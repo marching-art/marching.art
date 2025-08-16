@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken, getIdTokenResult } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // --- Firebase Configuration ---
 // These global variables are provided by the environment.
@@ -22,6 +23,7 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
 // --- Helper Components ---
 
@@ -49,11 +51,16 @@ const LogoIcon = ({ className }) => (
 );
 
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     if (!isOpen) return null;
+    const sizeClasses = {
+        md: 'max-w-md',
+        lg: 'max-w-3xl',
+        xl: 'max-w-5xl'
+    };
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 border-2 border-yellow-500 rounded-md shadow-lg w-full max-w-md p-6 relative text-gray-800 dark:text-yellow-300">
+            <div className={`bg-white dark:bg-gray-800 border-2 border-yellow-500 rounded-md shadow-lg w-full ${sizeClasses[size]} p-6 relative text-gray-800 dark:text-yellow-300`}>
                 <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 dark:text-yellow-400 hover:text-gray-800 dark:hover:text-yellow-200 transition-colors">
                     <Icon path="M6 18L18 6M6 6l12 12" />
                 </button>
@@ -513,12 +520,57 @@ const ProfilePage = ({ profile, userId }) => {
 };
 
 const AdminPage = () => {
+    const [email, setEmail] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const handleRoleChange = async (makeAdmin) => {
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const setUserRole = httpsCallable(functions, 'setUserRole');
+            const result = await setUserRole({ email, makeAdmin });
+            setMessage(result.data.message || result.data.error);
+        } catch (error) {
+            console.error("Error calling function:", error);
+            setMessage("An error occurred. Check the console for details.");
+        }
+        setIsLoading(false);
+    };
+
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
+            
+            {/* User Roles Management */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Site Management</h2>
-                <p>This is where admin tools for managing seasons, users, and scores will go.</p>
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Manage User Roles</h2>
+                <div className="space-y-4">
+                    <p>Enter a user's email address to grant or revoke admin privileges.</p>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="user@example.com"
+                        className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    />
+                    <div className="flex space-x-4">
+                        <button onClick={() => handleRoleChange(true)} disabled={isLoading || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            {isLoading ? 'Working...' : 'Make Admin'}
+                        </button>
+                        <button onClick={() => handleRoleChange(false)} disabled={isLoading || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            {isLoading ? 'Working...' : 'Remove Admin'}
+                        </button>
+                    </div>
+                    {message && <p className="mt-4 text-sm font-semibold">{message}</p>}
+                </div>
+            </div>
+
+            {/* Schedule Management */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
+                 {/* This will be built out in the next step */}
+                 <p>Coming soon: Tools to manage default season templates and edit active seasons.</p>
             </div>
         </div>
     );
