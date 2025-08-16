@@ -5,7 +5,9 @@ import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from 'fireb
 
 // --- Firebase Configuration ---
 // These global variables are provided by the environment.
+// eslint-disable-next-line no-undef
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'marching-art';
+// eslint-disable-next-line no-undef
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
     apiKey: "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
     authDomain: "marching-art.firebaseapp.com",
@@ -348,7 +350,9 @@ export default function App() {
             try {
                 // This handles the case where the app is run in an environment that provides a token.
                 // For regular users, this will not run.
+                // eslint-disable-next-line no-undef
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // eslint-disable-next-line no-undef
                     await signInWithCustomToken(auth, __initial_auth_token);
                 }
             } catch (error) {
