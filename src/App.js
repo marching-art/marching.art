@@ -312,7 +312,7 @@ const DashboardPage = ({ profile }) => {
 // --- New Profile Page Components ---
 
 const UniformDisplay = ({ uniform }) => {
-    // This is a simplified display. We'll make it more complex later.
+    if (!uniform) return <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md"></div>;
     return (
         <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Shako */}
@@ -336,41 +336,38 @@ const TrophyIcon = ({ type }) => {
     return <Icon path="M16.5 18.75h-9a9.75 9.75 0 001.05-3.055 9.75 9.75 0 00-1.05-3.055h9a9.75 9.75 0 00-1.05 3.055 9.75 9.75 0 001.05 3.055zM18.75 9.75h.008v.008h-.008V9.75z" className={`w-8 h-8 ${colors[type]}`} />;
 };
 
-const TrophyCase = ({ trophies }) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-        <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Trophy Case</h3>
-        <div className="space-y-4">
-            <div>
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Championships</h4>
-                <div className="flex space-x-2 mt-2">
-                    {trophies.championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
+const TrophyCase = ({ trophies }) => {
+    const safeTrophies = trophies || { championships: [], regionals: [] };
+    return (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Trophy Case</h3>
+            <div className="space-y-4">
+                <div>
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Championships</h4>
+                    <div className="flex space-x-2 mt-2">
+                        {safeTrophies.championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
+                    </div>
                 </div>
-            </div>
-            <div>
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Regionals</h4>
-                <div className="flex space-x-2 mt-2">
-                    {trophies.regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
+                <div>
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Regionals</h4>
+                    <div className="flex space-x-2 mt-2">
+                        {safeTrophies.regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
-const SeasonArchive = ({ seasons }) => {
+const SeasonArchive = ({ seasons = [] }) => {
     const [seasonType, setSeasonType] = useState('Live');
-    const [activeSeason, setActiveSeason] = useState(seasons.find(s => s.type === 'Live'));
-
     const filteredSeasons = seasons.filter(s => s.type === seasonType);
+    const [activeSeason, setActiveSeason] = useState(filteredSeasons.length > 0 ? filteredSeasons[0] : null);
 
     useEffect(() => {
-        // When seasonType changes, select the first season of that type
-        if (filteredSeasons.length > 0) {
-            setActiveSeason(filteredSeasons[0]);
-        } else {
-            setActiveSeason(null);
-        }
+        const newFiltered = seasons.filter(s => s.type === seasonType);
+        setActiveSeason(newFiltered.length > 0 ? newFiltered[0] : null);
     }, [seasonType, seasons]);
-
 
     return (
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
@@ -451,6 +448,7 @@ const ProfilePage = ({ profile, userId }) => {
     }
 
     const timeSince = (date) => {
+        if (!date?.toDate) return "a while ago"; // Guard against missing or invalid date
         const seconds = Math.floor((new Date() - date.toDate()) / 1000);
         let interval = seconds / 31536000;
         if (interval > 1) return Math.floor(interval) + " years ago";
