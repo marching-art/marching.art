@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken, getIdTokenResult } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 
 // --- Firebase Configuration ---
@@ -184,7 +184,7 @@ const LoginForm = ({ onLoginSuccess, switchToSignUp }) => {
 
 // --- Page Components ---
 
-const Header = ({ isLoggedIn, onLoginClick, onSignUpClick, onLogout, setPage, profile, theme, toggleTheme }) => {
+const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, setPage, profile, theme, toggleTheme }) => {
     return (
         <header className="bg-gray-100 dark:bg-black border-b-4 border-yellow-500 p-4 flex justify-between items-center shadow-md">
             <div onClick={() => setPage('home')} className="flex items-center space-x-3 cursor-pointer">
@@ -197,6 +197,7 @@ const Header = ({ isLoggedIn, onLoginClick, onSignUpClick, onLogout, setPage, pr
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {isLoggedIn ? (
                         <>
+                            {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 font-bold hover:underline">Admin</button>}
                             <span className="text-gray-700 dark:text-yellow-300 hidden sm:block">Welcome, {profile?.username || ''}</span>
                             <button onClick={() => setPage('profile')} className="text-gray-700 dark:text-yellow-300 hover:text-black dark:hover:text-white transition-colors">Profile</button>
                             <button onClick={onLogout} className="bg-gray-300 dark:bg-yellow-700 hover:bg-gray-400 dark:hover:bg-yellow-600 text-gray-800 dark:text-white font-bold py-2 px-3 rounded border-b-2 border-gray-400 dark:border-yellow-800 transition-all text-sm">
@@ -309,7 +310,7 @@ const DashboardPage = ({ profile }) => {
     );
 };
 
-// --- New Profile Page Components ---
+// --- Profile Page Components ---
 
 const UniformDisplay = ({ uniform }) => {
     if (!uniform) return <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md"></div>;
@@ -511,6 +512,18 @@ const ProfilePage = ({ profile, userId }) => {
     );
 };
 
+const AdminPage = () => {
+    return (
+        <div className="p-4 md:p-8">
+            <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Site Management</h2>
+                <p>This is where admin tools for managing seasons, users, and scores will go.</p>
+            </div>
+        </div>
+    );
+};
+
 
 const Footer = () => {
     return (
@@ -530,6 +543,7 @@ const Footer = () => {
 export default function App() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState('home');
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
@@ -557,22 +571,14 @@ export default function App() {
 
     // --- Authentication Effect ---
     useEffect(() => {
-        const authCheck = async () => {
-            try {
-                // This handles the case where the app is run in an environment that provides a token.
-                // For regular users, this will not run.
-                // eslint-disable-next-line no-undef
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    // eslint-disable-next-line no-undef
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                }
-            } catch (error) {
-                console.error("Authentication Error:", error);
-            }
-        };
-        authCheck();
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                const tokenResult = await getIdTokenResult(currentUser);
+                setIsAdmin(!!tokenResult.claims.admin);
+            } else {
+                setIsAdmin(false);
+            }
             setLoading(false);
         });
         return () => unsubscribe();
@@ -610,6 +616,7 @@ export default function App() {
         try {
             await signOut(auth);
             setProfile(null);
+            setIsAdmin(false);
             setPage('home');
         } catch (error) {
             console.error("Error signing out: ", error);
@@ -627,11 +634,11 @@ export default function App() {
     const renderPage = () => {
         switch (page) {
             case 'dashboard': 
-                // Protect the dashboard route
                 return isLoggedIn ? <DashboardPage profile={profile} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
-                // Protect the profile route
                 return isLoggedIn ? <ProfilePage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
+            case 'admin':
+                return isLoggedIn && isAdmin ? <AdminPage /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'home': 
             default: 
                 return <HomePage onSignUpClick={openSignUpModal} />;
@@ -650,6 +657,7 @@ export default function App() {
         <div className="bg-white dark:bg-black text-gray-800 dark:text-yellow-200 min-h-screen flex flex-col font-sans">
             <Header
                 isLoggedIn={isLoggedIn}
+                isAdmin={isAdmin}
                 profile={profile}
                 onLoginClick={openLoginModal}
                 onSignUpClick={openSignUpModal}
