@@ -31,6 +31,24 @@ const Icon = ({ path, className = "w-6 h-6" }) => (
     </svg>
 );
 
+const LogoIcon = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65" className={className}>
+      <g>
+        <circle cx="0" cy="0" r="4" fill="#a0a0a0"/>
+        <circle cx="25" cy="0" r="4" fill="#a0a0a0"/>
+        <circle cx="50" cy="0" r="4" fill="#a0a0a0"/>
+        <circle cx="0" cy="25" r="4" fill="#a0a0a0"/>
+        <circle cx="25" cy="25" r="4" fill="#a0a0a0"/>
+        <circle cx="50" cy="25" r="4" fill="#a0a0a0"/>
+        <circle cx="0" cy="50" r="4" fill="#a0a0a0"/>
+        <circle cx="25" cy="50" r="4" fill="#a0a0a0"/>
+        <circle cx="50" cy="50" r="4" fill="#a0a0a0"/>
+        <path d="M 0 0 Q 50 0, 50 50" stroke="#22c55e" strokeWidth="6" fill="none" strokeLinecap="round"/>
+      </g>
+    </svg>
+);
+
+
 const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
@@ -162,9 +180,12 @@ const LoginForm = ({ onLoginSuccess, switchToSignUp }) => {
 
 const Header = ({ isLoggedIn, onLoginClick, onSignUpClick, onLogout, setPage, profile, theme, toggleTheme }) => {
     return (
-        <header className="bg-gray-100 dark:bg-gray-900 border-b-4 border-green-500 p-4 flex justify-between items-center shadow-md">
-            <div className="text-xl md:text-3xl font-bold text-green-700 dark:text-green-400 tracking-wider cursor-pointer" onClick={() => setPage('home')}>
-                marching.art
+        <header className="bg-gray-100 dark:bg-black border-b-4 border-green-500 p-4 flex justify-between items-center shadow-md">
+            <div onClick={() => setPage('home')} className="flex items-center space-x-3 cursor-pointer">
+                <LogoIcon className="h-9 w-9" />
+                <span className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-white tracking-wide">
+                    marching<span className="text-green-600 dark:text-green-500 font-bold">.art</span>
+                </span>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <nav className="flex items-center space-x-2 md:space-x-4">
@@ -204,7 +225,7 @@ const HomePage = ({ onSignUpClick }) => {
                 Join a League Today!
             </button>
             
-            <div className="mt-16 grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                 <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-md">
                     <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Live Scoring</h3>
                     <p className="text-gray-600 dark:text-green-300">Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.</p>
@@ -216,6 +237,13 @@ const HomePage = ({ onSignUpClick }) => {
                 <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-md">
                     <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Create Your Profile</h3>
                     <p className="text-gray-600 dark:text-green-300">Build your manager profile, track your history, and show off your championship titles to the world.</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-md">
+                    <h3 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-2">Join the Community</h3>
+                    <p className="text-gray-600 dark:text-green-300 mb-4">Chat with other fans, discuss scores, and get help on our official Discord server.</p>
+                    <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md inline-block transition-all border-b-4 border-indigo-700 hover:border-indigo-800 transform hover:translate-y-px">
+                        Join Discord
+                    </a>
                 </div>
             </div>
         </div>
@@ -308,7 +336,12 @@ const ProfilePage = ({ profile, userId }) => {
 
 const Footer = () => {
     return (
-        <footer className="bg-gray-100 dark:bg-gray-900 border-t-2 border-green-600 dark:border-green-700 p-4 text-center text-gray-600 dark:text-green-500 mt-auto">
+        <footer className="bg-gray-100 dark:bg-black border-t-2 border-green-600 dark:border-green-700 p-4 text-center text-gray-600 dark:text-green-500 mt-auto">
+            <div className="mb-2">
+                <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:underline font-semibold">
+                    Join the Community on Discord
+                </a>
+            </div>
             <p>&copy; {new Date().getFullYear()} marching.art. All Rights Reserved.</p>
         </footer>
     );
@@ -429,14 +462,14 @@ export default function App() {
 
     if (loading) {
         return (
-            <div className="bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center text-green-600 dark:text-green-400 text-2xl font-sans">
+            <div className="bg-white dark:bg-black min-h-screen flex items-center justify-center text-green-600 dark:text-green-400 text-2xl font-sans">
                 Loading System...
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-green-200 min-h-screen flex flex-col font-sans">
+        <div className="bg-white dark:bg-black text-gray-800 dark:text-green-200 min-h-screen flex flex-col font-sans">
             <Header
                 isLoggedIn={isLoggedIn}
                 profile={profile}
