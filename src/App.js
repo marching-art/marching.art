@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 
 // --- Firebase Configuration ---
 // These global variables are provided by the environment.
@@ -43,7 +43,7 @@ const LogoIcon = ({ className }) => (
         <circle cx="0" cy="50" r="4" fill="#a0a0a0"/>
         <circle cx="25" cy="50" r="4" fill="#a0a0a0"/>
         <circle cx="50" cy="50" r="4" fill="#a0a0a0"/>
-        <path d="M 0 0 Q 50 0, 50 50" stroke="#22c55e" strokeWidth="6" fill="none" strokeLinecap="round"/>
+        <path d="M 0 0 Q 50 0, 50 50" stroke="#f59e0b" strokeWidth="6" fill="none" strokeLinecap="round"/>
       </g>
     </svg>
 );
@@ -53,11 +53,11 @@ const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 border-2 border-green-500 rounded-md shadow-lg w-full max-w-md p-6 relative text-gray-800 dark:text-green-300">
-                <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 dark:text-green-400 hover:text-gray-800 dark:hover:text-green-200 transition-colors">
+            <div className="bg-white dark:bg-gray-800 border-2 border-yellow-500 rounded-md shadow-lg w-full max-w-md p-6 relative text-gray-800 dark:text-yellow-300">
+                <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 dark:text-yellow-400 hover:text-gray-800 dark:hover:text-yellow-200 transition-colors">
                     <Icon path="M6 18L18 6M6 6l12 12" />
                 </button>
-                <h2 className="text-2xl font-bold mb-4 text-green-600 dark:text-green-400 tracking-wider">{title}</h2>
+                <h2 className="text-2xl font-bold mb-4 text-yellow-600 dark:text-yellow-400 tracking-wider">{title}</h2>
                 {children}
             </div>
         </div>
@@ -84,10 +84,16 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
             const user = userCredential.user;
             
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            // Expanded profile data on creation
             await setDoc(userDocRef, {
                 username: username,
                 email: user.email,
                 createdAt: new Date(),
+                lastActive: new Date(),
+                bio: `Welcome to my marching.art profile!`,
+                uniform: { jacketStyle: "classic", jacketColor1: "#000000", jacketColor2: "#ffffff", plumeStyle: "standard", plumeColor: "#ffffff", hatStyle: "shako", hatColor: "#000000" },
+                trophies: { championships: [], regionals: [] },
+                seasons: []
             });
             
             onSignUpSuccess();
@@ -104,28 +110,28 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 mb-4 text-gray-800 dark:text-green-300 placeholder-gray-500 dark:placeholder-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
             <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 mb-4 text-gray-800 dark:text-green-300 placeholder-gray-500 dark:placeholder-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 mb-4 text-gray-800 dark:text-green-300 placeholder-gray-500 dark:placeholder-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
-            <button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded border-b-4 border-green-800 hover:border-green-700 transition-all">
+            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all">
                 Sign Up
             </button>
             <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
-                <button type="button" onClick={switchToLogin} className="text-green-600 dark:text-green-400 hover:underline">Log In</button>
+                <button type="button" onClick={switchToLogin} className="text-yellow-600 dark:text-yellow-400 hover:underline">Log In</button>
             </p>
         </form>
     );
@@ -155,21 +161,21 @@ const LoginForm = ({ onLoginSuccess, switchToSignUp }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 mb-4 text-gray-800 dark:text-green-300 placeholder-gray-500 dark:placeholder-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 mb-4 text-gray-800 dark:text-green-300 placeholder-gray-500 dark:placeholder-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
-            <button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded border-b-4 border-green-800 hover:border-green-700 transition-all">
+            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all">
                 Log In
             </button>
             <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
-                <button type="button" onClick={switchToSignUp} className="text-green-600 dark:text-green-400 hover:underline">Sign Up</button>
+                <button type="button" onClick={switchToSignUp} className="text-yellow-600 dark:text-yellow-400 hover:underline">Sign Up</button>
             </p>
         </form>
     );
@@ -180,33 +186,33 @@ const LoginForm = ({ onLoginSuccess, switchToSignUp }) => {
 
 const Header = ({ isLoggedIn, onLoginClick, onSignUpClick, onLogout, setPage, profile, theme, toggleTheme }) => {
     return (
-        <header className="bg-gray-100 dark:bg-black border-b-4 border-green-500 p-4 flex justify-between items-center shadow-md">
+        <header className="bg-gray-100 dark:bg-black border-b-4 border-yellow-500 p-4 flex justify-between items-center shadow-md">
             <div onClick={() => setPage('home')} className="flex items-center space-x-3 cursor-pointer">
                 <LogoIcon className="h-9 w-9" />
                 <span className="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-white tracking-wide">
-                    marching<span className="text-green-600 dark:text-green-500 font-bold">.art</span>
+                    marching<span className="text-yellow-600 dark:text-yellow-500 font-bold">.art</span>
                 </span>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {isLoggedIn ? (
                         <>
-                            <span className="text-gray-700 dark:text-green-300 hidden sm:block">Welcome, {profile?.username || ''}</span>
-                            <button onClick={() => setPage('profile')} className="text-gray-700 dark:text-green-300 hover:text-black dark:hover:text-white transition-colors">Profile</button>
-                            <button onClick={onLogout} className="bg-gray-300 dark:bg-green-700 hover:bg-gray-400 dark:hover:bg-green-600 text-gray-800 dark:text-white font-bold py-2 px-3 rounded border-b-2 border-gray-400 dark:border-green-800 transition-all text-sm">
+                            <span className="text-gray-700 dark:text-yellow-300 hidden sm:block">Welcome, {profile?.username || ''}</span>
+                            <button onClick={() => setPage('profile')} className="text-gray-700 dark:text-yellow-300 hover:text-black dark:hover:text-white transition-colors">Profile</button>
+                            <button onClick={onLogout} className="bg-gray-300 dark:bg-yellow-700 hover:bg-gray-400 dark:hover:bg-yellow-600 text-gray-800 dark:text-white font-bold py-2 px-3 rounded border-b-2 border-gray-400 dark:border-yellow-800 transition-all text-sm">
                                 Logout
                             </button>
                         </>
                     ) : (
                         <>
-                            <button onClick={onLoginClick} className="text-gray-700 dark:text-green-300 hover:text-black dark:hover:text-white transition-colors">Log In</button>
-                            <button onClick={onSignUpClick} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-3 rounded border-b-4 border-green-800 hover:border-green-700 transition-all text-sm">
+                            <button onClick={onLoginClick} className="text-gray-700 dark:text-yellow-300 hover:text-black dark:hover:text-white transition-colors">Log In</button>
+                            <button onClick={onSignUpClick} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-3 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all text-sm">
                                 Sign Up
                             </button>
                         </>
                     )}
                 </nav>
-                 <button onClick={toggleTheme} className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-green-300 focus:outline-none focus:ring-2 focus:ring-green-500">
+                 <button onClick={toggleTheme} className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
                     {theme === 'light' ? <Icon path="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /> : <Icon path="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M12 21a9 9 0 110-18 9 9 0 010 18z" />}
                 </button>
             </div>
@@ -217,30 +223,30 @@ const Header = ({ isLoggedIn, onLoginClick, onSignUpClick, onLogout, setPage, pr
 const HomePage = ({ onSignUpClick }) => {
     return (
         <div className="text-center p-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-green-800 dark:text-green-300 mb-4 tracking-wider">Your Field of Dreams Awaits</h1>
-            <p className="text-lg text-gray-700 dark:text-green-200 mb-8 max-w-2xl mx-auto">
+            <h1 className="text-4xl md:text-5xl font-bold text-yellow-800 dark:text-yellow-300 mb-4 tracking-wider">Your Field of Dreams Awaits</h1>
+            <p className="text-lg text-gray-700 dark:text-yellow-200 mb-8 max-w-2xl mx-auto">
                 Assemble your ultimate drum corps lineup. Compete against friends. Follow the season's scores and rise to the top. This is where fantasy meets the field.
             </p>
-            <button onClick={onSignUpClick} className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-md text-xl transition-all border-b-4 border-green-700 hover:border-green-800 transform hover:translate-y-px">
+            <button onClick={onSignUpClick} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-md text-xl transition-all border-b-4 border-yellow-700 hover:border-yellow-800 transform hover:translate-y-px">
                 Join a League Today!
             </button>
             
             <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-md">
-                    <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Live Scoring</h3>
-                    <p className="text-gray-600 dark:text-green-300">Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.</p>
+                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-md">
+                    <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Live Scoring</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-md">
-                    <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Off-Season Fun</h3>
-                    <p className="text-gray-600 dark:text-green-300">The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.</p>
+                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-md">
+                    <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Off-Season Fun</h3>
+                    <p className="text-gray-600 dark:text-gray-300">The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-md">
-                    <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Create Your Profile</h3>
-                    <p className="text-gray-600 dark:text-green-300">Build your manager profile, track your history, and show off your championship titles to the world.</p>
+                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-md">
+                    <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Create Your Profile</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Build your manager profile, track your history, and show off your championship titles to the world.</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-md">
                     <h3 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-2">Join the Community</h3>
-                    <p className="text-gray-600 dark:text-green-300 mb-4">Chat with other fans, discuss scores, and get help on our official Discord server.</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">Chat with other fans, discuss scores, and get help on our official Discord server.</p>
                     <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md inline-block transition-all border-b-4 border-indigo-700 hover:border-indigo-800 transform hover:translate-y-px">
                         Join Discord
                     </a>
@@ -261,27 +267,27 @@ const DashboardPage = ({ profile }) => {
 
     return (
         <div className="p-4 md:p-8">
-            <h1 className="text-4xl font-bold text-green-800 dark:text-green-300 mb-6">Manager Dashboard</h1>
+            <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
             <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
-                    <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-4">My Team: "The Phantom Regiment"</h2>
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                    <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Team: "The Phantom Regiment"</h2>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b-2 border-green-600 dark:border-green-700">
-                                    <th className="p-2 text-gray-800 dark:text-green-200">Corps</th>
-                                    <th className="p-2 text-gray-800 dark:text-green-200">Last Score</th>
-                                    <th className="p-2 text-gray-800 dark:text-green-200">Change</th>
-                                    <th className="p-2 text-gray-800 dark:text-green-200">Fantasy Points</th>
+                                <tr className="border-b-2 border-yellow-600 dark:border-yellow-700">
+                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Corps</th>
+                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Last Score</th>
+                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Change</th>
+                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Fantasy Points</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {corps.map((c) => (
                                     <tr key={c.name} className="border-b border-gray-200 dark:border-gray-700">
-                                        <td className="p-2 font-semibold text-gray-900 dark:text-green-200">{c.name}</td>
+                                        <td className="p-2 font-semibold text-gray-900 dark:text-yellow-200">{c.name}</td>
                                         <td className={`p-2 ${c.change.startsWith('+') ? 'text-green-600' : c.change.startsWith('-') ? 'text-red-600' : 'text-gray-700 dark:text-gray-400'}`}>{c.score.toFixed(3)}</td>
                                         <td className={`p-2 ${c.change.startsWith('+') ? 'text-green-600' : c.change.startsWith('-') ? 'text-red-600' : 'text-gray-700 dark:text-gray-400'}`}>{c.change}</td>
-                                        <td className="p-2 text-gray-800 dark:text-green-300">{(c.score * 10).toFixed(2)}</td>
+                                        <td className="p-2 text-gray-800 dark:text-yellow-300">{(c.score * 10).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -289,9 +295,9 @@ const DashboardPage = ({ profile }) => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
-                    <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-4">League: "World Class Champions"</h2>
-                    <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-green-300">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                    <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">League: "World Class Champions"</h2>
+                    <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-yellow-300">
                         <li><span className="font-bold text-black dark:text-white">The Phantom Regiment</span> (You) - 1250.75 pts</li>
                         <li><span>Cavaliers Crew</span> - 1245.50 pts</li>
                         <li><span>Crown Joules</span> - 1230.00 pts</li>
@@ -303,40 +309,214 @@ const DashboardPage = ({ profile }) => {
     );
 };
 
-const ProfilePage = ({ profile, userId }) => {
-    if (!profile) {
-        return <div className="p-8 text-center text-gray-600 dark:text-green-300">Loading profile...</div>;
-    }
+// --- New Profile Page Components ---
+
+const UniformDisplay = ({ uniform }) => {
+    // This is a simplified display. We'll make it more complex later.
     return (
-        <div className="p-4 md:p-8 max-w-2xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
-                <h1 className="text-3xl font-bold text-green-800 dark:text-green-300 mb-6">My Profile</h1>
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-sm font-bold text-green-600 dark:text-green-500 tracking-wider">USERNAME</label>
-                        <p className="text-xl text-gray-900 dark:text-green-200">{profile.username}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-green-600 dark:text-green-500 tracking-wider">EMAIL</label>
-                        <p className="text-xl text-gray-900 dark:text-green-200">{profile.email}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-green-600 dark:text-green-500 tracking-wider">MEMBER SINCE</label>
-                        <p className="text-xl text-gray-900 dark:text-green-200">{profile.createdAt?.toDate().toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-bold text-green-600 dark:text-green-500 tracking-wider">USER ID</label>
-                        <p className="text-xs text-gray-500 dark:text-green-400 break-all">{userId}</p>
-                    </div>
-                </div>
+        <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            {/* Shako */}
+            <div style={{ backgroundColor: uniform.hatColor }} className="w-16 h-10 rounded-t-md absolute top-8"></div>
+            {/* Plume */}
+            <div style={{ backgroundColor: uniform.plumeColor }} className="w-4 h-12 absolute top-0 left-1/2 -translate-x-1/2 rounded-t-full"></div>
+            {/* Jacket */}
+            <div style={{ backgroundColor: uniform.jacketColor1 }} className="w-full h-32 absolute top-16">
+                <div style={{ backgroundColor: uniform.jacketColor2 }} className="w-1/2 h-full absolute top-0 left-1/2 -translate-x-1/2"></div>
             </div>
         </div>
     );
 };
 
+const TrophyIcon = ({ type }) => {
+    const colors = {
+        gold: "text-yellow-500",
+        silver: "text-gray-400",
+        bronze: "text-orange-500",
+    };
+    return <Icon path="M16.5 18.75h-9a9.75 9.75 0 001.05-3.055 9.75 9.75 0 00-1.05-3.055h9a9.75 9.75 0 00-1.05 3.055 9.75 9.75 0 001.05 3.055zM18.75 9.75h.008v.008h-.008V9.75z" className={`w-8 h-8 ${colors[type]}`} />;
+};
+
+const TrophyCase = ({ trophies }) => (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+        <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Trophy Case</h3>
+        <div className="space-y-4">
+            <div>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Championships</h4>
+                <div className="flex space-x-2 mt-2">
+                    {trophies.championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
+                </div>
+            </div>
+            <div>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">Regionals</h4>
+                <div className="flex space-x-2 mt-2">
+                    {trophies.regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const SeasonArchive = ({ seasons }) => {
+    const [seasonType, setSeasonType] = useState('Live');
+    const [activeSeason, setActiveSeason] = useState(seasons.find(s => s.type === 'Live'));
+
+    const filteredSeasons = seasons.filter(s => s.type === seasonType);
+
+    useEffect(() => {
+        // When seasonType changes, select the first season of that type
+        if (filteredSeasons.length > 0) {
+            setActiveSeason(filteredSeasons[0]);
+        } else {
+            setActiveSeason(null);
+        }
+    }, [seasonType, seasons]);
+
+
+    return (
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Archive</h3>
+            {/* Season Type Tabs */}
+            <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-2">
+                <button onClick={() => setSeasonType('Live')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Live' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Live Seasons</button>
+                <button onClick={() => setSeasonType('Off')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Off' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Off-Seasons</button>
+            </div>
+            
+            {/* Individual Season Tabs */}
+            <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
+                {filteredSeasons.map(season => (
+                    <button 
+                        key={season.name} 
+                        onClick={() => setActiveSeason(season)}
+                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${activeSeason?.name === season.name ? 'border-b-2 border-yellow-500 text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
+                    >
+                        {season.name}
+                    </button>
+                ))}
+            </div>
+
+            {activeSeason ? (
+                <div>
+                    <h4 className="text-xl font-bold text-gray-800 dark:text-gray-200">{activeSeason.showTitle}</h4>
+                    <p className="italic text-gray-600 dark:text-gray-400 mb-4">{activeSeason.repertoire}</p>
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                <th className="p-2">Event</th>
+                                <th className="p-2">Rank</th>
+                                <th className="p-2">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {activeSeason.events.map((event, i) => (
+                                <tr key={i} className="border-b border-gray-100 dark:border-gray-700">
+                                    <td className="p-2">{event.eventName}</td>
+                                    <td className="p-2">{event.rank}</td>
+                                    <td className="p-2">{event.score.toFixed(3)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : <p className="p-2 text-gray-500">No seasons of this type played.</p>}
+        </div>
+    );
+};
+
+
+const ProfilePage = ({ profile, userId }) => {
+    const isOwner = auth.currentUser?.uid === userId;
+
+    const [isEditingBio, setIsEditingBio] = useState(false);
+    const [bioText, setBioText] = useState(profile?.bio || '');
+
+    useEffect(() => {
+        setBioText(profile?.bio || '');
+    }, [profile]);
+
+    const handleSaveBio = async () => {
+        if (!userId) return;
+        const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+        try {
+            await updateDoc(userDocRef, {
+                bio: bioText
+            });
+            setIsEditingBio(false);
+        } catch (error) {
+            console.error("Error updating bio:", error);
+        }
+    };
+
+    if (!profile) {
+        return <div className="p-8 text-center text-gray-600 dark:text-yellow-300">Loading profile...</div>;
+    }
+
+    const timeSince = (date) => {
+        const seconds = Math.floor((new Date() - date.toDate()) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return "just now";
+    };
+
+    return (
+        <div className="p-4 md:p-8 space-y-8">
+            {/* Profile Header */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <UniformDisplay uniform={profile.uniform} />
+                <div className="flex-grow text-center md:text-left">
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        Member since {profile.createdAt?.toDate().toLocaleDateString()}
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                        Last active: {timeSince(profile.lastActive)}
+                    </p>
+                    <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
+                        {isEditingBio ? (
+                            <div className="space-y-2">
+                                <textarea 
+                                    value={bioText}
+                                    onChange={(e) => setBioText(e.target.value)}
+                                    className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                                    rows="4"
+                                ></textarea>
+                                <div className="flex justify-end space-x-2">
+                                    <button onClick={() => setIsEditingBio(false)} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm">Cancel</button>
+                                    <button onClick={handleSaveBio} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-sm">Save</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex justify-between items-start">
+                                <p className="text-gray-700 dark:text-gray-300">{profile.bio}</p>
+                                {isOwner && (
+                                    <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-yellow-600 dark:text-yellow-400 hover:underline flex-shrink-0">Edit</button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid lg:grid-cols-3 gap-8">
+                <TrophyCase trophies={profile.trophies} />
+                <SeasonArchive seasons={profile.seasons} />
+            </div>
+        </div>
+    );
+};
+
+
 const Footer = () => {
     return (
-        <footer className="bg-gray-100 dark:bg-black border-t-2 border-green-600 dark:border-green-700 p-4 text-center text-gray-600 dark:text-green-500 mt-auto">
+        <footer className="bg-gray-100 dark:bg-black border-t-2 border-yellow-600 dark:border-yellow-700 p-4 text-center text-gray-600 dark:text-yellow-500 mt-auto">
             <div className="mb-2">
                 <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:underline font-semibold">
                     Join the Community on Discord
@@ -462,14 +642,14 @@ export default function App() {
 
     if (loading) {
         return (
-            <div className="bg-white dark:bg-black min-h-screen flex items-center justify-center text-green-600 dark:text-green-400 text-2xl font-sans">
+            <div className="bg-white dark:bg-black min-h-screen flex items-center justify-center text-yellow-600 dark:text-yellow-400 text-2xl font-sans">
                 Loading System...
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-black text-gray-800 dark:text-green-200 min-h-screen flex flex-col font-sans">
+        <div className="bg-white dark:bg-black text-gray-800 dark:text-yellow-200 min-h-screen flex flex-col font-sans">
             <Header
                 isLoggedIn={isLoggedIn}
                 profile={profile}
