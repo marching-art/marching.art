@@ -521,7 +521,7 @@ const ProfilePage = ({ profile, userId }) => {
 
 const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     const [schedule, setSchedule] = useState({ name: title, events: [] });
-    const [newEvent, setNewEvent] = useState({ name: '', week: 1, day: 'Saturday', type: 'Standard' });
+    const [newEvent, setNewEvent] = useState({ name: '', location: '', week: 1, day: 'Saturday', type: 'Standard' });
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -544,14 +544,14 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     };
 
     const handleAddEvent = () => {
-        if (!newEvent.name.trim()) return;
+        if (!newEvent.name.trim() || !newEvent.location.trim()) return;
         const updatedEvents = [...schedule.events, newEvent];
         updatedEvents.sort((a, b) => {
             if (a.week !== b.week) return a.week - b.week;
             return days.indexOf(a.day) - days.indexOf(b.day);
         });
         setSchedule({ ...schedule, events: updatedEvents });
-        setNewEvent({ name: '', week: 1, day: 'Saturday', type: 'Standard' });
+        setNewEvent({ name: '', location: '', week: 1, day: 'Saturday', type: 'Standard' });
     };
 
     const handleDeleteEvent = (indexToDelete) => {
@@ -584,10 +584,11 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
             <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md">
                 <h4 className="font-semibold mb-2">Add New Show</h4>
                 <div className="flex flex-wrap items-end gap-2">
-                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="flex-grow-[2] min-w-[200px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
-                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="flex-grow min-w-[100px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Week {weekNum}</option>)}</select>
-                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select>
-                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select>
+                    <div className="flex-grow" style={{ flexBasis: 'calc(40% - 0.5rem)' }}><input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
+                    <div className="flex-grow" style={{ flexBasis: 'calc(20% - 0.5rem)' }}><input type="text" placeholder="Location" value={newEvent.location} onChange={e => handleEventChange('location', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
+                    <div className="flex-grow" style={{ flexBasis: 'calc(10% - 0.5rem)' }}><select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Wk {weekNum}</option>)}</select></div>
+                    <div className="flex-grow" style={{ flexBasis: 'calc(15% - 0.5rem)' }}><select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select></div>
+                    <div className="flex-grow" style={{ flexBasis: 'calc(15% - 0.5rem)' }}><select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select></div>
                     <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add</button>
                 </div>
             </div>
@@ -600,7 +601,7 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
                         {schedule.events.map((event, index) => (
                             <li key={index} className="flex justify-between items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span>
-                                    <strong>Week {event.week}, {event.day}:</strong> {event.name} ({event.type})
+                                    <strong>Week {event.week}, {event.day}:</strong> {event.name} <em className="text-gray-500">({event.location})</em> - {event.type}
                                 </span>
                                 <button onClick={() => handleDeleteEvent(index)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
                             </li>
