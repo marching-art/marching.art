@@ -1,20 +1,19 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall } = require("firebase-functions/v2/https");
 
 admin.initializeApp();
 const db = admin.firestore();
 
-exports.setUserRole = functions.https.onCall(async (data, context) => {
+exports.setUserRole = onCall(async (request) => {
   // Security Check: Ensure the user calling the function is an admin.
-  if (context.auth.token.admin !== true) {
-    return {
-      error: "Request not authorized. User must be an admin to fulfill this request.",
-    };
+  if (request.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Request not authorized. User must be an admin.');
   }
 
-  const email = data.email;
-  const makeAdmin = data.makeAdmin; // This will be true or false
+  const email = request.data.email;
+  const makeAdmin = request.data.makeAdmin; // This will be true or false
 
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
@@ -26,24 +25,20 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     };
   } catch (err) {
     console.error(err);
-    return {
-      error: err.message,
-    };
+    throw new functions.https.HttpsError('internal', err.message);
   }
 });
 
-exports.saveSchedule = functions.https.onCall(async (data, context) => {
+exports.saveSchedule = onCall(async (request) => {
   // Security Check: Ensure the user calling the function is an admin.
-  if (context.auth.token.admin !== true) {
-    return {
-      error: "Request not authorized. User must be an admin to save schedules.",
-    };
+  if (request.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Request not authorized. User must be an admin.');
   }
 
-  const { scheduleId, scheduleData } = data;
+  const { scheduleId, scheduleData } = request.data;
 
   if (!scheduleId || !scheduleData) {
-    return { error: "Invalid data provided." };
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid data provided.');
   }
 
   try {
@@ -51,12 +46,47 @@ exports.saveSchedule = functions.https.onCall(async (data, context) => {
     return { message: `Successfully saved schedule: ${scheduleData.name}` };
   } catch (err) {
     console.error("Error saving schedule:", err);
-    return { error: "Failed to save schedule." };
+    throw new functions.https.HttpsError('internal', 'Failed to save schedule.');
   }
 });
 
-// --- SCHEDULED FUNCTION (Corrected Syntax) ---
-// This is the main game engine. It runs automatically every day.
+exports.saveDciData = onCall(async (request) => {
+    // Security Check
+    if (request.auth.token.admin !== true) {
+        throw new functions.https.HttpsError('permission-denied', 'Request not authorized.');
+    }
+
+    const { year, corpsNames } = request.data;
+    if (!year || !corpsNames || corpsNames.length !== 25) {
+        throw new functions.https.HttpsError('invalid-argument', 'Invalid data. A year and 25 corps names are required.');
+    }
+
+    // Generate point values based on rank
+    const corpsValues = corpsNames.map((name, index) => {
+        let points = 25 - index;
+        if (name.toLowerCase() === 'genesis') points = 5;
+        if (name.toLowerCase() === 'jersey surf') points = 3;
+        return {
+            rank: index + 1,
+            corpsName: name,
+            points: points,
+        };
+    });
+
+    try {
+        await db.collection("dci-data").doc(String(year)).set({
+            year: parseInt(year),
+            corpsValues: corpsValues,
+        });
+        return { message: `Successfully saved DCI data for ${year}.` };
+    } catch (err) {
+        console.error("Error saving DCI data:", err);
+        throw new functions.https.HttpsError('internal', 'Failed to save DCI data.');
+    }
+});
+
+
+// --- SCHEDULED FUNCTION ---
 exports.runGameLoop = onSchedule("every day 05:00", async (event) => {
     console.log("Starting the daily game loop...");
 
@@ -119,18 +149,10 @@ exports.runGameLoop = onSchedule("every day 05:00", async (event) => {
     console.log(`Found ${todaysEvents.length} events for today:`, todaysEvents.map(e => e.name).join(', '));
 
     // --- 3. Placeholder: Fetch Scores for Today's Events ---
-    // In a future step, we will add web scraping logic here to get scores from dci.org.
-    // The scraper will look for the event names defined in the schedule.
-    // It will need to parse the results to get scores for each caption:
-    // GE, Music Analysis, Visual Analysis, Brass, Percussion, etc.
     console.log("--- TODO: Fetch scores for today's events ---");
 
 
     // --- 4. Placeholder: Calculate Fantasy Points and Update Users ---
-    // After fetching scores, we will loop through all users.
-    // For each user, we'll look at their selected corps for the week.
-    // We'll calculate their fantasy points based on the fetched scores and a defined scoring rubric.
-    // Finally, we'll update their user profile in Firestore with the new points and log the transaction.
     console.log("--- TODO: Calculate fantasy points and update all users ---");
 
     console.log("Daily game loop finished.");
