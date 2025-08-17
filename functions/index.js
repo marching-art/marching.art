@@ -8,7 +8,6 @@ const cheerio = require("cheerio");
 admin.initializeApp();
 const db = admin.firestore();
 
-// CORS configuration to allow requests from your web app
 const corsOptions = {
   cors: ["https://www.marching.art", "https://marching.art", /marching-art.*\.vercel\.app$/, "http://localhost:3000"],
 };
