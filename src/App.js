@@ -362,20 +362,30 @@ const DashboardPage = ({ profile }) => {
         const docRef = doc(db, 'dci-data', String(previousYear));
         
         const fetchData = async () => {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setCorpsData(docSnap.data().corpsValues || []);
-            } else {
-                console.log(`No corps data found for year ${previousYear}`);
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setCorpsData(docSnap.data().corpsValues || []);
+                } else {
+                    console.log(`No corps data found for year ${previousYear}`);
+                }
+            } catch (error) {
+                console.error("Error fetching corps data:", error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
         
         fetchData();
     }, []);
 
     if (isLoading) {
-        return <div className="p-8 text-center">Loading game data...</div>;
+        return (
+            <div className="p-4 md:p-8">
+                <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
+                <p>Loading game data...</p>
+            </div>
+        );
     }
 
     return (
@@ -653,7 +663,6 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     return (
         <div className="space-y-4">
             <h3 className="text-xl font-bold">{title}</h3>
-            {/* Event Entry Form */}
             <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md">
                 <h4 className="font-semibold mb-2">Add New Show</h4>
                 <div className="flex flex-wrap items-end gap-2">
@@ -666,7 +675,6 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
                 </div>
             </div>
 
-            {/* Event List */}
             <div className="space-y-2">
                 <h4 className="font-semibold">Scheduled Events</h4>
                 {schedule.events.length === 0 ? <p className="text-gray-500">No shows added yet.</p> :
