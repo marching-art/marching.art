@@ -25,6 +25,22 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 
+// --- Game Data ---
+const DCI_CORPS_DATA = [
+    { name: "Blue Devils", points: 25 }, { name: "Bluecoats", points: 24 },
+    { name: "Carolina Crown", points: 23 }, { name: "Boston Crusaders", points: 22 },
+    { name: "Santa Clara Vanguard", points: 21 }, { name: "Mandarins", points: 20 },
+    { name: "Phantom Regiment", points: 19 }, { name: "The Cavaliers", points: 18 },
+    { name: "Colts", points: 17 }, { name: "Troopers", points: 16 },
+    { name: "Blue Stars", points: 15 }, { name: "Blue Knights", points: 14 },
+    { name: "Crossmen", points: 13 }, { name: "Pacific Crest", points: 12 },
+    { name: "Spirit of Atlanta", points: 11 }, { name: "Madison Scouts", points: 10 },
+    { name: "Music City", points: 9 }, { name: "The Academy", points: 8 },
+    { name: "Genesis", points: 5 }, { name: "Jersey Surf", points: 3 }
+];
+const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
+const POINT_CAP = 150;
+
 // --- Helper Components ---
 
 const Icon = ({ path, className = "w-6 h-6" }) => (
@@ -100,7 +116,8 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                 bio: `Welcome to my marching.art profile!`,
                 uniform: { jacketStyle: "classic", jacketColor1: "#000000", jacketColor2: "#ffffff", plumeStyle: "standard", plumeColor: "#ffffff", hatStyle: "shako", hatColor: "#000000" },
                 trophies: { championships: [], regionals: [] },
-                seasons: []
+                seasons: [],
+                lineup: {}
             });
             
             onSignUpSuccess();
@@ -264,47 +281,78 @@ const HomePage = ({ onSignUpClick }) => {
     );
 };
 
-const DashboardPage = ({ profile }) => {
-    const corps = [
-        { name: "Blue Devils", score: 98.750, change: "+0.250" },
-        { name: "Boston Crusaders", score: 97.500, change: "+0.125" },
-        { name: "Bluecoats", score: 97.375, change: "-0.100" },
-        { name: "Carolina Crown", score: 96.800, change: "+0.500" },
-        { name: "Santa Clara Vanguard", score: 95.500, change: "+0.000" },
-    ];
+const LineupEditor = ({ profile }) => {
+    const [lineup, setLineup] = useState(profile?.lineup || {});
+    const [totalPoints, setTotalPoints] = useState(0);
 
+    useEffect(() => {
+        const points = CAPTIONS.reduce((sum, caption) => {
+            const corpsName = lineup[caption];
+            if (corpsName) {
+                const corps = DCI_CORPS_DATA.find(c => c.name === corpsName);
+                return sum + (corps?.points || 0);
+            }
+            return sum;
+        }, 0);
+        setTotalPoints(points);
+    }, [lineup]);
+
+    const handleSelect = (caption, corpsName) => {
+        setLineup(prev => ({ ...prev, [caption]: corpsName }));
+    };
+
+    const handleSave = () => {
+        // TODO: Add Firestore save logic, including uniqueness check
+        console.log("Saving lineup:", lineup);
+        alert("Lineup saved! (Functionality coming soon)");
+    };
+
+    return (
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">My Lineup</h2>
+                <div className={`text-xl font-bold ${totalPoints > POINT_CAP ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                    Total Points: {totalPoints} / {POINT_CAP}
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {CAPTIONS.map(caption => (
+                    <div key={caption} className="flex items-center">
+                        <label className="w-12 font-semibold">{caption}:</label>
+                        <select 
+                            value={lineup[caption] || ''} 
+                            onChange={(e) => handleSelect(caption, e.target.value)}
+                            className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                        >
+                            <option value="">-- Select a Corps --</option>
+                            {DCI_CORPS_DATA.map(corps => (
+                                <option key={corps.name} value={corps.name}>{corps.name} ({corps.points})</option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
+            </div>
+             <div className="mt-6 flex justify-end">
+                <button 
+                    onClick={handleSave} 
+                    disabled={totalPoints > POINT_CAP || Object.keys(lineup).length < 8}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    Save Lineup
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const DashboardPage = ({ profile }) => {
     return (
         <div className="p-4 md:p-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
             <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                    <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Team: "The Phantom Regiment"</h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b-2 border-yellow-600 dark:border-yellow-700">
-                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Corps</th>
-                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Last Score</th>
-                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Change</th>
-                                    <th className="p-2 text-gray-800 dark:text-yellow-200">Fantasy Points</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {corps.map((c) => (
-                                    <tr key={c.name} className="border-b border-gray-200 dark:border-gray-700">
-                                        <td className="p-2 font-semibold text-gray-900 dark:text-yellow-200">{c.name}</td>
-                                        <td className={`p-2 ${c.change.startsWith('+') ? 'text-green-600' : c.change.startsWith('-') ? 'text-red-600' : 'text-gray-700 dark:text-gray-400'}`}>{c.score.toFixed(3)}</td>
-                                        <td className={`p-2 ${c.change.startsWith('+') ? 'text-green-600' : c.change.startsWith('-') ? 'text-red-600' : 'text-gray-700 dark:text-gray-400'}`}>{c.change}</td>
-                                        <td className="p-2 text-gray-800 dark:text-yellow-300">{(c.score * 10).toFixed(2)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                <LineupEditor profile={profile} />
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                    <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">League: "World Class Champions"</h2>
+                    <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">League Standings</h2>
                     <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-yellow-300">
                         <li><span className="font-bold text-black dark:text-white">The Phantom Regiment</span> (You) - 1250.75 pts</li>
                         <li><span>Cavaliers Crew</span> - 1245.50 pts</li>
@@ -323,11 +371,8 @@ const UniformDisplay = ({ uniform }) => {
     if (!uniform) return <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md"></div>;
     return (
         <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            {/* Shako */}
             <div style={{ backgroundColor: uniform.hatColor }} className="w-16 h-10 rounded-t-md absolute top-8"></div>
-            {/* Plume */}
             <div style={{ backgroundColor: uniform.plumeColor }} className="w-4 h-12 absolute top-0 left-1/2 -translate-x-1/2 rounded-t-full"></div>
-            {/* Jacket */}
             <div style={{ backgroundColor: uniform.jacketColor1 }} className="w-full h-32 absolute top-16">
                 <div style={{ backgroundColor: uniform.jacketColor2 }} className="w-1/2 h-full absolute top-0 left-1/2 -translate-x-1/2"></div>
             </div>
@@ -380,13 +425,11 @@ const SeasonArchive = ({ seasons = [] }) => {
     return (
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
             <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Archive</h3>
-            {/* Season Type Tabs */}
             <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-2">
                 <button onClick={() => setSeasonType('Live')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Live' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Live Seasons</button>
                 <button onClick={() => setSeasonType('Off')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Off' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Off-Seasons</button>
             </div>
             
-            {/* Individual Season Tabs */}
             <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
                 {filteredSeasons.map(season => (
                     <button 
@@ -473,7 +516,6 @@ const ProfilePage = ({ profile, userId }) => {
 
     return (
         <div className="p-4 md:p-8 space-y-8">
-            {/* Profile Header */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                 <UniformDisplay uniform={profile.uniform} />
                 <div className="flex-grow text-center md:text-left">
@@ -510,7 +552,6 @@ const ProfilePage = ({ profile, userId }) => {
                 </div>
             </div>
 
-            {/* Main Content Grid */}
             <div className="grid lg:grid-cols-3 gap-8">
                 <TrophyCase trophies={profile.trophies} />
                 <SeasonArchive seasons={profile.seasons} />
@@ -584,11 +625,11 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
             <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md">
                 <h4 className="font-semibold mb-2">Add New Show</h4>
                 <div className="flex flex-wrap items-end gap-2">
-                    <div className="flex-grow" style={{ flexBasis: 'calc(40% - 0.5rem)' }}><input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
-                    <div className="flex-grow" style={{ flexBasis: 'calc(20% - 0.5rem)' }}><input type="text" placeholder="Location" value={newEvent.location} onChange={e => handleEventChange('location', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
-                    <div className="flex-grow" style={{ flexBasis: 'calc(10% - 0.5rem)' }}><select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Wk {weekNum}</option>)}</select></div>
-                    <div className="flex-grow" style={{ flexBasis: 'calc(15% - 0.5rem)' }}><select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select></div>
-                    <div className="flex-grow" style={{ flexBasis: 'calc(15% - 0.5rem)' }}><select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select></div>
+                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="flex-grow-[2] min-w-[150px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
+                    <input type="text" placeholder="Location" value={newEvent.location} onChange={e => handleEventChange('location', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
+                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Wk {weekNum}</option>)}</select>
+                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select>
+                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select>
                     <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add</button>
                 </div>
             </div>
