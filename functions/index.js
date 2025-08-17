@@ -1,3 +1,5 @@
+const cors = require("cors")({ origin: true }); // or specify your domain
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
@@ -144,17 +146,59 @@ exports.saveLineup = onCall(corsOptions, async (request) => {
     }
 });
 
-exports.scrapeHistoricalData = onCall({ cors: corsOptions, timeoutSeconds: 540 }, async (request) => {
-    if (request.auth.token.admin !== true) {
-        throw new HttpsError('permission-denied', 'Request not authorized.');
+const functions = require("firebase-functions");
+const { HttpsError } = require("firebase-functions/v2/https");
+const cors = require("cors")({ origin: true });
+
+exports.scrapeHistoricalData = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      // Handle preflight OPTIONS request
+      if (req.method === "OPTIONS") {
+        res.set("Access-Control-Allow-Origin", "*");
+        res.set("Access-Control-Allow-Methods", "POST");
+        res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        res.status(204).send('');
+        return;
+      }
+
+      // Enforce POST method
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+
+      // Parse and validate request body
+      const { year } = req.body;
+      if (!year) {
+        res.status(400).json({ error: "A year must be provided." });
+        return;
+      }
+
+      // Optional: Auth check (if using Firebase Auth tokens)
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(403).json({ error: "Unauthorized" });
+        return;
+      }
+
+      // TODO: Verify token and check admin claim if needed
+      // const decodedToken = await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+      // if (!decodedToken.admin) {
+      //   res.status(403).json({ error: "Admin privileges required." });
+      //   return;
+      // }
+
+      console.log(`Starting historical scrape for ${year}...`);
+      // TODO: Build the logic to scrape all scores for an entire season from dci.org/scores
+
+      res.set("Access-Control-Allow-Origin", "*");
+      res.status(200).json({ message: `Historical scrape for ${year} initiated. (Functionality pending)` });
+    } catch (error) {
+      console.error("Scrape error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-    const { year } = request.data;
-    if (!year) {
-        throw new HttpsError('invalid-argument', 'A year must be provided.');
-    }
-    console.log(`Starting historical scrape for ${year}...`);
-    // TODO: Build the logic to scrape all scores for an entire season from dci.org/scores
-    return { message: `Historical scrape for ${year} initiated. (Functionality pending)` };
+  });
 });
 
 
