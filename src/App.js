@@ -519,14 +519,79 @@ const ProfilePage = ({ profile, userId }) => {
     );
 };
 
+const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
+    const [schedule, setSchedule] = useState({ name: title, weeks: Array(weekCount).fill({ eventName: '' }) });
+    const [isLoading, setIsLoading] = useState(true);
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const docRef = doc(db, 'schedules', scheduleId);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSchedule(docSnap.data());
+            } else {
+                console.log(`No schedule found for ${scheduleId}, using default.`);
+            }
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, [scheduleId]);
+
+    const handleWeekChange = (index, eventName) => {
+        const newWeeks = [...schedule.weeks];
+        newWeeks[index] = { eventName };
+        setSchedule({ ...schedule, weeks: newWeeks });
+    };
+
+    const handleSave = async () => {
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const saveSchedule = httpsCallable(functions, 'saveSchedule');
+            const result = await saveSchedule({ scheduleId, scheduleData: schedule });
+            setMessage(result.data.message || result.data.error);
+        } catch (error) {
+            console.error("Error saving schedule:", error);
+            setMessage("An error occurred. Check the console for details.");
+        }
+        setIsLoading(false);
+    };
+
+    if (isLoading) {
+        return <p>Loading schedule...</p>;
+    }
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-xl font-bold">{title}</h3>
+            {schedule.weeks.map((week, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                    <label className="w-16 font-semibold">Week {index + 1}:</label>
+                    <input
+                        type="text"
+                        value={week.eventName}
+                        onChange={(e) => handleWeekChange(index, e.target.value)}
+                        placeholder="Enter event name"
+                        className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                    />
+                </div>
+            ))}
+            <button onClick={handleSave} disabled={isLoading} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                {isLoading ? 'Saving...' : 'Save Schedule'}
+            </button>
+            {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
+        </div>
+    );
+};
+
 const AdminPage = () => {
     const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
-        setIsLoading(true);
+        setIsLoadingRoles(true);
         try {
             const setUserRole = httpsCallable(functions, 'setUserRole');
             const result = await setUserRole({ email, makeAdmin });
@@ -535,14 +600,21 @@ const AdminPage = () => {
             console.error("Error calling function:", error);
             setMessage("An error occurred. Check the console for details.");
         }
-        setIsLoading(false);
+        setIsLoadingRoles(false);
     };
 
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
-            {/* User Roles Management */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
+                <div className="grid md:grid-cols-2 gap-8">
+                    <ScheduleEditor scheduleId="live_season_template" title="Default Live Season Schedule" weekCount={10} />
+                    <ScheduleEditor scheduleId="off_season_template" title="Default Off-Season Schedule" weekCount={7} />
+                </div>
+            </div>
+
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Manage User Roles</h2>
                 <div className="space-y-4">
@@ -555,22 +627,15 @@ const AdminPage = () => {
                         className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     />
                     <div className="flex space-x-4">
-                        <button onClick={() => handleRoleChange(true)} disabled={isLoading || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                            {isLoading ? 'Working...' : 'Make Admin'}
+                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            {isLoadingRoles ? 'Working...' : 'Make Admin'}
                         </button>
-                        <button onClick={() => handleRoleChange(false)} disabled={isLoading || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                            {isLoading ? 'Working...' : 'Remove Admin'}
+                        <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            {isLoadingRoles ? 'Working...' : 'Remove Admin'}
                         </button>
                     </div>
                     {message && <p className="mt-4 text-sm font-semibold">{message}</p>}
                 </div>
-            </div>
-
-            {/* Schedule Management */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
-                 {/* This will be built out in the next step */}
-                 <p>Coming soon: Tools to manage default season templates and edit active seasons.</p>
             </div>
         </div>
     );
