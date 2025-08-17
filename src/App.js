@@ -581,14 +581,14 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
         <div className="space-y-4">
             <h3 className="text-xl font-bold">{title}</h3>
             {/* Event Entry Form */}
-            <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md space-y-3">
-                <h4 className="font-semibold">Add New Show</h4>
+            <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md">
+                <h4 className="font-semibold mb-2">Add New Show</h4>
                 <div className="flex flex-wrap items-end gap-2">
-                    <div className="flex-grow" style={{ flexBasis: '100%', minWidth: '200px' }}><label className="text-sm">Event Name</label><input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
-                    <div className="flex-grow" style={{ flexBasis: '50px' }}><label className="text-sm">Week</label><select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>{weekNum}</option>)}</select></div>
-                    <div className="flex-grow" style={{ flexBasis: '120px' }}><label className="text-sm">Day</label><select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select></div>
-                    <div className="flex-grow" style={{ flexBasis: '120px' }}><label className="text-sm">Type</label><select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select></div>
-                    <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded h-10">Add</button>
+                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="flex-grow-[2] min-w-[200px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
+                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="flex-grow min-w-[100px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Week {weekNum}</option>)}</select>
+                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select>
+                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select>
+                    <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add</button>
                 </div>
             </div>
 
