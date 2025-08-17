@@ -228,3 +228,6 @@ exports.runGameLoop = onSchedule({schedule: "every day 02:00", timeZone: "Americ
     console.log("Fantasy score calculation complete.");
     return null;
 });
+exports.pingTest = onCall(() => {
+  return { message: "Ping successful" };
+});
