@@ -235,7 +235,7 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
 
 const HomePage = ({ onSignUpClick }) => {
     return (
-        <div className="text-center p-8">
+        <div className="text-center p-4 md:p-8">
             <h1 className="text-4xl md:text-5xl font-bold text-yellow-800 dark:text-yellow-300 mb-4 tracking-wider">Your Field of Dreams Awaits</h1>
             <p className="text-lg text-gray-700 dark:text-yellow-200 mb-8 max-w-2xl mx-auto">
                 Assemble your ultimate drum corps lineup. Compete against friends. Follow the season's scores and rise to the top. This is where fantasy meets the field.
@@ -316,7 +316,7 @@ const LineupEditor = ({ profile, corpsData }) => {
 
     return (
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">My Lineup</h2>
                 <div className={`text-xl font-bold ${totalPoints > POINT_CAP ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>
                     Total Points: {totalPoints} / {POINT_CAP}
@@ -382,7 +382,7 @@ const DashboardPage = ({ profile }) => {
     if (isLoading) {
         return (
             <div className="p-4 md:p-8">
-                <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
                 <p>Loading game data...</p>
             </div>
         );
@@ -390,7 +390,7 @@ const DashboardPage = ({ profile }) => {
 
     return (
         <div className="p-4 md:p-8">
-            <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
             <div className="grid lg:grid-cols-3 gap-8">
                 <LineupEditor profile={profile} corpsData={corpsData} />
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
