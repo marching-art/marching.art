@@ -520,26 +520,38 @@ const ProfilePage = ({ profile, userId }) => {
 };
 
 const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
-    const [schedule, setSchedule] = useState({ name: title, weeks: Array(weekCount).fill({ eventName: '' }) });
+    const [schedule, setSchedule] = useState({ name: title, weeks: [] });
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     useEffect(() => {
         const docRef = doc(db, 'schedules', scheduleId);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists() && docSnap.data().weeks.length === weekCount) {
                 setSchedule(docSnap.data());
             } else {
-                console.log(`No schedule found for ${scheduleId}, using default.`);
+                // Initialize a default schedule if one doesn't exist or has the wrong length
+                const defaultWeeks = Array.from({ length: weekCount }, (_, i) => ({
+                    week: i + 1,
+                    monday: { eventName: '' },
+                    tuesday: { eventName: '' },
+                    wednesday: { eventName: '' },
+                    thursday: { eventName: '' },
+                    friday: { eventName: '' },
+                    saturday: { eventName: '' },
+                    sunday: { eventName: '' },
+                }));
+                setSchedule({ name: title, weeks: defaultWeeks });
             }
             setIsLoading(false);
         });
         return () => unsubscribe();
-    }, [scheduleId]);
+    }, [scheduleId, weekCount, title]);
 
-    const handleWeekChange = (index, eventName) => {
+    const handleDayChange = (weekIndex, day, eventName) => {
         const newWeeks = [...schedule.weeks];
-        newWeeks[index] = { eventName };
+        newWeeks[weekIndex][day.toLowerCase()] = { eventName };
         setSchedule({ ...schedule, weeks: newWeeks });
     };
 
@@ -558,31 +570,41 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     };
 
     if (isLoading) {
-        return <p>Loading schedule...</p>;
+        return <p className="dark:text-gray-300">Loading schedule...</p>;
     }
 
     return (
         <div className="space-y-4">
             <h3 className="text-xl font-bold">{title}</h3>
-            {schedule.weeks.map((week, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                    <label className="w-16 font-semibold">Week {index + 1}:</label>
-                    <input
-                        type="text"
-                        value={week.eventName}
-                        onChange={(e) => handleWeekChange(index, e.target.value)}
-                        placeholder="Enter event name"
-                        className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
-                    />
-                </div>
-            ))}
-            <button onClick={handleSave} disabled={isLoading} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+            <div className="space-y-6">
+                {schedule.weeks.map((week, weekIndex) => (
+                    <div key={weekIndex}>
+                        <h4 className="font-bold text-lg mb-2">Week {weekIndex + 1}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                            {days.map(day => (
+                                <div key={day}>
+                                    <label className="text-sm font-semibold">{day}</label>
+                                    <input
+                                        type="text"
+                                        value={week[day.toLowerCase()]?.eventName || ''}
+                                        onChange={(e) => handleDayChange(weekIndex, day, e.target.value)}
+                                        placeholder="Event Name"
+                                        className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 text-sm"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <button onClick={handleSave} disabled={isLoading} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
                 {isLoading ? 'Saving...' : 'Save Schedule'}
             </button>
             {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
         </div>
     );
 };
+
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
@@ -609,8 +631,9 @@ const AdminPage = () => {
             
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-8">
                     <ScheduleEditor scheduleId="live_season_template" title="Default Live Season Schedule" weekCount={10} />
+                    <div className="border-t-2 border-gray-200 dark:border-gray-700 my-8"></div>
                     <ScheduleEditor scheduleId="off_season_template" title="Default Off-Season Schedule" weekCount={7} />
                 </div>
             </div>
