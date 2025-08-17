@@ -800,6 +800,9 @@ const AdminPage = () => {
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
+    const [scrapeYear, setScrapeYear] = useState(new Date().getFullYear() - 1);
+    const [isScraping, setIsScraping] = useState(false);
+    const [scrapeMessage, setScrapeMessage] = useState('');
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
@@ -815,10 +818,43 @@ const AdminPage = () => {
         setIsLoadingRoles(false);
     };
 
+    const handleScrape = async () => {
+        setScrapeMessage('');
+        setIsScraping(true);
+        try {
+            const scrapeHistoricalData = httpsCallable(functions, 'scrapeHistoricalData');
+            const result = await scrapeHistoricalData({ year: scrapeYear });
+            setScrapeMessage(result.data.message || result.data.error);
+        } catch (error) {
+            console.error("Error calling scrape function:", error);
+            setScrapeMessage("An error occurred during scraping.");
+        }
+        setIsScraping(false);
+    };
+
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Historical Data Scraper</h2>
+                <p className="mb-4">This tool will scrape an entire DCI season's worth of scores from dci.org. This can take several minutes to complete. Run this once for each past season to populate the database.</p>
+                <div className="flex items-center space-x-2">
+                    <label htmlFor="scrape-year" className="font-semibold">Year to Scrape:</label>
+                    <input 
+                        id="scrape-year"
+                        type="number"
+                        value={scrapeYear}
+                        onChange={(e) => setScrapeYear(e.target.value)}
+                        className="w-24 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                    />
+                    <button onClick={handleScrape} disabled={isScraping} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                        {isScraping ? 'Scraping...' : `Scrape ${scrapeYear} Season`}
+                    </button>
+                </div>
+                {scrapeMessage && <p className="mt-2 text-sm font-semibold">{scrapeMessage}</p>}
+            </div>
+
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <DciDataManager />
             </div>
