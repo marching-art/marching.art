@@ -26,18 +26,6 @@ const db = getFirestore(app);
 const functions = getFunctions(app);
 
 // --- Game Data ---
-const DCI_CORPS_DATA = [
-    { name: "Blue Devils", points: 25 }, { name: "Bluecoats", points: 24 },
-    { name: "Carolina Crown", points: 23 }, { name: "Boston Crusaders", points: 22 },
-    { name: "Santa Clara Vanguard", points: 21 }, { name: "Mandarins", points: 20 },
-    { name: "Phantom Regiment", points: 19 }, { name: "The Cavaliers", points: 18 },
-    { name: "Colts", points: 17 }, { name: "Troopers", points: 16 },
-    { name: "Blue Stars", points: 15 }, { name: "Blue Knights", points: 14 },
-    { name: "Crossmen", points: 13 }, { name: "Pacific Crest", points: 12 },
-    { name: "Spirit of Atlanta", points: 11 }, { name: "Madison Scouts", points: 10 },
-    { name: "Music City", points: 9 }, { name: "The Academy", points: 8 },
-    { name: "Genesis", points: 5 }, { name: "Jersey Surf", points: 3 }
-];
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 const POINT_CAP = 150;
 
@@ -281,31 +269,50 @@ const HomePage = ({ onSignUpClick }) => {
     );
 };
 
-const LineupEditor = ({ profile }) => {
+const LineupEditor = ({ profile, corpsData }) => {
     const [lineup, setLineup] = useState(profile?.lineup || {});
     const [totalPoints, setTotalPoints] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const points = CAPTIONS.reduce((sum, caption) => {
             const corpsName = lineup[caption];
             if (corpsName) {
-                const corps = DCI_CORPS_DATA.find(c => c.name === corpsName);
+                const corps = corpsData.find(c => c.corpsName === corpsName);
                 return sum + (corps?.points || 0);
             }
             return sum;
         }, 0);
         setTotalPoints(points);
-    }, [lineup]);
+    }, [lineup, corpsData]);
 
     const handleSelect = (caption, corpsName) => {
         setLineup(prev => ({ ...prev, [caption]: corpsName }));
     };
 
-    const handleSave = () => {
-        // TODO: Add Firestore save logic, including uniqueness check
-        console.log("Saving lineup:", lineup);
-        alert("Lineup saved! (Functionality coming soon)");
+    const handleSave = async () => {
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const saveLineup = httpsCallable(functions, 'saveLineup');
+            const result = await saveLineup({ lineup, totalPoints });
+            setMessage(result.data.message);
+        } catch (error) {
+            console.error("Error saving lineup:", error);
+            setMessage(error.message);
+        }
+        setIsLoading(false);
     };
+
+    if (!corpsData || corpsData.length === 0) {
+        return (
+             <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">My Lineup</h2>
+                <p className="mt-4">Corps data for the current season is not available yet. Please check back later.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
@@ -325,20 +332,21 @@ const LineupEditor = ({ profile }) => {
                             className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
                         >
                             <option value="">-- Select a Corps --</option>
-                            {DCI_CORPS_DATA.map(corps => (
-                                <option key={corps.name} value={corps.name}>{corps.name} ({corps.points})</option>
+                            {corpsData.map(corps => (
+                                <option key={corps.corpsName} value={corps.corpsName}>{corps.corpsName} ({corps.points})</option>
                             ))}
                         </select>
                     </div>
                 ))}
             </div>
-             <div className="mt-6 flex justify-end">
+             <div className="mt-6 flex justify-end items-center space-x-4">
+                {message && <p className="text-sm font-semibold">{message}</p>}
                 <button 
                     onClick={handleSave} 
-                    disabled={totalPoints > POINT_CAP || Object.keys(lineup).length < 8}
+                    disabled={isLoading || totalPoints > POINT_CAP || Object.values(lineup).length < 8 || Object.values(lineup).some(c => !c)}
                     className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                    Save Lineup
+                    {isLoading ? 'Saving...' : 'Save Lineup'}
                 </button>
             </div>
         </div>
@@ -346,11 +354,35 @@ const LineupEditor = ({ profile }) => {
 };
 
 const DashboardPage = ({ profile }) => {
+    const [corpsData, setCorpsData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const previousYear = new Date().getFullYear() - 1; 
+        const docRef = doc(db, 'dci-data', String(previousYear));
+        
+        const fetchData = async () => {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setCorpsData(docSnap.data().corpsValues || []);
+            } else {
+                console.log(`No corps data found for year ${previousYear}`);
+            }
+            setIsLoading(false);
+        };
+        
+        fetchData();
+    }, []);
+
+    if (isLoading) {
+        return <div className="p-8 text-center">Loading game data...</div>;
+    }
+
     return (
         <div className="p-4 md:p-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Manager Dashboard</h1>
             <div className="grid lg:grid-cols-3 gap-8">
-                <LineupEditor profile={profile} />
+                <LineupEditor profile={profile} corpsData={corpsData} />
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                     <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">League Standings</h2>
                     <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-yellow-300">
@@ -659,6 +691,68 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     );
 };
 
+const DciDataManager = () => {
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [corpsNames, setCorpsNames] = useState(Array(25).fill(''));
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const handleNameChange = (index, name) => {
+        const newNames = [...corpsNames];
+        newNames[index] = name;
+        setCorpsNames(newNames);
+    };
+
+    const handleSave = async () => {
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const saveDciData = httpsCallable(functions, 'saveDciData');
+            const result = await saveDciData({ year, corpsNames });
+            setMessage(result.data.message || result.data.error);
+        } catch (error) {
+            console.error("Error saving DCI data:", error);
+            setMessage("An error occurred.");
+        }
+        setIsLoading(false);
+    };
+
+    return (
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Placements Manager</h2>
+            <p>Enter the final placements for a DCI season. The system will automatically assign point values for the next fantasy season.</p>
+            <div className="flex items-center space-x-2">
+                <label htmlFor="year-select" className="font-semibold">Season Year:</label>
+                <input 
+                    id="year-select"
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="w-24 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {corpsNames.map((name, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                        <label className="w-8 font-semibold">{(index + 1).toString().padStart(2, '0')}.</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => handleNameChange(index, e.target.value)}
+                            placeholder={`Corps #${index + 1}`}
+                            className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                        />
+                    </div>
+                ))}
+            </div>
+            <button onClick={handleSave} disabled={isLoading} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                {isLoading ? 'Saving...' : `Save ${year} Placements`}
+            </button>
+            {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
+        </div>
+    );
+};
+
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
@@ -683,6 +777,10 @@ const AdminPage = () => {
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <DciDataManager />
+            </div>
+
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
                 <div className="space-y-8">
