@@ -583,20 +583,13 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
             {/* Event Entry Form */}
             <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md space-y-3">
                 <h4 className="font-semibold">Add New Show</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
-                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
-                        {Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Week {weekNum}</option>)}
-                    </select>
-                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
-                        {days.map(day => <option key={day} value={day}>{day}</option>)}
-                    </select>
-                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
-                        <option value="Standard">Standard</option>
-                        <option value="Regional">Regional</option>
-                    </select>
+                <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex-grow" style={{ flexBasis: '100%', minWidth: '200px' }}><label className="text-sm">Event Name</label><input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/></div>
+                    <div className="flex-grow" style={{ flexBasis: '50px' }}><label className="text-sm">Week</label><select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>{weekNum}</option>)}</select></div>
+                    <div className="flex-grow" style={{ flexBasis: '120px' }}><label className="text-sm">Day</label><select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select></div>
+                    <div className="flex-grow" style={{ flexBasis: '120px' }}><label className="text-sm">Type</label><select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select></div>
+                    <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded h-10">Add</button>
                 </div>
-                <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add Show</button>
             </div>
 
             {/* Event List */}
@@ -605,7 +598,7 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
                 {schedule.events.length === 0 ? <p className="text-gray-500">No shows added yet.</p> :
                     <ul className="list-disc list-inside space-y-1">
                         {schedule.events.map((event, index) => (
-                            <li key={index} className="flex justify-between items-center">
+                            <li key={index} className="flex justify-between items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <span>
                                     <strong>Week {event.week}, {event.day}:</strong> {event.name} ({event.type})
                                 </span>
