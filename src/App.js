@@ -520,7 +520,8 @@ const ProfilePage = ({ profile, userId }) => {
 };
 
 const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
-    const [schedule, setSchedule] = useState({ name: title, weeks: [] });
+    const [schedule, setSchedule] = useState({ name: title, events: [] });
+    const [newEvent, setNewEvent] = useState({ name: '', week: 1, day: 'Saturday', type: 'Standard' });
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -528,31 +529,34 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     useEffect(() => {
         const docRef = doc(db, 'schedules', scheduleId);
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists() && docSnap.data().weeks.length === weekCount) {
+            if (docSnap.exists()) {
                 setSchedule(docSnap.data());
             } else {
-                // Initialize a default schedule if one doesn't exist or has the wrong length
-                const defaultWeeks = Array.from({ length: weekCount }, (_, i) => ({
-                    week: i + 1,
-                    monday: { eventName: '' },
-                    tuesday: { eventName: '' },
-                    wednesday: { eventName: '' },
-                    thursday: { eventName: '' },
-                    friday: { eventName: '' },
-                    saturday: { eventName: '' },
-                    sunday: { eventName: '' },
-                }));
-                setSchedule({ name: title, weeks: defaultWeeks });
+                setSchedule({ name: title, events: [] });
             }
             setIsLoading(false);
         });
         return () => unsubscribe();
-    }, [scheduleId, weekCount, title]);
+    }, [scheduleId, title]);
+    
+    const handleEventChange = (field, value) => {
+        setNewEvent(prev => ({ ...prev, [field]: value }));
+    };
 
-    const handleDayChange = (weekIndex, day, eventName) => {
-        const newWeeks = [...schedule.weeks];
-        newWeeks[weekIndex][day.toLowerCase()] = { eventName };
-        setSchedule({ ...schedule, weeks: newWeeks });
+    const handleAddEvent = () => {
+        if (!newEvent.name.trim()) return;
+        const updatedEvents = [...schedule.events, newEvent];
+        updatedEvents.sort((a, b) => {
+            if (a.week !== b.week) return a.week - b.week;
+            return days.indexOf(a.day) - days.indexOf(b.day);
+        });
+        setSchedule({ ...schedule, events: updatedEvents });
+        setNewEvent({ name: '', week: 1, day: 'Saturday', type: 'Standard' });
+    };
+
+    const handleDeleteEvent = (indexToDelete) => {
+        const updatedEvents = schedule.events.filter((_, index) => index !== indexToDelete);
+        setSchedule({ ...schedule, events: updatedEvents });
     };
 
     const handleSave = async () => {
@@ -576,29 +580,44 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     return (
         <div className="space-y-4">
             <h3 className="text-xl font-bold">{title}</h3>
-            <div className="space-y-6">
-                {schedule.weeks.map((week, weekIndex) => (
-                    <div key={weekIndex}>
-                        <h4 className="font-bold text-lg mb-2">Week {weekIndex + 1}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                            {days.map(day => (
-                                <div key={day}>
-                                    <label className="text-sm font-semibold">{day}</label>
-                                    <input
-                                        type="text"
-                                        value={week[day.toLowerCase()]?.eventName || ''}
-                                        onChange={(e) => handleDayChange(weekIndex, day, e.target.value)}
-                                        placeholder="Event Name"
-                                        className="w-full mt-1 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 text-sm"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+            {/* Event Entry Form */}
+            <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md space-y-3">
+                <h4 className="font-semibold">Add New Show</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
+                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
+                        {Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Week {weekNum}</option>)}
+                    </select>
+                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
+                        {days.map(day => <option key={day} value={day}>{day}</option>)}
+                    </select>
+                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">
+                        <option value="Standard">Standard</option>
+                        <option value="Regional">Regional</option>
+                    </select>
+                </div>
+                <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add Show</button>
             </div>
+
+            {/* Event List */}
+            <div className="space-y-2">
+                <h4 className="font-semibold">Scheduled Events</h4>
+                {schedule.events.length === 0 ? <p className="text-gray-500">No shows added yet.</p> :
+                    <ul className="list-disc list-inside space-y-1">
+                        {schedule.events.map((event, index) => (
+                            <li key={index} className="flex justify-between items-center">
+                                <span>
+                                    <strong>Week {event.week}, {event.day}:</strong> {event.name} ({event.type})
+                                </span>
+                                <button onClick={() => handleDeleteEvent(index)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
+                            </li>
+                        ))}
+                    </ul>
+                }
+            </div>
+
             <button onClick={handleSave} disabled={isLoading} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                {isLoading ? 'Saving...' : 'Save Schedule'}
+                {isLoading ? 'Saving...' : 'Save Schedule Template'}
             </button>
             {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
         </div>
