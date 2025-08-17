@@ -144,7 +144,7 @@ exports.saveLineup = onCall(corsOptions, async (request) => {
     }
 });
 
-exports.scrapeHistoricalData = onCall(corsOptions, async (request) => {
+exports.scrapeHistoricalData = onCall({ cors: corsOptions, timeoutSeconds: 540 }, async (request) => {
     if (request.auth.token.admin !== true) {
         throw new HttpsError('permission-denied', 'Request not authorized.');
     }
