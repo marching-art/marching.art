@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -54,9 +55,9 @@ exports.saveSchedule = functions.https.onCall(async (data, context) => {
   }
 });
 
-// --- NEW SCHEDULED FUNCTION ---
+// --- SCHEDULED FUNCTION (Corrected Syntax) ---
 // This is the main game engine. It runs automatically every day.
-exports.runGameLoop = functions.pubsub.schedule("every day 05:00").onRun(async (context) => {
+exports.runGameLoop = onSchedule("every day 05:00", async (event) => {
     console.log("Starting the daily game loop...");
 
     // --- 1. Determine Current Season and Week ---
