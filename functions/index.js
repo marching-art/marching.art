@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
@@ -9,104 +8,73 @@ const cheerio = require("cheerio");
 admin.initializeApp();
 const db = admin.firestore();
 
-// Helper function to scrape a single day
-const scrapeDciScoresForDate = async (dateString) => {
-    const url = `https://www.dci.org/scores/recap/${dateString}`;
-    console.log(`Scraping: ${url}`);
-    let dailyScores = {};
-
-    try {
-        const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
-        
-        $("div.recap div.corps-scores").each((j, corpsElem) => {
-            const corpsName = $(corpsElem).find("a.corps-name").text().trim();
-            if (!corpsName) return;
-
-            const finalScore = parseFloat($(corpsElem).find("span.final-score").text().trim());
-            const captions = {};
-            
-            $(corpsElem).find("table.caption-scores tr").each((k, rowElem) => {
-                const captionName = $(rowElem).find("th").text().trim();
-                const scores = [];
-                $(rowElem).find("td").each((l, cellElem) => {
-                    const score = parseFloat($(cellElem).text().trim());
-                    if (!isNaN(score)) scores.push(score);
-                });
-                
-                if (scores.length > 0) {
-                    if(captionName.includes("General Effect 1")) captions.GE1 = scores;
-                    if(captionName.includes("General Effect 2")) captions.GE2 = scores;
-                    if(captionName.includes("Visual Prof")) captions.VP = scores;
-                    if(captionName.includes("Visual Analysis")) captions.VA = scores;
-                    if(captionName.includes("Color Guard")) captions.CG = scores;
-                    if(captionName.includes("Brass")) captions.B = scores;
-                    if(captionName.includes("Music Analysis")) captions.MA = (captions.MA || []).concat(scores);
-                    if(captionName.includes("Percussion")) captions.P = (captions.P || []).concat(scores);
-                }
-            });
-            dailyScores[corpsName] = { finalScore, captions };
-        });
-        return dailyScores;
-    } catch (error) {
-        if (error.response && error.response.status === 404) {
-            // This is expected for days with no shows
-        } else {
-            console.error(`Error scraping scores for ${dateString}:`, error);
-        }
-        return {};
-    }
-};
-
-
 exports.setUserRole = onCall(async (request) => {
+  // Security Check: Ensure the user calling the function is an admin.
   if (request.auth.token.admin !== true) {
-    throw new HttpsError('permission-denied', 'Request not authorized.');
+    throw new HttpsError('permission-denied', 'Request not authorized. User must be an admin.');
   }
-  const { email, makeAdmin } = request.data;
+
+  const email = request.data.email;
+  const makeAdmin = request.data.makeAdmin; // This will be true or false
+
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
-    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: makeAdmin });
-    return { message: `Success! ${email} has been ${makeAdmin ? "made" : "removed as"} an admin.` };
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      admin: makeAdmin,
+    });
+    return {
+      message: `Success! ${email} has been ${makeAdmin ? "made" : "removed as"} an admin.`,
+    };
   } catch (err) {
+    console.error(err);
     throw new HttpsError('internal', err.message);
   }
 });
 
 exports.saveSchedule = onCall(async (request) => {
+  // Security Check
   if (request.auth.token.admin !== true) {
     throw new HttpsError('permission-denied', 'Request not authorized.');
   }
+
   const { scheduleId, scheduleData } = request.data;
+
   if (!scheduleId || !scheduleData) {
     throw new HttpsError('invalid-argument', 'Invalid data provided.');
   }
+
   try {
     await db.collection("schedules").doc(scheduleId).set(scheduleData);
     return { message: `Successfully saved schedule: ${scheduleData.name}` };
   } catch (err) {
+    console.error("Error saving schedule:", err);
     throw new HttpsError('internal', 'Failed to save schedule.');
   }
 });
 
 exports.saveDciData = onCall(async (request) => {
+    // Security Check
     if (request.auth.token.admin !== true) {
         throw new HttpsError('permission-denied', 'Request not authorized.');
     }
+
     const { year, corpsNames } = request.data;
     if (!year || !corpsNames || corpsNames.length !== 25) {
         throw new HttpsError('invalid-argument', 'A year and 25 corps names are required.');
     }
+
     const corpsValues = corpsNames.map((name, index) => {
         let points = 25 - index;
         if (name.toLowerCase() === 'genesis') points = 5;
         if (name.toLowerCase() === 'jersey surf') points = 3;
         return { rank: index + 1, corpsName: name, points: points };
     });
+
     try {
         await db.collection("dci-data").doc(String(year)).set({ year: parseInt(year), corpsValues });
         return { message: `Successfully saved DCI data for ${year}.` };
     } catch (err) {
+        console.error("Error saving DCI data:", err);
         throw new HttpsError('internal', 'Failed to save DCI data.');
     }
 });
@@ -149,33 +117,9 @@ exports.scrapeHistoricalData = onCall(async (request) => {
     if (!year) {
         throw new HttpsError('invalid-argument', 'A year must be provided.');
     }
-
     console.log(`Starting historical scrape for ${year}...`);
-    
-    const getSecondSaturdayOfAugust = (year) => {
-        const firstOfMonth = new Date(year, 7, 1);
-        let dayOfWeek = firstOfMonth.getDay();
-        let firstSaturday = 1 + (6 - dayOfWeek + 7) % 7;
-        return new Date(year, 7, firstSaturday + 7);
-    };
-
-    const seasonEndDate = getSecondSaturdayOfAugust(year);
-    const seasonStartDate = new Date(year, 5, 1); // June 1st
-
-    let count = 0;
-    for (let d = new Date(seasonStartDate); d <= seasonEndDate; d.setDate(d.getDate() + 1)) {
-        const dateString = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
-        const dailyScores = await scrapeDciScoresForDate(dateString);
-        
-        if (Object.keys(dailyScores).length > 0) {
-            const scoreDocRef = db.collection('dci-data').doc(String(year)).collection('scores').doc(dateString);
-            await scoreDocRef.set({ date: dateString, events: [{ eventName: "Scores for this date", results: dailyScores }] });
-            count++;
-        }
-    }
-    
-    console.log(`Scrape for ${year} complete. Found scores for ${count} days.`);
-    return { message: `Historical scrape for ${year} complete. Found scores for ${count} days.` };
+    // TODO: Build the logic to scrape all scores for an entire season from dci.org/scores
+    return { message: `Historical scrape for ${year} initiated. (Functionality pending)` };
 });
 
 
@@ -186,19 +130,58 @@ exports.runGameLoop = onSchedule({schedule: "every day 02:00", timeZone: "Americ
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     const year = yesterday.getFullYear();
-    const dateString = `${year}-${(yesterday.getMonth() + 1).toString().padStart(2, '0')}-${yesterday.getDate().toString().padStart(2, '0')}`;
+    const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');
+    const day = yesterday.getDate().toString().padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    const url = `https://www.dci.org/scores/recap/${dateString}`;
 
-    const dailyScores = await scrapeDciScoresForDate(dateString);
-
-    if (Object.keys(dailyScores).length > 0) {
-        const scoreDocRef = db.collection('dci-data').doc(String(year)).collection('scores').doc(dateString);
-        await scoreDocRef.set({ date: dateString, events: [{ eventName: "Scores for this date", results: dailyScores }] });
-        console.log(`Successfully scraped and saved scores for ${dateString}.`);
-    } else {
-         console.log(`No scores found for ${dateString}.`);
-    }
+    console.log(`Checking for scores from: ${url}`);
     
+    let dailyScores = {};
+
+    try {
+        const { data } = await axios.get(url);
+        const $ = cheerio.load(data);
+        
+        $("div.recap div.corps-scores").each((j, corpsElem) => {
+            const corpsName = $(corpsElem).find("a.corps-name").text().trim();
+            const captions = {};
+            $(corpsElem).find("table.caption-scores tr").each((k, rowElem) => {
+                const captionName = $(rowElem).find("th").text().trim();
+                const scores = [];
+                $(rowElem).find("td").each((l, cellElem) => {
+                    const score = parseFloat($(cellElem).text().trim());
+                    if (!isNaN(score)) scores.push(score);
+                });
+                
+                if (scores.length > 0) {
+                    if(captionName.includes("General Effect 1")) captions.GE1 = scores;
+                    if(captionName.includes("General Effect 2")) captions.GE2 = scores;
+                    if(captionName.includes("Visual Prof")) captions.VP = scores;
+                    if(captionName.includes("Visual Analysis")) captions.VA = scores;
+                    if(captionName.includes("Color Guard")) captions.CG = scores;
+                    if(captionName.includes("Brass")) captions.B = scores;
+                    if(captionName.includes("Music Analysis")) captions.MA = (captions.MA || []).concat(scores);
+                    if(captionName.includes("Percussion")) captions.P = (captions.P || []).concat(scores);
+                }
+            });
+            dailyScores[corpsName] = captions;
+        });
+        console.log(`Successfully scraped scores for ${Object.keys(dailyScores).length} corps.`);
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            console.log(`No DCI scores page found for ${dateString}.`);
+        } else {
+            console.error("Error scraping scores:", error);
+        }
+    }
+
     // --- Calculate Fantasy Points and Update Users ---
+    if (Object.keys(dailyScores).length === 0) {
+        console.log("No scores to process. Ending game loop.");
+        return null;
+    }
+
     const usersSnapshot = await db.collectionGroup('profile').get();
     if (usersSnapshot.empty) {
         console.log("No users found to update.");
@@ -213,17 +196,18 @@ exports.runGameLoop = onSchedule({schedule: "every day 02:00", timeZone: "Americ
         const lineup = userProfile.lineup;
 
         if (!lineup || Object.keys(lineup).length !== 8) {
-            continue;
+            continue; // Skip users without a valid lineup
         }
 
         const getScore = (caption) => {
             const corpsName = lineup[caption];
             const corpsScores = dailyScores[corpsName];
-            if (!corpsScores || !corpsScores.captions[caption] || corpsScores.captions[caption].length === 0) {
+            if (!corpsScores || !corpsScores[caption] || corpsScores[caption].length === 0) {
                 // TODO: Implement trend-analysis for missing scores
                 return 0; 
             }
-            const scores = corpsScores.captions[caption];
+            // Average the scores from all judges for that caption
+            const scores = corpsScores[caption];
             return scores.reduce((a, b) => a + b, 0) / scores.length;
         };
 
@@ -236,9 +220,9 @@ exports.runGameLoop = onSchedule({schedule: "every day 02:00", timeZone: "Americ
         const maScore = getScore("MA");
         const pScore = getScore("P");
         
-        const totalGe = ge1Score + ge2Score;
-        const totalVisual = (vpScore + vaScore + cgScore) / 2;
-        const totalMusic = (bScore + maScore + pScore) / 2;
+        const totalGe = ge1Score + ge2Score; // Max 40
+        const totalVisual = (vpScore + vaScore + cgScore) / 2; // Max 30
+        const totalMusic = (bScore + maScore + pScore) / 2; // Max 30
         const finalFantasyScore = totalGe + totalVisual + totalMusic;
 
         // TODO: Update user's season data with the new score
