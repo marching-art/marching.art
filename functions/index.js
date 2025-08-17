@@ -9,53 +9,72 @@ admin.initializeApp();
 const db = admin.firestore();
 
 exports.setUserRole = onCall(async (request) => {
+  // Security Check: Ensure the user calling the function is an admin.
   if (request.auth.token.admin !== true) {
     throw new HttpsError('permission-denied', 'Request not authorized. User must be an admin.');
   }
-  const { email, makeAdmin } = request.data;
+
+  const email = request.data.email;
+  const makeAdmin = request.data.makeAdmin; // This will be true or false
+
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
-    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: makeAdmin });
-    return { message: `Success! ${email} has been ${makeAdmin ? "made" : "removed as"} an admin.` };
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      admin: makeAdmin,
+    });
+    return {
+      message: `Success! ${email} has been ${makeAdmin ? "made" : "removed as"} an admin.`,
+    };
   } catch (err) {
+    console.error(err);
     throw new HttpsError('internal', err.message);
   }
 });
 
 exports.saveSchedule = onCall(async (request) => {
+  // Security Check
   if (request.auth.token.admin !== true) {
     throw new HttpsError('permission-denied', 'Request not authorized.');
   }
+
   const { scheduleId, scheduleData } = request.data;
+
   if (!scheduleId || !scheduleData) {
     throw new HttpsError('invalid-argument', 'Invalid data provided.');
   }
+
   try {
     await db.collection("schedules").doc(scheduleId).set(scheduleData);
     return { message: `Successfully saved schedule: ${scheduleData.name}` };
   } catch (err) {
+    console.error("Error saving schedule:", err);
     throw new HttpsError('internal', 'Failed to save schedule.');
   }
 });
 
 exports.saveDciData = onCall(async (request) => {
+    // Security Check
     if (request.auth.token.admin !== true) {
         throw new HttpsError('permission-denied', 'Request not authorized.');
     }
+
     const { year, corpsNames } = request.data;
     if (!year || !corpsNames || corpsNames.length !== 25) {
         throw new HttpsError('invalid-argument', 'A year and 25 corps names are required.');
     }
+
     const corpsValues = corpsNames.map((name, index) => {
         let points = 25 - index;
         if (name.toLowerCase() === 'genesis') points = 5;
         if (name.toLowerCase() === 'jersey surf') points = 3;
         return { rank: index + 1, corpsName: name, points: points };
     });
+
     try {
         await db.collection("dci-data").doc(String(year)).set({ year: parseInt(year), corpsValues });
         return { message: `Successfully saved DCI data for ${year}.` };
     } catch (err) {
+        console.error("Error saving DCI data:", err);
         throw new HttpsError('internal', 'Failed to save DCI data.');
     }
 });
