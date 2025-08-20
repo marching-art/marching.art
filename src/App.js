@@ -619,6 +619,7 @@ const LiveSeasonScheduler = () => {
     }, []);
 
     const openModal = (dayIndex) => {
+        if (dayIndex >= 67) return; // Make finals week uneditable
         setSelectedDay(dayIndex);
         setNewEvent({ name: '', location: '', type: 'Standard' });
         setIsModalOpen(true);
@@ -675,13 +676,26 @@ const LiveSeasonScheduler = () => {
                 {Array.from({ length: WEEKS * 7 }).map((_, dayIndex) => {
                     const events = eventsByDay[dayIndex] || [];
                     const isChampionshipWeek = dayIndex >= 67; // Days 68, 69, 70
+                    const dayNumber = dayIndex + 1;
+                    
+                    let championshipEvent = null;
+                    if (dayNumber === 68) championshipEvent = { name: 'Prelims', location: 'Indianapolis, IN' };
+                    if (dayNumber === 69) championshipEvent = { name: 'Semi-Finals', location: 'Indianapolis, IN' };
+                    if (dayNumber === 70) championshipEvent = { name: 'Finals', location: 'Indianapolis, IN' };
+
                     return (
                         <div 
                             key={dayIndex} 
                             onClick={() => openModal(dayIndex)}
-                            className={`h-28 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-yellow-100 dark:bg-yellow-900/50' : ''}`}
+                            className={`h-28 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs ${!isChampionshipWeek && 'cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900'} transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-yellow-100 dark:bg-yellow-900/50' : ''}`}
                         >
-                            <span className="font-bold text-gray-500 dark:text-gray-400">{dayIndex + 1}</span>
+                            <span className="font-bold text-gray-500 dark:text-gray-400">{dayNumber}</span>
+                            {championshipEvent && (
+                                <div className="bg-yellow-200 dark:bg-yellow-800 p-1 rounded mt-1 text-black dark:text-white">
+                                    <p className="font-bold truncate">{championshipEvent.name}</p>
+                                    <p className="truncate">{championshipEvent.location}</p>
+                                </div>
+                            )}
                             {events.map(event => (
                                 <div key={event.name} className="bg-blue-200 dark:bg-blue-800 p-1 rounded mt-1 text-black dark:text-white">
                                     <p className="font-bold truncate">{event.name}</p>
@@ -818,7 +832,7 @@ const SeasonControls = () => {
     );
 };
 
-const DciPlacementsManager = () => {
+const FinalRankingsManager = () => {
     const [availableYears, setAvailableYears] = useState([]);
     const [selectedYear, setSelectedYear] = useState('');
     const [placements, setPlacements] = useState(Array(25).fill(''));
@@ -963,7 +977,7 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <DciPlacementsManager />
+                <FinalRankingsManager />
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
