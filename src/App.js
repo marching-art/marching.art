@@ -285,8 +285,9 @@ const LineupEditor = ({ profile, corpsData }) => {
         setMessage('');
         setIsLoading(true);
         try {
-            const saveLineup = httpsCallable(functions, 'saveLineup');
-            const result = await saveLineup({ lineup, totalPoints });
+            const saveLineupFunc = httpsCallable(functions, 'saveLineup');
+            // --- BUG FIX: Pass appId to the backend function ---
+            const result = await saveLineupFunc({ lineup, totalPoints, appId });
             setMessage(result.data.message);
         } catch (error) {
             console.error("Error saving lineup:", error);
