@@ -27,7 +27,6 @@ const functions = getFunctions(app);
 
 // --- Game Data ---
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
-// POINT_CAP is now managed in game settings, but we keep a default.
 const DEFAULT_POINT_CAP = 150;
 
 // --- Helper Components ---
@@ -746,7 +745,7 @@ const SeasonControls = () => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 setSeasonSettings(data);
-                setPointCap(data.pointCap || DEFAULT_POINT_CAP);
+                setPointCap(data.nextPointCap || data.currentPointCap || DEFAULT_POINT_CAP);
             } else {
                 setSeasonSettings({ status: 'inactive' });
             }
@@ -762,7 +761,7 @@ const SeasonControls = () => {
             return;
         }
         try {
-            await setDoc(doc(db, 'game-settings', 'season'), { pointCap: newCap }, { merge: true });
+            await setDoc(doc(db, 'game-settings', 'season'), { nextPointCap: newCap }, { merge: true });
             setMessage("Next season's point cap updated!");
         } catch (error) {
             setMessage("Error updating point cap.");
@@ -795,17 +794,19 @@ const SeasonControls = () => {
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md space-y-3">
                 <p>Current Status: <span className="font-bold text-lg capitalize">{seasonSettings?.status || 'Loading...'}</span></p>
                 <div className="flex items-center space-x-2">
-                    <label htmlFor="point-cap" className="font-semibold">Next Season Point Cap:</label>
+                    <label htmlFor="point-cap" className="font-semibold">Point Cap:</label>
                     <input 
                         id="point-cap"
                         type="number"
                         value={pointCap}
                         onChange={(e) => setPointCap(e.target.value)}
-                        disabled={seasonSettings?.status !== 'inactive'}
-                        className="w-24 bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-yellow-500 rounded p-1 disabled:opacity-50"
+                        className="w-24 bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-yellow-500 rounded p-1"
                     />
-                    <button onClick={handleSavePointCap} disabled={seasonSettings?.status !== 'inactive'} className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-1 px-3 rounded disabled:bg-gray-400">Save Cap</button>
+                    <button onClick={handleSavePointCap} className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-1 px-3 rounded">Save Cap</button>
                 </div>
+                {seasonSettings?.nextPointCap && seasonSettings.nextPointCap !== seasonSettings.currentPointCap &&
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400">A new point cap of {seasonSettings.nextPointCap} will be applied at the start of the next season.</p>
+                }
                 <p className="text-sm text-gray-500">Automatic season transitions are configured in the backend. These controls are for manual overrides.</p>
                 <div className="flex space-x-4 pt-2">
                     <button onClick={handleForceStartLiveSeason} disabled={isLoading} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Live Season</button>
@@ -820,7 +821,6 @@ const SeasonControls = () => {
 const DciPlacementsManager = () => {
     const [availableYears, setAvailableYears] = useState([]);
     const [selectedYear, setSelectedYear] = useState('');
-    const [allCorpsForYear, setAllCorpsForYear] = useState([]);
     const [placements, setPlacements] = useState(Array(25).fill(''));
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -849,26 +849,13 @@ const DciPlacementsManager = () => {
             setIsLoading(true);
             setMessage('');
             try {
-                const scoresDocRef = doc(db, 'historical_scores', selectedYear);
-                const scoresDocSnap = await getDoc(scoresDocRef);
-                if (scoresDocSnap.exists()) {
-                    const allEvents = scoresDocSnap.data().data || [];
-                    const corpsSet = new Set();
-                    allEvents.forEach(event => {
-                        event.scores.forEach(score => corpsSet.add(score.corps));
-                    });
-                    setAllCorpsForYear(['', ...Array.from(corpsSet).sort()]);
-                } else {
-                    setAllCorpsForYear(['']);
-                }
-
-                const dciDataDocRef = doc(db, 'dci-data', selectedYear);
-                const dciDataSnap = await getDoc(dciDataDocRef);
-                if (dciDataSnap.exists()) {
-                    const existingPlacements = dciDataSnap.data().corpsValues || [];
+                const rankingsDocRef = doc(db, 'final_rankings', selectedYear);
+                const rankingsDocSnap = await getDoc(rankingsDocRef);
+                if (rankingsDocSnap.exists()) {
+                    const existingPlacements = rankingsDocSnap.data().data || [];
                     const newPlacements = Array(25).fill('');
                     existingPlacements.forEach((p, index) => {
-                        if (index < 25) newPlacements[index] = p.corpsName;
+                        if (index < 25) newPlacements[index] = p.corps;
                     });
                     setPlacements(newPlacements);
                 } else {
@@ -893,7 +880,7 @@ const DciPlacementsManager = () => {
     const handleSave = async () => {
         setMessage('');
         setIsLoading(true);
-        const corpsNames = placements.filter(name => name && name !== '');
+        const corpsNames = placements; // Keep empty strings to preserve rank
         
         try {
             const saveDciData = httpsCallable(functions, 'saveDciData');
@@ -908,8 +895,8 @@ const DciPlacementsManager = () => {
 
     return (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Placements Manager</h2>
-            <p>Select a season, then assign a corps from that season to each final placement slot. The system will automatically assign point values for the next fantasy season.</p>
+            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Rankings Manager</h2>
+            <p>Verify, edit, or add to the final rankings for a given season. This data is used to randomly select corps for off-seasons.</p>
             <div className="flex items-center space-x-2">
                 <label htmlFor="year-select-placements" className="font-semibold">Season Year:</label>
                 <select 
@@ -921,24 +908,24 @@ const DciPlacementsManager = () => {
                     {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
                 </select>
             </div>
-            {isLoading ? <p>Loading corps data for {selectedYear}...</p> : (
+            {isLoading ? <p>Loading rankings for {selectedYear}...</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {placements.map((corpsName, index) => (
                         <div key={index} className="flex items-center space-x-2">
                             <label className="w-8 font-semibold">{(index + 1).toString().padStart(2, '0')}.</label>
-                            <select
+                            <input
+                                type="text"
                                 value={corpsName}
                                 onChange={(e) => handlePlacementChange(index, e.target.value)}
+                                placeholder={`Corps #${index + 1}`}
                                 className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
-                            >
-                                {allCorpsForYear.map(name => <option key={name || `empty-${index}`} value={name}>{name || '-- Select Corps --'}</option>)}
-                            </select>
+                            />
                         </div>
                     ))}
                 </div>
             )}
             <button onClick={handleSave} disabled={isLoading || !selectedYear} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                {isLoading ? 'Saving...' : `Save ${selectedYear} Placements`}
+                {isLoading ? 'Saving...' : `Save ${selectedYear} Rankings`}
             </button>
             {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
         </div>
