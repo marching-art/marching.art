@@ -1,0 +1,154 @@
+{
+  "2000": [
+    {
+      "rank": 1,
+      "corps": "TheCadets",
+      "points": 25,
+      "originalScore": 97.4
+    },
+    {
+      "rank": 2,
+      "corps": "BlueDevils",
+      "points": 24,
+      "originalScore": 95.9
+    },
+    {
+      "rank": 3,
+      "corps": "SantaClaraVanguard",
+      "points": 23,
+      "originalScore": 94.45
+    },
+    {
+      "rank": 4,
+      "corps": "BostonCrusaders",
+      "points": 22,
+      "originalScore": 92.05
+    },
+    {
+      "rank": 5,
+      "corps": "BlueKnights",
+      "points": 21,
+      "originalScore": 91.2
+    },
+    {
+      "rank": 6,
+      "corps": "BlieKnights",
+      "points": 20,
+      "originalScore": 90.5
+    },
+    {
+      "rank": 7,
+      "corps": "Crossmen",
+      "points": 19,
+      "originalScore": 88.7
+    },
+    {
+      "rank": 8,
+      "corps": "CarolinaCrown",
+      "points": 18,
+      "originalScore": 86
+    },
+    {
+      "rank": 9,
+      "corps": "TheCavaliers",
+      "points": 17,
+      "originalScore": 83
+    },
+    {
+      "rank": 10,
+      "corps": "SpiritofAtlanta",
+      "points": 16,
+      "originalScore": 80.65
+    },
+    {
+      "rank": 11,
+      "corps": "Glassmen",
+      "points": 15,
+      "originalScore": 79.15
+    },
+    {
+      "rank": 12,
+      "corps": "PhantomRegiment",
+      "points": 14,
+      "originalScore": 76.6
+    },
+    {
+      "rank": 13,
+      "corps": "Bluecoats",
+      "points": 13,
+      "originalScore": 76.6
+    },
+    {
+      "rank": 14,
+      "corps": "Troopers",
+      "points": 12,
+      "originalScore": 74.85
+    },
+    {
+      "rank": 15,
+      "corps": "VanguardCadets",
+      "points": 11,
+      "originalScore": 74.8
+    },
+    {
+      "rank": 16,
+      "corps": "Mandarins",
+      "points": 10,
+      "originalScore": 74.35
+    },
+    {
+      "rank": 17,
+      "corps": "MadisonScouts",
+      "points": 9,
+      "originalScore": 73.4
+    },
+    {
+      "rank": 18,
+      "corps": "JerseySurf",
+      "points": 8,
+      "originalScore": 71.8
+    },
+    {
+      "rank": 19,
+      "corps": "KiwanisKavaliers",
+      "points": 7,
+      "originalScore": 71.7
+    },
+    {
+      "rank": 20,
+      "corps": "Patriots",
+      "points": 6,
+      "originalScore": 70.45
+    },
+    {
+      "rank": 21,
+      "corps": "Colts",
+      "points": 5,
+      "originalScore": 70.2
+    },
+    {
+      "rank": 22,
+      "corps": "Southwind",
+      "points": 4,
+      "originalScore": 67.05
+    },
+    {
+      "rank": 23,
+      "corps": "Pioneer",
+      "points": 3,
+      "originalScore": 64.05
+    },
+    {
+      "rank": 24,
+      "corps": "BlueStars",
+      "points": 2,
+      "originalScore": 55.95
+    },
+    {
+      "rank": 25,
+      "corps": "CapitalSound",
+      "points": 1,
+      "originalScore": 55.7
+    }
+  ]
+}

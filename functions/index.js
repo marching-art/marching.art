@@ -231,8 +231,10 @@ exports.saveLineup = onCall(corsOptions, async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'You must be logged in to save a lineup.');
     }
-    const { lineup, totalPoints } = request.data;
+    // --- BUG FIX: Receive appId from client ---
+    const { lineup, totalPoints, appId } = request.data;
     const POINT_CAP = 150;
+    const finalAppId = appId || 'marching-art'; // Fallback just in case
 
     if (totalPoints > POINT_CAP) {
         throw new HttpsError('invalid-argument', `Total points (${totalPoints}) exceed the cap of ${POINT_CAP}.`);
@@ -242,7 +244,8 @@ exports.saveLineup = onCall(corsOptions, async (request) => {
     }
 
     try {
-        const userDocRef = doc(db, 'artifacts', 'marching-art', 'users', request.auth.uid, 'profile', 'data');
+        // --- BUG FIX: Use dynamic appId in the path ---
+        const userDocRef = doc(db, 'artifacts', finalAppId, 'users', request.auth.uid, 'profile', 'data');
         await userDocRef.update({ lineup });
         return { message: 'Lineup saved successfully!' };
     } catch (err) {
