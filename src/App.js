@@ -824,6 +824,7 @@ const FinalRankingsManager = () => {
     const [placements, setPlacements] = useState(Array(25).fill({ corps: '', originalScore: null, points: null }));
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [newYearInput, setNewYearInput] = useState('');
 
     useEffect(() => {
         const fetchYears = async () => {
@@ -946,12 +947,72 @@ const FinalRankingsManager = () => {
         setIsLoading(false);
     };
 
+    const handleCreateNewYear = async () => {
+        const year = newYearInput.trim();
+        if (!year || isNaN(year)) {
+            setMessage("Please enter a valid year.");
+            return;
+        }
+        if (availableYears.includes(year)) {
+            setMessage(`Year ${year} already exists.`);
+            return;
+        }
+
+        setIsLoading(true);
+        setMessage('');
+
+        const blankPlacements = Array(25).fill({
+            corps: '',
+            originalScore: null,
+            points: null,
+        });
+
+        const rankingsData = blankPlacements.map((entry, index) => ({
+            rank: index + 1,
+            ...entry,
+        }));
+
+        try {
+            const rankingsDocRef = doc(db, 'final_rankings', year);
+            await setDoc(rankingsDocRef, { data: rankingsData });
+
+            setAvailableYears(prev => [year, ...prev].sort((a, b) => b - a));
+            setSelectedYear(year);
+            setPlacements(blankPlacements);
+            setNewYearInput('');
+            setMessage(`Year ${year} created successfully!`);
+        } catch (error) {
+            console.error("Firebase Error: Could not create new year.", error);
+            setMessage("An error occurred while creating the year. Check Firestore rules.");
+        }
+
+        setIsLoading(false);
+    };
+
     return (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Rankings Manager</h2>
             <p className="text-sm italic text-gray-600 dark:text-gray-400">
                 This interface is the source of truth for game automation. Rankings here determine which corps are randomly selected for off-season play.
             </p>
+
+            <div className="flex items-center space-x-2">
+                <input
+                    type="text"
+                    value={newYearInput}
+                    onChange={(e) => setNewYearInput(e.target.value)}
+                    placeholder="New Year (e.g. 2026)"
+                    className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                />
+                <button
+                    onClick={handleCreateNewYear}
+                    disabled={isLoading || !newYearInput}
+                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                >
+                    Add Year
+                </button>
+            </div>
+
             <div className="flex items-center space-x-2">
                 <label htmlFor="year-select-placements" className="font-semibold">Season Year:</label>
                 <select
@@ -1005,10 +1066,15 @@ const FinalRankingsManager = () => {
                 {isLoading ? 'Saving...' : `Save ${selectedYear} Rankings`}
             </button>
 
-            {message && <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">{message}</p>}
+            {message && (
+                <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
+                    {message}
+                </p>
+            )}
         </div>
     );
 };
+
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
