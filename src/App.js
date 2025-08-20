@@ -1041,7 +1041,7 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <DciPlacementsManager />
+                <FinalRankingsManager />
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
