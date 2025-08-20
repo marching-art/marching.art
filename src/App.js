@@ -27,7 +27,8 @@ const functions = getFunctions(app);
 
 // --- Game Data ---
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
-const POINT_CAP = 150;
+// POINT_CAP is now managed in game settings, but we keep a default.
+const DEFAULT_POINT_CAP = 150;
 
 // --- Helper Components ---
 
@@ -286,7 +287,6 @@ const LineupEditor = ({ profile, corpsData }) => {
         setIsLoading(true);
         try {
             const saveLineupFunc = httpsCallable(functions, 'saveLineup');
-            // --- BUG FIX: Pass appId to the backend function ---
             const result = await saveLineupFunc({ lineup, totalPoints, appId });
             setMessage(result.data.message);
         } catch (error) {
@@ -309,8 +309,8 @@ const LineupEditor = ({ profile, corpsData }) => {
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">My Lineup</h2>
-                <div className={`text-xl font-bold ${totalPoints > POINT_CAP ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                    Total Points: {totalPoints} / {POINT_CAP}
+                <div className={`text-xl font-bold ${totalPoints > DEFAULT_POINT_CAP ? 'text-red-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                    Total Points: {totalPoints} / {DEFAULT_POINT_CAP}
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -334,7 +334,7 @@ const LineupEditor = ({ profile, corpsData }) => {
                 {message && <p className="text-sm font-semibold">{message}</p>}
                 <button 
                     onClick={handleSave} 
-                    disabled={isLoading || totalPoints > POINT_CAP || Object.values(lineup).length < 8 || Object.values(lineup).some(c => !c)}
+                    disabled={isLoading || totalPoints > DEFAULT_POINT_CAP || Object.values(lineup).length < 8 || Object.values(lineup).some(c => !c)}
                     className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                     {isLoading ? 'Saving...' : 'Save Lineup'}
@@ -630,12 +630,12 @@ const LiveSeasonScheduler = () => {
         const week = Math.floor(selectedDay / 7) + 1;
         const dayName = DAYS_OF_WEEK[selectedDay % 7];
         const finalEvent = { ...newEvent, week, day: dayName, dayIndex: selectedDay };
-        setSchedule(prev => [...prev.filter(e => e.dayIndex !== selectedDay), finalEvent]);
-        setIsModalOpen(false);
+        setSchedule(prev => [...prev, finalEvent]);
+        setNewEvent({ name: '', location: '', type: 'Standard' }); // Reset for next add
     };
     
-    const handleRemoveEvent = (dayIndex) => {
-        setSchedule(prev => prev.filter(event => event.dayIndex !== dayIndex));
+    const handleRemoveEvent = (dayIndex, eventName) => {
+        setSchedule(prev => prev.filter(event => !(event.dayIndex === dayIndex && event.name === eventName)));
     };
 
     const handleSaveSchedule = async () => {
@@ -659,7 +659,10 @@ const LiveSeasonScheduler = () => {
     };
 
     const eventsByDay = schedule.reduce((acc, event) => {
-        acc[event.dayIndex] = event;
+        if (!acc[event.dayIndex]) {
+            acc[event.dayIndex] = [];
+        }
+        acc[event.dayIndex].push(event);
         return acc;
     }, {});
 
@@ -671,20 +674,21 @@ const LiveSeasonScheduler = () => {
             </div>
             <div className="grid grid-cols-7 gap-1">
                 {Array.from({ length: WEEKS * 7 }).map((_, dayIndex) => {
-                    const event = eventsByDay[dayIndex];
+                    const events = eventsByDay[dayIndex] || [];
+                    const isChampionshipWeek = dayIndex >= 67; // Days 68, 69, 70
                     return (
                         <div 
                             key={dayIndex} 
                             onClick={() => openModal(dayIndex)}
-                            className="h-24 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-colors"
+                            className={`h-28 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-yellow-100 dark:bg-yellow-900/50' : ''}`}
                         >
                             <span className="font-bold text-gray-500 dark:text-gray-400">{dayIndex + 1}</span>
-                            {event && (
-                                <div className="bg-blue-200 dark:bg-blue-800 p-1 rounded mt-1 text-black dark:text-white" onClick={(e) => { e.stopPropagation(); handleRemoveEvent(dayIndex); }}>
+                            {events.map(event => (
+                                <div key={event.name} className="bg-blue-200 dark:bg-blue-800 p-1 rounded mt-1 text-black dark:text-white">
                                     <p className="font-bold truncate">{event.name}</p>
                                     <p className="truncate">{event.location}</p>
                                 </div>
-                            )}
+                            ))}
                         </div>
                     );
                 })}
@@ -697,15 +701,33 @@ const LiveSeasonScheduler = () => {
                 </button>
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Show for Day ${selectedDay + 1}`}>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Shows for Day ${selectedDay + 1}`}>
                 <div className="space-y-4">
-                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"/>
-                    <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"/>
-                    <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2">
-                        <option value="Standard">Standard</option>
-                        <option value="Regional">Regional</option>
-                    </select>
-                    <button onClick={handleAddEvent} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add/Update Show</button>
+                    <div className="border-b border-gray-300 dark:border-gray-600 pb-4">
+                        <h4 className="font-bold mb-2">Existing Shows on this Day:</h4>
+                        {(eventsByDay[selectedDay] || []).length > 0 ? (
+                            <ul className="space-y-2">
+                                {(eventsByDay[selectedDay]).map(event => (
+                                    <li key={event.name} className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                        <span>{event.name} <em className="text-gray-500">({event.location})</em></span>
+                                        <button onClick={() => handleRemoveEvent(selectedDay, event.name)} className="text-red-500 hover:text-red-700">
+                                            <Icon path="M6 18L18 6M6 6l12 12" className="w-4 h-4"/>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <p className="text-gray-500">No shows scheduled for this day.</p>}
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-2">Add New Show:</h4>
+                        <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-2"/>
+                        <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-2"/>
+                        <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-2">
+                            <option value="Standard">Standard</option>
+                            <option value="Regional">Regional</option>
+                        </select>
+                        <button onClick={handleAddEvent} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add Show</button>
+                    </div>
                 </div>
             </Modal>
         </div>
@@ -713,17 +735,40 @@ const LiveSeasonScheduler = () => {
 };
 
 const SeasonControls = () => {
-    const [seasonStatus, setSeasonStatus] = useState(null);
+    const [seasonSettings, setSeasonSettings] = useState(null);
+    const [pointCap, setPointCap] = useState(DEFAULT_POINT_CAP);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
     useEffect(() => {
         const docRef = doc(db, 'game-settings', 'season');
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            setSeasonStatus(docSnap.exists() ? docSnap.data() : { status: 'inactive' });
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setSeasonSettings(data);
+                setPointCap(data.pointCap || DEFAULT_POINT_CAP);
+            } else {
+                setSeasonSettings({ status: 'inactive' });
+            }
         });
         return () => unsubscribe();
     }, []);
+
+    const handleSavePointCap = async () => {
+        setMessage('');
+        const newCap = parseInt(pointCap, 10);
+        if (isNaN(newCap) || newCap <= 0) {
+            setMessage("Invalid point cap.");
+            return;
+        }
+        try {
+            await setDoc(doc(db, 'game-settings', 'season'), { pointCap: newCap }, { merge: true });
+            setMessage("Next season's point cap updated!");
+        } catch (error) {
+            setMessage("Error updating point cap.");
+            console.error(error);
+        }
+    };
 
     const handleForceStartOffSeason = async () => {
         if (!window.confirm('Are you sure you want to end any active season and start a new 7-week off-season? This will generate a new random corps list and schedule.')) return;
@@ -748,7 +793,19 @@ const SeasonControls = () => {
         <div>
             <h3 className="text-xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Season Status & Controls</h3>
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md space-y-3">
-                <p>Current Status: <span className="font-bold text-lg capitalize">{seasonStatus?.status || 'Loading...'}</span></p>
+                <p>Current Status: <span className="font-bold text-lg capitalize">{seasonSettings?.status || 'Loading...'}</span></p>
+                <div className="flex items-center space-x-2">
+                    <label htmlFor="point-cap" className="font-semibold">Next Season Point Cap:</label>
+                    <input 
+                        id="point-cap"
+                        type="number"
+                        value={pointCap}
+                        onChange={(e) => setPointCap(e.target.value)}
+                        disabled={seasonSettings?.status !== 'inactive'}
+                        className="w-24 bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-yellow-500 rounded p-1 disabled:opacity-50"
+                    />
+                    <button onClick={handleSavePointCap} disabled={seasonSettings?.status !== 'inactive'} className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-1 px-3 rounded disabled:bg-gray-400">Save Cap</button>
+                </div>
                 <p className="text-sm text-gray-500">Automatic season transitions are configured in the backend. These controls are for manual overrides.</p>
                 <div className="flex space-x-4 pt-2">
                     <button onClick={handleForceStartLiveSeason} disabled={isLoading} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Live Season</button>
