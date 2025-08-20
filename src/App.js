@@ -619,7 +619,6 @@ const LiveSeasonScheduler = () => {
     }, []);
 
     const openModal = (dayIndex) => {
-        if (dayIndex >= 67) return; // Make finals week uneditable
         setSelectedDay(dayIndex);
         setNewEvent({ name: '', location: '', type: 'Standard' });
         setIsModalOpen(true);
@@ -676,26 +675,13 @@ const LiveSeasonScheduler = () => {
                 {Array.from({ length: WEEKS * 7 }).map((_, dayIndex) => {
                     const events = eventsByDay[dayIndex] || [];
                     const isChampionshipWeek = dayIndex >= 67; // Days 68, 69, 70
-                    const dayNumber = dayIndex + 1;
-                    
-                    let championshipEvent = null;
-                    if (dayNumber === 68) championshipEvent = { name: 'Prelims', location: 'Indianapolis, IN' };
-                    if (dayNumber === 69) championshipEvent = { name: 'Semi-Finals', location: 'Indianapolis, IN' };
-                    if (dayNumber === 70) championshipEvent = { name: 'Finals', location: 'Indianapolis, IN' };
-
                     return (
                         <div 
                             key={dayIndex} 
                             onClick={() => openModal(dayIndex)}
-                            className={`h-28 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs ${!isChampionshipWeek && 'cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900'} transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-yellow-100 dark:bg-yellow-900/50' : ''}`}
+                            className={`h-28 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-yellow-100 dark:bg-yellow-900/50' : ''}`}
                         >
-                            <span className="font-bold text-gray-500 dark:text-gray-400">{dayNumber}</span>
-                            {championshipEvent && (
-                                <div className="bg-yellow-200 dark:bg-yellow-800 p-1 rounded mt-1 text-black dark:text-white">
-                                    <p className="font-bold truncate">{championshipEvent.name}</p>
-                                    <p className="truncate">{championshipEvent.location}</p>
-                                </div>
-                            )}
+                            <span className="font-bold text-gray-500 dark:text-gray-400">{dayIndex + 1}</span>
                             {events.map(event => (
                                 <div key={event.name} className="bg-blue-200 dark:bg-blue-800 p-1 rounded mt-1 text-black dark:text-white">
                                     <p className="font-bold truncate">{event.name}</p>
@@ -839,8 +825,10 @@ const FinalRankingsManager = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    // Effect to fetch the list of available years from the 'final_rankings' collection
     useEffect(() => {
         const fetchYears = async () => {
+            setIsLoading(true);
             try {
                 const querySnapshot = await getDocs(collection(db, 'final_rankings'));
                 const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
@@ -850,12 +838,14 @@ const FinalRankingsManager = () => {
                 }
             } catch (error) {
                 console.error("Error fetching available years:", error);
-                setMessage("Could not load available years.");
+                setMessage("Could not load available years. Check Firestore rules and collection name.");
             }
+            setIsLoading(false);
         };
         fetchYears();
     }, []);
 
+    // Effect to fetch the rankings data for the currently selected year
     useEffect(() => {
         if (!selectedYear) return;
 
@@ -885,24 +875,32 @@ const FinalRankingsManager = () => {
         fetchDataForYear();
     }, [selectedYear]);
 
+    // Handler to update the local state when an input field changes
     const handlePlacementChange = (index, corpsName) => {
         const newPlacements = [...placements];
         newPlacements[index] = corpsName;
         setPlacements(newPlacements);
     };
 
+    // Handler to save the current state of placements back to Firestore
     const handleSave = async () => {
         setMessage('');
         setIsLoading(true);
-        const corpsNames = placements; // Keep empty strings to preserve rank
         
+        // Format the data to match the structure in Firestore
+        const rankingsData = placements.map((corpsName, index) => ({
+            rank: index + 1,
+            corps: corpsName || null, // Save empty strings as null
+        }));
+
         try {
-            const saveDciData = httpsCallable(functions, 'saveDciData');
-            const result = await saveDciData({ year: selectedYear, corpsNames });
-            setMessage(result.data.message || result.data.error);
+            const rankingsDocRef = doc(db, 'final_rankings', selectedYear);
+            // Use setDoc to overwrite the document with the new rankings data
+            await setDoc(rankingsDocRef, { data: rankingsData });
+            setMessage(`Rankings for ${selectedYear} saved successfully!`);
         } catch (error) {
-            console.error("Error saving DCI data:", error);
-            setMessage("An error occurred.");
+            console.error("Error saving final rankings:", error);
+            setMessage("An error occurred while saving.");
         }
         setIsLoading(false);
     };
@@ -910,7 +908,7 @@ const FinalRankingsManager = () => {
     return (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Rankings Manager</h2>
-            <p>Verify, edit, or add to the final rankings for a given season. This data is used to randomly select corps for off-seasons.</p>
+            <p>Verify, edit, or add to the final rankings for a given season. This data is the source of truth for randomly selecting corps for off-seasons.</p>
             <div className="flex items-center space-x-2">
                 <label htmlFor="year-select-placements" className="font-semibold">Season Year:</label>
                 <select 
@@ -929,7 +927,7 @@ const FinalRankingsManager = () => {
                             <label className="w-8 font-semibold">{(index + 1).toString().padStart(2, '0')}.</label>
                             <input
                                 type="text"
-                                value={corpsName}
+                                value={corpsName || ''}
                                 onChange={(e) => handlePlacementChange(index, e.target.value)}
                                 placeholder={`Corps #${index + 1}`}
                                 className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
@@ -945,6 +943,7 @@ const FinalRankingsManager = () => {
         </div>
     );
 };
+
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
@@ -977,7 +976,7 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <FinalRankingsManager />
+                <DciPlacementsManager />
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
