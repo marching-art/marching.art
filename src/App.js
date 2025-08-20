@@ -116,34 +116,11 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     return (
         <form onSubmit={handleSignUp}>
             {error && <p className="bg-red-100 dark:bg-red-900 border border-red-500 text-red-700 dark:text-red-300 p-2 mb-4 rounded text-sm">{error}</p>}
-            <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-            <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-            <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all">
-                Sign Up
-            </button>
-            <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Already have an account?{' '}
-                <button type="button" onClick={switchToLogin} className="text-yellow-600 dark:text-yellow-400 hover:underline">Log In</button>
-            </p>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all"> Sign Up </button>
+            <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400"> Already have an account?{' '} <button type="button" onClick={switchToLogin} className="text-yellow-600 dark:text-yellow-400 hover:underline">Log In</button> </p>
         </form>
     );
 };
@@ -167,27 +144,10 @@ const LoginForm = ({ onLoginSuccess, switchToSignUp }) => {
     return (
         <form onSubmit={handleLogin}>
             {error && <p className="bg-red-100 dark:bg-red-900 border border-red-500 text-red-700 dark:text-red-300 p-2 mb-4 rounded text-sm">{error}</p>}
-            <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-            <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all">
-                Log In
-            </button>
-            <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Don't have an account?{' '}
-                <button type="button" onClick={switchToSignUp} className="text-yellow-600 dark:text-yellow-400 hover:underline">Sign Up</button>
-            </p>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 mb-4 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+            <button type="submit" className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded border-b-4 border-yellow-800 hover:border-yellow-700 transition-all"> Log In </button>
+            <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400"> Don't have an account?{' '} <button type="button" onClick={switchToSignUp} className="text-yellow-600 dark:text-yellow-400 hover:underline">Sign Up</button> </p>
         </form>
     );
 };
@@ -632,104 +592,173 @@ const ProfilePage = ({ profile, userId }) => {
     );
 };
 
-const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
-    const [schedule, setSchedule] = useState({ name: title, events: [] });
-    const [newEvent, setNewEvent] = useState({ name: '', location: '', week: 1, day: 'Saturday', type: 'Standard' });
+// --- NEW: Admin Page Components for Season Management ---
+
+const LiveSeasonScheduler = () => {
+    const [schedule, setSchedule] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [newEvent, setNewEvent] = useState({ name: '', location: '', type: 'Standard' });
     const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState('');
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    const WEEKS = 10;
+    const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     useEffect(() => {
-        const docRef = doc(db, 'schedules', scheduleId);
+        const docRef = doc(db, 'schedules', 'live_season_template');
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
-                setSchedule(docSnap.data());
+                setSchedule(docSnap.data().events || []);
             } else {
-                setSchedule({ name: title, events: [] });
+                setSchedule([]);
             }
             setIsLoading(false);
         });
         return () => unsubscribe();
-    }, [scheduleId, title]);
-    
-    const handleEventChange = (field, value) => {
-        setNewEvent(prev => ({ ...prev, [field]: value }));
+    }, []);
+
+    const openModal = (dayIndex) => {
+        setSelectedDay(dayIndex);
+        setNewEvent({ name: '', location: '', type: 'Standard' });
+        setIsModalOpen(true);
     };
 
     const handleAddEvent = () => {
-        if (!newEvent.name.trim() || !newEvent.location.trim()) return;
-        const updatedEvents = [...schedule.events, newEvent];
-        updatedEvents.sort((a, b) => {
-            if (a.week !== b.week) return a.week - b.week;
-            return days.indexOf(a.day) - days.indexOf(b.day);
-        });
-        setSchedule({ ...schedule, events: updatedEvents });
-        setNewEvent({ name: '', location: '', week: 1, day: 'Saturday', type: 'Standard' });
+        if (!newEvent.name.trim() || selectedDay === null) return;
+        const week = Math.floor(selectedDay / 7) + 1;
+        const dayName = DAYS_OF_WEEK[selectedDay % 7];
+        const finalEvent = { ...newEvent, week, day: dayName, dayIndex: selectedDay };
+        setSchedule(prev => [...prev.filter(e => e.dayIndex !== selectedDay), finalEvent]);
+        setIsModalOpen(false);
+    };
+    
+    const handleRemoveEvent = (dayIndex) => {
+        setSchedule(prev => prev.filter(event => event.dayIndex !== dayIndex));
     };
 
-    const handleDeleteEvent = (indexToDelete) => {
-        const updatedEvents = schedule.events.filter((_, index) => index !== indexToDelete);
-        setSchedule({ ...schedule, events: updatedEvents });
-    };
-
-    const handleSave = async () => {
-        setMessage('');
+    const handleSaveSchedule = async () => {
         setIsLoading(true);
+        setMessage('');
         try {
-            const saveSchedule = httpsCallable(functions, 'saveSchedule');
-            const result = await saveSchedule({ scheduleId, scheduleData: schedule });
-            setMessage(result.data.message || result.data.error);
+            const saveScheduleFunc = httpsCallable(functions, 'saveSchedule');
+            await saveScheduleFunc({ scheduleId: 'live_season_template', scheduleData: { events: schedule } });
+            setMessage('Schedule saved successfully!');
         } catch (error) {
-            console.error("Error saving schedule:", error);
-            setMessage("An error occurred. Check the console for details.");
+            setMessage('Error saving schedule.');
+            console.error(error);
         }
         setIsLoading(false);
     };
 
-    if (isLoading) {
-        return <p className="dark:text-gray-300">Loading schedule...</p>;
-    }
+    const handleClearSchedule = () => {
+        if (window.confirm('Are you sure you want to clear the entire live schedule? This cannot be undone.')) {
+            setSchedule([]);
+        }
+    };
+
+    const eventsByDay = schedule.reduce((acc, event) => {
+        acc[event.dayIndex] = event;
+        return acc;
+    }, {});
 
     return (
-        <div className="space-y-4">
-            <h3 className="text-xl font-bold">{title}</h3>
-            <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md">
-                <h4 className="font-semibold mb-2">Add New Show</h4>
-                <div className="flex flex-wrap items-end gap-2">
-                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => handleEventChange('name', e.target.value)} className="flex-grow-[2] min-w-[150px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
-                    <input type="text" placeholder="Location" value={newEvent.location} onChange={e => handleEventChange('location', e.target.value)} className="flex-grow min-w-[120px] bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"/>
-                    <select value={newEvent.week} onChange={e => handleEventChange('week', parseInt(e.target.value))} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{Array.from({ length: weekCount }, (_, i) => i + 1).map(weekNum => <option key={weekNum} value={weekNum}>Wk {weekNum}</option>)}</select>
-                    <select value={newEvent.day} onChange={e => handleEventChange('day', e.target.value)} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300">{days.map(day => <option key={day} value={day}>{day}</option>)}</select>
-                    <select value={newEvent.type} onChange={e => handleEventChange('type', e.target.value)} className="flex-shrink-0 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"><option value="Standard">Standard</option><option value="Regional">Regional</option></select>
-                    <button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add</button>
+        <div className="mt-6">
+            <h3 className="text-xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Live Season Schedule (10 Weeks)</h3>
+            <div className="grid grid-cols-7 gap-1 text-center font-bold mb-2">
+                {DAYS_OF_WEEK.map(day => <div key={day}>{day}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: WEEKS * 7 }).map((_, dayIndex) => {
+                    const event = eventsByDay[dayIndex];
+                    return (
+                        <div 
+                            key={dayIndex} 
+                            onClick={() => openModal(dayIndex)}
+                            className="h-24 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-1 text-xs cursor-pointer hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-colors"
+                        >
+                            <span className="font-bold text-gray-500 dark:text-gray-400">{dayIndex + 1}</span>
+                            {event && (
+                                <div className="bg-blue-200 dark:bg-blue-800 p-1 rounded mt-1 text-black dark:text-white" onClick={(e) => { e.stopPropagation(); handleRemoveEvent(dayIndex); }}>
+                                    <p className="font-bold truncate">{event.name}</p>
+                                    <p className="truncate">{event.location}</p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            <div className="flex justify-end items-center space-x-4 mt-4">
+                {message && <p className="text-sm font-semibold">{message}</p>}
+                <button onClick={handleClearSchedule} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded">Clear Schedule</button>
+                <button onClick={handleSaveSchedule} disabled={isLoading} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                    {isLoading ? 'Saving...' : 'Save Live Schedule'}
+                </button>
+            </div>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Show for Day ${selectedDay + 1}`}>
+                <div className="space-y-4">
+                    <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"/>
+                    <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"/>
+                    <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2">
+                        <option value="Standard">Standard</option>
+                        <option value="Regional">Regional</option>
+                    </select>
+                    <button onClick={handleAddEvent} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded">Add/Update Show</button>
                 </div>
-            </div>
-
-            <div className="space-y-2">
-                <h4 className="font-semibold">Scheduled Events</h4>
-                {schedule.events.length === 0 ? <p className="text-gray-500">No shows added yet.</p> :
-                    <ul className="list-disc list-inside space-y-1">
-                        {schedule.events.map((event, index) => (
-                            <li key={index} className="flex justify-between items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <span>
-                                    <strong>Week {event.week}, {event.day}:</strong> {event.name} <em className="text-gray-500">({event.location})</em> - {event.type}
-                                </span>
-                                <button onClick={() => handleDeleteEvent(index)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
-                            </li>
-                        ))}
-                    </ul>
-                }
-            </div>
-
-            <button onClick={handleSave} disabled={isLoading} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                {isLoading ? 'Saving...' : 'Save Schedule Template'}
-            </button>
-            {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
+            </Modal>
         </div>
     );
 };
 
-// --- REVAMPED: DCI Placements Manager ---
+const SeasonControls = () => {
+    const [seasonStatus, setSeasonStatus] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const docRef = doc(db, 'game-settings', 'season');
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            setSeasonStatus(docSnap.exists() ? docSnap.data() : { status: 'inactive' });
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleForceStartOffSeason = async () => {
+        if (!window.confirm('Are you sure you want to end any active season and start a new 7-week off-season? This will generate a new random corps list and schedule.')) return;
+        setIsLoading(true);
+        setMessage('');
+        try {
+            const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
+            const result = await startNewOffSeason();
+            setMessage(result.data.message);
+        } catch (error) {
+            setMessage(error.message);
+            console.error(error);
+        }
+        setIsLoading(false);
+    };
+    
+    const handleForceStartLiveSeason = () => {
+        alert("Automatic live season start logic will be implemented in the backend. This button is a placeholder for a manual override if needed.");
+    };
+
+    return (
+        <div>
+            <h3 className="text-xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Season Status & Controls</h3>
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md space-y-3">
+                <p>Current Status: <span className="font-bold text-lg capitalize">{seasonStatus?.status || 'Loading...'}</span></p>
+                <p className="text-sm text-gray-500">Automatic season transitions are configured in the backend. These controls are for manual overrides.</p>
+                <div className="flex space-x-4 pt-2">
+                    <button onClick={handleForceStartLiveSeason} disabled={isLoading} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Live Season</button>
+                    <button onClick={handleForceStartOffSeason} disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Off-Season</button>
+                </div>
+                {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
+            </div>
+        </div>
+    );
+};
+
 const DciPlacementsManager = () => {
     const [availableYears, setAvailableYears] = useState([]);
     const [selectedYear, setSelectedYear] = useState('');
@@ -824,9 +853,9 @@ const DciPlacementsManager = () => {
             <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Placements Manager</h2>
             <p>Select a season, then assign a corps from that season to each final placement slot. The system will automatically assign point values for the next fantasy season.</p>
             <div className="flex items-center space-x-2">
-                <label htmlFor="year-select" className="font-semibold">Season Year:</label>
+                <label htmlFor="year-select-placements" className="font-semibold">Season Year:</label>
                 <select 
-                    id="year-select"
+                    id="year-select-placements"
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
                     className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
@@ -858,7 +887,6 @@ const DciPlacementsManager = () => {
     );
 };
 
-
 const AdminPage = () => {
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
@@ -883,7 +911,10 @@ const AdminPage = () => {
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
-                <OffSeasonManager />
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Manager</h2>
+                <SeasonControls />
+                <div className="border-t-2 border-gray-200 dark:border-gray-700 my-6"></div>
+                <LiveSeasonScheduler />
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
@@ -891,32 +922,13 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Schedule Manager</h2>
-                <div className="space-y-8">
-                    <ScheduleEditor scheduleId="live_season_template" title="Default Live Season Schedule" weekCount={10} />
-                    <div className="border-t-2 border-gray-200 dark:border-gray-700 my-8"></div>
-                    <ScheduleEditor scheduleId="off_season_template" title="Default Off-Season Schedule" weekCount={7} />
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Manage User Roles</h2>
                 <div className="space-y-4">
                     <p>Enter a user's email address to grant or revoke admin privileges.</p>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="user@example.com"
-                        className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300 placeholder-gray-500 dark:placeholder-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
                     <div className="flex space-x-4">
-                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                            {isLoadingRoles ? 'Working...' : 'Make Admin'}
-                        </button>
-                        <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                            {isLoadingRoles ? 'Working...' : 'Remove Admin'}
-                        </button>
+                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
+                        <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Remove Admin'} </button>
                     </div>
                     {message && <p className="mt-4 text-sm font-semibold">{message}</p>}
                 </div>
@@ -925,19 +937,6 @@ const AdminPage = () => {
     );
 };
 
-
-const Footer = () => {
-    return (
-        <footer className="bg-gray-100 dark:bg-black border-t-2 border-yellow-600 dark:border-yellow-700 p-4 text-center text-gray-600 dark:text-yellow-500 mt-auto">
-            <div className="mb-2">
-                <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:underline font-semibold">
-                    Join the Community on Discord
-                </a>
-            </div>
-            <p>&copy; {new Date().getFullYear()} marching.art. All Rights Reserved.</p>
-        </footer>
-    );
-};
 
 // --- Main App Component ---
 
