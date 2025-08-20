@@ -729,24 +729,88 @@ const ScheduleEditor = ({ scheduleId, title, weekCount }) => {
     );
 };
 
-const DciDataManager = () => {
-    const [year, setYear] = useState(new Date().getFullYear());
-    const [corpsNames, setCorpsNames] = useState(Array(25).fill(''));
+// --- REVAMPED: DCI Placements Manager ---
+const DciPlacementsManager = () => {
+    const [availableYears, setAvailableYears] = useState([]);
+    const [selectedYear, setSelectedYear] = useState('');
+    const [allCorpsForYear, setAllCorpsForYear] = useState([]);
+    const [placements, setPlacements] = useState(Array(25).fill(''));
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    const handleNameChange = (index, name) => {
-        const newNames = [...corpsNames];
-        newNames[index] = name;
-        setCorpsNames(newNames);
+    useEffect(() => {
+        const fetchYears = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'final_rankings'));
+                const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
+                setAvailableYears(years);
+                if (years.length > 0) {
+                    setSelectedYear(years[0]);
+                }
+            } catch (error) {
+                console.error("Error fetching available years:", error);
+                setMessage("Could not load available years.");
+            }
+        };
+        fetchYears();
+    }, []);
+
+    useEffect(() => {
+        if (!selectedYear) return;
+
+        const fetchDataForYear = async () => {
+            setIsLoading(true);
+            setMessage('');
+            try {
+                const scoresDocRef = doc(db, 'historical_scores', selectedYear);
+                const scoresDocSnap = await getDoc(scoresDocRef);
+                if (scoresDocSnap.exists()) {
+                    const allEvents = scoresDocSnap.data().data || [];
+                    const corpsSet = new Set();
+                    allEvents.forEach(event => {
+                        event.scores.forEach(score => corpsSet.add(score.corps));
+                    });
+                    setAllCorpsForYear(['', ...Array.from(corpsSet).sort()]);
+                } else {
+                    setAllCorpsForYear(['']);
+                }
+
+                const dciDataDocRef = doc(db, 'dci-data', selectedYear);
+                const dciDataSnap = await getDoc(dciDataDocRef);
+                if (dciDataSnap.exists()) {
+                    const existingPlacements = dciDataSnap.data().corpsValues || [];
+                    const newPlacements = Array(25).fill('');
+                    existingPlacements.forEach((p, index) => {
+                        if (index < 25) newPlacements[index] = p.corpsName;
+                    });
+                    setPlacements(newPlacements);
+                } else {
+                    setPlacements(Array(25).fill(''));
+                }
+            } catch (error) {
+                console.error(`Error fetching data for ${selectedYear}:`, error);
+                setMessage(`Could not load data for ${selectedYear}.`);
+            }
+            setIsLoading(false);
+        };
+
+        fetchDataForYear();
+    }, [selectedYear]);
+
+    const handlePlacementChange = (index, corpsName) => {
+        const newPlacements = [...placements];
+        newPlacements[index] = corpsName;
+        setPlacements(newPlacements);
     };
 
     const handleSave = async () => {
         setMessage('');
         setIsLoading(true);
+        const corpsNames = placements.filter(name => name && name !== '');
+        
         try {
             const saveDciData = httpsCallable(functions, 'saveDciData');
-            const result = await saveDciData({ year, corpsNames });
+            const result = await saveDciData({ year: selectedYear, corpsNames });
             setMessage(result.data.message || result.data.error);
         } catch (error) {
             console.error("Error saving DCI data:", error);
@@ -758,136 +822,37 @@ const DciDataManager = () => {
     return (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Placements Manager</h2>
-            <p>Enter the final placements for a DCI season. The system will automatically assign point values for the next fantasy season.</p>
+            <p>Select a season, then assign a corps from that season to each final placement slot. The system will automatically assign point values for the next fantasy season.</p>
             <div className="flex items-center space-x-2">
                 <label htmlFor="year-select" className="font-semibold">Season Year:</label>
-                <input 
+                <select 
                     id="year-select"
-                    type="number"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="w-24 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
-                />
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                >
+                    {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
+                </select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {corpsNames.map((name, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                        <label className="w-8 font-semibold">{(index + 1).toString().padStart(2, '0')}.</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => handleNameChange(index, e.target.value)}
-                            placeholder={`Corps #${index + 1}`}
-                            className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
-                        />
-                    </div>
-                ))}
-            </div>
-            <button onClick={handleSave} disabled={isLoading} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                {isLoading ? 'Saving...' : `Save ${year} Placements`}
-            </button>
-            {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
-        </div>
-    );
-};
-
-// --- NEW: Off-Season Manager Component ---
-const OffSeasonManager = () => {
-    const [availableYears, setAvailableYears] = useState([]);
-    const [gameSettings, setGameSettings] = useState({ historicalYear: '', status: 'inactive' });
-    const [isLoading, setIsLoading] = useState(true);
-    const [message, setMessage] = useState('');
-
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setIsLoading(true);
-            try {
-                const historicalScoresCollection = collection(db, 'historical_scores');
-                const querySnapshot = await getDocs(historicalScoresCollection);
-                const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
-                setAvailableYears(years);
-
-                const settingsRef = doc(db, 'game-settings', 'off-season');
-                const settingsSnap = await getDoc(settingsRef);
-                if (settingsSnap.exists()) {
-                    setGameSettings(settingsSnap.data());
-                } else if (years.length > 0) {
-                    setGameSettings({ historicalYear: years[0], status: 'inactive' });
-                }
-            } catch (error) {
-                console.error("Error fetching off-season data:", error);
-                setMessage("Could not load off-season data.");
-            }
-            setIsLoading(false);
-        };
-        fetchInitialData();
-    }, []);
-
-    const handleSaveSettings = async (newStatus) => {
-        setMessage('');
-        setIsLoading(true);
-        try {
-            const saveOffSeasonSettings = httpsCallable(functions, 'saveOffSeasonSettings');
-            const result = await saveOffSeasonSettings({
-                historicalYear: gameSettings.historicalYear,
-                status: newStatus
-            });
-            setGameSettings(prev => ({ ...prev, status: newStatus }));
-            setMessage(result.data.message);
-        } catch (error) {
-            console.error("Error saving settings:", error);
-            setMessage(error.message);
-        }
-        setIsLoading(false);
-    };
-
-    if (isLoading && availableYears.length === 0) {
-        return <p>Loading available historical data...</p>;
-    }
-
-    return (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">Off-Season Game Manager</h2>
-            <p>Select a historical year to use for the off-season game. Activating this will pause the live game and use historical scores based on the "Off Season Day".</p>
-            
-            <div className="flex items-center space-x-4">
-                <div className="flex-grow">
-                    <label htmlFor="year-select" className="block font-semibold mb-1">Historical Year:</label>
-                    <select
-                        id="year-select"
-                        value={gameSettings.historicalYear}
-                        onChange={(e) => setGameSettings(prev => ({ ...prev, historicalYear: e.target.value }))}
-                        disabled={gameSettings.status === 'active'}
-                        className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 disabled:opacity-50"
-                    >
-                        {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
-                    </select>
+            {isLoading ? <p>Loading corps data for {selectedYear}...</p> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {placements.map((corpsName, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                            <label className="w-8 font-semibold">{(index + 1).toString().padStart(2, '0')}.</label>
+                            <select
+                                value={corpsName}
+                                onChange={(e) => handlePlacementChange(index, e.target.value)}
+                                className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                            >
+                                {allCorpsForYear.map(name => <option key={name || `empty-${index}`} value={name}>{name || '-- Select Corps --'}</option>)}
+                            </select>
+                        </div>
+                    ))}
                 </div>
-                <div className="flex-shrink-0 self-end">
-                    {gameSettings.status === 'active' ? (
-                        <button
-                            onClick={() => handleSaveSettings('inactive')}
-                            disabled={isLoading}
-                            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-                        >
-                            {isLoading ? 'Working...' : 'Deactivate Off-Season'}
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => handleSaveSettings('active')}
-                            disabled={isLoading || !gameSettings.historicalYear}
-                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-                        >
-                            {isLoading ? 'Working...' : 'Activate Off-Season'}
-                        </button>
-                    )}
-                </div>
-            </div>
-            {gameSettings.status === 'active' && (
-                <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                    Off-Season is currently ACTIVE with the {gameSettings.historicalYear} season.
-                </p>
             )}
+            <button onClick={handleSave} disabled={isLoading || !selectedYear} className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                {isLoading ? 'Saving...' : `Save ${selectedYear} Placements`}
+            </button>
             {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
         </div>
     );
@@ -898,9 +863,6 @@ const AdminPage = () => {
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
-    const [scrapeYear, setScrapeYear] = useState(new Date().getFullYear() - 1);
-    const [isScraping, setIsScraping] = useState(false);
-    const [scrapeMessage, setScrapeMessage] = useState('');
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
@@ -916,20 +878,6 @@ const AdminPage = () => {
         setIsLoadingRoles(false);
     };
 
-    const handleScrape = async () => {
-        setScrapeMessage('');
-        setIsScraping(true);
-        try {
-            const scrapeHistoricalData = httpsCallable(functions, 'scrapeHistoricalData');
-            const result = await scrapeHistoricalData({ year: scrapeYear });
-            setScrapeMessage(result.data.message || result.data.error);
-        } catch (error) {
-            console.error("Error calling scrape function:", error);
-            setScrapeMessage("An error occurred during scraping.");
-        }
-        setIsScraping(false);
-    };
-
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
@@ -939,26 +887,7 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Historical Data Scraper</h2>
-                <p className="mb-4">Note: This tool is a placeholder. Use the `masterParser.js` script for bulk data ingestion.</p>
-                <div className="flex items-center space-x-2">
-                    <label htmlFor="scrape-year" className="font-semibold">Year to Scrape:</label>
-                    <input 
-                        id="scrape-year"
-                        type="number"
-                        value={scrapeYear}
-                        onChange={(e) => setScrapeYear(e.target.value)}
-                        className="w-24 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
-                    />
-                    <button onClick={handleScrape} disabled={isScraping} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                        {isScraping ? 'Scraping...' : `Scrape ${scrapeYear} Season`}
-                    </button>
-                </div>
-                {scrapeMessage && <p className="mt-2 text-sm font-semibold">{scrapeMessage}</p>}
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <DciDataManager />
+                <DciPlacementsManager />
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
