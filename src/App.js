@@ -825,49 +825,65 @@ const FinalRankingsManager = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // Effect to fetch the list of available years from the 'final_rankings' collection
+    // Effect to fetch the list of available years when the component mounts.
     useEffect(() => {
         const fetchYears = async () => {
             setIsLoading(true);
+            setMessage('');
             try {
-                const querySnapshot = await getDocs(collection(db, 'final_rankings'));
-                const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
-                setAvailableYears(years);
-                if (years.length > 0) {
-                    setSelectedYear(years[0]);
+                // The collection name must exactly match what's in your Firestore console.
+                const rankingsCollectionRef = collection(db, 'final_rankings');
+                const querySnapshot = await getDocs(rankingsCollectionRef);
+                
+                if (querySnapshot.empty) {
+                    setMessage("No final rankings documents found in the database.");
+                    setAvailableYears([]);
+                    setSelectedYear('');
+                } else {
+                    const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
+                    setAvailableYears(years);
+                    setSelectedYear(years[0]); // Default to the most recent year.
                 }
             } catch (error) {
-                console.error("Error fetching available years:", error);
-                setMessage("Could not load available years. Check Firestore rules and collection name.");
+                console.error("Firebase Error: Could not fetch available years.", error);
+                setMessage("Could not load available years. Please check Firestore security rules and ensure the collection 'final_rankings' exists.");
             }
             setIsLoading(false);
         };
         fetchYears();
     }, []);
 
-    // Effect to fetch the rankings data for the currently selected year
+    // Effect to fetch the specific rankings for the selected year whenever it changes.
     useEffect(() => {
-        if (!selectedYear) return;
+        if (!selectedYear) {
+            setPlacements(Array(25).fill(''));
+            return;
+        };
 
         const fetchDataForYear = async () => {
             setIsLoading(true);
             setMessage('');
             try {
                 const rankingsDocRef = doc(db, 'final_rankings', selectedYear);
-                const rankingsDocSnap = await getDoc(rankingsDocRef);
-                if (rankingsDocSnap.exists()) {
-                    const existingPlacements = rankingsDocSnap.data().data || [];
+                const docSnap = await getDoc(rankingsDocRef);
+
+                if (docSnap.exists()) {
+                    const rankingsData = docSnap.data().data || [];
                     const newPlacements = Array(25).fill('');
-                    existingPlacements.forEach((p, index) => {
-                        if (index < 25) newPlacements[index] = p.corps;
+                    rankingsData.forEach(item => {
+                        // The rank is 1-based, array index is 0-based.
+                        if (item.rank > 0 && item.rank <= 25) {
+                            newPlacements[item.rank - 1] = item.corps || '';
+                        }
                     });
                     setPlacements(newPlacements);
                 } else {
+                    setMessage(`No data found for year ${selectedYear}. You can add it now.`);
                     setPlacements(Array(25).fill(''));
                 }
             } catch (error) {
-                console.error(`Error fetching data for ${selectedYear}:`, error);
-                setMessage(`Could not load data for ${selectedYear}.`);
+                console.error(`Firebase Error: Could not fetch data for ${selectedYear}.`, error);
+                setMessage(`Could not load data for ${selectedYear}. Check Firestore security rules.`);
             }
             setIsLoading(false);
         };
@@ -875,32 +891,36 @@ const FinalRankingsManager = () => {
         fetchDataForYear();
     }, [selectedYear]);
 
-    // Handler to update the local state when an input field changes
+    // Update the local state when an input field for a placement changes.
     const handlePlacementChange = (index, corpsName) => {
         const newPlacements = [...placements];
         newPlacements[index] = corpsName;
         setPlacements(newPlacements);
     };
 
-    // Handler to save the current state of placements back to Firestore
+    // Save the current state of the placements back to the Firestore document for the selected year.
     const handleSave = async () => {
-        setMessage('');
+        if (!selectedYear) {
+            setMessage("Please select a year before saving.");
+            return;
+        }
         setIsLoading(true);
-        
-        // Format the data to match the structure in Firestore
+        setMessage('');
+
+        // Transform the array of names into the structured data format for Firestore.
         const rankingsData = placements.map((corpsName, index) => ({
             rank: index + 1,
-            corps: corpsName || null, // Save empty strings as null
+            corps: corpsName || null,
         }));
 
         try {
             const rankingsDocRef = doc(db, 'final_rankings', selectedYear);
-            // Use setDoc to overwrite the document with the new rankings data
+            // setDoc will create the document if it doesn't exist, or overwrite it if it does.
             await setDoc(rankingsDocRef, { data: rankingsData });
             setMessage(`Rankings for ${selectedYear} saved successfully!`);
         } catch (error) {
-            console.error("Error saving final rankings:", error);
-            setMessage("An error occurred while saving.");
+            console.error("Firebase Error: Could not save final rankings.", error);
+            setMessage("An error occurred while saving. Check Firestore security rules.");
         }
         setIsLoading(false);
     };
@@ -916,6 +936,7 @@ const FinalRankingsManager = () => {
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
                     className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                    disabled={availableYears.length === 0}
                 >
                     {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
                 </select>
@@ -943,7 +964,6 @@ const FinalRankingsManager = () => {
         </div>
     );
 };
-
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
