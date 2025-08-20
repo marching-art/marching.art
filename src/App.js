@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken, getIdTokenResult } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, getIdTokenResult } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // --- Firebase Configuration ---
@@ -95,7 +95,6 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
             const user = userCredential.user;
             
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            // Expanded profile data on creation
             await setDoc(userDocRef, {
                 username: username,
                 email: user.email,
@@ -208,7 +207,6 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
                 </span>
             </div>
             
-            {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-2 md:space-x-4">
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {isLoggedIn ? (
@@ -234,7 +232,6 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
                 </button>
             </div>
 
-            {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
                 <button onClick={toggleTheme} className="p-2 mr-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-yellow-300">
                     {theme === 'light' ? <Icon path="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /> : <Icon path="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M12 21a9 9 0 110-18 9 9 0 010 18z" />}
@@ -244,7 +241,6 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
                 </button>
             </div>
 
-            {/* Mobile Menu Panel */}
             {isMobileMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-yellow-700 z-20">
                     <nav className="flex flex-col p-2">
@@ -795,6 +791,108 @@ const DciDataManager = () => {
     );
 };
 
+// --- NEW: Off-Season Manager Component ---
+const OffSeasonManager = () => {
+    const [availableYears, setAvailableYears] = useState([]);
+    const [gameSettings, setGameSettings] = useState({ historicalYear: '', status: 'inactive' });
+    const [isLoading, setIsLoading] = useState(true);
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+            try {
+                const historicalScoresCollection = collection(db, 'historical_scores');
+                const querySnapshot = await getDocs(historicalScoresCollection);
+                const years = querySnapshot.docs.map(doc => doc.id).sort((a, b) => b - a);
+                setAvailableYears(years);
+
+                const settingsRef = doc(db, 'game-settings', 'off-season');
+                const settingsSnap = await getDoc(settingsRef);
+                if (settingsSnap.exists()) {
+                    setGameSettings(settingsSnap.data());
+                } else if (years.length > 0) {
+                    setGameSettings({ historicalYear: years[0], status: 'inactive' });
+                }
+            } catch (error) {
+                console.error("Error fetching off-season data:", error);
+                setMessage("Could not load off-season data.");
+            }
+            setIsLoading(false);
+        };
+        fetchInitialData();
+    }, []);
+
+    const handleSaveSettings = async (newStatus) => {
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const saveOffSeasonSettings = httpsCallable(functions, 'saveOffSeasonSettings');
+            const result = await saveOffSeasonSettings({
+                historicalYear: gameSettings.historicalYear,
+                status: newStatus
+            });
+            setGameSettings(prev => ({ ...prev, status: newStatus }));
+            setMessage(result.data.message);
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            setMessage(error.message);
+        }
+        setIsLoading(false);
+    };
+
+    if (isLoading && availableYears.length === 0) {
+        return <p>Loading available historical data...</p>;
+    }
+
+    return (
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">Off-Season Game Manager</h2>
+            <p>Select a historical year to use for the off-season game. Activating this will pause the live game and use historical scores based on the "Off Season Day".</p>
+            
+            <div className="flex items-center space-x-4">
+                <div className="flex-grow">
+                    <label htmlFor="year-select" className="block font-semibold mb-1">Historical Year:</label>
+                    <select
+                        id="year-select"
+                        value={gameSettings.historicalYear}
+                        onChange={(e) => setGameSettings(prev => ({ ...prev, historicalYear: e.target.value }))}
+                        disabled={gameSettings.status === 'active'}
+                        className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 disabled:opacity-50"
+                    >
+                        {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
+                    </select>
+                </div>
+                <div className="flex-shrink-0 self-end">
+                    {gameSettings.status === 'active' ? (
+                        <button
+                            onClick={() => handleSaveSettings('inactive')}
+                            disabled={isLoading}
+                            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                        >
+                            {isLoading ? 'Working...' : 'Deactivate Off-Season'}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => handleSaveSettings('active')}
+                            disabled={isLoading || !gameSettings.historicalYear}
+                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                        >
+                            {isLoading ? 'Working...' : 'Activate Off-Season'}
+                        </button>
+                    )}
+                </div>
+            </div>
+            {gameSettings.status === 'active' && (
+                <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                    Off-Season is currently ACTIVE with the {gameSettings.historicalYear} season.
+                </p>
+            )}
+            {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
+        </div>
+    );
+};
+
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
@@ -836,9 +934,13 @@ const AdminPage = () => {
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
+                <OffSeasonManager />
+            </div>
+
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Historical Data Scraper</h2>
-                <p className="mb-4">This tool will scrape an entire DCI season's worth of scores from dci.org. This can take several minutes to complete. Run this once for each past season to populate the database.</p>
+                <p className="mb-4">Note: This tool is a placeholder. Use the `masterParser.js` script for bulk data ingestion.</p>
                 <div className="flex items-center space-x-2">
                     <label htmlFor="scrape-year" className="font-semibold">Year to Scrape:</label>
                     <input 
@@ -920,7 +1022,6 @@ export default function App() {
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
     const [theme, setTheme] = useState('light');
 
-    // --- Theme Management ---
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
@@ -939,7 +1040,6 @@ export default function App() {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
 
-    // --- Authentication Effect ---
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -954,10 +1054,8 @@ export default function App() {
         return () => unsubscribe();
     }, []);
 
-    // --- Profile Data Effect ---
     useEffect(() => {
         let unsubscribe;
-        // Only fetch profile if the user is not anonymous
         if (user && !user.isAnonymous) {
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
             unsubscribe = onSnapshot(userDocRef, (doc) => {
@@ -971,9 +1069,7 @@ export default function App() {
         return () => { if (unsubscribe) unsubscribe(); };
     }, [user]);
 
-    // --- Page Navigation Logic ---
     useEffect(() => {
-        // **FIXED LOGIC**: Only go to dashboard if user exists AND is not anonymous
         if (user && !user.isAnonymous) {
             setPage('dashboard');
         } else {
@@ -981,7 +1077,6 @@ export default function App() {
         }
     }, [user]);
 
-    // --- Event Handlers ---
     const handleLogout = async () => {
         try {
             await signOut(auth);
@@ -997,10 +1092,8 @@ export default function App() {
     const openSignUpModal = () => { setLoginModalOpen(false); setSignUpModalOpen(true); };
     const closeModal = () => { setLoginModalOpen(false); setSignUpModalOpen(false); };
     
-    // Determine if a real user is logged in
     const isLoggedIn = user && !user.isAnonymous;
 
-    // --- Render Logic ---
     const renderPage = () => {
         switch (page) {
             case 'dashboard': 
