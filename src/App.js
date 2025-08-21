@@ -12,7 +12,7 @@ import AdminPage from './components/pages/AdminPage';
 // Import Layout & UI Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import { Modal } from './components/ui/Modal';
+import Modal from './components/ui/Modal';
 import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 
