@@ -5,4 +5,4 @@ const Icon = ({ path, className = "w-6 h-6" }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d={path} />
     </svg>
 );
-export default Icon;
+export default Icon;   

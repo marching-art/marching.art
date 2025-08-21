@@ -19,7 +19,8 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
                     {isLoggedIn ? (
                         <>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 font-bold hover:underline">Admin</button>}
-                            <span className="text-gray-700 dark:text-yellow-300 hidden sm:block">Welcome, {profile?.username || ''}</span>
+                            {/* --- NEW BUTTON ADDED HERE --- */}
+                            <button onClick={() => setPage('dashboard')} className="text-gray-700 dark:text-yellow-300 hover:text-black dark:hover:text-white transition-colors">Dashboard</button>
                             <button onClick={() => setPage('profile')} className="text-gray-700 dark:text-yellow-300 hover:text-black dark:hover:text-white transition-colors">Profile</button>
                             <button onClick={onLogout} className="bg-gray-300 dark:bg-yellow-700 hover:bg-gray-400 dark:hover:bg-yellow-600 text-gray-800 dark:text-white font-bold py-2 px-3 rounded border-b-2 border-gray-400 dark:border-yellow-800 transition-all text-sm">
                                 Logout
@@ -54,6 +55,8 @@ const Header = ({ isLoggedIn, isAdmin, onLoginClick, onSignUpClick, onLogout, se
                         {isLoggedIn ? (
                             <>
                                 {isAdmin && <button onClick={() => { setPage('admin'); setIsMobileMenuOpen(false); }} className="text-red-500 font-bold p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700">Admin</button>}
+                                {/* --- NEW BUTTON ADDED HERE --- */}
+                                <button onClick={() => { setPage('dashboard'); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-yellow-300 p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700">Dashboard</button>
                                 <button onClick={() => { setPage('profile'); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-yellow-300 p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700">Profile</button>
                                 <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-yellow-300 p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700">Logout</button>
                             </>
