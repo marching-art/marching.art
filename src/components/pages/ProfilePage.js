@@ -7,7 +7,6 @@ import SeasonArchive from '../profile/SeasonArchive';
 
 const ProfilePage = ({ profile, userId }) => {
     const isOwner = auth.currentUser?.uid === userId;
-
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [bioText, setBioText] = useState(profile?.bio || '');
 
@@ -19,9 +18,7 @@ const ProfilePage = ({ profile, userId }) => {
         if (!userId) return;
         const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
         try {
-            await updateDoc(userDocRef, {
-                bio: bioText
-            });
+            await updateDoc(userDocRef, { bio: bioText });
             setIsEditingBio(false);
         } catch (error) {
             console.error("Error updating bio:", error);
