@@ -3,10 +3,9 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
 import Icon from '../ui/Icon'; // Assuming Icon.js is at src/components/ui/Icon.js
 
-// --- Child Components (made more robust) ---
+// --- Child Components ---
 
 const UniformDisplay = ({ uniform }) => {
-    // This component is safe, but included for completeness.
     if (!uniform) {
         return <div className="w-48 h-64 bg-gray-200 dark:bg-gray-700 rounded-md flex-shrink-0"></div>;
     }
@@ -22,7 +21,6 @@ const UniformDisplay = ({ uniform }) => {
 };
 
 const TrophyCase = ({ trophies }) => {
-    // FIX: Ensure trophies and its properties are always arrays, even if the prop is null or undefined.
     const safeTrophies = trophies || { championships: [], regionals: [] };
     const championships = safeTrophies.championships || [];
     const regionals = safeTrophies.regionals || [];
@@ -58,7 +56,6 @@ const TrophyCase = ({ trophies }) => {
 };
 
 const SeasonArchive = ({ seasons }) => {
-    // FIX: Ensure seasons is always an array, even if the prop is null or undefined.
     const safeSeasons = seasons || [];
     const [seasonType, setSeasonType] = useState('Live');
     
@@ -68,7 +65,7 @@ const SeasonArchive = ({ seasons }) => {
     useEffect(() => {
         const newFiltered = safeSeasons.filter(s => s && s.type === seasonType);
         setActiveSeason(newFiltered.length > 0 ? newFiltered[0] : null);
-    }, [seasonType, seasons]); // Rerun when seasons prop changes
+    }, [seasonType, seasons]);
 
     return (
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
@@ -126,11 +123,6 @@ const ProfilePage = ({ profile, userId }) => {
 
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [bioText, setBioText] = useState(profile?.bio || '');
-    // --- ADDED CODE START ---
-    const [corpsName, setCorpsName] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const [message, setMessage] = useState('');
-    // --- ADDED CODE END ---
 
     useEffect(() => {
         setBioText(profile?.bio || '');
@@ -148,28 +140,6 @@ const ProfilePage = ({ profile, userId }) => {
             console.error("Error updating bio:", error);
         }
     };
-    
-    // --- ADDED CODE START ---
-    const handleSaveCorpsName = async () => {
-        if (!userId || !corpsName.trim()) {
-            setMessage("Corps name cannot be empty.");
-            return;
-        }
-        setIsSaving(true);
-        setMessage('');
-        const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
-        try {
-            await updateDoc(userDocRef, {
-                corpsName: corpsName.trim()
-            });
-            setMessage("Corps created successfully!");
-        } catch (error) {
-            console.error("Error saving corps name:", error);
-            setMessage("Error saving corps name.");
-        }
-        setIsSaving(false);
-    };
-    // --- ADDED CODE END ---
 
     if (!profile) {
         return <div className="p-8 text-center text-gray-600 dark:text-yellow-300">Loading profile...</div>;
@@ -197,42 +167,16 @@ const ProfilePage = ({ profile, userId }) => {
                 <UniformDisplay uniform={profile.uniform} />
                 <div className="flex-grow text-center md:text-left">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
-                    {/* --- ADDED CODE START --- */}
+                    {/* Display the corps name if it exists */}
                     {profile.corpsName && (
                         <h2 className="text-2xl font-semibold text-yellow-700 dark:text-yellow-400 mt-1">{profile.corpsName}</h2>
                     )}
-                    {/* --- ADDED CODE END --- */}
                     <p className="text-gray-500 dark:text-gray-400 mt-1">
                         Member since {profile.createdAt?.toDate().toLocaleDateString()}
                     </p>
                     <p className="text-gray-500 dark:text-gray-400">
                         Last active: {timeSince(profile.lastActive)}
                     </p>
-                    {/* --- ADDED CODE START --- */}
-                    {isOwner && !profile.corpsName && (
-                        <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
-                            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Create Your Corps</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Give your corps a name to join the season!</p>
-                            <div className="flex items-center space-x-2">
-                                <input 
-                                    type="text"
-                                    value={corpsName}
-                                    onChange={(e) => setCorpsName(e.target.value)}
-                                    placeholder="Enter your corps name"
-                                    className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
-                                />
-                                <button 
-                                    onClick={handleSaveCorpsName} 
-                                    disabled={isSaving}
-                                    className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-                                >
-                                    {isSaving ? 'Saving...' : 'Create'}
-                                </button>
-                            </div>
-                            {message && <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">{message}</p>}
-                        </div>
-                    )}
-                     {/* --- ADDED CODE END --- */}
                     <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
                         {isEditingBio ? (
                             <div className="space-y-2">
@@ -249,7 +193,7 @@ const ProfilePage = ({ profile, userId }) => {
                             </div>
                         ) : (
                             <div className="flex justify-between items-start">
-                                <p className="text-gray-700 dark:text-gray-300">{profile.bio}</p>
+                                <p className="text-gray-700 dark:text-gray-300">{profile.bio || 'No bio has been set.'}</p>
                                 {isOwner && (
                                     <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-yellow-600 dark:text-yellow-400 hover:underline flex-shrink-0">Edit</button>
                                 )}
