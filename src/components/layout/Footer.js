@@ -7,9 +7,16 @@ const Footer = () => {
                 <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:underline font-semibold">
                     Join the Community on Discord
                 </a>
+                
+                <span className="mx-2 text-gray-400 dark:text-gray-600">|</span>
+
+                <a href="https://buymeacoffee.com/marching.art" target="_blank" rel="noopener noreferrer" className="text-indigo-500 dark:text-indigo-400 hover:underline font-semibold">
+                    Buy Me a Coffee ☕
+                </a>
             </div>
             <p>&copy; {new Date().getFullYear()} marching.art. All Rights Reserved.</p>
         </footer>
     );
 };
+
 export default Footer;
