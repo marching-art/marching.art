@@ -126,6 +126,11 @@ const ProfilePage = ({ profile, userId }) => {
 
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [bioText, setBioText] = useState(profile?.bio || '');
+    // --- ADDED CODE START ---
+    const [corpsName, setCorpsName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [message, setMessage] = useState('');
+    // --- ADDED CODE END ---
 
     useEffect(() => {
         setBioText(profile?.bio || '');
@@ -143,6 +148,28 @@ const ProfilePage = ({ profile, userId }) => {
             console.error("Error updating bio:", error);
         }
     };
+    
+    // --- ADDED CODE START ---
+    const handleSaveCorpsName = async () => {
+        if (!userId || !corpsName.trim()) {
+            setMessage("Corps name cannot be empty.");
+            return;
+        }
+        setIsSaving(true);
+        setMessage('');
+        const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+        try {
+            await updateDoc(userDocRef, {
+                corpsName: corpsName.trim()
+            });
+            setMessage("Corps created successfully!");
+        } catch (error) {
+            console.error("Error saving corps name:", error);
+            setMessage("Error saving corps name.");
+        }
+        setIsSaving(false);
+    };
+    // --- ADDED CODE END ---
 
     if (!profile) {
         return <div className="p-8 text-center text-gray-600 dark:text-yellow-300">Loading profile...</div>;
@@ -170,12 +197,42 @@ const ProfilePage = ({ profile, userId }) => {
                 <UniformDisplay uniform={profile.uniform} />
                 <div className="flex-grow text-center md:text-left">
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
+                    {/* --- ADDED CODE START --- */}
+                    {profile.corpsName && (
+                        <h2 className="text-2xl font-semibold text-yellow-700 dark:text-yellow-400 mt-1">{profile.corpsName}</h2>
+                    )}
+                    {/* --- ADDED CODE END --- */}
                     <p className="text-gray-500 dark:text-gray-400 mt-1">
                         Member since {profile.createdAt?.toDate().toLocaleDateString()}
                     </p>
                     <p className="text-gray-500 dark:text-gray-400">
                         Last active: {timeSince(profile.lastActive)}
                     </p>
+                    {/* --- ADDED CODE START --- */}
+                    {isOwner && !profile.corpsName && (
+                        <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
+                            <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">Create Your Corps</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Give your corps a name to join the season!</p>
+                            <div className="flex items-center space-x-2">
+                                <input 
+                                    type="text"
+                                    value={corpsName}
+                                    onChange={(e) => setCorpsName(e.target.value)}
+                                    placeholder="Enter your corps name"
+                                    className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                                />
+                                <button 
+                                    onClick={handleSaveCorpsName} 
+                                    disabled={isSaving}
+                                    className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                                >
+                                    {isSaving ? 'Saving...' : 'Create'}
+                                </button>
+                            </div>
+                            {message && <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">{message}</p>}
+                        </div>
+                    )}
+                     {/* --- ADDED CODE END --- */}
                     <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
                         {isEditingBio ? (
                             <div className="space-y-2">
