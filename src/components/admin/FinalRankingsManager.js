@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { db } from './firebase'; // Adjust path as needed
+import { db } from '../../firebase';
 import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 
 const FinalRankingsManager = () => {
