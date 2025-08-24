@@ -1,40 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, appId } from '../../firebase';
 
-const SeasonSignup = ({ profile, userId, seasonSettings }) => {
-    // This component guides the user through creating a corps and joining the season.
+const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
+
+const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
     const [step, setStep] = useState(1);
     const [corpsName, setCorpsName] = useState('');
+    const [lineup, setLineup] = useState({});
+    const [totalPoints, setTotalPoints] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState('');
+    
+    const pointCap = seasonSettings?.currentPointCap || 150;
 
-    // Step 1: Handle saving the user's chosen corps name to their profile.
+    // Calculate total points whenever the lineup changes
+    useEffect(() => {
+        const points = CAPTIONS.reduce((sum, caption) => {
+            const selectedCorpsName = lineup[caption];
+            if (selectedCorpsName) {
+                const corps = corpsData.find(c => c.corpsName === selectedCorpsName);
+                return sum + (corps?.points || 0);
+            }
+            return sum;
+        }, 0);
+        setTotalPoints(points);
+    }, [lineup, corpsData]);
+
+    const handleSelectCorps = (caption, corpsName) => {
+        setLineup(prev => ({ ...prev, [caption]: corpsName }));
+    };
+
+    // Step 1: Save corps name and move to lineup selection
     const handleCreateCorps = async () => {
         if (!corpsName.trim()) {
             setMessage("Your corps needs a name!");
             return;
         }
         setIsSaving(true);
+        // We don't save to Firestore yet, just move to the next step
+        setStep(2);
+        setIsSaving(false);
+    };
+
+    // Step 2: Save the final lineup and join the season
+    const handleJoinSeason = async () => {
+        setIsSaving(true);
         setMessage('');
         try {
-            // Path to the user's specific profile document
             const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
-            // Update their profile with the new corps name and join them to the current season.
+            // Update the user's profile with all the new season info at once
             await updateDoc(userDocRef, {
                 corpsName: corpsName.trim(),
-                activeSeasonId: seasonSettings.id // e.g., 'off-season-2025'
+                activeSeasonId: seasonSettings.id,
+                lineup: lineup 
             });
-            // Move to the next step in the signup process
-            setStep(2); 
+            // The component will disappear on the next render, so no need to setStep(3)
         } catch (error) {
-            console.error("Error creating corps:", error);
-            setMessage("There was an error creating your corps. Please try again.");
+            console.error("Error joining season:", error);
+            setMessage("There was an error joining the season. Please try again.");
         }
         setIsSaving(false);
     };
 
-    // Render Step 1: Create Corps Name
+    const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
+
+    // --- RENDER FUNCTIONS ---
+
     const renderStepOne = () => (
         <div>
             <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">Step 1: Name Your Corps</h3>
@@ -51,30 +83,55 @@ const SeasonSignup = ({ profile, userId, seasonSettings }) => {
                 />
                 <button
                     onClick={handleCreateCorps}
-                    disabled={isSaving}
+                    disabled={!corpsName.trim()}
                     className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-md text-lg disabled:bg-gray-400 transition-colors"
                 >
-                    {isSaving ? 'Saving...' : 'Create Corps'}
+                    Next: Create Lineup
                 </button>
             </div>
         </div>
     );
 
-    // Render Step 2: Welcome & Next Steps
     const renderStepTwo = () => (
-        <div className="text-center">
-            <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">Welcome to the Season!</h3>
-            <p className="mt-2 text-xl text-gray-800 dark:text-gray-200">
-                Your corps, <span className="font-bold text-yellow-600 dark:text-yellow-400">{profile.corpsName || corpsName}</span>, has been officially registered.
-            </p>
-            <p className="mt-4 text-gray-600 dark:text-gray-300">
-                The page will now reload to take you to your lineup editor. Good luck!
-            </p>
+        <div>
+            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">Step 2: Create Your Starting Lineup</h3>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center my-4 gap-2">
+                <p className="text-gray-600 dark:text-gray-300">Select a corps for each caption. Stay under the point cap!</p>
+                <div className={`text-xl font-bold px-3 py-1 rounded ${totalPoints > pointCap ? 'text-red-500 bg-red-100 dark:bg-red-900' : 'text-gray-800 dark:text-gray-200'}`}>
+                    Total Points: {totalPoints} / {pointCap}
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {CAPTIONS.map(caption => (
+                    <div key={caption} className="flex items-center">
+                        <label className="w-12 font-semibold">{caption}:</label>
+                        <select 
+                            value={lineup[caption] || ''} 
+                            onChange={(e) => handleSelectCorps(caption, e.target.value)}
+                            className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                        >
+                            <option value="">-- Select a Corps --</option>
+                            {corpsData.map(corps => (
+                                <option key={corps.corpsName} value={corps.corpsName}>{corps.corpsName} ({corps.points})</option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
+            </div>
+            <div className="flex justify-end items-center">
+                 <button 
+                    onClick={handleJoinSeason} 
+                    disabled={isSaving || totalPoints > pointCap || !isLineupComplete}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-md text-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                    {isSaving ? 'Joining...' : 'Join Season'}
+                </button>
+            </div>
         </div>
     );
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-md border-2 border-yellow-500 shadow-lg max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-md border-2 border-yellow-500 shadow-lg max-w-3xl mx-auto">
             {step === 1 && renderStepOne()}
             {step === 2 && renderStepTwo()}
             {message && <p className="mt-4 text-sm font-semibold text-red-600 dark:text-red-400">{message}</p>}
