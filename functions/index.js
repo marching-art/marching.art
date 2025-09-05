@@ -292,7 +292,7 @@ exports.seasonScheduler = onSchedule({
 
 async function scrapeDciScoresLogic() {
     logger.info("Running DCI RECAP scraper...");
-    const urlToScrape = "https://www.dci.org/scores/recap/2024-dci-world-championship-world-class-finals";
+    const urlToScrape = "https://www.dci.org/scores/recap/2025-dci-world-championship-finals/";
 
     try {
         const { data } = await axios.get(urlToScrape);
