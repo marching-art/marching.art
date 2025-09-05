@@ -16,7 +16,6 @@ const pubsubClient = new PubSub();
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
-const db = admin.firestore();
 
 // --- Helper Functions ---
 
