@@ -2,10 +2,13 @@ const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub")
+const { setGlobalOptions } = require("firebase-functions/v2/options");
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { PubSub } = require('@google-cloud/pubsub');
+setGlobalOptions({ cors: { origin: 'https://www.marching.art' } });
 const pubsubClient = new PubSub();
+
 
 admin.initializeApp();
 const db = admin.firestore();
