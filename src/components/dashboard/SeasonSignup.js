@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { httpsCallable } from 'firebase/functions';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, appId } from '../../firebase';
+import { db, appId, functions } from '../../firebase';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
@@ -45,22 +46,25 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     // Step 2: Save the final lineup and join the season
     const handleJoinSeason = async () => {
-        setIsSaving(true);
-        setMessage('');
-        try {
-            const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
-            // Update the user's profile with all the new season info at once
-            await updateDoc(userDocRef, {
-                corpsName: corpsName.trim(),
-                activeSeasonId: seasonSettings.id,
-                lineup: lineup 
-            });
-            // The component will disappear on the next render, so no need to setStep(3)
-        } catch (error) {
-            console.error("Error joining season:", error);
-            setMessage("There was an error joining the season. Please try again.");
-        }
-        setIsSaving(false);
+    setIsSaving(true);
+    setMessage('');
+    try {
+        // This is the new part: calling the cloud function
+        const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
+        const result = await validateAndSaveLineup({
+            lineup: lineup,
+            corpsName: corpsName.trim() // Pass the corpsName for the first save
+        });
+        setMessage(result.data.message);
+        // On success, the parent component will re-render and this component will disappear
+        // so we don't need to do anything else.
+
+    } catch (error) {
+        console.error("Error joining season:", error);
+        // The error message from our function will be on error.message
+        setMessage(error.message || "An unknown error occurred. Please try again.");
+    }
+    setIsSaving(false);
     };
 
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);

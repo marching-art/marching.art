@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { httpsCallable } from 'firebase/functions';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, appId, auth } from '../../firebase';
+import { db, appId, auth, functions } from '../../firebase';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 const WEEKLY_TRADES_LIMIT = 3; // The number of trades a user gets each week.
@@ -44,25 +45,25 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
     };
 
     const handleSave = async () => {
-        if (tradesUsed > WEEKLY_TRADES_LIMIT) {
-            setMessage("You have exceeded your trade limit for the week.");
-            return;
-        }
-        
-        setMessage('');
-        setIsLoading(true);
-        try {
-            const userDocRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
-            await updateDoc(userDocRef, {
-                lineup: lineup
-            });
-            setOriginalLineup(lineup); // Set the new saved lineup as the original for the next set of changes.
-            setMessage('Lineup saved successfully!');
-        } catch (error) {
-            console.error("Error saving lineup:", error);
-            setMessage("An error occurred while saving your lineup.");
-        }
-        setIsLoading(false);
+    if (tradesUsed > WEEKLY_TRADES_LIMIT) { // This local check is still useful
+        setMessage("You have exceeded your trade limit for the week.");
+        return;
+    }
+
+    setMessage('');
+    setIsLoading(true);
+    try {
+        const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
+        const result = await validateAndSaveLineup({ lineup: lineup });
+
+        setOriginalLineup(lineup); // Set the new saved lineup as the original
+        setMessage(result.data.message); // Display success message from the function
+
+    } catch (error) {
+        console.error("Error saving lineup:", error);
+        setMessage(error.message || "An error occurred while saving your lineup.");
+    }
+    setIsLoading(false);
     };
 
     if (!corpsData || corpsData.length === 0) {
