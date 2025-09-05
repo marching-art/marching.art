@@ -9,7 +9,9 @@ const AdminPage = () => {
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
-
+    const [isScraping, setIsScraping] = useState(false);
+    const [scraperMessage, setScraperMessage] = useState('');
+    
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
         setIsLoadingRoles(true);
@@ -24,6 +26,20 @@ const AdminPage = () => {
         setIsLoadingRoles(false);
     };
 
+    const handleTestScraper = async () => {
+        setScraperMessage('Starting scraper test...');
+        setIsScraping(true);
+        try {
+            const testScraper = httpsCallable(functions, 'testScraper');
+            const result = await testScraper();
+            setScraperMessage(result.data.message);
+        } catch (error) {
+            console.error("Error calling testScraper function:", error);
+            setScraperMessage(`Error: ${error.message}`);
+        }
+        setIsScraping(false);
+    };
+    
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
