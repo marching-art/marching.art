@@ -1,21 +1,16 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { logger } = require("firebase-functions/v2");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
-const { setGlobalOptions } = require("firebase-functions/v2/options"); // <<< CORS FIX: ADD THIS LINE
+const { setGlobalOptions } = require("firebase-functions/v2/options");
 const { PubSub } = require('@google-cloud/pubsub');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { db, appId } = require('./_config');
-// --- END: All require statements ---
 
-// <<< CORS FIX: ADD THIS LINE to configure permissions
 setGlobalOptions({ cors: { origin: "https://www.marching.art" } });
 
-// Initialize the PubSub client ONCE
 const pubsubClient = new PubSub();
-
-// Initialize Firebase Admin SDK
-admin.initializeApp();
 
 // --- Helper Functions ---
 
