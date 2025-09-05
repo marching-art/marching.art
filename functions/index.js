@@ -53,11 +53,17 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
         throw new HttpsError("unauthenticated", "You must be logged in to save a lineup.");
     }
     const { lineup, corpsName } = request.data;
+    const uid = request.auth.uid;
+    
+    // --- NEW LOGGING ---
+    logger.info(`[validateAndSaveLineup] Firing for user: ${uid}`);
+    logger.info(`[validateAndSaveLineup] Received corpsName: ${corpsName}`);
+    // --- END NEW LOGGING ---
+
     if (!lineup || Object.keys(lineup).length !== 8) {
         throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
     }
 
-    const uid = request.auth.uid;
     const lineupValues = Object.values(lineup).sort();
     const lineupKey = lineupValues.join("_");
     if (lineupValues.length !== 8 || lineupValues.some((val) => !val)) {
@@ -73,6 +79,9 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
 
     try {
         await db.runTransaction(async (transaction) => {
+            // --- NEW LOGGING ---
+            logger.info(`[validateAndSaveLineup] Starting transaction for user: ${uid}`);
+            // --- END NEW LOGGING ---
             const userProfileRef = db.doc(`artifacts/${appId}/users/${uid}/profile/data`);
             const userProfileDoc = await transaction.get(userProfileRef);
             if (!userProfileDoc.exists) {
@@ -103,11 +112,20 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
                 profileUpdateData.corpsName = corpsName;
             }
 
+            // --- NEW LOGGING ---
+            logger.info(`[validateAndSaveLineup] Data to be updated for user ${uid}:`, profileUpdateData);
+            // --- END NEW LOGGING ---
+
             transaction.update(userProfileRef, profileUpdateData);
         });
+
+        // --- NEW LOGGING ---
+        logger.info(`[validateAndSaveLineup] Transaction completed successfully for user: ${uid}`);
+        // --- END NEW LOGGING ---
         return { success: true, message: "Lineup saved successfully!" };
+
     } catch (error) {
-        logger.error("Lineup save transaction failed: ", error);
+        logger.error(`[validateAndSaveLineup] Transaction FAILED for user ${uid}:`, error);
         if (error instanceof HttpsError) {
             throw error;
         }
