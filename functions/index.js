@@ -1,27 +1,24 @@
-const admin = require("firebase-admin");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onMessagePublished } = require("firebase-functions/v2/pubsub")
-const { setGlobalOptions } = require("firebase-functions/v2/options");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onMessagePublished } = require("firebase-functions/v2/pubsub");
+const { setGlobalOptions } = require("firebase-functions/v2/options"); // <<< CORS FIX: ADD THIS LINE
+const { PubSub } = require('@google-cloud/pubsub');
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { PubSub } = require('@google-cloud/pubsub');
-setGlobalOptions({ cors: { origin: 'https://www.marching.art' } });
+const { db, appId } = require('./_config');
+// --- END: All require statements ---
+
+// <<< CORS FIX: ADD THIS LINE to configure permissions
+setGlobalOptions({ cors: { origin: "https://www.marching.art" } });
+
+// Initialize the PubSub client ONCE
 const pubsubClient = new PubSub();
 
-
+// Initialize Firebase Admin SDK
 admin.initializeApp();
 const db = admin.firestore();
 
 // --- Helper Functions ---
-
-const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-};
 
 const getSecondSaturdayOfAugust = (year) => {
     const augustFirst = new Date(year, 7, 1);
@@ -228,23 +225,85 @@ exports.manageSeasonTransitions = onSchedule({schedule: "every day 01:05", timeZ
 // --- Core Season Management Functions (Callable by Admin) ---
 
 /**
- * Manually starts a new Off-Season. This is intended to be called by an
- * admin from the front-end to override the automatic scheduler.
+ * Creates and saves all data for a new OFF-SEASON.
+ * An off-season is 7 weeks long.
  */
-exports.startNewOffSeason = onCall(async (request) => {
-    if (!request.auth || !request.auth.token.admin) {
-        throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+async function startNewOffSeason() {
+    console.log("Generating new off-season...");
+
+    // 1. FETCH THE LATEST FINAL RANKINGS
+    const rankingsQuery = db.collection('final_rankings').orderBy(db.FieldPath.documentId(), 'desc').limit(1);
+    const rankingsSnapshot = await rankingsQuery.get();
+    if (rankingsSnapshot.empty) {
+        throw new Error("Cannot start off-season: No final rankings found in the database.");
     }
+    const latestRankingsDoc = rankingsSnapshot.docs[0];
+    const sourceCorps = latestRankingsDoc.data().data; // This is the array of {rank, corps, score}
+    const sourceYear = latestRankingsDoc.id;
+
+    console.log(`Using final rankings from ${sourceYear} as the source.`);
+
+    // 2. SHUFFLE THE CORPS
+    // We'll take the top 25 corps for randomization
+    const shuffledCorps = shuffleArray(sourceCorps.slice(0, 25));
+
+    // 3. ASSIGN NEW FANTASY POINT VALUES
+    // Assign points in a descending fashion to the now-randomized list
+    const pointValues = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    const offSeasonCorpsData = shuffledCorps.map((item, index) => ({
+        corpsName: item.corps,
+        points: pointValues[index] || 1, // Assign points, default to 1 if out of range
+    }));
+
+    // 4. SAVE THE NEW CORPS DATA LIST
+    const startDate = new Date();
+    const seasonName = `Off-Season ${startDate.toLocaleString('default', { month: 'long' })} ${startDate.getFullYear()}`;
+    // Create a unique ID for this season's data document
+    const dataDocId = `off-season-${startDate.getFullYear()}-${startDate.getMonth() + 1}`;
     
-    try {
-        console.log(`Manual override triggered by admin: ${request.auth.uid}. Starting new off-season.`);
-        await startNewOffSeason(); 
-        return { success: true, message: "A new off-season has been started successfully." };
-    } catch (error) {
-        console.error("Error manually starting new off-season:", error);
-        throw new HttpsError("internal", "An error occurred while starting the season.");
-    }
-});
+    await db.doc(`dci-data/${dataDocId}`).set({
+        corpsValues: offSeasonCorpsData,
+        source: `Shuffled from ${sourceYear} rankings`,
+        createdAt: startDate,
+    });
+
+    console.log(`Saved new corps data to dci-data/${dataDocId}`);
+
+    // 5. UPDATE THE MAIN SEASON SETTINGS DOCUMENT
+    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000); // 7 weeks * 7 days
+
+    const newSeasonSettings = {
+        name: seasonName,
+        status: 'off-season',
+        currentPointCap: 150,
+        dataDocId: dataDocId, // Link to the data document we just created
+        schedule: {
+            startDate: startDate,
+            endDate: endDate
+        }
+    };
+
+    await db.doc('game-settings/season').set(newSeasonSettings);
+    console.log(`Successfully started the ${seasonName}.`);
+}
+
+/**
+ * A standard Fisher-Yates shuffle algorithm to randomize an array.
+ * This is the function your linter was referring to.
+ */
+function shuffleArray(array) {
+  let currentIndex = array.length,  randomIndex;
+  // While there remain elements to shuffle.
+  while (currentIndex != 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
 
 /**
  * Callable function for admins to archive the results of a completed season.
