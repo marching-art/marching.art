@@ -2,15 +2,12 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
-const { setGlobalOptions } = require("firebase-functions/v2/options");
 const { PubSub } = require('@google-cloud/pubsub');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { db, appId } = require('./_config');
 
-setGlobalOptions({ cors: { origin: "https://www.marching.art" } });
-
-const pubsubClient = new PubSub();
+const pubsubClient = new PubSub()
 
 // --- Helper Functions ---
 
@@ -217,6 +214,47 @@ exports.manageSeasonTransitions = onSchedule({schedule: "every day 01:05", timeZ
 
 
 // --- Core Season Management Functions (Callable by Admin) ---
+
+/**
+ * Calculates all dates for a new LIVE season and updates the game settings.
+ * A live season is 10 weeks long.
+ */
+async function startNewLiveSeason() {
+    const today = new Date();
+    const year = today.getFullYear();
+
+    // DCI Finals are consistently the second Saturday in August. Let's calculate that.
+    const augustFirst = new Date(year, 7, 1); // 7 = August
+    const dayOfWeek = augustFirst.getDay(); // 0=Sun, 6=Sat
+    // Days to get to the first Saturday
+    const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
+    const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+    const finalsDate = new Date(firstSaturday.getTime() + 7 * 24 * 60 * 60 * 1000); // Second Saturday
+
+    // Season is 10 weeks long
+    const startDate = new Date(finalsDate.getTime() - 70 * 24 * 60 * 60 * 1000); // 10 weeks * 7 days
+
+    const newSeasonData = {
+        name: `DCI ${year} Live Season`,
+        status: 'live-season',
+        seasonYear: year,
+        currentPointCap: 150, // Or fetch this from another settings doc
+        schedule: {
+            startDate: startDate,
+            endDate: finalsDate,
+            openTradeEndDate: new Date(`${year}-07-01T23:59:59-04:00`),
+            quartersDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 2)),
+            semifinalsDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 1)),
+            finalsDate: finalsDate,
+        }
+    };
+    
+    // TODO: Add logic here to generate the corpsData for the live season.
+    // This would likely read from your `final_rankings` collection for the PREVIOUS year.
+
+    await db.doc('game-settings/season').set(newSeasonData);
+    console.log(`Successfully started the ${newSeasonData.name}.`);
+}
 
 /**
  * Creates and saves all data for a new OFF-SEASON.
@@ -567,6 +605,23 @@ exports.scrapeDciScores = onSchedule({
 });
 
 /**
+ * A manually callable function for testing the scraper logic during the off-season.
+ */
+exports.testScraper = onCall({ cors: true }, async (request) => {
+    if (!request.auth || !request.auth.token.admin) {
+        throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+    }
+    try {
+        // We are calling the same logic as the scheduled function, but on demand.
+        await scrapeDciScoresLogic();
+        return { success: true, message: "Scraper test triggered successfully. Check Cloud Function logs for output." };
+    } catch (error) {
+        console.error("Error manually triggering scraper:", error);
+        throw new HttpsError("internal", "An error occurred while triggering the scraper test.");
+    }
+});
+
+/**
  * Triggered by a message on the 'dci-scores-topic'. This function calculates
  * and saves fantasy scores for all active players based on the scraped recap data.
  * (Updated to Firebase Functions v2 syntax)
@@ -673,71 +728,4 @@ exports.processDciScores = onMessagePublished('dci-scores-topic', async (message
     }
 });
 
-/**
- * Calculates all dates for a new LIVE season and updates the game settings.
- * A live season is 10 weeks long.
- */
-async function startNewLiveSeason() {
-    const today = new Date();
-    const year = today.getFullYear();
 
-    // DCI Finals are consistently the second Saturday in August. Let's calculate that.
-    const augustFirst = new Date(year, 7, 1); // 7 = August
-    const dayOfWeek = augustFirst.getDay(); // 0=Sun, 6=Sat
-    // Days to get to the first Saturday
-    const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
-    const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
-    const finalsDate = new Date(firstSaturday.getTime() + 7 * 24 * 60 * 60 * 1000); // Second Saturday
-
-    // Season is 10 weeks long
-    const startDate = new Date(finalsDate.getTime() - 70 * 24 * 60 * 60 * 1000); // 10 weeks * 7 days
-
-    const newSeasonData = {
-        name: `DCI ${year} Live Season`,
-        status: 'live-season',
-        seasonYear: year,
-        currentPointCap: 150, // Or fetch this from another settings doc
-        schedule: {
-            startDate: startDate,
-            endDate: finalsDate,
-            openTradeEndDate: new Date(`${year}-07-01T23:59:59-04:00`),
-            quartersDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 2)),
-            semifinalsDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 1)),
-            finalsDate: finalsDate,
-        }
-    };
-    
-    // TODO: Add logic here to generate the corpsData for the live season.
-    // This would likely read from your `final_rankings` collection for the PREVIOUS year.
-
-    await db.doc('game-settings/season').set(newSeasonData);
-    console.log(`Successfully started the ${newSeasonData.name}.`);
-}
-
-/**
- * Calculates all dates for a new OFF-SEASON and updates the game settings.
- * An off-season is 7 weeks long.
- */
-async function startNewOffSeason() {
-    const startDate = new Date();
-    // Off-season is 7 weeks long
-    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000); // 7 weeks * 7 days
-
-    const newSeasonData = {
-        name: `Off-Season ${startDate.toLocaleString('default', { month: 'long' })} ${startDate.getFullYear()}`,
-        status: 'off-season',
-        currentPointCap: 150,
-        schedule: {
-            startDate: startDate,
-            endDate: endDate
-            // Off-seasons may have simpler trade rules, so fewer dates are needed
-        }
-    };
-
-    // TODO: Add your logic to generate random corpsData for the off-season.
-    // This is where you'd use the logic from `startNewOffSeason` that was triggered
-    // from your admin panel, likely using the `final_rankings` data.
-
-    await db.doc('game-settings/season').set(newSeasonData);
-    console.log(`Successfully started the ${newSeasonData.name}.`);
-}
