@@ -6,12 +6,15 @@ import LiveSeasonScheduler from '../admin/LiveSeasonScheduler';
 import SeasonControls from '../admin/SeasonControls';
 
 const AdminPage = () => {
+    // State for User Role Management
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
+
+    // State for Scraper Test
     const [isScraping, setIsScraping] = useState(false);
     const [scraperMessage, setScraperMessage] = useState('');
-    
+
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
         setIsLoadingRoles(true);
@@ -26,6 +29,7 @@ const AdminPage = () => {
         setIsLoadingRoles(false);
     };
 
+    // Handler function to call the testScraper Cloud Function
     const handleTestScraper = async () => {
         setScraperMessage('Starting scraper test...');
         setIsScraping(true);
@@ -39,10 +43,29 @@ const AdminPage = () => {
         }
         setIsScraping(false);
     };
-    
+
+
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
+            
+            {/* THIS IS THE SECTION THAT USES THE NEW VARIABLES AND HANDLER */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-lg">
+                <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Data & Scoring Tools</h2>
+                <div className="space-y-4">
+                    <p>Manually trigger the backend scraper to fetch the latest scores. This will initiate the `processDciScores` function automatically upon completion.</p>
+                    <div className="flex items-center space-x-4">
+                        <button 
+                            onClick={handleTestScraper} 
+                            disabled={isScraping} 
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                        >
+                            {isScraping ? 'Scraping...' : 'Run Scraper Test'}
+                        </button>
+                        {scraperMessage && <p className="text-sm font-semibold">{scraperMessage}</p>}
+                    </div>
+                </div>
+            </div>
             
             <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Manager</h2>
