@@ -292,11 +292,46 @@ exports.seasonScheduler = onSchedule({
 
 async function scrapeDciScoresLogic() {
     logger.info("Running DCI RECAP scraper...");
-    const urlToScrape = "https://www.dci.org/scores/recap/2025-dci-world-championship-finals/";
+    
+    // --- NEW: List of URLs to try in order ---
+    const urlsToTry = [
+        'https://www.dci.org/scores/recap/2025-dci-world-championship-finals',
+        // A corrected guess for the 2024 recap URL
+        'https://www.dci.org/scores/recap/2024-dci-world-championship-finals',
+        // A known-good, stable URL for the 2023 recap for fallback/testing
+        'https://www.dci.org/scores/recap/2023-dci-world-championship-finals'
+    ];
 
+    let htmlData;
+    let successfulUrl;
+
+    for (const url of urlsToTry) {
+        try {
+            logger.info(`Attempting to scrape URL: ${url}`);
+            const response = await axios.get(url);
+            htmlData = response.data;
+            successfulUrl = url;
+            logger.info(`Successfully fetched data from: ${url}`);
+            break; // Exit the loop on the first successful fetch
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                logger.warn(`URL failed with 404: ${url}. Trying next URL...`);
+                continue; // Go to the next URL in the list
+            } else {
+                // For other errors (not 404), throw them to stop the process
+                logger.error(`An unexpected error occurred trying to fetch ${url}:`, error);
+                throw new Error("Scraping logic failed with a non-404 error.");
+            }
+        }
+    }
+
+    if (!htmlData) {
+        logger.error("All scraper URLs failed. Could not retrieve any data.");
+        throw new Error("All scraper URLs failed.");
+    }
+    
     try {
-        const { data } = await axios.get(urlToScrape);
-        const $ = cheerio.load(data);
+        const $ = cheerio.load(htmlData);
         const scoresData = [];
 
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
@@ -335,7 +370,7 @@ async function scrapeDciScoresLogic() {
         });
 
         if (scoresData.length === 0) {
-            logger.warn("No scores found on recap page. Selectors may need an update.");
+            logger.warn(`No scores found on ${successfulUrl}. Selectors may need an update.`);
             return;
         }
 
@@ -345,9 +380,10 @@ async function scrapeDciScoresLogic() {
         const dataBuffer = Buffer.from(JSON.stringify({ scores: scoresData, eventName: eventName }));
 
         await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
+
     } catch (error) {
-        logger.error("Error during recap scraping or publishing:", error);
-        throw new Error("Scraping logic failed.");
+        logger.error("Error during recap parsing or publishing:", error);
+        throw new Error("Scraping logic failed during parsing phase.");
     }
 }
 
