@@ -14,6 +14,11 @@ const AdminPage = () => {
     // State for Scraper Test
     const [isScraping, setIsScraping] = useState(false);
     const [scraperMessage, setScraperMessage] = useState('');
+    
+    // State for Crawler Test
+    const [isCrawling, setIsCrawling] = useState(false);
+    const [crawlerMessage, setCrawlerMessage] = useState('');
+
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
@@ -44,13 +49,36 @@ const AdminPage = () => {
         setIsScraping(false);
     };
 
+    const handleCrawlAndQueue = async () => {
+    setCrawlerMessage('Starting discovery process...');
+    setIsCrawling(true);
+    try {
+        const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
+        const result = await discoverAndQueueUrls();
+        setCrawlerMessage(result.data.message);
+    } catch (error) {
+        console.error("Error calling crawler function:", error);
+        setCrawlerMessage(`Error: ${error.message}`);
+    }
+    setIsCrawling(false);
+    };
 
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
             {/* THIS IS THE SECTION THAT USES THE NEW VARIABLES AND HANDLER */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-lg">
+            <div className="flex items-center space-x-4">
+    <button 
+        onClick={handleCrawlAndQueue} 
+        disabled={isCrawling} 
+        className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+    >
+        {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
+    </button>
+    {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
+</div>
+<div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Data & Scoring Tools</h2>
                 <div className="space-y-4">
                     <p>Manually trigger the backend scraper to fetch the latest scores. This will initiate the `processDciScores` function automatically upon completion.</p>
@@ -91,6 +119,7 @@ const AdminPage = () => {
                 </div>
             </div>
         </div>
+        
     );
 };
 export default AdminPage;
