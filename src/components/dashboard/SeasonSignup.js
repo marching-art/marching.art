@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, appId, functions } from '../../firebase';
-import { doc, setDoc } from 'firebase/firestore'; 
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
