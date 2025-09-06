@@ -1,10 +1,21 @@
+// In functions/_config.js
+
 const admin = require("firebase-admin");
 
-// Initialize the Firebase Admin SDK
-admin.initializeApp();
+let db; // This will hold our initialized db connection
 
-// Export the initialized services and config variables for other files to use
+const getDb = () => {
+    if (db) {
+        // If db is already initialized, return it
+        return db;
+    }
+    // If not, initialize the app and the database
+    admin.initializeApp();
+    db = admin.firestore();
+    return db;
+};
+
 module.exports = {
-    db: admin.firestore(),
-    appId: "marching-art", // Your project's App ID
+    getDb: getDb,
+    appId: "marching-art",
 };

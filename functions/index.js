@@ -5,7 +5,7 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { PubSub } = require("@google-cloud/pubsub");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { db, appId } = require("./_config");
+const { getDb, appId } = require("./_config"); // UPDATED IMPORT
 
 const pubsubClient = new PubSub();
 
@@ -13,10 +13,6 @@ const pubsubClient = new PubSub();
 //                      EXPORTED CLOUD FUNCTIONS                     //
 // ================================================================= //
 
-/**
- * Manages user roles. Called by an admin from the front-end.
- * NOTE: The logic to set custom claims with the Admin SDK needs to be implemented.
- */
 exports.setUserRole = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -28,9 +24,6 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
     return { success: true, message: `Role change for ${email} processed.` };
 });
 
-/**
- * Manually starts a new Off-Season. Called by an admin.
- */
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -45,9 +38,6 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
     }
 });
 
-/**
- * Validates and saves a user's lineup.
- */
 exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "You must be logged in to save a lineup.");
@@ -55,10 +45,8 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     const { lineup, corpsName } = request.data;
     const uid = request.auth.uid;
     
-    // --- NEW LOGGING ---
     logger.info(`[validateAndSaveLineup] Firing for user: ${uid}`);
     logger.info(`[validateAndSaveLineup] Received corpsName: ${corpsName}`);
-    // --- END NEW LOGGING ---
 
     if (!lineup || Object.keys(lineup).length !== 8) {
         throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
@@ -70,7 +58,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
         throw new HttpsError("invalid-argument", "The lineup is incomplete.");
     }
     
-    const seasonSettingsRef = db.doc("game-settings/season");
+    const seasonSettingsRef = getDb().doc("game-settings/season");
     const seasonDoc = await seasonSettingsRef.get();
     if (!seasonDoc.exists || seasonDoc.data().status === "inactive") {
         throw new HttpsError("failed-precondition", "There is no active season.");
@@ -78,17 +66,15 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     const activeSeasonId = seasonDoc.id;
 
     try {
-        await db.runTransaction(async (transaction) => {
-            // --- NEW LOGGING ---
+        await getDb().runTransaction(async (transaction) => {
             logger.info(`[validateAndSaveLineup] Starting transaction for user: ${uid}`);
-            // --- END NEW LOGGING ---
-            const userProfileRef = db.doc(`artifacts/${appId}/users/${uid}/profile/data`);
+            const userProfileRef = getDb().doc(`artifacts/${appId}/users/${uid}/profile/data`);
             const userProfileDoc = await transaction.get(userProfileRef);
             if (!userProfileDoc.exists) {
                 throw new HttpsError("not-found", "User profile does not exist.");
             }
 
-            const newActiveLineupRef = db.collection("activeLineups").doc(lineupKey);
+            const newActiveLineupRef = getDb().collection("activeLineups").doc(lineupKey);
             const existingLineupDoc = await transaction.get(newActiveLineupRef);
 
             if (existingLineupDoc.exists && existingLineupDoc.data().uid !== uid) {
@@ -97,7 +83,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
 
             const oldLineupKey = userProfileDoc.data().lineupKey;
             if (oldLineupKey && oldLineupKey !== lineupKey) {
-                const oldActiveLineupRef = db.collection("activeLineups").doc(oldLineupKey);
+                const oldActiveLineupRef = getDb().collection("activeLineups").doc(oldLineupKey);
                 transaction.delete(oldActiveLineupRef);
             }
             
@@ -112,18 +98,13 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
                 profileUpdateData.corpsName = corpsName;
             }
 
-            // --- NEW LOGGING ---
             logger.info(`[validateAndSaveLineup] Data to be updated for user ${uid}:`, profileUpdateData);
-            // --- END NEW LOGGING ---
 
             transaction.update(userProfileRef, profileUpdateData);
         });
 
-        // --- NEW LOGGING ---
         logger.info(`[validateAndSaveLineup] Transaction completed successfully for user: ${uid}`);
-        // --- END NEW LOGGING ---
         return { success: true, message: "Lineup saved successfully!" };
-
     } catch (error) {
         logger.error(`[validateAndSaveLineup] Transaction FAILED for user ${uid}:`, error);
         if (error instanceof HttpsError) {
@@ -133,9 +114,6 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     }
 });
 
-/**
- * A manually callable function for testing the scraper logic.
- */
 exports.testScraper = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -149,9 +127,6 @@ exports.testScraper = onCall({ cors: true }, async (request) => {
     }
 });
 
-/**
- * Processes scores published to the 'dci-scores-topic'.
- */
 exports.processDciScores = onMessagePublished("dci-scores-topic", async (message) => {
     logger.info("Received new scores to process.");
     try {
@@ -166,7 +141,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
         const scoreMap = new Map();
         scores.forEach((s) => scoreMap.set(s.corps, s));
         
-        const seasonSettingsRef = db.doc("game-settings/season");
+        const seasonSettingsRef = getDb().doc("game-settings/season");
         const seasonDoc = await seasonSettingsRef.get();
         if (!seasonDoc.exists) {
             logger.error("Cannot process scores: No active season found.");
@@ -174,7 +149,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
         }
         const activeSeasonId = seasonDoc.id;
 
-        const profileCollection = db.collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
+        const profileCollection = getDb().collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
         const playersSnapshot = await profileCollection.get();
 
         if (playersSnapshot.empty) {
@@ -202,7 +177,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
                 }
             }
 
-            const promise = db.runTransaction(async (transaction) => {
+            const promise = getDb().runTransaction(async (transaction) => {
                 const playerProfileRef = playerDoc.ref;
                 const freshPlayerDoc = await transaction.get(playerProfileRef);
                 const freshPlayerData = freshPlayerDoc.data();
@@ -246,19 +221,13 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
     }
 });
 
-/**
- * Scheduled function to run the scraper during the season.
- */
 exports.scrapeDciScores = onSchedule({
-    schedule: "*/30 19-23 * 7,8 6", // Runs every 30 mins from 7pm-11:30pm ET on Saturdays in July/Aug
+    schedule: "*/30 19-23 * 7,8 6",
     timeZone: "America/New_York",
 }, async (_context) => {
     await scrapeDciScoresLogic();
 });
 
-/**
- * Scheduled function to automatically manage season transitions.
- */
 exports.seasonScheduler = onSchedule({
     schedule: "every day 03:00",
     timeZone: "America/New_York",
@@ -266,7 +235,7 @@ exports.seasonScheduler = onSchedule({
     logger.info("Running daily season scheduler...");
     const now = new Date();
 
-    const seasonSettingsRef = db.doc("game-settings/season");
+    const seasonSettingsRef = getDb().doc("game-settings/season");
     const seasonDoc = await seasonSettingsRef.get();
 
     if (!seasonDoc.exists) {
@@ -293,7 +262,7 @@ exports.seasonScheduler = onSchedule({
 
     const today = new Date();
     const currentYear = today.getFullYear();
-    const liveSeasonStartDate = new Date(currentYear, 5, 15); // June 15th
+    const liveSeasonStartDate = new Date(currentYear, 5, 15);
 
     if (seasonData.status === "off-season" && today >= liveSeasonStartDate) {
         logger.info("It's time for the live season! Starting now.");
@@ -304,6 +273,7 @@ exports.seasonScheduler = onSchedule({
     }
 });
 
+
 // ================================================================= //
 //                      INTERNAL HELPER LOGIC                        //
 // ================================================================= //
@@ -311,13 +281,9 @@ exports.seasonScheduler = onSchedule({
 async function scrapeDciScoresLogic() {
     logger.info("Running DCI RECAP scraper...");
     
-    // --- NEW: List of URLs to try in order ---
     const urlsToTry = [
-        'https://www.dci.org/scores/recap/2025-dci-world-championship-finals',
-        // A corrected guess for the 2024 recap URL
-        'https://www.dci.org/scores/recap/2024-dci-world-championship-finals',
-        // A known-good, stable URL for the 2023 recap for fallback/testing
-        'https://www.dci.org/scores/recap/2023-dci-world-championship-finals'
+        'https://www.dci.org/scores/recap/2024-dci-world-championships-finals',
+        'https://www.dci.org/scores/recap/2023-dci-world-championships-finals'
     ];
 
     let htmlData;
@@ -330,13 +296,12 @@ async function scrapeDciScoresLogic() {
             htmlData = response.data;
             successfulUrl = url;
             logger.info(`Successfully fetched data from: ${url}`);
-            break; // Exit the loop on the first successful fetch
+            break;
         } catch (error) {
             if (error.response && error.response.status === 404) {
                 logger.warn(`URL failed with 404: ${url}. Trying next URL...`);
-                continue; // Go to the next URL in the list
+                continue;
             } else {
-                // For other errors (not 404), throw them to stop the process
                 logger.error(`An unexpected error occurred trying to fetch ${url}:`, error);
                 throw new Error("Scraping logic failed with a non-404 error.");
             }
@@ -415,7 +380,6 @@ async function startNewLiveSeason() {
     const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
     const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
     const finalsDate = new Date(firstSaturday.getTime() + 7 * 24 * 60 * 60 * 1000);
-
     const startDate = new Date(finalsDate.getTime() - 70 * 24 * 60 * 60 * 1000);
 
     const newSeasonData = {
@@ -433,17 +397,15 @@ async function startNewLiveSeason() {
         },
     };
     
-    // TODO: Generate the corpsData for the live season from final_rankings.
-    // This is similar to the start of the startNewOffSeason function.
-
-    await db.doc("game-settings/season").set(newSeasonData);
+    // TODO: Generate corpsData for the live season from final_rankings.
+    await getDb().doc("game-settings/season").set(newSeasonData);
     logger.info(`Successfully started the ${newSeasonData.name}.`);
 }
 
 async function startNewOffSeason() {
     logger.info("Generating new off-season...");
 
-    const rankingsQuery = db.collection("final_rankings").orderBy(db.FieldPath.documentId(), "desc").limit(1);
+    const rankingsQuery = getDb().collection("final_rankings").orderBy(getDb().FieldPath.documentId(), "desc").limit(1);
     const rankingsSnapshot = await rankingsQuery.get();
     if (rankingsSnapshot.empty) {
         throw new Error("Cannot start off-season: No final rankings found in the database.");
@@ -453,7 +415,6 @@ async function startNewOffSeason() {
     const sourceYear = latestRankingsDoc.id;
 
     logger.info(`Using final rankings from ${sourceYear} as the source.`);
-
     const shuffledCorps = shuffleArray(sourceCorps.slice(0, 25));
 
     const pointValues = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -466,16 +427,14 @@ async function startNewOffSeason() {
     const seasonName = `Off-Season ${startDate.toLocaleString("default", { month: "long" })} ${startDate.getFullYear()}`;
     const dataDocId = `off-season-${startDate.getFullYear()}-${startDate.getMonth() + 1}`;
     
-    await db.doc(`dci-data/${dataDocId}`).set({
+    await getDb().doc(`dci-data/${dataDocId}`).set({
         corpsValues: offSeasonCorpsData,
         source: `Shuffled from ${sourceYear} rankings`,
         createdAt: startDate,
     });
-
     logger.info(`Saved new corps data to dci-data/${dataDocId}`);
 
     const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000);
-
     const newSeasonSettings = {
         name: seasonName,
         status: "off-season",
@@ -487,17 +446,16 @@ async function startNewOffSeason() {
         },
     };
 
-    await db.doc("game-settings/season").set(newSeasonSettings);
+    await getDb().doc("game-settings/season").set(newSeasonSettings);
     logger.info(`Successfully started the ${seasonName}.`);
 }
 
 function shuffleArray(array) {
-  let currentIndex = array.length, randomIndex;
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-  return array;
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
 }
