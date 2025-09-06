@@ -507,17 +507,15 @@ function shuffleArray(array) {
 exports.discoverAndQueueUrls = onCall({
     cors: true,
     memory: '1GiB',
-    timeoutSeconds: 540,
+    timeoutSeconds: 540, // 9-minute timeout for the entire crawl
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting PAGINATION crawl to discover recap URLs...");
+    logger.info("Starting 3-step crawl for recap URLs...");
     const baseUrl = "https://www.dci.org";
     const baseScoresUrl = `${baseUrl}/scores`;
-    
-    const finalRecapUrls = new Set();
     
     let browser = null;
     try {
@@ -531,24 +529,25 @@ exports.discoverAndQueueUrls = onCall({
 
         const page = await browser.newPage();
         
-        // Step 1: Loop through paginated pages to find "Final Scores" links
+        // --- Step 1: Loop through paginated pages to find "final-scores" links ---
         const finalScoresUrls = new Set();
         let pageno = 1;
         while (true) {
             const currentUrl = `${baseScoresUrl}?pageno=${pageno}`;
             logger.info(`Processing pagination page: ${currentUrl}`);
             
-            await page.goto(currentUrl, { waitUntil: 'domcontentloaded' });
+            await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
             
-            const linksOnPage = await page.$$eval('a[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
+            // Find links with the text "View scores" that point to a final-scores page
+            const linksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
             
             if (linksOnPage.length === 0) {
-                logger.info(`Found no more links on pageno=${pageno}. Ending discovery phase.`);
+                logger.info(`Found no more 'final-scores' links on pageno=${pageno}. Ending discovery.`);
                 break;
             }
             
             linksOnPage.forEach(link => finalScoresUrls.add(link));
-            logger.info(`Found ${linksOnPage.length} final-scores links on page ${pageno}.`);
+            logger.info(`Found ${linksOnPage.length} 'final-scores' links on page ${pageno}.`);
             
             pageno++;
         }
@@ -558,15 +557,16 @@ exports.discoverAndQueueUrls = onCall({
             return { success: true, message: "Completed: Could not find any final-scores pages." };
         }
 
-        // Step 2: Visit each "Final Scores" page to find the Recap links
-        logger.info(`Found ${finalScoresUrls.size} total final-scores pages. Now searching for recap links...`);
+        // --- Step 2: Visit each "final-scores" page to find the final "recap" link ---
+        const finalRecapUrls = new Set();
+        logger.info(`Found ${finalScoresUrls.size} total 'final-scores' pages. Now searching each for a recap link...`);
         for (const finalScoresUrl of finalScoresUrls) {
             try {
-                // --- THIS IS THE UPDATED LINE ---
-                // We changed 'networkidle0' to 'domcontentloaded' and increased the timeout
                 await page.goto(finalScoresUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
                 
-                const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
+                // On the final-scores page, find the single link with the text "View full recap"
+                const recapLinksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/recap/"]', links => links.map(a => a.href));
+                
                 recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
             } catch (error) {
                 logger.warn(`Could not process final-scores page ${finalScoresUrl}. Skipping.`, error.message);
@@ -574,11 +574,11 @@ exports.discoverAndQueueUrls = onCall({
         }
 
         if (finalRecapUrls.size === 0) {
-            logger.warn("Completed crawl, but no recap URLs were found across all pages.");
+            logger.warn("Completed crawl, but no final recap URLs were found.");
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
-        // Step 3: Queue the discovered URLs
+        // --- Step 3: Queue the discovered URLs for scraping ---
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
         const tasksClient = new CloudTasksClient();
