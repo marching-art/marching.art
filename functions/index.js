@@ -506,7 +506,7 @@ function shuffleArray(array) {
 
 exports.discoverAndQueueUrls = onCall({
     cors: true,
-    memory: '1GiB',
+    memory: '2GiB',
     timeoutSeconds: 540,
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
