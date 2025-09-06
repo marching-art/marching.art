@@ -138,6 +138,53 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
             return;
         }
 
+        // --- NEW LOGIC: Transform and Archive the Raw Scraped Data ---
+        try {
+            const eventSlug = eventName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const year = new Date().getFullYear();
+            const docId = `${year}-${eventSlug}`;
+
+            // This map translates our scraped keys to your database keys
+            const captionMap = {
+                GE1: "GE1",
+                GE2: "GE2",
+                VP: "VIS_PROF",
+                VA: "VIS_ANALYSIS",
+                CG: "CG",
+                B: "BRASS", // Assuming 'B' maps to 'BRASS'
+                MA: "MUS_ANALYSIS",
+                P: "PERCUSSION",
+            };
+
+            // Transform the array of scores into an object (map) of corps
+            const corpsMap = scores.reduce((acc, corpsScore) => {
+                const transformedCaptions = {};
+                for (const key in corpsScore.captions) {
+                    const newKey = captionMap[key];
+                    if (newKey) {
+                        transformedCaptions[newKey] = corpsScore.captions[key];
+                    }
+                }
+                acc[corpsScore.corps] = transformedCaptions;
+                return acc;
+            }, {});
+
+            const archiveData = {
+                eventName: eventName,
+                eventDate: new Date(),
+                seasonYear: year,
+                corpses: corpsMap, // Use the 'corpses' key and the transformed map
+                createdAt: new Date(),
+            };
+            
+            await getDb().collection('historical_scores').doc(docId).set(archiveData);
+            logger.info(`Successfully archived raw scores to historical_scores/${docId} with correct formatting.`);
+
+        } catch (archiveError) {
+            logger.error("Failed to archive raw score data:", archiveError);
+        }
+        // --- END NEW LOGIC ---
+
         const scoreMap = new Map();
         scores.forEach((s) => scoreMap.set(s.corps, s));
         
@@ -296,11 +343,11 @@ async function scrapeDciScoresLogic() {
             htmlData = response.data;
             successfulUrl = url;
             logger.info(`Successfully fetched data from: ${url}`);
-            break;
+            break; 
         } catch (error) {
             if (error.response && error.response.status === 404) {
                 logger.warn(`URL failed with 404: ${url}. Trying next URL...`);
-                continue;
+                continue; 
             } else {
                 logger.error(`An unexpected error occurred trying to fetch ${url}:`, error);
                 throw new Error("Scraping logic failed with a non-404 error.");
@@ -326,29 +373,47 @@ async function scrapeDciScoresLogic() {
             const musicSection = $(row).find("td").eq(3);
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
 
-            const getCaptionTotal = (section, index) => {
-                const scoreText = $(section).find("table.main-sec-table").eq(index).find("td.data-total span").first().text().trim();
-                return parseFloat(scoreText);
+            // --- NEW, MORE ROBUST HELPER FUNCTIONS ---
+            const getJudgeScore = (section, judgeIndex) => {
+                const scoreText = section.find('table.data').eq(judgeIndex).find('td').eq(2).find('span').first().text().trim();
+                return parseFloat(scoreText) || 0;
             };
+
+            const getAverageScore = (section, judgeIndexes) => {
+                const scores = [];
+                judgeIndexes.forEach(index => {
+                    const score = getJudgeScore(section, index);
+                    if (score > 0) { // Only include actual scores, not 0s from non-existent judges
+                        scores.push(score);
+                    }
+                });
+
+                if (scores.length === 0) return 0;
+                const sum = scores.reduce((total, current) => total + current, 0);
+                return sum / scores.length;
+            };
+
+            const getCaptionTotal = (section, captionIndex) => {
+                const scoreText = section.find('table.main-sec-table').eq(captionIndex).find('td.data-total span').first().text().trim();
+                return parseFloat(scoreText) || 0;
+            };
+            // --- END NEW HELPER FUNCTIONS ---
 
             const scores = {
                 corps: corpsName,
                 totalScore: totalScore,
                 captions: {
-                    GE: getCaptionTotal(geSection, 0),
+                    GE1: getAverageScore(geSection, [0, 1]), // Average judges at index 0 and 1
+                    GE2: getAverageScore(geSection, [2, 3]), // Average judges at index 2 and 3
                     VP: getCaptionTotal(visualSection, 0),
                     VA: getCaptionTotal(visualSection, 1),
                     CG: getCaptionTotal(visualSection, 2),
                     B: getCaptionTotal(musicSection, 0),
-                    MA: getCaptionTotal(musicSection, 1),
-                    P: getCaptionTotal(musicSection, 2),
-                },
+                    MA: getAverageScore(musicSection, [1, 2]), // Average judges at index 1 and 2
+                    P: getCaptionTotal(musicSection, 3),
+                }
             };
             
-            scores.captions.GE1 = scores.captions.GE / 2;
-            scores.captions.GE2 = scores.captions.GE / 2;
-            delete scores.captions.GE;
-
             scoresData.push(scores);
         });
 
