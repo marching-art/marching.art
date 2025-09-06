@@ -513,9 +513,10 @@ exports.discoverAndQueueUrls = onCall({
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting Puppeteer crawler to discover recap URLs...");
+    logger.info("Starting 3-step discovery of recap URLs...");
     const baseUrl = "https://www.dci.org";
     const mainScoresUrl = `${baseUrl}/scores`;
+    
     const finalRecapUrls = new Set();
     
     let browser = null;
@@ -529,47 +530,48 @@ exports.discoverAndQueueUrls = onCall({
         });
 
         const page = await browser.newPage();
+        
+        // --- Step 1: Find all available years from the main page ---
         await page.goto(mainScoresUrl, { waitUntil: 'networkidle0' });
-
         const years = await page.$$eval('div.score-season div.options div[data-value]', divs =>
             divs.map(div => div.getAttribute('data-value')).filter(year => year && year !== 'All')
         );
-
-        if (years.length === 0) {
-            logger.warn("Could not find any season year values in the dropdown.");
-            return { success: true, message: "Completed: Could not find season years." };
-        }
-
-        logger.info(`Found years to process: ${years.join(', ')}. Now searching each for recaps...`);
-
-        for (const year of years) {
-            logger.info(`Processing year: ${year}...`);
-            await page.click('div.score-season');
-            await page.click(`div.options div[data-value="${year}"]`);
-            
-            // --- NEW, MORE ROBUST WAITING LOGIC ---
-            // Instead of waiting for a specific network request, we will wait for
-            // the content we care about (the recap links) to actually appear on the page.
-            // We give it a long timeout of 60 seconds just in case.
-            try {
-                await page.waitForSelector('a[href*="/scores/recap/"]', { timeout: 60000 });
-            } catch (timeoutError) {
-                logger.warn(`Timed out waiting for recap links for year ${year}. The page might have no recaps. Skipping.`);
-                continue; // Skip to the next year
-            }
-            // --- END OF NEW LOGIC ---
-
-            const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
-            
-            recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
-            logger.info(`Found ${recapLinksOnPage.length} recap links for ${year}.`);
-        }
+        logger.info(`Found years to process: ${years.join(', ')}.`);
         
+        // --- Step 2: Visit each Year page to find "Final Scores" links ---
+        const finalScoresUrls = new Set();
+        for (const year of years) {
+            logger.info(`Navigating to scores for year: ${year}...`);
+            await page.goto(`${mainScoresUrl}?season=${year}`, { waitUntil: 'networkidle0' });
+            
+            const links = await page.$$eval('a[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
+            links.forEach(link => finalScoresUrls.add(link));
+            logger.info(`Found ${links.length} final-scores links for ${year}.`);
+        }
+
+        if (finalScoresUrls.size === 0) {
+            logger.warn("Could not find any final-scores pages to crawl.");
+            return { success: true, message: "Completed: Could not find any final-scores pages." };
+        }
+
+        // --- Step 3: Visit each "Final Scores" page to find the Recap links ---
+        logger.info(`Found ${finalScoresUrls.size} total final-scores pages. Now searching for recap links...`);
+        for (const finalScoresUrl of finalScoresUrls) {
+            try {
+                await page.goto(finalScoresUrl, { waitUntil: 'networkidle0' });
+                const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
+                recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
+            } catch (error) {
+                logger.warn(`Could not process final-scores page ${finalScoresUrl}. Skipping.`, error.message);
+            }
+        }
+
         if (finalRecapUrls.size === 0) {
-            logger.warn("Completed crawl, but no recap URLs were found.");
+            logger.warn("Completed crawl, but no recap URLs were found across all pages.");
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
+        // --- Step 4: Queue the discovered URLs (same as before) ---
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
         const tasksClient = new CloudTasksClient();
