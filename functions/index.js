@@ -46,17 +46,13 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     const uid = request.auth.uid;
     
     logger.info(`[validateAndSaveLineup] Firing for user: ${uid}`);
-    logger.info(`[validateAndSaveLineup] Received corpsName: ${corpsName}`);
-
+    
     if (!lineup || Object.keys(lineup).length !== 8) {
         throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
     }
 
     const lineupValues = Object.values(lineup).sort();
     const lineupKey = lineupValues.join("_");
-    if (lineupValues.length !== 8 || lineupValues.some((val) => !val)) {
-        throw new HttpsError("invalid-argument", "The lineup is incomplete.");
-    }
     
     const seasonSettingsRef = getDb().doc("game-settings/season");
     const seasonDoc = await seasonSettingsRef.get();
@@ -67,7 +63,6 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
 
     try {
         await getDb().runTransaction(async (transaction) => {
-            logger.info(`[validateAndSaveLineup] Starting transaction for user: ${uid}`);
             const userProfileRef = getDb().doc(`artifacts/${appId}/users/${uid}/profile/data`);
             const userProfileDoc = await transaction.get(userProfileRef);
             if (!userProfileDoc.exists) {
@@ -78,7 +73,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
             const existingLineupDoc = await transaction.get(newActiveLineupRef);
 
             if (existingLineupDoc.exists && existingLineupDoc.data().uid !== uid) {
-                throw new HttpsError("already-exists", "This exact lineup has already been claimed by another user. Please change at least one corps.");
+                throw new HttpsError("already-exists", "This exact lineup has already been claimed by another user.");
             }
 
             const oldLineupKey = userProfileDoc.data().lineupKey;
@@ -93,24 +88,16 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
                 lineup: lineup,
                 lineupKey: lineupKey,
                 activeSeasonId: activeSeasonId,
+                corpsName: corpsName,
             };
-            if (corpsName) {
-                profileUpdateData.corpsName = corpsName;
-            }
-
-            logger.info(`[validateAndSaveLineup] Data to be updated for user ${uid}:`, profileUpdateData);
 
             transaction.update(userProfileRef, profileUpdateData);
         });
-
-        logger.info(`[validateAndSaveLineup] Transaction completed successfully for user: ${uid}`);
         return { success: true, message: "Lineup saved successfully!" };
     } catch (error) {
         logger.error(`[validateAndSaveLineup] Transaction FAILED for user ${uid}:`, error);
-        if (error instanceof HttpsError) {
-            throw error;
-        }
-        throw new HttpsError("internal", "An error occurred while saving your lineup. Please try again.");
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError("internal", "An error occurred while saving your lineup.");
     }
 });
 
@@ -119,8 +106,13 @@ exports.testScraper = onCall({ cors: true }, async (request) => {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
     try {
-        await scrapeDciScoresLogic();
-        return { success: true, message: "Scraper test triggered successfully. Check Cloud Function logs for output." };
+        // Define a single, known-good URL for manual testing
+        const testUrl = 'https://www.dci.org/scores/recap/2023-dci-world-championships-finals';
+        
+        // Pass the URL to the logic function
+        await scrapeDciScoresLogic(testUrl);
+
+        return { success: true, message: `Scraper test triggered for ${testUrl}. Check logs for output.` };
     } catch (error) {
         logger.error("Error manually triggering scraper:", error);
         throw new HttpsError("internal", "An error occurred while triggering the scraper test.");
@@ -325,43 +317,19 @@ exports.seasonScheduler = onSchedule({
 //                      INTERNAL HELPER LOGIC                        //
 // ================================================================= //
 
-async function scrapeDciScoresLogic() {
-    logger.info("Running DCI RECAP scraper...");
-    
-    const urlsToTry = [
-        'https://www.dci.org/scores/recap/2024-dci-world-championships-finals',
-        'https://www.dci.org/scores/recap/2023-dci-world-championships-finals'
-    ];
-
-    let htmlData;
-    let successfulUrl;
-
-    for (const url of urlsToTry) {
-        try {
-            logger.info(`Attempting to scrape URL: ${url}`);
-            const response = await axios.get(url);
-            htmlData = response.data;
-            successfulUrl = url;
-            logger.info(`Successfully fetched data from: ${url}`);
-            break; 
-        } catch (error) {
-            if (error.response && error.response.status === 404) {
-                logger.warn(`URL failed with 404: ${url}. Trying next URL...`);
-                continue; 
-            } else {
-                logger.error(`An unexpected error occurred trying to fetch ${url}:`, error);
-                throw new Error("Scraping logic failed with a non-404 error.");
-            }
-        }
-    }
-
-    if (!htmlData) {
-        logger.error("All scraper URLs failed. Could not retrieve any data.");
-        throw new Error("All scraper URLs failed.");
+async function scrapeDciScoresLogic(urlToScrape) {
+    // Check if a URL was provided to the function
+    if (!urlToScrape) {
+        logger.error("scrapeDciScoresLogic was called without a URL.");
+        throw new Error("A URL is required to scrape.");
     }
     
+    logger.info(`Running DCI RECAP scraper on: ${urlToScrape}`);
+
     try {
-        const $ = cheerio.load(htmlData);
+        // This function no longer has a loop; it only processes the single URL it was given.
+        const { data } = await axios.get(urlToScrape);
+        const $ = cheerio.load(data);
         const scoresData = [];
 
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
@@ -373,21 +341,14 @@ async function scrapeDciScoresLogic() {
             const musicSection = $(row).find("td").eq(3);
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
 
-            // --- NEW, MORE ROBUST HELPER FUNCTIONS ---
-            const getJudgeScore = (section, judgeIndex) => {
-                const scoreText = section.find('table.data').eq(judgeIndex).find('td').eq(2).find('span').first().text().trim();
-                return parseFloat(scoreText) || 0;
-            };
-
             const getAverageScore = (section, judgeIndexes) => {
                 const scores = [];
                 judgeIndexes.forEach(index => {
-                    const score = getJudgeScore(section, index);
-                    if (score > 0) { // Only include actual scores, not 0s from non-existent judges
+                    const score = parseFloat(section.find('table.data').eq(index).find('td').eq(2).find('span').first().text().trim()) || 0;
+                    if (score > 0) {
                         scores.push(score);
                     }
                 });
-
                 if (scores.length === 0) return 0;
                 const sum = scores.reduce((total, current) => total + current, 0);
                 return sum / scores.length;
@@ -397,19 +358,18 @@ async function scrapeDciScoresLogic() {
                 const scoreText = section.find('table.main-sec-table').eq(captionIndex).find('td.data-total span').first().text().trim();
                 return parseFloat(scoreText) || 0;
             };
-            // --- END NEW HELPER FUNCTIONS ---
 
             const scores = {
                 corps: corpsName,
                 totalScore: totalScore,
                 captions: {
-                    GE1: getAverageScore(geSection, [0, 1]), // Average judges at index 0 and 1
-                    GE2: getAverageScore(geSection, [2, 3]), // Average judges at index 2 and 3
+                    GE1: getAverageScore(geSection, [0, 1]),
+                    GE2: getAverageScore(geSection, [2, 3]),
                     VP: getCaptionTotal(visualSection, 0),
                     VA: getCaptionTotal(visualSection, 1),
                     CG: getCaptionTotal(visualSection, 2),
                     B: getCaptionTotal(musicSection, 0),
-                    MA: getAverageScore(musicSection, [1, 2]), // Average judges at index 1 and 2
+                    MA: getAverageScore(musicSection, [1, 2]),
                     P: getCaptionTotal(musicSection, 3),
                 }
             };
@@ -418,8 +378,8 @@ async function scrapeDciScoresLogic() {
         });
 
         if (scoresData.length === 0) {
-            logger.warn(`No scores found on ${successfulUrl}. Selectors may need an update.`);
-            return;
+            logger.warn(`No scores found on ${urlToScrape}. Selectors may need an update or page structure is different.`);
+            return; // Return gracefully if no scores are found on the page
         }
 
         logger.info(`Successfully scraped recap for ${scoresData.length} corps. Publishing to Pub/Sub.`);
@@ -430,8 +390,9 @@ async function scrapeDciScoresLogic() {
         await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
 
     } catch (error) {
-        logger.error("Error during recap parsing or publishing:", error);
-        throw new Error("Scraping logic failed during parsing phase.");
+        logger.error(`Error during recap scraping or publishing for URL ${urlToScrape}:`, error);
+        // Re-throw the error so the calling function (testScraper or the worker) knows it failed.
+        throw new Error("Scraping logic failed during processing.");
     }
 }
 
@@ -524,3 +485,103 @@ function shuffleArray(array) {
     }
     return array;
 }
+
+// ================================================================= //
+//                      NEW CRAWLER & WORKER FUNCTIONS               //
+// ================================================================= //
+
+/**
+ * The CRAWLER: An onCall function that finds all recap URLs on the main DCI scores
+ * page and adds them as tasks to a Cloud Tasks queue.
+ */
+exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
+    if (!request.auth || !request.auth.token.admin) {
+        throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+    }
+
+    logger.info("Starting discovery of recap URLs...");
+    const dciScoresUrl = "https://www.dci.org/scores";
+    const recapUrls = new Set(); // Use a Set to avoid duplicate URLs
+
+    try {
+        const { data } = await axios.get(dciScoresUrl);
+        const $ = cheerio.load(data);
+
+        // Find all links and filter for ones that contain '/scores/recap/'
+        $('a').each((_idx, el) => {
+            const href = $(el).attr('href');
+            if (href && href.includes('/scores/recap/')) {
+                // Ensure it's a full URL
+                const fullUrl = new URL(href, dciScoresUrl).href;
+                recapUrls.add(fullUrl);
+            }
+        });
+
+        if (recapUrls.size === 0) {
+            logger.warn("Could not find any recap URLs on the main scores page.");
+            return { success: true, message: "Completed with no URLs found." };
+        }
+
+        logger.info(`Discovered ${recapUrls.size} unique recap URLs. Now queueing tasks...`);
+
+        // Initialize the Cloud Tasks client
+        const tasksClient = new CloudTasksClient();
+        const project = 'marching-art'; // Your project ID
+        const location = 'us-central1';
+        const queue = 'recap-scraper-queue';
+
+        // Get the URL of our worker function
+        // IMPORTANT: Replace 'scrapeSingleRecap' if you name your worker function differently
+        const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
+        
+        const queuePath = tasksClient.queuePath(project, location, queue);
+        
+        const promises = [];
+        recapUrls.forEach(url => {
+            const task = {
+                httpRequest: {
+                    httpMethod: 'POST',
+                    url: workerUrl,
+                    body: Buffer.from(JSON.stringify({ url })).toString('base64'),
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            };
+            promises.push(tasksClient.createTask({ parent: queuePath, task: task }));
+        });
+
+        await Promise.all(promises);
+        
+        logger.info(`Successfully queued ${recapUrls.size} scraping tasks.`);
+        return { success: true, message: `Successfully queued ${recapUrls.size} scraping tasks.` };
+
+    } catch (error) {
+        logger.error("An error occurred during URL discovery and queueing:", error);
+        throw new HttpsError("internal", "Failed to discover and queue URLs.");
+    }
+});
+
+
+/**
+ * The WORKER: An HTTP-triggered function that receives a URL from the Cloud Tasks
+ * queue, scrapes it, and publishes the results to Pub/Sub.
+ */
+exports.scrapeSingleRecap = async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) {
+            logger.error("Worker received a task with no URL.");
+            res.status(400).send("Bad Request: Missing URL in payload.");
+            return;
+        }
+
+        // We reuse our existing scraping logic!
+        await scrapeDciScoresLogic(url);
+
+        // Acknowledge the task was successful
+        res.status(200).send("Successfully processed recap URL.");
+    } catch (error) {
+        logger.error(`Worker failed to process URL: ${req.body.url}`, error);
+        // Tell Cloud Tasks the task failed so it can be retried
+        res.status(500).send("Internal Server Error");
+    }
+};
