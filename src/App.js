@@ -104,7 +104,7 @@ export default function App() {
     const renderPage = () => {
         switch (page) {
             case 'dashboard': 
-                return isLoggedIn ? <DashboardPage profile={profile} /> : <HomePage onSignUpClick={openSignUpModal} />;
+                return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
                 return isLoggedIn ? <ProfilePage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'admin':
