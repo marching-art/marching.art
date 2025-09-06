@@ -124,8 +124,9 @@ exports.testScraper = onCall({ cors: true }, async (request) => {
 exports.processDciScores = onMessagePublished("dci-scores-topic", async (message) => {
     logger.info("Received new scores to process.");
     try {
+        // --- NEW: Destructure eventLocation from the payload ---
         const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
-        const { eventName, scores } = JSON.parse(payloadBuffer);
+        const { eventName, scores, eventLocation } = JSON.parse(payloadBuffer);
 
         if (!scores || scores.length === 0) {
             logger.info("Payload contained no scores. Exiting function.");
@@ -165,14 +166,18 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
 
             const archiveData = {
                 eventName: eventName,
+                eventLocation: eventLocation, // Save the location
                 eventDate: new Date(),
                 seasonYear: year,
-                corpses: corpsMap, // Use the 'corpses' key and the transformed map
+                corpses: scores.reduce((acc, s) => { // This transform logic is correct
+                    acc[s.corps] = s.captions;
+                    return acc;
+                }, {}),
                 createdAt: new Date(),
             };
             
             await getDb().collection('historical_scores').doc(docId).set(archiveData);
-            logger.info(`Successfully archived raw scores to historical_scores/${docId} with correct formatting.`);
+            logger.info(`Successfully archived raw scores to historical_scores/${docId}`);
 
         } catch (archiveError) {
             logger.error("Failed to archive raw score data:", archiveError);
@@ -320,7 +325,6 @@ exports.seasonScheduler = onSchedule({
 // ================================================================= //
 
 async function scrapeDciScoresLogic(urlToScrape) {
-    // Check if a URL was provided to the function
     if (!urlToScrape) {
         logger.error("scrapeDciScoresLogic was called without a URL.");
         throw new Error("A URL is required to scrape.");
@@ -329,7 +333,6 @@ async function scrapeDciScoresLogic(urlToScrape) {
     logger.info(`Running DCI RECAP scraper on: ${urlToScrape}`);
 
     try {
-        // This function no longer has a loop; it only processes the single URL it was given.
         const { data } = await axios.get(urlToScrape);
         const $ = cheerio.load(data);
         const scoresData = [];
@@ -347,9 +350,7 @@ async function scrapeDciScoresLogic(urlToScrape) {
                 const scores = [];
                 judgeIndexes.forEach(index => {
                     const score = parseFloat(section.find('table.data').eq(index).find('td').eq(2).find('span').first().text().trim()) || 0;
-                    if (score > 0) {
-                        scores.push(score);
-                    }
+                    if (score > 0) { scores.push(score); }
                 });
                 if (scores.length === 0) return 0;
                 const sum = scores.reduce((total, current) => total + current, 0);
@@ -380,20 +381,25 @@ async function scrapeDciScoresLogic(urlToScrape) {
         });
 
         if (scoresData.length === 0) {
-            logger.warn(`No scores found on ${urlToScrape}. Selectors may need an update or page structure is different.`);
-            return; // Return gracefully if no scores are found on the page
+            logger.warn(`No scores found on ${urlToScrape}. Selectors may need an update.`);
+            return;
         }
 
         logger.info(`Successfully scraped recap for ${scoresData.length} corps. Publishing to Pub/Sub.`);
         
         const eventName = $("h1.page-title").text().trim() || "DCI Recap Event";
-        const dataBuffer = Buffer.from(JSON.stringify({ scores: scoresData, eventName: eventName }));
+        
+        // --- UPDATED LOCATION SCRAPER LOGIC ---
+        // Find the <p> tag that contains an <svg> element and get its text
+        const eventLocation = $('p:has(svg)').text().trim() || "Unknown Location";
+
+        // Add the location to the data we publish
+        const dataBuffer = Buffer.from(JSON.stringify({ scores: scoresData, eventName, eventLocation }));
 
         await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
 
     } catch (error) {
         logger.error(`Error during recap scraping or publishing for URL ${urlToScrape}:`, error);
-        // Re-throw the error so the calling function (testScraper or the worker) knows it failed.
         throw new Error("Scraping logic failed during processing.");
     }
 }
@@ -514,16 +520,13 @@ exports.discoverAndQueueUrls = onCall({
     
     let browser = null;
     try {
-        // --- THIS IS THE UPDATED BROWSER LAUNCH LOGIC ---
-        // It now uses the new @sparticuz/chromium package
         browser = await puppeteer.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(), // Note the parentheses
+            executablePath: await chromium.executablePath(),
             headless: chromium.headless,
             ignoreHTTPSErrors: true,
         });
-        // --- END OF UPDATED LOGIC ---
 
         const page = await browser.newPage();
         await page.goto(mainScoresUrl, { waitUntil: 'networkidle0' });
@@ -543,8 +546,18 @@ exports.discoverAndQueueUrls = onCall({
             logger.info(`Processing year: ${year}...`);
             await page.click('div.score-season');
             await page.click(`div.options div[data-value="${year}"]`);
-            await page.waitForResponse(response => response.url().includes('/xB_') && response.status() === 200, { timeout: 30000 });
-            await page.waitForTimeout(2000);
+            
+            // --- NEW, MORE ROBUST WAITING LOGIC ---
+            // Instead of waiting for a specific network request, we will wait for
+            // the content we care about (the recap links) to actually appear on the page.
+            // We give it a long timeout of 60 seconds just in case.
+            try {
+                await page.waitForSelector('a[href*="/scores/recap/"]', { timeout: 60000 });
+            } catch (timeoutError) {
+                logger.warn(`Timed out waiting for recap links for year ${year}. The page might have no recaps. Skipping.`);
+                continue; // Skip to the next year
+            }
+            // --- END OF NEW LOGIC ---
 
             const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
             
@@ -559,7 +572,7 @@ exports.discoverAndQueueUrls = onCall({
         
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
-        const tasksClient = new CloudTasksClient(); // Ensure CloudTasksClient is defined at the top of your file
+        const tasksClient = new CloudTasksClient();
         const project = 'marching-art';
         const location = 'us-central1';
         const queue = 'recap-scraper-queue';
