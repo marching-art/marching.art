@@ -494,50 +494,77 @@ function shuffleArray(array) {
  * The CRAWLER: An onCall function that finds all recap URLs on the main DCI scores
  * page and adds them as tasks to a Cloud Tasks queue.
  */
+// In functions/index.js, replace the entire discoverAndQueueUrls function
+
 exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting discovery of recap URLs...");
-    const dciScoresUrl = "https://www.dci.org/scores";
-    const recapUrls = new Set(); // Use a Set to avoid duplicate URLs
+    logger.info("Starting discovery of recap URLs from custom dropdown...");
+    const baseUrl = "https://www.dci.org";
+    const mainScoresUrl = `${baseUrl}/scores`;
+    
+    const finalRecapUrls = new Set();
 
     try {
-        const { data } = await axios.get(dciScoresUrl);
-        const $ = cheerio.load(data);
+        // --- Step 1: Find all available years from the custom dropdown ---
+        const seasonPageUrls = new Set();
+        const { data: mainPageHtml } = await axios.get(mainScoresUrl);
+        const $main = cheerio.load(mainPageHtml);
 
-        // Find all links and filter for ones that contain '/scores/recap/'
-        $('a').each((_idx, el) => {
-            const href = $(el).attr('href');
-            if (href && href.includes('/scores/recap/')) {
-                // Ensure it's a full URL
-                const fullUrl = new URL(href, dciScoresUrl).href;
-                recapUrls.add(fullUrl);
+        // Target the divs with a 'data-value' inside the custom dropdown you found
+        $main('div.score-season div.options div[data-value]').each((_idx, el) => {
+            const year = $main(el).data('value'); // Use .data('value') to get the attribute
+            
+            // Manually construct the season URL, ignoring the "All" option
+            if (year && year !== 'All') {
+                const seasonUrl = `${mainScoresUrl}?season=${year}`;
+                seasonPageUrls.add(seasonUrl);
             }
         });
 
-        if (recapUrls.size === 0) {
-            logger.warn("Could not find any recap URLs on the main scores page.");
-            return { success: true, message: "Completed with no URLs found." };
+        if (seasonPageUrls.size === 0) {
+            logger.warn("Could not find any season year values in the dropdown.");
+            return { success: true, message: "Completed: Could not find season year values in the dropdown." };
         }
 
-        logger.info(`Discovered ${recapUrls.size} unique recap URLs. Now queueing tasks...`);
+        logger.info(`Found ${seasonPageUrls.size} season pages to search. Now finding recaps...`);
 
-        // Initialize the Cloud Tasks client
+        // --- Step 2: Visit each season page and find recap URLs (same as before) ---
+        for (const seasonUrl of seasonPageUrls) {
+            try {
+                const { data: seasonPageHtml } = await axios.get(seasonUrl);
+                const $season = cheerio.load(seasonPageHtml);
+
+                $season('a[href*="/scores/recap/"]').each((_idx, el) => {
+                    const href = $season(el).attr('href');
+                    if (href) {
+                        finalRecapUrls.add(new URL(href, baseUrl).href);
+                    }
+                });
+            } catch (error) {
+                logger.warn(`Could not process season page ${seasonUrl}. Skipping.`, error.message);
+            }
+        }
+        
+        if (finalRecapUrls.size === 0) {
+            logger.warn("Completed crawl, but no recap URLs were found across all season pages.");
+            return { success: true, message: "Completed with no recap URLs found." };
+        }
+
+        logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs. Now queueing tasks...`);
+
+        // --- Step 3: Queue the discovered URLs (same as before) ---
         const tasksClient = new CloudTasksClient();
-        const project = 'marching-art'; // Your project ID
+        const project = 'marching-art';
         const location = 'us-central1';
         const queue = 'recap-scraper-queue';
-
-        // Get the URL of our worker function
-        // IMPORTANT: Replace 'scrapeSingleRecap' if you name your worker function differently
         const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
-        
         const queuePath = tasksClient.queuePath(project, location, queue);
         
         const promises = [];
-        recapUrls.forEach(url => {
+        finalRecapUrls.forEach(url => {
             const task = {
                 httpRequest: {
                     httpMethod: 'POST',
@@ -551,15 +578,14 @@ exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
 
         await Promise.all(promises);
         
-        logger.info(`Successfully queued ${recapUrls.size} scraping tasks.`);
-        return { success: true, message: `Successfully queued ${recapUrls.size} scraping tasks.` };
+        logger.info(`Successfully queued ${finalRecapUrls.size} scraping tasks.`);
+        return { success: true, message: `Successfully queued ${finalRecapUrls.size} scraping tasks.` };
 
     } catch (error) {
         logger.error("An error occurred during URL discovery and queueing:", error);
         throw new HttpsError("internal", "Failed to discover and queue URLs.");
     }
 });
-
 
 /**
  * The WORKER: An HTTP-triggered function that receives a URL from the Cloud Tasks
