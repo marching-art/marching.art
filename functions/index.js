@@ -507,7 +507,7 @@ function shuffleArray(array) {
 exports.discoverAndQueueUrls = onCall({
     cors: true,
     memory: '1GiB',
-    timeoutSeconds: 540, // Increased timeout for potentially long crawl
+    timeoutSeconds: 540,
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -531,21 +531,20 @@ exports.discoverAndQueueUrls = onCall({
 
         const page = await browser.newPage();
         
-        // --- NEW LOGIC: Loop through paginated pages ---
+        // Step 1: Loop through paginated pages to find "Final Scores" links
         const finalScoresUrls = new Set();
         let pageno = 1;
         while (true) {
             const currentUrl = `${baseScoresUrl}?pageno=${pageno}`;
             logger.info(`Processing pagination page: ${currentUrl}`);
             
-            await page.goto(currentUrl, { waitUntil: 'networkidle0' });
+            await page.goto(currentUrl, { waitUntil: 'domcontentloaded' });
             
-            // On each page, find links to the "/final-scores/" pages
             const linksOnPage = await page.$$eval('a[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
             
             if (linksOnPage.length === 0) {
                 logger.info(`Found no more links on pageno=${pageno}. Ending discovery phase.`);
-                break; // This is the exit condition for our loop
+                break;
             }
             
             linksOnPage.forEach(link => finalScoresUrls.add(link));
@@ -553,18 +552,20 @@ exports.discoverAndQueueUrls = onCall({
             
             pageno++;
         }
-        // --- END NEW LOGIC ---
 
         if (finalScoresUrls.size === 0) {
             logger.warn("Could not find any final-scores pages to crawl.");
             return { success: true, message: "Completed: Could not find any final-scores pages." };
         }
 
-        // --- Step 2: Visit each "Final Scores" page to find the Recap links (same as before) ---
+        // Step 2: Visit each "Final Scores" page to find the Recap links
         logger.info(`Found ${finalScoresUrls.size} total final-scores pages. Now searching for recap links...`);
         for (const finalScoresUrl of finalScoresUrls) {
             try {
-                await page.goto(finalScoresUrl, { waitUntil: 'networkidle0' });
+                // --- THIS IS THE UPDATED LINE ---
+                // We changed 'networkidle0' to 'domcontentloaded' and increased the timeout
+                await page.goto(finalScoresUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                
                 const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
                 recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
             } catch (error) {
@@ -577,7 +578,7 @@ exports.discoverAndQueueUrls = onCall({
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
-        // --- Step 3: Queue the discovered URLs (same as before) ---
+        // Step 3: Queue the discovered URLs
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
         const tasksClient = new CloudTasksClient();
