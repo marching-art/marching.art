@@ -6,7 +6,8 @@ const { PubSub } = require("@google-cloud/pubsub");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { getDb, appId } = require("./_config"); // UPDATED IMPORT
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('chrome-aws-lambda');
 
 const pubsubClient = new PubSub();
 
@@ -499,8 +500,8 @@ function shuffleArray(array) {
 
 exports.discoverAndQueueUrls = onCall({
     cors: true,
-    memory: '1GiB',      // Request more memory for the browser
-    timeoutSeconds: 300, // Extend the timeout to 5 minutes
+    memory: '1GiB',      // We still need to request more memory
+    timeoutSeconds: 300, // And a longer timeout
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -513,11 +514,19 @@ exports.discoverAndQueueUrls = onCall({
     
     let browser = null;
     try {
-        browser = await puppeteer.launch({ args: ['--no-sandbox'] }); // Launch the browser
-        const page = await browser.newPage();
-        await page.goto(mainScoresUrl, { waitUntil: 'networkidle0' }); // Wait for page to be interactive
+        // --- THIS IS THE UPDATED BROWSER LAUNCH LOGIC ---
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath,
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+        });
+        // --- END OF UPDATED LOGIC ---
 
-        // Get all available years from the custom dropdown's data-value attribute
+        const page = await browser.newPage();
+        await page.goto(mainScoresUrl, { waitUntil: 'networkidle0' });
+
         const years = await page.$$eval('div.score-season div.options div[data-value]', divs =>
             divs.map(div => div.getAttribute('data-value')).filter(year => year && year !== 'All')
         );
@@ -529,22 +538,14 @@ exports.discoverAndQueueUrls = onCall({
 
         logger.info(`Found years to process: ${years.join(', ')}. Now searching each for recaps...`);
 
-        // Loop through each year, select it, and find the recap links
         for (const year of years) {
             logger.info(`Processing year: ${year}...`);
-            // Click the dropdown to make options visible
             await page.click('div.score-season');
-            // Click the specific year option in the dropdown
             await page.click(`div.options div[data-value="${year}"]`);
-            
-            // Wait for the new scores to load after the click
             await page.waitForResponse(response => response.url().includes('/xB_') && response.status() === 200, { timeout: 30000 });
-            await page.waitForTimeout(2000); // Extra wait for safety
+            await page.waitForTimeout(2000);
 
-            // Get all recap links now visible on the page
-            const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links =>
-                links.map(a => a.href)
-            );
+            const recapLinksOnPage = await page.$$eval('a[href*="/scores/recap/"]', links => links.map(a => a.href));
             
             recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
             logger.info(`Found ${recapLinksOnPage.length} recap links for ${year}.`);
@@ -555,17 +556,39 @@ exports.discoverAndQueueUrls = onCall({
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
-        // --- Queue the discovered URLs (this part is the same as before) ---
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
-        const tasksClient = new CloudTasksClient();
-        // ... (rest of the Cloud Tasks queueing logic is identical to the previous version)
+        
+        const tasksClient = new CloudTasksClient(); // Ensure CloudTasksClient is defined
+        const project = 'marching-art';
+        const location = 'us-central1';
+        const queue = 'recap-scraper-queue';
+        const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
+        const queuePath = tasksClient.queuePath(project, location, queue);
+        
+        const promises = [];
+        finalRecapUrls.forEach(url => {
+            const task = {
+                httpRequest: {
+                    httpMethod: 'POST',
+                    url: workerUrl,
+                    body: Buffer.from(JSON.stringify({ url })).toString('base64'),
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            };
+            promises.push(tasksClient.createTask({ parent: queuePath, task: task }));
+        });
+
+        await Promise.all(promises);
+        
+        logger.info(`Successfully queued ${finalRecapUrls.size} scraping tasks.`);
+        return { success: true, message: `Successfully queued ${finalRecapUrls.size} scraping tasks.` };
 
     } catch (error) {
         logger.error("An error occurred during Puppeteer URL discovery:", error);
         throw new HttpsError("internal", "Failed to discover URLs with Puppeteer.");
     } finally {
         if (browser) {
-            await browser.close(); // IMPORTANT: Always close the browser
+            await browser.close();
         }
     }
 });
