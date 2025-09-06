@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, appId, functions } from '../../firebase';
+import { doc, setDoc } from 'firebase/firestore'; 
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
@@ -46,25 +47,34 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     // Step 2: Save the final lineup and join the season
     const handleJoinSeason = async () => {
-    setIsSaving(true);
-    setMessage('');
-    try {
-        // This is the new part: calling the cloud function
-        const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
-        const result = await validateAndSaveLineup({
-            lineup: lineup,
-            corpsName: corpsName.trim() // Pass the corpsName for the first save
-        });
-        setMessage(result.data.message);
-        // On success, the parent component will re-render and this component will disappear
-        // so we don't need to do anything else.
+        setIsSaving(true);
+        setMessage('');
+        try {
+            const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
+            const result = await validateAndSaveLineup({
+                lineup: lineup,
+                corpsName: corpsName.trim()
+            });
 
-    } catch (error) {
-        console.error("Error joining season:", error);
-        // The error message from our function will be on error.message
-        setMessage(error.message || "An unknown error occurred. Please try again.");
-    }
-    setIsSaving(false);
+            // --- FIX STARTS HERE ---
+            // After the backend successfully validates and saves the lineup,
+            // we update the user's profile on the client-side to ensure
+            // the onSnapshot listener in App.js gets the final, critical update.
+            const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+            await updateDoc(userProfileRef, {
+                activeSeasonId: seasonSettings.id 
+            });
+            // --- FIX ENDS HERE ---
+
+            setMessage(result.data.message);
+            // Now, when the parent re-renders because the profile has been updated,
+            // this component will be correctly replaced by the dashboard.
+
+        } catch (error) {
+            console.error("Error joining season:", error);
+            setMessage(error.message || "An unknown error occurred. Please try again.");
+        }
+        setIsSaving(false);
     };
 
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
