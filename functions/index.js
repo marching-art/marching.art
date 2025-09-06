@@ -507,18 +507,21 @@ function shuffleArray(array) {
 exports.discoverAndQueueUrls = onCall({
     cors: true,
     memory: '1GiB',
-    timeoutSeconds: 540, // 9-minute timeout for the entire crawl
+    timeoutSeconds: 540,
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting 3-step crawl for recap URLs...");
+    logger.info("Starting optimized crawl for recap URLs...");
     const baseUrl = "https://www.dci.org";
     const baseScoresUrl = `${baseUrl}/scores`;
     
+    const finalRecapUrls = new Set();
+    
     let browser = null;
     try {
+        // Step 1: Use Puppeteer for the complex, dynamic pagination pages
         browser = await puppeteer.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
@@ -526,10 +529,8 @@ exports.discoverAndQueueUrls = onCall({
             headless: chromium.headless,
             ignoreHTTPSErrors: true,
         });
-
         const page = await browser.newPage();
         
-        // --- Step 1: Loop through paginated pages to find "final-scores" links ---
         const finalScoresUrls = new Set();
         let pageno = 1;
         while (true) {
@@ -538,10 +539,9 @@ exports.discoverAndQueueUrls = onCall({
             
             await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
             
-            // Find links with the text "View scores" that point to a final-scores page
             const linksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
             
-            if (linksOnPage.length === 0) {
+            if (linksOnPage.length === 0 && pageno > 1) {
                 logger.info(`Found no more 'final-scores' links on pageno=${pageno}. Ending discovery.`);
                 break;
             }
@@ -549,36 +549,41 @@ exports.discoverAndQueueUrls = onCall({
             linksOnPage.forEach(link => finalScoresUrls.add(link));
             logger.info(`Found ${linksOnPage.length} 'final-scores' links on page ${pageno}.`);
             
+            if (pageno > 110) {
+                logger.warn("Reached page 110, stopping crawl as a precaution.");
+                break;
+            }
             pageno++;
         }
+        await browser.close();
 
-        if (finalScoresUrls.size === 0) {
-            logger.warn("Could not find any final-scores pages to crawl.");
-            return { success: true, message: "Completed: Could not find any final-scores pages." };
-        }
-
-        // --- Step 2: Visit each "final-scores" page to find the final "recap" link ---
-        const finalRecapUrls = new Set();
-        logger.info(`Found ${finalScoresUrls.size} total 'final-scores' pages. Now searching each for a recap link...`);
+        // Step 2: Use the much faster axios to check each final-scores page
+        logger.info(`Found ${finalScoresUrls.size} total 'final-scores' pages. Now rapidly searching for recap links...`);
         for (const finalScoresUrl of finalScoresUrls) {
             try {
-                await page.goto(finalScoresUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
+                const $ = cheerio.load(data);
                 
-                // On the final-scores page, find the single link with the text "View full recap"
-                const recapLinksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/recap/"]', links => links.map(a => a.href));
-                
-                recapLinksOnPage.forEach(url => finalRecapUrls.add(url));
+                // --- THIS IS THE CORRECTED LOGIC ---
+                // Use .each() to find and process ALL recap links on the page
+                $('a.arrow-btn[href*="/scores/recap/"]').each((_idx, el) => {
+                    const recapLink = $(el).attr('href');
+                    if (recapLink) {
+                        finalRecapUrls.add(new URL(recapLink, baseUrl).href);
+                    }
+                });
+
             } catch (error) {
-                logger.warn(`Could not process final-scores page ${finalScoresUrl}. Skipping.`, error.message);
+                logger.warn(`Could not process ${finalScoresUrl}. Skipping. Message: ${error.message}`);
             }
         }
 
         if (finalRecapUrls.size === 0) {
-            logger.warn("Completed crawl, but no final recap URLs were found.");
+            logger.warn("Completed crawl, but no recap URLs were found.");
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
-        // --- Step 3: Queue the discovered URLs for scraping ---
+        // Step 3: Queue the discovered URLs
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
         const tasksClient = new CloudTasksClient();
@@ -607,10 +612,10 @@ exports.discoverAndQueueUrls = onCall({
         return { success: true, message: `Successfully queued ${finalRecapUrls.size} scraping tasks.` };
 
     } catch (error) {
-        logger.error("An error occurred during Puppeteer URL discovery:", error);
-        throw new HttpsError("internal", "Failed to discover URLs with Puppeteer.");
+        logger.error("An error occurred during URL discovery:", error);
+        throw new HttpsError("internal", "Failed to discover URLs.");
     } finally {
-        if (browser) {
+        if (browser && browser.process() != null) {
             await browser.close();
         }
     }
