@@ -7,7 +7,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const { getDb, appId } = require("./_config"); // UPDATED IMPORT
 const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
+const chromium = require('@sparticuz/chromium');
 
 const pubsubClient = new PubSub();
 
@@ -500,8 +500,8 @@ function shuffleArray(array) {
 
 exports.discoverAndQueueUrls = onCall({
     cors: true,
-    memory: '1GiB',      // We still need to request more memory
-    timeoutSeconds: 300, // And a longer timeout
+    memory: '1GiB',
+    timeoutSeconds: 300,
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -515,10 +515,11 @@ exports.discoverAndQueueUrls = onCall({
     let browser = null;
     try {
         // --- THIS IS THE UPDATED BROWSER LAUNCH LOGIC ---
+        // It now uses the new @sparticuz/chromium package
         browser = await puppeteer.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
+            executablePath: await chromium.executablePath(), // Note the parentheses
             headless: chromium.headless,
             ignoreHTTPSErrors: true,
         });
@@ -558,7 +559,7 @@ exports.discoverAndQueueUrls = onCall({
         
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
-        const tasksClient = new CloudTasksClient(); // Ensure CloudTasksClient is defined
+        const tasksClient = new CloudTasksClient(); // Ensure CloudTasksClient is defined at the top of your file
         const project = 'marching-art';
         const location = 'us-central1';
         const queue = 'recap-scraper-queue';
