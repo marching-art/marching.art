@@ -507,15 +507,15 @@ function shuffleArray(array) {
 exports.discoverAndQueueUrls = onCall({
     cors: true,
     memory: '1GiB',
-    timeoutSeconds: 300,
+    timeoutSeconds: 540, // Increased timeout for potentially long crawl
 }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting 3-step discovery of recap URLs...");
+    logger.info("Starting PAGINATION crawl to discover recap URLs...");
     const baseUrl = "https://www.dci.org";
-    const mainScoresUrl = `${baseUrl}/scores`;
+    const baseScoresUrl = `${baseUrl}/scores`;
     
     const finalRecapUrls = new Set();
     
@@ -531,30 +531,36 @@ exports.discoverAndQueueUrls = onCall({
 
         const page = await browser.newPage();
         
-        // --- Step 1: Find all available years from the main page ---
-        await page.goto(mainScoresUrl, { waitUntil: 'networkidle0' });
-        const years = await page.$$eval('div.score-season div.options div[data-value]', divs =>
-            divs.map(div => div.getAttribute('data-value')).filter(year => year && year !== 'All')
-        );
-        logger.info(`Found years to process: ${years.join(', ')}.`);
-        
-        // --- Step 2: Visit each Year page to find "Final Scores" links ---
+        // --- NEW LOGIC: Loop through paginated pages ---
         const finalScoresUrls = new Set();
-        for (const year of years) {
-            logger.info(`Navigating to scores for year: ${year}...`);
-            await page.goto(`${mainScoresUrl}?season=${year}`, { waitUntil: 'networkidle0' });
+        let pageno = 1;
+        while (true) {
+            const currentUrl = `${baseScoresUrl}?pageno=${pageno}`;
+            logger.info(`Processing pagination page: ${currentUrl}`);
             
-            const links = await page.$$eval('a[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
-            links.forEach(link => finalScoresUrls.add(link));
-            logger.info(`Found ${links.length} final-scores links for ${year}.`);
+            await page.goto(currentUrl, { waitUntil: 'networkidle0' });
+            
+            // On each page, find links to the "/final-scores/" pages
+            const linksOnPage = await page.$$eval('a[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
+            
+            if (linksOnPage.length === 0) {
+                logger.info(`Found no more links on pageno=${pageno}. Ending discovery phase.`);
+                break; // This is the exit condition for our loop
+            }
+            
+            linksOnPage.forEach(link => finalScoresUrls.add(link));
+            logger.info(`Found ${linksOnPage.length} final-scores links on page ${pageno}.`);
+            
+            pageno++;
         }
+        // --- END NEW LOGIC ---
 
         if (finalScoresUrls.size === 0) {
             logger.warn("Could not find any final-scores pages to crawl.");
             return { success: true, message: "Completed: Could not find any final-scores pages." };
         }
 
-        // --- Step 3: Visit each "Final Scores" page to find the Recap links ---
+        // --- Step 2: Visit each "Final Scores" page to find the Recap links (same as before) ---
         logger.info(`Found ${finalScoresUrls.size} total final-scores pages. Now searching for recap links...`);
         for (const finalScoresUrl of finalScoresUrls) {
             try {
@@ -571,7 +577,7 @@ exports.discoverAndQueueUrls = onCall({
             return { success: true, message: "Completed with no recap URLs found." };
         }
         
-        // --- Step 4: Queue the discovered URLs (same as before) ---
+        // --- Step 3: Queue the discovered URLs (same as before) ---
         logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
         
         const tasksClient = new CloudTasksClient();
