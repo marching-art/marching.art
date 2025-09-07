@@ -439,7 +439,8 @@ async function startNewLiveSeason() {
 async function startNewOffSeason() {
     logger.info("Generating new off-season...");
 
-    const rankingsQuery = getDb().collection("final_rankings").orderBy(getDb().FieldPath.documentId(), "desc").limit(1);
+    const rankingsQuery = getDb().collection("final_rankings").orderBy("__name__", "desc").limit(1);
+    
     const rankingsSnapshot = await rankingsQuery.get();
     if (rankingsSnapshot.empty) {
         throw new Error("Cannot start off-season: No final rankings found in the database.");
@@ -468,7 +469,7 @@ async function startNewOffSeason() {
     });
     logger.info(`Saved new corps data to dci-data/${dataDocId}`);
 
-    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000); // 49 days = 7 weeks
     const newSeasonSettings = {
         name: seasonName,
         status: "off-season",
