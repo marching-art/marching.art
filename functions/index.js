@@ -550,7 +550,12 @@ exports.processPaginationPage = onMessagePublished({
     memory: '2GiB',
     timeoutSeconds: 540,
 }, async (message) => {
-    const { pageno } = message.data.json;
+    // --- FIX STARTS HERE ---
+    // Manually decode the Base64 payload and parse it as JSON.
+    const payloadBuffer = Buffer.from(message.data.message.data, 'base64').toString('utf-8');
+    const { pageno } = JSON.parse(payloadBuffer);
+    // --- FIX ENDS HERE ---
+
     const baseUrl = "https://www.dci.org";
     const currentUrl = `${baseUrl}/scores?pageno=${pageno}`;
     logger.info(`[Paginator] Processing page: ${currentUrl}`);
