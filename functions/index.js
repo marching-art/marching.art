@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { PubSub } = require("@google-cloud/pubsub");
+const { CloudTasksClient } = require("@google-cloud/tasks");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { getDb, appId } = require("./_config"); // UPDATED IMPORT
@@ -10,6 +11,7 @@ const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium');
 
 const pubsubClient = new PubSub();
+const tasksClient = new CloudTasksClient();
 const PAGINATION_TOPIC = "dci-pagination-topic";
 
 // ================================================================= //
@@ -616,8 +618,7 @@ exports.processPaginationPage = onMessagePublished({
 
 async function queueRecapUrlForScraping(url) {
     try {
-        const { CloudTasksClient } = require("@google-cloud/tasks"); // Import client here
-        const tasksClient = new CloudTasksClient();
+        // The CloudTasksClient is now initialized globally, no need to require it here
         const project = 'marching-art';
         const location = 'us-central1';
         const queue = 'recap-scraper-queue';
