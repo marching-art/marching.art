@@ -566,7 +566,7 @@ exports.discoverAndQueueUrls = onCall({
                 const $ = cheerio.load(data);
                 
                 // --- THIS IS THE CORRECTED LOGIC ---
-                // Use .each() to find and process ALL recap links on the page
+                // Use .each() to find and process ALL recap links on the page, not just the .first() one.
                 $('a.arrow-btn[href*="/scores/recap/"]').each((_idx, el) => {
                     const recapLink = $(el).attr('href');
                     if (recapLink) {
