@@ -10,6 +10,7 @@ const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium');
 
 const pubsubClient = new PubSub();
+const PAGINATION_TOPIC = "dci-pagination-topic";
 
 // ================================================================= //
 //                      EXPORTED CLOUD FUNCTIONS                     //
@@ -505,121 +506,18 @@ function shuffleArray(array) {
  */
 // In functions/index.js, replace the entire discoverAndQueueUrls function
 
-exports.discoverAndQueueUrls = onCall({
-    cors: true,
-    memory: '2GiB',
-    timeoutSeconds: 540,
-}, async (request) => {
+exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
 
-    logger.info("Starting optimized crawl for recap URLs...");
-    const baseUrl = "https://www.dci.org";
-    const baseScoresUrl = `${baseUrl}/scores`;
+    logger.info("Kicking off asynchronous discovery process...");
     
-    const finalRecapUrls = new Set();
-    
-    let browser = null;
-    try {
-        // Step 1: Use Puppeteer for the complex, dynamic pagination pages
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
-            ignoreHTTPSErrors: true,
-        });
-        const page = await browser.newPage();
-        
-        const finalScoresUrls = new Set();
-        let pageno = 1;
-        while (true) {
-            const currentUrl = `${baseScoresUrl}?pageno=${pageno}`;
-            logger.info(`Processing pagination page: ${currentUrl}`);
-            
-            await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-            
-            const linksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
-            
-            if (linksOnPage.length === 0 && pageno > 1) {
-                logger.info(`Found no more 'final-scores' links on pageno=${pageno}. Ending discovery.`);
-                break;
-            }
-            
-            linksOnPage.forEach(link => finalScoresUrls.add(link));
-            logger.info(`Found ${linksOnPage.length} 'final-scores' links on page ${pageno}.`);
-            
-            if (pageno > 110) {
-                logger.warn("Reached page 110, stopping crawl as a precaution.");
-                break;
-            }
-            pageno++;
-        }
-        await browser.close();
+    // Publish the first page number to the pagination topic to start the chain.
+    const dataBuffer = Buffer.from(JSON.stringify({ pageno: 1 }));
+    await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: dataBuffer });
 
-        // Step 2: Use the much faster axios to check each final-scores page
-        logger.info(`Found ${finalScoresUrls.size} total 'final-scores' pages. Now rapidly searching for recap links...`);
-        for (const finalScoresUrl of finalScoresUrls) {
-            try {
-                const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
-                const $ = cheerio.load(data);
-                
-                // --- THIS IS THE CORRECTED LOGIC ---
-                // Use .each() to find and process ALL recap links on the page, not just the .first() one.
-                $('a.arrow-btn[href*="/scores/recap/"]').each((_idx, el) => {
-                    const recapLink = $(el).attr('href');
-                    if (recapLink) {
-                        finalRecapUrls.add(new URL(recapLink, baseUrl).href);
-                    }
-                });
-
-            } catch (error) {
-                logger.warn(`Could not process ${finalScoresUrl}. Skipping. Message: ${error.message}`);
-            }
-        }
-
-        if (finalRecapUrls.size === 0) {
-            logger.warn("Completed crawl, but no recap URLs were found.");
-            return { success: true, message: "Completed with no recap URLs found." };
-        }
-        
-        // Step 3: Queue the discovered URLs
-        logger.info(`Discovered ${finalRecapUrls.size} unique recap URLs in total. Now queueing tasks...`);
-        
-        const tasksClient = new CloudTasksClient();
-        const project = 'marching-art';
-        const location = 'us-central1';
-        const queue = 'recap-scraper-queue';
-        const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
-        const queuePath = tasksClient.queuePath(project, location, queue);
-        
-        const promises = [];
-        finalRecapUrls.forEach(url => {
-            const task = {
-                httpRequest: {
-                    httpMethod: 'POST',
-                    url: workerUrl,
-                    body: Buffer.from(JSON.stringify({ url })).toString('base64'),
-                    headers: { 'Content-Type': 'application/json' },
-                },
-            };
-            promises.push(tasksClient.createTask({ parent: queuePath, task: task }));
-        });
-
-        await Promise.all(promises);
-        
-        logger.info(`Successfully queued ${finalRecapUrls.size} scraping tasks.`);
-        return { success: true, message: `Successfully queued ${finalRecapUrls.size} scraping tasks.` };
-
-    } catch (error) {
-        logger.error("An error occurred during URL discovery:", error);
-        throw new HttpsError("internal", "Failed to discover URLs.");
-    } finally {
-        if (browser && browser.process() != null) {
-            await browser.close();
-        }
-    }
+    return { success: true, message: "Asynchronous scraper process initiated. See logs for progress." };
 });
 
 /**
@@ -646,3 +544,93 @@ exports.scrapeSingleRecap = async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 };
+
+exports.processPaginationPage = onMessagePublished({
+    topic: PAGINATION_TOPIC,
+    memory: '2GiB',
+    timeoutSeconds: 540,
+}, async (message) => {
+    const { pageno } = message.data.json;
+    const baseUrl = "https://www.dci.org";
+    const currentUrl = `${baseUrl}/scores?pageno=${pageno}`;
+    logger.info(`[Paginator] Processing page: ${currentUrl}`);
+
+    let browser = null;
+    try {
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+        });
+        const page = await browser.newPage();
+        await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        
+        const linksOnPage = await page.$$eval('a.arrow-btn[href*="/scores/final-scores/"]', anchors => anchors.map(a => a.href));
+        
+        if (linksOnPage.length === 0) {
+            logger.info(`[Paginator] Found no more 'final-scores' links on pageno=${pageno}. Ending discovery chain.`);
+            return;
+        }
+
+        logger.info(`[Paginator] Found ${linksOnPage.length} 'final-scores' links. Queueing them for recap search.`);
+        
+        // Use Axios to quickly find recap links on each final-scores page
+        for (const finalScoresUrl of linksOnPage) {
+            try {
+                const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
+                const $ = cheerio.load(data);
+                
+                $('a.arrow-btn[href*="/scores/recap/"]').each((_idx, el) => {
+                    const recapLink = $(el).attr('href');
+                    if (recapLink) {
+                        const fullUrl = new URL(recapLink, baseUrl).href;
+                        // Instead of adding to a set, directly queue it in Cloud Tasks
+                        queueRecapUrlForScraping(fullUrl);
+                    }
+                });
+            } catch (error) {
+                 logger.warn(`[Paginator] Could not process ${finalScoresUrl}. Skipping. Message: ${error.message}`);
+            }
+        }
+        
+        // Trigger the next page processing
+        const nextDataBuffer = Buffer.from(JSON.stringify({ pageno: pageno + 1 }));
+        await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: nextDataBuffer });
+
+    } catch (error) {
+        logger.error(`[Paginator] Failed to process page ${pageno}:`, error);
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+    }
+});
+
+
+async function queueRecapUrlForScraping(url) {
+    try {
+        const { CloudTasksClient } = require("@google-cloud/tasks"); // Import client here
+        const tasksClient = new CloudTasksClient();
+        const project = 'marching-art';
+        const location = 'us-central1';
+        const queue = 'recap-scraper-queue';
+        const workerUrl = `https://us-central1-${project}.cloudfunctions.net/scrapeSingleRecap`;
+        const queuePath = tasksClient.queuePath(project, location, queue);
+
+        const task = {
+            httpRequest: {
+                httpMethod: 'POST',
+                url: workerUrl,
+                body: Buffer.from(JSON.stringify({ url })).toString('base64'),
+                headers: { 'Content-Type': 'application/json' },
+            },
+        };
+
+        await tasksClient.createTask({ parent: queuePath, task: task });
+        logger.info(`[Queuer] Successfully queued task for URL: ${url}`);
+    } catch (error) {
+        logger.error(`[Queuer] Failed to queue task for URL: ${url}`, error);
+    }
+}
