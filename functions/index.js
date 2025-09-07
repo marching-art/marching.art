@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
@@ -526,7 +526,8 @@ exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
  * The WORKER: An HTTP-triggered function that receives a URL from the Cloud Tasks
  * queue, scrapes it, and publishes the results to Pub/Sub.
  */
-exports.scrapeSingleRecap = async (req, res) => {
+exports.scrapeSingleRecap = onRequest({ cors: true }, async (req, res) => {
+    // The v2 onRequest wrapper handles body parsing, so req.body is already an object.
     try {
         const { url } = req.body;
         if (!url) {
@@ -545,7 +546,7 @@ exports.scrapeSingleRecap = async (req, res) => {
         // Tell Cloud Tasks the task failed so it can be retried
         res.status(500).send("Internal Server Error");
     }
-};
+});
 
 exports.processPaginationPage = onMessagePublished({
     topic: PAGINATION_TOPIC,
