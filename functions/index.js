@@ -256,74 +256,91 @@ async function scrapeDciScoresLogic(urlToScrape) {
         const $ = cheerio.load(data);
         const scoresData = [];
 
-        // --- FINALIZED SELECTORS WITH FALLBACKS ---
-        let eventName = ($('.event-info h2').first().text().trim() ||      // Most common historical format
-                         $('h1.elementor-heading-title').first().text().trim() || // Modern "Elementor" format
-                         "Unknown DCI Event").replace("Official DCI Scores", "").trim();
+        // --- FINALIZED SELECTORS FOR METADATA ---
+        const eventName = $('h1.elementor-heading-title').first().text().trim() || "Unknown DCI Event";
+        const dateLocationDiv = $('div.score-date-location').first();
+        const dateText = dateLocationDiv.find('p').eq(0).text().trim();
+        const locationText = dateLocationDiv.find('p').eq(1).text().trim();
 
         let eventDate = new Date();
-        let eventLocation = "Unknown Location";
+        let eventLocation = locationText || "Unknown Location";
         let year = new Date().getFullYear();
 
-        // Strategy 1: Look for the old ".event-info p" structure
-        const eventInfoP = $('.event-info p').first().text().trim();
-        if (eventInfoP) {
-            const parts = eventInfoP.split(' - ');
-            if (parts.length >= 2) {
-                const dateStr = parts[0].trim();
-                eventLocation = parts[1].trim();
-                const parsedDate = new Date(dateStr);
-                if (!isNaN(parsedDate.getTime())) {
-                    eventDate = parsedDate;
-                    year = eventDate.getFullYear();
-                }
-            }
-        } else {
-            // Strategy 2 (Fallback): Look for the new "div.score-date-location" structure
-            const dateLocationDiv = $('div.score-date-location').first();
-            if (dateLocationDiv.length > 0) {
-                const dateText = dateLocationDiv.find('p').eq(0).text().trim();
-                const locationText = dateLocationDiv.find('p').eq(1).text().trim();
-                eventLocation = locationText || eventLocation;
-                if(dateText) {
-                    const parsedDate = new Date(dateText);
-                    if (!isNaN(parsedDate.getTime())) {
-                        eventDate = parsedDate;
-                        year = eventDate.getFullYear();
-                    }
-                }
+        if (dateText) {
+            const parsedDate = new Date(dateText);
+            if (!isNaN(parsedDate.getTime())) {
+                eventDate = parsedDate;
+                year = eventDate.getFullYear();
             }
         }
         
         logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
-        // --- Score & Caption Scraping (This part is working well) ---
+        // --- ★ NEW DYNAMIC CAPTION SCRAPING LOGIC ★ ---
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
 
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
-            const geSection = $(row).find("td").eq(1);
-            const visualSection = $(row).find("td").eq(2);
-            const musicSection = $(row).find("td").eq(3);
 
-            const getAverageScore = (section, judgeIndexes) => {
-                const scores = [];
-                judgeIndexes.forEach(index => {
-                    const scoreText = section.find('table.data').eq(index).find('td').eq(2).find('span').first().text().trim();
-                    const score = parseFloat(scoreText);
-                    if (!isNaN(score)) scores.push(score);
-                });
-                if (scores.length === 0) return 0;
-                const sum = scores.reduce((total, current) => total + current, 0);
+            // Object to hold all found scores for this corps
+            const captions = { GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0 };
+            
+            const tempScores = {
+                "General Effect 1": [],
+                "General Effect 2": [],
+                "Visual Proficiency": [],
+                "Visual - Analysis": [],
+                "Color Guard": [],
+                "Music - Brass": [],
+                "Music - Analysis": [],
+                "Music - Percussion": [],
+            };
+
+            // Find all GE scores
+            const geScores = $(row).find('td').eq(1).find('table.data');
+            if (geScores.length >= 2) {
+                tempScores["General Effect 1"].push(parseFloat(geScores.eq(0).find('td').eq(2).text().trim()));
+                tempScores["General Effect 1"].push(parseFloat(geScores.eq(1).find('td').eq(2).text().trim()));
+            }
+            if (geScores.length >= 4) {
+                 tempScores["General Effect 2"].push(parseFloat(geScores.eq(2).find('td').eq(2).text().trim()));
+                 tempScores["General Effect 2"].push(parseFloat(geScores.eq(3).find('td').eq(2).text().trim()));
+            }
+
+            // Find all Visual scores
+            const visualScores = $(row).find('td').eq(2).find('table.data');
+            if (visualScores.length >= 1) tempScores["Visual Proficiency"].push(parseFloat(visualScores.eq(0).find('td').eq(2).text().trim()));
+            if (visualScores.length >= 2) tempScores["Visual - Analysis"].push(parseFloat(visualScores.eq(1).find('td').eq(2).text().trim()));
+            if (visualScores.length >= 3) tempScores["Color Guard"].push(parseFloat(visualScores.eq(2).find('td').eq(2).text().trim()));
+           
+            // Find all Music scores
+            const musicScores = $(row).find('td').eq(3).find('table.data');
+            if (musicScores.length >= 1) tempScores["Music - Brass"].push(parseFloat(musicScores.eq(0).find('td').eq(2).text().trim()));
+            if (musicScores.length >= 3) { // MA has two judges
+                tempScores["Music - Analysis"].push(parseFloat(musicScores.eq(1).find('td').eq(2).text().trim()));
+                tempScores["Music - Analysis"].push(parseFloat(musicScores.eq(2).find('td').eq(2).text().trim()));
+            }
+            if (musicScores.length >= 4) tempScores["Music - Percussion"].push(parseFloat(musicScores.eq(3).find('td').eq(2).text().trim()));
+            
+            // --- Process and Average the collected scores ---
+            const processCaption = (captionName) => {
+                const scores = tempScores[captionName].filter(s => !isNaN(s)); // Filter out any NaN values
+                if (!scores || scores.length === 0) return 0;
+                if (scores.length === 1) return scores[0];
+                const sum = scores.reduce((a, b) => a + b, 0);
                 return parseFloat((sum / scores.length).toFixed(3));
             };
-            const getCaptionTotal = (section, captionIndex) => {
-                const scoreText = section.find('table.data').eq(captionIndex).find('td').eq(2).find('span').first().text().trim();
-                return parseFloat(scoreText) || 0;
-            };
 
-            const captions = { GE1: getAverageScore(geSection, [0, 1]), GE2: getAverageScore(geSection, [2, 3]), VP: getCaptionTotal(visualSection, 0), VA: getCaptionTotal(visualSection, 1), CG: getCaptionTotal(visualSection, 2), B:  getCaptionTotal(musicSection, 0), MA: getAverageScore(musicSection, [1, 2]), P:  getCaptionTotal(musicSection, 3) };
+            captions.GE1 = processCaption("General Effect 1");
+            captions.GE2 = processCaption("General Effect 2");
+            captions.VP = processCaption("Visual Proficiency");
+            captions.VA = processCaption("Visual - Analysis");
+            captions.CG = processCaption("Color Guard");
+            captions.B = processCaption("Music - Brass");
+            captions.MA = processCaption("Music - Analysis");
+            captions.P = processCaption("Music - Percussion");
+
             const scoreObject = { corps: corpsName, score: totalScore, captions: captions };
             scoresData.push(scoreObject);
         });
