@@ -256,8 +256,7 @@ async function scrapeDciScoresLogic(urlToScrape) {
         const $ = cheerio.load(data);
         const scoresData = [];
 
-        // --- ★ FIXED SELECTORS FOR METADATA ★ ---
-        // Scope the search to the specific widgets that contain the correct, visible data.
+        // --- CORRECTED SELECTORS FOR METADATA ---
         const eventName = $('div[data-widget_type="theme-post-title.default"] h1.elementor-heading-title').text().trim() || "Unknown DCI Event";
         const dateLocationDiv = $('div[data-widget_type="shortcode.default"] div.score-date-location');
         const dateText = dateLocationDiv.find('p').eq(0).text().trim();
@@ -277,66 +276,74 @@ async function scrapeDciScoresLogic(urlToScrape) {
         
         logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
-        // --- ★ NEW ROBUST & DYNAMIC CAPTION SCRAPING LOGIC ★ ---
-        // This logic now reads caption titles instead of assuming their order.
+        // --- ★ NEW: Parse the table header ONCE to create a caption map ★ ---
+        const headerRow = $('table#effect-table-0 > tbody > tr.table-top');
+        const orderedCaptionTitles = [];
+        headerRow.find('td.type').each((_i, el) => {
+            orderedCaptionTitles.push($(el).text().trim());
+        });
+
+        // --- ★ REVISED DYNAMIC CAPTION SCRAPING LOGIC ★ ---
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
 
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
-
-            const captions = { GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0 };
             
             const tempScores = {
                 "General Effect 1": [],
                 "General Effect 2": [],
                 "Visual Proficiency": [],
-                "Visual Analysis": [], // Corrected from "Visual - Analysis" to match recap sheets
+                "Visual Analysis": [],
                 "Color Guard": [],
-                "Music Brass": [], // Corrected from "Music - Brass"
-                "Music Analysis": [], // Corrected from "Music - Analysis"
-                "Music Percussion": [], // Corrected from "Music - Percussion"
+                "Music Brass": [],
+                "Music Analysis": [],
+                "Music Percussion": [],
             };
             
-            // Helper function to map HTML titles to our tempScores keys
-            const mapCaptionTitle = (title) => {
-                const normalizedTitle = title.replace(/\s-\s/g, ' ').trim();
-                return tempScores[normalizedTitle] ? normalizedTitle : null;
+            // Map DCI's caption names to our internal keys
+            const mapCaptionTitleToKey = (title) => {
+                const normalized = title.replace(/\s-\s/g, ' ').trim();
+                return tempScores.hasOwnProperty(normalized) ? normalized : null;
             };
 
-            // Dynamically find all sub-captions and their scores
-            $(row).find('td > table.main-sec-table').each((_colIndex, mainCatTable) => {
-                $(mainCatTable).find('table.table-head').each((_headIndex, headTable) => {
-                    const captionTitleText = $(headTable).find('td.type').text().trim();
-                    const mappedTitle = mapCaptionTitle(captionTitleText);
-                    
-                    if (mappedTitle) {
-                        const scoreTable = $(headTable).next('table.data');
-                        const score = parseFloat(scoreTable.find('td').eq(2).text().trim());
-                        if (!isNaN(score)) {
-                             tempScores[mappedTitle].push(score);
-                        }
+            // Find all individual score tables for the current corps
+            const scoreTables = $(row).find('table.data');
+
+            // Iterate through the scores and use the ordered header map to identify them
+            scoreTables.each((index, table) => {
+                // The Nth score table in this row corresponds to the Nth caption title from the header
+                const captionTitle = orderedCaptionTitles[index];
+                const mappedTitle = mapCaptionTitleToKey(captionTitle);
+                
+                if (mappedTitle) {
+                    // The actual score is the 3rd sub-cell (index 2) in the score table
+                    const score = parseFloat($(table).find('td').eq(2).text().trim());
+                    if (!isNaN(score)) {
+                        tempScores[mappedTitle].push(score);
                     }
-                });
+                }
             });
 
             // --- Process and Average the collected scores ---
             const processCaption = (captionName) => {
-                const scores = tempScores[captionName].filter(s => !isNaN(s));
+                const scores = tempScores[captionName];
                 if (!scores || scores.length === 0) return 0;
                 if (scores.length === 1) return scores[0];
                 const sum = scores.reduce((a, b) => a + b, 0);
                 return parseFloat((sum / scores.length).toFixed(3));
             };
-
-            captions.GE1 = processCaption("General Effect 1");
-            captions.GE2 = processCaption("General Effect 2");
-            captions.VP = processCaption("Visual Proficiency");
-            captions.VA = processCaption("Visual Analysis");
-            captions.CG = processCaption("Color Guard");
-            captions.B = processCaption("Music Brass");
-            captions.MA = processCaption("Music Analysis");
-            captions.P = processCaption("Music Percussion");
+            
+            const captions = {
+                GE1: processCaption("General Effect 1"),
+                GE2: processCaption("General Effect 2"),
+                VP:  processCaption("Visual Proficiency"),
+                VA:  processCaption("Visual Analysis"),
+                CG:  processCaption("Color Guard"),
+                B:   processCaption("Music Brass"),
+                MA:  processCaption("Music Analysis"),
+                P:   processCaption("Music Percussion"),
+            };
 
             const scoreObject = { corps: corpsName, score: totalScore, captions: captions };
             scoresData.push(scoreObject);
