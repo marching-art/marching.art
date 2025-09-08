@@ -125,149 +125,70 @@ exports.testScraper = onCall({ cors: true }, async (request) => {
 });
 
 exports.processDciScores = onMessagePublished("dci-scores-topic", async (message) => {
-    logger.info("Received new scores to process.");
+    logger.info("Received new historical scores to process.");
     try {
-        // --- NEW: Destructure eventLocation from the payload ---
         const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
-        const { eventName, scores, eventLocation } = JSON.parse(payloadBuffer);
+        const { eventName, scores, eventLocation, eventDate, year } = JSON.parse(payloadBuffer);
 
-        if (!scores || scores.length === 0) {
-            logger.info("Payload contained no scores. Exiting function.");
+        if (!scores || scores.length === 0 || !year) {
+            logger.warn("Payload was missing scores or year. Exiting function.", { eventName, year });
             return;
         }
 
-        // --- NEW LOGIC: Transform and Archive the Raw Scraped Data ---
-        try {
-            const eventSlug = eventName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-            const year = new Date().getFullYear();
-            const docId = `${year}-${eventSlug}`;
+        const docId = year.toString();
+        const yearDocRef = getDb().collection('historical_scores').doc(docId);
 
-            // This map translates our scraped keys to your database keys
-            const captionMap = {
-                GE1: "GE1",
-                GE2: "GE2",
-                VP: "VIS_PROF",
-                VA: "VIS_ANALYSIS",
-                CG: "CG",
-                B: "BRASS", // Assuming 'B' maps to 'BRASS'
-                MA: "MUS_ANALYSIS",
-                P: "PERCUSSION",
-            };
+        // This is the new event object we want to add to our array.
+        // It's structured to match your historical_scores.json file.
+        const newEventData = {
+            eventName: eventName,
+            date: eventDate,
+            location: eventLocation,
+            scores: scores,
+            // You can add headerMap and other fields if they are scraped.
+            // For now, they are omitted for simplicity.
+            headerMap: {}, 
+            offSeasonDay: null 
+        };
 
-            // Transform the array of scores into an object (map) of corps
-            const corpsMap = scores.reduce((acc, corpsScore) => {
-                const transformedCaptions = {};
-                for (const key in corpsScore.captions) {
-                    const newKey = captionMap[key];
-                    if (newKey) {
-                        transformedCaptions[newKey] = corpsScore.captions[key];
-                    }
+        // Use a transaction to safely read, modify, and write the document.
+        // This prevents race conditions if multiple events from the same year are processed at once.
+        await getDb().runTransaction(async (transaction) => {
+            const yearDoc = await transaction.get(yearDocRef);
+
+            if (!yearDoc.exists) {
+                // If the document for the year doesn't exist, create it with the first event.
+                logger.info(`Creating new document for year ${year}.`);
+                transaction.set(yearDocRef, { data: [newEventData] });
+            } else {
+                // If the document exists, append the new event to the 'data' array.
+                const existingData = yearDoc.data().data || [];
+
+                // OPTIONAL: Prevent duplicate entries
+                const eventExists = existingData.some(event => 
+                    event.eventName === newEventData.eventName && event.date === newEventData.date
+                );
+
+                if (eventExists) {
+                    logger.warn(`Event "${newEventData.eventName}" on ${newEventData.date} already exists for year ${year}. Skipping.`);
+                    return; // Exit the transaction
                 }
-                acc[corpsScore.corps] = transformedCaptions;
-                return acc;
-            }, {});
 
-            const archiveData = {
-                eventName: eventName,
-                eventLocation: eventLocation, // Save the location
-                eventDate: new Date(),
-                seasonYear: year,
-                corpses: scores.reduce((acc, s) => { // This transform logic is correct
-                    acc[s.corps] = s.captions;
-                    return acc;
-                }, {}),
-                createdAt: new Date(),
-            };
-            
-            await getDb().collection('historical_scores').doc(docId).set(archiveData);
-            logger.info(`Successfully archived raw scores to historical_scores/${docId}`);
-
-        } catch (archiveError) {
-            logger.error("Failed to archive raw score data:", archiveError);
-        }
-        // --- END NEW LOGIC ---
-
-        const scoreMap = new Map();
-        scores.forEach((s) => scoreMap.set(s.corps, s));
-        
-        const seasonSettingsRef = getDb().doc("game-settings/season");
-        const seasonDoc = await seasonSettingsRef.get();
-        if (!seasonDoc.exists) {
-            logger.error("Cannot process scores: No active season found.");
-            return;
-        }
-        const activeSeasonId = seasonDoc.id;
-
-        const profileCollection = getDb().collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
-        const playersSnapshot = await profileCollection.get();
-
-        if (playersSnapshot.empty) {
-            logger.info("No active players in this season to score.");
-            return;
-        }
-        
-        logger.info(`Found ${playersSnapshot.size} players to score for event: ${eventName}.`);
-        
-        const promises = [];
-        playersSnapshot.forEach((playerDoc) => {
-            const playerData = playerDoc.data();
-            const playerLineup = playerData.lineup;
-
-            if (!playerLineup) return;
-
-            let fantasyScore = 0;
-            
-            for (const caption in playerLineup) {
-                const selectedCorps = playerLineup[caption];
-                const corpsScores = scoreMap.get(selectedCorps);
-                
-                if (corpsScores && corpsScores.captions[caption]) {
-                    fantasyScore += corpsScores.captions[caption];
-                }
+                const updatedData = [...existingData, newEventData];
+                logger.info(`Appending new event to document for year ${year}. Total events: ${updatedData.length}`);
+                transaction.update(yearDocRef, { data: updatedData });
             }
-
-            const promise = getDb().runTransaction(async (transaction) => {
-                const playerProfileRef = playerDoc.ref;
-                const freshPlayerDoc = await transaction.get(playerProfileRef);
-                const freshPlayerData = freshPlayerDoc.data();
-
-                const seasons = freshPlayerData.seasons || [];
-                const seasonIndex = seasons.findIndex((s) => s.name === seasonDoc.data().name);
-
-                const newEvent = {
-                    eventName: eventName,
-                    score: parseFloat(fantasyScore.toFixed(3)),
-                    date: new Date(),
-                };
-                
-                if (seasonIndex > -1) {
-                    seasons[seasonIndex].events = [...(seasons[seasonIndex].events || []), newEvent];
-                } else {
-                    seasons.push({
-                        name: seasonDoc.data().name,
-                        showTitle: "New Season",
-                        repertoire: "TBD",
-                        type: seasonDoc.data().status.startsWith("live") ? "Live" : "Off",
-                        events: [newEvent],
-                    });
-                }
-                
-                const newTotalScore = (freshPlayerData.totalSeasonScore || 0) + newEvent.score;
-                
-                transaction.update(playerProfileRef, {
-                    seasons: seasons,
-                    totalSeasonScore: newTotalScore,
-                });
-            });
-
-            promises.push(promise);
         });
 
-        await Promise.all(promises);
-        logger.info("Successfully processed and saved scores for all players.");
+        logger.info(`Successfully processed and archived scores to historical_scores/${docId}`);
+
     } catch (error) {
-        logger.error("Error processing scores:", error);
+        logger.error("Error processing and archiving historical scores:", error);
     }
+    
+    // NOTE: The logic for updating player fantasy scores has been removed from this function.
+    // It is best practice to separate concerns. This function now ONLY handles archiving historical data.
+    // If you need to score players based on these historical events, you should create a separate system.
 });
 
 exports.scrapeDciScores = onSchedule({
@@ -340,70 +261,118 @@ async function scrapeDciScoresLogic(urlToScrape) {
         const $ = cheerio.load(data);
         const scoresData = [];
 
+        // --- Event Detail Scraping ---
+        const eventName = $('h2.event-name').text().trim() || $('h1.page-title').text().trim() || "Unknown DCI Event";
+        const locationAndDateString = $('p.location-date').text().trim();
+
+        let eventDate = new Date();
+        let eventLocation = "Unknown Location";
+        let year = eventDate.getFullYear();
+
+        if (locationAndDateString) {
+            const parts = locationAndDateString.split('|').map(p => p.trim());
+            if (parts.length >= 2) {
+                eventDate = new Date(parts[0]);
+                eventLocation = parts[1];
+                if (!isNaN(eventDate.getTime())) {
+                    year = eventDate.getFullYear();
+                }
+            } else {
+                eventLocation = locationAndDateString;
+            }
+        }
+        
+        logger.info(`Scraped details: Name='${eventName}', Date='${eventDate.toISOString()}', Location='${eventLocation}', Year='${year}'`);
+        
+        // --- Header Mapping (to find which columns belong to which caption) ---
+        const captionMap = {};
+        const headerRow = $("table#effect-table-0 > tbody > tr.table-top");
+
+        // Dynamically map captions to their column groups
+        const mainHeaders = headerRow.find('td > table.main-sec-table');
+        mainHeaders.each((sectionIndex, sectionEl) => {
+            const subHeaders = $(sectionEl).find('td > table.table-head');
+            subHeaders.each((subIndex, subEl) => {
+                const captionType = $(subEl).find('td.type').text().trim();
+                const key = `${sectionIndex}-${subIndex}`;
+                captionMap[key] = captionType;
+            });
+        });
+
+        // --- Main Scoring Logic ---
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
 
-            const geSection = $(row).find("td").eq(1);
-            const visualSection = $(row).find("td").eq(2);
-            const musicSection = $(row).find("td").eq(3);
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
 
-            const getAverageScore = (section, judgeIndexes) => {
-                const scores = [];
-                judgeIndexes.forEach(index => {
-                    const score = parseFloat(section.find('table.data').eq(index).find('td').eq(2).find('span').first().text().trim()) || 0;
-                    if (score > 0) { scores.push(score); }
+            const captions = { GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0 };
+            const tempScores = {}; // Temporary object to hold scores before averaging
+
+            $(row).find('td > table.main-sec-table').each((sectionIndex, sectionEl) => {
+                $(sectionEl).find('td > table.data').each((subIndex, subEl) => {
+                    const captionKey = `${sectionIndex}-${subIndex}`;
+                    const captionType = captionMap[captionKey];
+                    if (!captionType) return;
+                    
+                    const scoreText = $(subEl).find('td').eq(2).find('span').first().text().trim();
+                    const score = parseFloat(scoreText) || 0;
+
+                    if (!tempScores[captionType]) {
+                        tempScores[captionType] = [];
+                    }
+                    tempScores[captionType].push(score);
                 });
-                if (scores.length === 0) return 0;
-                const sum = scores.reduce((total, current) => total + current, 0);
-                return sum / scores.length;
+            });
+
+            // --- Process and Average the collected scores ---
+            const processCaption = (captionName) => {
+                const scores = tempScores[captionName];
+                if (!scores || scores.length === 0) return 0;
+                if (scores.length === 1) return scores[0];
+                const sum = scores.reduce((a, b) => a + b, 0);
+                return parseFloat((sum / scores.length).toFixed(3));
             };
 
-            const getCaptionTotal = (section, captionIndex) => {
-                const scoreText = section.find('table.main-sec-table').eq(captionIndex).find('td.data-total span').first().text().trim();
-                return parseFloat(scoreText) || 0;
-            };
+            captions.GE1 = processCaption("General Effect 1");
+            captions.GE2 = processCaption("General Effect 2");
+            captions.VP = processCaption("Visual Proficiency");
+            captions.VA = processCaption("Visual - Analysis");
+            captions.CG = processCaption("Color Guard");
+            captions.B = processCaption("Music - Brass");
+            captions.MA = processCaption("Music - Analysis");
+            captions.P = processCaption("Music - Percussion");
 
-            const scores = {
+            const scoreObject = {
                 corps: corpsName,
-                totalScore: totalScore,
-                captions: {
-                    GE1: getAverageScore(geSection, [0, 1]),
-                    GE2: getAverageScore(geSection, [2, 3]),
-                    VP: getCaptionTotal(visualSection, 0),
-                    VA: getCaptionTotal(visualSection, 1),
-                    CG: getCaptionTotal(visualSection, 2),
-                    B: getCaptionTotal(musicSection, 0),
-                    MA: getAverageScore(musicSection, [1, 2]),
-                    P: getCaptionTotal(musicSection, 3),
-                }
+                score: totalScore,
+                captions: captions
             };
             
-            scoresData.push(scores);
+            scoresData.push(scoreObject);
         });
 
         if (scoresData.length === 0) {
-            logger.warn(`No scores found on ${urlToScrape}. Selectors may need an update.`);
+            logger.warn(`No scores found on ${urlToScrape}. Check your selectors.`);
             return;
         }
 
-        logger.info(`Successfully scraped recap for ${scoresData.length} corps. Publishing to Pub/Sub.`);
+        logger.info(`Successfully scraped recap for ${scoresData.length} corps from ${eventName}. Publishing to Pub/Sub.`);
         
-        const eventName = $("h1.page-title").text().trim() || "DCI Recap Event";
-        
-        // --- UPDATED LOCATION SCRAPER LOGIC ---
-        // Find the <p> tag that contains an <svg> element and get its text
-        const eventLocation = $('p:has(svg)').text().trim() || "Unknown Location";
-
-        // Add the location to the data we publish
-        const dataBuffer = Buffer.from(JSON.stringify({ scores: scoresData, eventName, eventLocation }));
+        const payload = {
+            scores: scoresData,
+            eventName,
+            eventLocation,
+            eventDate: eventDate.toISOString(),
+            year
+        };
+        const dataBuffer = Buffer.from(JSON.stringify(payload));
 
         await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
 
     } catch (error) {
         logger.error(`Error during recap scraping or publishing for URL ${urlToScrape}:`, error);
-        throw new Error("Scraping logic failed during processing.");
+        throw new Error(`Scraping logic failed for ${urlToScrape}.`);
     }
 }
 
