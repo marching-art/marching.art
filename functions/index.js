@@ -137,41 +137,36 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
 
         const docId = year.toString();
         const yearDocRef = getDb().collection('historical_scores').doc(docId);
+        
+        // --- NEW: Calculate offSeasonDay using our helper function ---
+        const parsedEventDate = new Date(eventDate);
+        const offSeasonDay = calculateOffSeasonDay(parsedEventDate, year);
 
-        // This is the new event object we want to add to our array.
-        // It's structured to match your historical_scores.json file.
         const newEventData = {
             eventName: eventName,
             date: eventDate,
             location: eventLocation,
             scores: scores,
-            // You can add headerMap and other fields if they are scraped.
-            // For now, they are omitted for simplicity.
-            headerMap: {}, 
-            offSeasonDay: null 
+            headerMap: {},
+            offSeasonDay: offSeasonDay // Use the calculated value here
         };
 
-        // Use a transaction to safely read, modify, and write the document.
-        // This prevents race conditions if multiple events from the same year are processed at once.
         await getDb().runTransaction(async (transaction) => {
             const yearDoc = await transaction.get(yearDocRef);
 
             if (!yearDoc.exists) {
-                // If the document for the year doesn't exist, create it with the first event.
                 logger.info(`Creating new document for year ${year}.`);
                 transaction.set(yearDocRef, { data: [newEventData] });
             } else {
-                // If the document exists, append the new event to the 'data' array.
                 const existingData = yearDoc.data().data || [];
 
-                // OPTIONAL: Prevent duplicate entries
                 const eventExists = existingData.some(event => 
-                    event.eventName === newEventData.eventName && event.date === newEventData.date
+                    event.eventName === newEventData.eventName && new Date(event.date).getTime() === new Date(newEventData.date).getTime()
                 );
 
                 if (eventExists) {
                     logger.warn(`Event "${newEventData.eventName}" on ${newEventData.date} already exists for year ${year}. Skipping.`);
-                    return; // Exit the transaction
+                    return;
                 }
 
                 const updatedData = [...existingData, newEventData];
@@ -180,15 +175,11 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
             }
         });
 
-        logger.info(`Successfully processed and archived scores to historical_scores/${docId}`);
+        logger.info(`Successfully processed and archived scores to historical_scores/${docId} with offSeasonDay: ${offSeasonDay}`);
 
     } catch (error) {
         logger.error("Error processing and archiving historical scores:", error);
     }
-    
-    // NOTE: The logic for updating player fantasy scores has been removed from this function.
-    // It is best practice to separate concerns. This function now ONLY handles archiving historical data.
-    // If you need to score players based on these historical events, you should create a separate system.
 });
 
 exports.scrapeDciScores = onSchedule({
@@ -465,6 +456,48 @@ function shuffleArray(array) {
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
     return array;
+}
+
+/**
+ * Calculates the off-season day (1-49) for a given event date.
+ * Day 49 is defined as the second Saturday in August of the event's year.
+ * @param {Date} eventDate The date of the drum corps event.
+ * @param {number} year The four-digit year of the event.
+ * @return {number|null} The off-season day (1-49) or null if outside the season.
+ */
+function calculateOffSeasonDay(eventDate, year) {
+    if (!eventDate || isNaN(eventDate.getTime())) {
+        return null; // Cannot calculate without a valid date
+    }
+
+    // --- Step 1: Find the second Saturday in August for the given year ---
+    const firstOfAugust = new Date(Date.UTC(year, 7, 1)); // Month is 0-indexed, 7 = August
+    const dayOfWeek = firstOfAugust.getUTCDay(); // 0=Sunday, 6=Saturday
+
+    // Days to add to the 1st to get to the first Saturday
+    const daysUntilFirstSaturday = (6 - dayOfWeek + 7) % 7;
+    const firstSaturdayDate = 1 + daysUntilFirstSaturday;
+    
+    // The second Saturday is 7 days after the first one
+    const finalsDateUTC = new Date(Date.UTC(year, 7, firstSaturdayDate + 7));
+
+    // --- Step 2: Determine the 49-day season window ---
+    const seasonEndDate = new Date(finalsDateUTC);
+    const seasonStartDate = new Date(finalsDateUTC.getTime() - 48 * 24 * 60 * 60 * 1000);
+
+    // --- Step 3: Check if the event is within the window ---
+    // Normalize eventDate to UTC start of day for accurate comparison
+    const eventDateUTC = new Date(Date.UTC(eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate()));
+    
+    if (eventDateUTC < seasonStartDate || eventDateUTC > seasonEndDate) {
+        return null; // Event is outside the 49-day off-season window
+    }
+
+    // --- Step 4: Calculate the specific off-season day ---
+    const diffInMillis = eventDateUTC.getTime() - seasonStartDate.getTime();
+    const diffInDays = Math.round(diffInMillis / (1000 * 60 * 60 * 24));
+    
+    return diffInDays + 1; // Return the day number (1 to 49)
 }
 
 // ================================================================= //
