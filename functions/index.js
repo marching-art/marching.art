@@ -256,9 +256,10 @@ async function scrapeDciScoresLogic(urlToScrape) {
         const $ = cheerio.load(data);
         const scoresData = [];
 
-        // --- FINALIZED SELECTORS FOR METADATA ---
-        const eventName = $('h1.elementor-heading-title').first().text().trim() || "Unknown DCI Event";
-        const dateLocationDiv = $('div.score-date-location').first();
+        // --- ★ FIXED SELECTORS FOR METADATA ★ ---
+        // Scope the search to the specific widgets that contain the correct, visible data.
+        const eventName = $('div[data-widget_type="theme-post-title.default"] h1.elementor-heading-title').text().trim() || "Unknown DCI Event";
+        const dateLocationDiv = $('div[data-widget_type="shortcode.default"] div.score-date-location');
         const dateText = dateLocationDiv.find('p').eq(0).text().trim();
         const locationText = dateLocationDiv.find('p').eq(1).text().trim();
 
@@ -276,56 +277,52 @@ async function scrapeDciScoresLogic(urlToScrape) {
         
         logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
-        // --- ★ NEW DYNAMIC CAPTION SCRAPING LOGIC ★ ---
+        // --- ★ NEW ROBUST & DYNAMIC CAPTION SCRAPING LOGIC ★ ---
+        // This logic now reads caption titles instead of assuming their order.
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
 
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
 
-            // Object to hold all found scores for this corps
             const captions = { GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0 };
             
             const tempScores = {
                 "General Effect 1": [],
                 "General Effect 2": [],
                 "Visual Proficiency": [],
-                "Visual - Analysis": [],
+                "Visual Analysis": [], // Corrected from "Visual - Analysis" to match recap sheets
                 "Color Guard": [],
-                "Music - Brass": [],
-                "Music - Analysis": [],
-                "Music - Percussion": [],
+                "Music Brass": [], // Corrected from "Music - Brass"
+                "Music Analysis": [], // Corrected from "Music - Analysis"
+                "Music Percussion": [], // Corrected from "Music - Percussion"
+            };
+            
+            // Helper function to map HTML titles to our tempScores keys
+            const mapCaptionTitle = (title) => {
+                const normalizedTitle = title.replace(/\s-\s/g, ' ').trim();
+                return tempScores[normalizedTitle] ? normalizedTitle : null;
             };
 
-            // Find all GE scores
-            const geScores = $(row).find('td').eq(1).find('table.data');
-            if (geScores.length >= 2) {
-                tempScores["General Effect 1"].push(parseFloat(geScores.eq(0).find('td').eq(2).text().trim()));
-                tempScores["General Effect 1"].push(parseFloat(geScores.eq(1).find('td').eq(2).text().trim()));
-            }
-            if (geScores.length >= 4) {
-                 tempScores["General Effect 2"].push(parseFloat(geScores.eq(2).find('td').eq(2).text().trim()));
-                 tempScores["General Effect 2"].push(parseFloat(geScores.eq(3).find('td').eq(2).text().trim()));
-            }
+            // Dynamically find all sub-captions and their scores
+            $(row).find('td > table.main-sec-table').each((_colIndex, mainCatTable) => {
+                $(mainCatTable).find('table.table-head').each((_headIndex, headTable) => {
+                    const captionTitleText = $(headTable).find('td.type').text().trim();
+                    const mappedTitle = mapCaptionTitle(captionTitleText);
+                    
+                    if (mappedTitle) {
+                        const scoreTable = $(headTable).next('table.data');
+                        const score = parseFloat(scoreTable.find('td').eq(2).text().trim());
+                        if (!isNaN(score)) {
+                             tempScores[mappedTitle].push(score);
+                        }
+                    }
+                });
+            });
 
-            // Find all Visual scores
-            const visualScores = $(row).find('td').eq(2).find('table.data');
-            if (visualScores.length >= 1) tempScores["Visual Proficiency"].push(parseFloat(visualScores.eq(0).find('td').eq(2).text().trim()));
-            if (visualScores.length >= 2) tempScores["Visual - Analysis"].push(parseFloat(visualScores.eq(1).find('td').eq(2).text().trim()));
-            if (visualScores.length >= 3) tempScores["Color Guard"].push(parseFloat(visualScores.eq(2).find('td').eq(2).text().trim()));
-           
-            // Find all Music scores
-            const musicScores = $(row).find('td').eq(3).find('table.data');
-            if (musicScores.length >= 1) tempScores["Music - Brass"].push(parseFloat(musicScores.eq(0).find('td').eq(2).text().trim()));
-            if (musicScores.length >= 3) { // MA has two judges
-                tempScores["Music - Analysis"].push(parseFloat(musicScores.eq(1).find('td').eq(2).text().trim()));
-                tempScores["Music - Analysis"].push(parseFloat(musicScores.eq(2).find('td').eq(2).text().trim()));
-            }
-            if (musicScores.length >= 4) tempScores["Music - Percussion"].push(parseFloat(musicScores.eq(3).find('td').eq(2).text().trim()));
-            
             // --- Process and Average the collected scores ---
             const processCaption = (captionName) => {
-                const scores = tempScores[captionName].filter(s => !isNaN(s)); // Filter out any NaN values
+                const scores = tempScores[captionName].filter(s => !isNaN(s));
                 if (!scores || scores.length === 0) return 0;
                 if (scores.length === 1) return scores[0];
                 const sum = scores.reduce((a, b) => a + b, 0);
@@ -335,11 +332,11 @@ async function scrapeDciScoresLogic(urlToScrape) {
             captions.GE1 = processCaption("General Effect 1");
             captions.GE2 = processCaption("General Effect 2");
             captions.VP = processCaption("Visual Proficiency");
-            captions.VA = processCaption("Visual - Analysis");
+            captions.VA = processCaption("Visual Analysis");
             captions.CG = processCaption("Color Guard");
-            captions.B = processCaption("Music - Brass");
-            captions.MA = processCaption("Music - Analysis");
-            captions.P = processCaption("Music - Percussion");
+            captions.B = processCaption("Music Brass");
+            captions.MA = processCaption("Music Analysis");
+            captions.P = processCaption("Music Percussion");
 
             const scoreObject = { corps: corpsName, score: totalScore, captions: captions };
             scoresData.push(scoreObject);
