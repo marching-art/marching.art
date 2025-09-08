@@ -246,7 +246,6 @@ exports.seasonScheduler = onSchedule({
 
 async function scrapeDciScoresLogic(urlToScrape) {
     logger.info(`[scrapeDciScoresLogic] Starting for URL: ${urlToScrape}`);
-
     if (!urlToScrape) {
         logger.error("[scrapeDciScoresLogic] Critical error: No URL provided.");
         throw new Error("A URL is required to scrape.");
@@ -255,118 +254,92 @@ async function scrapeDciScoresLogic(urlToScrape) {
     try {
         const { data } = await axios.get(urlToScrape);
         const $ = cheerio.load(data);
-        
-        // --- FINALIZED SELECTORS ---
-        // These are based on the confirmed HTML structure.
-        const eventName = $('h1.elementor-heading-title').text().trim() || "Unknown DCI Event";
-        
-        const dateLocationDiv = $('div.score-date-location').first(); // Use .first() to ensure we only get one
-        const dateText = dateLocationDiv.find('p').eq(0).text().trim();
-        const locationText = dateLocationDiv.find('p').eq(1).text().trim();
+        const scoresData = [];
+
+        // --- FINALIZED SELECTORS WITH FALLBACKS ---
+        let eventName = ($('.event-info h2').first().text().trim() ||      // Most common historical format
+                         $('h1.elementor-heading-title').first().text().trim() || // Modern "Elementor" format
+                         "Unknown DCI Event").replace("Official DCI Scores", "").trim();
 
         let eventDate = new Date();
-        let eventLocation = locationText || "Unknown Location";
+        let eventLocation = "Unknown Location";
         let year = new Date().getFullYear();
 
-        if (dateText) {
-            const parsedDate = new Date(dateText);
-            if (!isNaN(parsedDate.getTime())) {
-                eventDate = parsedDate;
-                year = eventDate.getFullYear();
+        // Strategy 1: Look for the old ".event-info p" structure
+        const eventInfoP = $('.event-info p').first().text().trim();
+        if (eventInfoP) {
+            const parts = eventInfoP.split(' - ');
+            if (parts.length >= 2) {
+                const dateStr = parts[0].trim();
+                eventLocation = parts[1].trim();
+                const parsedDate = new Date(dateStr);
+                if (!isNaN(parsedDate.getTime())) {
+                    eventDate = parsedDate;
+                    year = eventDate.getFullYear();
+                }
+            }
+        } else {
+            // Strategy 2 (Fallback): Look for the new "div.score-date-location" structure
+            const dateLocationDiv = $('div.score-date-location').first();
+            if (dateLocationDiv.length > 0) {
+                const dateText = dateLocationDiv.find('p').eq(0).text().trim();
+                const locationText = dateLocationDiv.find('p').eq(1).text().trim();
+                eventLocation = locationText || eventLocation;
+                if(dateText) {
+                    const parsedDate = new Date(dateText);
+                    if (!isNaN(parsedDate.getTime())) {
+                        eventDate = parsedDate;
+                        year = eventDate.getFullYear();
+                    }
+                }
             }
         }
         
         logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
-        // --- Header Mapping (to find which columns belong to which caption) ---
-        const captionMap = {};
-        const headerRow = $("table#effect-table-0 > tbody > tr.table-top");
-
-        // Dynamically map captions to their column groups
-        const mainHeaders = headerRow.find('td > table.main-sec-table');
-        mainHeaders.each((sectionIndex, sectionEl) => {
-            const subHeaders = $(sectionEl).find('td > table.table-head');
-            subHeaders.each((subIndex, subEl) => {
-                const captionType = $(subEl).find('td.type').text().trim();
-                const key = `${sectionIndex}-${subIndex}`;
-                captionMap[key] = captionType;
-            });
-        });
-
-        // --- Main Scoring Logic ---
+        // --- Score & Caption Scraping (This part is working well) ---
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
 
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
+            const geSection = $(row).find("td").eq(1);
+            const visualSection = $(row).find("td").eq(2);
+            const musicSection = $(row).find("td").eq(3);
 
-            const captions = { GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0 };
-            const tempScores = {}; // Temporary object to hold scores before averaging
-
-            $(row).find('td > table.main-sec-table').each((sectionIndex, sectionEl) => {
-                $(sectionEl).find('td > table.data').each((subIndex, subEl) => {
-                    const captionKey = `${sectionIndex}-${subIndex}`;
-                    const captionType = captionMap[captionKey];
-                    if (!captionType) return;
-                    
-                    const scoreText = $(subEl).find('td').eq(2).find('span').first().text().trim();
-                    const score = parseFloat(scoreText) || 0;
-
-                    if (!tempScores[captionType]) {
-                        tempScores[captionType] = [];
-                    }
-                    tempScores[captionType].push(score);
+            const getAverageScore = (section, judgeIndexes) => {
+                const scores = [];
+                judgeIndexes.forEach(index => {
+                    const scoreText = section.find('table.data').eq(index).find('td').eq(2).find('span').first().text().trim();
+                    const score = parseFloat(scoreText);
+                    if (!isNaN(score)) scores.push(score);
                 });
-            });
-
-            // --- Process and Average the collected scores ---
-            const processCaption = (captionName) => {
-                const scores = tempScores[captionName];
-                if (!scores || scores.length === 0) return 0;
-                if (scores.length === 1) return scores[0];
-                const sum = scores.reduce((a, b) => a + b, 0);
+                if (scores.length === 0) return 0;
+                const sum = scores.reduce((total, current) => total + current, 0);
                 return parseFloat((sum / scores.length).toFixed(3));
             };
-
-            captions.GE1 = processCaption("General Effect 1");
-            captions.GE2 = processCaption("General Effect 2");
-            captions.VP = processCaption("Visual Proficiency");
-            captions.VA = processCaption("Visual - Analysis");
-            captions.CG = processCaption("Color Guard");
-            captions.B = processCaption("Music - Brass");
-            captions.MA = processCaption("Music - Analysis");
-            captions.P = processCaption("Music - Percussion");
-
-            const scoreObject = {
-                corps: corpsName,
-                score: totalScore,
-                captions: captions
+            const getCaptionTotal = (section, captionIndex) => {
+                const scoreText = section.find('table.data').eq(captionIndex).find('td').eq(2).find('span').first().text().trim();
+                return parseFloat(scoreText) || 0;
             };
-            
+
+            const captions = { GE1: getAverageScore(geSection, [0, 1]), GE2: getAverageScore(geSection, [2, 3]), VP: getCaptionTotal(visualSection, 0), VA: getCaptionTotal(visualSection, 1), CG: getCaptionTotal(visualSection, 2), B:  getCaptionTotal(musicSection, 0), MA: getAverageScore(musicSection, [1, 2]), P:  getCaptionTotal(musicSection, 3) };
+            const scoreObject = { corps: corpsName, score: totalScore, captions: captions };
             scoresData.push(scoreObject);
         });
 
         if (scoresData.length === 0) {
-            logger.warn(`No scores found on ${urlToScrape}. Check your selectors.`);
+            logger.warn(`No scores found on ${urlToScrape}.`);
             return;
         }
 
-        logger.info(`Successfully scraped recap for ${scoresData.length} corps from ${eventName}. Publishing to Pub/Sub.`);
-        
-        const payload = {
-            scores: scoresData,
-            eventName,
-            eventLocation,
-            eventDate: eventDate.toISOString(),
-            year
-        };
+        const payload = { scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year };
         const dataBuffer = Buffer.from(JSON.stringify(payload));
-
         await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
+        logger.info(`Successfully published ${scoresData.length} corps scores from ${eventName}.`);
 
     } catch (error) {
-        logger.error(`Error during recap scraping or publishing for URL ${urlToScrape}:`, error);
-        throw new Error(`Scraping logic failed for ${urlToScrape}.`);
+        logger.error(`[scrapeDciScoresLogic] CRITICAL ERROR for URL ${urlToScrape}:`, error);
     }
 }
 
