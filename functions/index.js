@@ -18,6 +18,11 @@ const PAGINATION_TOPIC = "dci-pagination-topic";
 //                      EXPORTED CLOUD FUNCTIONS                     //
 // ================================================================= //
 
+exports.helloWorld = onRequest({ cors: true }, (req, res) => {
+    logger.info("Hello Logs!", { structuredData: true });
+    res.send("Hello from Firebase! Check your Cloud Function logs.");
+});
+
 exports.setUserRole = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
@@ -240,40 +245,38 @@ exports.seasonScheduler = onSchedule({
 // ================================================================= //
 
 async function scrapeDciScoresLogic(urlToScrape) {
+    logger.info(`[scrapeDciScoresLogic] Starting for URL: ${urlToScrape}`);
+
     if (!urlToScrape) {
-        logger.error("scrapeDciScoresLogic was called without a URL.");
+        logger.error("[scrapeDciScoresLogic] Critical error: No URL provided.");
         throw new Error("A URL is required to scrape.");
     }
     
-    logger.info(`Running DCI RECAP scraper on: ${urlToScrape}`);
-
     try {
         const { data } = await axios.get(urlToScrape);
         const $ = cheerio.load(data);
-        const scoresData = [];
-
-        // --- Event Detail Scraping ---
-        const eventName = $('h2.event-name').text().trim() || $('h1.page-title').text().trim() || "Unknown DCI Event";
-        const locationAndDateString = $('p.location-date').text().trim();
+        
+        // --- FINALIZED SELECTORS ---
+        // These are based on the confirmed HTML structure.
+        const eventName = $('h1.elementor-heading-title').text().trim() || "Unknown DCI Event";
+        
+        const dateLocationDiv = $('div.score-date-location').first(); // Use .first() to ensure we only get one
+        const dateText = dateLocationDiv.find('p').eq(0).text().trim();
+        const locationText = dateLocationDiv.find('p').eq(1).text().trim();
 
         let eventDate = new Date();
-        let eventLocation = "Unknown Location";
-        let year = eventDate.getFullYear();
+        let eventLocation = locationText || "Unknown Location";
+        let year = new Date().getFullYear();
 
-        if (locationAndDateString) {
-            const parts = locationAndDateString.split('|').map(p => p.trim());
-            if (parts.length >= 2) {
-                eventDate = new Date(parts[0]);
-                eventLocation = parts[1];
-                if (!isNaN(eventDate.getTime())) {
-                    year = eventDate.getFullYear();
-                }
-            } else {
-                eventLocation = locationAndDateString;
+        if (dateText) {
+            const parsedDate = new Date(dateText);
+            if (!isNaN(parsedDate.getTime())) {
+                eventDate = parsedDate;
+                year = eventDate.getFullYear();
             }
         }
         
-        logger.info(`Scraped details: Name='${eventName}', Date='${eventDate.toISOString()}', Location='${eventLocation}', Year='${year}'`);
+        logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
         // --- Header Mapping (to find which columns belong to which caption) ---
         const captionMap = {};
