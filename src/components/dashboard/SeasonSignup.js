@@ -55,7 +55,6 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                 corpsName: corpsName.trim()
             });
 
-            // --- FIX STARTS HERE ---
             // After the backend successfully validates and saves the lineup,
             // we update the user's profile on the client-side to ensure
             // the onSnapshot listener in App.js gets the final, critical update.
@@ -63,7 +62,6 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
             await updateDoc(userProfileRef, {
                 activeSeasonId: seasonSettings.id 
             });
-            // --- FIX ENDS HERE ---
 
             setMessage(result.data.message);
             // Now, when the parent re-renders because the profile has been updated,
@@ -124,9 +122,10 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                             className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
                         >
                             <option value="">-- Select a Corps --</option>
-                                {corpsData.map(corps => (
+                            {corpsData.map(corps => (
                                 <option key={`${corps.corpsName}-${corps.sourceYear}`} value={corps.corpsName}>
-                                {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts </option>
+                                    {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
+                                </option>
                             ))}
                         </select>
                     </div>
