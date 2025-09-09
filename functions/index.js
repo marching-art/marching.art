@@ -756,13 +756,13 @@ async function generateOffSeasonSchedule(seasonLength) {
     };
     
     // 3. Place mandatory and special shows first
-    findAndSetShow(28, "DCI Mid-America", "Murfreesboro, Tennessee", true);
-    findAndSetShow(47, "Quarterfinals", "College Park, Maryland", true);
+    findAndSetShow(28, "DCI Southwestern Championship", true);
+    findAndSetShow(47, "DCI World Championship Prelims", true);
     // Semis and Finals are special cases handled by scoring logic, not user selection. We still add them to the schedule.
-    findAndSetShow(48, "Semi-Finals", "College Park, Maryland", true);
-    findAndSetShow(49, "Finals", "College Park, Maryland", true);
+    findAndSetShow(48, "DCI World Championship Semifinals", true);
+    findAndSetShow(49, "DCI World Championship Finals", true);
 
-    const dciEastShow = (showsByDay.get(41) || []).find(s => s.eventName.includes("DCI East"));
+    const dciEastShow = (showsByDay.get(41) || []).find(s => s.eventName.includes("DCI Eastern Classic"));
     if (dciEastShow) {
         if (41 <= seasonLength) schedule[40].shows = [{ ...dciEastShow, mandatory: false }];
         if (42 <= seasonLength) schedule[41].shows = [{ ...dciEastShow, mandatory: false }];
