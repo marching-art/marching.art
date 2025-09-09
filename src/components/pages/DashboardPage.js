@@ -6,23 +6,21 @@ import { db } from '../../firebase';
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LineupEditor from '../dashboard/LineupEditor';
 import Leaderboard from '../dashboard/Leaderboard';
+import ShowSelection from '../dashboard/ShowSelection'; // NEW IMPORT
 
-const DashboardPage = ({ profile, userId }) => { // Accept userId as a prop
+const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
-    const [corpsData, setCorpsData] = useState([]); // State for the corps list
+    const [corpsData, setCorpsData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const seasonSettingsRef = doc(db, 'game-settings', 'season');
         
-        // This listener fetches season settings and then fetches the corps data
         const unsubscribe = onSnapshot(seasonSettingsRef, async (docSnap) => {
             if (docSnap.exists()) {
                 const settings = { id: docSnap.id, ...docSnap.data() };
                 setSeasonSettings(settings);
 
-                // --- NEW LOGIC ---
-                // Once we have the settings, use the dataDocId to fetch the corps list
                 if (settings.dataDocId) {
                     const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
                     const corpsDocSnap = await getDoc(corpsDataRef);
@@ -33,8 +31,6 @@ const DashboardPage = ({ profile, userId }) => { // Accept userId as a prop
                         setCorpsData([]);
                     }
                 }
-                // --- END NEW LOGIC ---
-
             } else {
                 setSeasonSettings(null);
             }
@@ -47,7 +43,6 @@ const DashboardPage = ({ profile, userId }) => { // Accept userId as a prop
         return () => unsubscribe();
     }, []);
 
-    // Updated loading state to be more robust
     if (isLoading || !seasonSettings) {
         return (
             <div className="text-center">
@@ -59,23 +54,39 @@ const DashboardPage = ({ profile, userId }) => { // Accept userId as a prop
     // Check if the user has joined the current season
     const hasJoinedCurrentSeason = profile?.activeSeasonId === seasonSettings.id;
 
+    // Calculate the current day of the off-season
+    const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
+    let currentOffSeasonDay = 0;
+    if (seasonStartDate) {
+        const diff = new Date().getTime() - seasonStartDate.getTime();
+        currentOffSeasonDay = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+    }
+
     return (
         <div>
             {hasJoinedCurrentSeason ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <LineupEditor 
-                        profile={profile} 
-                        corpsData={corpsData} // Pass the fetched corps data
-                        pointCap={seasonSettings.currentPointCap}
+                    <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                         <LineupEditor 
+                            profile={profile} 
+                            corpsData={corpsData}
+                            pointCap={seasonSettings.currentPointCap}
+                        />
+                        <Leaderboard />
+                    </div>
+                    {/* NEW: ShowSelection component takes up the full width below */}
+                    <ShowSelection 
+                        seasonEvents={seasonSettings.events || []}
+                        profile={profile}
+                        currentOffSeasonDay={currentOffSeasonDay}
                     />
-                    <Leaderboard />
                 </div>
             ) : (
                 <SeasonSignup
                     profile={profile}
-                    userId={userId} // Pass the userId prop down
+                    userId={userId}
                     seasonSettings={seasonSettings}
-                    corpsData={corpsData} // Pass the fetched corps data
+                    corpsData={corpsData}
                 />
             )}
         </div>
