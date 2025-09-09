@@ -104,8 +104,9 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
                             className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
                         >
                             <option value="">-- Select a Corps --</option>
-                            {corpsData.map(corps => (
-                                <option key={corps.corpsName} value={corps.corpsName}>{corps.corpsName} ({corps.points})</option>
+                                {corpsData.map(corps => (
+                                <option key={`${corps.corpsName}-${corps.sourceYear}`} value={corps.corpsName}>
+                                {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts </option>
                             ))}
                         </select>
                     </div>
