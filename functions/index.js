@@ -580,62 +580,89 @@ async function startNewLiveSeason() {
 }
 
 async function startNewOffSeason() {
-    logger.info("Generating new off-season...");
+    logger.info("Generating new off-season with CORRECT rank-based point logic...");
     const db = getDb();
-    
-    // --- 1. Fetch ALL final rankings to create a diverse pool of corps ---
+
+    // --- 1. Fetch all final rankings and group corps by their point value ---
     const rankingsSnapshot = await db.collection("final_rankings").get();
     if (rankingsSnapshot.empty) {
-        throw new Error("Cannot start off-season: No final rankings found in the database.");
+        throw new Error("Cannot start off-season: No final rankings found.");
     }
 
-    const allCorpsByYear = new Map();
-    const uniqueCorpsNames = new Set();
-    
+    const pointsMap = new Map();
+    const allCorpsList = [];
+
     rankingsSnapshot.forEach(doc => {
         const year = doc.id;
-        const corpsData = doc.data().data;
+        const corpsData = doc.data().data || [];
         corpsData.forEach(corps => {
-            uniqueCorpsNames.add(corps.corps);
-            if (!allCorpsByYear.has(corps.corps)) {
-                allCorpsByYear.set(corps.corps, []);
+            const pointValue = corps.points;
+            const entry = {
+                corpsName: corps.corps,
+                sourceYear: year,
+                points: pointValue
+            };
+
+            if (!pointsMap.has(pointValue)) {
+                pointsMap.set(pointValue, []);
             }
-            allCorpsByYear.get(corps.corps).push(year);
+            pointsMap.get(pointValue).push(entry);
+            allCorpsList.push(entry);
         });
     });
 
-    // --- 2. Create a randomized list of 25 unique corps ---
-    const shuffledUniqueCorps = shuffleArray(Array.from(uniqueCorpsNames));
-    const selectedCorpsNames = shuffledUniqueCorps.slice(0, 25);
+    // --- 2. Select one unique corps for each point value from 25 down to 1 ---
+    const offSeasonCorpsData = [];
+    const usedCorpsNames = new Set();
+    const shuffledAllCorps = shuffleArray(allCorpsList); // For fallback picks
 
-    // --- 3. Assign points and a random source year to each selected corps ---
-    const pointValues = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-    const offSeasonCorpsData = selectedCorpsNames.map((corpsName, index) => {
-        const availableYears = allCorpsByYear.get(corpsName);
-        const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
-        return {
-            corpsName: corpsName,
-            sourceYear: randomYear, // Store the year for UI display
-            points: pointValues[index]
-        };
-    });
+    for (let points = 25; points >= 1; points--) {
+        let candidates = pointsMap.get(points) || [];
+        let chosenCorps = null;
+
+        if (candidates.length > 0) {
+            // Shuffle candidates to randomize which corps is picked for this point value
+            candidates = shuffleArray(candidates);
+            // Find the first one that hasn't been used yet
+            chosenCorps = candidates.find(c => !usedCorpsNames.has(c.corpsName));
+        }
+
+        // --- Fallback Logic ---
+        // If no unused corps is found for the current point value (e.g., all 22-point corps
+        // were already picked for higher slots), find the best available substitute.
+        if (!chosenCorps) {
+            const fallback = shuffledAllCorps.find(c => !usedCorpsNames.has(c.corpsName));
+            if (fallback) {
+                chosenCorps = { ...fallback, points: points }; // Assign the current loop's point value
+            }
+        }
+        
+        if (chosenCorps) {
+            offSeasonCorpsData.push({
+                corpsName: chosenCorps.corpsName,
+                sourceYear: chosenCorps.sourceYear,
+                points: chosenCorps.points,
+            });
+            usedCorpsNames.add(chosenCorps.corpsName);
+        }
+    }
     
-    // --- 4. Generate the 49-day schedule for this season ---
+    // --- 3. Generate the 49-day schedule (logic unchanged) ---
     const schedule = await generateOffSeasonSchedule();
     
-    // --- 5. Save the new season data ---
+    // --- 4. Save the new season data (logic unchanged) ---
     const startDate = new Date();
     const seasonName = `Off-Season ${startDate.toLocaleString("default", { month: "long" })} ${startDate.getFullYear()}`;
     const dataDocId = `off-season-${startDate.getFullYear()}-${startDate.getMonth() + 1}`;
     
     await db.doc(`dci-data/${dataDocId}`).set({
         corpsValues: offSeasonCorpsData,
-        source: `Randomly generated from all available ranking years.`,
+        source: `Generated from historical rankings with rank-based point selection.`,
         createdAt: Timestamp.fromDate(startDate),
     });
     logger.info(`Saved new corps data to dci-data/${dataDocId}`);
 
-    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000); // 49 days = 7 weeks
+    const endDate = new Date(startDate.getTime() + 49 * 24 * 60 * 60 * 1000);
     const newSeasonSettings = {
         name: seasonName,
         status: "off-season",
@@ -645,11 +672,11 @@ async function startNewOffSeason() {
             startDate: Timestamp.fromDate(startDate),
             endDate: Timestamp.fromDate(endDate),
         },
-        events: schedule // The newly generated schedule
+        events: schedule
     };
 
     await db.doc("game-settings/season").set(newSeasonSettings);
-    logger.info(`Successfully started the ${seasonName} with a 49-day schedule.`);
+    logger.info(`Successfully started the ${seasonName} with a 49-day schedule and logical points.`);
 }
 
 
