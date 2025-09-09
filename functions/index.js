@@ -6,9 +6,10 @@ const { PubSub } = require("@google-cloud/pubsub");
 const { CloudTasksClient } = require("@google-cloud/tasks");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { getDb, appId } = require("./_config"); // UPDATED IMPORT
+const { getDb, appId } = require("./_config");
 const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium');
+const { Timestamp } = require('firebase-admin/firestore'); // Import Timestamp
 
 const pubsubClient = new PubSub();
 const tasksClient = new CloudTasksClient();
@@ -239,6 +240,188 @@ exports.seasonScheduler = onSchedule({
     }
 });
 
+exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
+    if (!request.auth || !request.auth.token.admin) {
+        throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+    }
+    try {
+        logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new off-season.`);
+        await startNewOffSeason();
+        return { success: true, message: "A new off-season has been started successfully." };
+    } catch (error) {
+        logger.error("Error manually starting new off-season:", error);
+        throw new HttpsError("internal", "An error occurred while starting the season.");
+    }
+});
+
+
+exports.seasonScheduler = onSchedule({
+    schedule: "every day 03:00",
+    timeZone: "America/New_York",
+}, async (_context) => {
+    logger.info("Running daily season scheduler...");
+    const now = new Date();
+
+    const seasonSettingsRef = getDb().doc("game-settings/season");
+    const seasonDoc = await seasonSettingsRef.get();
+
+    if (!seasonDoc.exists) {
+        logger.info("No season document found. Starting first off-season.");
+        await startNewOffSeason();
+        return;
+    }
+
+    const seasonData = seasonDoc.data();
+    if (!seasonData.schedule || !seasonData.schedule.endDate) {
+        logger.warn("Season doc is malformed. Starting new off-season to correct.");
+        await startNewOffSeason();
+        return;
+    }
+    
+    // Ensure endDate is a Date object
+    const seasonEndDate = seasonData.schedule.endDate.toDate ? seasonData.schedule.endDate.toDate() : new Date(seasonData.schedule.endDate);
+
+    if (now < seasonEndDate) {
+        logger.info(`Current season (${seasonData.name}) is active. No action taken.`);
+        return;
+    }
+
+    logger.info(`Season ${seasonData.name} has ended. Starting next season.`);
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const liveSeasonStartDate = new Date(currentYear, 5, 15); // June 15th
+
+    if (seasonData.status === "off-season" && today >= liveSeasonStartDate) {
+        logger.info("It's time for the live season! Starting now.");
+        await startNewLiveSeason();
+    } else {
+        logger.info("Starting a new off-season.");
+        await startNewOffSeason();
+    }
+});
+
+
+/**
+ * NEW: Nightly function to process scores for the current day of the off-season.
+ */
+exports.processDailyScores = onSchedule({
+    schedule: "every day 03:00",
+    timeZone: "America/New_York",
+}, async (_context) => {
+    const db = getDb();
+    logger.info("Running Daily Score Processor...");
+
+    const seasonSettingsRef = db.doc("game-settings/season");
+    const seasonDoc = await seasonSettingsRef.get();
+
+    if (!seasonDoc.exists || seasonDoc.data().status !== 'off-season') {
+        logger.info("No active off-season found. Exiting score processor.");
+        return;
+    }
+    const seasonData = { id: seasonDoc.id, ...seasonDoc.data() };
+    const seasonStartDate = seasonData.schedule.startDate.toDate();
+    
+    // Calculate the current off-season day (1-49)
+    const now = new Date();
+    const diffInMillis = now.getTime() - seasonStartDate.getTime();
+    const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+    const currentOffSeasonDay = diffInDays + 1;
+
+    if (currentOffSeasonDay < 1 || currentOffSeasonDay > 49) {
+        logger.info(`Current off-season day (${currentOffSeasonDay}) is outside the 1-49 range. Exiting.`);
+        return;
+    }
+
+    logger.info(`Processing scores for Off-Season Day: ${currentOffSeasonDay}`);
+
+    // Get today's scheduled shows from the season document
+    const todayEventData = seasonData.events.find(e => e.offSeasonDay === currentOffSeasonDay);
+    if (!todayEventData || !todayEventData.shows || todayEventData.shows.length === 0) {
+        logger.info(`No shows scheduled for day ${currentOffSeasonDay}. Nothing to score.`);
+        return;
+    }
+    const todaysShows = todayEventData.shows;
+    
+    // Get all user profiles participating in the current season
+    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', seasonData.id);
+    const profilesSnapshot = await profilesQuery.get();
+    
+    if (profilesSnapshot.empty) {
+        logger.info("No users have joined the current season. Exiting.");
+        return;
+    }
+    
+    const week = Math.ceil(currentOffSeasonDay / 7);
+    
+    for (const userDoc of profilesSnapshot.docs) {
+        const userProfile = userDoc.data();
+        const uid = userDoc.ref.parent.parent.id; // Correctly get UID from subcollection path
+        
+        // Check if the user has selected shows for this week
+        const userShowsForWeek = userProfile.selectedShows ? userProfile.selectedShows[`week${week}`] : [];
+        if (!userShowsForWeek || userShowsForWeek.length === 0) {
+            continue; // User didn't select any shows this week
+        }
+
+        let dailyScore = 0;
+        
+        for (const show of todaysShows) {
+            // Check if the user "attended" this show
+            const attendedShow = userShowsForWeek.some(s => s.eventName === show.eventName && s.date === show.date);
+            if (attendedShow) {
+                // Calculate user's score for this specific show
+                let showScore = 0;
+                for (const caption in userProfile.lineup) {
+                    const selectedCorps = userProfile.lineup[caption];
+                    const corpsScoreData = show.scores.find(s => s.corps === selectedCorps);
+                    if (corpsScoreData && corpsScoreData.captions[caption]) {
+                        showScore += corpsScoreData.captions[caption];
+                    }
+                }
+                dailyScore += showScore;
+            }
+        }
+        
+        if (dailyScore > 0) {
+            const newTotal = (userProfile.totalSeasonScore || 0) + dailyScore;
+            await userDoc.ref.update({
+                totalSeasonScore: newTotal,
+                lastScoredDay: currentOffSeasonDay
+            });
+            logger.info(`User ${uid} scored ${dailyScore.toFixed(3)} points today. New total: ${newTotal.toFixed(3)}`);
+        }
+    }
+    logger.info("Daily Score Processor finished.");
+});
+
+
+/**
+ * NEW: Callable function for a user to save their show selections for a given week.
+ */
+exports.selectUserShows = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in.");
+    }
+    const uid = request.auth.uid;
+    const { week, shows } = request.data; // Expects week: 1, shows: [show1, show2, ...]
+
+    if (!week || !shows || !Array.isArray(shows) || shows.length > 4) {
+        throw new HttpsError("invalid-argument", "Invalid data. A week number and a maximum of 4 shows are required.");
+    }
+
+    const userProfileRef = getDb().doc(`artifacts/${appId}/users/${uid}/profile/data`);
+
+    try {
+        await userProfileRef.update({
+            [`selectedShows.week${week}`]: shows
+        });
+        return { success: true, message: `Successfully saved selections for week ${week}.`};
+    } catch (error) {
+        logger.error(`Failed to save show selections for user ${uid}:`, error);
+        throw new HttpsError("internal", "Could not save your show selections.");
+    }
+});
 
 // ================================================================= //
 //                      INTERNAL HELPER LOGIC                        //
@@ -398,34 +581,57 @@ async function startNewLiveSeason() {
 
 async function startNewOffSeason() {
     logger.info("Generating new off-season...");
-
-    const rankingsQuery = getDb().collection("final_rankings").orderBy("__name__", "desc").limit(1);
+    const db = getDb();
     
-    const rankingsSnapshot = await rankingsQuery.get();
+    // --- 1. Fetch ALL final rankings to create a diverse pool of corps ---
+    const rankingsSnapshot = await db.collection("final_rankings").get();
     if (rankingsSnapshot.empty) {
         throw new Error("Cannot start off-season: No final rankings found in the database.");
     }
-    const latestRankingsDoc = rankingsSnapshot.docs[0];
-    const sourceCorps = latestRankingsDoc.data().data;
-    const sourceYear = latestRankingsDoc.id;
 
-    logger.info(`Using final rankings from ${sourceYear} as the source.`);
-    const shuffledCorps = shuffleArray(sourceCorps.slice(0, 25));
+    const allCorpsByYear = new Map();
+    const uniqueCorpsNames = new Set();
+    
+    rankingsSnapshot.forEach(doc => {
+        const year = doc.id;
+        const corpsData = doc.data().data;
+        corpsData.forEach(corps => {
+            uniqueCorpsNames.add(corps.corps);
+            if (!allCorpsByYear.has(corps.corps)) {
+                allCorpsByYear.set(corps.corps, []);
+            }
+            allCorpsByYear.get(corps.corps).push(year);
+        });
+    });
 
+    // --- 2. Create a randomized list of 25 unique corps ---
+    const shuffledUniqueCorps = shuffleArray(Array.from(uniqueCorpsNames));
+    const selectedCorpsNames = shuffledUniqueCorps.slice(0, 25);
+
+    // --- 3. Assign points and a random source year to each selected corps ---
     const pointValues = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-    const offSeasonCorpsData = shuffledCorps.map((item, index) => ({
-        corpsName: item.corps,
-        points: pointValues[index] || 1,
-    }));
-
+    const offSeasonCorpsData = selectedCorpsNames.map((corpsName, index) => {
+        const availableYears = allCorpsByYear.get(corpsName);
+        const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
+        return {
+            corpsName: corpsName,
+            sourceYear: randomYear, // Store the year for UI display
+            points: pointValues[index]
+        };
+    });
+    
+    // --- 4. Generate the 49-day schedule for this season ---
+    const schedule = await generateOffSeasonSchedule();
+    
+    // --- 5. Save the new season data ---
     const startDate = new Date();
     const seasonName = `Off-Season ${startDate.toLocaleString("default", { month: "long" })} ${startDate.getFullYear()}`;
     const dataDocId = `off-season-${startDate.getFullYear()}-${startDate.getMonth() + 1}`;
     
-    await getDb().doc(`dci-data/${dataDocId}`).set({
+    await db.doc(`dci-data/${dataDocId}`).set({
         corpsValues: offSeasonCorpsData,
-        source: `Shuffled from ${sourceYear} rankings`,
-        createdAt: startDate,
+        source: `Randomly generated from all available ranking years.`,
+        createdAt: Timestamp.fromDate(startDate),
     });
     logger.info(`Saved new corps data to dci-data/${dataDocId}`);
 
@@ -436,13 +642,70 @@ async function startNewOffSeason() {
         currentPointCap: 150,
         dataDocId: dataDocId,
         schedule: {
-            startDate: startDate,
-            endDate: endDate,
+            startDate: Timestamp.fromDate(startDate),
+            endDate: Timestamp.fromDate(endDate),
         },
+        events: schedule // The newly generated schedule
     };
 
-    await getDb().doc("game-settings/season").set(newSeasonSettings);
-    logger.info(`Successfully started the ${seasonName}.`);
+    await db.doc("game-settings/season").set(newSeasonSettings);
+    logger.info(`Successfully started the ${seasonName} with a 49-day schedule.`);
+}
+
+
+/**
+ * NEW: Generates a 49-day schedule by randomly selecting up to 3 shows
+ * per off-season day from the historical_scores collection.
+ * @returns {Array} An array of events, one for each of the 49 days.
+ */
+async function generateOffSeasonSchedule() {
+    logger.info("Generating 49-day off-season schedule from historical scores...");
+    const db = getDb();
+    const scoresSnapshot = await db.collection('historical_scores').get();
+    
+    const showsByOffSeasonDay = new Map();
+
+    // Group all shows by their offSeasonDay
+    scoresSnapshot.forEach(yearDoc => {
+        const yearData = yearDoc.data().data || [];
+        yearData.forEach(event => {
+            if (event.offSeasonDay) {
+                if (!showsByOffSeasonDay.has(event.offSeasonDay)) {
+                    showsByOffSeasonDay.set(event.offSeasonDay, []);
+                }
+                // Only store essential info to keep the season document smaller
+                showsByOffSeasonDay.get(event.offSeasonDay).push({
+                    eventName: event.eventName,
+                    date: event.date,
+                    location: event.location,
+                    scores: event.scores.map(s => ({ // Map scores to a cleaner format
+                        corps: s.corps,
+                        score: s.score,
+                        captions: {
+                            GE: (s.captions.GE1 + s.captions.GE2) / 2,
+                            Visual: (s.captions.VP + s.captions.VA + s.captions.CG) / 3,
+                            Music: (s.captions.B + s.captions.MA + s.captions.P) / 3
+                        }
+                    }))
+                });
+            }
+        });
+    });
+
+    const finalSchedule = [];
+    for (let day = 1; day <= 49; day++) {
+        const potentialShows = showsByOffSeasonDay.get(day) || [];
+        const shuffledShows = shuffleArray(potentialShows);
+        const selectedShows = shuffledShows.slice(0, 3); // Max 3 shows per day
+        
+        finalSchedule.push({
+            offSeasonDay: day,
+            shows: selectedShows,
+        });
+    }
+
+    logger.info(`Schedule generated with events for ${finalSchedule.filter(d => d.shows.length > 0).length} of 49 days.`);
+    return finalSchedule;
 }
 
 function shuffleArray(array) {
