@@ -686,53 +686,105 @@ async function startNewOffSeason() {
  * @returns {Array} An array of events, one for each of the 49 days.
  */
 async function generateOffSeasonSchedule() {
-    logger.info("Generating 49-day off-season schedule from historical scores...");
+    logger.info("Generating advanced 49-day off-season schedule...");
     const db = getDb();
     const scoresSnapshot = await db.collection('historical_scores').get();
-    
-    const showsByOffSeasonDay = new Map();
 
-    // Group all shows by their offSeasonDay
+    // 1. Create a master pool of all valid, usable shows
+    let allShows = [];
     scoresSnapshot.forEach(yearDoc => {
         const yearData = yearDoc.data().data || [];
         yearData.forEach(event => {
-            if (event.offSeasonDay) {
-                if (!showsByOffSeasonDay.has(event.offSeasonDay)) {
-                    showsByOffSeasonDay.set(event.offSeasonDay, []);
-                }
-                // Only store essential info to keep the season document smaller
-                showsByOffSeasonDay.get(event.offSeasonDay).push({
+            // Requirement: Skip shows with a null title
+            if (event.eventName && event.offSeasonDay) {
+                allShows.push({
                     eventName: event.eventName,
                     date: event.date,
                     location: event.location,
-                    scores: event.scores.map(s => ({ // Map scores to a cleaner format
-                        corps: s.corps,
-                        score: s.score,
-                        captions: {
-                            GE: (s.captions.GE1 + s.captions.GE2) / 2,
-                            Visual: (s.captions.VP + s.captions.VA + s.captions.CG) / 3,
-                            Music: (s.captions.B + s.captions.MA + s.captions.P) / 3
-                        }
-                    }))
+                    scores: event.scores, // Keep full scores for processing later
+                    offSeasonDay: event.offSeasonDay
                 });
             }
         });
     });
 
-    const finalSchedule = [];
-    for (let day = 1; day <= 49; day++) {
-        const potentialShows = showsByOffSeasonDay.get(day) || [];
-        const shuffledShows = shuffleArray(potentialShows);
-        const selectedShows = shuffledShows.slice(0, 3); // Max 3 shows per day
-        
-        finalSchedule.push({
-            offSeasonDay: day,
-            shows: selectedShows,
-        });
+    // 2. Prepare the schedule structure and find specific championship events
+    const schedule = Array.from({ length: 49 }, (_, i) => ({ offSeasonDay: i + 1, shows: [] }));
+    const usedEventNames = new Set();
+    const usedLocations = new Set();
+
+    // Helper to find and reserve a specific show
+    const findAndSetShow = (day, name, loc) => {
+        const show = allShows.find(s => s.eventName.includes(name) && s.location.includes(loc));
+        if (show) {
+            schedule[day - 1].shows = [{ ...show, mandatory: true }];
+            usedEventNames.add(show.eventName);
+            // Do not add exception locations to usedLocations
+            if (loc !== "Allentown, Pennsylvania" && loc !== "College Park, Maryland") {
+                 usedLocations.add(show.location);
+            }
+            return true;
+        }
+        logger.warn(`Could not find required show: ${name} in ${loc}`);
+        return false;
+    };
+    
+    // 3. Place mandatory and special shows first
+    // Day 28: DCI Southwestern Championship (substituting with Mid-America)
+    findAndSetShow(28, "DCI Mid-America", "Murfreesboro, Tennessee");
+
+    // Day 35: A random championship show
+    const champShows = shuffleArray(allShows.filter(s => s.eventName.toLowerCase().includes('championship')));
+    const day35Show = champShows.find(s => !usedEventNames.has(s.eventName));
+    if(day35Show) {
+        schedule[34].shows = [{...day35Show, mandatory: false }]; // Not mandatory to attend
+        usedEventNames.add(day35Show.eventName);
+        usedLocations.add(day35Show.location);
+    }
+    
+    // Day 41 & 42: DCI East
+    const dciEastShow = allShows.find(s => s.eventName.includes("DCI East") && s.location.includes("Allentown, Pennsylvania"));
+    if (dciEastShow) {
+        schedule[40].shows = [{ ...dciEastShow, mandatory: false }];
+        schedule[41].shows = [{ ...dciEastShow, mandatory: false }];
+        usedEventNames.add(dciEastShow.eventName); // Add to used so it's not picked again randomly
     }
 
-    logger.info(`Schedule generated with events for ${finalSchedule.filter(d => d.shows.length > 0).length} of 49 days.`);
-    return finalSchedule;
+    // Days 47, 48, 49: World Championships
+    findAndSetShow(47, "DCI Division I World Championship Quarterfinals", "College Park, Maryland");
+    findAndSetShow(48, "DCI Division I World Championship Semi-Finals", "College Park, Maryland");
+    findAndSetShow(49, "DCI Division I World Championship Finals", "College Park, Maryland");
+
+
+    // 4. Determine show counts for remaining days
+    const remainingDaysIndices = schedule.map((_, i) => i).filter(i => schedule[i].shows.length === 0);
+    const twoShowDayCount = Math.floor(remainingDaysIndices.length * 0.2);
+    const threeShowDayCount = remainingDaysIndices.length - twoShowDayCount;
+    let dayCounts = shuffleArray([
+        ...Array(twoShowDayCount).fill(2),
+        ...Array(threeShowDayCount).fill(3)
+    ]);
+
+    // 5. Fill the rest of the schedule
+    const availableShows = shuffleArray(allShows.filter(s => !usedEventNames.has(s.eventName)));
+    
+    for (const dayIndex of remainingDaysIndices) {
+        const numShowsToPick = dayCounts.pop() || 3;
+        const pickedShows = [];
+        
+        for (let i = 0; i < availableShows.length && pickedShows.length < numShowsToPick; i++) {
+            const potentialShow = availableShows[i];
+            if (!usedEventNames.has(potentialShow.eventName) && !usedLocations.has(potentialShow.location)) {
+                pickedShows.push(potentialShow);
+                usedEventNames.add(potentialShow.eventName);
+                usedLocations.add(potentialShow.location);
+            }
+        }
+        schedule[dayIndex].shows = pickedShows;
+    }
+
+    logger.info(`Advanced schedule generated successfully.`);
+    return schedule;
 }
 
 function shuffleArray(array) {
