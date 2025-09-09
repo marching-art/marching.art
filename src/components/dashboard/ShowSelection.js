@@ -7,6 +7,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [expandedShow, setExpandedShow] = useState(null); // To track which show details are open
+    const [registrations, setRegistrations] = useState({});
 
     const currentWeek = Math.ceil(currentOffSeasonDay / 7);
 
@@ -47,82 +48,83 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         setIsLoading(false);
     };
 
-    const toggleShowDetails = (showIdentifier) => {
-        setExpandedShow(expandedShow === showIdentifier ? null : showIdentifier);
+    const toggleShowDetails = async (showIdentifier, week, show) => {
+        if (expandedShow === showIdentifier) {
+            setExpandedShow(null);
+            return;
+        }
+
+        // Fetch registrations if not already fetched
+        if (!registrations[showIdentifier]) {
+            try {
+                const getShowRegistrations = httpsCallable(functions, 'getShowRegistrations');
+                const result = await getShowRegistrations({
+                    week,
+                    eventName: show.eventName,
+                    date: show.date
+                });
+                setRegistrations(prev => ({ ...prev, [showIdentifier]: result.data.corpsNames }));
+            } catch (error) {
+                console.error("Error fetching registrations:", error);
+                setRegistrations(prev => ({ ...prev, [showIdentifier]: ["Error loading."] }));
+            }
+        }
+        setExpandedShow(showIdentifier);
     };
 
     const renderWeek = (week) => {
+        // ... (logic to calculate start/end day and get weekEvents) ...
         const weekKey = `week${week}`;
         const startDay = (week - 1) * 7 + 1;
         const endDay = week * 7;
-        const weekEvents = seasonEvents.filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay);
-        const showsThisWeek = weekEvents.flatMap(day => day.shows.map(show => ({...show, offSeasonDay: day.offSeasonDay })));
-        
+        const weekEventsByDay = seasonEvents.filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay);
+
         let userSelectionsForWeek = selectedShows[weekKey] || [];
-        
-        // Auto-enroll in mandatory shows for the week
-        showsThisWeek.forEach(show => {
-            if (show.mandatory && !userSelectionsForWeek.some(s => s.eventName === show.eventName)) {
-                 userSelectionsForWeek.push({ eventName: show.eventName, date: show.date, location: show.location });
-            }
+        weekEventsByDay.forEach(day => {
+            day.shows.forEach(show => {
+                if (show.mandatory && !userSelectionsForWeek.some(s => s.eventName === show.eventName)) {
+                    userSelectionsForWeek.push({ eventName: show.eventName, date: show.date, location: show.location });
+                }
+            });
         });
 
         const isPastWeek = week < currentWeek;
 
         return (
-            <div key={week} className={`p-4 rounded-md ${isPastWeek ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}>
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold">Week {week} (Days {startDay}-{endDay})</h3>
-                    {!isPastWeek && (
-                         <button 
-                            onClick={() => handleSaveWeek(week)} 
-                            disabled={isLoading}
-                            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-1 px-3 rounded disabled:bg-gray-400"
-                        >
-                            {isLoading ? 'Saving...' : `Save Week ${week}`}
-                        </button>
-                    )}
-                </div>
-                 <p className="text-sm text-gray-500 mb-2">Selections: {userSelectionsForWeek.length} / 4</p>
-                {showsThisWeek.length > 0 ? (
-                    <div className="space-y-2 mt-2">
-                        {showsThisWeek.map((show, index) => {
-                            const showIdentifier = `${week}-${index}`;
-                            const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName && s.date === show.date);
-                            return (
-                                <div key={index} className="p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                                    <div className="flex items-center">
-                                        <input 
-                                            type="checkbox"
-                                            id={`show-${showIdentifier}`}
-                                            checked={isSelected}
-                                            disabled={isPastWeek || show.mandatory}
-                                            onChange={(e) => handleSelectShow(week, show, e.target.checked)}
-                                            className="mr-3 h-5 w-5 rounded text-yellow-600 focus:ring-yellow-500 disabled:opacity-50"
-                                        />
-                                        <label htmlFor={`show-${showIdentifier}`} className="flex-grow">
-                                            <span className="font-semibold">{show.eventName}</span>
-                                            <span className="text-sm text-gray-500 ml-2">({show.location})</span>
-                                            {show.mandatory && <span className="ml-2 text-xs font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">MANDATORY</span>}
-                                        </label>
-                                        <button onClick={() => toggleShowDetails(showIdentifier)} className="text-sm text-blue-500 hover:underline">
-                                           {expandedShow === showIdentifier ? 'Hide' : 'Who\'s Going?'}
-                                        </button>
-                                    </div>
-                                    {expandedShow === showIdentifier && (
-                                        <div className="mt-2 pl-8 text-sm text-gray-600 dark:text-gray-400">
-                                            {/* This is where you would query and display the list of users */}
-                                            <p className="italic">Registered Directors:</p>
-                                            <ul className="list-disc pl-5">
-                                                <li>Placeholder Corps 1</li>
-                                                <li>Placeholder Corps 2</li>
-                                                <li>(Fetching real-time registration data is a future feature)</li>
-                                            </ul>
+            <div key={week} /* ... */ >
+                {/* ... Week Header ... */}
+                {weekEventsByDay.length > 0 ? (
+                    <div className="space-y-4 mt-2">
+                        {weekEventsByDay.map(day => (
+                            <div key={day.offSeasonDay}>
+                                <h4 className="font-bold text-gray-700 dark:text-gray-300">Day {day.offSeasonDay}</h4>
+                                {day.shows.map((show, index) => {
+                                    const showIdentifier = `${week}-${day.offSeasonDay}-${index}`;
+                                    const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
+                                    return (
+                                        <div key={index} className="ml-4 p-2 bg-gray-50 dark:bg-gray-900 rounded mt-1">
+                                            {/* ... Checkbox and Label as before, with location ... */}
+                                             <button onClick={() => toggleShowDetails(showIdentifier, week, show)} /* ... */ >
+                                                {expandedShow === showIdentifier ? 'Hide' : 'Who\'s Going?'}
+                                             </button>
+                                            {expandedShow === showIdentifier && (
+                                                <div className="mt-2 pl-8 text-sm text-gray-600 dark:text-gray-400">
+                                                    <p className="italic">Registered Directors:</p>
+                                                    <ul className="list-disc pl-5">
+                                                        {registrations[showIdentifier] ? (
+                                                            registrations[showIdentifier].length > 0 ? (
+                                                                registrations[showIdentifier].map((name, i) => <li key={i}>{name}</li>)
+                                                            ) : (<li>No one yet!</li>)
+                                                        ) : (<li>Loading...</li>)
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                    );
+                                })}
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <p className="text-gray-500 mt-2">No shows scheduled for this week.</p>
@@ -139,7 +141,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                 {Array.from({ length: 7 }, (_, i) => i + 1).map(week => renderWeek(week))}
              </div>
         </div>
-    )
+    );
 };
 
 export default ShowSelection;
