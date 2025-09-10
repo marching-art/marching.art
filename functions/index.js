@@ -675,28 +675,36 @@ async function startNewOffSeason() {
         let chosenCorps = null;
 
         if (candidates.length > 0) {
-            // Shuffle candidates to randomize which corps is picked for this point value
-            candidates = shuffleArray(candidates);
-            // Find the first one that hasn't been used yet
-            chosenCorps = candidates.find(c => !usedCorpsNames.has(c.corpsName));
+            const shuffledCandidates = shuffleArray([...candidates]);
+            
+            // --- Step 1: Prioritize finding an unused corps with the correct point value ---
+            chosenCorps = shuffledCandidates.find(c => !usedCorpsNames.has(c.corpsName));
+
+            // --- Step 2: If no unused corps is found, accept a duplicate to maintain point accuracy ---
+            if (!chosenCorps) {
+                logger.info(`No unused corps for ${points} points. Accepting a duplicate.`);
+                // Simply select the first available candidate, even if its name is already used.
+                chosenCorps = shuffledCandidates[0];
+            }
         }
 
-        // --- Fallback Logic ---
-        // If no unused corps is found for the current point value (e.g., all 22-point corps
-        // were already picked for higher slots), find the best available substitute.
+        // --- Step 3 (Last Resort): If no corps exist for this point value at all ---
         if (!chosenCorps) {
             const fallback = shuffledAllCorps.find(c => !usedCorpsNames.has(c.corpsName));
             if (fallback) {
+                logger.warn(`No corps found for ${points} points. Using fallback ${fallback.corpsName} and re-valuing.`);
                 chosenCorps = { ...fallback, points: points }; // Assign the current loop's point value
             }
         }
         
         if (chosenCorps) {
+            // It's important to push a copy of the object
             offSeasonCorpsData.push({
                 corpsName: chosenCorps.corpsName,
                 sourceYear: chosenCorps.sourceYear,
                 points: chosenCorps.points,
             });
+            // Still add the name to the used set so the primary logic (Step 1) works correctly.
             usedCorpsNames.add(chosenCorps.corpsName);
         }
     }
@@ -711,6 +719,7 @@ async function startNewOffSeason() {
     const newSeasonSettings = {
         name: seasonName,
         status: "off-season",
+        seasonUid: dataDocId,
         currentPointCap: 150,
         dataDocId: dataDocId,
         schedule: {
