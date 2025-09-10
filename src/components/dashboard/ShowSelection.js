@@ -99,30 +99,47 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                             <div key={day.offSeasonDay}>
                                 <h4 className="font-bold text-gray-700 dark:text-gray-300">Day {day.offSeasonDay}</h4>
                                 {day.shows.map((show, index) => {
-                                    const showIdentifier = `${week}-${day.offSeasonDay}-${index}`;
-                                    const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
-                                    return (
-                                        <div key={index} className="ml-4 p-2 bg-gray-50 dark:bg-gray-900 rounded mt-1">
-                                            {/* ... Checkbox and Label as before, with location ... */}
-                                             <button onClick={() => toggleShowDetails(showIdentifier, week, show)} /* ... */ >
-                                                {expandedShow === showIdentifier ? 'Hide' : 'Who\'s Going?'}
-                                             </button>
-                                            {expandedShow === showIdentifier && (
-                                                <div className="mt-2 pl-8 text-sm text-gray-600 dark:text-gray-400">
-                                                    <p className="italic">Registered Directors:</p>
-                                                    <ul className="list-disc pl-5">
-                                                        {registrations[showIdentifier] ? (
-                                                            registrations[showIdentifier].length > 0 ? (
-                                                                registrations[showIdentifier].map((name, i) => <li key={i}>{name}</li>)
-                                                            ) : (<li>No one yet!</li>)
-                                                        ) : (<li>Loading...</li>)
-                                                        }
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+    const showIdentifier = `${week}-${day.offSeasonDay}-${index}`;
+    const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
+    
+    return (
+        <div key={index} className="ml-4 p-2 bg-gray-50 dark:bg-gray-900 rounded mt-1">
+            <div className="flex justify-between items-center">
+                <div className="flex items-center flex-grow">
+                    <input
+                        type="checkbox"
+                        id={showIdentifier}
+                        checked={isSelected}
+                        disabled={show.mandatory || isPastWeek}
+                        onChange={(e) => handleSelectShow(week, show, e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 disabled:opacity-50 cursor-pointer"
+                    />
+                    <label htmlFor={showIdentifier} className="ml-3 text-sm flex-grow cursor-pointer">
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{show.eventName}</span>
+                        <em className="text-gray-500 dark:text-gray-400 ml-2">({show.location})</em>
+                    </label>
+                </div>
+                <button onClick={() => toggleShowDetails(showIdentifier, week, show)} className="text-xs text-blue-500 hover:underline flex-shrink-0 ml-2">
+                    {expandedShow === showIdentifier ? 'Hide' : 'Who\'s Going?'}
+                </button>
+            </div>
+
+            {expandedShow === showIdentifier && (
+                <div className="mt-2 pl-8 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="italic">Registered Directors:</p>
+                    <ul className="list-disc pl-5">
+                        {registrations[showIdentifier] ? (
+                            registrations[showIdentifier].length > 0 ? (
+                                registrations[showIdentifier].map((name, i) => <li key={i}>{name}</li>)
+                            ) : (<li>No one yet!</li>)
+                        ) : (<li>Loading...</li>)
+                        }
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+})}
                             </div>
                         ))}
                     </div>
@@ -130,7 +147,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                     <p className="text-gray-500 mt-2">No shows scheduled for this week.</p>
                 )}
             </div>
-        )
+        );
     }
 
     return (
