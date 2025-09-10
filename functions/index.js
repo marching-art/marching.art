@@ -724,12 +724,21 @@ async function generateOffSeasonSchedule(seasonLength) {
     
     // 1. Group all valid shows by their offSeasonDay
     const showsByDay = new Map();
+    let allShows = []; // Create a flat list for easier searching
     scoresSnapshot.forEach(yearDoc => {
         const yearData = yearDoc.data().data || [];
         yearData.forEach(event => {
             if (event.eventName && event.offSeasonDay) {
+                const showData = {
+                    eventName: event.eventName,
+                    date: event.date,
+                    location: event.location,
+                    scores: event.scores,
+                    offSeasonDay: event.offSeasonDay
+                };
                 if (!showsByDay.has(event.offSeasonDay)) showsByDay.set(event.offSeasonDay, []);
-                showsByDay.get(event.offSeasonDay).push({ /* ... event data ... */ });
+                showsByDay.get(event.offSeasonDay).push(showData);
+                allShows.push(showData);
             }
         });
     });
@@ -741,8 +750,10 @@ async function generateOffSeasonSchedule(seasonLength) {
 
     const findAndSetShow = (day, name, loc, mandatory) => {
         if (day > seasonLength) return false;
-        const dayShows = showsByDay.get(day) || [];
-        const show = dayShows.find(s => s.eventName.includes(name) && s.location.includes(loc));
+        const potentialShows = showsByDay.get(day) || [];
+        const show = potentialShows.find(s => s.eventName.includes(name) && s.location.includes(loc));
+        
+        // --- THIS IS THE FIX ---
         if (show) {
             schedule[day - 1].shows = [{ ...show, mandatory }];
             usedEventNames.add(show.eventName);
@@ -751,37 +762,43 @@ async function generateOffSeasonSchedule(seasonLength) {
             }
             return true;
         }
-        logger.warn(`Could not find required show for Day ${day}: ${name}`);
+        // --- END FIX ---
+
+        logger.warn(`Could not find required show for Day ${day}: ${name} in ${loc}. Day will be filled randomly.`);
         return false;
     };
     
     // 3. Place mandatory and special shows first
     findAndSetShow(28, "DCI Southwestern Championship", true);
     findAndSetShow(47, "DCI World Championship Prelims", true);
-    // Semis and Finals are special cases handled by scoring logic, not user selection. We still add them to the schedule.
     findAndSetShow(48, "DCI World Championship Semifinals", true);
     findAndSetShow(49, "DCI World Championship Finals", true);
 
-    const dciEastShow = (showsByDay.get(41) || []).find(s => s.eventName.includes("DCI Eastern Classic"));
+    const dciEastShow = (showsByDay.get(42) || []).find(s => s.eventName.includes("DCI East")); // Usually on Day 42
     if (dciEastShow) {
         if (41 <= seasonLength) schedule[40].shows = [{ ...dciEastShow, mandatory: false }];
         if (42 <= seasonLength) schedule[41].shows = [{ ...dciEastShow, mandatory: false }];
         usedEventNames.add(dciEastShow.eventName);
     }
-    
-    const champShows = shuffleArray(allShows.filter(s => s.eventName.toLowerCase().includes('championship')));
+
     if (35 <= seasonLength && schedule[34].shows.length === 0) {
-       //... logic to find and set Day 35 show
+        const champShows = shuffleArray(allShows.filter(s => s.eventName.toLowerCase().includes('championship')));
+        const day35Show = champShows.find(s => !usedEventNames.has(s.eventName));
+        if (day35Show) {
+            schedule[34].shows = [{ ...day35Show, mandatory: false }];
+            usedEventNames.add(day35Show.eventName);
+            usedLocations.add(day35Show.location);
+        }
     }
 
-    // 4. Calculate show distribution for remaining days
+    // 4. Determine show counts for remaining days
     const remainingDays = schedule.filter(d => d.shows.length === 0);
     const twoShowDayCount = Math.floor(remainingDays.length * 0.2);
     const dayCounts = shuffleArray([...Array(twoShowDayCount).fill(2), ...Array(remainingDays.length - twoShowDayCount).fill(3)]);
 
-    // 5. Fill the rest of the schedule respecting offSeasonDay
+    // 5. Fill the rest of the schedule
     for (const day of remainingDays) {
-        const numShowsToPick = dayCounts.pop();
+        const numShowsToPick = dayCounts.pop() || 3;
         const potentialShows = shuffleArray(showsByDay.get(day.offSeasonDay) || []);
         const pickedShows = [];
         
@@ -796,19 +813,10 @@ async function generateOffSeasonSchedule(seasonLength) {
         day.shows = pickedShows;
     }
 
+    logger.info(`Advanced schedule generated successfully.`);
     return schedule;
-}
-
-function shuffleArray(array) {
-    let currentIndex = array.length, randomIndex;
-    while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-    }
-    return array;
-}
-
+}  
+    
 /**
  * Calculates the off-season day (1-49) for a given event date.
  * Day 49 is defined as the second Saturday in August of the event's year.
