@@ -60,7 +60,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
             // the onSnapshot listener in App.js gets the final, critical update.
             const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
             await updateDoc(userProfileRef, {
-                activeSeasonId: seasonSettings.id 
+                activeSeasonId: seasonSettings.seasonUid
             });
 
             setMessage(result.data.message);
