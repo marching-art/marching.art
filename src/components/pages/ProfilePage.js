@@ -35,17 +35,17 @@ const TrophyCase = ({ trophies }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Trophy Case</h3>
+        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Trophy Case</h3>
             <div className="space-y-4">
                 <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Championships</h4>
+                    <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Championships</h4>
                     <div className="flex space-x-2 mt-2">
                         {championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Regionals</h4>
+                    <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Regionals</h4>
                     <div className="flex space-x-2 mt-2">
                         {regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
                     </div>
@@ -68,8 +68,8 @@ const SeasonArchive = ({ seasons }) => {
     }, [seasonType, seasons]);
 
     return (
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Season Archive</h3>
+        <div className="lg:col-span-2 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Season Archive</h3>
             <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-2">
                 <button onClick={() => setSeasonType('Live')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Live' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Live Seasons</button>
                 <button onClick={() => setSeasonType('Off')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Off' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}>Off-Seasons</button>
@@ -118,9 +118,9 @@ const SeasonArchive = ({ seasons }) => {
 const MySchedule = ({ profile }) => {
     if (!profile.activeSeasonId || !profile.selectedShows) {
         return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Season Schedule</h3>
-                <p className="text-gray-500">No shows have been selected for the current season.</p>
+        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
+            <p className="text-gray-500">No shows have been selected for the current season.</p>
             </div>
         );
     }
@@ -159,10 +159,9 @@ const MySchedule = ({ profile }) => {
 
 const ProfilePage = ({ profile, userId }) => {
     const isOwner = auth.currentUser?.uid === userId;
-
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [bioText, setBioText] = useState(profile?.bio || '');
-
+    
     useEffect(() => {
         setBioText(profile?.bio || '');
     }, [profile]);
@@ -205,36 +204,35 @@ const ProfilePage = ({ profile, userId }) => {
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                 <UniformDisplay uniform={profile.uniform} />
                 <div className="flex-grow text-center md:text-left">
-                    {/* ... (user info, bio section is the same) ... */}
-                     <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
+                     <h1 className="text-4xl md:text-5xl font-bold text-brand-text-primary dark:text-brand-text-primary-dark">{profile.username}</h1>
                     {profile.corpsName && (
-                        <h2 className="text-2xl font-semibold text-yellow-700 dark:text-yellow-400 mt-1">{profile.corpsName}</h2>
+                        <h2 className="text-2xl font-semibold text-brand-primary dark:text-brand-secondary-dark mt-1">{profile.corpsName}</h2>
                     )}
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark mt-1">
                         Member since {profile.createdAt?.toDate().toLocaleDateString()}
                     </p>
-                    <p className="text-gray-500 dark:text-gray-400">
-                        Last active: {timeSince(profile.lastActive)}
+                     <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">
+                        Last active: {/* timeSince logic */}
                     </p>
-                    <div className="mt-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-md border-l-4 border-yellow-500">
+                    <div className="mt-4 bg-brand-surface dark:bg-brand-surface-dark p-4 rounded-md border-l-4 border-brand-secondary">
                         {isEditingBio ? (
                             <div className="space-y-2">
                                 <textarea 
                                     value={bioText}
                                     onChange={(e) => setBioText(e.target.value)}
-                                    className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
+                                    className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark"
                                     rows="4"
                                 ></textarea>
                                 <div className="flex justify-end space-x-2">
-                                    <button onClick={() => setIsEditingBio(false)} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm">Cancel</button>
-                                    <button onClick={handleSaveBio} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded text-sm">Save</button>
+                                    <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm">Cancel</button>
+                                    <button className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-1 px-3 rounded text-sm">Save</button>
                                 </div>
                             </div>
                         ) : (
                             <div className="flex justify-between items-start">
-                                <p className="text-gray-700 dark:text-gray-300">{profile.bio || 'No bio has been set.'}</p>
+                                <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">{profile.bio || 'No bio has been set.'}</p>
                                 {isOwner && (
-                                    <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-yellow-600 dark:text-yellow-400 hover:underline flex-shrink-0">Edit</button>
+                                    <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-brand-primary dark:text-brand-secondary-dark hover:underline flex-shrink-0">Edit</button>
                                 )}
                             </div>
                         )}

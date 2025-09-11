@@ -6,7 +6,7 @@ import { db } from '../../firebase';
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LineupEditor from '../dashboard/LineupEditor';
 import Leaderboard from '../dashboard/Leaderboard';
-import ShowSelection from '../dashboard/ShowSelection'; // NEW IMPORT
+import ShowSelection from '../dashboard/ShowSelection';
 
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
@@ -45,16 +45,14 @@ const DashboardPage = ({ profile, userId }) => {
 
     if (isLoading || !seasonSettings) {
         return (
-            <div className="text-center">
-                <p className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">Loading Season Data...</p>
+            <div className="text-center p-8">
+                <p className="text-lg font-semibold text-brand-primary dark:text-brand-secondary-dark">Loading Season Data...</p>
             </div>
         );
     }
     
-    // Check if the user has joined the current season
     const hasJoinedCurrentSeason = profile?.activeSeasonId === seasonSettings.seasonUid;
 
-    // Calculate the current day of the off-season
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonStartDate) {
@@ -62,8 +60,11 @@ const DashboardPage = ({ profile, userId }) => {
         currentOffSeasonDay = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
     }
 
+    // NOTE: Child components like LineupEditor, Leaderboard, etc. would
+    // also need their internal styles updated to reflect the new brand colors.
+    // The parent containers here provide the overall layout.
     return (
-        <div>
+        <div className="p-4 md:p-8">
             {hasJoinedCurrentSeason ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -71,11 +72,10 @@ const DashboardPage = ({ profile, userId }) => {
                             profile={profile} 
                             corpsData={corpsData}
                             pointCap={seasonSettings.currentPointCap}
-                            seasonSettings={seasonSettings} // Add this prop
+                            seasonSettings={seasonSettings}
                         />
                         <Leaderboard />
                     </div>
-                    {/* NEW: ShowSelection component takes up the full width below */}
                     <ShowSelection 
                         seasonEvents={seasonSettings.events || []}
                         profile={profile}

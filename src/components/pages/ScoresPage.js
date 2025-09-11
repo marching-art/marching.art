@@ -17,14 +17,12 @@ const ScoresPage = () => {
                 const fetchedRecaps = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                 if (fetchedRecaps.length > 0) {
-                    // Sort seasons by the date of their first recap, newest first
                     fetchedRecaps.sort((a, b) => {
                         const dateA = a.recaps?.[0]?.date.toDate() || 0;
                         const dateB = b.recaps?.[0]?.date.toDate() || 0;
                         return dateB - dateA;
                     });
                     setAllRecaps(fetchedRecaps);
-                    // Default to the latest season and its latest day
                     const latestSeason = fetchedRecaps[0];
                     setSelectedSeason(latestSeason);
                     if (latestSeason.recaps?.length > 0) {
@@ -43,7 +41,6 @@ const ScoresPage = () => {
     const handleSeasonChange = (seasonId) => {
         const season = allRecaps.find(r => r.id === seasonId);
         setSelectedSeason(season);
-        // Default to the latest day of the newly selected season
         if (season.recaps?.length > 0) {
             const latestDay = season.recaps.sort((a,b) => b.offSeasonDay - a.offSeasonDay)[0];
             setSelectedDay(latestDay);
@@ -61,18 +58,18 @@ const ScoresPage = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6 text-center">Fantasy Show Recaps</h1>
+            <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6 text-center">Fantasy Show Recaps</h1>
             
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-brand-surface dark:bg-brand-surface-dark rounded-lg shadow-md">
                 <div className="flex items-center gap-2">
-                    <label htmlFor="season-select" className="font-semibold">Season:</label>
-                    <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-gray-100 dark:bg-gray-900 border rounded p-2">
+                    <label htmlFor="season-select" className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Season:</label>
+                    <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-white dark:bg-brand-background-dark border border-brand-accent rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark">
                         {allRecaps.map(season => <option key={season.id} value={season.id}>{season.seasonName}</option>)}
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label htmlFor="day-select" className="font-semibold">Day:</label>
-                    <select id="day-select" value={selectedDay?.offSeasonDay || ''} onChange={e => handleDayChange(e.target.value)} className="bg-gray-100 dark:bg-gray-900 border rounded p-2" disabled={!selectedSeason}>
+                    <label htmlFor="day-select" className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Day:</label>
+                    <select id="day-select" value={selectedDay?.offSeasonDay || ''} onChange={e => handleDayChange(e.target.value)} className="bg-white dark:bg-brand-background-dark border border-brand-accent rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark" disabled={!selectedSeason}>
                         {(selectedSeason?.recaps || []).sort((a,b) => a.offSeasonDay - b.offSeasonDay).map(day => <option key={day.offSeasonDay} value={day.offSeasonDay}>Day {day.offSeasonDay}</option>)}
                     </select>
                 </div>
@@ -81,30 +78,30 @@ const ScoresPage = () => {
             {selectedDay ? (
                 <div className="space-y-8">
                     {selectedDay.shows.map((show, index) => (
-                        <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{show.eventName}</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{show.location}</p>
+                        <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+                            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName}</h2>
+                            <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark mb-4">{show.location}</p>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="border-b-2 border-gray-200 dark:border-gray-700">
+                                <table className="w-full text-left text-sm text-brand-text-primary dark:text-brand-text-primary-dark">
+                                    <thead className="border-b-2 border-brand-accent dark:border-brand-accent-dark">
                                         <tr>
-                                            <th className="p-2 w-12">Rank</th>
-                                            <th className="p-2">Corps</th>
-                                            <th className="p-2 text-right">GE</th>
-                                            <th className="p-2 text-right">Visual</th>
-                                            <th className="p-2 text-right">Music</th>
-                                            <th className="p-2 text-right">Total Score</th>
+                                            <th className="p-2 w-12 font-semibold">Rank</th>
+                                            <th className="p-2 font-semibold">Corps</th>
+                                            <th className="p-2 text-right font-semibold">GE</th>
+                                            <th className="p-2 text-right font-semibold">Visual</th>
+                                            <th className="p-2 text-right font-semibold">Music</th>
+                                            <th className="p-2 text-right font-semibold">Total Score</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {show.results.sort((a, b) => b.totalScore - a.totalScore).map((res, i) => (
-                                            <tr key={res.uid} className="border-b border-gray-100 dark:border-gray-700">
+                                            <tr key={res.uid} className="border-b border-brand-surface dark:border-gray-700">
                                                 <td className="p-2 font-bold">{i + 1}</td>
                                                 <td className="p-2 font-semibold">{res.corpsName}</td>
                                                 <td className="p-2 text-right">{res.geScore.toFixed(3)}</td>
                                                 <td className="p-2 text-right">{res.visualScore.toFixed(3)}</td>
                                                 <td className="p-2 text-right">{res.musicScore.toFixed(3)}</td>
-                                                <td className="p-2 font-bold text-right">{res.totalScore.toFixed(3)}</td>
+                                                <td className="p-2 font-bold text-right text-brand-primary dark:text-brand-secondary-dark">{res.totalScore.toFixed(3)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -114,7 +111,7 @@ const ScoresPage = () => {
                     ))}
                 </div>
             ) : (
-                 <p className="text-center text-gray-600 dark:text-gray-300 mt-8">No recaps found for the selected season or day.</p>
+                 <p className="text-center text-brand-text-secondary dark:text-brand-text-secondary-dark mt-8">No recaps found for the selected season or day.</p>
             )}
         </div>
     );

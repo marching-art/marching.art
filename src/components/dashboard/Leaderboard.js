@@ -18,27 +18,20 @@ const Leaderboard = () => {
                 return;
             }
             const seasonData = seasonDoc.data();
-
-            // --- MODIFICATION START ---
-            // The user's profile `activeSeasonId` matches the unique `seasonUid` field from the season's data,
-            // not the document's ID. This corrects the query to find players in the current season.
-            const activeSeasonId = seasonData.seasonUid;
+            const activeSeasonId = seasonData.seasonUid; //
             if (!activeSeasonId) {
                 console.error("Season UID is not configured in game-settings/season");
                 setIsLoading(false);
                 return;
             }
-            setSeasonName(seasonData.name);
-            // --- MODIFICATION END ---
+            setSeasonName(seasonData.name); //
 
-            // Now, create the query to get all players for the active season, ordered by score
             const profilesQuery = query(
                 collectionGroup(db, 'profile'), 
-                where('activeSeasonId', '==', activeSeasonId),
-                orderBy('totalSeasonScore', 'desc')
+                where('activeSeasonId', '==', activeSeasonId), //
+                orderBy('totalSeasonScore', 'desc') //
             );
             
-            // Set up a realtime listener for the leaderboard
             unsubscribe = onSnapshot(profilesQuery, (querySnapshot) => {
                 const players = [];
                 querySnapshot.forEach((doc) => {
@@ -59,33 +52,40 @@ const Leaderboard = () => {
 
         return () => { if (unsubscribe) unsubscribe(); };
     }, []);
+    
+    const CardContainer = ({ children }) => (
+        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            {children}
+        </div>
+    );
+
 
     if (isLoading) {
         return (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Loading Leaderboard...</h2>
-            </div>
+            <CardContainer>
+                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Loading Leaderboard...</h2>
+            </CardContainer>
         );
     }
     
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-1">{seasonName}</h2>
-            <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-4">Global Leaderboard</h3>
+        <CardContainer>
+            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-1">{seasonName}</h2>
+            <h3 className="text-lg font-semibold text-brand-text-secondary dark:text-brand-text-secondary-dark mb-4">Global Leaderboard</h3>
             <ol className="list-decimal list-inside space-y-3">
                 {leaderboard.map((player, index) => (
-                    <li key={player.id} className="p-2 rounded-md bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
+                    <li key={player.id} className="p-2 rounded-md bg-brand-background dark:bg-brand-background-dark flex justify-between items-center">
                         <div>
-                            <span className="font-bold text-black dark:text-white">{index + 1}. {player.corpsName}</span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({player.username})</span>
+                            <span className="font-bold text-brand-text-primary dark:text-brand-text-primary-dark">{index + 1}. {player.corpsName}</span>
+                            <span className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark ml-2">({player.username})</span>
                         </div>
-                        <span className="font-bold text-lg text-yellow-800 dark:text-yellow-300">
+                        <span className="font-bold text-lg text-brand-primary dark:text-brand-secondary-dark">
                             {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
                         </span>
                     </li>
                 ))}
             </ol>
-        </div>
+        </CardContainer>
     );
 };
 
