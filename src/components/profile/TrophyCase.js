@@ -13,17 +13,17 @@ const TrophyCase = ({ trophies }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">Trophy Case</h3>
+        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Trophy Case</h3>
             <div className="space-y-4">
                 <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Championships</h4>
+                    <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Championships</h4>
                     <div className="flex space-x-2 mt-2">
                         {safeTrophies.championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">Regionals</h4>
+                    <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Regionals</h4>
                     <div className="flex space-x-2 mt-2">
                         {safeTrophies.regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
                     </div>
