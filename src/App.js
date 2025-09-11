@@ -105,10 +105,11 @@ export default function App() {
 
     const renderPage = () => {
         switch (page) {
+            // Pass setPage to SchedulePage so it can navigate to the scores
             case 'schedule':
-                return <SchedulePage />;
+                return <SchedulePage setPage={setPage} />;
             case 'scores':
-                return <ScoresPage theme={theme} />; // Pass theme prop here
+                return <ScoresPage theme={theme} />;
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
@@ -142,7 +143,11 @@ export default function App() {
                 theme={theme}
                 toggleTheme={toggleTheme}
             />
-            <main className="flex-grow container mx-auto px-4 py-8">
+            {/* This is the key layout change. We remove the 'container' and 'mx-auto' classes from the main
+              element. This makes the main content area take up the full width of the screen, allowing
+              each individual page component to control its own width and centering.
+            */}
+            <main className="flex-grow w-full">
                 {renderPage()}
             </main>
             <Footer />
@@ -155,3 +160,4 @@ export default function App() {
         </div>
     );
 }
+
