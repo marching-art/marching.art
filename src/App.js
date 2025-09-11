@@ -8,6 +8,8 @@ import HomePage from './components/pages/HomePage';
 import DashboardPage from './components/pages/DashboardPage';
 import ProfilePage from './components/pages/ProfilePage';
 import AdminPage from './components/pages/AdminPage';
+import SchedulePage from './components/pages/SchedulePage';
+import ScoresPage from './components/pages/ScoresPage';
 
 // Import Layout & UI Components
 import Header from './components/layout/Header';
@@ -103,6 +105,10 @@ export default function App() {
 
     const renderPage = () => {
         switch (page) {
+            case 'schedule':
+                return <SchedulePage />;
+            case 'scores':
+                return <ScoresPage />;
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
