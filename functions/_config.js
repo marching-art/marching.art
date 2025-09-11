@@ -1,24 +1,19 @@
 const admin = require("firebase-admin");
 
-// This will hold our initialized db connection after the first use
-let db;
+// Initialize the app ONCE at the top level of the module.
+admin.initializeApp();
+
+// Get the Firestore instance from the already-initialized app.
+const db = admin.firestore();
 
 /**
- * Initializes the Firebase Admin SDK and Firestore connection if they haven't
- * been already, then returns the Firestore instance.
+ * Returns the already-initialized Firestore database instance.
  */
 const getDb = () => {
-    if (db) {
-        // If db is already initialized, return it to avoid re-initializing
-        return db;
-    }
-    // If it's the first time, initialize the app and the database
-    admin.initializeApp();
-    db = admin.firestore();
     return db;
 };
 
 module.exports = {
-    getDb: getDb, // Export the function that gets the database
+    getDb: getDb,
     appId: "marching-art",
 };
