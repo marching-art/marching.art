@@ -57,10 +57,18 @@ const ScoresPage = () => {
     if (isLoading) return <div className="p-8 text-center"><p className="text-lg font-semibold">Loading Recaps...</p></div>;
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6 text-center">Fantasy Show Recaps</h1>
-            
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-brand-surface dark:bg-brand-surface-dark rounded-lg shadow-md">
+        <>
+            {/* NEW: Modal to display the chart */}
+            <Modal isOpen={!!showToChart} onClose={() => setShowToChart(null)} title="Caption Breakdown">
+                <div className="w-full h-[60vh] relative">
+                    <CaptionChart showData={showToChart} theme={theme} />
+                </div>
+            </Modal>
+
+            <div className="p-4 md:p-8 max-w-6xl mx-auto">
+                <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6 text-center">Fantasy Show Recaps</h1>
+                
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-brand-surface dark:bg-brand-surface-dark rounded-lg shadow-md">
                 <div className="flex items-center gap-2">
                     <label htmlFor="season-select" className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Season:</label>
                     <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-white dark:bg-brand-background-dark border border-brand-accent rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark">
@@ -76,12 +84,23 @@ const ScoresPage = () => {
             </div>
 
             {selectedDay ? (
-                <div className="space-y-8">
-                    {selectedDay.shows.map((show, index) => (
-                        <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName}</h2>
-                            <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark mb-4">{show.location}</p>
-                            <div className="overflow-x-auto">
+                    <div className="space-y-8">
+                        {selectedDay.shows.map((show, index) => (
+                            <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName}</h2>
+                                        <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
+                                    </div>
+                                    {/* NEW: Button to open the chart modal */}
+                                    <button 
+                                        onClick={() => setShowToChart(show)}
+                                        className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded transition-colors"
+                                    >
+                                        View Chart
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm text-brand-text-primary dark:text-brand-text-primary-dark">
                                     <thead className="border-b-2 border-brand-accent dark:border-brand-accent-dark">
                                         <tr>
@@ -106,14 +125,15 @@ const ScoresPage = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                 <p className="text-center text-brand-text-secondary dark:text-brand-text-secondary-dark mt-8">No recaps found for the selected season or day.</p>
-            )}
-        </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-brand-text-secondary dark:text-brand-text-secondary-dark mt-8">No recaps found for the selected season or day.</p>
+                )}
+            </div>
+        </>
     );
 };
 
