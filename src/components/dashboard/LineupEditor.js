@@ -4,12 +4,10 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, appId, auth, functions } from '../../firebase';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
-const WEEKLY_TRADES_LIMIT = 3; // The number of trades a user gets each week.
+const WEEKLY_TRADES_LIMIT = 3;
 
 const LineupEditor = ({ profile, corpsData, pointCap }) => {
-    // 'originalLineup' stores the lineup as it was when the component loaded.
     const [originalLineup, setOriginalLineup] = useState(profile?.lineup || {});
-    // 'lineup' stores the current state of the user's selections.
     const [lineup, setLineup] = useState(profile?.lineup || {});
     
     const [totalPoints, setTotalPoints] = useState(0);
@@ -17,19 +15,17 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // Effect to recalculate total points and trades used whenever the lineup changes.
     useEffect(() => {
         let points = 0;
         let trades = 0;
         
         CAPTIONS.forEach(caption => {
-            const selectedCorpsName = lineup[caption];
-            // If a corps is selected for the caption...
-            if (selectedCorpsName) {
+            const selectedValue = lineup[caption];
+            if (selectedValue) {
+                // --- MODIFICATION: Parse the unique value string for points and trade detection ---
                 const [_corpsName, corpsPoints] = selectedValue.split('|');
                 points += Number(corpsPoints) || 0;
 
-                // Compare the full unique value to detect a trade
                 if (originalLineup[caption] !== selectedValue) {
                     trades++;
                 }
@@ -40,30 +36,31 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
         setTradesUsed(trades);
     }, [lineup, originalLineup]);
 
-    const handleSelect = (caption, corpsName) => {
-        setLineup(prev => ({ ...prev, [caption]: corpsName }));
+    // --- MODIFICATION: The handler now receives the full unique value ---
+    const handleSelect = (caption, selectedValue) => {
+        setLineup(prev => ({ ...prev, [caption]: selectedValue }));
     };
 
     const handleSave = async () => {
-    if (tradesUsed > WEEKLY_TRADES_LIMIT) { // This local check is still useful
-        setMessage("You have exceeded your trade limit for the week.");
-        return;
-    }
+        if (tradesUsed > WEEKLY_TRADES_LIMIT) {
+            setMessage("You have exceeded your trade limit for the week.");
+            return;
+        }
 
-    setMessage('');
-    setIsLoading(true);
-    try {
-        const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
-        const result = await validateAndSaveLineup({ lineup: lineup });
+        setMessage('');
+        setIsLoading(true);
+        try {
+            const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
+            const result = await validateAndSaveLineup({ lineup: lineup });
 
-        setOriginalLineup(lineup); // Set the new saved lineup as the original
-        setMessage(result.data.message); // Display success message from the function
+            setOriginalLineup(lineup);
+            setMessage(result.data.message);
 
-    } catch (error) {
-        console.error("Error saving lineup:", error);
-        setMessage(error.message || "An error occurred while saving your lineup.");
-    }
-    setIsLoading(false);
+        } catch (error) {
+            console.error("Error saving lineup:", error);
+            setMessage(error.message || "An error occurred while saving your lineup.");
+        }
+        setIsLoading(false);
     };
 
     if (!corpsData || corpsData.length === 0) {
@@ -75,7 +72,9 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
         )
     }
 
+    // --- MODIFICATION: Helper to create a unique value for each corps option ---
     const uniqueCorpsValue = (corps) => `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
+
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
     const tradesRemaining = WEEKLY_TRADES_LIMIT - tradesUsed;
 
@@ -105,6 +104,7 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
                             className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
                         >
                             <option value="">-- Select a Corps --</option>
+                            {/* --- MODIFICATION: Use the unique value for the key and value attributes --- */}
                             {corpsData.map(corps => (
                                 <option key={uniqueCorpsValue(corps)} value={uniqueCorpsValue(corps)}>
                                     {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts

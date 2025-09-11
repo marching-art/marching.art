@@ -17,6 +17,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     // Calculate total points whenever the lineup changes
     useEffect(() => {
+        // --- MODIFICATION: Parse the unique value string to get points ---
         const points = CAPTIONS.reduce((sum, caption) => {
             const selectedValue = lineup[caption];
             if (selectedValue) {
@@ -28,6 +29,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
         setTotalPoints(points);
     }, [lineup]);
 
+    // --- MODIFICATION: The handler now receives the full unique value ---
     const handleSelectCorps = (caption, selectedValue) => {
         setLineup(prev => ({ ...prev, [caption]: selectedValue }));
     };
@@ -39,7 +41,6 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
             return;
         }
         setIsSaving(true);
-        // We don't save to Firestore yet, just move to the next step
         setStep(2);
         setIsSaving(false);
     };
@@ -55,17 +56,12 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                 corpsName: corpsName.trim()
             });
 
-            // After the backend successfully validates and saves the lineup,
-            // we update the user's profile on the client-side to ensure
-            // the onSnapshot listener in App.js gets the final, critical update.
             const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
             await updateDoc(userProfileRef, {
                 activeSeasonId: seasonSettings.seasonUid
             });
 
             setMessage(result.data.message);
-            // Now, when the parent re-renders because the profile has been updated,
-            // this component will be correctly replaced by the dashboard.
 
         } catch (error) {
             console.error("Error joining season:", error);
@@ -76,11 +72,13 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
 
+    // --- MODIFICATION: Helper to create a unique value for each corps option ---
     const uniqueCorpsValue = (corps) => `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
-    
+
     // --- RENDER FUNCTIONS ---
 
     const renderStepOne = () => (
+        // This function does not need changes
         <div>
             <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">Step 1: Name Your Corps</h3>
             <p className="mt-2 mb-4 text-gray-600 dark:text-gray-300">
@@ -124,6 +122,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                             className="flex-grow bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2 text-gray-800 dark:text-yellow-300"
                         >
                             <option value="">-- Select a Corps --</option>
+                            {/* --- MODIFICATION: Use the unique value for the key and value attributes --- */}
                             {corpsData.map(corps => (
                                 <option key={uniqueCorpsValue(corps)} value={uniqueCorpsValue(corps)}>
                                     {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
