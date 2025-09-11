@@ -24,7 +24,6 @@ const ScoreDataViewer = () => {
                 const settings = seasonSnap.data();
                 if (!settings.dataDocId) return;
 
-                // 1. Fetch the corps roster for the current season
                 const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
                 const corpsSnap = await getDoc(corpsDataRef);
                 let localCorpsList = [];
@@ -33,7 +32,6 @@ const ScoreDataViewer = () => {
                     setCorpsList(localCorpsList.sort((a, b) => b.points - a.points));
                 }
 
-                // 2. Fetch all necessary historical data based on the source years in the roster
                 const yearsToFetch = [...new Set(localCorpsList.map(c => c.sourceYear))];
                 const historicalPromises = yearsToFetch.map(year => getDoc(doc(db, 'historical_scores', year)));
                 const historicalDocs = await Promise.all(historicalPromises);
@@ -41,7 +39,7 @@ const ScoreDataViewer = () => {
                 const localHistoricalData = {};
                 historicalDocs.forEach(docSnap => {
                     if (docSnap.exists()) {
-                        localHistoricalData[docSnap.id] = docSnap.data().data; // Store events by year
+                        localHistoricalData[docSnap.id] = docSnap.data().data;
                     }
                 });
                 setHistoricalData(localHistoricalData);
@@ -55,7 +53,6 @@ const ScoreDataViewer = () => {
     }, []);
 
     useEffect(() => {
-        // This effect now correctly maps a corps to its specific source year's data
         if (!historicalData || corpsList.length === 0) return;
 
         const processedData = {};
@@ -63,21 +60,25 @@ const ScoreDataViewer = () => {
             const uniqueCorpKey = `${corp.corpsName}-${corp.sourceYear}`;
             processedData[uniqueCorpKey] = {};
             
-            // Get the historical event data only for the corps' specific source year
             const corpHistoricalEvents = historicalData[corp.sourceYear] || [];
             
             DAYS.forEach(day => {
                 let scoreForDay = null;
-                // Find an event on this day within the correct year's data
-                const dayEvent = corpHistoricalEvents.find(e => e.offSeasonDay === day);
+                // --- MODIFICATION START ---
+                // Find ALL events on this day, not just the first one.
+                const dayEvents = corpHistoricalEvents.filter(e => e.offSeasonDay === day);
                 
-                if (dayEvent) {
-                    // Find the specific corps' score within that event
-                    const scoreData = dayEvent.scores.find(s => s.corps === corp.corpsName);
-                    if (scoreData && scoreData.captions[selectedCaption] > 0) {
-                        scoreForDay = scoreData.captions[selectedCaption];
+                if (dayEvents.length > 0) {
+                    // Look for the corps' score in ANY of the shows on that day.
+                    for (const event of dayEvents) {
+                        const scoreData = event.scores.find(s => s.corps === corp.corpsName);
+                        if (scoreData && scoreData.captions[selectedCaption] > 0) {
+                            scoreForDay = scoreData.captions[selectedCaption];
+                            break; // Found a score for this day, stop looking.
+                        }
                     }
                 }
+                // --- MODIFICATION END ---
                 processedData[uniqueCorpKey][day] = scoreForDay;
             });
         });
