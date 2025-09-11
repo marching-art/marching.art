@@ -6,6 +6,7 @@ import { db } from '../../firebase';
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LineupEditor from '../dashboard/LineupEditor';
 import Leaderboard from '../dashboard/Leaderboard';
+import LeagueManager from '../dashboard/LeagueManager';
 import ShowSelection from '../dashboard/ShowSelection';
 
 const DashboardPage = ({ profile, userId }) => {
@@ -69,13 +70,14 @@ const DashboardPage = ({ profile, userId }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8">
                          <LineupEditor 
-                            profile={profile} 
+                            profile={profile}  
                             corpsData={corpsData}
                             pointCap={seasonSettings.currentPointCap}
                             seasonSettings={seasonSettings}
                         />
-                        <Leaderboard />
+                        <Leaderboard profile={profile} />
                     </div>
+                    <LeagueManager profile={profile} />
                     <ShowSelection 
                         seasonEvents={seasonSettings.events || []}
                         profile={profile}
