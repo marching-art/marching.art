@@ -8,6 +8,7 @@ import LineupEditor from '../dashboard/LineupEditor';
 import Leaderboard from '../dashboard/Leaderboard';
 import LeagueManager from '../dashboard/LeagueManager';
 import ShowSelection from '../dashboard/ShowSelection';
+import LiveShowSelection from '../dashboard/LiveShowSelection'; // Import the new component
 
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
@@ -56,14 +57,11 @@ const DashboardPage = ({ profile, userId }) => {
 
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
-    if (seasonStartDate) {
+    if (seasonSettings.status === 'off-season' && seasonStartDate) {
         const diff = new Date().getTime() - seasonStartDate.getTime();
         currentOffSeasonDay = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
     }
 
-    // NOTE: Child components like LineupEditor, Leaderboard, etc. would
-    // also need their internal styles updated to reflect the new brand colors.
-    // The parent containers here provide the overall layout.
     return (
         <div className="p-4 md:p-8">
             {hasJoinedCurrentSeason ? (
@@ -78,11 +76,21 @@ const DashboardPage = ({ profile, userId }) => {
                         <Leaderboard profile={profile} />
                     </div>
                     <LeagueManager profile={profile} />
-                    <ShowSelection 
-                        seasonEvents={seasonSettings.events || []}
-                        profile={profile}
-                        currentOffSeasonDay={currentOffSeasonDay}
-                    />
+
+                    {/* --- CONDITIONAL RENDERING LOGIC --- */}
+                    {seasonSettings.status === 'live-season' ? (
+                        <LiveShowSelection
+                            seasonEvents={seasonSettings.events || []}
+                            profile={profile}
+                            seasonStartDate={seasonStartDate}
+                        />
+                    ) : (
+                        <ShowSelection 
+                            seasonEvents={seasonSettings.events || []}
+                            profile={profile}
+                            currentOffSeasonDay={currentOffSeasonDay}
+                        />
+                    )}
                 </div>
             ) : (
                 <SeasonSignup
