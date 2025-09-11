@@ -53,7 +53,7 @@ const DashboardPage = ({ profile, userId }) => {
     
     // Check if the user has joined the current season
     const hasJoinedCurrentSeason = profile?.activeSeasonId === seasonSettings.seasonUid;
-    
+
     // Calculate the current day of the off-season
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
@@ -71,6 +71,7 @@ const DashboardPage = ({ profile, userId }) => {
                             profile={profile} 
                             corpsData={corpsData}
                             pointCap={seasonSettings.currentPointCap}
+                            seasonSettings={seasonSettings} // Add this prop
                         />
                         <Leaderboard />
                     </div>
