@@ -6,14 +6,23 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
     const [isLoading, setIsLoading] = useState({}); // Use an object for week-specific loading
     const [message, setMessage] = useState('');
-    const [activeWeek, setActiveWeek] = useState(Math.ceil(currentOffSeasonDay / 7));
+    
+    // --- MODIFICATION START ---
+    // Calculate the initial week and ensure it's at least 1.
+    const initialWeek = Math.ceil(currentOffSeasonDay / 7);
+    const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1);
+    // --- MODIFICATION END ---
+
     const [registrations, setRegistrations] = useState({});
     const [expandedShow, setExpandedShow] = useState(null);
 
-    // When profile changes (like after a new season signup), reset the local state
+    // When profile changes, reset the local state and ensure activeWeek is valid
     useEffect(() => {
         setSelectedShows(profile.selectedShows || {});
-        setActiveWeek(Math.ceil(currentOffSeasonDay / 7));
+        // --- MODIFICATION START ---
+        const currentWeek = Math.ceil(currentOffSeasonDay / 7);
+        setActiveWeek(currentWeek > 0 ? currentWeek : 1);
+        // --- MODIFICATION END ---
     }, [profile, currentOffSeasonDay]);
 
     const handleSelectShow = (week, show, isSelected) => {
@@ -73,7 +82,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
 
     const renderDay = (day, week) => {
         const dayEvent = seasonEvents.find(e => e.offSeasonDay === day);
-        const currentWeek = Math.ceil(currentOffSeasonDay / 7);
+        const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7);
         const isPastDay = day < currentOffSeasonDay;
 
         return (
@@ -112,6 +121,8 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         const endDay = week * 7;
         const weekEvents = seasonEvents.filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay);
         const userSelectionsForWeek = selectedShows[weekKey] || [];
+        const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7);
+        const isPastWeek = week < currentWeekNumber;
 
         return (
             <div className="mt-4 p-4 border-t-2 border-yellow-500">
@@ -146,15 +157,17 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                     ))
                 ) : <p className="text-gray-500">No shows scheduled for this week.</p>}
                 
-                <div className="flex justify-end items-center mt-4 space-x-4">
-                    <p className="text-sm font-semibold">Selections for Week {week}: {userSelectionsForWeek.length} / 4</p>
-                    <button 
-                        onClick={() => handleSaveWeek(week)}
-                        disabled={isLoading[week]}
-                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
-                        {isLoading[week] ? 'Saving...' : `Save Week ${week} Selections`}
-                    </button>
-                </div>
+                { !isPastWeek && (
+                    <div className="flex justify-end items-center mt-4 space-x-4">
+                        <p className="text-sm font-semibold">Selections for Week {week}: {userSelectionsForWeek.length} / 4</p>
+                        <button 
+                            onClick={() => handleSaveWeek(week)}
+                            disabled={isLoading[week]}
+                            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            {isLoading[week] ? 'Saving...' : `Save Week ${week} Selections`}
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };
