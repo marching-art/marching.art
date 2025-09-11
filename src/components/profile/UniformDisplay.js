@@ -1,148 +1,148 @@
 import React from 'react';
 
-// This component is now responsible for rendering the SVG avatar based on the uniform object.
-// Each part of the uniform is a separate component for clarity.
+// --- SVG Components for different uniform parts ---
 
-const Jacket = ({ style, colors }) => {
-    switch (style) {
-        case 'sash':
-            return (
-                <g id="jacket-sash">
-                    <path d="M75,130 h50 v70 h-50 z" fill={colors.base} />
-                    <path d="M75,130 L125,200" stroke={colors.accent} strokeWidth="12" />
-                    <path d="M75,140 h50" stroke={colors.trim} strokeWidth="4" />
-                </g>
-            );
-        case 'cadet':
-            return (
-                <g id="jacket-cadet">
-                    <path d="M75,130 h50 v70 h-50 z" fill={colors.base} />
-                    <path d="M75,130 L100,200 L125,130" stroke={colors.accent} strokeWidth="12" fill="none" />
-                    <circle cx="100" cy="135" r="5" fill={colors.trim} />
-                </g>
-            );
-        case 'modern':
-             return (
-                <g id="jacket-modern">
-                    <path d="M75,130 h50 v70 h-50 z" fill={colors.base} />
-                    <path d="M75,130 Q 100,160 75,200" stroke={colors.accent} strokeWidth="8" fill="none" />
-                     <path d="M125,130 L100,200" stroke={colors.trim} strokeWidth="3" fill="none" />
-                </g>
-            );
-        case 'classic':
-        default:
-            return (
-                <g id="jacket-classic">
-                    <path d="M75,130 h50 v70 h-50 z" fill={colors.base} />
-                    <path d="M100,130 v70" stroke={colors.accent} strokeWidth="4" />
-                    <path d="M80,135 h3" stroke={colors.trim} strokeWidth="2" />
-                    <path d="M80,145 h3" stroke={colors.trim} strokeWidth="2" />
-                </g>
-            );
-    }
+const Skin = ({ color }) => (
+    <g id="skin">
+        <path d="M100,50 Q90,40 80,50 L80,60 Q90,70 100,60 Z" fill={color} />
+        <path d="M100,90 v40 h-10 v-40" fill={color} />
+        <path d="M120,90 v40 h-10 v-40" fill={color} />
+    </g>
+);
+
+const Headwear = ({ style, primaryColor, secondaryColor, plumeColor }) => {
+    const styles = {
+        shako: (
+            <g id="shako">
+                <path d="M85,30 h30 v20 h-30 Z" fill={primaryColor} />
+                <path d="M82,50 h36 v5 h-36 Z" fill={secondaryColor} />
+                <path d="M98,5 a1 1 0 0 0 0 25 a1 1 0 0 0 0-25" fill={plumeColor} />
+            </g>
+        ),
+        aussie: (
+            <g id="aussie">
+                <path d="M70,45 Q100,25 130,45 L115,50 L85,50 Z" fill={primaryColor} />
+                <path d="M70,45 Q75,50 85,50" fill={secondaryColor} />
+                 <path d="M98,20 a1 1 0 0 0 0 25 a1 1 0 0 0 0-25" fill={plumeColor} />
+            </g>
+        ),
+        helmet: (
+             <g id="helmet">
+                <path d="M80,30 Q100,20 120,30 v15 h-40 Z" fill={primaryColor} />
+                <path d="M98,5 a1 1 0 0 0 0 25 a1 1 0 0 0 0-25" fill={plumeColor} />
+            </g>
+        ),
+        none: null
+    };
+    return styles[style] || null;
 };
 
-const Pants = ({ style, colors }) => {
-     switch (style) {
-        case 'stripe':
-            return (
-                <g id="pants-stripe">
-                    <path d="M80,200 h15 v60 h-15 z" fill={colors.base} />
-                    <path d="M105,200 h15 v60 h-15 z" fill={colors.base} />
-                    <path d="M82,200 v60" stroke={colors.stripe} strokeWidth="4" />
-                    <path d="M118,200 v60" stroke={colors.stripe} strokeWidth="4" />
-                </g>
-            );
-        case 'plain':
-        default:
-             return (
-                <g id="pants-plain">
-                    <path d="M80,200 h15 v60 h-15 z" fill={colors.base} />
-                    <path d="M105,200 h15 v60 h-15 z" fill={colors.base} />
-                </g>
-            );
-     }
+const Jacket = ({ style, primaryColor, secondaryColor }) => {
+     const styles = {
+        traditional: <path d="M85,70 v50 h30 v-50 a15 10 0 0 0 -30 0" fill={primaryColor} />,
+        cadet: <path d="M85,70 v30 h30 v-30 a15 10 0 0 0 -30 0" fill={primaryColor} />,
+        asymmetrical: (
+            <>
+                <path d="M85,70 v50 h30 v-50 a15 10 0 0 0 -30 0" fill={primaryColor} />
+                <path d="M100,70 L115,120 L115,70 Z" fill={secondaryColor} />
+            </>
+        )
+    };
+    return <g id="jacket-style">{styles[style]}</g> || null;
 };
 
-const Headwear = ({ style, colors }) => {
-    if (style === 'none') return null;
-    switch (style) {
-        case 'aussie':
-             return <path id="head-aussie" d="M80,85 a20,10 0 0,1 40,0 l-5, -10 l-30,0 z" fill={colors.hat} stroke={colors.trim} strokeWidth="1.5" />;
-        case 'helmet':
-            return <path id="head-helmet" d="M80,95 a20,20 0 0,1 40,0 v-15 a20,20 0 0,1 -40,0 z" fill={colors.hat} stroke={colors.trim} strokeWidth="1.5" />;
-        case 'busby':
-            return <rect id="head-busby" x="82" y="65" width="36" height="30" rx="5" fill={colors.hat} stroke={colors.trim} strokeWidth="1.5" />;
-        case 'shako':
-        default:
-            return <path id="head-shako" d="M85,75 h30 v20 h-30 z" fill={colors.hat} stroke={colors.trim} strokeWidth="1.5" />;
-    }
+const JacketAccessory = ({ style, primaryColor, secondaryColor }) => {
+    const styles = {
+        sash: <path d="M85,70 L115,110 L110, 115 L80,75 Z" fill={primaryColor} />,
+        baldric: <path d="M115,70 L85,110 L90, 115 L120,75 Z" fill={primaryColor} />,
+        sequins: (
+            <>
+                <circle cx="95" cy="80" r="1.5" fill={secondaryColor} />
+                <circle cx="105" cy="80" r="1.5" fill={secondaryColor} />
+                <circle cx="95" cy="95" r="1.5" fill={secondaryColor} />
+                <circle cx="105" cy="95" r="1.5" fill={secondaryColor} />
+            </>
+        ),
+        none: null
+    };
+    return <g id="jacket-accessory">{styles[style]}</g> || null;
 };
 
-const Plume = ({ style, colors }) => {
-     if (style === 'none') return null;
-     switch (style) {
-        case 'feather':
-            return <path id="plume-feather" d="M100,75 C 110,50 115,40 100,30" fill="none" stroke={colors.plume} strokeWidth="4" />;
-        case 'mohawk':
-            return <path id="plume-mohawk" d="M85,70 h30 v-10 a15,10 0 0,0 -30,0 z" fill={colors.plume} />;
-        case 'fountain':
-        default:
-            return <path id="plume-fountain" d="M100,75 C 90,50 95,40 85,30 M100,75 C 110,50 105,40 115,30 M100,75 v-20" stroke={colors.plume} strokeWidth="3" fill="none" />;
-     }
+
+const Pants = ({ style, primaryColor, secondaryColor }) => {
+     const styles = {
+        standard: <path d="M85,120 v60 h30 v-60 Z" fill={primaryColor} />,
+        stripe: (
+            <>
+                <path d="M85,120 v60 h30 v-60 Z" fill={primaryColor} />
+                <path d="M98,120 v60 h4 v-60 Z" fill={secondaryColor} />
+            </>
+        )
+    };
+     return <g id="pants">{styles[style]}</g> || null;
 };
 
-const Shoes = ({ style }) => {
-    const color = style === 'white' ? '#FFFFFF' : '#1a1a1a';
-    return (
-        <g id="shoes">
-            <path d="M80,260 h15 v10 h-15 z" fill={color} />
-            <path d="M105,260 h15 v10 h-15 z" fill={color} />
-        </g>
-    );
-};
+const Shoes = ({ style, primaryColor }) => {
+    const styles = {
+        standard: <path d="M85,180 v10 h30 v-10 Z" fill={primaryColor} />
+    };
+    return <g id="shoes">{styles[style]}</g> || null;
+}
 
 
 const UniformDisplay = ({ uniform }) => {
-    // Default uniform structure to prevent errors if profile.uniform is not set
-    const defaultUniform = {
-      skinTone: '#d8aa7c',
-      headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } },
-      plume: { style: 'fountain', colors: { plume: '#ff0000' } },
-      jacket: { style: 'sash', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700' } },
-      pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } },
-      shoes: { style: 'white' },
+    // Default uniform if none is provided
+    const displayUniform = uniform || {
+        skinTone: '#C68642',
+        headwearStyle: 'shako',
+        headwearColor1: '#1a202c',
+        headwearColor2: '#4a5568',
+        plumeColor: '#FFFFFF',
+        jacketStyle: 'traditional',
+        jacketColor1: '#d53f8c',
+        jacketColor2: '#805ad5',
+        jacketAccessory: 'sash',
+        jacketAccessoryColor1: '#f6e05e',
+        jacketAccessoryColor2: '#f6e05e',
+        pantsStyle: 'standard',
+        pantsColor1: '#1a202c',
+        pantsColor2: '#4a5568',
+        shoesStyle: 'standard',
+        shoesColor1: '#FFFFFF'
     };
-    
-    const currentUniform = { ...defaultUniform, ...(uniform || {}) };
 
-    // Deep merge for nested properties
-    currentUniform.headwear = { ...defaultUniform.headwear, ...(uniform?.headwear || {}) };
-    currentUniform.plume = { ...defaultUniform.plume, ...(uniform?.plume || {}) };
-    currentUniform.jacket = { ...defaultUniform.jacket, ...(uniform?.jacket || {}) };
-    currentUniform.pants = { ...defaultUniform.pants, ...(uniform?.pants || {}) };
-    currentUniform.shoes = { ...defaultUniform.shoes, ...(uniform?.shoes || {}) };
-    
     return (
-        <div className="w-48 h-80 bg-brand-surface dark:bg-brand-surface-dark rounded-md flex justify-center items-center p-2 relative overflow-hidden flex-shrink-0 border-2 border-brand-accent dark:border-brand-accent-dark">
-            <svg viewBox="0 0 200 300" className="w-full h-full">
-                {/* Body Base */}
-                <g id="body">
-                    {/* Head */}
-                    <circle cx="100" cy="100" r="15" fill={currentUniform.skinTone} />
-                    {/* Neck */}
-                    <rect x="95" y="115" width="10" height="15" fill={currentUniform.skinTone} />
-                    {/* Hands */}
-                    <circle cx="70" cy="165" r="5" fill={currentUniform.skinTone} />
-                    <circle cx="130" cy="165" r="5" fill={currentUniform.skinTone} />
-                </g>
+        <div className="w-48 h-80 bg-brand-surface dark:bg-brand-surface-dark rounded-md flex items-center justify-center p-2 relative flex-shrink-0 border-2 border-brand-accent dark:border-brand-accent-dark">
+            <svg viewBox="0 0 200 200" className="w-full h-full">
+                {/* Base Body */}
+                <Skin color={displayUniform.skinTone} />
 
-                {/* Uniform Pieces */}
-                <Jacket style={currentUniform.jacket.style} colors={currentUniform.jacket.colors} />
-                <Pants style={currentUniform.pants.style} colors={currentUniform.pants.colors} />
-                <Shoes style={currentUniform.shoes.style} />
-                <Headwear style={currentUniform.headwear.style} colors={currentUniform.headwear.colors} />
-                <Plume style={currentUniform.plume.style} colors={currentUniform.plume.colors} />
+                {/* Clothing Layers */}
+                <Pants 
+                    style={displayUniform.pantsStyle}
+                    primaryColor={displayUniform.pantsColor1}
+                    secondaryColor={displayUniform.pantsColor2}
+                />
+                 <Shoes 
+                    style={displayUniform.shoesStyle}
+                    primaryColor={displayUniform.shoesColor1}
+                />
+                <Jacket 
+                    style={displayUniform.jacketStyle}
+                    primaryColor={displayUniform.jacketColor1}
+                    secondaryColor={displayUniform.jacketColor2}
+                />
+                <JacketAccessory
+                    style={displayUniform.jacketAccessory}
+                    primaryColor={displayUniform.jacketAccessoryColor1}
+                    secondaryColor={displayUniform.jacketAccessoryColor2}
+                />
+                <Headwear 
+                    style={displayUniform.headwearStyle}
+                    primaryColor={displayUniform.headwearColor1}
+                    secondaryColor={displayUniform.headwearColor2}
+                    plumeColor={displayUniform.plumeColor}
+                />
             </svg>
         </div>
     );
