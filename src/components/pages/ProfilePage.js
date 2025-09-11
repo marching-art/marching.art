@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
 import Icon from '../ui/Icon';
-import UniformDisplay from '../UniformDisplay';
-import TrophyCase from '../TrophyCase';
-import SeasonArchive from '../SeasonArchive';
-import UniformBuilder from '../UniformBuilder'; // Import the new builder
+import UniformDisplay from '../profile/UniformDisplay';
+import TrophyCase from '../profile/TrophyCase';
+import SeasonArchive from '../profile/SeasonArchive';
+import UniformBuilder from '../profile/UniformBuilder'; // Import the new builder
 
 // --- Child Components ---
 
