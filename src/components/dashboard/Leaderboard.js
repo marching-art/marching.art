@@ -11,15 +11,25 @@ const Leaderboard = () => {
     useEffect(() => {
         let unsubscribe;
         const fetchLeaderboardData = async () => {
-            // First, get the current active season ID from game-settings
             const seasonSettingsRef = doc(db, 'game-settings', 'season');
             const seasonDoc = await getDoc(seasonSettingsRef);
             if (!seasonDoc.exists()) {
                 setIsLoading(false);
                 return;
             }
-            const activeSeasonId = seasonDoc.id;
-            setSeasonName(seasonDoc.data().name);
+            const seasonData = seasonDoc.data();
+
+            // --- MODIFICATION START ---
+            // The user's profile `activeSeasonId` matches the unique `seasonUid` field from the season's data,
+            // not the document's ID. This corrects the query to find players in the current season.
+            const activeSeasonId = seasonData.seasonUid;
+            if (!activeSeasonId) {
+                console.error("Season UID is not configured in game-settings/season");
+                setIsLoading(false);
+                return;
+            }
+            setSeasonName(seasonData.name);
+            // --- MODIFICATION END ---
 
             // Now, create the query to get all players for the active season, ordered by score
             const profilesQuery = query(
@@ -41,14 +51,12 @@ const Leaderboard = () => {
                 setIsLoading(false);
             }, (error) => {
                 console.error("Error fetching leaderboard:", error);
-                // The error message will contain a link to create the required index.
                 setIsLoading(false);
             });
         };
         
         fetchLeaderboardData();
 
-        // Cleanup the listener when the component unmounts
         return () => { if (unsubscribe) unsubscribe(); };
     }, []);
 
