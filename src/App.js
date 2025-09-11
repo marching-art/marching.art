@@ -108,7 +108,7 @@ export default function App() {
             case 'schedule':
                 return <SchedulePage />;
             case 'scores':
-                return <ScoresPage />;
+                return <ScoresPage theme={theme} />; // Pass theme prop here
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
