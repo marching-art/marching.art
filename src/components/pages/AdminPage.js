@@ -4,8 +4,10 @@ import { functions } from '../../firebase';
 import FinalRankingsManager from '../admin/FinalRankingsManager';
 import LiveSeasonScheduler from '../admin/LiveSeasonScheduler';
 import SeasonControls from '../admin/SeasonControls';
+import ScoreDataViewer from '../admin/ScoreDataViewer'; // 1. Import the new component
 
 const AdminPage = () => {
+    // ... (all existing state and handler functions remain the same) ...
     // State for User Role Management
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
@@ -34,7 +36,6 @@ const AdminPage = () => {
         setIsLoadingRoles(false);
     };
 
-    // Handler function to call the testScraper Cloud Function
     const handleTestScraper = async () => {
         setScraperMessage('Starting scraper test...');
         setIsScraping(true);
@@ -63,25 +64,37 @@ const AdminPage = () => {
     setIsCrawling(false);
     };
 
+
     return (
         <div className="p-4 md:p-8 space-y-8">
             <h1 className="text-4xl font-bold text-yellow-800 dark:text-yellow-300 mb-6">Admin Panel</h1>
             
-            {/* THIS IS THE SECTION THAT USES THE NEW VARIABLES AND HANDLER */}
-            <div className="flex items-center space-x-4">
-    <button 
-        onClick={handleCrawlAndQueue} 
-        disabled={isCrawling} 
-        className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-    >
-        {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
-    </button>
-    {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
-</div>
-<div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-lg">
+            {/* --- MODIFICATION START: Add the new ScoreDataViewer component here --- */}
+            <ScoreDataViewer />
+            {/* --- MODIFICATION END --- */}
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-indigo-500 shadow-lg">
                 <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Data & Scoring Tools</h2>
                 <div className="space-y-4">
-                    <p>Manually trigger the backend scraper to fetch the latest scores. This will initiate the `processDciScores` function automatically upon completion.</p>
+                    <p className='text-sm text-gray-600 dark:text-gray-400'>
+                        <strong>Import All Historical Recaps:</strong> Discovers all historical score recap URLs from dci.org and adds them to a queue for processing. This is a comprehensive, one-time operation to populate the database.
+                    </p>
+                    <div className="flex items-center space-x-4">
+                        <button 
+                            onClick={handleCrawlAndQueue} 
+                            disabled={isCrawling} 
+                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                        >
+                            {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
+                        </button>
+                        {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+
+                     <p className='text-sm text-gray-600 dark:text-gray-400'>
+                        <strong>Run Scraper Test:</strong> Manually triggers the backend scraper to fetch scores from a single, specific recap page. Useful for testing scraper logic without running the full discovery process.
+                    </p>
                     <div className="flex items-center space-x-4">
                         <button 
                             onClick={handleTestScraper} 
