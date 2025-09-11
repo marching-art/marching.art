@@ -56,21 +56,19 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     const { lineup, corpsName } = request.data;
     const uid = request.auth.uid;
     
-    logger.info(`[validateAndSaveLineup] Firing for user: ${uid}`);
-    
     if (!lineup || Object.keys(lineup).length !== 8) {
         throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
     }
 
-    const lineupValues = Object.values(lineup).sort();
-    const lineupKey = lineupValues.join("_");
+    const lineupKey = Object.values(lineup).sort().join("_");
     
     const seasonSettingsRef = getDb().doc("game-settings/season");
     const seasonDoc = await seasonSettingsRef.get();
-    if (!seasonDoc.exists || seasonDoc.data().status === "inactive") {
+    if (!seasonDoc.exists || !seasonDoc.data().seasonUid) {
         throw new HttpsError("failed-precondition", "There is no active season.");
     }
-    const activeSeasonId = seasonDoc.id;
+    const seasonData = seasonDoc.data();
+    const activeSeasonId = seasonData.seasonUid;
 
     try {
         await getDb().runTransaction(async (transaction) => {
@@ -82,26 +80,65 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
 
             const newActiveLineupRef = getDb().collection("activeLineups").doc(lineupKey);
             const existingLineupDoc = await transaction.get(newActiveLineupRef);
-
             if (existingLineupDoc.exists && existingLineupDoc.data().uid !== uid) {
-                throw new HttpsError("already-exists", "This exact lineup has already been claimed by another user.");
+                throw new HttpsError("already-exists", "This exact lineup has already been claimed.");
             }
-
-            const oldLineupKey = userProfileDoc.data().lineupKey;
+            
+            const userProfileData = userProfileDoc.data();
+            const oldLineupKey = userProfileData.lineupKey;
             if (oldLineupKey && oldLineupKey !== lineupKey) {
-                const oldActiveLineupRef = getDb().collection("activeLineups").doc(oldLineupKey);
-                transaction.delete(oldActiveLineupRef);
+                transaction.delete(getDb().collection("activeLineups").doc(oldLineupKey));
             }
-            
             transaction.set(newActiveLineupRef, { uid: uid, seasonId: activeSeasonId });
-            
+
             const profileUpdateData = {
                 lineup: lineup,
                 lineupKey: lineupKey,
-                activeSeasonId: activeSeasonId,
-                corpsName: corpsName,
             };
+            
+            const isNewSeasonSignup = userProfileData.activeSeasonId !== activeSeasonId;
 
+            if (isNewSeasonSignup) {
+                if (!corpsName) throw new HttpsError("invalid-argument", "A corps name is required.");
+                profileUpdateData.corpsName = corpsName;
+                profileUpdateData.activeSeasonId = activeSeasonId;
+                profileUpdateData.totalSeasonScore = 0;
+                profileUpdateData.selectedShows = {};
+                profileUpdateData.weeklyTrades = { seasonUid: activeSeasonId, week: 1, used: 0 };
+            } else {
+                // --- PERSISTENT TRADE VALIDATION LOGIC ---
+                const now = new Date();
+                const seasonStartDate = seasonData.schedule.startDate.toDate();
+                const diffInMillis = now.getTime() - seasonStartDate.getTime();
+                const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+                const currentWeek = Math.ceil(currentDay / 7);
+
+                let tradeLimit = 3;
+                if (seasonData.status === 'off-season' && currentWeek === 1) tradeLimit = Infinity;
+                if (seasonData.status === 'live-season' && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
+                
+                const originalLineup = userProfileData.lineup || {};
+                let newTrades = 0;
+                Object.keys(lineup).forEach(caption => {
+                    if (originalLineup[caption] !== lineup[caption]) newTrades++;
+                });
+
+                if (newTrades > 0 && tradeLimit !== Infinity) {
+                    const weeklyTrades = userProfileData.weeklyTrades || { week: 0, used: 0 };
+                    let tradesAlreadyUsed = (weeklyTrades.seasonUid === activeSeasonId && weeklyTrades.week === currentWeek) ? weeklyTrades.used : 0;
+
+                    if (tradesAlreadyUsed + newTrades > tradeLimit) {
+                        throw new HttpsError("failed-precondition", `Exceeds trade limit. You have ${tradeLimit - tradesAlreadyUsed} trades remaining.`);
+                    }
+                    
+                    profileUpdateData.weeklyTrades = {
+                        seasonUid: activeSeasonId,
+                        week: currentWeek,
+                        used: tradesAlreadyUsed + newTrades
+                    };
+                }
+            }
+            
             transaction.update(userProfileRef, profileUpdateData);
         });
         return { success: true, message: "Lineup saved successfully!" };
@@ -260,7 +297,6 @@ exports.processDailyScores = onSchedule({
     const seasonData = { id: seasonDoc.id, ...seasonDoc.data() };
     const seasonStartDate = seasonData.schedule.startDate.toDate();
     
-    // Calculate the current off-season day (1-49)
     const now = new Date();
     const diffInMillis = now.getTime() - seasonStartDate.getTime();
     const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
@@ -273,7 +309,6 @@ exports.processDailyScores = onSchedule({
 
     logger.info(`Processing scores for Off-Season Day: ${currentOffSeasonDay}`);
 
-    // Get today's scheduled shows from the season document
     const todayEventData = seasonData.events.find(e => e.offSeasonDay === currentOffSeasonDay);
     if (!todayEventData || !todayEventData.shows || todayEventData.shows.length === 0) {
         logger.info(`No shows scheduled for day ${currentOffSeasonDay}. Nothing to score.`);
@@ -281,8 +316,7 @@ exports.processDailyScores = onSchedule({
     }
     const todaysShows = todayEventData.shows;
     
-    // Get all user profiles participating in the current season
-    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', seasonData.id);
+    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', seasonData.seasonUid);
     const profilesSnapshot = await profilesQuery.get();
     
     if (profilesSnapshot.empty) {
@@ -294,28 +328,32 @@ exports.processDailyScores = onSchedule({
     
     for (const userDoc of profilesSnapshot.docs) {
         const userProfile = userDoc.data();
-        const uid = userDoc.ref.parent.parent.id; // Correctly get UID from subcollection path
+        const uid = userDoc.ref.parent.parent.id;
         
-        // Check if the user has selected shows for this week
         const userShowsForWeek = userProfile.selectedShows ? userProfile.selectedShows[`week${week}`] : [];
         if (!userShowsForWeek || userShowsForWeek.length === 0) {
-            continue; // User didn't select any shows this week
+            continue;
         }
 
         let dailyScore = 0;
         
         for (const show of todaysShows) {
-            // Check if the user "attended" this show
             const attendedShow = userShowsForWeek.some(s => s.eventName === show.eventName && s.date === show.date);
             if (attendedShow) {
-                // Calculate user's score for this specific show
                 let showScore = 0;
                 for (const caption in userProfile.lineup) {
-                    const selectedCorps = userProfile.lineup[caption];
-                    const corpsScoreData = show.scores.find(s => s.corps === selectedCorps);
-                    if (corpsScoreData && corpsScoreData.captions[caption]) {
-                        showScore += corpsScoreData.captions[caption];
-                    }
+                    const selectedValue = userProfile.lineup[caption];
+                    const selectedCorps = selectedValue.split('|')[0];
+                    
+                    // --- MODIFICATION: Call the new helper function for each caption ---
+                    const captionScore = getRealisticCaptionScore(
+                        selectedCorps, 
+                        caption, 
+                        currentOffSeasonDay, 
+                        show,
+                        seasonData.events
+                    );
+                    showScore += captionScore;
                 }
                 dailyScore += showScore;
             }
@@ -345,7 +383,11 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
     const seasonDoc = await db.doc("game-settings/season").get();
     if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
     
-    const activeSeasonId = seasonDoc.id;
+    const activeSeasonId = seasonDoc.data().seasonUid;
+    if (!activeSeasonId) {
+        throw new HttpsError("not-found", "Active season UID is not configured.");
+    }
+    
     const weekKey = `selectedShows.week${week}`;
 
     const registrations = [];
@@ -393,6 +435,32 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
 // ================================================================= //
 //                      INTERNAL HELPER LOGIC                        //
 // ================================================================= //
+
+/**
+ * Calculates the slope (m) and y-intercept (c) for a simple linear regression line.
+ * @param {Array<Array<number>>} data An array of [x, y] data points ([day, score]).
+ * @returns {{m: number, c: number}} The slope and y-intercept of the trend line.
+ */
+function simpleLinearRegression(data) {
+    const n = data.length;
+    if (n < 2) {
+        return { m: 0, c: data.length > 0 ? data[0][1] : 0 };
+    }
+
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    for (const [x, y] of data) {
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumXX += x * x;
+    }
+
+    // Using the formula for the slope (m) and y-intercept (c)
+    const m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const c = (sumY - m * sumX) / n;
+
+    return { m, c };
+}
 
 /**
  * Shuffles an array in place using the Fisher-Yates algorithm.
@@ -560,22 +628,19 @@ async function startNewLiveSeason() {
 }
 
 async function startNewOffSeason() {
-    logger.info("Generating new off-season with cycle-sync and advanced rules...");
+    logger.info("Generating new off-season with calendar-aware cycle-sync...");
     const db = getDb();
     
-    const startDate = new Date();
+    // --- MODIFICATION START ---
+    // Use the calendar-aware logic to determine the correct start and end dates for the current 49-day off-season slot.
     const endDate = getNextSeasonEndDate();
-
-    // Calculate truncated season length
-    const diffInMillis = endDate.getTime() - startDate.getTime();
-    let seasonLength = Math.ceil(diffInMillis / (1000 * 60 * 60 * 24));
-    if (seasonLength > 49) seasonLength = 49;
-    if (seasonLength < 1) {
-        logger.error("Calculated season length is less than 1. Aborting.");
-        return;
-    }
-
-    logger.info(`New season will start on ${startDate.toISOString()} and end on ${endDate.toISOString()}, with a length of ${seasonLength} days.`);
+    const startDate = new Date(endDate.getTime() - 48 * 24 * 60 * 60 * 1000);
+    
+    // Always generate a full 49-day schedule for this season slot.
+    const seasonLength = 49;
+    const startDay = 1;
+    logger.info(`New season slot runs from ${startDate.toISOString()} to ${endDate.toISOString()}. Generating full 49-day schedule.`);
+    // --- MODIFICATION END ---
 
     const rankingsSnapshot = await db.collection("final_rankings").get();
     if (rankingsSnapshot.empty) {
@@ -614,47 +679,38 @@ async function startNewOffSeason() {
 
         if (candidates.length > 0) {
             const shuffledCandidates = shuffleArray([...candidates]);
-            
-            // --- Step 1: Prioritize finding an unused corps with the correct point value ---
             chosenCorps = shuffledCandidates.find(c => !usedCorpsNames.has(c.corpsName));
 
-            // --- Step 2: If no unused corps is found, accept a duplicate to maintain point accuracy ---
             if (!chosenCorps) {
                 logger.info(`No unused corps for ${points} points. Accepting a duplicate.`);
-                // Simply select the first available candidate, even if its name is already used.
                 chosenCorps = shuffledCandidates[0];
             }
         }
 
-        // --- Step 3 (Last Resort): If no corps exist for this point value at all ---
         if (!chosenCorps) {
             const fallback = shuffledAllCorps.find(c => !usedCorpsNames.has(c.corpsName));
             if (fallback) {
                 logger.warn(`No corps found for ${points} points. Using fallback ${fallback.corpsName} and re-valuing.`);
-                chosenCorps = { ...fallback, points: points }; // Assign the current loop's point value
+                chosenCorps = { ...fallback, points: points };
             }
         }
         
         if (chosenCorps) {
-            // It's important to push a copy of the object
             offSeasonCorpsData.push({
                 corpsName: chosenCorps.corpsName,
                 sourceYear: chosenCorps.sourceYear,
                 points: chosenCorps.points,
             });
-            // Still add the name to the used set so the primary logic (Step 1) works correctly.
             usedCorpsNames.add(chosenCorps.corpsName);
         }
     }
     
-    const startDay = 49 - seasonLength + 1;
-
     const schedule = await generateOffSeasonSchedule(seasonLength, startDay);
 
     const seasonName = `Off-Season ${startDate.toLocaleString("default", { month: "long" })} ${startDate.getFullYear()}`;
-    const dataDocId = `off-season-${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()}`;
+    const dataDocId = `off-season-${startDate.getTime()}`;
     
-    await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData, /* ... */ });
+    await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
     const newSeasonSettings = {
         name: seasonName,
@@ -670,22 +726,20 @@ async function startNewOffSeason() {
     };
 
     await db.doc("game-settings/season").set(newSeasonSettings);
-    logger.info(`Successfully started ${seasonName} for ${seasonLength} days.`);
+    logger.info(`Successfully started ${seasonName}.`);
 }
-
 
 async function generateOffSeasonSchedule(seasonLength, startDay) {
     logger.info(`Generating schedule for a ${seasonLength}-day season, starting on day ${startDay}.`);
     const db = getDb();
     const scoresSnapshot = await db.collection('historical_scores').get();
     
-    // 1. Group all valid shows by their offSeasonDay, EXCLUDING "Open Class"
+    // 1. Group all valid shows by their offSeasonDay
     const showsByDay = new Map();
     let allShows = []; 
     scoresSnapshot.forEach(yearDoc => {
         const yearData = yearDoc.data().data || [];
         yearData.forEach(event => {
-            // --- NEW: Filter out "Open Class" shows ---
             if (event.eventName && event.offSeasonDay && !event.eventName.toLowerCase().includes('open class')) {
                 const showData = {
                     eventName: event.eventName,
@@ -701,37 +755,67 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         });
     });
 
-    // 2. Initialize schedule for the correct range of days
+    // 2. Initialize schedule and tracking sets
     const schedule = Array.from({ length: seasonLength }, (_, i) => ({ offSeasonDay: startDay + i, shows: [] }));
     const usedEventNames = new Set();
     const usedLocations = new Set();
 
-    // --- UPDATED: More robust function to find and place shows ---
-    const findAndSetShow = (day, name, mandatory) => {
+    // --- MODIFICATION: Helper function now correctly uses shows from the specified day ---
+    const placeExclusiveShow = (day, showNamePattern, mandatory) => {
         const dayObject = schedule.find(d => d.offSeasonDay === day);
-        if (!dayObject) return false; // Day doesn't exist in this truncated schedule
+        if (!dayObject) return;
 
-        const potentialShows = showsByDay.get(day) || [];
-        const show = potentialShows.find(s => s.eventName.includes(name));
+        // CRITICAL FIX: Only search for shows that actually occurred on this offSeasonDay.
+        const showsForThisDay = showsByDay.get(day) || [];
+        const candidates = showsForThisDay.filter(s => 
+            s.eventName.toLowerCase().includes(showNamePattern.toLowerCase()) && 
+            !usedEventNames.has(s.eventName)
+        );
         
-        if (show) {
-            dayObject.shows = [{ ...show, mandatory }];
-            usedEventNames.add(show.eventName);
-            usedLocations.add(show.location);
-            return true;
-        }
+        const showToPlace = shuffleArray(candidates)[0];
 
-        logger.warn(`Could not find required show for Day ${day}: ${name}. Day will be filled randomly.`);
-        return false;
+        if (showToPlace) {
+            dayObject.shows = [{ ...showToPlace, mandatory }];
+            usedEventNames.add(showToPlace.eventName);
+            usedLocations.add(showToPlace.location);
+        } else {
+            logger.warn(`Could not find an unused show for Day ${day} matching "${showNamePattern}". Day will be empty.`);
+            dayObject.shows = [];
+        }
     };
     
-    // 3. Place mandatory and special shows first
-    findAndSetShow(28, "DCI Southwestern Championship", true);
-    findAndSetShow(47, "DCI World Championship Prelims", true);
-    findAndSetShow(48, "DCI World Championship Semifinals", true);
-    findAndSetShow(49, "DCI World Championship Finals", true);
+    // 3. Place mandatory and special shows first using the corrected helper
+    placeExclusiveShow(49, "DCI World Championship Finals", true);
+    placeExclusiveShow(48, "DCI World Championship Semifinals", true);
+    placeExclusiveShow(47, "DCI World Championship Prelims", true);
+    placeExclusiveShow(28, "DCI Southwestern Championship", true);
+    placeExclusiveShow(35, "championship", false);
 
-    // ... (rest of the special show logic for DCI East, etc.) ...
+    // --- MODIFICATION: Special handling for DCI Eastern Classic, sourcing from the correct days ---
+    const showsForDay41 = showsByDay.get(41) || [];
+    const showsForDay42 = showsByDay.get(42) || [];
+    
+    const easternClassicCandidates = [...showsForDay41, ...showsForDay42].filter(s => 
+        s.eventName.includes("DCI Eastern Classic") && 
+        !usedEventNames.has(s.eventName)
+    );
+
+    const dciEastShow = shuffleArray(easternClassicCandidates)[0];
+
+    if (dciEastShow) {
+        const day41 = schedule.find(d => d.offSeasonDay === 41);
+        const day42 = schedule.find(d => d.offSeasonDay === 42);
+        
+        if (day41) day41.shows = [{ ...dciEastShow, mandatory: false }];
+        if (day42) day42.shows = [{ ...dciEastShow, mandatory: false }];
+        
+        if (day41 || day42) {
+            usedEventNames.add(dciEastShow.eventName);
+            usedLocations.add(dciEastShow.location);
+        }
+    } else {
+        logger.warn(`Could not find "DCI Eastern Classic" on days 41 or 42. These days will be filled randomly if available.`);
+    }
     
     // 4. Fill the rest of the schedule
     const remainingDays = schedule.filter(d => d.shows.length === 0);
@@ -740,6 +824,7 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
 
     for (const day of remainingDays) {
         const numShowsToPick = dayCounts.pop() || 3;
+        // This part was already correct: It uses the specific day's shows.
         const potentialShows = shuffleArray(showsByDay.get(day.offSeasonDay) || []);
         const pickedShows = [];
         
@@ -754,7 +839,6 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         day.shows = pickedShows;
     }
 
-    // --- NEW: Ensure Days 45 and 46 are always empty ---
     const day45 = schedule.find(d => d.offSeasonDay === 45);
     if (day45) day45.shows = [];
     const day46 = schedule.find(d => d.offSeasonDay === 46);
@@ -846,6 +930,84 @@ function getNextSeasonEndDate() {
     }
     
     return potentialEndDate;
+}
+
+/**
+ * Gets a realistic caption score, using linear regression if the real score is missing.
+ * @param {string} corpsName The name of the corps.
+ * @param {string} caption The caption to score (e.g., 'GE1').
+ * @param {number} currentDay The current off-season day (1-49).
+ * @param {object} currentShow The show object for the current day.
+ * @param {Array} allEvents The full 49-day schedule of all events.
+ * @returns {number} The real or generated caption score.
+ */
+function getRealisticCaptionScore(corpsName, caption, currentDay, currentShow, allEvents) {
+    // 1. Check for a real, valid score in the currently scheduled show.
+    const realScoreData = currentShow.scores.find(s => s.corps === corpsName);
+    if (realScoreData && realScoreData.captions[caption] && realScoreData.captions[caption] > 0) {
+        return realScoreData.captions[caption];
+    }
+
+    // 2. If no real score, gather up to 3 past and 3 future scores to build a trend.
+    const dataPoints = [];
+    const SCORE_POINTS_TO_FIND = 3;
+
+    // Search backwards for past scores
+    let pastScoresFound = 0;
+    for (let day = currentDay - 1; day >= 1; day--) {
+        const dayEvents = allEvents.find(e => e.offSeasonDay === day);
+        if (dayEvents) {
+            for (const show of dayEvents.shows) {
+                const scoreData = show.scores.find(s => s.corps === corpsName);
+                if (scoreData && scoreData.captions[caption] > 0) {
+                    dataPoints.push([day, scoreData.captions[caption]]);
+                    pastScoresFound++;
+                    break; // Take one score per day to avoid clustering
+                }
+            }
+        }
+        if (pastScoresFound >= SCORE_POINTS_TO_FIND) break;
+    }
+
+    // Search forwards for future scores
+    let futureScoresFound = 0;
+    for (let day = currentDay + 1; day <= 49; day++) {
+        const dayEvents = allEvents.find(e => e.offSeasonDay === day);
+        if (dayEvents) {
+            for (const show of dayEvents.shows) {
+                const scoreData = show.scores.find(s => s.corps === corpsName);
+                if (scoreData && scoreData.captions[caption] > 0) {
+                    dataPoints.push([day, scoreData.captions[caption]]);
+                    futureScoresFound++;
+                    break; // Take one score per day
+                }
+            }
+        }
+        if (futureScoresFound >= SCORE_POINTS_TO_FIND) break;
+    }
+
+    // 3. Predict the score using the trend line from the collected data points.
+    if (dataPoints.length >= 2) {
+        const { m, c } = simpleLinearRegression(dataPoints);
+        const predictedScore = m * currentDay + c;
+        
+        const jitter = (Math.random() - 0.5) * 0.5; // +/- 0.25
+        const finalScore = predictedScore + jitter;
+
+        return Math.max(0, Math.min(10, parseFloat(finalScore.toFixed(3))));
+
+    } else if (dataPoints.length === 1) {
+        // Fallback to single-point logic if not enough data for a trend.
+        const baselineScore = dataPoints[0][1];
+        const jitter = (Math.random() - 0.5) * 0.2; // smaller jitter
+        const finalScore = baselineScore + jitter;
+        return Math.max(0, Math.min(10, parseFloat(finalScore.toFixed(3))));
+        
+    } else {
+        // No scores found at all.
+        logger.warn(`No historical scores found for ${corpsName}, caption ${caption}. Returning 0.`);
+        return 0;
+    }
 }
 
 // ================================================================= //
@@ -965,7 +1127,6 @@ exports.processPaginationPage = onMessagePublished({
         }
     }
 });
-
 
 async function queueRecapUrlForScraping(url) {
     try {
