@@ -26,9 +26,9 @@ const ScoreDataViewer = () => {
                     const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
                     const corpsSnap = await getDoc(corpsDataRef);
                     if (corpsSnap.exists()) {
-                        // Sort corps alphabetically for consistent display
                         const corpsValues = corpsSnap.data().corpsValues || [];
-                        setCorpsList(corpsValues.sort((a, b) => a.corpsName.localeCompare(b.corpsName)));
+                        // --- MODIFICATION: Sort corps by point value, descending ---
+                        setCorpsList(corpsValues.sort((a, b) => b.points - a.points));
                     }
                 }
             }
@@ -51,7 +51,7 @@ const ScoreDataViewer = () => {
                         const scoreData = show.scores.find(s => s.corps === corp.corpsName);
                         if (scoreData && scoreData.captions[selectedCaption] > 0) {
                             scoreForDay = scoreData.captions[selectedCaption];
-                            break; // Take the first score found for that day
+                            break; 
                         }
                     }
                 }
@@ -68,17 +68,24 @@ const ScoreDataViewer = () => {
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
             <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-4">Season Score Data Viewer</h2>
-            <div className="flex items-center space-x-4 mb-4">
-                <label htmlFor="caption-select" className="font-semibold">Select Caption:</label>
-                <select
-                    id="caption-select"
-                    value={selectedCaption}
-                    onChange={(e) => setSelectedCaption(e.target.value)}
-                    className="bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-green-500 rounded p-2 text-gray-800 dark:text-green-300"
-                >
-                    {CAPTIONS.map(caption => <option key={caption} value={caption}>{caption}</option>)}
-                </select>
+            
+            {/* --- MODIFICATION: Replaced dropdown with a tab-style header --- */}
+            <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
+                {CAPTIONS.map(caption => (
+                    <button
+                        key={caption}
+                        onClick={() => setSelectedCaption(caption)}
+                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${
+                            selectedCaption === caption
+                                ? 'border-b-2 border-green-500 text-green-600 dark:text-green-400'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        {caption}
+                    </button>
+                ))}
             </div>
+
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm text-left border-collapse">
                     <thead className="bg-gray-100 dark:bg-gray-900 sticky top-0">
@@ -89,8 +96,11 @@ const ScoreDataViewer = () => {
                     </thead>
                     <tbody>
                         {corpsList.map(corp => (
-                            <tr key={corp.corpsName} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-800/50">
-                                <td className="p-2 border border-gray-300 dark:border-gray-600 font-semibold whitespace-nowrap">{corp.corpsName}</td>
+                            <tr key={`${corp.corpsName}-${corp.sourceYear}`} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-800/50">
+                                <td className="p-2 border border-gray-300 dark:border-gray-600 font-semibold whitespace-nowrap">
+                                    {/* --- MODIFICATION: Display name, year, and points --- */}
+                                    {`${corp.corpsName} (${corp.sourceYear}) - ${corp.points} pts`}
+                                </td>
                                 {DAYS.map(day => (
                                     <td key={`${corp.corpsName}-${day}`} className="p-2 border border-gray-300 dark:border-gray-600 text-center">
                                         {gridData[corp.corpsName]?.[day]?.toFixed(3) || ''}
