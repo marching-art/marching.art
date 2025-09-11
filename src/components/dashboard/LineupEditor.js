@@ -26,11 +26,11 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
             const selectedCorpsName = lineup[caption];
             // If a corps is selected for the caption...
             if (selectedCorpsName) {
-                const corps = corpsData.find(c => c.corpsName === selectedCorpsName);
-                points += corps?.points || 0;
+                const [_corpsName, corpsPoints] = selectedValue.split('|');
+                points += Number(corpsPoints) || 0;
 
-                // Check if this selection is different from the original lineup to count a trade.
-                if (originalLineup[caption] !== selectedCorpsName) {
+                // Compare the full unique value to detect a trade
+                if (originalLineup[caption] !== selectedValue) {
                     trades++;
                 }
             }
@@ -38,7 +38,7 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
         
         setTotalPoints(points);
         setTradesUsed(trades);
-    }, [lineup, corpsData, originalLineup]);
+    }, [lineup, originalLineup]);
 
     const handleSelect = (caption, corpsName) => {
         setLineup(prev => ({ ...prev, [caption]: corpsName }));
@@ -75,6 +75,7 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
         )
     }
 
+    const uniqueCorpsValue = (corps) => `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
     const tradesRemaining = WEEKLY_TRADES_LIMIT - tradesUsed;
 
@@ -105,7 +106,7 @@ const LineupEditor = ({ profile, corpsData, pointCap }) => {
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData.map(corps => (
-                                <option key={`${corps.corpsName}-${corps.sourceYear}`} value={corps.corpsName}>
+                                <option key={uniqueCorpsValue(corps)} value={uniqueCorpsValue(corps)}>
                                     {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
                                 </option>
                             ))}

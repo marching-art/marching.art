@@ -18,18 +18,18 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
     // Calculate total points whenever the lineup changes
     useEffect(() => {
         const points = CAPTIONS.reduce((sum, caption) => {
-            const selectedCorpsName = lineup[caption];
-            if (selectedCorpsName) {
-                const corps = corpsData.find(c => c.corpsName === selectedCorpsName);
-                return sum + (corps?.points || 0);
+            const selectedValue = lineup[caption];
+            if (selectedValue) {
+                const [_corpsName, corpsPoints] = selectedValue.split('|');
+                return sum + (Number(corpsPoints) || 0);
             }
             return sum;
         }, 0);
         setTotalPoints(points);
-    }, [lineup, corpsData]);
+    }, [lineup]);
 
-    const handleSelectCorps = (caption, corpsName) => {
-        setLineup(prev => ({ ...prev, [caption]: corpsName }));
+    const handleSelectCorps = (caption, selectedValue) => {
+        setLineup(prev => ({ ...prev, [caption]: selectedValue }));
     };
 
     // Step 1: Save corps name and move to lineup selection
@@ -76,6 +76,8 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
 
+    const uniqueCorpsValue = (corps) => `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
+    
     // --- RENDER FUNCTIONS ---
 
     const renderStepOne = () => (
@@ -123,7 +125,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData.map(corps => (
-                                <option key={`${corps.corpsName}-${corps.sourceYear}`} value={corps.corpsName}>
+                                <option key={uniqueCorpsValue(corps)} value={uniqueCorpsValue(corps)}>
                                     {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
                                 </option>
                             ))}
