@@ -11,7 +11,6 @@ const LeagueManager = ({ profile }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [newLeagueInfo, setNewLeagueInfo] = useState(null);
-    // NEW: State to provide feedback when a code is copied
     const [copiedCode, setCopiedCode] = useState('');
 
     useEffect(() => {
@@ -31,11 +30,10 @@ const LeagueManager = ({ profile }) => {
         fetchLeagueDetails();
     }, [profile]);
 
-    // NEW: Function to handle copying the invite code to the clipboard
     const handleCopyCode = (code) => {
         navigator.clipboard.writeText(code);
         setCopiedCode(code);
-        setTimeout(() => setCopiedCode(''), 2000); // Reset after 2 seconds
+        setTimeout(() => setCopiedCode(''), 2000);
     };
 
     const handleJoinLeague = async (e) => {
@@ -43,7 +41,7 @@ const LeagueManager = ({ profile }) => {
         if (!inviteCode.trim()) return;
         setIsLoading(true);
         setMessage({ type: '', text: '' });
-        setNewLeagueInfo(null); // Clear previous new league info
+        setNewLeagueInfo(null);
         try {
             const joinLeague = httpsCallable(functions, 'joinLeague');
             const result = await joinLeague({ inviteCode: inviteCode.trim() });
@@ -70,6 +68,23 @@ const LeagueManager = ({ profile }) => {
         setIsLoading(false);
     };
 
+    // --- NEW: Function to handle leaving a league ---
+    const handleLeaveLeague = async (leagueId) => {
+        if (window.confirm("Are you sure you want to leave this league? This action cannot be undone.")) {
+            setIsLoading(true);
+            setMessage({ type: '', text: '' });
+            setNewLeagueInfo(null);
+            try {
+                const leaveLeague = httpsCallable(functions, 'leaveLeague');
+                const result = await leaveLeague({ leagueId });
+                setMessage({ type: 'success', text: result.data.message });
+            } catch (error) {
+                setMessage({ type: 'error', text: error.message });
+            }
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="lg:col-span-1 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
             <CreateLeagueModal
@@ -82,10 +97,19 @@ const LeagueManager = ({ profile }) => {
             
             {userLeagues.length > 0 ? (
                 <ul className="space-y-3 mb-6">
-                    {/* CHANGED: This whole list item is updated to show the code and copy button */}
                     {userLeagues.map(league => (
                         <li key={league.id} className="p-3 bg-brand-background dark:bg-brand-background-dark rounded-md">
-                            <p className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">{league.name}</p>
+                            <div className="flex items-center justify-between">
+                                <p className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">{league.name}</p>
+                                {/* --- NEW: Leave League Button --- */}
+                                <button
+                                    onClick={() => handleLeaveLeague(league.id)}
+                                    disabled={isLoading}
+                                    className="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded disabled:bg-gray-400"
+                                >
+                                    Leave
+                                </button>
+                            </div>
                             <div className="flex items-center justify-between mt-2">
                                 <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">
                                     Invite Code: <span className="font-mono bg-gray-200 dark:bg-brand-surface-dark px-2 py-1 rounded">{league.inviteCode}</span>
@@ -104,6 +128,7 @@ const LeagueManager = ({ profile }) => {
                 <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark mb-6 italic">You haven't joined any leagues yet.</p>
             )}
 
+            {/* --- Rest of the component remains the same --- */}
             <div className="space-y-4 border-t-2 border-brand-accent dark:border-brand-accent-dark pt-4">
                 <form onSubmit={handleJoinLeague} className="space-y-2">
                     <h3 className="font-semibold text-lg text-brand-text-primary dark:text-brand-text-primary-dark">Join a League</h3>
