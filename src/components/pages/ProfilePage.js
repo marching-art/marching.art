@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
-import Icon from '../ui/Icon'; // Assuming Icon.js is at src/components/ui/Icon.js
+import Icon from '../ui/Icon';
 
 // --- Child Components ---
 
@@ -115,6 +115,45 @@ const SeasonArchive = ({ seasons }) => {
     );
 };
 
+const MySchedule = ({ profile }) => {
+    if (!profile.activeSeasonId || !profile.selectedShows) {
+        return (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+                <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Season Schedule</h3>
+                <p className="text-gray-500">No shows have been selected for the current season.</p>
+            </div>
+        );
+    }
+    
+    const weeks = Object.keys(profile.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', '')));
+
+    return (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
+            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Season Schedule</h3>
+            <div className="space-y-4">
+                {weeks.map(weekKey => {
+                    const weekNum = weekKey.replace('week', '');
+                    const shows = profile.selectedShows[weekKey];
+                    return (
+                        <div key={weekKey}>
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-200">Week {weekNum}</h4>
+                            {shows && shows.length > 0 ? (
+                                <ul className="list-disc list-inside pl-2 mt-1 text-sm text-gray-700 dark:text-gray-300">
+                                    {shows.map((show, index) => (
+                                        <li key={index}>{show.eventName} - <em className="text-gray-500">{show.location}</em></li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="pl-2 mt-1 text-sm text-gray-500">No shows selected for this week.</p>
+                            )}
+                        </div>
+                    );
+                })}
+                 {weeks.length === 0 && <p className="text-gray-500">No shows have been selected for the current season.</p>}
+            </div>
+        </div>
+    );
+};
 
 // --- Main ProfilePage Component ---
 
@@ -166,8 +205,8 @@ const ProfilePage = ({ profile, userId }) => {
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                 <UniformDisplay uniform={profile.uniform} />
                 <div className="flex-grow text-center md:text-left">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
-                    {/* Display the corps name if it exists */}
+                    {/* ... (user info, bio section is the same) ... */}
+                     <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white">{profile.username}</h1>
                     {profile.corpsName && (
                         <h2 className="text-2xl font-semibold text-yellow-700 dark:text-yellow-400 mt-1">{profile.corpsName}</h2>
                     )}
@@ -203,9 +242,10 @@ const ProfilePage = ({ profile, userId }) => {
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">                
+                <MySchedule profile={profile} />
                 <TrophyCase trophies={profile.trophies} />
-                <SeasonArchive seasons={profile.seasons} />
+                <SeasonArchive seasons={profile.seasons} />                
             </div>
         </div>
     );
