@@ -118,9 +118,9 @@ const SeasonArchive = ({ seasons }) => {
 const MySchedule = ({ profile }) => {
     if (!profile.activeSeasonId || !profile.selectedShows) {
         return (
-        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
-            <p className="text-gray-500">No shows have been selected for the current season.</p>
+            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+                <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
+                <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows have been selected for the current season.</p>
             </div>
         );
     }
@@ -128,28 +128,28 @@ const MySchedule = ({ profile }) => {
     const weeks = Object.keys(profile.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', '')));
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-yellow-500 shadow-lg">
-            <h3 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">My Season Schedule</h3>
+        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
             <div className="space-y-4">
                 {weeks.map(weekKey => {
                     const weekNum = weekKey.replace('week', '');
                     const shows = profile.selectedShows[weekKey];
                     return (
                         <div key={weekKey}>
-                            <h4 className="font-semibold text-gray-800 dark:text-gray-200">Week {weekNum}</h4>
+                            <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Week {weekNum}</h4>
                             {shows && shows.length > 0 ? (
-                                <ul className="list-disc list-inside pl-2 mt-1 text-sm text-gray-700 dark:text-gray-300">
+                                <ul className="list-disc list-inside pl-2 mt-1 text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">
                                     {shows.map((show, index) => (
-                                        <li key={index}>{show.eventName} - <em className="text-gray-500">{show.location}</em></li>
+                                        <li key={index}>{show.eventName} - <em className="text-brand-accent dark:text-brand-accent-dark">{show.location}</em></li>
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="pl-2 mt-1 text-sm text-gray-500">No shows selected for this week.</p>
+                                <p className="pl-2 mt-1 text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows selected for this week.</p>
                             )}
                         </div>
                     );
                 })}
-                 {weeks.length === 0 && <p className="text-gray-500">No shows have been selected for the current season.</p>}
+                 {weeks.length === 0 && <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows have been selected for the current season.</p>}
             </div>
         </div>
     );
