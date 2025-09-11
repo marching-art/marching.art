@@ -51,17 +51,15 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
         setMessage('');
         try {
             const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
+            // This single backend call now handles everything atomically.
             const result = await validateAndSaveLineup({
                 lineup: lineup,
                 corpsName: corpsName.trim()
             });
 
-            const userProfileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
-            await updateDoc(userProfileRef, {
-                activeSeasonId: seasonSettings.seasonUid
-            });
-
             setMessage(result.data.message);
+            // The main app's real-time listener will automatically detect the profile 
+            // update from the backend and refresh the dashboard.
 
         } catch (error) {
             console.error("Error joining season:", error);
