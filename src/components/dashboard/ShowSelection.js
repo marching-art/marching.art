@@ -98,7 +98,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                                         onChange={(e) => handleSelectShow(week, show, e.target.checked)}
                                         className="h-3 w-3 rounded border-gray-300 text-brand-primary focus:ring-brand-secondary disabled:opacity-50"
                                     />
-                                    <label htmlFor={showIdentifier} className="ml-1.5 font-semibold text-brand-text-primary dark:text-brand-text-primary-dark truncate cursor-pointer">{show.eventName}</label>
+                                    <label htmlFor={showIdentifier} className="ml-1.5 font-semibold text-brand-text-primary dark:text-brand-text-primary-dark truncate cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
                                 </div>
                             </div>
                         );
@@ -128,7 +128,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                                 const showIdentifier = `${week}-${day.offSeasonDay}-details-${index}`;
                                 return (
                                     <div key={showIdentifier} className="ml-4 p-2 text-sm">
-                                        <p className="font-bold">{show.eventName} <em className="font-normal text-gray-500">({show.location})</em></p>
+                                        <p className="font-bold">{show.eventName.replace(/DCI/g, 'marching.art')} <em className="font-normal text-gray-500">({show.location})</em></p>
                                         <button onClick={() => toggleShowDetails(showIdentifier, week, show)} className="text-xs text-blue-500 hover:underline">
                                             {expandedShow === showIdentifier ? 'Hide Details' : 'Who\'s Going?'}
                                         </button>

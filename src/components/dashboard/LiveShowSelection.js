@@ -111,7 +111,7 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
                                 className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-secondary disabled:opacity-50"
                             />
                             <div>
-                                <label htmlFor={showIdentifier} className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark cursor-pointer">{show.eventName}</label>
+                                <label htmlFor={showIdentifier} className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
                                 <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
                             </div>
                         </div>
