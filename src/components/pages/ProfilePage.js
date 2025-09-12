@@ -34,7 +34,7 @@ const MySchedule = ({ profile }) => {
                             {shows && shows.length > 0 ? (
                                 <ul className="list-disc list-inside pl-2 mt-1 text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">
                                     {shows.map((show, index) => (
-                                        <li key={index}>{show.eventName} - <em className="text-brand-accent dark:text-brand-accent-dark">{show.location}</em></li>
+                                        <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-brand-accent dark:text-brand-accent-dark">{show.location}</em></li>
                                     ))}
                                 </ul>
                             ) : (
