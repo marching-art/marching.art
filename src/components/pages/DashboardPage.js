@@ -58,30 +58,19 @@ const DashboardPage = ({ profile, userId }) => {
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        // --- THIS IS THE CORRECTED EASTERN TIME CALCULATION ---
+        // --- START: NEW, SIMPLIFIED TIMEZONE-SAFE CALCULATION ---
         const now = new Date();
+        
+        // Get the start of today's date in the user's local timezone
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Get the start of the season's date in the user's local timezone
+        const startDay = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
 
-        const etFormatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric',
-        });
-
-        const todayParts = etFormatter.formatToParts(now).reduce((acc, part) => {
-            acc[part.type] = part.value;
-            return acc;
-        }, {});
-        const todayET = new Date(Date.UTC(todayParts.year, todayParts.month - 1, todayParts.day));
-
-        const startDateParts = etFormatter.formatToParts(seasonStartDate).reduce((acc, part) => {
-            acc[part.type] = part.value;
-            return acc;
-        }, {});
-        const startDateET = new Date(Date.UTC(startDateParts.year, startDateParts.month - 1, startDateParts.day));
-
-        const diff = todayET.getTime() - startDateET.getTime();
-        currentOffSeasonDay = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+        // Calculate the difference in days
+        const diff = today.getTime() - startDay.getTime();
+        currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+        // --- END: NEW CALCULATION ---
     }
 
     return (
