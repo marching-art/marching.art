@@ -9,11 +9,13 @@ const cheerio = require("cheerio");
 const { getDb, appId } = require("./_config");
 const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium');
-const { Timestamp } = require('firebase-admin/firestore'); // Import Timestamp
+const { Timestamp } = require('firebase-admin/firestore');
+const admin = require("firebase-admin");
 
 const pubsubClient = new PubSub();
 const tasksClient = new CloudTasksClient();
 const PAGINATION_TOPIC = "dci-pagination-topic";
+const LIVE_SCORES_TOPIC = "live-scores-topic";
 
 // ================================================================= //
 //                      EXPORTED CLOUD FUNCTIONS                     //
@@ -31,7 +33,6 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
     const { email, makeAdmin } = request.data;
     logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
     // TODO: Add logic to set custom claims using the Firebase Admin Auth SDK.
-    // Example: await getAuth().setCustomUserClaims(user.uid, { admin: makeAdmin });
     return { success: true, message: `Role change for ${email} processed.` };
 });
 
@@ -91,22 +92,25 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
             }
             transaction.set(newActiveLineupRef, { uid: uid, seasonId: activeSeasonId });
 
-            const profileUpdateData = {
-                lineup: lineup,
-                lineupKey: lineupKey,
-            };
+            let profileUpdateData = {};
             
             const isNewSeasonSignup = userProfileData.activeSeasonId !== activeSeasonId;
 
             if (isNewSeasonSignup) {
                 if (!corpsName) throw new HttpsError("invalid-argument", "A corps name is required.");
-                profileUpdateData.corpsName = corpsName;
-                profileUpdateData.activeSeasonId = activeSeasonId;
-                profileUpdateData.totalSeasonScore = 0;
-                profileUpdateData.selectedShows = {};
-                profileUpdateData.weeklyTrades = { seasonUid: activeSeasonId, week: 1, used: 0 };
+                
+                profileUpdateData = {
+                    corpsName: corpsName,
+                    activeSeasonId: activeSeasonId,
+                    totalSeasonScore: 0,
+                    selectedShows: {},
+                    weeklyTrades: { seasonUid: activeSeasonId, week: 1, used: 0 },
+                    lastScoredDay: 0,
+                    lineup: lineup,
+                    lineupKey: lineupKey,
+                };
+
             } else {
-                // --- PERSISTENT TRADE VALIDATION LOGIC ---
                 const now = new Date();
                 const seasonStartDate = seasonData.schedule.startDate.toDate();
                 const diffInMillis = now.getTime() - seasonStartDate.getTime();
@@ -137,6 +141,9 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
                         used: tradesAlreadyUsed + newTrades
                     };
                 }
+                
+                profileUpdateData.lineup = lineup;
+                profileUpdateData.lineupKey = lineupKey;
             }
             
             transaction.update(userProfileRef, profileUpdateData);
@@ -154,12 +161,8 @@ exports.testScraper = onCall({ cors: true }, async (request) => {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
     try {
-        // Define a single, known-good URL for manual testing
         const testUrl = 'https://www.dci.org/scores/recap/2023-dci-world-championships-finals';
-        
-        // Pass the URL to the logic function
         await scrapeDciScoresLogic(testUrl);
-
         return { success: true, message: `Scraper test triggered for ${testUrl}. Check logs for output.` };
     } catch (error) {
         logger.error("Error manually triggering scraper:", error);
@@ -181,7 +184,6 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
         const docId = year.toString();
         const yearDocRef = getDb().collection('historical_scores').doc(docId);
         
-        // --- NEW: Calculate offSeasonDay using our helper function ---
         const parsedEventDate = new Date(eventDate);
         const offSeasonDay = calculateOffSeasonDay(parsedEventDate, year);
 
@@ -191,7 +193,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
             location: eventLocation,
             scores: scores,
             headerMap: {},
-            offSeasonDay: offSeasonDay // Use the calculated value here
+            offSeasonDay: offSeasonDay
         };
 
         await getDb().runTransaction(async (transaction) => {
@@ -202,7 +204,6 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
                 transaction.set(yearDocRef, { data: [newEventData] });
             } else {
                 const existingData = yearDoc.data().data || [];
-
                 const eventExists = existingData.some(event => 
                     event.eventName === newEventData.eventName && new Date(event.date).getTime() === new Date(newEventData.date).getTime()
                 );
@@ -226,10 +227,33 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
 });
 
 exports.scrapeDciScores = onSchedule({
-    schedule: "*/30 19-23 * 7,8 6",
+    schedule: "every 15 minutes from 19:00 to 01:50",
     timeZone: "America/New_York",
 }, async (_context) => {
-    await scrapeDciScoresLogic();
+    logger.info("Running live score scraper...");
+    const db = getDb();
+    const seasonDoc = await db.doc("game-settings/season").get();
+    
+    if (!seasonDoc.exists || seasonDoc.data().status !== 'live-season') {
+        logger.info("No active live season. Scraper will not run.");
+        return;
+    }
+
+    try {
+        const urlToScrape = 'https://www.dci.org/scores?pageno=1';
+        const { data } = await axios.get(urlToScrape);
+        const $ = cheerio.load(data);
+        const latestRecapLink = $('a.arrow-btn[href*="/scores/recap/"]').first().attr('href');
+        
+        if (latestRecapLink) {
+            const fullUrl = new URL(latestRecapLink, "https://www.dci.org").href;
+            await scrapeDciScoresLogic(fullUrl, LIVE_SCORES_TOPIC);
+        } else {
+            logger.info("No new recap links found on scores page 1.");
+        }
+    } catch (error) {
+        logger.error("Error during live score scraping:", error);
+    }
 });
 
 exports.seasonScheduler = onSchedule({
@@ -238,7 +262,6 @@ exports.seasonScheduler = onSchedule({
 }, async (_context) => {
     logger.info("Running daily season scheduler...");
     const now = new Date();
-
     const seasonSettingsRef = getDb().doc("game-settings/season");
     const seasonDoc = await seasonSettingsRef.get();
 
@@ -256,14 +279,12 @@ exports.seasonScheduler = onSchedule({
     }
     
     const seasonEndDate = seasonData.schedule.endDate.toDate();
-
     if (now < seasonEndDate) {
         logger.info(`Current season (${seasonData.name}) is active. No action taken.`);
         return;
     }
 
     logger.info(`Season ${seasonData.name} has ended. Starting next season.`);
-
     const today = new Date();
     const currentYear = today.getFullYear();
     const liveSeasonStartDate = new Date(currentYear, 5, 15);
@@ -277,11 +298,8 @@ exports.seasonScheduler = onSchedule({
     }
 });
 
-/**
- * NEW: Nightly function to process scores for the current day of the off-season.
- */
 exports.processDailyScores = onSchedule({
-    schedule: "every day 03:00",
+    schedule: "every day 01:56",
     timeZone: "America/New_York",
 }, async (_context) => {
     const db = getDb();
@@ -299,8 +317,7 @@ exports.processDailyScores = onSchedule({
     
     const now = new Date();
     const diffInMillis = now.getTime() - seasonStartDate.getTime();
-    const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-    const currentOffSeasonDay = diffInDays + 1;
+    const currentOffSeasonDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
 
     if (currentOffSeasonDay < 1 || currentOffSeasonDay > 49) {
         logger.info(`Current off-season day (${currentOffSeasonDay}) is outside the 1-49 range. Exiting.`);
@@ -308,6 +325,30 @@ exports.processDailyScores = onSchedule({
     }
 
     logger.info(`Processing scores for Off-Season Day: ${currentOffSeasonDay}`);
+
+    const dataDocId = seasonData.dataDocId;
+    if (!dataDocId) {
+        logger.error("Season settings are missing dataDocId. Aborting.");
+        return;
+    }
+    const corpsDataRef = db.doc(`dci-data/${dataDocId}`);
+    const corpsDataSnap = await corpsDataRef.get();
+    if (!corpsDataSnap.exists) {
+        logger.error(`dci-data document ${dataDocId} not found. Aborting.`);
+        return;
+    }
+    const seasonCorpsList = corpsDataSnap.data().corpsValues || [];
+
+    const yearsToFetch = [...new Set(seasonCorpsList.map(c => c.sourceYear))];
+    const historicalPromises = yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get());
+    const historicalDocs = await Promise.all(historicalPromises);
+    
+    const historicalData = {};
+    historicalDocs.forEach(docSnap => {
+        if (docSnap.exists) {
+            historicalData[docSnap.id] = docSnap.data().data;
+        }
+    });
 
     const todayEventData = seasonData.events.find(e => e.offSeasonDay === currentOffSeasonDay);
     if (!todayEventData || !todayEventData.shows || todayEventData.shows.length === 0) {
@@ -331,9 +372,7 @@ exports.processDailyScores = onSchedule({
         const uid = userDoc.ref.parent.parent.id;
         
         const userShowsForWeek = userProfile.selectedShows ? userProfile.selectedShows[`week${week}`] : [];
-        if (!userShowsForWeek || userShowsForWeek.length === 0) {
-            continue;
-        }
+        if (!userShowsForWeek || userShowsForWeek.length === 0) continue;
 
         let dailyScore = 0;
         
@@ -343,15 +382,14 @@ exports.processDailyScores = onSchedule({
                 let showScore = 0;
                 for (const caption in userProfile.lineup) {
                     const selectedValue = userProfile.lineup[caption];
-                    const selectedCorps = selectedValue.split('|')[0];
+                    const [selectedCorps, _points, sourceYear] = selectedValue.split('|');
                     
-                    // --- MODIFICATION: Call the new helper function for each caption ---
                     const captionScore = getRealisticCaptionScore(
                         selectedCorps, 
+                        sourceYear,
                         caption, 
                         currentOffSeasonDay, 
-                        show,
-                        seasonData.events
+                        historicalData
                     );
                     showScore += captionScore;
                 }
@@ -369,6 +407,80 @@ exports.processDailyScores = onSchedule({
         }
     }
     logger.info("Daily Score Processor finished.");
+});
+
+exports.processDailyLiveScores = onSchedule({
+    schedule: "every day 01:58",
+    timeZone: "America/New_York",
+}, async (_context) => {
+    const db = getDb();
+    logger.info("Running Daily Live Season Score Processor...");
+
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists || seasonDoc.data().status !== 'live-season') {
+        logger.info("No active live season found. Exiting processor.");
+        return;
+    }
+
+    const seasonData = seasonDoc.data();
+    const seasonStartDate = seasonData.schedule.startDate.toDate();
+
+    const now = new Date();
+    const diffInMillis = now.getTime() - seasonStartDate.getTime();
+    const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+
+    if (currentDay < 1) return;
+
+    logger.info(`Processing live season scores for Day: ${currentDay}`);
+
+    const corpsDataRef = db.doc(`dci-data/${seasonData.dataDocId}`);
+    const corpsDataSnap = await corpsDataRef.get();
+    if (!corpsDataSnap.exists) return;
+    const seasonCorpsList = corpsDataSnap.data().corpsValues || [];
+    const yearsToFetch = [...new Set(seasonCorpsList.map(c => c.sourceYear))];
+    const historicalDocs = await Promise.all(yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get()));
+    const historicalData = {};
+    historicalDocs.forEach(doc => { if (doc.exists) historicalData[doc.id] = doc.data().data; });
+
+    const showsToday = [];
+    const liveScoresTodayRef = db.collection(`live_scores/${seasonData.seasonUid}/scores`).where("day", "==", currentDay);
+    const liveScoresTodaySnap = await liveScoresTodayRef.get();
+    liveScoresTodaySnap.forEach(doc => {
+        const eventName = doc.data().eventName;
+        if (!showsToday.includes(eventName)) {
+            showsToday.push(eventName);
+        }
+    });
+
+    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', seasonData.seasonUid);
+    const profilesSnapshot = await profilesQuery.get();
+    if (profilesSnapshot.empty) return;
+
+    for (const userDoc of profilesSnapshot.docs) {
+        const userProfile = userDoc.data();
+        const uid = userDoc.ref.parent.parent.id;
+
+        const userShows = Object.values(userProfile.selectedShows || {}).flat();
+        const attendedRealShowToday = userShows.some(s => showsToday.includes(s.eventName));
+        if (attendedRealShowToday) {
+            logger.info(`User ${uid} attended a real show today, skipping prediction.`);
+            continue;
+        }
+
+        let predictedDailyScore = 0;
+        for (const caption in userProfile.lineup) {
+            const [selectedCorps, , sourceYear] = userProfile.lineup[caption].split('|');
+            const captionScore = await getLiveCaptionScore(selectedCorps, sourceYear, caption, currentDay, historicalData);
+            predictedDailyScore += captionScore;
+        }
+
+        if (predictedDailyScore > 0) {
+            const newTotal = (userProfile.totalSeasonScore || 0) + predictedDailyScore;
+            await userDoc.ref.update({ totalSeasonScore: newTotal });
+            logger.info(`User ${uid} scored ${predictedDailyScore.toFixed(3)} predicted points. New total: ${newTotal.toFixed(3)}`);
+        }
+    }
+    logger.info("Daily Live Season Score Processor finished.");
 });
 
 exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
@@ -405,15 +517,12 @@ exports.getShowRegistrations = onCall({ cors: true }, async (request) => {
     return { corpsNames: registrations };
 });
 
-/**
- * NEW: Callable function for a user to save their show selections for a given week.
- */
 exports.selectUserShows = onCall({ cors: true }, async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "You must be logged in.");
     }
     const uid = request.auth.uid;
-    const { week, shows } = request.data; // Expects week: 1, shows: [show1, show2, ...]
+    const { week, shows } = request.data;
 
     if (!week || !shows || !Array.isArray(shows) || shows.length > 4) {
         throw new HttpsError("invalid-argument", "Invalid data. A week number and a maximum of 4 shows are required.");
@@ -432,15 +541,320 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     }
 });
 
+exports.createLeague = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to create a league.");
+    }
+    const { leagueName } = request.data;
+    const uid = request.auth.uid;
+
+    if (!leagueName || leagueName.trim().length < 3) {
+        throw new HttpsError("invalid-argument", "League name must be at least 3 characters long.");
+    }
+
+    const db = getDb();
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) throw new HttpsError("not-found", "No active season.");
+    const activeSeasonId = seasonDoc.data().seasonUid;
+
+    let inviteCode;
+    let codeExists = true;
+    while (codeExists) {
+        inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const inviteDoc = await db.doc(`leagueInvites/${inviteCode}`).get();
+        codeExists = inviteDoc.exists;
+    }
+
+    const leagueRef = db.collection('leagues').doc();
+    const inviteRef = db.doc(`leagueInvites/${inviteCode}`);
+    const userProfileRef = db.doc(`artifacts/${appId}/users/${uid}/profile/data`);
+
+    await db.runTransaction(async (transaction) => {
+        transaction.set(leagueRef, {
+            name: leagueName.trim(),
+            creatorUid: uid,
+            seasonUid: activeSeasonId,
+            members: [uid],
+            inviteCode: inviteCode
+        });
+        transaction.set(inviteRef, { leagueId: leagueRef.id });
+        transaction.update(userProfileRef, {
+            leagueIds: admin.firestore.FieldValue.arrayUnion(leagueRef.id)
+        });
+    });
+
+    return { success: true, message: "League created!", inviteCode: inviteCode, leagueId: leagueRef.id };
+});
+
+exports.joinLeague = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to join a league.");
+    }
+    const { inviteCode } = request.data;
+    const uid = request.auth.uid;
+
+    if (!inviteCode) throw new HttpsError("invalid-argument", "An invite code is required.");
+
+    const db = getDb();
+    const inviteRef = db.doc(`leagueInvites/${inviteCode.toUpperCase()}`);
+    const inviteDoc = await inviteRef.get();
+
+    if (!inviteDoc.exists) {
+        throw new HttpsError("not-found", "This invite code is invalid.");
+    }
+    const { leagueId } = inviteDoc.data();
+
+    const leagueRef = db.doc(`leagues/${leagueId}`);
+    const userProfileRef = db.doc(`artifacts/${appId}/users/${uid}/profile/data`);
+
+    await db.runTransaction(async (transaction) => {
+        const leagueDoc = await transaction.get(leagueRef);
+        if (!leagueDoc.exists) throw new HttpsError("not-found", "The associated league no longer exists.");
+
+        transaction.update(leagueRef, {
+            members: admin.firestore.FieldValue.arrayUnion(uid)
+        });
+        transaction.update(userProfileRef, {
+            leagueIds: admin.firestore.FieldValue.arrayUnion(leagueId)
+        });
+    });
+
+    return { success: true, message: "Successfully joined league!" };
+});
+
+exports.leaveLeague = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to leave a league.");
+    }
+    const { leagueId } = request.data;
+    const uid = request.auth.uid;
+
+    if (!leagueId) {
+        throw new HttpsError("invalid-argument", "A league ID is required.");
+    }
+
+    const db = getDb();
+    const leagueRef = db.doc(`leagues/${leagueId}`);
+    const userProfileRef = db.doc(`artifacts/${appId}/users/${uid}/profile/data`);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const leagueDoc = await transaction.get(leagueRef);
+            if (!leagueDoc.exists) {
+                throw new HttpsError("not-found", "This league does not exist.");
+            }
+            
+            const leagueData = leagueDoc.data();
+            
+            if (leagueData.creatorUid === uid && leagueData.members.length === 1) {
+                logger.info(`Creator ${uid} is the last member of league ${leagueId}. Deleting league.`);
+                transaction.delete(leagueRef);
+                if (leagueData.inviteCode) {
+                    const inviteRef = db.doc(`leagueInvites/${leagueData.inviteCode}`);
+                    transaction.delete(inviteRef);
+                }
+            } else {
+                transaction.update(leagueRef, {
+                    members: admin.firestore.FieldValue.arrayRemove(uid)
+                });
+            }
+
+            transaction.update(userProfileRef, {
+                leagueIds: admin.firestore.FieldValue.arrayRemove(leagueId)
+            });
+        });
+
+        return { success: true, message: "Successfully left the league." };
+
+    } catch (error) {
+        logger.error(`Failed to leave league ${leagueId} for user ${uid}:`, error);
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError("internal", "An error occurred while leaving the league.");
+    }
+});
+
+exports.archiveDailyFantasyScores = onSchedule({
+    schedule: "every day 02:00",
+    timeZone: "America/New_York",
+}, async (_context) => {
+    const db = getDb();
+    logger.info("Running Daily Fantasy Recap Archiver...");
+
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists || seasonDoc.data().status !== 'off-season') {
+        logger.info("No active off-season found. Exiting archiver.");
+        return;
+    }
+    const seasonData = seasonDoc.data();
+    const seasonStartDate = seasonData.schedule.startDate.toDate();
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
+    const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+
+    if (scoredDay < 1 || scoredDay > 49) {
+        logger.info(`Scored day (${scoredDay}) is outside the 1-49 range. Nothing to archive.`);
+        return;
+    }
+
+    const corpsDataRef = db.doc(`dci-data/${seasonData.dataDocId}`);
+    const corpsDataSnap = await corpsDataRef.get();
+    if (!corpsDataSnap.exists) return;
+    const seasonCorpsList = corpsDataSnap.data().corpsValues || [];
+    const yearsToFetch = [...new Set(seasonCorpsList.map(c => c.sourceYear))];
+    const historicalDocs = await Promise.all(yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get()));
+    const historicalData = {};
+    historicalDocs.forEach(doc => { if (doc.exists) historicalData[doc.id] = doc.data().data; });
+
+    const dayEventData = seasonData.events.find(e => e.offSeasonDay === scoredDay);
+    if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
+        logger.info(`No shows found for day ${scoredDay} to archive.`);
+        return;
+    }
+
+    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', seasonData.seasonUid);
+    const profilesSnapshot = await profilesQuery.get();
+    if (profilesSnapshot.empty) return;
+
+    const week = Math.ceil(scoredDay / 7);
+    const dailyRecap = {
+        offSeasonDay: scoredDay,
+        date: new Date(),
+        shows: [],
+    };
+
+    for (const show of dayEventData.shows) {
+        const showResult = {
+            eventName: show.eventName,
+            location: show.location,
+            results: [],
+        };
+
+        for (const userDoc of profilesSnapshot.docs) {
+            const userProfile = userDoc.data();
+            const userShows = userProfile.selectedShows ? userProfile.selectedShows[`week${week}`] : [];
+            const attended = userShows.some(s => s.eventName === show.eventName && s.date === show.date);
+
+            if (attended) {
+                let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+                
+                for (const caption in userProfile.lineup) {
+                    const [corps, , year] = userProfile.lineup[caption].split('|');
+                    const captionScore = getRealisticCaptionScore(corps, year, caption, scoredDay, historicalData);
+                    
+                    if (['GE1', 'GE2'].includes(caption)) geScore += captionScore;
+                    else if (['VP', 'VA', 'CG'].includes(caption)) rawVisualScore += captionScore;
+                    else if (['B', 'MA', 'P'].includes(caption)) rawMusicScore += captionScore;
+                }
+
+                const visualScore = rawVisualScore / 2;
+                const musicScore = rawMusicScore / 2;
+
+                showResult.results.push({
+                    uid: userDoc.ref.parent.parent.id,
+                    corpsName: userProfile.corpsName,
+                    totalScore: geScore + visualScore + musicScore,
+                    geScore,
+                    visualScore,
+                    musicScore,
+                });
+            }
+        }
+        dailyRecap.shows.push(showResult);
+    }
+    
+    const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
+    await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(recapDocRef);
+        if (!doc.exists) {
+            transaction.set(recapDocRef, {
+                seasonName: seasonData.name,
+                recaps: [dailyRecap],
+            });
+        } else {
+            const existingRecaps = doc.data().recaps || [];
+            const updatedRecaps = existingRecaps.filter(r => r.offSeasonDay !== scoredDay);
+            updatedRecaps.push(dailyRecap);
+            transaction.update(recapDocRef, { recaps: updatedRecaps });
+        }
+    });
+
+    logger.info(`Successfully archived fantasy recaps for day ${scoredDay}.`);
+});
+
+exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (message) => {
+    logger.info("Received new live score recap to process.");
+    const db = getDb();
+
+    try {
+        const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
+        const { eventName, scores, eventDate } = JSON.parse(payloadBuffer);
+
+        const seasonDoc = await db.doc("game-settings/season").get();
+        if (!seasonDoc.exists || seasonDoc.data().status !== 'live-season') return;
+
+        const seasonData = seasonDoc.data();
+        const activeSeasonId = seasonData.seasonUid;
+        const seasonStartDate = seasonData.schedule.startDate.toDate();
+
+        const parsedEventDate = new Date(eventDate);
+        const diffInMillis = parsedEventDate.getTime() - seasonStartDate.getTime();
+        const eventDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+
+        const batch = db.batch();
+        for (const scoreData of scores) {
+            const docId = `${scoreData.corps.replace(/ /g, '_')}-${eventDay}`;
+            const scoreDocRef = db.doc(`live_scores/${activeSeasonId}/scores/${docId}`);
+            batch.set(scoreDocRef, {
+                corpsName: scoreData.corps,
+                day: eventDay,
+                eventName: eventName,
+                captions: scoreData.captions
+            });
+        }
+        await batch.commit();
+        logger.info(`Saved ${scores.length} real score records for day ${eventDay}.`);
+        
+        const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', activeSeasonId);
+        const profilesSnapshot = await profilesQuery.get();
+        if (profilesSnapshot.empty) return;
+
+        for (const userDoc of profilesSnapshot.docs) {
+            const userProfile = userDoc.data();
+            const uid = userDoc.ref.parent.parent.id;
+
+            const userShows = Object.values(userProfile.selectedShows || {}).flat();
+            const attendedShow = userShows.some(s => s.eventName === eventName);
+
+            if (attendedShow) {
+                let showScore = 0;
+                for (const caption in userProfile.lineup) {
+                    const [selectedCorps, ,] = userProfile.lineup[caption].split('|');
+
+                    const corpsResult = scores.find(s => s.corps === selectedCorps);
+                    if (corpsResult && corpsResult.captions[caption]) {
+                        showScore += corpsResult.captions[caption];
+                    }
+                }
+
+                if (showScore > 0) {
+                    const newTotal = (userProfile.totalSeasonScore || 0) + showScore;
+                    await userDoc.ref.update({ totalSeasonScore: newTotal });
+                    logger.info(`User ${uid} scored ${showScore.toFixed(3)} points for ${eventName}. New total: ${newTotal.toFixed(3)}`);
+                }
+            }
+        }
+
+    } catch (error) {
+        logger.error("Error processing live score recap:", error);
+    }
+});
+
 // ================================================================= //
 //                      INTERNAL HELPER LOGIC                        //
 // ================================================================= //
 
-/**
- * Calculates the slope (m) and y-intercept (c) for a simple linear regression line.
- * @param {Array<Array<number>>} data An array of [x, y] data points ([day, score]).
- * @returns {{m: number, c: number}} The slope and y-intercept of the trend line.
- */
 function simpleLinearRegression(data) {
     const n = data.length;
     if (n < 2) {
@@ -455,27 +869,21 @@ function simpleLinearRegression(data) {
         sumXX += x * x;
     }
 
-    // Using the formula for the slope (m) and y-intercept (c)
     const m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     const c = (sumY - m * sumX) / n;
 
     return { m, c };
 }
 
-/**
- * Shuffles an array in place using the Fisher-Yates algorithm.
- * @param {Array} array The array to shuffle.
- * @returns {Array} The shuffled array.
- */
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+    [array[i], array[j]] = [array[j], array[i]];
   }
-  return array; // Return the array for easier use
+  return array;
 }
 
-async function scrapeDciScoresLogic(urlToScrape) {
+async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
     logger.info(`[scrapeDciScoresLogic] Starting for URL: ${urlToScrape}`);
     if (!urlToScrape) {
         logger.error("[scrapeDciScoresLogic] Critical error: No URL provided.");
@@ -487,7 +895,6 @@ async function scrapeDciScoresLogic(urlToScrape) {
         const $ = cheerio.load(data);
         const scoresData = [];
 
-        // --- CORRECTED SELECTORS FOR METADATA ---
         const eventName = $('div[data-widget_type="theme-post-title.default"] h1.elementor-heading-title').text().trim() || "Unknown DCI Event";
         const dateLocationDiv = $('div[data-widget_type="shortcode.default"] div.score-date-location');
         const dateText = dateLocationDiv.find('p').eq(0).text().trim();
@@ -507,14 +914,12 @@ async function scrapeDciScoresLogic(urlToScrape) {
         
         logger.info(`PARSED DATA --> Name: '${eventName}', Date: '${eventDate.toISOString()}', Location: '${eventLocation}', Year: '${year}'`);
         
-        // --- ★ NEW: Parse the table header ONCE to create a caption map ★ ---
         const headerRow = $('table#effect-table-0 > tbody > tr.table-top');
         const orderedCaptionTitles = [];
         headerRow.find('td.type').each((_i, el) => {
             orderedCaptionTitles.push($(el).text().trim());
         });
 
-        // --- ★ REVISED DYNAMIC CAPTION SCRAPING LOGIC ★ ---
         $("table#effect-table-0 > tbody > tr").not(".table-top").each((i, row) => {
             const corpsName = $(row).find("td.sticky-td").first().text().trim();
             if (!corpsName) return;
@@ -522,33 +927,23 @@ async function scrapeDciScoresLogic(urlToScrape) {
             const totalScore = parseFloat($(row).find("td.data-total").last().find("span").first().text().trim());
             
             const tempScores = {
-                "General Effect 1": [],
-                "General Effect 2": [],
-                "Visual Proficiency": [],
-                "Visual Analysis": [],
-                "Color Guard": [],
-                "Music Brass": [],
-                "Music Analysis": [],
-                "Music Percussion": [],
+                "General Effect 1": [], "General Effect 2": [],
+                "Visual Proficiency": [], "Visual Analysis": [], "Color Guard": [],
+                "Music Brass": [], "Music Analysis": [], "Music Percussion": [],
             };
             
-            // Map DCI's caption names to our internal keys
             const mapCaptionTitleToKey = (title) => {
                 const normalized = title.replace(/\s-\s/g, ' ').trim();
                 return tempScores.hasOwnProperty(normalized) ? normalized : null;
             };
 
-            // Find all individual score tables for the current corps
             const scoreTables = $(row).find('table.data');
 
-            // Iterate through the scores and use the ordered header map to identify them
             scoreTables.each((index, table) => {
-                // The Nth score table in this row corresponds to the Nth caption title from the header
                 const captionTitle = orderedCaptionTitles[index];
                 const mappedTitle = mapCaptionTitleToKey(captionTitle);
                 
                 if (mappedTitle) {
-                    // The actual score is the 3rd sub-cell (index 2) in the score table
                     const score = parseFloat($(table).find('td').eq(2).text().trim());
                     if (!isNaN(score)) {
                         tempScores[mappedTitle].push(score);
@@ -556,7 +951,6 @@ async function scrapeDciScoresLogic(urlToScrape) {
                 }
             });
 
-            // --- Process and Average the collected scores ---
             const processCaption = (captionName) => {
                 const scores = tempScores[captionName];
                 if (!scores || scores.length === 0) return 0;
@@ -566,14 +960,9 @@ async function scrapeDciScoresLogic(urlToScrape) {
             };
             
             const captions = {
-                GE1: processCaption("General Effect 1"),
-                GE2: processCaption("General Effect 2"),
-                VP:  processCaption("Visual Proficiency"),
-                VA:  processCaption("Visual Analysis"),
-                CG:  processCaption("Color Guard"),
-                B:   processCaption("Music Brass"),
-                MA:  processCaption("Music Analysis"),
-                P:   processCaption("Music Percussion"),
+                GE1: processCaption("General Effect 1"), GE2: processCaption("General Effect 2"),
+                VP:  processCaption("Visual Proficiency"), VA:  processCaption("Visual Analysis"), CG:  processCaption("Color Guard"),
+                B:   processCaption("Music Brass"), MA:  processCaption("Music Analysis"), P:   processCaption("Music Percussion"),
             };
 
             const scoreObject = { corps: corpsName, score: totalScore, captions: captions };
@@ -587,7 +976,7 @@ async function scrapeDciScoresLogic(urlToScrape) {
 
         const payload = { scores: scoresData, eventName, eventLocation, eventDate: eventDate.toISOString(), year };
         const dataBuffer = Buffer.from(JSON.stringify(payload));
-        await pubsubClient.topic("dci-scores-topic").publishMessage({ data: dataBuffer });
+        await pubsubClient.topic(topic).publishMessage({ data: dataBuffer });
         logger.info(`Successfully published ${scoresData.length} corps scores from ${eventName}.`);
 
     } catch (error) {
@@ -597,136 +986,129 @@ async function scrapeDciScoresLogic(urlToScrape) {
 
 async function startNewLiveSeason() {
     logger.info("Generating new live season...");
+    const db = getDb();
     const today = new Date();
     const year = today.getFullYear();
+    const previousYear = (year - 1).toString();
+
+    const rankingsDocRef = db.doc(`final_rankings/${previousYear}`);
+    const rankingsDoc = await rankingsDocRef.get();
+    if (!rankingsDoc.exists) {
+        throw new Error(`Cannot start live season: Final rankings for ${previousYear} not found.`);
+    }
+    const corpsValues = rankingsDoc.data().data.map(c => ({
+        corpsName: c.corps,
+        sourceYear: previousYear,
+        points: c.points
+    }));
+
+    const dataDocId = `live-season-${year}`;
+    await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
+
+    const scheduleTemplateRef = db.doc('schedules/live_season_template');
+    const scheduleTemplateDoc = await scheduleTemplateRef.get();
+    const events = scheduleTemplateDoc.exists ? scheduleTemplateDoc.data().events : [];
 
     const augustFirst = new Date(year, 7, 1);
     const dayOfWeek = augustFirst.getDay();
     const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
     const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
     const finalsDate = new Date(firstSaturday.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const startDate = new Date(finalsDate.getTime() - 70 * 24 * 60 * 60 * 1000);
+    const startDate = new Date(finalsDate.getTime() - 69 * 24 * 60 * 60 * 1000);
 
     const newSeasonData = {
-        name: `DCI ${year} Live Season`,
-        status: "live-season",
-        seasonYear: year,
-        currentPointCap: 150,
+        name: `DCI ${year} Live Season`, status: "live-season", seasonUid: dataDocId,
+        seasonYear: year, currentPointCap: 150, dataDocId: dataDocId,
         schedule: {
-            startDate: startDate,
-            endDate: finalsDate,
-            openTradeEndDate: new Date(`${year}-07-01T23:59:59-04:00`),
-            quartersDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 2)),
-            semifinalsDate: new Date(new Date(finalsDate).setDate(finalsDate.getDate() - 1)),
-            finalsDate: finalsDate,
+            startDate: Timestamp.fromDate(startDate),
+            endDate: Timestamp.fromDate(finalsDate),
         },
+        events: events
     };
-    
-    // TODO: Generate corpsData for the live season from final_rankings.
-    await getDb().doc("game-settings/season").set(newSeasonData);
+
+    await db.doc("game-settings/season").set(newSeasonData);
     logger.info(`Successfully started the ${newSeasonData.name}.`);
 }
 
 async function startNewOffSeason() {
-    logger.info("Generating new off-season with calendar-aware cycle-sync...");
+    logger.info("Generating new themed off-season...");
     const db = getDb();
-    
-    // --- MODIFICATION START ---
-    // Use the calendar-aware logic to determine the correct start and end dates for the current 49-day off-season slot.
-    const endDate = getNextSeasonEndDate();
-    const startDate = new Date(endDate.getTime() - 48 * 24 * 60 * 60 * 1000);
-    
-    // Always generate a full 49-day schedule for this season slot.
-    const seasonLength = 49;
-    const startDay = 1;
-    logger.info(`New season slot runs from ${startDate.toISOString()} to ${endDate.toISOString()}. Generating full 49-day schedule.`);
-    // --- MODIFICATION END ---
+    const seasonSettingsRef = db.doc("game-settings/season");
 
+    let oldSeasonUid = null;
+    const oldSeasonDoc = await seasonSettingsRef.get();
+    if (oldSeasonDoc.exists) {
+        oldSeasonUid = oldSeasonDoc.data().seasonUid;
+    }
+    
+    const { startDate, endDate, seasonType, finalsYear } = getNextOffSeasonWindow();
+    const seasonLength = 49;
     const rankingsSnapshot = await db.collection("final_rankings").get();
     if (rankingsSnapshot.empty) {
         throw new Error("Cannot start off-season: No final rankings found.");
     }
-
     const pointsMap = new Map();
     const allCorpsList = [];
-
     rankingsSnapshot.forEach(doc => {
         const year = doc.id;
         const corpsData = doc.data().data || [];
         corpsData.forEach(corps => {
             const pointValue = corps.points;
-            const entry = {
-                corpsName: corps.corps,
-                sourceYear: year,
-                points: pointValue
-            };
-
-            if (!pointsMap.has(pointValue)) {
-                pointsMap.set(pointValue, []);
+            if (pointValue) {
+                const entry = { corpsName: corps.corps, sourceYear: year, points: pointValue };
+                if (!pointsMap.has(pointValue)) pointsMap.set(pointValue, []);
+                pointsMap.get(pointValue).push(entry);
+                allCorpsList.push(entry);
             }
-            pointsMap.get(pointValue).push(entry);
-            allCorpsList.push(entry);
         });
     });
-
     const offSeasonCorpsData = [];
     const usedCorpsNames = new Set();
-    const shuffledAllCorps = shuffleArray(allCorpsList); // For fallback picks
-
+    const shuffledAllCorps = shuffleArray(allCorpsList);
     for (let points = 25; points >= 1; points--) {
         let candidates = pointsMap.get(points) || [];
         let chosenCorps = null;
-
         if (candidates.length > 0) {
             const shuffledCandidates = shuffleArray([...candidates]);
             chosenCorps = shuffledCandidates.find(c => !usedCorpsNames.has(c.corpsName));
-
-            if (!chosenCorps) {
-                logger.info(`No unused corps for ${points} points. Accepting a duplicate.`);
-                chosenCorps = shuffledCandidates[0];
-            }
+            if (!chosenCorps) chosenCorps = shuffledCandidates[0];
         }
-
         if (!chosenCorps) {
             const fallback = shuffledAllCorps.find(c => !usedCorpsNames.has(c.corpsName));
-            if (fallback) {
-                logger.warn(`No corps found for ${points} points. Using fallback ${fallback.corpsName} and re-valuing.`);
-                chosenCorps = { ...fallback, points: points };
-            }
+            if (fallback) chosenCorps = { ...fallback, points: points };
         }
-        
         if (chosenCorps) {
-            offSeasonCorpsData.push({
-                corpsName: chosenCorps.corpsName,
-                sourceYear: chosenCorps.sourceYear,
-                points: chosenCorps.points,
-            });
+            offSeasonCorpsData.push({ corpsName: chosenCorps.corpsName, sourceYear: chosenCorps.sourceYear, points: chosenCorps.points });
             usedCorpsNames.add(chosenCorps.corpsName);
         }
     }
-    
-    const schedule = await generateOffSeasonSchedule(seasonLength, startDay);
-
-    const seasonName = `Off-Season ${startDate.toLocaleString("default", { month: "long" })} ${startDate.getFullYear()}`;
+    const schedule = await generateOffSeasonSchedule(seasonLength, 1);
+    const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
     const dataDocId = `off-season-${startDate.getTime()}`;
-    
     await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
-
     const newSeasonSettings = {
-        name: seasonName,
-        status: "off-season",
-        seasonUid: dataDocId,
-        currentPointCap: 150,
-        dataDocId: dataDocId,
-        schedule: {
-            startDate: Timestamp.fromDate(startDate),
-            endDate: Timestamp.fromDate(endDate),
-        },
+        name: seasonName, status: "off-season", seasonUid: dataDocId,
+        currentPointCap: 150, dataDocId: dataDocId,
+        schedule: { startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate) },
         events: schedule
     };
 
-    await db.doc("game-settings/season").set(newSeasonSettings);
+    await seasonSettingsRef.set(newSeasonSettings);
     logger.info(`Successfully started ${seasonName}.`);
+
+    if (oldSeasonUid) {
+        const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', oldSeasonUid);
+        const profilesSnapshot = await profilesQuery.get();
+        
+        if (!profilesSnapshot.empty) {
+            const batch = db.batch();
+            profilesSnapshot.docs.forEach(doc => {
+                batch.update(doc.ref, { activeSeasonId: null });
+            });
+            await batch.commit();
+            logger.info(`Invalidated activeSeasonId for ${profilesSnapshot.size} users from previous season: ${oldSeasonUid}`);
+        }
+    }
 }
 
 async function generateOffSeasonSchedule(seasonLength, startDay) {
@@ -734,7 +1116,6 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     const db = getDb();
     const scoresSnapshot = await db.collection('historical_scores').get();
     
-    // 1. Group all valid shows by their offSeasonDay
     const showsByDay = new Map();
     let allShows = []; 
     scoresSnapshot.forEach(yearDoc => {
@@ -742,11 +1123,8 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         yearData.forEach(event => {
             if (event.eventName && event.offSeasonDay && !event.eventName.toLowerCase().includes('open class')) {
                 const showData = {
-                    eventName: event.eventName,
-                    date: event.date,
-                    location: event.location,
-                    scores: event.scores,
-                    offSeasonDay: event.offSeasonDay
+                    eventName: event.eventName, date: event.date, location: event.location,
+                    scores: event.scores, offSeasonDay: event.offSeasonDay
                 };
                 if (!showsByDay.has(event.offSeasonDay)) showsByDay.set(event.offSeasonDay, []);
                 showsByDay.get(event.offSeasonDay).push(showData);
@@ -755,17 +1133,14 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         });
     });
 
-    // 2. Initialize schedule and tracking sets
     const schedule = Array.from({ length: seasonLength }, (_, i) => ({ offSeasonDay: startDay + i, shows: [] }));
     const usedEventNames = new Set();
     const usedLocations = new Set();
 
-    // --- MODIFICATION: Helper function now correctly uses shows from the specified day ---
     const placeExclusiveShow = (day, showNamePattern, mandatory) => {
         const dayObject = schedule.find(d => d.offSeasonDay === day);
         if (!dayObject) return;
 
-        // CRITICAL FIX: Only search for shows that actually occurred on this offSeasonDay.
         const showsForThisDay = showsByDay.get(day) || [];
         const candidates = showsForThisDay.filter(s => 
             s.eventName.toLowerCase().includes(showNamePattern.toLowerCase()) && 
@@ -784,14 +1159,12 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         }
     };
     
-    // 3. Place mandatory and special shows first using the corrected helper
     placeExclusiveShow(49, "DCI World Championship Finals", true);
     placeExclusiveShow(48, "DCI World Championship Semifinals", true);
     placeExclusiveShow(47, "DCI World Championship Prelims", true);
     placeExclusiveShow(28, "DCI Southwestern Championship", true);
     placeExclusiveShow(35, "championship", false);
 
-    // --- MODIFICATION: Special handling for DCI Eastern Classic, sourcing from the correct days ---
     const showsForDay41 = showsByDay.get(41) || [];
     const showsForDay42 = showsByDay.get(42) || [];
     
@@ -817,14 +1190,12 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         logger.warn(`Could not find "DCI Eastern Classic" on days 41 or 42. These days will be filled randomly if available.`);
     }
     
-    // 4. Fill the rest of the schedule
     const remainingDays = schedule.filter(d => d.shows.length === 0);
     const twoShowDayCount = Math.floor(remainingDays.length * 0.2);
     const dayCounts = shuffleArray([...Array(twoShowDayCount).fill(2), ...Array(remainingDays.length - twoShowDayCount).fill(3)]);
 
     for (const day of remainingDays) {
         const numShowsToPick = dayCounts.pop() || 3;
-        // This part was already correct: It uses the specific day's shows.
         const potentialShows = shuffleArray(showsByDay.get(day.offSeasonDay) || []);
         const pickedShows = [];
         
@@ -848,177 +1219,171 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     return schedule;
 }  
     
-/**
- * Calculates the off-season day (1-49) for a given event date.
- * Day 49 is defined as the second Saturday in August of the event's year.
- * @param {Date} eventDate The date of the drum corps event.
- * @param {number} year The four-digit year of the event.
- * @return {number|null} The off-season day (1-49) or null if outside the season.
- */
 function calculateOffSeasonDay(eventDate, year) {
-    if (!eventDate || isNaN(eventDate.getTime())) {
-        return null; // Cannot calculate without a valid date
-    }
+    if (!eventDate || isNaN(eventDate.getTime())) return null;
 
-    // --- Step 1: Find the second Saturday in August for the given year ---
-    const firstOfAugust = new Date(Date.UTC(year, 7, 1)); // Month is 0-indexed, 7 = August
-    const dayOfWeek = firstOfAugust.getUTCDay(); // 0=Sunday, 6=Saturday
-
-    // Days to add to the 1st to get to the first Saturday
+    const firstOfAugust = new Date(Date.UTC(year, 7, 1));
+    const dayOfWeek = firstOfAugust.getUTCDay();
     const daysUntilFirstSaturday = (6 - dayOfWeek + 7) % 7;
     const firstSaturdayDate = 1 + daysUntilFirstSaturday;
-    
-    // The second Saturday is 7 days after the first one
     const finalsDateUTC = new Date(Date.UTC(year, 7, firstSaturdayDate + 7));
 
-    // --- Step 2: Determine the 49-day season window ---
     const seasonEndDate = new Date(finalsDateUTC);
     const seasonStartDate = new Date(finalsDateUTC.getTime() - 48 * 24 * 60 * 60 * 1000);
-
-    // --- Step 3: Check if the event is within the window ---
-    // Normalize eventDate to UTC start of day for accurate comparison
     const eventDateUTC = new Date(Date.UTC(eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate()));
     
-    if (eventDateUTC < seasonStartDate || eventDateUTC > seasonEndDate) {
-        return null; // Event is outside the 49-day off-season window
-    }
+    if (eventDateUTC < seasonStartDate || eventDateUTC > seasonEndDate) return null;
 
-    // --- Step 4: Calculate the specific off-season day ---
     const diffInMillis = eventDateUTC.getTime() - seasonStartDate.getTime();
     const diffInDays = Math.round(diffInMillis / (1000 * 60 * 60 * 24));
     
-    return diffInDays + 1; // Return the day number (1 to 49)
+    return diffInDays + 1;
 }
 
-function getNextSeasonEndDate() {
+function getThematicOffSeasonName(seasonType, finalsYear) {
+    const startYear = finalsYear - 1;
+    return `${seasonType} Season ${startYear}-${finalsYear.toString().slice(-2)}`;
+}
+
+function getNextOffSeasonWindow() {
     const now = new Date();
     const currentYear = now.getFullYear();
-    
-    // DCI Finals is the 2nd Saturday in August. This is our anchor.
+
     const findSecondSaturday = (year) => {
-        const firstOfAugust = new Date(year, 7, 1);
-        let dayOfWeek = firstOfAugust.getDay();
-        let firstSaturday = 1 + (6 - dayOfWeek + 7) % 7;
-        return new Date(year, 7, firstSaturday + 7);
+        const firstOfAugust = new Date(Date.UTC(year, 7, 1));
+        const dayOfWeek = firstOfAugust.getUTCDay();
+        const daysToAdd = (6 - dayOfWeek + 7) % 7;
+        const firstSaturday = 1 + daysToAdd;
+        return new Date(Date.UTC(year, 7, firstSaturday + 7));
     };
 
-    let dciFinalsDate = findSecondSaturday(currentYear);
-
-    // If this year's DCI finals have already passed, the anchor is next year's finals.
-    if (now > dciFinalsDate) {
-        dciFinalsDate = findSecondSaturday(currentYear + 1);
+    let nextFinalsDate = findSecondSaturday(currentYear);
+    if (now >= nextFinalsDate) {
+        nextFinalsDate = findSecondSaturday(currentYear + 1);
     }
     
-    // The live season is 10 weeks. The off-season is 7 weeks (49 days).
-    // The full cycle is 17 weeks. We need to find the next 7-week interval end date
-    // that occurs before the next 10-week live season begins.
+    const liveSeasonStartDate = new Date(nextFinalsDate.getTime() - 69 * 24 * 60 * 60 * 1000);
+    const seasonTypes = ['Finale', 'Crescendo', 'Scherzo', 'Adagio', 'Allegro', 'Overture'];
+    const seasonWindows = [];
 
-    // A full cycle is 17 weeks (119 days). We can work backwards from DCI finals.
-    const liveSeasonStartDate = new Date(dciFinalsDate.getTime() - (69 * 24 * 60 * 60 * 1000)); // 10 weeks = 70 days
-    
-    // Find the closest previous 7-week cycle end date.
-    let potentialEndDate = new Date(liveSeasonStartDate.getTime() - (1 * 24 * 60 * 60 * 1000)); // Day before live season
-    
-    // This logic ensures we find the correct end date for the 7-week off-season slot
-    // immediately preceding the live season.
-    while (potentialEndDate > now) {
-        let proposedStartDate = new Date(potentialEndDate.getTime() - (48 * 24 * 60 * 60 * 1000));
-        if (proposedStartDate <= now) {
-            break;
-        }
-        potentialEndDate = new Date(potentialEndDate.getTime() - (49 * 24 * 60 * 60 * 1000));
+    for (let i = 0; i < seasonTypes.length; i++) {
+        const seasonEndDate = new Date(liveSeasonStartDate.getTime() - (i * 49 * 24 * 60 * 60 * 1000) - (1 * 24 * 60 * 60 * 1000));
+        const seasonStartDate = new Date(seasonEndDate.getTime() - 48 * 24 * 60 * 60 * 1000);
+        seasonWindows.push({
+            startDate: seasonStartDate,
+            endDate: seasonEndDate,
+            seasonType: seasonTypes[i]
+        });
+    }
+
+    seasonWindows.reverse();
+    const nextWindow = seasonWindows.find(window => now < window.endDate);
+
+    if (nextWindow) {
+        return { ...nextWindow, finalsYear: nextFinalsDate.getFullYear() };
     }
     
-    return potentialEndDate;
+    const overtureStartDate = new Date(nextFinalsDate.getTime() + 1 * 24 * 60 * 60 * 1000);
+    const overtureEndDate = new Date(overtureStartDate.getTime() + 48 * 24 * 60 * 60 * 1000);
+    
+    return {
+        startDate: overtureStartDate,
+        endDate: overtureEndDate,
+        seasonType: 'Overture',
+        finalsYear: nextFinalsDate.getFullYear()
+    };
 }
 
-/**
- * Gets a realistic caption score, using linear regression if the real score is missing.
- * @param {string} corpsName The name of the corps.
- * @param {string} caption The caption to score (e.g., 'GE1').
- * @param {number} currentDay The current off-season day (1-49).
- * @param {object} currentShow The show object for the current day.
- * @param {Array} allEvents The full 49-day schedule of all events.
- * @returns {number} The real or generated caption score.
- */
-function getRealisticCaptionScore(corpsName, caption, currentDay, currentShow, allEvents) {
-    // 1. Check for a real, valid score in the currently scheduled show.
-    const realScoreData = currentShow.scores.find(s => s.corps === corpsName);
-    if (realScoreData && realScoreData.captions[caption] && realScoreData.captions[caption] > 0) {
-        return realScoreData.captions[caption];
+function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, historicalData) {
+    const actualScore = getScoreForDay(currentDay, corpsName, sourceYear, caption, historicalData);
+    if (actualScore !== null) {
+        return actualScore; // Always use the real score if it exists.
     }
 
-    // 2. If no real score, gather up to 3 past and 3 future scores to build a trend.
-    const dataPoints = [];
-    const SCORE_POINTS_TO_FIND = 3;
-
-    // Search backwards for past scores
-    let pastScoresFound = 0;
-    for (let day = currentDay - 1; day >= 1; day--) {
-        const dayEvents = allEvents.find(e => e.offSeasonDay === day);
-        if (dayEvents) {
-            for (const show of dayEvents.shows) {
-                const scoreData = show.scores.find(s => s.corps === corpsName);
-                if (scoreData && scoreData.captions[caption] > 0) {
-                    dataPoints.push([day, scoreData.captions[caption]]);
-                    pastScoresFound++;
-                    break; // Take one score per day to avoid clustering
-                }
+    const allDataPoints = [];
+    const yearData = historicalData[sourceYear] || [];
+    for (const event of yearData) {
+        const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
+        if (score !== null) {
+            if (!allDataPoints.some(p => p[0] === event.offSeasonDay)) {
+                 allDataPoints.push([event.offSeasonDay, score]);
             }
         }
-        if (pastScoresFound >= SCORE_POINTS_TO_FIND) break;
     }
 
-    // Search forwards for future scores
-    let futureScoresFound = 0;
-    for (let day = currentDay + 1; day <= 49; day++) {
-        const dayEvents = allEvents.find(e => e.offSeasonDay === day);
-        if (dayEvents) {
-            for (const show of dayEvents.shows) {
-                const scoreData = show.scores.find(s => s.corps === corpsName);
-                if (scoreData && scoreData.captions[caption] > 0) {
-                    dataPoints.push([day, scoreData.captions[caption]]);
-                    futureScoresFound++;
-                    break; // Take one score per day
-                }
-            }
-        }
-        if (futureScoresFound >= SCORE_POINTS_TO_FIND) break;
-    }
+    const maxScore = 20;
 
-    // 3. Predict the score using the trend line from the collected data points.
-    if (dataPoints.length >= 2) {
-        const { m, c } = simpleLinearRegression(dataPoints);
-        const predictedScore = m * currentDay + c;
-        
-        const jitter = (Math.random() - 0.5) * 0.5; // +/- 0.25
+    if (allDataPoints.length >= 2) {
+        const regression = logarithmicRegression(allDataPoints);
+        const predictedScore = regression.predict(currentDay);
+        const jitter = (Math.random() - 0.5) * 0.5;
         const finalScore = predictedScore + jitter;
+        return Math.max(0, Math.min(maxScore, parseFloat(finalScore.toFixed(3))));
 
-        return Math.max(0, Math.min(10, parseFloat(finalScore.toFixed(3))));
-
-    } else if (dataPoints.length === 1) {
-        // Fallback to single-point logic if not enough data for a trend.
-        const baselineScore = dataPoints[0][1];
-        const jitter = (Math.random() - 0.5) * 0.2; // smaller jitter
-        const finalScore = baselineScore + jitter;
-        return Math.max(0, Math.min(10, parseFloat(finalScore.toFixed(3))));
-        
+    } else if (allDataPoints.length === 1) {
+        return allDataPoints[0][1];
     } else {
-        // No scores found at all.
-        logger.warn(`No historical scores found for ${corpsName}, caption ${caption}. Returning 0.`);
+        logger.warn(`No historical scores found for ${corpsName} (${sourceYear}), caption ${caption}. Returning 0.`);
         return 0;
     }
 }
 
-// ================================================================= //
-//                      NEW CRAWLER & WORKER FUNCTIONS               //
-// ================================================================= //
+function logarithmicRegression(data) {
+    const transformedData = data.map(([x, y]) => [x, y > 0 ? Math.log(y) : 0]);
+    
+    const { m, c } = simpleLinearRegression(transformedData);
+    
+    return {
+        predict: (x) => {
+            const logPrediction = m * x + c;
+            // Use Math.exp() to reverse the Math.log() transformation.
+            return Math.exp(logPrediction);
+        }
+    };
+}
 
-/**
- * The CRAWLER: An onCall function that finds all recap URLs on the main DCI scores
- * page and adds them as tasks to a Cloud Tasks queue.
- */
-// In functions/index.js, replace the entire discoverAndQueueUrls function
+function mapLiveDayToOffSeasonDay(liveDay) {
+    const liveSeasonStartDay = 22;
+    const dayOffset = 21;
+    if (liveDay < liveSeasonStartDay) {
+        return 1;
+    } else {
+        return liveDay - dayOffset;
+    }
+}
+
+async function getLiveCaptionScore(corpsName, sourceYear, caption, currentDay, historicalData) {
+    const db = getDb();
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const activeSeasonId = seasonDoc.data().seasonUid;
+
+    const liveScoresRef = db.collection(`live_scores/${activeSeasonId}/scores`).where("corpsName", "==", corpsName);
+    const liveScoresSnap = await liveScoresRef.get();
+
+    const currentSeasonScores = [];
+    liveScoresSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.captions && data.captions[caption]) {
+            currentSeasonScores.push([data.day, data.captions[caption]]);
+        }
+    });
+
+    if (currentSeasonScores.length >= 3) {
+        const regression = logarithmicRegression(currentSeasonScores);
+        const predictedScore = regression.predict(currentDay);
+        const jitter = (Math.random() - 0.5) * 0.5;
+        const finalScore = predictedScore + jitter;
+        return Math.max(0, Math.min(20, parseFloat(finalScore.toFixed(3))));
+
+    } else {
+        const equivalentOffSeasonDay = mapLiveDayToOffSeasonDay(currentDay);
+        return getRealisticCaptionScore(corpsName, sourceYear, caption, equivalentOffSeasonDay, historicalData);
+    }
+}
+
+// ================================================================= //
+//                        CRAWLER & WORKER FUNCTIONS                 //
+// ================================================================= //
 
 exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
@@ -1027,19 +1392,13 @@ exports.discoverAndQueueUrls = onCall({ cors: true }, async (request) => {
 
     logger.info("Kicking off asynchronous discovery process...");
     
-    // Publish the first page number to the pagination topic to start the chain.
     const dataBuffer = Buffer.from(JSON.stringify({ pageno: 1 }));
     await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: dataBuffer });
 
     return { success: true, message: "Asynchronous scraper process initiated. See logs for progress." };
 });
 
-/**
- * The WORKER: An HTTP-triggered function that receives a URL from the Cloud Tasks
- * queue, scrapes it, and publishes the results to Pub/Sub.
- */
 exports.scrapeSingleRecap = onRequest({ cors: true }, async (req, res) => {
-    // The v2 onRequest wrapper handles body parsing, so req.body is already an object.
     try {
         const { url } = req.body;
         if (!url) {
@@ -1048,14 +1407,10 @@ exports.scrapeSingleRecap = onRequest({ cors: true }, async (req, res) => {
             return;
         }
 
-        // We reuse our existing scraping logic!
         await scrapeDciScoresLogic(url);
-
-        // Acknowledge the task was successful
         res.status(200).send("Successfully processed recap URL.");
     } catch (error) {
         logger.error(`Worker failed to process URL: ${req.body.url}`, error);
-        // Tell Cloud Tasks the task failed so it can be retried
         res.status(500).send("Internal Server Error");
     }
 });
@@ -1065,12 +1420,8 @@ exports.processPaginationPage = onMessagePublished({
     memory: '2GiB',
     timeoutSeconds: 540,
 }, async (message) => {
-    // --- FIX STARTS HERE ---
-    // Manually decode the Base64 payload and parse it as JSON.
     const payloadBuffer = Buffer.from(message.data.message.data, 'base64').toString('utf-8');
     const { pageno } = JSON.parse(payloadBuffer);
-    // --- FIX ENDS HERE ---
-
     const baseUrl = "https://www.dci.org";
     const currentUrl = `${baseUrl}/scores?pageno=${pageno}`;
     logger.info(`[Paginator] Processing page: ${currentUrl}`);
@@ -1096,7 +1447,6 @@ exports.processPaginationPage = onMessagePublished({
 
         logger.info(`[Paginator] Found ${linksOnPage.length} 'final-scores' links. Queueing them for recap search.`);
         
-        // Use Axios to quickly find recap links on each final-scores page
         for (const finalScoresUrl of linksOnPage) {
             try {
                 const { data } = await axios.get(finalScoresUrl, { timeout: 15000 });
@@ -1106,7 +1456,6 @@ exports.processPaginationPage = onMessagePublished({
                     const recapLink = $(el).attr('href');
                     if (recapLink) {
                         const fullUrl = new URL(recapLink, baseUrl).href;
-                        // Instead of adding to a set, directly queue it in Cloud Tasks
                         queueRecapUrlForScraping(fullUrl);
                     }
                 });
@@ -1115,7 +1464,6 @@ exports.processPaginationPage = onMessagePublished({
             }
         }
         
-        // Trigger the next page processing
         const nextDataBuffer = Buffer.from(JSON.stringify({ pageno: pageno + 1 }));
         await pubsubClient.topic(PAGINATION_TOPIC).publishMessage({ data: nextDataBuffer });
 
@@ -1130,7 +1478,6 @@ exports.processPaginationPage = onMessagePublished({
 
 async function queueRecapUrlForScraping(url) {
     try {
-        // The CloudTasksClient is now initialized globally, no need to require it here
         const project = 'marching-art';
         const location = 'us-central1';
         const queue = 'recap-scraper-queue';
