@@ -87,7 +87,7 @@ const SchedulePage = ({ setPage }) => {
                                         <div className="space-y-3 flex-grow">
                                             {day.shows.length > 0 ? day.shows.map((show, index) => (
                                                 <div key={index} className="text-sm">
-                                                    <p className="font-bold text-brand-text-primary dark:text-brand-secondary-dark">{show.eventName}</p>
+                                                    <p className="font-bold text-brand-text-primary dark:text-brand-secondary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</p>
                                                     <p className="text-xs text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
                                                 </div>
                                             )) : (

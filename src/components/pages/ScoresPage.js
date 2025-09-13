@@ -88,7 +88,7 @@ const ScoresPage = ({ theme }) => { // Accept theme as a prop
                             <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName}</h2>
+                                        <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</h2>
                                         <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
                                     </div>
                                     <button onClick={() => setShowToChart(show)} className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded text-sm">
