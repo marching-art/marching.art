@@ -7,34 +7,40 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Add this font family section
+      fontFamily: {
+        sans: ['"Inter"', 'sans-serif'], // A strong, clean sans-serif for headings
+        mono: ['"Roboto Mono"', 'monospace'], // A clear monospace for all data/stats
+      },
       colors: {
-        'brand-primary': {
-          DEFAULT: '#1E3A8A', // A strong, deep blue
-          dark: '#3B82F6',   // A brighter blue for dark mode contrast
-        },
-        'brand-secondary': {
-          DEFAULT: '#FBBF24', // A rich, vibrant gold
-          dark: '#FCD34D',   // A slightly lighter gold for dark mode
-        },
+        // A single, vibrant accent. Let's use an electric green.
         'brand-accent': {
-          DEFAULT: '#9CA3AF', // A neutral gray for borders and secondary text
-          dark: '#6B7280',   // A darker gray for dark mode
+          DEFAULT: '#00FF7F', // Spring Green
+          dark: '#39FF14',   // Neon Green
         },
+        // Backgrounds are just black and white. No soft grays.
         'brand-background': {
-          DEFAULT: '#FFFFFF',
-          dark: '#111827', // A very dark gray, almost black
+          DEFAULT: '#FFFFFF', // White
+          dark: '#0A0A0A',    // Near Black
         },
+        // Surfaces are either the background color or a very subtle off-white/gray for hierarchy.
         'brand-surface': {
-          DEFAULT: '#F9FAFB', // A very light gray for cards/sections
-          dark: '#1F2937',   // A dark gray for cards in dark mode
+          DEFAULT: '#F5F5F5', 
+          dark: '#141414',
         },
+        // Text is simple and high-contrast.
         'brand-text': {
-          primary: '#1F2937',
-          'primary-dark': '#F9FAFB',
-          secondary: '#4B5563',
-          'secondary-dark': '#D1D5DB',
+          primary: '#0A0A0A',
+          'primary-dark': '#EAEAEA',
+          secondary: '#555555',
+          'secondary-dark': '#999999',
         },
       },
+      // Optional: Add a hard-edged shadow for a retro effect
+      boxShadow: {
+        'hard': '4px 4px 0px #0A0A0A',
+        'hard-dark': '4px 4px 0px #EAEAEA',
+      }
     },
   },
   plugins: [],

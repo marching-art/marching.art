@@ -148,7 +148,7 @@ const ProfilePage = ({ profile, userId }) => {
                                         rows="4"
                                     ></textarea>
                                     <div className="flex justify-end space-x-2">
-                                        <button onClick={() => setIsEditingBio(false)} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm">Cancel</button>
+                                        <button onClick={() => setIsEditingBio(false)} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm  transition-all transform hover:rotate-6 hover:scale-110">Cancel</button>
                                         <button onClick={handleSaveBio} className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-1 px-3 rounded text-sm">Save</button>
                                     </div>
                                 </div>

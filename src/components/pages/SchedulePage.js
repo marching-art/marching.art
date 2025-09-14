@@ -64,8 +64,8 @@ const SchedulePage = ({ setPage }) => {
             <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6 text-center">{season.name}</h1>
             <div className="space-y-10">
                 {Object.keys(eventsByWeek).map(week => (
-                    <div key={week} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                        <h2 className="text-3xl font-bold text-brand-primary dark:text-brand-secondary-dark border-b-2 border-brand-accent dark:border-brand-accent-dark pb-3 mb-4">Week {week}</h2>
+                    <div key={week} className="bg-brand-surface dark:bg-brand-surface-dark p-6 border-2 border-black dark:border-brand-text-secondary-dark">
+                        <h2 className="text-4xl font-black uppercase text-brand-text-primary dark:text-brand-text-primary-dark border-b-2 border-brand-accent dark:border-brand-accent-dark pb-3 mb-4">Week {week}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* THIS IS THE KEY CHANGE: Sort the days of the week before rendering */}
                             {eventsByWeek[week].sort((a, b) => a.offSeasonDay - b.offSeasonDay).map(day => {
@@ -73,14 +73,14 @@ const SchedulePage = ({ setPage }) => {
                                 const hasResults = fantasyRecaps?.has(day.offSeasonDay);
                                 
                                 return (
-                                    <div key={day.offSeasonDay} className="flex flex-col bg-brand-background dark:bg-brand-background-dark p-4 rounded-md">
+                                    <div key={day.offSeasonDay} className="flex flex-col bg-brand-background dark:bg-brand-background-dark p-4 border border-brand-text-secondary dark:border-brand-text-secondary-dark">
                                         <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-3">
                                             <h3 className="font-bold text-lg text-brand-text-primary dark:text-brand-text-primary-dark">
                                                 {calendarDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' })}
                                             </h3>
                                             {hasResults && (
-                                                <button onClick={() => setPage('scores')} className="text-sm font-semibold text-brand-primary dark:text-brand-secondary-dark hover:underline">
-                                                    View Results
+                                                <button onClick={() => setPage('scores')} className="text-sm font-bold text-brand-accent dark:text-brand-accent-dark hover:underline uppercase">
+                                                    [View Results]
                                                 </button>
                                             )}
                                         </div>

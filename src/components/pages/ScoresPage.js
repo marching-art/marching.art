@@ -67,7 +67,7 @@ const ScoresPage = ({ theme }) => { // Accept theme as a prop
             <div className="p-4 md:p-8 max-w-6xl mx-auto">
                 <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6 text-center">Fantasy Show Recaps</h1>
                 
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-brand-surface dark:bg-brand-surface-dark rounded-lg shadow-md">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-brand-surface dark:bg-brand-surface-dark shadow-md">
                     <div className="flex items-center gap-2">
                         <label htmlFor="season-select" className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Season:</label>
                         <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-white dark:bg-brand-background-dark border border-brand-accent rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark">
@@ -85,37 +85,40 @@ const ScoresPage = ({ theme }) => { // Accept theme as a prop
                 {selectedDay ? (
                     <div className="space-y-8">
                         {selectedDay.shows.map((show, index) => (
-                            <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                                <div className="flex justify-between items-center mb-4">
+                            <div key={index} className="bg-brand-surface dark:bg-brand-surface-dark p-6 border-2 border-black dark:border-brand-text-secondary-dark">
+                                    <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</h2>
                                         <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
                                     </div>
-                                    <button onClick={() => setShowToChart(show)} className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded text-sm">
+                                    <button onClick={() => setShowToChart(show)} className="bg-brand-accent text-black font-bold py-2 px-4 uppercase text-sm border-2 border-black hover:bg-brand-background hover:text-black transition-all">
                                         View Chart
                                     </button>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm text-brand-text-primary dark:text-brand-text-primary-dark">
-                                        <thead className="border-b-2 border-brand-accent dark:border-brand-accent-dark">
+                                    <table className="w-full text-left font-mono text-sm text-brand-text-primary dark:text-brand-text-primary-dark">
+                                       {/* The table header gets a stark border */}
+                                       <thead className="border-b-2 border-brand-accent dark:border-brand-accent-dark uppercase">
                                             <tr>
-                                                <th className="p-2 w-12 font-semibold">Rank</th>
-                                                <th className="p-2 font-semibold">Corps</th>
-                                                <th className="p-2 text-right font-semibold">GE</th>
-                                                <th className="p-2 text-right font-semibold">Visual</th>
-                                                <th className="p-2 text-right font-semibold">Music</th>
-                                                <th className="p-2 text-right font-semibold">Total Score</th>
+                                                <th className="p-2 w-12 font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">Rank</th>
+                                                <th className="p-2 font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">Corps</th>
+                                                <th className="p-2 text-right font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">GE</th>
+                                                <th className="p-2 text-right font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">Visual</th>
+                                                <th className="p-2 text-right font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">Music</th>
+                                                <th className="p-2 text-right font-bold transition-all hover:bg-brand-accent hover:text-black dark:hover:bg-brand-accent-dark dark:hover:text-black">Total Score</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {show.results.sort((a, b) => b.totalScore - a.totalScore).map((res, i) => (
+                                                // Use a simple, stark border for rows. No zebra-striping.
                                                 <tr key={res.uid} className="border-b border-brand-surface dark:border-gray-700">
-                                                    <td className="p-2 font-bold">{i + 1}</td>
+                                                    <td className="p-2 font-black text-lg">{i + 1}</td>
                                                     <td className="p-2 font-semibold">{res.corpsName}</td>
                                                     <td className="p-2 text-right">{res.geScore.toFixed(3)}</td>
                                                     <td className="p-2 text-right">{res.visualScore.toFixed(3)}</td>
                                                     <td className="p-2 text-right">{res.musicScore.toFixed(3)}</td>
-                                                    <td className="p-2 font-bold text-right text-brand-primary dark:text-brand-secondary-dark">{res.totalScore.toFixed(3)}</td>
+                                                    {/* The most important number gets the accent color */}
+                                                    <td className="p-2 font-bold text-right text-brand-accent dark:text-brand-accent-dark">{res.totalScore.toFixed(3)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
