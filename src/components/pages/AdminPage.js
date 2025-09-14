@@ -125,12 +125,12 @@ const AdminPage = () => {
         <div className="flex items-center space-x-4">
             <button 
                 onClick={() => handleManualTrigger('processAndArchiveOffSeasonScores')} 
-                disabled={jobStatus.processDailyScores?.loading} 
+                disabled={jobStatus.processAndArchiveOffSeasonScores?.loading} 
                 className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
             >
-                {jobStatus.processDailyScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
+                {jobStatus.processAndArchiveOffSeasonScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
             </button>
-            {jobStatus.processDailyScores?.message && <p className="text-sm font-semibold">{jobStatus.processDailyScores.message}</p>}
+            {jobStatus.processAndArchiveOffSeasonScores?.message && <p className="text-sm font-semibold">{jobStatus.processAndArchiveOffSeasonScores.message}</p>}
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
@@ -153,7 +153,13 @@ const AdminPage = () => {
                 <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Manage User Roles</h2>
                 <div className="space-y-4">
                     <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">Enter a user's email address to grant or revoke admin privileges.</p>
-                    <input type="email" placeholder="user@example.com" className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-secondary" />
+                    <input 
+                        type="email" 
+                        placeholder="user@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-secondary" 
+                    />
                     <div className="flex space-x-4">
                         <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
                         <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Remove Admin'} </button>
