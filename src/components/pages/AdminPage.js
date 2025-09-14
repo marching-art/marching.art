@@ -124,28 +124,16 @@ const AdminPage = () => {
         {/* --- Process Daily Scores Trigger --- */}
         <div className="flex items-center space-x-4">
             <button 
-                onClick={() => handleManualTrigger('processDailyScores')} 
+                onClick={() => handleManualTrigger('processAndArchiveOffSeasonScores')} 
                 disabled={jobStatus.processDailyScores?.loading} 
                 className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
             >
-                {jobStatus.processDailyScores?.loading ? 'Processing...' : 'Run Daily Score Processor'}
+                {jobStatus.processDailyScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
             </button>
             {jobStatus.processDailyScores?.message && <p className="text-sm font-semibold">{jobStatus.processDailyScores.message}</p>}
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
-
-        {/* --- Archive Daily Recaps Trigger --- */}
-        <div className="flex items-center space-x-4">
-            <button 
-                onClick={() => handleManualTrigger('archiveDailyFantasyScores')} 
-                disabled={jobStatus.archiveDailyFantasyScores?.loading} 
-                className="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-            >
-                {jobStatus.archiveDailyFantasyScores?.loading ? 'Archiving...' : 'Run Daily Recap Archiver'}
-            </button>
-            {jobStatus.archiveDailyFantasyScores?.message && <p className="text-sm font-semibold">{jobStatus.archiveDailyFantasyScores.message}</p>}
-        </div>
 
     </div>
 </div>
