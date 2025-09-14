@@ -21,6 +21,7 @@ const AdminPage = () => {
     const [isCrawling, setIsCrawling] = useState(false);
     const [crawlerMessage, setCrawlerMessage] = useState('');
 
+    const [jobStatus, setJobStatus] = useState({});
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
