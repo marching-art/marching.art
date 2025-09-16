@@ -20,14 +20,15 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
     useEffect(() => {
         if (profile) {
             setCorpsName(profile.corpsName || '');
-            setLineup(profile.lineup || {});
-            setOriginalLineup(profile.lineup || {});
+            const currentLineup = profile.lineup || {};
+            setLineup(currentLineup);
+            setOriginalLineup(currentLineup);
         } else {
             setCorpsName('');
             setLineup({});
             setOriginalLineup({});
         }
-    }, [profile]);
+    }, [profile, corpsClass]); // Add corpsClass as dependency to reset when switching corps
 
     useEffect(() => {
         const seasonStartDate = seasonSettings?.schedule?.startDate?.toDate();
