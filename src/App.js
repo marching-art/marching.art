@@ -10,6 +10,7 @@ import ProfilePage from './components/pages/ProfilePage';
 import AdminPage from './components/pages/AdminPage';
 import SchedulePage from './components/pages/SchedulePage';
 import ScoresPage from './components/pages/ScoresPage';
+import LeaderboardPage from './components/pages/LeaderboardPage'; // 1. IMPORT THE NEW PAGE
 
 // Import Layout & UI Components
 import Header from './components/layout/Header';
@@ -27,19 +28,20 @@ export default function App() {
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
 
+    // This theme state is not used by the new single-theme design,
+    // but is kept here in case you want to re-enable a theme switcher later.
     const [theme, setTheme] = useState({
-        style: localStorage.getItem('themeStyle') || 'brutalist',
+        style: localStorage.getItem('themeStyle') || 'brand',
         mode: localStorage.getItem('themeMode') || 'dark',
     });
 
     useEffect(() => {
         const root = document.documentElement;
-        root.classList.remove('theme-brand', 'theme-brutalist', 'dark', 'light');
-        root.classList.add(`theme-${theme.style}`);
+        // Simplified for single theme
+        root.classList.remove('dark', 'light');
         root.classList.add(theme.mode);
-        localStorage.setItem('themeStyle', theme.style);
         localStorage.setItem('themeMode', theme.mode);
-    }, [theme]);
+    }, [theme.mode]);
 
     const toggleThemeMode = () => {
         setTheme(prevTheme => ({
@@ -48,6 +50,7 @@ export default function App() {
         }));
     };
     
+    // Kept for potential future use
     const switchThemeStyle = (newStyle) => {
         setTheme(prevTheme => ({
             ...prevTheme,
@@ -115,7 +118,9 @@ export default function App() {
             case 'schedule':
                 return <SchedulePage setPage={setPage} />;
             case 'scores':
-                return <ScoresPage theme={theme} />; 
+                return <ScoresPage theme={theme} />;
+            case 'leaderboard':
+                return <LeaderboardPage profile={profile} />;
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
@@ -130,7 +135,7 @@ export default function App() {
 
     if (loading) {
         return (
-             <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-secondary-dark text-2xl font-sans">
+             <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary-dark text-2xl font-sans">
                 Loading System...
             </div>
         );
@@ -148,6 +153,7 @@ export default function App() {
                 setPage={setPage}
                 themeMode={theme.mode}
                 toggleThemeMode={toggleThemeMode}
+                // The following props are no longer needed for a single theme but are kept for reference
                 switchThemeStyle={switchThemeStyle} 
                 currentThemeStyle={theme.style}
             />
@@ -156,10 +162,10 @@ export default function App() {
             </main>
             <Footer />
             <Modal isOpen={isLoginModalOpen} onClose={closeModal} title="LOGIN">
-                <LoginForm onLoginSuccess={closeModal} switchToSignUp={openSignUpModal} />
+                <LoginForm onLoginSuccess={closeModal} switchToSignUp={() => { closeModal(); openSignUpModal(); }} />
             </Modal>
             <Modal isOpen={isSignUpModalOpen} onClose={closeModal} title="CREATE ACCOUNT">
-                <SignUpForm onSignUpSuccess={closeModal} switchToLogin={openLoginModal} />
+                <SignUpForm onSignUpSuccess={closeModal} switchToLogin={() => { closeModal(); openLoginModal(); }} />
             </Modal>
         </div>
     );

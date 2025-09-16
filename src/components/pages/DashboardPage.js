@@ -64,7 +64,7 @@ const DashboardPage = ({ profile, userId }) => {
     }
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
             {hasJoinedCurrentSeason ? (
                 <div className="flex flex-col gap-8">
                     {/* Row 1: Lineup Editor & League Manager (2 Columns) */}

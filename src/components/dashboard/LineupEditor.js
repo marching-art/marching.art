@@ -64,25 +64,20 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
             const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
             const result = await validateAndSaveLineup({ lineup: lineup });
             setMessage(result.data.message);
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error saving lineup:", error);
             setMessage(error.message || "An error occurred while saving your lineup.");
         }
         setIsLoading(false);
     };
 
-    const CardContainer = ({ children }) => (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-            {children}
-        </div>
-    );
-
     if (!corpsData || corpsData.length === 0) {
         return (
-             <CardContainer>
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">My Lineup</h2>
+            <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">My Lineup</h2>
                 <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Corps data not available. Please check back later.</p>
-            </CardContainer>
+            </div>
         )
     }
 
@@ -91,22 +86,22 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
     const hasExceededTrades = tradeLimit !== Infinity && tradesRemaining < 0;
 
     return (
-        <CardContainer>
+        <div>
             <div className="border-b-theme border-accent dark:border-accent-dark pb-4 mb-4">
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">{profile.corpsName}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">{profile.corpsName}</h2>
                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Lineups lock each Saturday at 12:00 PM EST.</p>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                <div className={`text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
                     Trades Remaining: {tradesRemaining}
                 </div>
-                <div className={`text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
                     Total Points: {totalPoints} / {pointCap}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 {CAPTIONS.map(caption => (
                     <div key={caption} className="flex items-center">
                         <label className="w-12 font-semibold text-text-primary dark:text-text-primary-dark">{caption}:</label>
@@ -139,7 +134,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
                     {isLoading ? 'Saving...' : 'Save Lineup'}
                 </button>
             </div>
-        </CardContainer>
+        </div>
     );
 };
 
