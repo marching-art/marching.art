@@ -59,7 +59,7 @@ const DashboardPage = ({ profile, userId }) => {
         // This logic creates a "logical" date by subtracting 6 hours.
         // This makes the daily rollover happen at 6 AM instead of midnight.
         const logicalNow = new Date();
-        logicalNow.setHours(logicalNow.getHours() - 6);
+        logicalNow.setHours(logicalNow.getHours() - 24);
 
         // Use this logical date to determine "today" for selection purposes
         const todayForLogic = new Date(logicalNow.getFullYear(), logicalNow.getMonth(), logicalNow.getDate());
