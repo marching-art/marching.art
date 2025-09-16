@@ -99,7 +99,7 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
     }, [seasonType, allSeasons]);
     
     const chartData = {
-        labels: activeSeason?.events.map(e => e.eventName.split(' ').slice(0, 2).join(' ')) || [],
+        labels: activeSeason?.events.map(e => e.eventName.replace(/DCI/g, 'marching.art').split(' ').slice(0, 2).join(' ')) || [],
         datasets: [
             {
                 label: 'Total Score',
@@ -178,7 +178,7 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
                         <tbody>
                             {activeSeason.events.map((event, i) => (
                                 <tr key={i} className="border-b-theme border-surface dark:border-accent-dark/20">
-                                    <td className="p-2">{event.eventName}</td>
+                                    <td className="p-2">{event.eventName.replace(/DCI/g, 'marching.art')}</td>
                                     <td className="p-2">{event.rank}</td>
                                     <td className="p-2 font-semibold text-primary dark:text-primary-dark">{event.score.toFixed(3)}</td>
                                 </tr>
