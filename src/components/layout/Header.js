@@ -40,8 +40,12 @@ const Header = ({
                 <div className="flex items-center space-x-6">
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
-                    <NavButton page="leaderboard">Leaderboard</NavButton>
-                    {isLoggedIn && <NavButton page="dashboard">Dashboard</NavButton>}
+                    {isLoggedIn && (
+                        <>
+                            <NavButton page="leaderboard">Leaderboard</NavButton>
+                            <NavButton page="dashboard">Dashboard</NavButton>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -81,11 +85,11 @@ const Header = ({
                     <nav className="flex flex-col p-2">
                         <MobileNavButton page="schedule">Schedule</MobileNavButton>
                         <MobileNavButton page="scores">Scores</MobileNavButton>
-                        <MobileNavButton page="leaderboard">Leaderboard</MobileNavButton>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                         
                         {isLoggedIn ? (
                             <>
+                                <MobileNavButton page="leaderboard">Leaderboard</MobileNavButton>
                                 <MobileNavButton page="dashboard">Dashboard</MobileNavButton>
                                 <MobileNavButton page="profile">Profile</MobileNavButton>
                                 {isAdmin && <button onClick={() => { setPage('admin'); setIsMobileMenuOpen(false); }} className="text-red-500 font-bold p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 w-full">Admin</button>}
