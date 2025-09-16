@@ -4,7 +4,6 @@ import { db } from '../../firebase';
 
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LineupEditor from '../dashboard/LineupEditor';
-import Leaderboard from '../dashboard/Leaderboard';
 import LeagueManager from '../dashboard/LeagueManager';
 import ShowSelection from '../dashboard/ShowSelection';
 import LiveShowSelection from '../dashboard/LiveShowSelection';
@@ -65,15 +64,10 @@ const DashboardPage = ({ profile, userId }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8">
             {hasJoinedCurrentSeason ? (
                 <div className="flex flex-col gap-8">
-                    {/* Row 1: Leaderboard (Full Width) */}
-                    <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                        <Leaderboard profile={profile} />
-                    </div>
-
-                    {/* Row 2: Lineup Editor & League Manager (2 Columns) */}
+                    {/* Row 1: Lineup Editor & League Manager (2 Columns) */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                              <LineupEditor 
@@ -88,7 +82,7 @@ const DashboardPage = ({ profile, userId }) => {
                         </div>
                     </div>
 
-                    {/* Row 3: Show Selection (Full Width) */}
+                    {/* Row 2: Show Selection (Full Width) */}
                     <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                         {seasonSettings.status === 'live-season' ? (
                             <LiveShowSelection

@@ -40,6 +40,7 @@ const Header = ({
                 <div className="flex items-center space-x-6">
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
+                    <NavButton page="leaderboard">Leaderboard</NavButton>
                     {isLoggedIn && <NavButton page="dashboard">Dashboard</NavButton>}
                 </div>
 
@@ -80,6 +81,7 @@ const Header = ({
                     <nav className="flex flex-col p-2">
                         <MobileNavButton page="schedule">Schedule</MobileNavButton>
                         <MobileNavButton page="scores">Scores</MobileNavButton>
+                        <MobileNavButton page="leaderboard">Leaderboard</MobileNavButton>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                         
                         {isLoggedIn ? (

@@ -87,28 +87,26 @@ const Leaderboard = ({ profile }) => {
             {isLoading ? (
                 <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
             ) : (
-                <div className="max-h-96 overflow-y-auto pr-2">
-                    <ol className="list-decimal list-inside space-y-2">
-                        {leaderboard.map((player, index) => {
-                            const isCurrentUser = player.id === profile.userId;
+                <ol className="list-decimal list-inside space-y-2">
+                    {leaderboard.map((player, index) => {
+                        const isCurrentUser = player.id === profile.userId;
 
-                            return (
-                                <li 
-                                    key={player.id} 
-                                    className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
-                                >
-                                    <div>
-                                        <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
-                                        <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
-                                    </div>
-                                    <span className="font-bold text-lg text-primary dark:text-primary-dark">
-                                        {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
-                                    </span>
-                                </li>
-                            );
-                        })}
-                    </ol>
-                </div>
+                        return (
+                            <li 
+                                key={player.id} 
+                                className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
+                            >
+                                <div>
+                                    <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
+                                    <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
+                                </div>
+                                <span className="font-bold text-lg text-primary dark:text-primary-dark">
+                                    {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
+                                </span>
+                            </li>
+                        );
+                    })}
+                </ol>
             )}
         </div>
     );
