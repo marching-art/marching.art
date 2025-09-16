@@ -1,5 +1,3 @@
-// App.js
-
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut, getIdTokenResult } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -29,28 +27,20 @@ export default function App() {
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
 
-    // 1. COMPLETELY REPLACE the old useState with this new object-based one.
     const [theme, setTheme] = useState({
         style: localStorage.getItem('themeStyle') || 'brutalist',
         mode: localStorage.getItem('themeMode') || 'dark',
     });
 
-    // 2. This useEffect now handles both style and mode classes correctly.
     useEffect(() => {
         const root = document.documentElement;
-        // Clear previous theme classes to prevent conflicts
         root.classList.remove('theme-brand', 'theme-brutalist', 'dark', 'light');
-
-        // Add the current theme and mode classes
         root.classList.add(`theme-${theme.style}`);
         root.classList.add(theme.mode);
-
-        // Save the user's preference for next visit
         localStorage.setItem('themeStyle', theme.style);
         localStorage.setItem('themeMode', theme.mode);
     }, [theme]);
 
-    // 3. The old toggleTheme function is replaced by these two new functions.
     const toggleThemeMode = () => {
         setTheme(prevTheme => ({
             ...prevTheme,
@@ -65,7 +55,6 @@ export default function App() {
         }));
     };
 
-    // --- Authentication & Profile Loading (no changes here) ---
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -85,7 +74,7 @@ export default function App() {
         if (user && !user.isAnonymous) {
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
             unsubscribe = onSnapshot(userDocRef, (doc) => {
-                setProfile(doc.exists() ? doc.data() : null);
+                setProfile(doc.exists() ? { userId: user.uid, ...doc.data() } : null);
             }, (error) => {
                 console.error("Error fetching profile:", error);
             });
@@ -95,7 +84,6 @@ export default function App() {
         return () => { if (unsubscribe) unsubscribe(); };
     }, [user]);
 
-    // --- Page Navigation & Modals (no changes here) ---
     useEffect(() => {
         if (user && !user.isAnonymous) {
             setPage('dashboard');
@@ -104,10 +92,21 @@ export default function App() {
         }
     }, [user]);
 
-    const handleLogout = async () => { /* ... */ };
-    const openLoginModal = () => { /* ... */ };
-    const openSignUpModal = () => { /* ... */ };
-    const closeModal = () => { /* ... */ };
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            setPage('home');
+        } catch (error) {
+            console.error("Error signing out: ", error);
+        }
+    };
+
+    const openLoginModal = () => setLoginModalOpen(true);
+    const openSignUpModal = () => setSignUpModalOpen(true);
+    const closeModal = () => {
+        setLoginModalOpen(false);
+        setSignUpModalOpen(false);
+    };
     
     const isLoggedIn = user && !user.isAnonymous;
 
@@ -116,7 +115,6 @@ export default function App() {
             case 'schedule':
                 return <SchedulePage setPage={setPage} />;
             case 'scores':
-                // Pass the theme object to any page that needs it (e.g., for charts)
                 return <ScoresPage theme={theme} />; 
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
@@ -148,10 +146,8 @@ export default function App() {
                 onSignUpClick={openSignUpModal}
                 onLogout={handleLogout}
                 setPage={setPage}
-                // 4. Update the props passed to the Header component
                 themeMode={theme.mode}
                 toggleThemeMode={toggleThemeMode}
-                // You can now also pass the style switcher function
                 switchThemeStyle={switchThemeStyle} 
                 currentThemeStyle={theme.style}
             />
