@@ -83,7 +83,8 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     const getCalendarDateForDay = (offSeasonDay) => {
         if (!seasonStartDate) return null;
         const calendarDate = new Date(seasonStartDate.getTime());
-        calendarDate.setUTCDate(calendarDate.getUTCDate() + offSeasonDay - 1);
+        // UPDATED: Use local date methods instead of UTC to prevent timezone shift
+        calendarDate.setDate(calendarDate.getDate() + offSeasonDay - 1);
         return calendarDate;
     };
 

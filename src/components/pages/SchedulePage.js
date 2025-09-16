@@ -42,7 +42,8 @@ const SchedulePage = ({ setPage }) => {
     const getCalendarDateForDay = (offSeasonDay) => {
         const startDate = season.schedule.startDate.toDate();
         const calendarDate = new Date(startDate.getTime());
-        calendarDate.setUTCDate(calendarDate.getUTCDate() + offSeasonDay - 1);
+        // UPDATED: Use local date methods instead of UTC to prevent timezone shift
+        calendarDate.setDate(calendarDate.getDate() + offSeasonDay - 1);
         return calendarDate;
     };
 
@@ -71,7 +72,7 @@ const SchedulePage = ({ setPage }) => {
                                     <div key={day.offSeasonDay} className="flex flex-col bg-background dark:bg-background-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark">
                                         <div className="flex justify-between items-center border-b-theme border-accent dark:border-accent-dark pb-2 mb-3">
                                             <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark">
-                                                {calendarDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                                                {calendarDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                                             </h3>
                                         </div>
                                         <div className="space-y-3 flex-grow">
