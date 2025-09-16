@@ -56,8 +56,8 @@ const DashboardPage = ({ profile, userId }) => {
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        // CORRECTED LOGIC: Create a "logical" date by subtracting 6 hours.
-        // This makes the daily rollover happen at 6 AM instead of midnight, allowing for early morning selections.
+        // This logic creates a "logical" date by subtracting 6 hours.
+        // This makes the daily rollover happen at 6 AM instead of midnight.
         const logicalNow = new Date();
         logicalNow.setHours(logicalNow.getHours() - 6);
 

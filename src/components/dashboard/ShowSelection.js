@@ -80,8 +80,9 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     const getCalendarDateForDay = (offSeasonDay) => {
         if (!seasonStartDate) return null;
         const calendarDate = new Date(seasonStartDate.getTime());
-        // REVERTED: Use the mathematically correct offset. The cutoff logic is handled elsewhere.
-        calendarDate.setDate(calendarDate.getDate() + offSeasonDay - 1);
+        // CORRECTED: Add the offSeasonDay and then subtract 1 to get the offset, then add 1 to shift the calendar.
+        // This simplifies to just adding the offSeasonDay.
+        calendarDate.setDate(calendarDate.getDate() + offSeasonDay);
         return calendarDate;
     };
 
