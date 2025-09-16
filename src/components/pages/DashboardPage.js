@@ -65,33 +65,46 @@ const DashboardPage = ({ profile, userId }) => {
     }
 
     return (
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
             {hasJoinedCurrentSeason ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                         <LineupEditor 
-                            profile={profile}  
-                            corpsData={corpsData}
-                            pointCap={seasonSettings.currentPointCap}
-                            seasonSettings={seasonSettings}
-                        />
-                        <Leaderboard profile={profile} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    {/* Lineup Editor and Leaderboard in the first column */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                             <LineupEditor 
+                                profile={profile}  
+                                corpsData={corpsData}
+                                pointCap={seasonSettings.currentPointCap}
+                                seasonSettings={seasonSettings}
+                            />
+                        </div>
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                            <Leaderboard profile={profile} />
+                        </div>
                     </div>
-                    <LeagueManager profile={profile} />
 
-                    {seasonSettings.status === 'live-season' ? (
-                        <LiveShowSelection
-                            seasonEvents={seasonSettings.events || []}
-                            profile={profile}
-                            seasonStartDate={seasonStartDate}
-                        />
-                    ) : (
-                        <ShowSelection 
-                            seasonEvents={seasonSettings.events || []}
-                            profile={profile}
-                            currentOffSeasonDay={currentOffSeasonDay}
-                        />
-                    )}
+                    {/* League Manager and Show Selection in the second column */}
+                    <div className="lg:col-span-1 space-y-8">
+                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                             <LeagueManager profile={profile} />
+                         </div>
+                        
+                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                            {seasonSettings.status === 'live-season' ? (
+                                <LiveShowSelection
+                                    seasonEvents={seasonSettings.events || []}
+                                    profile={profile}
+                                    seasonStartDate={seasonStartDate}
+                                />
+                            ) : (
+                                <ShowSelection 
+                                    seasonEvents={seasonSettings.events || []}
+                                    profile={profile}
+                                    currentOffSeasonDay={currentOffSeasonDay}
+                                />
+                            )}
+                         </div>
+                    </div>
                 </div>
             ) : (
                 <SeasonSignup

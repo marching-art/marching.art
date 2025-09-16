@@ -37,41 +37,34 @@ const timeSince = (date) => {
 // --- Child Components ---
 
 const MySchedule = ({ profile }) => {
-    if (!profile.activeSeasonId || !profile.selectedShows) {
-        return (
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
-                <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows have been selected for the current season.</p>
-            </div>
-        );
-    }
-    
-    const weeks = Object.keys(profile.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', '')));
-
+    // This component now uses the standard theme classes for a consistent look.
     return (
-        <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-            <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Season Schedule</h3>
-            <div className="space-y-4">
-                {weeks.map(weekKey => {
-                    const weekNum = weekKey.replace('week', '');
-                    const shows = profile.selectedShows[weekKey];
-                    return (
-                        <div key={weekKey}>
-                            <h4 className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Week {weekNum}</h4>
-                            {shows && shows.length > 0 ? (
-                                <ul className="list-disc list-inside pl-2 mt-1 text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">
-                                    {shows.map((show, index) => (
-                                        <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-brand-accent dark:text-brand-accent-dark">{show.location}</em></li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="pl-2 mt-1 text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows selected for this week.</p>
-                            )}
-                        </div>
-                    );
-                })}
-                 {weeks.length === 0 && <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">No shows have been selected for the current season.</p>}
-            </div>
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">My Season Schedule</h3>
+            {!profile.activeSeasonId || !profile.selectedShows || Object.keys(profile.selectedShows).length === 0 ? (
+                 <p className="text-text-secondary dark:text-text-secondary-dark">No shows have been selected for the current season.</p>
+            ) : (
+                <div className="space-y-4">
+                    {Object.keys(profile.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
+                        const weekNum = weekKey.replace('week', '');
+                        const shows = profile.selectedShows[weekKey];
+                        return (
+                            <div key={weekKey}>
+                                <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">Week {weekNum}</h4>
+                                {shows && shows.length > 0 ? (
+                                    <ul className="list-disc list-inside pl-2 mt-1 text-sm text-text-secondary dark:text-text-secondary-dark space-y-1">
+                                        {shows.map((show, index) => (
+                                            <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="pl-2 mt-1 text-sm text-text-secondary dark:text-text-secondary-dark italic">No shows selected for this week.</p>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };
@@ -163,7 +156,7 @@ const ProfilePage = ({ profile, userId }) => {
 
 
     if (!profile) {
-        return <div className="p-8 text-center text-text-secondary">Loading profile...</div>;
+        return <div className="p-8 text-center text-text-secondary dark:text-text-secondary-dark">Loading profile...</div>;
     }
 
     return (
@@ -176,9 +169,9 @@ const ProfilePage = ({ profile, userId }) => {
                     UniformDisplayComponent={UniformDisplay}
                 />
             )}
-            <div className="p-4 md:p-8 space-y-8">
+            <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                         <UniformDisplay uniform={userUniform} />
                         {isOwner && (
                             <button 
@@ -191,50 +184,58 @@ const ProfilePage = ({ profile, userId }) => {
                         )}
                     </div>
                     <div className="flex-grow text-center md:text-left">
-                         <h1 className="text-4xl md:text-5xl font-bold text-text-primary">{profile.username}</h1>
+                         <h1 className="text-4xl md:text-5xl font-bold text-text-primary dark:text-text-primary-dark">{profile.username}</h1>
                         {profile.corpsName && (
                             <h2 className="text-2xl font-semibold text-secondary dark:text-secondary-dark mt-1">{profile.corpsName}</h2>
                         )}
-                        <p className="text-text-secondary mt-1">
+                        <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
                             Member since {profile.createdAt?.toDate().toLocaleDateString()}
                         </p>
-                         <p className="text-text-secondary">
+                         <p className="text-text-secondary dark:text-text-secondary-dark">
                             Last active: {timeSinceActive}
                         </p>
-                        <div className="mt-4 bg-surface dark:bg-surface-dark p-4 rounded-theme border-l-4 border-secondary">
+                        <div className="mt-4 bg-surface dark:bg-surface-dark p-4 rounded-theme border-l-4 border-primary dark:border-primary-dark">
                             {isEditingBio ? (
                                 <div className="space-y-2">
                                     <textarea 
                                         value={bioText}
                                         onChange={(e) => setBioText(e.target.value)}
-                                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary"
+                                        className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary"
                                         rows="4"
                                     ></textarea>
                                     <div className="flex justify-end space-x-2">
-                                        <button onClick={() => setIsEditingBio(false)} className="border-theme border-accent hover:bg-accent/20 text-text-primary font-bold py-1 px-3 rounded-theme text-sm transition-colors">Cancel</button>
-                                        <button onClick={handleSaveBio} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-1 px-3 rounded-theme text-sm">Save</button>
+                                        <button onClick={() => setIsEditingBio(false)} className="border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark font-bold py-1 px-3 rounded-theme text-sm transition-colors">Cancel</button>
+                                        <button onClick={handleSaveBio} className="bg-primary hover:opacity-90 text-on-primary font-bold py-1 px-3 rounded-theme text-sm">Save</button>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex justify-between items-start">
-                                    <p className="text-text-secondary">{profile.bio || 'No bio has been set.'}</p>
+                                    <p className="text-text-secondary dark:text-text-secondary-dark italic">{profile.bio || 'No bio has been set.'}</p>
                                     {isOwner && (
-                                        <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-secondary hover:underline flex-shrink-0">Edit</button>
+                                        <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-primary dark:text-primary-dark hover:underline flex-shrink-0">Edit</button>
                                     )}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="grid lg:grid-cols-3 gap-8">                
-                    <MySchedule profile={profile} />
-                    <TrophyCase trophies={profile.trophies} />
-                    <SeasonArchive 
-                        seasons={profile.seasons} 
-                        userId={userId}
-                        seasonSettings={seasonSettings}
-                        fantasyRecaps={fantasyRecaps}
-                    />                
+                <div className="grid lg:grid-cols-3 gap-8 items-start">                
+                    <div className="lg:col-span-1">
+                        <MySchedule profile={profile} />
+                    </div>
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                            <TrophyCase trophies={profile.trophies} />
+                        </div>
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                             <SeasonArchive 
+                                seasons={profile.seasons} 
+                                userId={userId}
+                                seasonSettings={seasonSettings}
+                                fantasyRecaps={fantasyRecaps}
+                            />               
+                        </div>
+                    </div> 
                 </div>
             </div>
         </>
