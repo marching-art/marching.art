@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { collectionGroup, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
 
 const Leaderboard = ({ profile }) => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [seasonName, setSeasonName] = useState('');
     const [selectedLeague, setSelectedLeague] = useState(null);
+    const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
 
     useEffect(() => {
         setIsLoading(true);
@@ -37,11 +39,33 @@ const Leaderboard = ({ profile }) => {
                 baseQuery = query(baseQuery, where('leagueIds', 'array-contains', selectedLeague.id));
             }
 
-            const finalQuery = query(baseQuery, orderBy('totalSeasonScore', 'desc'));
-
-            unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
-                const players = querySnapshot.docs.map(doc => ({ id: doc.ref.parent.parent.id, ...doc.data() }));
-                setLeaderboard(players);
+            unsubscribe = onSnapshot(baseQuery, (querySnapshot) => {
+                const allCorpsEntries = [];
+                
+                querySnapshot.docs.forEach(doc => {
+                    const playerData = doc.data();
+                    const userId = doc.ref.parent.parent.id;
+                    const userCorps = getAllUserCorps(playerData);
+                    
+                    // Add each corps class as a separate leaderboard entry
+                    Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                            allCorpsEntries.push({
+                                id: `${userId}_${corpsClass}`,
+                                userId: userId,
+                                username: playerData.username,
+                                corpsName: corps.corpsName,
+                                corpsClass: corpsClass,
+                                totalSeasonScore: corps.totalSeasonScore || 0
+                            });
+                        }
+                    });
+                });
+                
+                // Sort by score descending
+                allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
+                
+                setLeaderboard(allCorpsEntries);
                 setIsLoading(false);
             }, (error) => {
                 console.error("Error fetching leaderboard:", error);
@@ -51,7 +75,7 @@ const Leaderboard = ({ profile }) => {
         
         fetchLeaderboardData();
         return () => { if (unsubscribe) unsubscribe(); };
-    }, [selectedLeague]);
+    }, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
@@ -62,6 +86,25 @@ const Leaderboard = ({ profile }) => {
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
+            {/* Corps Class Selector */}
+            <div className="flex flex-wrap gap-2 mb-4">
+                {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
+                    <button
+                        key={key}
+                        onClick={() => setSelectedCorpsClass(key)}
+                        className={`px-3 py-1 rounded-theme font-semibold transition-all ${
+                            selectedCorpsClass === key
+                                ? 'bg-primary text-on-primary'
+                                : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                        }`}
+                    >
+                        <div className={`inline-block w-2 h-2 rounded-full ${classInfo.color} mr-2`}></div>
+                        {classInfo.name}
+                    </button>
+                ))}
+            </div>
+
+            {/* League Selector */}
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
                 <button
                     onClick={() => setSelectedLeague(null)}

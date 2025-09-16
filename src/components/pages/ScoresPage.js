@@ -3,11 +3,13 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../../firebase';
 import Modal from '../ui/Modal';
 import CaptionChart from '../charts/CaptionChart';
+import { CORPS_CLASSES } from '../../utils/profileCompatibility';
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
     const [selectedSeason, setSelectedSeason] = useState(null);
     const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
     const [isLoading, setIsLoading] = useState(true);
     const [showToChart, setShowToChart] = useState(null);
 
@@ -79,6 +81,14 @@ const ScoresPage = ({ theme }) => {
                             {(selectedSeason?.recaps || []).sort((a,b) => a.offSeasonDay - b.offSeasonDay).map(day => <option key={day.offSeasonDay} value={day.offSeasonDay}>Day {day.offSeasonDay}</option>)}
                         </select>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="class-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">Class:</label>
+                        <select id="class-select" value={selectedCorpsClass} onChange={e => setSelectedCorpsClass(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary">
+                            {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
+                                <option key={key} value={key}>{classInfo.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {selectedDay ? (
@@ -107,10 +117,18 @@ const ScoresPage = ({ theme }) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {show.results.sort((a, b) => b.totalScore - a.totalScore).map((res, i) => (
-                                                <tr key={res.uid} className="transition-colors even:bg-accent/40 dark:even:bg-accent-dark/10 hover:bg-accent dark:hover:bg-accent-dark/20">
+                                            {show.results
+                                                .filter(res => res.corpsClass === selectedCorpsClass || !res.corpsClass) // Filter by corps class, include legacy entries without corpsClass
+                                                .sort((a, b) => b.totalScore - a.totalScore)
+                                                .map((res, i) => (
+                                                <tr key={res.uid || res.id} className="transition-colors even:bg-accent/40 dark:even:bg-accent-dark/10 hover:bg-accent dark:hover:bg-accent-dark/20">
                                                     <td className="p-3 font-bold w-12">{i + 1}</td>
-                                                    <td className="p-3 font-semibold">{res.corpsName}</td>
+                                                    <td className="p-3 font-semibold">
+                                                        {res.corpsName}
+                                                        {res.corpsClass && (
+                                                            <span className={`ml-2 inline-block w-2 h-2 rounded-full ${CORPS_CLASSES[res.corpsClass]?.color || 'bg-gray-400'}`}></span>
+                                                        )}
+                                                    </td>
                                                     <td className="p-3 text-right">{res.geScore.toFixed(3)}</td>
                                                     <td className="p-3 text-right">{res.visualScore.toFixed(3)}</td>
                                                     <td className="p-3 text-right">{res.musicScore.toFixed(3)}</td>

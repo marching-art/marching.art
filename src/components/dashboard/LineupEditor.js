@@ -122,7 +122,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
 
     const totalTradesUsed = tradesUsedThisWeek + pendingTrades;
     const tradesRemaining = tradeLimit === Infinity ? 'Unlimited' : tradeLimit - totalTradesUsed;
-    const hasExceededTrades = tradeLimit !== Infinity && tradesRemaining < 0;
+    const hasExceededTrades = !isNewCorps && tradeLimit !== Infinity && tradesRemaining < 0;
     const isLineupComplete = Object.keys(lineup).length === 8 && Object.values(lineup).every(Boolean);
 
     return (

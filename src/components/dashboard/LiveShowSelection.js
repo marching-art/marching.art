@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
+import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
 
 const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
-    const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
+    const [selectedShows, setSelectedShows] = useState({});
     const [isLoading, setIsLoading] = useState({});
     const [message, setMessage] = useState('');
+    const [activeCorpsClass, setActiveCorpsClass] = useState('worldClass');
+    const [userCorps, setUserCorps] = useState({});
 
     const showsByWeek = seasonEvents.reduce((acc, event) => {
         const week = event.week;
@@ -29,8 +32,22 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     const [activeWeek, setActiveWeek] = useState(currentWeek > 0 && currentWeek <= 10 ? currentWeek : 1);
 
     useEffect(() => {
-        setSelectedShows(profile.selectedShows || {});
+        const allCorps = getAllUserCorps(profile);
+        setUserCorps(allCorps);
+        
+        // Set active to first corps they have
+        const firstCorpsKey = Object.keys(allCorps)[0] || 'worldClass';
+        setActiveCorpsClass(firstCorpsKey);
+        
+        // Initialize selected shows for the active corps
+        const activeCorpsData = allCorps[firstCorpsKey];
+        setSelectedShows(activeCorpsData?.selectedShows || {});
     }, [profile]);
+
+    useEffect(() => {
+        const activeCorpsData = userCorps[activeCorpsClass];
+        setSelectedShows(activeCorpsData?.selectedShows || {});
+    }, [activeCorpsClass, userCorps]);
 
     const handleSelectShow = (week, show, isSelected) => {
         const weekKey = `week${week}`;
@@ -60,7 +77,11 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
 
         try {
             const selectUserShows = httpsCallable(functions, 'selectUserShows');
-            const result = await selectUserShows({ week, shows: showsToSave });
+            const result = await selectUserShows({ 
+                week, 
+                shows: showsToSave, 
+                corpsClass: activeCorpsClass 
+            });
             setMessage(result.data.message);
             setTimeout(() => setMessage(''), 3000);
         } catch (error) {
@@ -75,6 +96,27 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     return (
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-4">Live Season Schedule</h2>
+            
+            {/* Corps Class Selector */}
+            {Object.keys(userCorps).length > 1 && (
+                <div className="flex gap-2 mb-4 overflow-x-auto">
+                    {Object.keys(userCorps).map(corpsClass => (
+                        <button
+                            key={corpsClass}
+                            onClick={() => setActiveCorpsClass(corpsClass)}
+                            className={`px-3 py-2 rounded-theme whitespace-nowrap text-sm font-semibold transition-all ${
+                                activeCorpsClass === corpsClass
+                                    ? 'bg-secondary text-on-secondary'
+                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                            }`}
+                        >
+                            <div className={`inline-block w-2 h-2 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mr-2`}></div>
+                            {userCorps[corpsClass].corpsName}
+                        </button>
+                    ))}
+                </div>
+            )}
+            
             <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
                     <button
