@@ -73,14 +73,14 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     const weeks = Array.from({ length: 10 }, (_, i) => i + 1);
 
     return (
-        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Live Season Schedule</h2>
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
                 {weeks.map(week => (
                     <button
                         key={week}
                         onClick={() => setActiveWeek(week)}
-                        className={`py-2 px-4 font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-secondary text-secondary' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`py-2 px-4 font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                     >
                         Week {week}
                     </button>
@@ -103,29 +103,29 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
                                 checked={isSelected}
                                 disabled={isPastShow || (isSelectionLimitReached && !isSelected)}
                                 onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)}
-                                className="appearance-none h-5 w-5 border-theme border-accent checked:bg-primary transition-colors disabled:opacity-50"
+                                className="h-5 w-5 rounded text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark"
                             />
                             <div>
-                                <label htmlFor={showIdentifier} className="font-semibold text-text-primary cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
-                                <p className="text-sm text-text-secondary">{show.location}</p>
+                                <label htmlFor={showIdentifier} className="font-semibold text-text-primary dark:text-text-primary-dark cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
                             </div>
                         </div>
                     );
                 })}
                  {(!showsByWeek[activeWeek] || showsByWeek[activeWeek].length === 0) && (
-                    <p className="text-center text-text-secondary py-4">No shows scheduled for this week.</p>
+                    <p className="text-center text-text-secondary dark:text-text-secondary-dark py-4">No shows scheduled for this week.</p>
                 )}
             </div>
             
             {activeWeek >= currentWeek && (
                  <div className="flex justify-end items-center mt-4 pt-4 border-t-theme border-accent dark:border-accent-dark space-x-4">
-                    <p className="text-sm font-semibold text-text-primary">
+                    <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
                         Selections for Week {activeWeek}: {(selectedShows[`week${activeWeek}`] || []).length} / 4
                     </p>
                     <button 
                         onClick={() => handleSaveWeek(activeWeek)}
                         disabled={isLoading[activeWeek]}
-                        className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                         {isLoading[activeWeek] ? 'Saving...' : `Save Week ${activeWeek} Selections`}
                     </button>
                 </div>

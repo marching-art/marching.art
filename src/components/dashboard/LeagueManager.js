@@ -85,7 +85,7 @@ const LeagueManager = ({ profile }) => {
     };
 
     return (
-        <div className="lg:col-span-1 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <CreateLeagueModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -97,9 +97,9 @@ const LeagueManager = ({ profile }) => {
             {userLeagues.length > 0 ? (
                 <ul className="space-y-3 mb-6">
                     {userLeagues.map(league => (
-                        <li key={league.id} className="p-3 bg-background dark:bg-background-dark rounded-theme border-theme border-accent">
+                        <li key={league.id} className="p-3 bg-background dark:bg-background-dark rounded-theme border-theme border-accent dark:border-accent-dark">
                             <div className="flex items-center justify-between">
-                                <p className="font-semibold text-text-primary">{league.name}</p>
+                                <p className="font-semibold text-text-primary dark:text-text-primary-dark">{league.name}</p>
                                 <button
                                     onClick={() => handleLeaveLeague(league.id)}
                                     disabled={isLoading}
@@ -109,12 +109,12 @@ const LeagueManager = ({ profile }) => {
                                 </button>
                             </div>
                             <div className="flex items-center justify-between mt-2">
-                                <p className="text-sm text-text-secondary">
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
                                     Invite Code: <span className="font-mono bg-surface dark:bg-surface-dark px-2 py-1 rounded-theme">{league.inviteCode}</span>
                                 </p>
                                 <button
                                     onClick={() => handleCopyCode(league.inviteCode)}
-                                    className="text-sm border-theme border-accent hover:bg-accent/20 text-text-primary font-bold py-1 px-3 rounded-theme transition-colors"
+                                    className="text-sm border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark font-bold py-1 px-3 rounded-theme transition-colors"
                                 >
                                     {copiedCode === league.inviteCode ? 'Copied!' : 'Copy'}
                                 </button>
@@ -123,26 +123,26 @@ const LeagueManager = ({ profile }) => {
                     ))}
                 </ul>
             ) : (
-                <p className="text-text-secondary mb-6 italic">You haven't joined any leagues yet.</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark mb-6 italic">You haven't joined any leagues yet.</p>
             )}
 
-            <div className="space-y-4 border-t-theme border-accent pt-4">
+            <div className="space-y-4 border-t-theme border-accent dark:border-accent-dark pt-4">
                 <form onSubmit={handleJoinLeague} className="space-y-2">
-                    <h3 className="font-semibold text-lg text-text-primary">Join a League</h3>
+                    <h3 className="font-semibold text-lg text-text-primary dark:text-text-primary-dark">Join a League</h3>
                     <input
                         type="text"
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                         placeholder="Enter Invite Code"
-                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary font-mono uppercase"
+                        className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark font-mono uppercase focus:ring-2 focus:ring-primary focus:border-primary"
                     />
-                    <button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                    <button type="submit" disabled={isLoading} className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                         {isLoading ? 'Joining...' : 'Join'}
                     </button>
                 </form>
 
                 <div>
-                    <button onClick={() => { setIsModalOpen(true); setNewLeagueInfo(null); }} className="w-full bg-secondary hover:bg-secondary/80 text-on-secondary font-bold py-2 px-4 rounded-theme">
+                    <button onClick={() => { setIsModalOpen(true); setNewLeagueInfo(null); }} className="w-full bg-secondary hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme">
                         Create New League
                     </button>
                 </div>

@@ -11,40 +11,36 @@ const TrophyCase = ({ trophies }) => {
         const colors = {
             gold: "text-yellow-500",
             silver: "text-gray-400",
-            bronze: "text-orange-500",
+            bronze: "text-orange-400",
         };
 
-        // This is a generic trophy icon path, you can customize it as needed.
-        const trophyPath = "M13.5 6H12V4.125C12 3.504 11.496 3 10.875 3H7.125C6.504 3 6 3.504 6 4.125V6H4.5c-.828 0-1.5.672-1.5 1.5v3c0 .828.672 1.5 1.5 1.5H6v1.125c0 .621.504 1.125 1.125 1.125h3.75c.621 0 1.125-.504 1.125-1.125V12h1.5c.828 0 1.5-.672 1.5-1.5v-3c0-.828-.672-1.5-1.5-1.5zM9 4.5h-.75V6H9V4.5zM7.5 6V4.5H6.75V6H7.5z";
+        const trophyPath = "M19.5 10.5c0 5.25-4.25 9.5-9.5 9.5s-9.5-4.25-9.5-9.5S5.25 1 10 1s9.5 4.25 9.5 9.5zM10 3c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5S11.38 3 10 3zm0 15c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zm0-11c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z";
 
-        return <Icon path={trophyPath} className={`w-8 h-8 ${colors[type] || 'text-gray-300'}`} />;
+        return <Icon path={trophyPath} className={`w-10 h-10 ${colors[type] || 'text-gray-300'}`} />;
     };
 
     return (
-        // UPDATED: Main container uses theme variables.
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-            {/* UPDATED: Title uses primary theme color. */}
+        <div>
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Trophy Case</h3>
             <div className="space-y-4">
                 <div>
-                    {/* UPDATED: Subtitle uses primary text theme color. */}
-                    <h4 className="font-semibold text-text-primary">Championships</h4>
+                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">Championships</h4>
                     {safeTrophies.championships.length > 0 ? (
                         <div className="flex flex-wrap gap-2 mt-2">
                             {safeTrophies.championships.map((t, i) => <TrophyIcon key={`champ-${i}`} type={t} />)}
                         </div>
                     ) : (
-                        <p className="text-sm text-text-secondary mt-1 italic">No championships won yet.</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 italic">No championships won yet.</p>
                     )}
                 </div>
                 <div>
-                    <h4 className="font-semibold text-text-primary">Regionals</h4>
+                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">Regionals</h4>
                     {safeTrophies.regionals.length > 0 ? (
                         <div className="flex flex-wrap gap-2 mt-2">
                             {safeTrophies.regionals.map((t, i) => <TrophyIcon key={`reg-${i}`} type={t} />)}
                         </div>
                     ) : (
-                        <p className="text-sm text-text-secondary mt-1 italic">No regional titles yet.</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 italic">No regional titles yet.</p>
                     )}
                 </div>
             </div>

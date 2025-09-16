@@ -127,8 +127,7 @@ const UniformDisplay = ({ uniform }) => {
     currentUniform.shoes = { ...defaultUniform.shoes, ...(uniform?.shoes || {}) };
     
     return (
-        // UPDATED: The container div now uses theme variables for a consistent look.
-        <div className="w-48 h-80 bg-surface dark:bg-surface-dark rounded-theme flex justify-center items-center p-2 relative overflow-hidden flex-shrink-0 border-theme border-accent">
+        <div className="w-48 h-80 bg-background dark:bg-background-dark rounded-theme flex justify-center items-center p-2 relative overflow-hidden flex-shrink-0 border-theme border-accent dark:border-accent-dark">
             <svg viewBox="0 0 200 300" className="w-full h-full">
                 {/* Body Base */}
                 <g id="body">

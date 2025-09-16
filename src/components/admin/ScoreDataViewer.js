@@ -88,7 +88,7 @@ const ScoreDataViewer = () => {
     }
 
     return (
-        <div className="bg-background dark:bg-surface-dark p-6 rounded-theme border-theme border-primary shadow-theme">
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Season Score Data Viewer</h2>
             
             <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
@@ -98,8 +98,8 @@ const ScoreDataViewer = () => {
                         onClick={() => setSelectedCaption(caption)}
                         className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${
                             selectedCaption === caption
-                                ? 'border-b-2 border-primary text-primary dark:text-primary-dark'
-                                : 'text-text-secondary hover:text-text-primary'
+                                ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark'
+                                : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
                         }`}
                     >
                         {caption}
@@ -111,20 +111,20 @@ const ScoreDataViewer = () => {
                 <table className="min-w-full text-sm text-left border-collapse">
                     <thead className="bg-surface dark:bg-surface-dark sticky top-0">
                         <tr>
-                            <th className="p-2 border-theme border-accent">Corps</th>
-                            {DAYS.map(day => <th key={day} className="p-2 border-theme border-accent text-center">{day}</th>)}
+                            <th className="p-2 border-theme border-accent dark:border-accent-dark text-text-primary dark:text-text-primary-dark">Corps</th>
+                            {DAYS.map(day => <th key={day} className="p-2 border-theme border-accent dark:border-accent-dark text-center text-text-secondary dark:text-text-secondary-dark">{day}</th>)}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-text-primary dark:text-text-primary-dark">
                         {corpsList.map(corp => {
                             const uniqueCorpKey = `${corp.corpsName}-${corp.sourceYear}`;
                             return (
                                 <tr key={uniqueCorpKey} className="odd:bg-background even:bg-surface dark:odd:bg-surface-dark dark:even:bg-surface-dark/50">
-                                    <td className="p-2 border-theme border-accent font-semibold whitespace-nowrap">
+                                    <td className="p-2 border-theme border-accent dark:border-accent-dark font-semibold whitespace-nowrap">
                                         {`${corp.corpsName} (${corp.sourceYear}) - ${corp.points} pts`}
                                     </td>
                                     {DAYS.map(day => (
-                                        <td key={`${uniqueCorpKey}-${day}`} className="p-2 border-theme border-accent text-center">
+                                        <td key={`${uniqueCorpKey}-${day}`} className="p-2 border-theme border-accent dark:border-accent-dark text-center">
                                             {gridData[uniqueCorpKey]?.[day]?.toFixed(3) || ''}
                                         </td>
                                     ))}

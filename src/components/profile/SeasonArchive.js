@@ -9,18 +9,19 @@ const getThemeColors = () => {
     if (typeof window === 'undefined') {
         // Return fallback colors for server-side rendering
         return {
-            primary: '#1E3A8A',
-            textPrimary: '#1F2937',
-            textSecondary: '#4B5563',
+            primary: '#3B82F6',
+            textPrimary: '#111827',
+            textSecondary: '#6B7280',
         };
     }
     const rootStyles = getComputedStyle(document.documentElement);
-    const getColor = (name) => `rgb(${rootStyles.getPropertyValue(name).trim()})`;
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const getColor = (varName) => `rgb(${rootStyles.getPropertyValue(varName).trim()})`;
 
     return {
-        primary: getColor('--color-primary'),
-        textPrimary: getColor('--text-primary'),
-        textSecondary: getColor('--text-secondary'),
+        primary: isDarkMode ? getColor('--color-primary-dark') : getColor('--color-primary'),
+        textPrimary: isDarkMode ? getColor('--text-primary-dark') : getColor('--text-primary'),
+        textSecondary: isDarkMode ? getColor('--text-secondary-dark') : getColor('--text-secondary'),
     };
 };
 
@@ -96,7 +97,7 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
                 label: 'Total Score',
                 data: activeSeason?.events.map(e => e.score) || [],
                 fill: true,
-                backgroundColor: `${themeColors.primary} / 0.2`,
+                backgroundColor: `${themeColors.primary}33`, // Added 33 for hex alpha
                 borderColor: themeColors.primary,
                 tension: 0.1
             }
@@ -121,22 +122,22 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
         }
     };
 
-    const filteredSeasons = seasons.filter(s => s.type === seasonType).sort((a,b) => b.name.localeCompare(a.name));
+    const filteredSeasons = allSeasons.filter(s => s.type.toLowerCase().startsWith(seasonType.toLowerCase())).sort((a,b) => b.name.localeCompare(a.name));
 
     return (
-        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+        <div>
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Season Archive</h3>
-            <div className="flex border-b-theme border-accent mb-2">
-                <button onClick={() => setSeasonType('Live')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Live' ? 'text-secondary border-b-2 border-secondary' : 'text-text-secondary hover:text-text-primary'}`}>Live Seasons</button>
-                <button onClick={() => setSeasonType('Off')} className={`py-2 px-4 text-lg font-bold transition-colors ${seasonType === 'Off' ? 'text-secondary border-b-2 border-secondary' : 'text-text-secondary hover:text-text-primary'}`}>Off-Seasons</button>
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-2">
+                <button onClick={() => setSeasonType('Live')} className={`py-2 px-4 font-bold transition-colors ${seasonType === 'Live' ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}>Live Seasons</button>
+                <button onClick={() => setSeasonType('Off')} className={`py-2 px-4 font-bold transition-colors ${seasonType === 'Off' ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}>Off-Seasons</button>
             </div>
             
-            <div className="flex border-b-theme border-accent mb-4 overflow-x-auto">
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {filteredSeasons.map(season => (
                     <button 
                         key={season.name} 
                         onClick={() => setActiveSeason(season)}
-                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${activeSeason?.name === season.name ? 'border-b-2 border-secondary text-secondary' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${activeSeason?.name === season.name ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                     >
                         {season.name} {season.isCurrent && '★'}
                     </button>
@@ -145,22 +146,22 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
 
             {activeSeason ? (
                 <div>
-                    <h4 className="text-xl font-bold text-text-primary">{activeSeason.showTitle}</h4>
-                    <p className="italic text-text-secondary mb-4">{activeSeason.repertoire}</p>
+                    <h4 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">{activeSeason.showTitle}</h4>
+                    <p className="italic text-text-secondary dark:text-text-secondary-dark mb-4">{activeSeason.repertoire}</p>
                     
                     {activeSeason.events.length > 0 ? (
                          <div className="w-full h-64 relative mb-6">
                             <Line options={chartOptions} data={chartData} />
                         </div>
                     ) : (
-                        <div className="w-full h-64 relative mb-6 flex items-center justify-center text-text-secondary">
+                        <div className="w-full h-64 relative mb-6 flex items-center justify-center text-text-secondary dark:text-text-secondary-dark">
                            <p>No scores recorded yet for this season.</p>
                         </div>
                     )}
                     
-                    <table className="w-full text-left text-text-primary">
-                        <thead>
-                            <tr className="border-b-theme border-accent">
+                    <table className="w-full text-left text-sm text-text-primary dark:text-text-primary-dark">
+                        <thead className="border-b-theme border-accent dark:border-accent-dark">
+                            <tr>
                                 <th className="p-2 font-semibold">Event</th>
                                 <th className="p-2 font-semibold">Rank</th>
                                 <th className="p-2 font-semibold">Score</th>
@@ -168,16 +169,16 @@ const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, th
                         </thead>
                         <tbody>
                             {activeSeason.events.map((event, i) => (
-                                <tr key={i} className="border-b-theme border-surface dark:border-accent">
+                                <tr key={i} className="border-b-theme border-surface dark:border-accent-dark/20">
                                     <td className="p-2">{event.eventName}</td>
                                     <td className="p-2">{event.rank}</td>
-                                    <td className="p-2">{event.score.toFixed(3)}</td>
+                                    <td className="p-2 font-semibold text-primary dark:text-primary-dark">{event.score.toFixed(3)}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-            ) : <p className="p-2 text-text-secondary">No seasons of this type played.</p>}
+            ) : <p className="p-2 text-text-secondary dark:text-text-secondary-dark">No seasons of this type played.</p>}
         </div>
     );
 };

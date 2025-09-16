@@ -8,23 +8,24 @@ const getThemeColors = () => {
     if (typeof window === 'undefined') {
         return {
             primary: 'rgba(59, 130, 246, 0.7)',
-            secondary: 'rgba(251, 191, 36, 0.7)',
-            accent: 'rgba(156, 163, 175, 0.7)',
-            textPrimary: '#1F2937',
-            textSecondary: '#4B5563',
-            grid: 'rgba(209, 213, 219, 0.5)',
+            secondary: 'rgba(55, 65, 81, 0.7)',
+            accent: 'rgba(229, 231, 235, 0.7)',
+            textPrimary: '#111827',
+            textSecondary: '#6B7280',
+            grid: 'rgba(229, 231, 235, 0.5)',
         };
     }
     const rootStyles = getComputedStyle(document.documentElement);
-    const getColor = (name) => `rgb(${rootStyles.getPropertyValue(name).trim()})`;
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const getColor = (varName) => `rgb(${rootStyles.getPropertyValue(varName).trim()})`;
 
     return {
-        primary: `${getColor('--color-primary')}`,
-        secondary: `${getColor('--color-secondary')}`,
-        accent: `${getColor('--color-accent')}`,
-        textPrimary: `${getColor('--text-primary')}`,
-        textSecondary: `${getColor('--text-secondary')}`,
-        grid: `${getColor('--color-accent')} / 0.2`,
+        primary: isDarkMode ? getColor('--color-primary-dark') : getColor('--color-primary'),
+        secondary: isDarkMode ? getColor('--color-secondary-dark') : getColor('--color-secondary'),
+        accent: isDarkMode ? getColor('--color-accent-dark') : getColor('--color-accent'),
+        textPrimary: isDarkMode ? getColor('--text-primary-dark') : getColor('--text-primary'),
+        textSecondary: isDarkMode ? getColor('--text-secondary-dark') : getColor('--text-secondary'),
+        grid: `${isDarkMode ? getColor('--color-accent-dark') : getColor('--color-accent')} / 0.2`,
     };
 };
 
@@ -48,21 +49,21 @@ const CaptionChart = ({ showData, theme }) => {
             {
                 label: 'GE Score',
                 data: topCorps.map(c => c.geScore),
-                backgroundColor: `${themeColors.primary} / 0.7`,
+                backgroundColor: `${themeColors.primary}B3`, // B3 is ~70% opacity in hex
                 borderColor: themeColors.primary,
                 borderWidth: 1,
             },
             {
                 label: 'Visual Score',
                 data: topCorps.map(c => c.visualScore),
-                backgroundColor: `${themeColors.secondary} / 0.7`,
+                backgroundColor: `${themeColors.secondary}B3`,
                 borderColor: themeColors.secondary,
                 borderWidth: 1,
             },
             {
                 label: 'Music Score',
                 data: topCorps.map(c => c.musicScore),
-                backgroundColor: `${themeColors.accent} / 0.7`,
+                backgroundColor: `${themeColors.accent}B3`,
                 borderColor: themeColors.accent,
                 borderWidth: 1,
             },

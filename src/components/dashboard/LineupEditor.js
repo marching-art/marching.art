@@ -72,7 +72,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
     };
 
     const CardContainer = ({ children }) => (
-        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             {children}
         </div>
     );
@@ -81,7 +81,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
         return (
              <CardContainer>
                 <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">My Lineup</h2>
-                <p className="mt-4 text-text-secondary">Corps data not available. Please check back later.</p>
+                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Corps data not available. Please check back later.</p>
             </CardContainer>
         )
     }
@@ -94,14 +94,14 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
         <CardContainer>
             <div className="border-b-theme border-accent dark:border-accent-dark pb-4 mb-4">
                 <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">{profile.corpsName}</h2>
-                <p className="text-sm text-text-secondary">Lineups lock each Saturday at 12:00 PM EST.</p>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Lineups lock each Saturday at 12:00 PM EST.</p>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                <div className={`text-xl font-bold p-2 border-theme ${hasExceededTrades ? 'text-red-500 border-red-500' : 'text-text-primary border-accent'}`}>
+                <div className={`text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
                     Trades Remaining: {tradesRemaining}
                 </div>
-                <div className={`text-xl font-bold p-2 border-theme ${totalPoints > pointCap ? 'text-red-500 border-red-500' : 'text-text-primary border-accent'}`}>
+                <div className={`text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
                     Total Points: {totalPoints} / {pointCap}
                 </div>
             </div>
@@ -109,11 +109,11 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {CAPTIONS.map(caption => (
                     <div key={caption} className="flex items-center">
-                        <label className="w-12 font-semibold text-text-primary">{caption}:</label>
+                        <label className="w-12 font-semibold text-text-primary dark:text-text-primary-dark">{caption}:</label>
                         <select 
                             value={lineup[caption] || ''} 
                             onChange={(e) => setLineup(prev => ({...prev, [caption]: e.target.value}))}
-                            className="flex-grow bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary"
+                            className="flex-grow bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary"
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData.map(corps => {
@@ -134,7 +134,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
                 <button 
                     onClick={handleSave} 
                     disabled={isLoading || totalPoints > pointCap || pendingTrades === 0 || hasExceededTrades}
-                    className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? 'Saving...' : 'Save Lineup'}
                 </button>

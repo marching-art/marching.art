@@ -21,13 +21,21 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
             const user = userCredential.user;
             
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            // Default uniform data now matches the builder's structure
             await setDoc(userDocRef, {
                 username: username,
                 email: user.email,
                 createdAt: new Date(),
                 lastActive: new Date(),
                 bio: `Welcome to my marching.art profile!`,
-                uniform: { jacketStyle: "classic", jacketColor1: "#000000", jacketColor2: "#ffffff", plumeStyle: "standard", plumeColor: "#ffffff", hatStyle: "shako", hatColor: "#000000" },
+                uniform: {
+                  skinTone: '#d8aa7c',
+                  headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } },
+                  plume: { style: 'fountain', colors: { plume: '#ff0000' } },
+                  jacket: { style: 'sash', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700' } },
+                  pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } },
+                  shoes: { style: 'white' },
+                },
                 trophies: { championships: [], regionals: [] },
                 seasons: [],
                 lineup: {}
@@ -41,14 +49,14 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
 
     return (
         <form onSubmit={handleSignUp} className="space-y-4">
-            {error && <p className="bg-red-100 dark:bg-red-900 border border-red-500 text-red-700 dark:text-red-300 p-2 rounded-theme text-sm">{error}</p>}
+            {error && <p className="bg-red-500/10 border border-red-500 text-red-700 dark:text-red-300 p-3 rounded-theme text-sm">{error}</p>}
             
             <input 
                 type="text" 
                 value={username} 
                 onChange={(e) => setUsername(e.target.value)} 
                 placeholder="Username"
-                className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors" 
+                className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:border-primary" 
             />
             
             <input 
@@ -56,7 +64,7 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="Email" 
-                className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors" 
+                className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:border-primary" 
             />
             
             <input 
@@ -64,22 +72,22 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="Password" 
-                className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors" 
+                className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:border-primary" 
             />
             
             <button 
                 type="submit" 
-                className="w-full bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme transition-all"
+                className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme transition-all"
             >
                 Sign Up
             </button>
             
-            <p className="text-center pt-2 text-sm text-text-secondary">
+            <p className="text-center pt-2 text-sm text-text-secondary dark:text-text-secondary-dark">
                 Already have an account?{' '}
                 <button 
                     type="button" 
                     onClick={switchToLogin} 
-                    className="font-semibold text-secondary dark:text-secondary-dark hover:underline"
+                    className="font-semibold text-primary dark:text-primary-dark hover:underline"
                 >
                     Log In
                 </button>

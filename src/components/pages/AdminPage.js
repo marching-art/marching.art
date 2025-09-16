@@ -68,93 +68,100 @@ const AdminPage = () => {
             setJobStatus(prev => ({ ...prev, [jobName]: { loading: false, message: `Error: ${error.message}` } }));
         }
     };
+    
+    const AdminCard = ({ title, children }) => (
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">{title}</h2>
+            {children}
+        </div>
+    );
 
     return (
-        <div className="p-4 md:p-8 space-y-8">
-            <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-6">Admin Panel</h1>
+        <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+            <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-6">Admin Panel</h1>
             
             <ScoreDataViewer />
 
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Data & Scoring Tools</h2>
+            <AdminCard title="Data & Scoring Tools">
                 <div className="space-y-4">
-                    <p className='text-sm text-text-secondary'>
-                        <strong>Import All Historical Recaps:</strong> Discovers all historical score recap URLs from dci.org and adds them to a queue for processing. This is a comprehensive, one-time operation to populate the database.
-                    </p>
-                    <div className="flex items-center space-x-4">
-                        <button 
-                            onClick={handleCrawlAndQueue} 
-                            disabled={isCrawling} 
-                            className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
-                        >
-                            {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
-                        </button>
-                        {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
+                    <div>
+                        <p className='text-sm text-text-secondary dark:text-text-secondary-dark mb-2'>
+                            <strong>Import All Historical Recaps:</strong> Discovers all historical score recap URLs from dci.org and adds them to a queue for processing. This is a comprehensive, one-time operation to populate the database.
+                        </p>
+                        <div className="flex items-center space-x-4">
+                            <button 
+                                onClick={handleCrawlAndQueue} 
+                                disabled={isCrawling} 
+                                className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                            >
+                                {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
+                            </button>
+                            {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
+                        </div>
                     </div>
 
-                    <div className="border-t-theme border-accent my-4"></div>
+                    <div className="border-t-theme border-accent dark:border-accent-dark my-4"></div>
 
-                     <p className='text-sm text-text-secondary'>
-                        <strong>Run Scraper Test:</strong> Manually triggers the backend scraper to fetch scores from a single, specific recap page. Useful for testing scraper logic without running the full discovery process.
-                    </p>
-                    <div className="flex items-center space-x-4">
-                        <button 
-                            onClick={handleTestScraper} 
-                            disabled={isScraping} 
-                            className="bg-secondary hover:bg-secondary/80 text-on-secondary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
-                        >
-                            {isScraping ? 'Scraping...' : 'Run Scraper Test'}
-                        </button>
-                        {scraperMessage && <p className="text-sm font-semibold">{scraperMessage}</p>}
+                    <div>
+                         <p className='text-sm text-text-secondary dark:text-text-secondary-dark mb-2'>
+                            <strong>Run Scraper Test:</strong> Manually triggers the backend scraper to fetch scores from a single, specific recap page. Useful for testing scraper logic without running the full discovery process.
+                        </p>
+                        <div className="flex items-center space-x-4">
+                            <button 
+                                onClick={handleTestScraper} 
+                                disabled={isScraping} 
+                                className="bg-secondary hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                            >
+                                {isScraping ? 'Scraping...' : 'Run Scraper Test'}
+                            </button>
+                            {scraperMessage && <p className="text-sm font-semibold">{scraperMessage}</p>}
+                        </div>
                     </div>
                 </div>
-            </div>
+            </AdminCard>
             
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manual Job Triggers</h2>
+            <AdminCard title="Manual Job Triggers">
                 <div className="space-y-4">
                     <div className="flex items-center space-x-4">
                         <button 
                             onClick={() => handleManualTrigger('processAndArchiveOffSeasonScores')} 
                             disabled={jobStatus.processAndArchiveOffSeasonScores?.loading} 
-                            className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                            className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
                         >
                             {jobStatus.processAndArchiveOffSeasonScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
                         </button>
                         {jobStatus.processAndArchiveOffSeasonScores?.message && <p className="text-sm font-semibold">{jobStatus.processAndArchiveOffSeasonScores.message}</p>}
                     </div>
                 </div>
-            </div>
+            </AdminCard>
 
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Season Manager</h2>
+            <AdminCard title="Season Manager">
                 <SeasonControls />
-                <div className="border-t-theme border-accent my-6"></div>
+                <div className="border-t-theme border-accent dark:border-accent-dark my-6"></div>
                 <LiveSeasonScheduler />
-            </div>
+            </AdminCard>
 
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+            <AdminCard title="Final Rankings Manager">
                 <FinalRankingsManager />
-            </div>
+            </AdminCard>
 
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manage User Roles</h2>
+            <AdminCard title="Manage User Roles">
                 <div className="space-y-4">
-                    <p className="text-text-secondary">Enter a user's email address to grant or revoke admin privileges.</p>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">Enter a user's email address to grant or revoke admin privileges.</p>
                     <input 
                         type="email" 
                         placeholder="user@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-secondary" 
+                        className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:border-primary" 
                     />
                     <div className="flex space-x-4">
-                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
+                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
                         <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="border-theme border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50 transition-colors"> {isLoadingRoles ? 'Working...' : 'Remove Admin'} </button>
                     </div>
                     {message && <p className="mt-4 text-sm font-semibold">{message}</p>}
                 </div>
-            </div>
+            </AdminCard>
         </div>
     );
 };

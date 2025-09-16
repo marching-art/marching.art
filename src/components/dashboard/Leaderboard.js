@@ -58,7 +58,7 @@ const Leaderboard = ({ profile }) => {
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
 
     const CardContainer = ({ children }) => (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             {children}
         </div>
     );
@@ -75,7 +75,7 @@ const Leaderboard = ({ profile }) => {
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
                 <button
                     onClick={() => setSelectedLeague(null)}
-                    className={`py-2 px-4 font-semibold transition-colors ${!selectedLeague ? 'border-b-2 border-secondary text-secondary' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`py-2 px-4 font-semibold transition-colors ${!selectedLeague ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                 >
                     Global
                 </button>
@@ -83,7 +83,7 @@ const Leaderboard = ({ profile }) => {
                     <button
                         key={league.id}
                         onClick={() => setSelectedLeague(league)}
-                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${selectedLeague?.id === league.id ? 'border-b-2 border-secondary text-secondary' : 'text-text-secondary hover:text-text-primary'}`}
+                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${selectedLeague?.id === league.id ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                     >
                         {league.name}
                     </button>
@@ -91,7 +91,7 @@ const Leaderboard = ({ profile }) => {
             </div>
 
             {isLoading ? (
-                <p className="text-center text-text-secondary mt-4">Loading Leaderboard...</p>
+                <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
             ) : (
                 <ol className="list-decimal list-inside space-y-2">
                     {leaderboard.map((player, index) => {
@@ -100,11 +100,11 @@ const Leaderboard = ({ profile }) => {
                         return (
                             <li 
                                 key={player.id} 
-                                className={`p-2 rounded-theme bg-background dark:bg-surface-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary' : ''}`}
+                                className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
                             >
                                 <div>
-                                    <span className="font-bold text-text-primary">{index + 1}. {player.corpsName}</span>
-                                    <span className="text-sm text-text-secondary ml-2">({player.username})</span>
+                                    <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
+                                    <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
                                 </div>
                                 <span className="font-bold text-lg text-primary dark:text-primary-dark">
                                     {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}

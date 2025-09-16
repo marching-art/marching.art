@@ -13,11 +13,11 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
     const sizeClasses = { md: 'max-w-md', lg: 'max-w-3xl', xl: 'max-w-5xl' };
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className={`bg-background dark:bg-surface-dark border-theme border-secondary rounded-theme shadow-theme w-full ${sizeClasses[size]} p-6 relative text-text-primary dark:text-text-primary-dark`}>
-                <button onClick={onClose} className="absolute top-3 right-3 text-text-secondary hover:text-text-primary transition-colors">
+            <div className={`bg-surface dark:bg-surface-dark border-theme border-accent dark:border-accent-dark rounded-theme shadow-theme w-full ${sizeClasses[size]} p-6 relative text-text-primary dark:text-text-primary-dark`}>
+                <button onClick={onClose} className="absolute top-3 right-3 text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors">
                     <Icon path="M6 18L18 6M6 6l12 12" />
                 </button>
-                <h2 className="text-2xl font-bold mb-4 text-secondary dark:text-secondary-dark tracking-wider">{title}</h2>
+                <h2 className="text-2xl font-bold mb-4 text-primary dark:text-primary-dark">{title}</h2>
                 {children}
             </div>
         </div>
@@ -110,8 +110,8 @@ const LiveSeasonScheduler = () => {
 
     return (
         <div className="mt-6">
-            <h3 className="text-xl font-bold text-secondary dark:text-secondary-dark mb-4">Live Season Schedule (10 Weeks)</h3>
-            <div className="grid grid-cols-7 gap-1 text-center font-bold mb-2">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Live Season Schedule (10 Weeks)</h3>
+            <div className="grid grid-cols-7 gap-1 text-center font-bold mb-2 text-text-secondary dark:text-text-secondary-dark">
                 {DAYS_OF_WEEK.map(day => <div key={day}>{day}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
@@ -129,17 +129,17 @@ const LiveSeasonScheduler = () => {
                         <div 
                             key={dayIndex} 
                             onClick={() => openModal(dayIndex)}
-                            className={`h-28 bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-1 text-xs ${!isChampionshipWeek && 'cursor-pointer hover:bg-secondary/10'} transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-secondary/20 dark:bg-secondary/30' : ''}`}
+                            className={`h-28 bg-surface dark:bg-surface-dark border-theme border-accent dark:border-accent-dark rounded-theme p-1 text-xs ${!isChampionshipWeek && 'cursor-pointer hover:bg-accent dark:hover:bg-accent-dark/20'} transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-secondary/10 dark:bg-secondary-dark/10' : ''}`}
                         >
-                            <span className="font-bold text-text-secondary">{dayNumber}</span>
+                            <span className="font-bold text-text-secondary dark:text-text-secondary-dark">{dayNumber}</span>
                             {championshipEvent && (
-                                <div className="bg-secondary/30 p-1 rounded-theme mt-1 text-text-primary">
+                                <div className="bg-secondary/20 dark:bg-secondary-dark/20 p-1 rounded-theme mt-1 text-text-primary dark:text-text-primary-dark">
                                     <p className="font-bold truncate">{championshipEvent.name}</p>
                                     <p className="truncate">{championshipEvent.location}</p>
                                 </div>
                             )}
                             {events.map(event => (
-                                <div key={event.name} className="bg-primary/30 p-1 rounded-theme mt-1 text-text-primary">
+                                <div key={event.name} className="bg-primary/20 p-1 rounded-theme mt-1 text-text-primary dark:text-text-primary-dark">
                                     <p className="font-bold truncate">{event.name}</p>
                                     <p className="truncate">{event.location}</p>
                                 </div>
@@ -151,37 +151,37 @@ const LiveSeasonScheduler = () => {
             <div className="flex justify-end items-center space-x-4 mt-4">
                 {message && <p className="text-sm font-semibold">{message}</p>}
                 <button onClick={handleClearSchedule} className="border-theme border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded-theme transition-colors">Clear Schedule</button>
-                <button onClick={handleSaveSchedule} disabled={isLoading} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                <button onClick={handleSaveSchedule} disabled={isLoading} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                     {isLoading ? 'Saving...' : 'Save Live Schedule'}
                 </button>
             </div>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Shows for Day ${selectedDay + 1}`}>
                 <div className="space-y-4">
-                    <div className="border-b border-accent pb-4">
-                        <h4 className="font-bold mb-2">Existing Shows on this Day:</h4>
+                    <div className="border-b border-accent dark:border-accent-dark pb-4">
+                        <h4 className="font-bold mb-2 text-text-primary dark:text-text-primary-dark">Existing Shows on this Day:</h4>
                         {(eventsByDay[selectedDay] || []).length > 0 ? (
                             <ul className="space-y-2">
                                 {(eventsByDay[selectedDay]).map(event => (
-                                    <li key={event.name} className="flex justify-between items-center bg-surface dark:bg-surface-dark p-2 rounded-theme">
-                                        <span>{event.name} <em className="text-text-secondary">({event.location})</em></span>
+                                    <li key={event.name} className="flex justify-between items-center bg-background dark:bg-background-dark p-2 rounded-theme">
+                                        <span>{event.name} <em className="text-text-secondary dark:text-text-secondary-dark">({event.location})</em></span>
                                         <button onClick={() => handleRemoveEvent(selectedDay, event.name)} className="text-red-500 hover:text-red-700">
                                             <Icon path="M6 18L18 6M6 6l12 12" className="w-4 h-4"/>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
-                        ) : <p className="text-text-secondary">No shows scheduled for this day.</p>}
+                        ) : <p className="text-text-secondary dark:text-text-secondary-dark">No shows scheduled for this day.</p>}
                     </div>
                     <div>
-                        <h4 className="font-bold mb-2">Add New Show:</h4>
-                        <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 mb-2"/>
-                        <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 mb-2"/>
-                        <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2 mb-2">
+                        <h4 className="font-bold mb-2 text-text-primary dark:text-text-primary-dark">Add New Show:</h4>
+                        <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary"/>
+                        <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary"/>
+                        <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary">
                             <option value="Standard">Standard</option>
                             <option value="Regional">Regional</option>
                         </select>
-                        <button onClick={handleAddEvent} className="w-full bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme">Add Show</button>
+                        <button onClick={handleAddEvent} className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme">Add Show</button>
                     </div>
                 </div>
             </Modal>
