@@ -39,20 +39,21 @@
 :root.theme-brutalist {
   /* Colors */
   --color-primary: 0 255 127;      /* Spring Green */
-  --color-primary-dark: 57 255 20;     /* Neon Green */  
-  --color-on-primary: 10 10 10;      /* Black text for the bright green button */
-  --color-on-secondary: 234 234 234; /* Light text for the black button */
+  --color-primary-dark: 57 255 20;     /* Neon Green (Primary actions) */
+  --color-on-primary: 10 10 10;      /* Black text for on the bright green button */
+  --color-on-secondary: 10 10 10;   /* Black text for on the light gray button */
   --color-secondary: 10 10 10;      /* Near Black */
-  --color-secondary-dark: 234 234 234;  /* Light Gray */
+  --color-secondary-dark: 234 234 234;  /* Light Gray (Secondary actions, active tabs) */
   --color-accent: 0 255 127;      /* Use Primary color as the only accent */
-  --color-accent-dark: 57 255 20;     /* Use Primary-dark as the only accent */
+  --color-accent-dark: 80 80 80;       /* Darker Gray for borders, dividers */
   --color-background: 255 255 255;  /* #FFFFFF */
-  --color-background-dark: 10 10 10;      /* #0A0A0A */
+  --color-background-dark: 22 22 22;      /* #161616 */
   --color-surface: 245 245 245;    /* #F5F5F5 */
-  --color-surface-dark: 20 20 20;       /* #141414 */--text-primary: 10 10 10;
-  --text-primary-dark: 234 234 234;
+  --color-surface-dark: 30 30 30;       /* #1E1E1E */
+  --text-primary: 10 10 10;
+  --text-primary-dark: 234 234 234;     /* Light Gray */
   --text-secondary: 85 85 85;
-  --text-secondary-dark: 153 153 153;
+  --text-secondary-dark: 153 153 153;   /* Muted Gray for less important text */
 
   /* Borders & Shadows */
   --border-radius-theme: 0px; /* No rounded corners */
