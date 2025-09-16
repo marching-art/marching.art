@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
-import Modal from '../ui/Modal'; // Assuming Modal component is in this path
+import Modal from '../ui/Modal'; 
 
 const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStartDate }) => {
     const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
@@ -20,10 +20,8 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
         setActiveWeek(currentWeek > 0 ? currentWeek : 1);
     }, [profile, currentOffSeasonDay]);
 
-    // Effect to fetch registrants when the modal is opened
     useEffect(() => {
         if (!registrantsModalShow) return;
-
         const fetchRegistrants = async () => {
             setIsRegistrantsLoading(true);
             try {
@@ -40,7 +38,6 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             }
             setIsRegistrantsLoading(false);
         };
-
         fetchRegistrants();
     }, [registrantsModalShow, activeWeek]);
 
@@ -83,14 +80,13 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     const getCalendarDateForDay = (offSeasonDay) => {
         if (!seasonStartDate) return null;
         const calendarDate = new Date(seasonStartDate.getTime());
-        // CORRECTED: Add the offSeasonDay directly to shift calendar forward by one day
-        calendarDate.setDate(calendarDate.getDate() + offSeasonDay);
+        // REVERTED: Use the mathematically correct offset. The cutoff logic is handled elsewhere.
+        calendarDate.setDate(calendarDate.getDate() + offSeasonDay - 1);
         return calendarDate;
     };
 
     const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
     
-    // Group shows by formatted date
     const showsGroupedByDate = useMemo(() => {
         const startDay = (activeWeek - 1) * 7 + 1;
         const endDay = activeWeek * 7;
@@ -103,9 +99,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             const date = getCalendarDateForDay(show.offSeasonDay);
             if (!date) return acc;
             const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-            if (!acc[formattedDate]) {
-                acc[formattedDate] = [];
-            }
+            if (!acc[formattedDate]) acc[formattedDate] = [];
             acc[formattedDate].push(show);
             return acc;
         }, {});
@@ -118,16 +112,12 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     return (
         <div>
             <Modal isOpen={!!registrantsModalShow} onClose={() => setRegistrantsModalShow(null)} title={`Attendees for ${registrantsModalShow?.eventName.replace(/DCI/g, 'marching.art')}`}>
-                {isRegistrantsLoading ? (
-                    <p className="text-text-secondary dark:text-text-secondary-dark">Loading...</p>
-                ) : (
+                {isRegistrantsLoading ? ( <p>Loading...</p> ) : (
                     registrants.length > 0 ? (
                         <ul className="space-y-2 list-disc list-inside">
                             {registrants.map((name, i) => <li key={i}>{name}</li>)}
                         </ul>
-                    ) : (
-                        <p className="text-text-secondary dark:text-text-secondary-dark">No corps have registered for this show yet.</p>
-                    )
+                    ) : ( <p>No corps have registered for this show yet.</p> )
                 )}
             </Modal>
 

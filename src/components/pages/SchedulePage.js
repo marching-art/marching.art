@@ -42,8 +42,8 @@ const SchedulePage = ({ setPage }) => {
     const getCalendarDateForDay = (offSeasonDay) => {
         const startDate = season.schedule.startDate.toDate();
         const calendarDate = new Date(startDate.getTime());
-        // CORRECTED: Add the offSeasonDay directly to shift calendar forward by one day
-        calendarDate.setDate(calendarDate.getDate() + offSeasonDay);
+        // REVERTED: Use the mathematically correct offset. The cutoff logic is handled elsewhere.
+        calendarDate.setDate(calendarDate.getDate() + offSeasonDay - 1);
         return calendarDate;
     };
 

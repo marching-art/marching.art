@@ -56,10 +56,16 @@ const DashboardPage = ({ profile, userId }) => {
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startDay = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
-        const diff = today.getTime() - startDay.getTime();
+        // CORRECTED LOGIC: Create a "logical" date by subtracting 6 hours.
+        // This makes the daily rollover happen at 6 AM instead of midnight, allowing for early morning selections.
+        const logicalNow = new Date();
+        logicalNow.setHours(logicalNow.getHours() - 6);
+
+        // Use this logical date to determine "today" for selection purposes
+        const todayForLogic = new Date(logicalNow.getFullYear(), logicalNow.getMonth(), logicalNow.getDate());
+        
+        const startDayForLogic = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
+        const diff = todayForLogic.getTime() - startDayForLogic.getTime();
         currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
     }
 
