@@ -73,21 +73,21 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     const weeks = Array.from({ length: 10 }, (_, i) => i + 1);
 
     return (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Live Season Schedule</h2>
-            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
+        <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-4">Live Season Schedule</h2>
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
                     <button
                         key={week}
                         onClick={() => setActiveWeek(week)}
-                        className={`py-2 px-4 font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
+                        className={`py-2 px-3 sm:px-4 whitespace-nowrap font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                     >
                         Week {week}
                     </button>
                 ))}
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-64 sm:max-h-96 overflow-y-auto pr-2">
                 {(showsByWeek[activeWeek] || []).map((show, index) => {
                     const weekKey = `week${activeWeek}`;
                     const showIdentifier = `${weekKey}-${index}`;
@@ -118,14 +118,14 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
             </div>
             
             {activeWeek >= currentWeek && (
-                 <div className="flex justify-end items-center mt-4 pt-4 border-t-theme border-accent dark:border-accent-dark space-x-4">
+                 <div className="flex flex-col sm:flex-row justify-end items-center mt-4 pt-4 border-t-theme border-accent dark:border-accent-dark space-y-4 sm:space-y-0 sm:space-x-4">
                     <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
                         Selections for Week {activeWeek}: {(selectedShows[`week${activeWeek}`] || []).length} / 4
                     </p>
                     <button 
                         onClick={() => handleSaveWeek(activeWeek)}
                         disabled={isLoading[activeWeek]}
-                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                        className="w-full sm:w-auto bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                         {isLoading[activeWeek] ? 'Saving...' : `Save Week ${activeWeek} Selections`}
                     </button>
                 </div>

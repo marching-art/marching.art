@@ -79,8 +79,8 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         const isPastDay = day < currentOffSeasonDay;
 
         return (
-            <div key={day} className={`p-2 border-theme border-accent dark:border-accent-dark rounded-theme ${isPastDay ? 'bg-surface/50 dark:bg-surface-dark/50 opacity-60' : 'bg-background dark:bg-background-dark'}`}>
-                <div className="font-bold text-center text-text-primary dark:text-text-primary-dark">{day}</div>
+            <div key={day} className={`p-1 sm:p-2 border-theme border-accent dark:border-accent-dark rounded-theme ${isPastDay ? 'bg-surface/50 dark:bg-surface-dark/50 opacity-60' : 'bg-background dark:bg-background-dark'}`}>
+                <div className="font-bold text-center text-sm sm:text-base text-text-primary dark:text-text-primary-dark">{day}</div>
                 <div className="mt-1 space-y-1">
                     {(dayEvent?.shows || []).map((show, index) => {
                         const showIdentifier = `${week}-${day}-${index}`;
@@ -118,7 +118,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
 
         return (
             <div className="mt-4 p-4 border-t-theme border-accent dark:border-accent-dark">
-                <h4 className="text-lg font-bold text-primary dark:text-primary-dark">Week {week} Show Details</h4>
+                <h4 className="text-lg sm:text-xl font-bold text-primary dark:text-primary-dark">Week {week} Show Details</h4>
                 {weekEvents.length > 0 ? (
                     weekEvents.map(day => (
                         <div key={day.offSeasonDay} className="mt-2">
@@ -150,12 +150,12 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                 ) : <p className="text-text-secondary dark:text-text-secondary-dark">No shows scheduled for this week.</p>}
                 
                 { !isPastWeek && (
-                    <div className="flex justify-end items-center mt-4 space-x-4">
+                    <div className="flex flex-col sm:flex-row justify-end items-center mt-4 space-y-4 sm:space-y-0 sm:space-x-4">
                         <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Selections for Week {week}: {userSelectionsForWeek.length} / 4</p>
                         <button 
                             onClick={() => handleSaveWeek(week)}
                             disabled={isLoading[week]}
-                            className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                            className="w-full sm:w-auto bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                             {isLoading[week] ? 'Saving...' : `Save Week ${week} Selections`}
                         </button>
                     </div>
@@ -167,21 +167,21 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
 
     return (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Select Your Shows</h2>
-            <div className="flex justify-center border-b-theme border-accent dark:border-accent-dark mb-4">
+        <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-4">Select Your Shows</h2>
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
                     <button
                         key={week}
                         onClick={() => setActiveWeek(week)}
-                        className={`py-2 px-4 text-sm md:text-base font-bold transition-colors ${activeWeek === week ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
+                        className={`py-2 px-3 sm:px-4 whitespace-nowrap text-sm md:text-base font-bold transition-colors ${activeWeek === week ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
                     >
                         Week {week}
                     </button>
                 ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {Array.from({ length: 7 }, (_, i) => renderDay((activeWeek - 1) * 7 + 1 + i, activeWeek))}
             </div>
 
