@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
 import Icon from '../ui/Icon';
 import UniformDisplay from '../profile/UniformDisplay';
