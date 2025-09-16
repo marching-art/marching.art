@@ -1,17 +1,61 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ==================================================================
+  Theme Definitions
+  We define all our design tokens as CSS variables here.
+  ==================================================================
+*/
+
+/* --- THEME 1: Your Original 'Brand' Theme --- */
+:root.theme-brand {
+  /* Colors */
+  --color-primary: 30 58 138;      /* #1E3A8A */
+  --color-primary-dark: 59 130 246;  /* #3B82F6 */
+  --color-on-primary: 255 255 255;  /* White text for the dark blue button */
+  --color-on-secondary: 31 41 55;   /* Dark text for the gold button */
+  --color-secondary: 251 191 36;   /* #FBBF24 */
+  --color-secondary-dark: 252 211 77; /* #FCD34D */
+  --color-accent: 156 163 175;     /* #9CA3AF */
+  --color-accent-dark: 107 114 128;   /* #6B7280 */
+  --color-background: 255 255 255;  /* #FFFFFF */
+  --color-background-dark: 17 24 39;      /* #111827 */
+  --color-surface: 249 250 251;    /* #F9FAFB */
+  --color-surface-dark: 31 41 55;       /* #1F2937 */
+  --text-primary: 31 41 55;       /* #1F2937 */
+  --text-primary-dark: 249 250 251;    /* #F9FAFB */
+  --text-secondary: 75 85 99;      /* #4B5563 */
+  --text-secondary-dark: 209 213 219;  /* #D1D5DB */
+
+  /* Borders & Shadows */
+  --border-radius-theme: 0.5rem; /* rounded-lg */
+  --shadow-theme: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+  --border-width-theme: 2px;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* --- THEME 2: The New 'Brutalist' Theme --- */
+:root.theme-brutalist {
+  /* Colors */
+  --color-primary: 0 255 127;      /* Spring Green */
+  --color-primary-dark: 57 255 20;     /* Neon Green */  
+  --color-on-primary: 10 10 10;      /* Black text for the bright green button */
+  --color-on-secondary: 234 234 234; /* Light text for the black button */
+  --color-secondary: 10 10 10;      /* Near Black */
+  --color-secondary-dark: 234 234 234;  /* Light Gray */
+  --color-accent: 0 255 127;      /* Use Primary color as the only accent */
+  --color-accent-dark: 57 255 20;     /* Use Primary-dark as the only accent */
+  --color-background: 255 255 255;  /* #FFFFFF */
+  --color-background-dark: 10 10 10;      /* #0A0A0A */
+  --color-surface: 245 245 245;    /* #F5F5F5 */
+  --color-surface-dark: 20 20 20;       /* #141414 */--text-primary: 10 10 10;
+  --text-primary-dark: 234 234 234;
+  --text-secondary: 85 85 85;
+  --text-secondary-dark: 153 153 153;
+
+  /* Borders & Shadows */
+  --border-radius-theme: 0px; /* No rounded corners */
+  --shadow-theme: none; /* No soft shadows */
+  --border-width-theme: 2px;
 }

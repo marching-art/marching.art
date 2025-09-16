@@ -1,15 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+const getThemeColors = () => {
+    if (typeof window === 'undefined') {
+        return {
+            primary: 'rgba(59, 130, 246, 0.7)',
+            secondary: 'rgba(251, 191, 36, 0.7)',
+            accent: 'rgba(156, 163, 175, 0.7)',
+            textPrimary: '#1F2937',
+            textSecondary: '#4B5563',
+            grid: 'rgba(209, 213, 219, 0.5)',
+        };
+    }
+    const rootStyles = getComputedStyle(document.documentElement);
+    const getColor = (name) => `rgb(${rootStyles.getPropertyValue(name).trim()})`;
+
+    return {
+        primary: `${getColor('--color-primary')}`,
+        secondary: `${getColor('--color-secondary')}`,
+        accent: `${getColor('--color-accent')}`,
+        textPrimary: `${getColor('--text-primary')}`,
+        textSecondary: `${getColor('--text-secondary')}`,
+        grid: `${getColor('--color-accent')} / 0.2`,
+    };
+};
+
+
 const CaptionChart = ({ showData, theme }) => {
+    const [themeColors, setThemeColors] = useState(getThemeColors());
+
+    useEffect(() => {
+        setThemeColors(getThemeColors());
+    }, [theme]);
+
     if (!showData || !showData.results || showData.results.length === 0) {
         return null;
     }
 
-    // Take the top 5 corps for clarity, or all if fewer than 5
     const topCorps = showData.results.slice(0, 5);
 
     const data = {
@@ -18,22 +48,22 @@ const CaptionChart = ({ showData, theme }) => {
             {
                 label: 'GE Score',
                 data: topCorps.map(c => c.geScore),
-                backgroundColor: 'rgba(59, 130, 246, 0.7)', // brand-primary
-                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: `${themeColors.primary} / 0.7`,
+                borderColor: themeColors.primary,
                 borderWidth: 1,
             },
             {
                 label: 'Visual Score',
                 data: topCorps.map(c => c.visualScore),
-                backgroundColor: 'rgba(251, 191, 36, 0.7)', // brand-secondary
-                borderColor: 'rgba(251, 191, 36, 1)',
+                backgroundColor: `${themeColors.secondary} / 0.7`,
+                borderColor: themeColors.secondary,
                 borderWidth: 1,
             },
             {
                 label: 'Music Score',
                 data: topCorps.map(c => c.musicScore),
-                backgroundColor: 'rgba(156, 163, 175, 0.7)', // brand-accent
-                borderColor: 'rgba(156, 163, 175, 1)',
+                backgroundColor: `${themeColors.accent} / 0.7`,
+                borderColor: themeColors.accent,
                 borderWidth: 1,
             },
         ],
@@ -46,13 +76,13 @@ const CaptionChart = ({ showData, theme }) => {
             legend: {
                 position: 'top',
                 labels: {
-                    color: theme === 'dark' ? '#F9FAFB' : '#1F2937',
+                    color: themeColors.textPrimary,
                 }
             },
             title: {
                 display: true,
-                text: `Caption Breakdown for ${showData.eventName}`,
-                color: theme === 'dark' ? '#F9FAFB' : '#1F2937',
+                text: `Caption Breakdown for ${showData.eventName.replace(/DCI/g, 'marching.art')}`,
+                color: themeColors.textPrimary,
                 font: {
                     size: 18,
                 }
@@ -61,19 +91,19 @@ const CaptionChart = ({ showData, theme }) => {
         scales: {
             x: {
                 ticks: {
-                    color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
+                    color: themeColors.textSecondary,
                 },
                 grid: {
-                    color: theme === 'dark' ? 'rgba(107, 114, 128, 0.2)' : 'rgba(209, 213, 219, 0.5)',
+                    color: themeColors.grid,
                 }
             },
             y: {
                 beginAtZero: true,
                 ticks: {
-                    color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
+                    color: themeColors.textSecondary,
                 },
                  grid: {
-                    color: theme === 'dark' ? 'rgba(107, 114, 128, 0.2)' : 'rgba(209, 213, 219, 0.5)',
+                    color: themeColors.grid,
                 }
             },
         },

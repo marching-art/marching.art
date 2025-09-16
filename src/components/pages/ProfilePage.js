@@ -7,6 +7,33 @@ import TrophyCase from '../profile/TrophyCase';
 import SeasonArchive from '../profile/SeasonArchive';
 import UniformBuilder from '../profile/UniformBuilder'; // Import the new builder
 
+// This function calculates the difference between a given date and now,
+// returning a human-readable string like "5 minutes ago".
+const timeSince = (date) => {
+    if (!date) return 'never';
+
+    // Handle Firebase Timestamp objects by converting them to JS Date objects
+    const dateObj = date.toDate ? date.toDate() : new Date(date);
+    const seconds = Math.floor((new Date() - dateObj) / 1000);
+
+    let interval = seconds / 31536000; // years
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    
+    interval = seconds / 2592000; // months
+    if (interval > 1) return Math.floor(interval) + " months ago";
+
+    interval = seconds / 86400; // days
+    if (interval > 1) return Math.floor(interval) + " days ago";
+
+    interval = seconds / 3600; // hours
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+
+    interval = seconds / 60; // minutes
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+
+    return "a moment ago";
+};
+
 // --- Child Components ---
 
 const MySchedule = ({ profile }) => {
@@ -55,9 +82,11 @@ const ProfilePage = ({ profile, userId }) => {
     const isOwner = auth.currentUser?.uid === userId;
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [bioText, setBioText] = useState(profile?.bio || '');
-    const [isBuildingUniform, setIsBuildingUniform] = useState(false); // State for builder modal
+    const [isBuildingUniform, setIsBuildingUniform] = useState(false);
+    const [timeSinceActive, setTimeSinceActive] = useState('');
+    const [seasonSettings, setSeasonSettings] = useState(null);
+    const [fantasyRecaps, setFantasyRecaps] = useState(null);
 
-    // Default uniform structure to prevent errors on first load
     const defaultUniform = {
       skinTone: '#d8aa7c',
       headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } },
@@ -70,8 +99,43 @@ const ProfilePage = ({ profile, userId }) => {
     const userUniform = profile?.uniform ? { ...defaultUniform, ...profile.uniform } : defaultUniform;
     
     useEffect(() => {
+        const fetchCurrentSeasonData = async () => {
+            const seasonRef = doc(db, 'game-settings', 'season');
+            const seasonSnap = await getDoc(seasonRef);
+            if (seasonSnap.exists()) {
+                const settings = seasonSnap.data();
+                setSeasonSettings(settings);
+
+                const recapRef = doc(db, 'fantasy_recaps', settings.seasonUid);
+                const recapSnap = await getDoc(recapRef);
+                if (recapSnap.exists()) {
+                    setFantasyRecaps(recapSnap.data());
+                }
+            }
+        };
+
+        fetchCurrentSeasonData();
+    }, []);
+    
+    useEffect(() => {
         setBioText(profile?.bio || '');
     }, [profile]);
+
+    useEffect(() => {
+        if (profile?.lastActive) {
+            const updateLastActive = () => {
+                setTimeSinceActive(timeSince(profile.lastActive));
+            };
+
+            updateLastActive();
+
+            const intervalId = setInterval(updateLastActive, 60000);
+
+            return () => clearInterval(intervalId);
+        } else {
+            setTimeSinceActive('never');
+        }
+    }, [profile?.lastActive]);
 
     const handleSaveBio = async () => {
         if (!userId) return;
@@ -90,7 +154,6 @@ const ProfilePage = ({ profile, userId }) => {
         if (!userId) return;
         const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
         try {
-            // Using setDoc with merge: true will create or update the document
             await setDoc(userDocRef, { uniform: newUniform }, { merge: true });
             setIsBuildingUniform(false);
         } catch (error) {
@@ -100,7 +163,7 @@ const ProfilePage = ({ profile, userId }) => {
 
 
     if (!profile) {
-        return <div className="p-8 text-center text-gray-600 dark:text-yellow-300">Loading profile...</div>;
+        return <div className="p-8 text-center text-text-secondary">Loading profile...</div>;
     }
 
     return (
@@ -116,11 +179,11 @@ const ProfilePage = ({ profile, userId }) => {
             <div className="p-4 md:p-8 space-y-8">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                     <div className="relative">
-                        <UniformDisplay uniform={profile.uniform} />
+                        <UniformDisplay uniform={userUniform} />
                         {isOwner && (
                             <button 
                                 onClick={() => setIsBuildingUniform(true)} 
-                                className="absolute top-2 right-2 bg-brand-primary/80 hover:bg-brand-primary text-white p-2 rounded-full shadow-lg backdrop-blur-sm transition-all"
+                                className="absolute top-2 right-2 bg-primary/80 hover:bg-primary text-on-primary p-2 rounded-full shadow-lg backdrop-blur-sm transition-all"
                                 aria-label="Edit Uniform"
                             >
                                <Icon path="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" className="w-5 h-5" />
@@ -128,46 +191,50 @@ const ProfilePage = ({ profile, userId }) => {
                         )}
                     </div>
                     <div className="flex-grow text-center md:text-left">
-                         <h1 className="text-4xl md:text-5xl font-bold text-brand-text-primary dark:text-brand-text-primary-dark">{profile.username}</h1>
+                         <h1 className="text-4xl md:text-5xl font-bold text-text-primary">{profile.username}</h1>
                         {profile.corpsName && (
-                            <h2 className="text-2xl font-semibold text-brand-primary dark:text-brand-secondary-dark mt-1">{profile.corpsName}</h2>
+                            <h2 className="text-2xl font-semibold text-secondary dark:text-secondary-dark mt-1">{profile.corpsName}</h2>
                         )}
-                        <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark mt-1">
+                        <p className="text-text-secondary mt-1">
                             Member since {profile.createdAt?.toDate().toLocaleDateString()}
                         </p>
-                         <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">
-                            Last active: {/* timeSince logic */}
+                         <p className="text-text-secondary">
+                            Last active: {timeSinceActive}
                         </p>
-                        <div className="mt-4 bg-brand-surface dark:bg-brand-surface-dark p-4 rounded-md border-l-4 border-brand-secondary">
+                        <div className="mt-4 bg-surface dark:bg-surface-dark p-4 rounded-theme border-l-4 border-secondary">
                             {isEditingBio ? (
                                 <div className="space-y-2">
                                     <textarea 
                                         value={bioText}
                                         onChange={(e) => setBioText(e.target.value)}
-                                        className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark"
+                                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary"
                                         rows="4"
                                     ></textarea>
                                     <div className="flex justify-end space-x-2">
-                                        <button onClick={() => setIsEditingBio(false)} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-sm  transition-all transform hover:rotate-6 hover:scale-110">Cancel</button>
-                                        <button onClick={handleSaveBio} className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-1 px-3 rounded text-sm">Save</button>
+                                        <button onClick={() => setIsEditingBio(false)} className="border-theme border-accent hover:bg-accent/20 text-text-primary font-bold py-1 px-3 rounded-theme text-sm transition-colors">Cancel</button>
+                                        <button onClick={handleSaveBio} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-1 px-3 rounded-theme text-sm">Save</button>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex justify-between items-start">
-                                    <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">{profile.bio || 'No bio has been set.'}</p>
+                                    <p className="text-text-secondary">{profile.bio || 'No bio has been set.'}</p>
                                     {isOwner && (
-                                        <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-brand-primary dark:text-brand-secondary-dark hover:underline flex-shrink-0">Edit</button>
+                                        <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-secondary hover:underline flex-shrink-0">Edit</button>
                                     )}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-
                 <div className="grid lg:grid-cols-3 gap-8">                
                     <MySchedule profile={profile} />
                     <TrophyCase trophies={profile.trophies} />
-                    <SeasonArchive seasons={profile.seasons} />                
+                    <SeasonArchive 
+                        seasons={profile.seasons} 
+                        userId={userId}
+                        seasonSettings={seasonSettings}
+                        fantasyRecaps={fantasyRecaps}
+                    />                
                 </div>
             </div>
         </>

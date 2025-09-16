@@ -10,7 +10,6 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
     const [totalPoints, setTotalPoints] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
-
     const [tradesUsedThisWeek, setTradesUsedThisWeek] = useState(0);
     const [pendingTrades, setPendingTrades] = useState(0);
     const [tradeLimit, setTradeLimit] = useState(3);
@@ -73,7 +72,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
     };
 
     const CardContainer = ({ children }) => (
-        <div className="lg:col-span-2 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
             {children}
         </div>
     );
@@ -81,8 +80,8 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
     if (!corpsData || corpsData.length === 0) {
         return (
              <CardContainer>
-                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark">My Lineup</h2>
-                <p className="mt-4 text-brand-text-secondary dark:text-brand-text-secondary-dark">Corps data not available. Please check back later.</p>
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">My Lineup</h2>
+                <p className="mt-4 text-text-secondary">Corps data not available. Please check back later.</p>
             </CardContainer>
         )
     }
@@ -93,16 +92,16 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
 
     return (
         <CardContainer>
-            <div className="border-b-2 border-brand-accent dark:border-brand-accent-dark pb-4 mb-4">
-                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark">{profile.corpsName}</h2>
-                <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">Lineups lock each Saturday at 12:00 PM EST.</p>
+            <div className="border-b-theme border-accent dark:border-accent-dark pb-4 mb-4">
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">{profile.corpsName}</h2>
+                <p className="text-sm text-text-secondary">Lineups lock each Saturday at 12:00 PM EST.</p>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                <div className={`text-xl font-bold px-3 py-1 rounded ${hasExceededTrades ? 'text-red-500 bg-red-100 dark:bg-red-900' : 'text-brand-text-primary dark:text-brand-text-primary-dark'}`}>
+                <div className={`text-xl font-bold p-2 border-theme ${hasExceededTrades ? 'text-red-500 border-red-500' : 'text-text-primary border-accent'}`}>
                     Trades Remaining: {tradesRemaining}
                 </div>
-                <div className={`text-xl font-bold px-3 py-1 rounded ${totalPoints > pointCap ? 'text-red-500 bg-red-100 dark:bg-red-900' : 'text-brand-text-primary dark:text-brand-text-primary-dark'}`}>
+                <div className={`text-xl font-bold p-2 border-theme ${totalPoints > pointCap ? 'text-red-500 border-red-500' : 'text-text-primary border-accent'}`}>
                     Total Points: {totalPoints} / {pointCap}
                 </div>
             </div>
@@ -110,11 +109,11 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {CAPTIONS.map(caption => (
                     <div key={caption} className="flex items-center">
-                        <label className="w-12 font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">{caption}:</label>
+                        <label className="w-12 font-semibold text-text-primary">{caption}:</label>
                         <select 
                             value={lineup[caption] || ''} 
                             onChange={(e) => setLineup(prev => ({...prev, [caption]: e.target.value}))}
-                            className="flex-grow bg-brand-background dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark"
+                            className="flex-grow bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary"
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData.map(corps => {
@@ -135,7 +134,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings }) => {
                 <button 
                     onClick={handleSave} 
                     disabled={isLoading || totalPoints > pointCap || pendingTrades === 0 || hasExceededTrades}
-                    className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-6 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? 'Saving...' : 'Save Lineup'}
                 </button>

@@ -68,7 +68,6 @@ const LeagueManager = ({ profile }) => {
         setIsLoading(false);
     };
 
-    // --- NEW: Function to handle leaving a league ---
     const handleLeaveLeague = async (leagueId) => {
         if (window.confirm("Are you sure you want to leave this league? This action cannot be undone.")) {
             setIsLoading(true);
@@ -86,37 +85,36 @@ const LeagueManager = ({ profile }) => {
     };
 
     return (
-        <div className="lg:col-span-1 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+        <div className="lg:col-span-1 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
             <CreateLeagueModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onCreate={handleCreateLeague}
                 isLoading={isLoading}
             />
-            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">My Leagues</h2>
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">My Leagues</h2>
             
             {userLeagues.length > 0 ? (
                 <ul className="space-y-3 mb-6">
                     {userLeagues.map(league => (
-                        <li key={league.id} className="p-3 bg-brand-background dark:bg-brand-background-dark rounded-md">
+                        <li key={league.id} className="p-3 bg-background dark:bg-background-dark rounded-theme border-theme border-accent">
                             <div className="flex items-center justify-between">
-                                <p className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">{league.name}</p>
-                                {/* --- NEW: Leave League Button --- */}
+                                <p className="font-semibold text-text-primary">{league.name}</p>
                                 <button
                                     onClick={() => handleLeaveLeague(league.id)}
                                     disabled={isLoading}
-                                    className="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded disabled:bg-gray-400"
+                                    className="text-sm border-theme border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-1 px-3 rounded-theme disabled:opacity-50 transition-colors"
                                 >
                                     Leave
                                 </button>
                             </div>
                             <div className="flex items-center justify-between mt-2">
-                                <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">
-                                    Invite Code: <span className="font-mono bg-gray-200 dark:bg-brand-surface-dark px-2 py-1 rounded">{league.inviteCode}</span>
+                                <p className="text-sm text-text-secondary">
+                                    Invite Code: <span className="font-mono bg-surface dark:bg-surface-dark px-2 py-1 rounded-theme">{league.inviteCode}</span>
                                 </p>
                                 <button
                                     onClick={() => handleCopyCode(league.inviteCode)}
-                                    className="text-sm bg-gray-300 hover:bg-gray-400 dark:bg-brand-accent-dark dark:hover:bg-brand-accent text-brand-text-primary dark:text-brand-text-primary-dark font-bold py-1 px-3 rounded"
+                                    className="text-sm border-theme border-accent hover:bg-accent/20 text-text-primary font-bold py-1 px-3 rounded-theme transition-colors"
                                 >
                                     {copiedCode === league.inviteCode ? 'Copied!' : 'Copy'}
                                 </button>
@@ -125,27 +123,26 @@ const LeagueManager = ({ profile }) => {
                     ))}
                 </ul>
             ) : (
-                <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark mb-6 italic">You haven't joined any leagues yet.</p>
+                <p className="text-text-secondary mb-6 italic">You haven't joined any leagues yet.</p>
             )}
 
-            {/* --- Rest of the component remains the same --- */}
-            <div className="space-y-4 border-t-2 border-brand-accent dark:border-brand-accent-dark pt-4">
+            <div className="space-y-4 border-t-theme border-accent pt-4">
                 <form onSubmit={handleJoinLeague} className="space-y-2">
-                    <h3 className="font-semibold text-lg text-brand-text-primary dark:text-brand-text-primary-dark">Join a League</h3>
+                    <h3 className="font-semibold text-lg text-text-primary">Join a League</h3>
                     <input
                         type="text"
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                         placeholder="Enter Invite Code"
-                        className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark font-mono uppercase"
+                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary font-mono uppercase"
                     />
-                    <button type="submit" disabled={isLoading} className="w-full bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                    <button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                         {isLoading ? 'Joining...' : 'Join'}
                     </button>
                 </form>
 
                 <div>
-                    <button onClick={() => { setIsModalOpen(true); setNewLeagueInfo(null); }} className="w-full bg-brand-secondary hover:bg-amber-500 text-brand-text-primary font-bold py-2 px-4 rounded">
+                    <button onClick={() => { setIsModalOpen(true); setNewLeagueInfo(null); }} className="w-full bg-secondary hover:bg-secondary/80 text-on-secondary font-bold py-2 px-4 rounded-theme">
                         Create New League
                     </button>
                 </div>
@@ -158,10 +155,10 @@ const LeagueManager = ({ profile }) => {
             )}
 
             {newLeagueInfo && (
-                <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/50 border border-green-400 rounded-md text-center">
+                <div className="mt-4 p-3 bg-green-500/10 dark:bg-green-500/20 border border-green-500 rounded-theme text-center">
                     <p className="font-semibold text-green-800 dark:text-green-200">Your new league "{newLeagueInfo.name}" is ready!</p>
                     <p className="text-sm text-green-700 dark:text-green-300 mt-1">Share this invite code with friends:</p>
-                    <p className="text-xl font-bold text-green-800 dark:text-green-200 tracking-widest bg-white dark:bg-brand-background-dark mt-2 p-1 rounded select-all">{newLeagueInfo.code}</p>
+                    <p className="text-xl font-bold text-green-800 dark:text-green-200 tracking-widest bg-background dark:bg-surface-dark mt-2 p-1 rounded-theme select-all">{newLeagueInfo.code}</p>
                 </div>
             )}
         </div>

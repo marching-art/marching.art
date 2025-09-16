@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-// Import child components
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LineupEditor from '../dashboard/LineupEditor';
 import Leaderboard from '../dashboard/Leaderboard';
 import LeagueManager from '../dashboard/LeagueManager';
 import ShowSelection from '../dashboard/ShowSelection';
-import LiveShowSelection from '../dashboard/LiveShowSelection'; // Import the new component
+import LiveShowSelection from '../dashboard/LiveShowSelection';
 
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
@@ -48,7 +47,7 @@ const DashboardPage = ({ profile, userId }) => {
     if (isLoading || !seasonSettings) {
         return (
             <div className="text-center p-8">
-                <p className="text-lg font-semibold text-brand-primary dark:text-brand-secondary-dark">Loading Season Data...</p>
+                <p className="text-lg font-semibold text-primary dark:text-primary-dark">Loading Season Data...</p>
             </div>
         );
     }
@@ -58,19 +57,11 @@ const DashboardPage = ({ profile, userId }) => {
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        // --- START: NEW, SIMPLIFIED TIMEZONE-SAFE CALCULATION ---
         const now = new Date();
-        
-        // Get the start of today's date in the user's local timezone
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
-        // Get the start of the season's date in the user's local timezone
         const startDay = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
-
-        // Calculate the difference in days
         const diff = today.getTime() - startDay.getTime();
         currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
-        // --- END: NEW CALCULATION ---
     }
 
     return (
@@ -88,7 +79,6 @@ const DashboardPage = ({ profile, userId }) => {
                     </div>
                     <LeagueManager profile={profile} />
 
-                    {/* --- CONDITIONAL RENDERING LOGIC --- */}
                     {seasonSettings.status === 'live-season' ? (
                         <LiveShowSelection
                             seasonEvents={seasonSettings.events || []}

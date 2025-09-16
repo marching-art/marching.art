@@ -7,16 +7,16 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     const [isLoading, setIsLoading] = useState({});
     const [message, setMessage] = useState('');
     
-    const initialWeek = Math.ceil(currentOffSeasonDay / 7); //
-    const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1); //
+    const initialWeek = Math.ceil(currentOffSeasonDay / 7);
+    const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1);
 
     const [registrations, setRegistrations] = useState({});
     const [expandedShow, setExpandedShow] = useState(null);
 
     useEffect(() => {
-        setSelectedShows(profile.selectedShows || {}); //
-        const currentWeek = Math.ceil(currentOffSeasonDay / 7); //
-        setActiveWeek(currentWeek > 0 ? currentWeek : 1); //
+        setSelectedShows(profile.selectedShows || {});
+        const currentWeek = Math.ceil(currentOffSeasonDay / 7);
+        setActiveWeek(currentWeek > 0 ? currentWeek : 1);
     }, [profile, currentOffSeasonDay]);
 
     const handleSelectShow = (week, show, isSelected) => {
@@ -76,11 +76,11 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
 
     const renderDay = (day, week) => {
         const dayEvent = seasonEvents.find(e => e.offSeasonDay === day);
-        const isPastDay = day < currentOffSeasonDay; //
+        const isPastDay = day < currentOffSeasonDay;
 
         return (
-            <div key={day} className={`p-2 border border-brand-accent dark:border-brand-accent-dark rounded-md ${isPastDay ? 'bg-brand-surface dark:bg-brand-surface-dark opacity-60' : 'bg-brand-background dark:bg-brand-background-dark'}`}>
-                <div className="font-bold text-center text-brand-text-primary dark:text-brand-text-primary-dark">{day}</div>
+            <div key={day} className={`p-2 border-theme border-accent rounded-theme ${isPastDay ? 'bg-surface dark:bg-surface-dark opacity-60' : 'bg-background dark:bg-background-dark'}`}>
+                <div className="font-bold text-center text-text-primary">{day}</div>
                 <div className="mt-1 space-y-1">
                     {(dayEvent?.shows || []).map((show, index) => {
                         const showIdentifier = `${week}-${day}-${index}`;
@@ -88,7 +88,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                         const isSelectionLimitReached = (selectedShows[`week${week}`] || []).length >= 4;
 
                         return (
-                            <div key={showIdentifier} className="text-xs p-1 rounded bg-blue-100 dark:bg-brand-primary/20">
+                            <div key={showIdentifier} className="text-xs p-1 rounded-theme bg-primary/10 dark:bg-primary/20">
                                 <div className="flex items-center">
                                     <input
                                         type="checkbox"
@@ -96,9 +96,9 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                                         checked={isSelected}
                                         disabled={show.mandatory || isPastDay || (isSelectionLimitReached && !isSelected)}
                                         onChange={(e) => handleSelectShow(week, show, e.target.checked)}
-                                        className="h-3 w-3 rounded border-gray-300 text-brand-primary focus:ring-brand-secondary disabled:opacity-50"
+                                        className="appearance-none h-3 w-3 border-theme border-accent checked:bg-primary transition-colors disabled:opacity-50"
                                     />
-                                    <label htmlFor={showIdentifier} className="ml-1.5 font-semibold text-brand-text-primary dark:text-brand-text-primary-dark truncate cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
+                                    <label htmlFor={showIdentifier} className="ml-1.5 font-semibold text-text-primary truncate cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
                                 </div>
                             </div>
                         );
@@ -109,31 +109,30 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     };
 
     const renderWeekDetails = (week) => {
-        const weekKey = `week${week}`;
         const startDay = (week - 1) * 7 + 1;
         const endDay = week * 7;
         const weekEvents = seasonEvents.filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay);
-        const userSelectionsForWeek = selectedShows[`week${week}`] || []; //
-        const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7); //
-        const isPastWeek = week < currentWeekNumber; //
+        const userSelectionsForWeek = selectedShows[`week${week}`] || [];
+        const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7);
+        const isPastWeek = week < currentWeekNumber;
 
         return (
-            <div className="mt-4 p-4 border-t-2 border-brand-secondary">
-                <h4 className="text-lg font-bold text-brand-primary dark:text-brand-secondary-dark">Week {week} Show Details</h4>
+            <div className="mt-4 p-4 border-t-theme border-secondary">
+                <h4 className="text-lg font-bold text-primary dark:text-primary-dark">Week {week} Show Details</h4>
                 {weekEvents.length > 0 ? (
                     weekEvents.map(day => (
                         <div key={day.offSeasonDay} className="mt-2">
-                            <h5 className="font-semibold text-gray-800 dark:text-gray-300">Day {day.offSeasonDay}</h5>
+                            <h5 className="font-semibold text-text-primary">Day {day.offSeasonDay}</h5>
                             {day.shows.map((show, index) => {
                                 const showIdentifier = `${week}-${day.offSeasonDay}-details-${index}`;
                                 return (
                                     <div key={showIdentifier} className="ml-4 p-2 text-sm">
-                                        <p className="font-bold">{show.eventName.replace(/DCI/g, 'marching.art')} <em className="font-normal text-gray-500">({show.location})</em></p>
-                                        <button onClick={() => toggleShowDetails(showIdentifier, week, show)} className="text-xs text-blue-500 hover:underline">
+                                        <p className="font-bold">{show.eventName.replace(/DCI/g, 'marching.art')} <em className="font-normal text-text-secondary">({show.location})</em></p>
+                                        <button onClick={() => toggleShowDetails(showIdentifier, week, show)} className="text-xs text-secondary hover:underline">
                                             {expandedShow === showIdentifier ? 'Hide Details' : 'Who\'s Going?'}
                                         </button>
                                         {expandedShow === showIdentifier && (
-                                            <div className="mt-1 pl-4 text-xs">
+                                            <div className="mt-1 pl-4 text-xs text-text-secondary">
                                                 <ul className="list-disc pl-5">
                                                     {registrations[showIdentifier] ? (
                                                         registrations[showIdentifier].length > 0 ? (
@@ -148,15 +147,15 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                             })}
                         </div>
                     ))
-                ) : <p className="text-gray-500">No shows scheduled for this week.</p>}
+                ) : <p className="text-text-secondary">No shows scheduled for this week.</p>}
                 
                 { !isPastWeek && (
                     <div className="flex justify-end items-center mt-4 space-x-4">
-                        <p className="text-sm font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">Selections for Week {week}: {userSelectionsForWeek.length} / 4</p>
+                        <p className="text-sm font-semibold text-text-primary">Selections for Week {week}: {userSelectionsForWeek.length} / 4</p>
                         <button 
                             onClick={() => handleSaveWeek(week)}
                             disabled={isLoading[week]}
-                            className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                            className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                             {isLoading[week] ? 'Saving...' : `Save Week ${week} Selections`}
                         </button>
                     </div>
@@ -168,14 +167,14 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
     const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
 
     return (
-        <div className="lg:col-span-3 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Select Your Shows</h2>
-            <div className="flex justify-center border-b border-brand-accent dark:border-brand-accent-dark mb-4">
+        <div className="lg:col-span-3 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Select Your Shows</h2>
+            <div className="flex justify-center border-b-theme border-accent mb-4">
                 {weeks.map(week => (
                     <button
                         key={week}
                         onClick={() => setActiveWeek(week)}
-                        className={`py-2 px-4 text-lg font-bold transition-colors ${activeWeek === week ? 'text-brand-primary dark:text-brand-secondary-dark border-b-2 border-brand-secondary' : 'text-brand-text-secondary dark:text-brand-text-secondary-dark hover:text-brand-primary dark:hover:text-brand-secondary'}`}
+                        className={`py-2 px-4 text-lg font-bold transition-colors ${activeWeek === week ? 'text-secondary border-b-2 border-secondary' : 'text-text-secondary hover:text-text-primary'}`}
                     >
                         Week {week}
                     </button>

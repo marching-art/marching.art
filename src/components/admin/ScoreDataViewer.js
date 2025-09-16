@@ -64,21 +64,17 @@ const ScoreDataViewer = () => {
             
             DAYS.forEach(day => {
                 let scoreForDay = null;
-                // --- MODIFICATION START ---
-                // Find ALL events on this day, not just the first one.
                 const dayEvents = corpHistoricalEvents.filter(e => e.offSeasonDay === day);
                 
                 if (dayEvents.length > 0) {
-                    // Look for the corps' score in ANY of the shows on that day.
                     for (const event of dayEvents) {
                         const scoreData = event.scores.find(s => s.corps === corp.corpsName);
                         if (scoreData && scoreData.captions[selectedCaption] > 0) {
                             scoreForDay = scoreData.captions[selectedCaption];
-                            break; // Found a score for this day, stop looking.
+                            break;
                         }
                     }
                 }
-                // --- MODIFICATION END ---
                 processedData[uniqueCorpKey][day] = scoreForDay;
             });
         });
@@ -86,23 +82,24 @@ const ScoreDataViewer = () => {
         
     }, [selectedCaption, historicalData, corpsList]);
 
+
     if (isLoading) {
         return <p>Loading score data...</p>;
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-md border-2 border-green-500 shadow-lg">
-            <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-4">Season Score Data Viewer</h2>
+        <div className="bg-background dark:bg-surface-dark p-6 rounded-theme border-theme border-primary shadow-theme">
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Season Score Data Viewer</h2>
             
-            <div className="flex border-b-2 border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {CAPTIONS.map(caption => (
                     <button
                         key={caption}
                         onClick={() => setSelectedCaption(caption)}
                         className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${
                             selectedCaption === caption
-                                ? 'border-b-2 border-green-500 text-green-600 dark:text-green-400'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                                ? 'border-b-2 border-primary text-primary dark:text-primary-dark'
+                                : 'text-text-secondary hover:text-text-primary'
                         }`}
                     >
                         {caption}
@@ -112,22 +109,22 @@ const ScoreDataViewer = () => {
 
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm text-left border-collapse">
-                    <thead className="bg-gray-100 dark:bg-gray-900 sticky top-0">
+                    <thead className="bg-surface dark:bg-surface-dark sticky top-0">
                         <tr>
-                            <th className="p-2 border border-gray-300 dark:border-gray-600">Corps</th>
-                            {DAYS.map(day => <th key={day} className="p-2 border border-gray-300 dark:border-gray-600 text-center">{day}</th>)}
+                            <th className="p-2 border-theme border-accent">Corps</th>
+                            {DAYS.map(day => <th key={day} className="p-2 border-theme border-accent text-center">{day}</th>)}
                         </tr>
                     </thead>
                     <tbody>
                         {corpsList.map(corp => {
                             const uniqueCorpKey = `${corp.corpsName}-${corp.sourceYear}`;
                             return (
-                                <tr key={uniqueCorpKey} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-800/50">
-                                    <td className="p-2 border border-gray-300 dark:border-gray-600 font-semibold whitespace-nowrap">
+                                <tr key={uniqueCorpKey} className="odd:bg-background even:bg-surface dark:odd:bg-surface-dark dark:even:bg-surface-dark/50">
+                                    <td className="p-2 border-theme border-accent font-semibold whitespace-nowrap">
                                         {`${corp.corpsName} (${corp.sourceYear}) - ${corp.points} pts`}
                                     </td>
                                     {DAYS.map(day => (
-                                        <td key={`${uniqueCorpKey}-${day}`} className="p-2 border border-gray-300 dark:border-gray-600 text-center">
+                                        <td key={`${uniqueCorpKey}-${day}`} className="p-2 border-theme border-accent text-center">
                                             {gridData[uniqueCorpKey]?.[day]?.toFixed(3) || ''}
                                         </td>
                                     ))}

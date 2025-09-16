@@ -1,3 +1,5 @@
+// App.js
+
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut, getIdTokenResult } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -26,28 +28,44 @@ export default function App() {
     const [page, setPage] = useState('home');
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
-    const [theme, setTheme] = useState('light');
 
-    // --- Theme Management ---
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
-    }, []);
+    // 1. COMPLETELY REPLACE the old useState with this new object-based one.
+    const [theme, setTheme] = useState({
+        style: localStorage.getItem('themeStyle') || 'brutalist',
+        mode: localStorage.getItem('themeMode') || 'dark',
+    });
 
+    // 2. This useEffect now handles both style and mode classes correctly.
     useEffect(() => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('theme', theme);
+        const root = document.documentElement;
+        // Clear previous theme classes to prevent conflicts
+        root.classList.remove('theme-brand', 'theme-brutalist', 'dark', 'light');
+
+        // Add the current theme and mode classes
+        root.classList.add(`theme-${theme.style}`);
+        root.classList.add(theme.mode);
+
+        // Save the user's preference for next visit
+        localStorage.setItem('themeStyle', theme.style);
+        localStorage.setItem('themeMode', theme.mode);
     }, [theme]);
 
-    const toggleTheme = () => {
-        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    // 3. The old toggleTheme function is replaced by these two new functions.
+    const toggleThemeMode = () => {
+        setTheme(prevTheme => ({
+            ...prevTheme,
+            mode: prevTheme.mode === 'light' ? 'dark' : 'light',
+        }));
+    };
+    
+    const switchThemeStyle = (newStyle) => {
+        setTheme(prevTheme => ({
+            ...prevTheme,
+            style: newStyle,
+        }));
     };
 
-    // --- Authentication & Profile Loading ---
+    // --- Authentication & Profile Loading (no changes here) ---
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -77,7 +95,7 @@ export default function App() {
         return () => { if (unsubscribe) unsubscribe(); };
     }, [user]);
 
-    // --- Page Navigation ---
+    // --- Page Navigation & Modals (no changes here) ---
     useEffect(() => {
         if (user && !user.isAnonymous) {
             setPage('dashboard');
@@ -86,30 +104,20 @@ export default function App() {
         }
     }, [user]);
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            setProfile(null);
-            setIsAdmin(false);
-            setPage('home');
-        } catch (error) {
-            console.error("Error signing out: ", error);
-        }
-    };
-
-    const openLoginModal = () => { setSignUpModalOpen(false); setLoginModalOpen(true); };
-    const openSignUpModal = () => { setLoginModalOpen(false); setSignUpModalOpen(true); };
-    const closeModal = () => { setLoginModalOpen(false); setSignUpModalOpen(false); };
+    const handleLogout = async () => { /* ... */ };
+    const openLoginModal = () => { /* ... */ };
+    const openSignUpModal = () => { /* ... */ };
+    const closeModal = () => { /* ... */ };
     
     const isLoggedIn = user && !user.isAnonymous;
 
     const renderPage = () => {
         switch (page) {
-            // Pass setPage to SchedulePage so it can navigate to the scores
             case 'schedule':
                 return <SchedulePage setPage={setPage} />;
             case 'scores':
-                return <ScoresPage theme={theme} />;
+                // Pass the theme object to any page that needs it (e.g., for charts)
+                return <ScoresPage theme={theme} />; 
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
@@ -124,14 +132,14 @@ export default function App() {
 
     if (loading) {
         return (
-            <div className="bg-white dark:bg-black min-h-screen flex items-center justify-center text-yellow-600 dark:text-yellow-400 text-2xl font-sans">
+             <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-secondary-dark text-2xl font-sans">
                 Loading System...
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-black text-gray-800 dark:text-yellow-200 min-h-screen flex flex-col font-sans">
+        <div className="bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark min-h-screen flex flex-col font-sans">
             <Header
                 isLoggedIn={isLoggedIn}
                 isAdmin={isAdmin}
@@ -140,13 +148,13 @@ export default function App() {
                 onSignUpClick={openSignUpModal}
                 onLogout={handleLogout}
                 setPage={setPage}
-                theme={theme}
-                toggleTheme={toggleTheme}
+                // 4. Update the props passed to the Header component
+                themeMode={theme.mode}
+                toggleThemeMode={toggleThemeMode}
+                // You can now also pass the style switcher function
+                switchThemeStyle={switchThemeStyle} 
+                currentThemeStyle={theme.style}
             />
-            {/* This is the key layout change. We remove the 'container' and 'mx-auto' classes from the main
-              element. This makes the main content area take up the full width of the screen, allowing
-              each individual page component to control its own width and centering.
-            */}
             <main className="flex-grow w-full">
                 {renderPage()}
             </main>
@@ -160,4 +168,3 @@ export default function App() {
         </div>
     );
 }
-

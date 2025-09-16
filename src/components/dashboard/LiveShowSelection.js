@@ -7,22 +7,18 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     const [isLoading, setIsLoading] = useState({});
     const [message, setMessage] = useState('');
 
-    // Group all events by their week number
     const showsByWeek = seasonEvents.reduce((acc, event) => {
         const week = event.week;
         if (!acc[week]) {
             acc[week] = [];
         }
-        // Since one event can have multiple shows, add them all
         event.shows.forEach(show => {
             acc[week].push({ ...show, dayIndex: event.dayIndex });
         });
-        // Sort shows within the week by day
         acc[week].sort((a, b) => a.dayIndex - b.dayIndex);
         return acc;
     }, {});
     
-    // Calculate the current day and week of the live season
     let currentDay = 0;
     if (seasonStartDate) {
         const diff = new Date().getTime() - seasonStartDate.getTime();
@@ -66,7 +62,6 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
             const selectUserShows = httpsCallable(functions, 'selectUserShows');
             const result = await selectUserShows({ week, shows: showsToSave });
             setMessage(result.data.message);
-            // Clear message after a few seconds
             setTimeout(() => setMessage(''), 3000);
         } catch (error) {
             console.error("Error saving show selections:", error);
@@ -78,14 +73,14 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
     const weeks = Array.from({ length: 10 }, (_, i) => i + 1);
 
     return (
-        <div className="lg:col-span-2 bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-            <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Live Season Schedule</h2>
-            <div className="flex flex-wrap border-b border-brand-accent dark:border-brand-accent-dark mb-4">
+        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Live Season Schedule</h2>
+            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
                 {weeks.map(week => (
                     <button
                         key={week}
                         onClick={() => setActiveWeek(week)}
-                        className={`py-2 px-4 font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-brand-secondary text-brand-primary dark:text-brand-secondary-dark' : 'text-brand-text-secondary dark:text-brand-text-secondary-dark hover:text-brand-primary dark:hover:text-brand-secondary'}`}
+                        className={`py-2 px-4 font-semibold transition-colors ${activeWeek === week ? 'border-b-2 border-secondary text-secondary' : 'text-text-secondary hover:text-text-primary'}`}
                     >
                         Week {week}
                     </button>
@@ -101,36 +96,36 @@ const LiveShowSelection = ({ seasonEvents, profile, seasonStartDate }) => {
                     const isPastShow = show.dayIndex < currentDay;
 
                     return (
-                        <div key={showIdentifier} className={`p-3 rounded-md flex items-center gap-4 ${isPastShow ? 'bg-gray-200 dark:bg-gray-800 opacity-70' : 'bg-brand-background dark:bg-brand-background-dark'}`}>
+                        <div key={showIdentifier} className={`p-3 rounded-theme flex items-center gap-4 ${isPastShow ? 'bg-surface dark:bg-surface-dark opacity-70' : 'bg-background dark:bg-background-dark'}`}>
                             <input
                                 type="checkbox"
                                 id={showIdentifier}
                                 checked={isSelected}
                                 disabled={isPastShow || (isSelectionLimitReached && !isSelected)}
                                 onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-secondary disabled:opacity-50"
+                                className="appearance-none h-5 w-5 border-theme border-accent checked:bg-primary transition-colors disabled:opacity-50"
                             />
                             <div>
-                                <label htmlFor={showIdentifier} className="font-semibold text-brand-text-primary dark:text-brand-text-primary-dark cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
-                                <p className="text-sm text-brand-text-secondary dark:text-brand-text-secondary-dark">{show.location}</p>
+                                <label htmlFor={showIdentifier} className="font-semibold text-text-primary cursor-pointer">{show.eventName.replace(/DCI/g, 'marching.art')}</label>
+                                <p className="text-sm text-text-secondary">{show.location}</p>
                             </div>
                         </div>
                     );
                 })}
                  {(!showsByWeek[activeWeek] || showsByWeek[activeWeek].length === 0) && (
-                    <p className="text-center text-brand-text-secondary dark:text-brand-text-secondary-dark py-4">No shows scheduled for this week.</p>
+                    <p className="text-center text-text-secondary py-4">No shows scheduled for this week.</p>
                 )}
             </div>
             
             {activeWeek >= currentWeek && (
-                 <div className="flex justify-end items-center mt-4 pt-4 border-t-2 border-brand-accent dark:border-brand-accent-dark space-x-4">
-                    <p className="text-sm font-semibold text-brand-text-primary dark:text-brand-text-primary-dark">
+                 <div className="flex justify-end items-center mt-4 pt-4 border-t-theme border-accent dark:border-accent-dark space-x-4">
+                    <p className="text-sm font-semibold text-text-primary">
                         Selections for Week {activeWeek}: {(selectedShows[`week${activeWeek}`] || []).length} / 4
                     </p>
                     <button 
                         onClick={() => handleSaveWeek(activeWeek)}
                         disabled={isLoading[activeWeek]}
-                        className="bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">
+                        className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
                         {isLoading[activeWeek] ? 'Saving...' : `Save Week ${activeWeek} Selections`}
                     </button>
                 </div>

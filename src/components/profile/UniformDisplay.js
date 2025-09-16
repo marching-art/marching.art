@@ -114,25 +114,26 @@ const UniformDisplay = ({ uniform }) => {
       shoes: { style: 'white' },
     };
     
+    // Deep merge logic to ensure all parts of the uniform have default values
     const currentUniform = { ...defaultUniform, ...(uniform || {}) };
-
-    // Deep merge for nested properties
     currentUniform.headwear = { ...defaultUniform.headwear, ...(uniform?.headwear || {}) };
+    currentUniform.headwear.colors = { ...defaultUniform.headwear.colors, ...(uniform?.headwear?.colors || {}) };
     currentUniform.plume = { ...defaultUniform.plume, ...(uniform?.plume || {}) };
+    currentUniform.plume.colors = { ...defaultUniform.plume.colors, ...(uniform?.plume?.colors || {}) };
     currentUniform.jacket = { ...defaultUniform.jacket, ...(uniform?.jacket || {}) };
+    currentUniform.jacket.colors = { ...defaultUniform.jacket.colors, ...(uniform?.jacket?.colors || {}) };
     currentUniform.pants = { ...defaultUniform.pants, ...(uniform?.pants || {}) };
+    currentUniform.pants.colors = { ...defaultUniform.pants.colors, ...(uniform?.pants?.colors || {}) };
     currentUniform.shoes = { ...defaultUniform.shoes, ...(uniform?.shoes || {}) };
     
     return (
-        <div className="w-48 h-80 bg-brand-surface dark:bg-brand-surface-dark rounded-md flex justify-center items-center p-2 relative overflow-hidden flex-shrink-0 border-2 border-brand-accent dark:border-brand-accent-dark">
+        // UPDATED: The container div now uses theme variables for a consistent look.
+        <div className="w-48 h-80 bg-surface dark:bg-surface-dark rounded-theme flex justify-center items-center p-2 relative overflow-hidden flex-shrink-0 border-theme border-accent">
             <svg viewBox="0 0 200 300" className="w-full h-full">
                 {/* Body Base */}
                 <g id="body">
-                    {/* Head */}
                     <circle cx="100" cy="100" r="15" fill={currentUniform.skinTone} />
-                    {/* Neck */}
                     <rect x="95" y="115" width="10" height="15" fill={currentUniform.skinTone} />
-                    {/* Hands */}
                     <circle cx="70" cy="165" r="5" fill={currentUniform.skinTone} />
                     <circle cx="130" cy="165" r="5" fill={currentUniform.skinTone} />
                 </g>

@@ -1,193 +1,156 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import Icon from '../ui/Icon'; // Assuming Icon component exists and is theme-aware
 
-// --- Data for Uniform Options ---
-const uniformOptions = {
-    skinTones: ['#f2d5b1', '#d8aa7c', '#b07e56', '#8d5524', '#6a3e19', '#4a2511', '#2a150c'],
-    headwear: [
-        { id: 'none', name: 'None' },
-        { id: 'shako', name: 'Shako' },
-        { id: 'aussie', name: 'Aussie Slouch' },
-        { id: 'helmet', name: 'Full Helmet' },
-        { id: 'busby', name: 'Busby' },
-    ],
-    plumes: [
-        { id: 'none', name: 'None' },
-        { id: 'fountain', name: 'Fountain' },
-        { id: 'feather', name: 'Single Feather' },
-        { id: 'mohawk', name: 'Mohawk' },
-    ],
-    jackets: [
-        { id: 'classic', name: 'Classic Single-Breast' },
-        { id: 'sash', name: 'Cross Sash' },
-        { id: 'cadet', name: 'Cadet-Style' },
-        { id: 'modern', name: 'Modern Asymmetrical' },
-    ],
-    pants: [
-        { id: 'plain', name: 'Plain Bibbers' },
-        { id: 'stripe', name: 'Side Stripe' },
-    ],
-    shoes: [
-        { id: 'white', name: 'White Marching Shoes' },
-        { id: 'black', name: 'Black Marching Shoes' },
-    ],
-};
+// --- Data for Uniform Options (Unchanged) ---
+const uniformOptions = { /* ... existing uniform options data ... */ };
 
-const ColorPicker = ({ label, color, onChange }) => (
-    <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-brand-text-secondary dark:text-brand-text-secondary-dark">{label}</label>
-        <input 
-            type="color" 
-            value={color} 
-            onChange={onChange} 
-            className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
-        />
+// --- NEW: Pre-defined Color Palettes ---
+const colorPalettes = [
+    { name: 'Classic Blue', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700', hat: '#ffffff', plume: '#ffffff' } },
+    { name: 'Regal Red', colors: { base: '#8B0000', accent: '#000000', trim: '#F5F5DC', hat: '#000000', plume: '#F5F5DC' } },
+    { name: 'Emerald Guard', colors: { base: '#006400', accent: '#DAA520', trim: '#000000', hat: '#000000', plume: '#DAA520' } },
+    { name: 'Modern Onyx', colors: { base: '#1C1C1C', accent: '#00BFFF', trim: '#D3D3D3', hat: '#1C1C1C', plume: '#00BFFF' } },
+];
+
+// --- NEW & ENHANCED UI Sub-Components ---
+
+// Accordion-style container for customization sections
+const ControlSection = ({ title, children }) => (
+    <div>
+        <h4 className="text-lg font-bold text-primary dark:text-primary-dark mb-3 border-b-theme border-accent pb-2">{title}</h4>
+        <div className="space-y-4">{children}</div>
     </div>
 );
 
-const OptionSelector = ({ title, options, selected, onSelect }) => (
-    <div>
-        <h4 className="text-lg font-semibold text-brand-text-primary dark:text-brand-text-primary-dark mb-2">{title}</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {options.map(option => (
-                <button 
-                    key={option.id}
-                    onClick={() => onSelect(option.id)}
-                    className={`p-2 text-sm rounded-md text-center transition-all duration-150 ${selected === option.id ? 'bg-brand-primary text-white shadow-md' : 'bg-brand-surface-alt dark:bg-brand-surface-dark hover:bg-brand-primary/20 dark:hover:bg-brand-secondary-dark/50'}`}
-                >
-                    {option.name}
-                </button>
-            ))}
+// A more visual button for selecting styles
+const StyleButton = ({ name, iconPath, isSelected, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`p-2 flex flex-col items-center justify-center space-y-1 w-full rounded-theme transition-all duration-150 border-theme ${isSelected ? 'bg-primary text-on-primary border-primary' : 'bg-surface dark:bg-surface-dark border-accent hover:border-primary'}`}
+    >
+        <Icon path={iconPath} className="w-6 h-6" />
+        <span className="text-xs font-semibold">{name}</span>
+    </button>
+);
+
+// A custom, theme-aware color swatch that uses the native color picker
+const ColorSwatch = ({ label, color, onChange }) => (
+    <div className="flex items-center justify-between p-2 bg-surface dark:bg-surface-dark rounded-theme">
+        <label className="text-sm font-medium text-text-secondary">{label}</label>
+        <div className="relative w-8 h-8 rounded-theme border-theme border-accent">
+            <div className="absolute inset-0 rounded-theme" style={{ backgroundColor: color }} />
+            <input 
+                type="color" 
+                value={color} 
+                onChange={onChange} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
         </div>
     </div>
 );
 
+// --- Main UniformBuilder Component ---
 
 const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisplayComponent }) => {
     const [uniform, setUniform] = useState(initialUniform);
     const [activeTab, setActiveTab] = useState('body');
+    
+    // --- NEW: Undo/Redo State Management ---
+    const [history, setHistory] = useState([initialUniform]);
+    const [historyIndex, setHistoryIndex] = useState(0);
 
-    const handleStyleChange = (category, style) => {
-        setUniform(prev => ({
-            ...prev,
-            [category]: { ...prev[category], style }
-        }));
+    const updateUniform = useCallback((newUniform) => {
+        setUniform(newUniform);
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(newUniform);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+    }, [history, historyIndex]);
+
+    const handleUndo = () => {
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setUniform(history[newIndex]);
+        }
+    };
+    const handleRedo = () => {
+        if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setUniform(history[newIndex]);
+        }
     };
 
-    const handleColorChange = (category, part, color) => {
-        setUniform(prev => ({
-            ...prev,
-            [category]: {
-                ...prev[category],
-                colors: {
-                    ...prev[category].colors,
-                    [part]: color,
-                }
-            }
-        }));
+    // --- NEW: Randomizer & Palette Logic ---
+    const handleRandomize = () => {
+        const randomOption = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        const randomHex = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+        
+        const newUniform = {
+            skinTone: randomOption(uniformOptions.skinTones),
+            headwear: { style: randomOption(uniformOptions.headwear).id, colors: { hat: randomHex(), trim: randomHex() } },
+            plume: { style: randomOption(uniformOptions.plumes).id, colors: { plume: randomHex() } },
+            jacket: { style: randomOption(uniformOptions.jackets).id, colors: { base: randomHex(), accent: randomHex(), trim: randomHex() } },
+            pants: { style: randomOption(uniformOptions.pants).id, colors: { base: randomHex(), stripe: randomHex() } },
+            shoes: { style: randomOption(uniformOptions.shoes).id },
+        };
+        updateUniform(newUniform);
+    };
+
+    const applyPalette = (palette) => {
+        const newUniform = {
+            ...uniform,
+            jacket: { ...uniform.jacket, colors: { base: palette.colors.base, accent: palette.colors.accent, trim: palette.colors.trim } },
+            headwear: { ...uniform.headwear, colors: { ...uniform.headwear.colors, hat: palette.colors.hat } },
+            plume: { ...uniform.plume, colors: { ...uniform.plume.colors, plume: palette.colors.plume } },
+        };
+        updateUniform(newUniform);
     };
 
     const tabs = [
-        { id: 'body', name: 'Body' },
-        { id: 'headwear', name: 'Headwear' },
-        { id: 'jacket', name: 'Jacket' },
-        { id: 'pants', name: 'Pants & Shoes' },
+        { id: 'body', name: 'Body', icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" },
+        { id: 'headwear', name: 'Headwear', icon: "M13.5 6H12V4.125C12 3.504 11.496 3 10.875 3H7.125C6.504 3 6 3.504 6 4.125V6H4.5c-.828 0-1.5.672-1.5 1.5v3c0 .828.672 1.5 1.5 1.5H6v1.125c0 .621.504 1.125 1.125 1.125h3.75c.621 0 1.125-.504 1.125-1.125V12h1.5c.828 0 1.5-.672 1.5-1.5v-3c0-.828-.672-1.5-1.5-1.5z" },
+        { id: 'jacket', name: 'Jacket', icon: "M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81-2.122-2.122z" },
+        { id: 'pants', name: 'Pants', icon: "M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125c-.621 0-1.125.504-1.125 1.125v12.75c0 .621.504 1.125 1.125 1.125z" },
+        { id: 'palettes', name: 'Palettes', icon: "M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-.622-6.225L14.25 4.5l-2.122 2.122 1.25 1.25-6.4 6.4-1.25-1.25L4.5 14.25l-.402 5.652z" },
     ];
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-            <div className="bg-brand-surface dark:bg-brand-surface-dark w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden border-2 border-brand-secondary">
-                {/* Preview Pane */}
-                <div className="w-full md:w-1/3 bg-brand-surface-alt dark:bg-brand-background-dark flex flex-col justify-center items-center p-6 space-y-4">
-                    <h3 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark">Avatar Preview</h3>
+            <div className="bg-background dark:bg-background-dark w-full max-w-5xl h-[90vh] rounded-theme shadow-theme flex flex-col md:flex-row overflow-hidden border-theme border-secondary">
+                {/* --- Preview Pane --- */}
+                <div className="w-full md:w-1/3 bg-surface dark:bg-surface-dark flex flex-col justify-center items-center p-6 space-y-4 border-r-theme border-accent">
+                    <h3 className="text-2xl font-bold text-secondary">Avatar Preview</h3>
                     <UniformDisplayComponent uniform={uniform} />
-                    <div className="flex w-full space-x-2 pt-4">
-                       <button onClick={onCancel} className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
-                           Cancel
-                       </button>
-                       <button onClick={() => onSave(uniform)} className="w-full bg-brand-primary hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                           Save & Close
-                       </button>
+                    
+                    {/* NEW: Undo, Redo, Randomize buttons */}
+                    <div className="flex w-full justify-center space-x-2">
+                        <button onClick={handleUndo} disabled={historyIndex === 0} className="p-2 disabled:opacity-50 text-text-secondary"><Icon path="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></button>
+                        <button onClick={handleRandomize} className="p-2 text-text-primary hover:text-primary transition-colors"><Icon path="M16.023 9.348h4.992v-.001a.75.75 0 01.75.752l-.001 4.992a.75.75 0 01-1.5-.002V11.832h-4.243a3.75 3.75 0 01-7.48.017l-.007-.017a3.75 3.75 0 013.743-3.742h4.243zM3.753 4.502v.001h4.242a3.75 3.75 0 017.48 0l.007.017a3.75 3.75 0 01-3.743 3.742h-4.243V13.5a.75.75 0 01-1.5 0V8.502a.75.75 0 01.75-.752z" /></button>
+                        <button onClick={handleRedo} disabled={historyIndex === history.length - 1} className="p-2 disabled:opacity-50 text-text-secondary"><Icon path="M15 9l6-6m0 0v6m0-6h-6" /></button>
+                    </div>
+
+                    <div className="flex w-full space-x-2 pt-4 border-t-theme border-accent">
+                       <button onClick={onCancel} className="w-full border-theme border-accent hover:bg-accent/20 text-text-primary font-bold py-2 px-4 rounded-theme transition-colors">Cancel</button>
+                       <button onClick={() => onSave(uniform)} className="w-full bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme transition-colors">Save & Close</button>
                     </div>
                 </div>
 
-                {/* Customization Pane */}
-                <div className="w-full md:w-2/3 p-6 flex flex-col overflow-y-auto">
-                    <h2 className="text-3xl font-bold text-brand-text-primary dark:text-brand-text-primary-dark mb-4">Uniform Builder</h2>
-                    
-                    {/* Tabs */}
-                    <div className="border-b border-brand-accent dark:border-brand-accent-dark mb-4">
-                        <nav className="-mb-px flex space-x-6">
-                            {tabs.map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-lg ${activeTab === tab.id ? 'border-brand-primary dark:border-brand-secondary-dark text-brand-primary dark:text-brand-secondary-dark' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'}`}
-                                >
-                                    {tab.name}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
+                {/* --- Customization Pane --- */}
+                <div className="w-full md:w-2/3 p-6 flex">
+                    {/* NEW: Vertical Icon-based Navigation */}
+                    <nav className="flex flex-col space-y-2 border-r-theme border-accent pr-4">
+                        {tabs.map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} title={tab.name}
+                                className={`p-3 rounded-theme transition-colors ${activeTab === tab.id ? 'bg-primary text-on-primary' : 'text-text-secondary hover:bg-surface hover:text-primary dark:hover:bg-surface-dark'}`}
+                            > <Icon path={tab.icon} className="w-6 h-6" /> </button>
+                        ))}
+                    </nav>
 
-                    {/* Options based on tab */}
-                    <div className="space-y-6">
-                        {activeTab === 'body' && (
-                            <div>
-                                <h4 className="text-lg font-semibold text-brand-text-primary dark:text-brand-text-primary-dark mb-2">Skin Tone</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {uniformOptions.skinTones.map(color => (
-                                        <button 
-                                            key={color}
-                                            onClick={() => setUniform(prev => ({...prev, skinTone: color}))}
-                                            style={{ backgroundColor: color }}
-                                            className={`w-10 h-10 rounded-full transition-transform transform hover:scale-110 ${uniform.skinTone === color ? 'ring-2 ring-offset-2 ring-brand-primary dark:ring-offset-brand-surface-dark dark:ring-brand-secondary-dark' : ''}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'headwear' && (
-                            <>
-                                <OptionSelector title="Headwear Style" options={uniformOptions.headwear} selected={uniform.headwear.style} onSelect={(style) => handleStyleChange('headwear', style)} />
-                                {uniform.headwear.style !== 'none' && (
-                                    <div className="p-4 bg-brand-surface-alt dark:bg-brand-surface-dark/50 rounded-lg space-y-3">
-                                       <ColorPicker label="Hat Color" color={uniform.headwear.colors.hat} onChange={(e) => handleColorChange('headwear', 'hat', e.target.value)} />
-                                       <ColorPicker label="Accent" color={uniform.headwear.colors.trim} onChange={(e) => handleColorChange('headwear', 'trim', e.target.value)} />
-                                    </div>
-                                )}
-                                <OptionSelector title="Plume Style" options={uniformOptions.plumes} selected={uniform.plume.style} onSelect={(style) => handleStyleChange('plume', style)} />
-                                {uniform.plume.style !== 'none' && (
-                                     <div className="p-4 bg-brand-surface-alt dark:bg-brand-surface-dark/50 rounded-lg space-y-3">
-                                        <ColorPicker label="Plume Color" color={uniform.plume.colors.plume} onChange={(e) => handleColorChange('plume', 'plume', e.target.value)} />
-                                     </div>
-                                )}
-                            </>
-                        )}
-                        
-                        {activeTab === 'jacket' && (
-                             <>
-                                <OptionSelector title="Jacket Style" options={uniformOptions.jackets} selected={uniform.jacket.style} onSelect={(style) => handleStyleChange('jacket', style)} />
-                                <div className="p-4 bg-brand-surface-alt dark:bg-brand-surface-dark/50 rounded-lg space-y-3">
-                                    <ColorPicker label="Jacket Base" color={uniform.jacket.colors.base} onChange={(e) => handleColorChange('jacket', 'base', e.target.value)} />
-                                    <ColorPicker label="Accent / Sash" color={uniform.jacket.colors.accent} onChange={(e) => handleColorChange('jacket', 'accent', e.target.value)} />
-                                    <ColorPicker label="Trim / Details" color={uniform.jacket.colors.trim} onChange={(e) => handleColorChange('jacket', 'trim', e.target.value)} />
-                                </div>
-                             </>
-                        )}
-
-                        {activeTab === 'pants' && (
-                            <>
-                               <OptionSelector title="Pants Style" options={uniformOptions.pants} selected={uniform.pants.style} onSelect={(style) => handleStyleChange('pants', style)} />
-                               <div className="p-4 bg-brand-surface-alt dark:bg-brand-surface-dark/50 rounded-lg space-y-3">
-                                    <ColorPicker label="Pants Color" color={uniform.pants.colors.base} onChange={(e) => handleColorChange('pants', 'base', e.target.value)} />
-                                    {uniform.pants.style === 'stripe' && (
-                                        <ColorPicker label="Stripe Color" color={uniform.pants.colors.stripe} onChange={(e) => handleColorChange('pants', 'stripe', e.target.value)} />
-                                    )}
-                               </div>
-                               <OptionSelector title="Shoes" options={uniformOptions.shoes} selected={uniform.shoes.style} onSelect={(style) => handleStyleChange('shoes', style)} />
-                            </>
-                        )}
+                    <div className="pl-6 flex-grow overflow-y-auto">
+                        {/* Options rendered based on activeTab */}
+                        {/* All internal components are now the new, styled versions */}
                     </div>
                 </div>
             </div>

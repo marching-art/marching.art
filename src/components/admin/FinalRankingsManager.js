@@ -175,8 +175,8 @@ const FinalRankingsManager = () => {
 
     return (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">DCI Final Rankings Manager</h2>
-            <p className="text-sm italic text-gray-600 dark:text-gray-400">
+            <h2 className="text-2xl font-bold text-secondary dark:text-secondary-dark">DCI Final Rankings Manager</h2>
+            <p className="text-sm italic text-text-secondary dark:text-text-secondary-dark">
                 This interface is the source of truth for game automation. Rankings here determine which corps are randomly selected for off-season play.
             </p>
 
@@ -186,12 +186,12 @@ const FinalRankingsManager = () => {
                     value={newYearInput}
                     onChange={(e) => setNewYearInput(e.target.value)}
                     placeholder="New Year (e.g. 2026)"
-                    className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                    className="w-32 bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2"
                 />
                 <button
                     onClick={handleCreateNewYear}
                     disabled={isLoading || !newYearInput}
-                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                    className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
                 >
                     Add Year
                 </button>
@@ -203,7 +203,7 @@ const FinalRankingsManager = () => {
                     id="year-select-placements"
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
-                    className="w-32 bg-gray-100 dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                    className="w-32 bg-surface dark:bg-surface-dark border-theme border-accent rounded-theme p-2"
                     disabled={availableYears.length === 0}
                 >
                     {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
@@ -213,14 +213,14 @@ const FinalRankingsManager = () => {
             {isLoading ? <p>Loading rankings for {selectedYear}...</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {placements.map((entry, index) => (
-                        <div key={index} className="space-y-1 border p-2 rounded bg-gray-50 dark:bg-gray-800">
+                        <div key={index} className="space-y-1 border-theme border-accent p-2 rounded-theme bg-surface dark:bg-surface-dark">
                             <label className="font-semibold block">{(index + 1).toString().padStart(2, '0')}.</label>
                             <input
                                 type="text"
                                 value={entry.corps}
                                 onChange={(e) => handlePlacementChange(index, 'corps', e.target.value)}
                                 placeholder={`Corps #${index + 1}`}
-                                className="w-full bg-white dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                                className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2"
                             />
                             <input
                                 type="number"
@@ -228,14 +228,14 @@ const FinalRankingsManager = () => {
                                 value={entry.originalScore ?? ''}
                                 onChange={(e) => handlePlacementChange(index, 'originalScore', e.target.value)}
                                 placeholder="Score"
-                                className="w-full bg-white dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                                className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2"
                             />
                             <input
                                 type="number"
                                 value={entry.points ?? ''}
                                 onChange={(e) => handlePlacementChange(index, 'points', e.target.value)}
                                 placeholder="Points"
-                                className="w-full bg-white dark:bg-gray-900 border border-gray-400 dark:border-yellow-500 rounded p-2"
+                                className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2"
                             />
                         </div>
                     ))}
@@ -245,7 +245,7 @@ const FinalRankingsManager = () => {
             <button
                 onClick={handleSave}
                 disabled={isLoading || !selectedYear}
-                className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                className="mt-4 bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
             >
                 {isLoading ? 'Saving...' : `Save ${selectedYear} Rankings`}
             </button>

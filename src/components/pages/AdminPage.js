@@ -7,20 +7,13 @@ import SeasonControls from '../admin/SeasonControls';
 import ScoreDataViewer from '../admin/ScoreDataViewer'; 
 
 const AdminPage = () => {
-    // ... (all existing state and handler functions remain the same) ...
-    // State for User Role Management
     const [email, setEmail] = useState('');
     const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [message, setMessage] = useState('');
-
-    // State for Scraper Test
     const [isScraping, setIsScraping] = useState(false);
     const [scraperMessage, setScraperMessage] = useState('');
-    
-    // State for Crawler Test
     const [isCrawling, setIsCrawling] = useState(false);
     const [crawlerMessage, setCrawlerMessage] = useState('');
-
     const [jobStatus, setJobStatus] = useState({});
 
     const handleRoleChange = async (makeAdmin) => {
@@ -52,17 +45,17 @@ const AdminPage = () => {
     };
 
     const handleCrawlAndQueue = async () => {
-    setCrawlerMessage('Starting discovery process...');
-    setIsCrawling(true);
-    try {
-        const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
-        const result = await discoverAndQueueUrls();
-        setCrawlerMessage(result.data.message);
-    } catch (error) {
-        console.error("Error calling crawler function:", error);
-        setCrawlerMessage(`Error: ${error.message}`);
-    }
-    setIsCrawling(false);
+        setCrawlerMessage('Starting discovery process...');
+        setIsCrawling(true);
+        try {
+            const discoverAndQueueUrls = httpsCallable(functions, 'discoverAndQueueUrls');
+            const result = await discoverAndQueueUrls();
+            setCrawlerMessage(result.data.message);
+        } catch (error) {
+            console.error("Error calling crawler function:", error);
+            setCrawlerMessage(`Error: ${error.message}`);
+        }
+        setIsCrawling(false);
     };
 
     const handleManualTrigger = async (jobName) => {
@@ -78,37 +71,37 @@ const AdminPage = () => {
 
     return (
         <div className="p-4 md:p-8 space-y-8">
-            <h1 className="text-4xl font-bold text-brand-primary dark:text-brand-primary-dark mb-6">Admin Panel</h1>
+            <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-6">Admin Panel</h1>
             
             <ScoreDataViewer />
 
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-primary shadow-lg">
-                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark mb-4">Data & Scoring Tools</h2>
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Data & Scoring Tools</h2>
                 <div className="space-y-4">
-                    <p className='text-sm text-gray-600 dark:text-gray-400'>
+                    <p className='text-sm text-text-secondary'>
                         <strong>Import All Historical Recaps:</strong> Discovers all historical score recap URLs from dci.org and adds them to a queue for processing. This is a comprehensive, one-time operation to populate the database.
                     </p>
                     <div className="flex items-center space-x-4">
                         <button 
                             onClick={handleCrawlAndQueue} 
                             disabled={isCrawling} 
-                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                            className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
                         >
                             {isCrawling ? 'Discovering...' : 'Import All Historical Recaps'}
                         </button>
                         {crawlerMessage && <p className="text-sm font-semibold">{crawlerMessage}</p>}
                     </div>
 
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                    <div className="border-t-theme border-accent my-4"></div>
 
-                     <p className='text-sm text-gray-600 dark:text-gray-400'>
+                     <p className='text-sm text-text-secondary'>
                         <strong>Run Scraper Test:</strong> Manually triggers the backend scraper to fetch scores from a single, specific recap page. Useful for testing scraper logic without running the full discovery process.
                     </p>
                     <div className="flex items-center space-x-4">
                         <button 
                             onClick={handleTestScraper} 
                             disabled={isScraping} 
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                            className="bg-secondary hover:bg-secondary/80 text-on-secondary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
                         >
                             {isScraping ? 'Scraping...' : 'Run Scraper Test'}
                         </button>
@@ -117,58 +110,53 @@ const AdminPage = () => {
                 </div>
             </div>
             
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-primary shadow-lg">
-    <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-primary-dark mb-4">Manual Job Triggers</h2>
-    <div className="space-y-4">
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manual Job Triggers</h2>
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                        <button 
+                            onClick={() => handleManualTrigger('processAndArchiveOffSeasonScores')} 
+                            disabled={jobStatus.processAndArchiveOffSeasonScores?.loading} 
+                            className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                        >
+                            {jobStatus.processAndArchiveOffSeasonScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
+                        </button>
+                        {jobStatus.processAndArchiveOffSeasonScores?.message && <p className="text-sm font-semibold">{jobStatus.processAndArchiveOffSeasonScores.message}</p>}
+                    </div>
+                </div>
+            </div>
 
-        {/* --- Process Daily Scores Trigger --- */}
-        <div className="flex items-center space-x-4">
-            <button 
-                onClick={() => handleManualTrigger('processAndArchiveOffSeasonScores')} 
-                disabled={jobStatus.processAndArchiveOffSeasonScores?.loading} 
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-            >
-                {jobStatus.processAndArchiveOffSeasonScores?.loading ? 'Processing...' : 'Run Daily Score and Archive Processor'}
-            </button>
-            {jobStatus.processAndArchiveOffSeasonScores?.message && <p className="text-sm font-semibold">{jobStatus.processAndArchiveOffSeasonScores.message}</p>}
-        </div>
-
-        <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
-
-    </div>
-</div>
-
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Season Manager</h2>
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Season Manager</h2>
                 <SeasonControls />
-                <div className="border-t-2 border-brand-accent dark:border-brand-accent-dark my-6"></div>
+                <div className="border-t-theme border-accent my-6"></div>
                 <LiveSeasonScheduler />
             </div>
 
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
                 <FinalRankingsManager />
             </div>
 
-            <div className="bg-brand-surface dark:bg-brand-surface-dark p-6 rounded-lg border-2 border-brand-secondary shadow-lg">
-                <h2 className="text-2xl font-bold text-brand-primary dark:text-brand-secondary-dark mb-4">Manage User Roles</h2>
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
+                <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manage User Roles</h2>
                 <div className="space-y-4">
-                    <p className="text-brand-text-secondary dark:text-brand-text-secondary-dark">Enter a user's email address to grant or revoke admin privileges.</p>
+                    <p className="text-text-secondary">Enter a user's email address to grant or revoke admin privileges.</p>
                     <input 
                         type="email" 
                         placeholder="user@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white dark:bg-brand-background-dark border border-brand-accent dark:border-brand-accent-dark rounded p-2 text-brand-text-primary dark:text-brand-text-primary-dark placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-secondary" 
+                        className="w-full bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-secondary" 
                     />
                     <div className="flex space-x-4">
-                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
-                        <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"> {isLoadingRoles ? 'Working...' : 'Remove Admin'} </button>
+                        <button onClick={() => handleRoleChange(true)} disabled={isLoadingRoles || !email} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50"> {isLoadingRoles ? 'Working...' : 'Make Admin'} </button>
+                        <button onClick={() => handleRoleChange(false)} disabled={isLoadingRoles || !email} className="border-theme border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50 transition-colors"> {isLoadingRoles ? 'Working...' : 'Remove Admin'} </button>
                     </div>
                     {message && <p className="mt-4 text-sm font-semibold">{message}</p>}
                 </div>
             </div>
         </div>
-        
     );
 };
+
 export default AdminPage;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db, functions } from '../../firebase'; // Assuming firebase.js is in src folder
+import { db, functions } from '../../firebase';
 import { httpsCallable } from 'firebase/functions';
 
 const DEFAULT_POINT_CAP = 150;
@@ -69,8 +69,8 @@ const SeasonControls = () => {
 
     return (
         <div>
-            <h3 className="text-xl font-bold text-yellow-700 dark:text-yellow-400 mb-2">Season Status & Controls</h3>
-            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md space-y-3">
+            <h3 className="text-xl font-bold text-secondary dark:text-secondary-dark mb-2">Season Status & Controls</h3>
+            <div className="p-4 bg-surface dark:bg-surface-dark rounded-theme space-y-3 border-theme border-accent">
                 <p>Current Status: <span className="font-bold text-lg capitalize">{seasonSettings?.status || 'Loading...'}</span></p>
                 <div className="flex items-center space-x-2">
                     <label htmlFor="point-cap" className="font-semibold">Point Cap:</label>
@@ -79,17 +79,17 @@ const SeasonControls = () => {
                         type="number"
                         value={pointCap}
                         onChange={(e) => setPointCap(e.target.value)}
-                        className="w-24 bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-yellow-500 rounded p-1"
+                        className="w-24 bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-1"
                     />
-                    <button onClick={handleSavePointCap} className="bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold py-1 px-3 rounded">Save Cap</button>
+                    <button onClick={handleSavePointCap} className="border-theme border-accent hover:bg-accent/20 text-sm font-bold py-1 px-3 rounded-theme transition-colors">Save Cap</button>
                 </div>
                 {seasonSettings?.nextPointCap && seasonSettings.nextPointCap !== seasonSettings.currentPointCap &&
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">A new point cap of {seasonSettings.nextPointCap} will be applied at the start of the next season.</p>
+                    <p className="text-sm text-secondary dark:text-secondary-dark">A new point cap of {seasonSettings.nextPointCap} will be applied at the start of the next season.</p>
                 }
-                <p className="text-sm text-gray-500">Automatic season transitions are configured in the backend. These controls are for manual overrides.</p>
+                <p className="text-sm text-text-secondary">Automatic season transitions are configured in the backend. These controls are for manual overrides.</p>
                 <div className="flex space-x-4 pt-2">
-                    <button onClick={handleForceStartLiveSeason} disabled={isLoading} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Live Season</button>
-                    <button onClick={handleForceStartOffSeason} disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400">Force Start Off-Season</button>
+                    <button onClick={handleForceStartLiveSeason} disabled={isLoading} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">Force Start Live Season</button>
+                    <button onClick={handleForceStartOffSeason} disabled={isLoading} className="bg-secondary hover:bg-secondary/80 text-on-secondary font-bold py-2 px-4 rounded-theme disabled:opacity-50">Force Start Off-Season</button>
                 </div>
                 {message && <p className="mt-2 text-sm font-semibold">{message}</p>}
             </div>
