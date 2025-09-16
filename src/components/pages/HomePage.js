@@ -15,7 +15,7 @@ const FeatureCard = ({ title, children, accentText }) => (
 
 const HomePage = ({ onSignUpClick }) => {
     return (
-        <div className="relative bg-background dark:bg-background-dark overflow-hidden">
+        <div className="relative bg-background dark:bg-background-dark overflow-hidden min-h-screen">
             {/* --- VIDEO BACKGROUND --- */}
             <video 
                 autoPlay 
