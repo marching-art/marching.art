@@ -9,6 +9,8 @@ import ShowSelection from '../dashboard/ShowSelection';
 import LiveShowSelection from '../dashboard/LiveShowSelection';
 import CorpsSelector from '../dashboard/CorpsSelector';
 
+import { hasJoinedSeason } from '../../utils/profileCompatibility';
+
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
     const [corpsData, setCorpsData] = useState([]);
