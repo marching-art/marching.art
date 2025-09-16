@@ -50,26 +50,36 @@
 
 /* --- THEME 2: The New 'Brutalist' Theme --- */
 :root.theme-brutalist {
-  /* Colors */
-  --color-primary: 0 255 127;      /* Spring Green */
-  --color-primary-dark: 57 255 20;     /* Neon Green (Primary actions) */
-  --color-on-primary: 10 10 10;      /* Black text for on the bright green button */
-  --color-on-secondary: 10 10 10;   /* Black text for on the light gray button */
-  --color-secondary: 10 10 10;      /* Near Black */
-  --color-secondary-dark: 234 234 234;  /* Light Gray (Secondary actions, active tabs) */
-  --color-accent: 0 255 127;      /* Use Primary color as the only accent */
-  --color-accent-dark: 80 80 80;       /* Darker Gray for borders, dividers */
-  --color-background: 255 255 255;  /* #FFFFFF */
-  --color-background-dark: 22 22 22;      /* #161616 */
-  --color-surface: 245 245 245;    /* #F5F5F5 */
-  --color-surface-dark: 30 30 30;       /* #1E1E1E */
-  --text-primary: 10 10 10;
-  --text-primary-dark: 234 234 234;     /* Light Gray */
-  --text-secondary: 85 85 85;
-  --text-secondary-dark: 153 153 153;   /* Muted Gray for less important text */
+  /* --- COLOR CHANGES --- */
 
-  /* Borders & Shadows */
-  --border-radius-theme: 0px; /* No rounded corners */
-  --shadow-theme: none; /* No soft shadows */
-  --border-width-theme: 2px;
+  /* 1. Background is a deep, neutral gray. */
+  --color-background-dark: 18 18 18;      /* #121212 */
+
+  /* 2. Surface is slightly lighter to create noticeable depth for panels. */
+  --color-surface-dark: 36 36 36;       /* #242424 */
+  
+  /* 3. Text hierarchy is clear. */
+  --text-primary-dark: 234 234 234;     /* Light Gray for titles/important text */
+  --text-secondary-dark: 160 160 160;   /* Muted Gray for body text/labels */
+
+  /* 4. Neon Green is ONLY for primary actions. */
+  --color-primary-dark: 57 255 20;     /* Neon Green */
+  
+  /* 5. Secondary interactive color is a clean white/light gray. */
+  --color-secondary-dark: 234 234 234;
+  
+  /* 6. Accent color for borders is now a SUBTLE dark gray.
+     This is the KEY to reducing visual noise. The bright green will
+     only appear on focus/hover. */
+  --color-accent-dark: 68 68 68;       /* #444444 */
+  
+  /* Text colors for placing ON TOP of colored buttons */
+  --color-on-primary: 10 10 10;
+  --color-on-secondary: 10 10 10;
+
+
+  /* --- STRUCTURAL STYLES (Unchanged) --- */
+  --border-radius-theme: 0px;
+  --shadow-theme: none;
+  --border-width-theme: 1px;
 }
