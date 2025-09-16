@@ -1,7 +1,7 @@
 import React from 'react';
 
 const FeatureCard = ({ title, children, accentText }) => (
-    <div className="relative bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
+    <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
             {accentText}
         </span>
@@ -15,7 +15,21 @@ const FeatureCard = ({ title, children, accentText }) => (
 
 const HomePage = ({ onSignUpClick }) => {
     return (
-        <div className="relative bg-background dark:bg-background-dark">
+        <div className="relative bg-background dark:bg-background-dark overflow-hidden">
+            {/* --- VIDEO BACKGROUND --- */}
+            <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="absolute top-0 left-0 w-full h-full object-cover -z-20"
+            >
+                <source src="/montage.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+            </video>
+            {/* --- OVERLAY --- */}
+            <div className="absolute top-0 left-0 w-full h-full bg-background-dark/70 -z-10"></div>
+
             <div className="text-center p-6 md:p-8">
                 {/* --- HERO SECTION --- */}
                 <div className="py-20 md:py-32">
@@ -37,6 +51,7 @@ const HomePage = ({ onSignUpClick }) => {
                 
                 {/* --- FEATURES SECTION --- */}
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                    {/* Note: Updated FeatureCard background for better readability over video */}
                     <FeatureCard title="Live Scoring" accentText="LIVE">
                         Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
                     </FeatureCard>
@@ -47,7 +62,7 @@ const HomePage = ({ onSignUpClick }) => {
                         Create your manager profile, design a unique uniform, and track your history to show off your championship titles.
                     </FeatureCard>
                     
-                    <div className="relative bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
+                    <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
                          <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
                             CHAT
                         </span>
