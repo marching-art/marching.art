@@ -4,82 +4,34 @@
 
 /* ==================================================================
   Theme Definitions
-  We define all our design tokens as CSS variables here.
+  This new, unified theme provides a professional and highly readable
+  experience in both light and dark modes.
   ==================================================================
 */
 
-/* --- THEME 1: Your Original 'Brand' Theme --- */
-:root.theme-brand {
-  /* Colors */
-  --color-primary: 251 191 36;      /* #FBBF24 (Primary Gold) */
-  --color-primary-dark: 252 211 77;  /* #FCD34D (Brighter Gold for Dark Mode) */
-  
-  --color-secondary: 26 26 26;      /* #1A1A1A (Black) */
-  --color-secondary-dark: 234 234 234; /* #EAEAEA (White) */
-  
-  /* UPDATED: Accent color for dark mode is now a muted, elegant gold.
-     This will make all your borders and dividers clearly visible. */
-  --color-accent: 209 199 172;     /* #D1C7AC */
-  --color-accent-dark: 133 111 45;      /* #856f2d */
+:root, :root.theme-brand, :root.theme-brutalist {
+  /* --- COLOR PALETTE (Light Mode) --- */
+  --color-primary: 59 130 246;      /* Professional Blue */
+  --color-secondary: 55 65 81;      /* Dark Gray for text/elements */
+  --color-accent: 229 231 235;     /* Light Gray for borders */
+  --color-background: 249 250 251;  /* Off-white to reduce glare */
+  --color-surface: 255 255 255;    /* Pure white for cards */
+  --text-primary: 17 24 39;       /* Nearly black for high contrast */
+  --text-secondary: 107 114 128;   /* Medium gray for supporting text */
+  --color-on-primary: 255 255 255;   /* White text on blue buttons */
+  --color-on-secondary: 255 255 255; /* White text on gray buttons */
 
-  /* Backgrounds are clean black and white */
-  --color-background: 255 255 255;  /* #FFFFFF */
-  --color-background-dark: 18 18 18;      /* #121212 */
-  
-  /* Surfaces for panels and cards */
-  --color-surface: 255 251 235;    /* #FFFBEB (Very light gold) */
-  --color-surface-dark: 30 30 30;       /* #1E1E1E (Dark gray) */
-  
-  /* Text is high-contrast black or white */
-  --text-primary: 26 26 26;       /* #1A1A1A */
-  --text-primary-dark: 234 234 234;    /* #EAEAEA */
+  /* --- DARK MODE OVERRIDES --- */
+  --color-primary-dark: 96 165 250;    /* Lighter blue for dark mode contrast */
+  --color-secondary-dark: 209 213 219;  /* Light gray for text/elements */
+  --color-accent-dark: 55 65 81;       /* Dark gray for borders */
+  --color-background-dark: 17 24 39;     /* Deep, cool navy for background */
+  --color-surface-dark: 31 41 55;      /* Lighter navy for cards */
+  --text-primary-dark: 249 250 251;     /* Off-white for main text */
+  --text-secondary-dark: 156 163 175;   /* Lighter gray for supporting text */
 
-  /* UPDATED: Secondary text in dark mode is slightly brighter for better readability. */
-  --text-secondary: 115 115 115;      /* #737373 */
-  --text-secondary-dark: 176 176 176;  /* #B0B0B0 */
-
-  /* Text colors for placing ON TOP of colored buttons */
-  --color-on-primary: 26 26 26;       /* Black text for on the gold button */
-  --color-on-secondary: 255 255 255;  /* White text for on the black button */
-
-  /* --- STRUCTURAL STYLES (Unchanged) --- */
+  /* --- STRUCTURAL & TYPOGRAPHIC STYLES --- */
   --border-radius-theme: 0.5rem; /* rounded-lg */
-  --shadow-theme: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --border-width-theme: 2px;
-}
-
-/* --- THEME 2: The New 'Brutalist' Theme --- */
-:root.theme-brutalist {
-  /* --- COLOR CHANGES --- */
-
-  /* 1. Background is a deep, neutral gray. */
-  --color-background-dark: 18 18 18;      /* #121212 */
-
-  /* 2. Surface is slightly lighter to create noticeable depth for panels. */
-  --color-surface-dark: 36 36 36;       /* #242424 */
-  
-  /* 3. Text hierarchy is clear. */
-  --text-primary-dark: 234 234 234;     /* Light Gray for titles/important text */
-  --text-secondary-dark: 160 160 160;   /* Muted Gray for body text/labels */
-
-  /* 4. Neon Green is ONLY for primary actions. */
-  --color-primary-dark: 57 255 20;     /* Neon Green */
-  
-  /* 5. Secondary interactive color is a clean white/light gray. */
-  --color-secondary-dark: 234 234 234;
-  
-  /* 6. Accent color for borders is now a SUBTLE dark gray.
-     This is the KEY to reducing visual noise. The bright green will
-     only appear on focus/hover. */
-  --color-accent-dark: 68 68 68;       /* #444444 */
-  
-  /* Text colors for placing ON TOP of colored buttons */
-  --color-on-primary: 10 10 10;
-  --color-on-secondary: 10 10 10;
-
-
-  /* --- STRUCTURAL STYLES (Unchanged) --- */
-  --border-radius-theme: 0px;
-  --shadow-theme: none;
+  --shadow-theme: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
   --border-width-theme: 1px;
 }

@@ -53,7 +53,7 @@ const ScoresPage = ({ theme }) => {
         setSelectedDay(dayData);
     };
 
-    if (isLoading) return <div className="p-8 text-center"><p className="text-lg font-semibold text-text-primary">Loading Recaps...</p></div>;
+    if (isLoading) return <div className="p-8 text-center"><p className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Loading Recaps...</p></div>;
 
     return (
         <>
@@ -63,19 +63,19 @@ const ScoresPage = ({ theme }) => {
                 </div>
             </Modal>
 
-            <div className="p-4 md:p-8 max-w-6xl mx-auto">
-                <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-6 text-center">Fantasy Show Recaps</h1>
+            <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-8 text-center">Fantasy Show Recaps</h1>
                 
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-surface dark:bg-surface-dark rounded-theme shadow-theme">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center mb-8 p-4 bg-surface dark:bg-surface-dark rounded-theme shadow-theme border border-accent dark:border-accent-dark">
                     <div className="flex items-center gap-2">
-                        <label htmlFor="season-select" className="font-semibold text-text-primary">Season:</label>
-                        <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary">
+                        <label htmlFor="season-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">Season:</label>
+                        <select id="season-select" value={selectedSeason?.id || ''} onChange={e => handleSeasonChange(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary">
                             {allRecaps.map(season => <option key={season.id} value={season.id}>{season.seasonName}</option>)}
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label htmlFor="day-select" className="font-semibold text-text-primary">Day:</label>
-                        <select id="day-select" value={selectedDay?.offSeasonDay || ''} onChange={e => handleDayChange(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent rounded-theme p-2 text-text-primary" disabled={!selectedSeason}>
+                        <label htmlFor="day-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">Day:</label>
+                        <select id="day-select" value={selectedDay?.offSeasonDay || ''} onChange={e => handleDayChange(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary" disabled={!selectedSeason}>
                             {(selectedSeason?.recaps || []).sort((a,b) => a.offSeasonDay - b.offSeasonDay).map(day => <option key={day.offSeasonDay} value={day.offSeasonDay}>Day {day.offSeasonDay}</option>)}
                         </select>
                     </div>
@@ -84,37 +84,37 @@ const ScoresPage = ({ theme }) => {
                 {selectedDay ? (
                     <div className="space-y-8">
                         {selectedDay.shows.map((show, index) => (
-                            <div key={index} className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-secondary shadow-theme">
-                                <div className="flex justify-between items-center mb-4">
+                            <div key={index} className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                                <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
                                     <div>
                                         <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</h2>
-                                        <p className="text-sm text-text-secondary">{show.location}</p>
+                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
                                     </div>
-                                    <button onClick={() => setShowToChart(show)} className="bg-primary hover:bg-primary/80 text-on-primary font-bold py-2 px-4 rounded-theme text-sm">
+                                    <button onClick={() => setShowToChart(show)} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme text-sm self-start md:self-center">
                                         View Chart
                                     </button>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm text-text-primary">
-                                        <thead className="border-b-theme border-accent">
+                                    <table className="w-full text-left text-sm text-text-primary dark:text-text-primary-dark">
+                                        <thead className="border-b-theme border-accent dark:border-accent-dark">
                                             <tr>
-                                                <th className="p-2 w-12 font-semibold">Rank</th>
-                                                <th className="p-2 font-semibold">Corps</th>
-                                                <th className="p-2 text-right font-semibold">GE</th>
-                                                <th className="p-2 text-right font-semibold">Visual</th>
-                                                <th className="p-2 text-right font-semibold">Music</th>
-                                                <th className="p-2 text-right font-semibold">Total Score</th>
+                                                <th className="p-3 font-semibold text-text-secondary dark:text-text-secondary-dark">Rank</th>
+                                                <th className="p-3 font-semibold text-text-secondary dark:text-text-secondary-dark">Corps</th>
+                                                <th className="p-3 text-right font-semibold text-text-secondary dark:text-text-secondary-dark">GE</th>
+                                                <th className="p-3 text-right font-semibold text-text-secondary dark:text-text-secondary-dark">Visual</th>
+                                                <th className="p-3 text-right font-semibold text-text-secondary dark:text-text-secondary-dark">Music</th>
+                                                <th className="p-3 text-right font-semibold text-text-secondary dark:text-text-secondary-dark">Total Score</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {show.results.sort((a, b) => b.totalScore - a.totalScore).map((res, i) => (
-                                                <tr key={res.uid} className="border-b-theme border-surface dark:border-accent">
-                                                    <td className="p-2 font-bold">{i + 1}</td>
-                                                    <td className="p-2 font-semibold">{res.corpsName}</td>
-                                                    <td className="p-2 text-right">{res.geScore.toFixed(3)}</td>
-                                                    <td className="p-2 text-right">{res.visualScore.toFixed(3)}</td>
-                                                    <td className="p-2 text-right">{res.musicScore.toFixed(3)}</td>
-                                                    <td className="p-2 font-bold text-right text-primary dark:text-primary-dark">{res.totalScore.toFixed(3)}</td>
+                                                <tr key={res.uid} className="transition-colors even:bg-accent/40 dark:even:bg-accent-dark/10 hover:bg-accent dark:hover:bg-accent-dark/20">
+                                                    <td className="p-3 font-bold w-12">{i + 1}</td>
+                                                    <td className="p-3 font-semibold">{res.corpsName}</td>
+                                                    <td className="p-3 text-right">{res.geScore.toFixed(3)}</td>
+                                                    <td className="p-3 text-right">{res.visualScore.toFixed(3)}</td>
+                                                    <td className="p-3 text-right">{res.musicScore.toFixed(3)}</td>
+                                                    <td className="p-3 font-bold text-right text-primary dark:text-primary-dark">{res.totalScore.toFixed(3)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -124,7 +124,7 @@ const ScoresPage = ({ theme }) => {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-text-secondary mt-8">No recaps found for the selected season or day.</p>
+                    <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-8">No recaps found for the selected season or day.</p>
                 )}
             </div>
         </>
