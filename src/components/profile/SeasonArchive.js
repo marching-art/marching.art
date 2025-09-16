@@ -27,9 +27,17 @@ const getThemeColors = () => {
 
 
 const SeasonArchive = ({ seasons = [], userId, seasonSettings, fantasyRecaps, theme }) => {
-    const [seasonType, setSeasonType] = useState('Live');
+    const [seasonType, setSeasonType] = useState('Live'); // Default state
     const [activeSeason, setActiveSeason] = useState(null);
     const [themeColors, setThemeColors] = useState(getThemeColors());
+
+    // This effect sets the default tab based on the current season status when the component loads
+    useEffect(() => {
+        if (seasonSettings) {
+            const currentSeasonType = seasonSettings.status === 'live-season' ? 'Live' : 'Off';
+            setSeasonType(currentSeasonType);
+        }
+    }, [seasonSettings]);
 
     useEffect(() => { setThemeColors(getThemeColors()); }, [theme]);
 
