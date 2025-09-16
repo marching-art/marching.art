@@ -1,3 +1,4 @@
+// src/components/pages/HomePage.js (or wherever this file is located)
 import React from 'react';
 
 const FeatureCard = ({ title, children, accentText }) => (
@@ -14,24 +15,28 @@ const FeatureCard = ({ title, children, accentText }) => (
 
 
 const HomePage = ({ onSignUpClick }) => {
+    // Add a console log to be sure the component is rendering
+    console.log('HomePage is rendering'); 
+
     return (
-        <div className="relative bg-background dark:bg-background-dark overflow-hidden min-h-screen">
-            {/* --- VIDEO BACKGROUND --- */}
+        // 1. USE h-screen HERE to make the container fill the viewport's height
+        <div className="relative overflow-hidden h-screen"> 
+            
             <video 
                 autoPlay 
                 loop 
-                muted 
+                muted // 2. ENSURE the "muted" attribute is present
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover -z-20"
             >
                 <source src="/montage.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
             </video>
-            {/* --- OVERLAY --- */}
+            
             <div className="absolute top-0 left-0 w-full h-full bg-background-dark/70 -z-10"></div>
 
             <div className="text-center p-6 md:p-8">
-                {/* --- HERO SECTION --- */}
+                {/* HERO SECTION */}
                 <div className="py-20 md:py-32">
                     <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
                         Your Field of Dreams Awaits
@@ -49,9 +54,8 @@ const HomePage = ({ onSignUpClick }) => {
                     </button>
                 </div>
                 
-                {/* --- FEATURES SECTION --- */}
+                {/* FEATURES SECTION - This section will now appear below the fold. You will need to scroll down to see it. */}
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                    {/* Note: Updated FeatureCard background for better readability over video */}
                     <FeatureCard title="Live Scoring" accentText="LIVE">
                         Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
                     </FeatureCard>
@@ -61,22 +65,12 @@ const HomePage = ({ onSignUpClick }) => {
                     <FeatureCard title="Build Your Legacy" accentText="YOU">
                         Create your manager profile, design a unique uniform, and track your history to show off your championship titles.
                     </FeatureCard>
-                    
                     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
-                         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
-                            CHAT
-                        </span>
+                        <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">CHAT</span>
                         <div className="relative text-left">
                             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-2">Join the Community</h3>
                             <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed mb-4">Chat with other fans, discuss scores, and get help on our official Discord server.</p>
-                            <a 
-                                href="https://discord.gg/YvFRJ97A5H" 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="bg-secondary dark:bg-secondary-dark hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme inline-block transition-all text-sm"
-                            >
-                                Join Discord
-                            </a>
+                            <a href="https://discord.gg/YvFRJ97A5H" target="_blank" rel="noopener noreferrer" className="bg-secondary dark:bg-secondary-dark hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme inline-block transition-all text-sm">Join Discord</a>
                         </div>
                     </div>
                 </div>
