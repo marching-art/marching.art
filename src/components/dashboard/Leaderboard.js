@@ -33,8 +33,6 @@ const Leaderboard = ({ profile }) => {
                 where('activeSeasonId', '==', activeSeasonId)
             );
 
-            // This logic requires profile.leagues to be populated.
-            // Assuming profile.leagues is an array of objects: [{id: '...', name: '...'}]
             if (selectedLeague) {
                 baseQuery = query(baseQuery, where('leagueIds', 'array-contains', selectedLeague.id));
             }
@@ -57,12 +55,10 @@ const Leaderboard = ({ profile }) => {
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
-    // This assumes the profile object now contains a leagues array.
-    // This would be fetched and added to the profile state in App.js
     const userLeagues = profile?.leagues || [];
 
     return (
-        <div>
+        <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
