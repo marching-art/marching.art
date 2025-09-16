@@ -7,6 +7,7 @@ import LineupEditor from '../dashboard/LineupEditor';
 import LeagueManager from '../dashboard/LeagueManager';
 import ShowSelection from '../dashboard/ShowSelection';
 import LiveShowSelection from '../dashboard/LiveShowSelection';
+import CorpsSelector from '../dashboard/CorpsSelector';
 
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
