@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
+import Modal from '../ui/Modal'; // Assuming Modal component is in this path
 
-const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
+const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStartDate }) => {
     const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [registrantsModalShow, setRegistrantsModalShow] = useState(null);
+    const [registrants, setRegistrants] = useState([]);
+    const [isRegistrantsLoading, setIsRegistrantsLoading] = useState(false);
     
     const initialWeek = Math.ceil(currentOffSeasonDay / 7);
     const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1);
@@ -16,15 +20,39 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         setActiveWeek(currentWeek > 0 ? currentWeek : 1);
     }, [profile, currentOffSeasonDay]);
 
+    // Effect to fetch registrants when the modal is opened
+    useEffect(() => {
+        if (!registrantsModalShow) return;
+
+        const fetchRegistrants = async () => {
+            setIsRegistrantsLoading(true);
+            try {
+                const getShowRegistrations = httpsCallable(functions, 'getShowRegistrations');
+                const result = await getShowRegistrations({ 
+                    week: activeWeek, 
+                    eventName: registrantsModalShow.eventName, 
+                    date: registrantsModalShow.date 
+                });
+                setRegistrants(result.data.corpsNames);
+            } catch (error) {
+                console.error("Error fetching registrants:", error);
+                setRegistrants(["Error loading registrants."]);
+            }
+            setIsRegistrantsLoading(false);
+        };
+
+        fetchRegistrants();
+    }, [registrantsModalShow, activeWeek]);
+
     const handleSelectShow = (week, show, isSelected) => {
         const weekKey = `week${week}`;
         const currentSelections = selectedShows[weekKey] || [];
         let newSelections;
 
         if (isSelected) {
-            newSelections = [...currentSelections, { eventName: show.eventName, date: show.date, location: show.location, offSeasonDay: show.offSeasonDay }];
+            newSelections = [...currentSelections, { eventName: show.eventName, date: show.date, location: show.location }];
         } else {
-            newSelections = currentSelections.filter(s => !(s.eventName === show.eventName && s.date === show.date));
+            newSelections = currentSelections.filter(s => s.eventName !== show.eventName);
         }
 
         if (newSelections.length > 4) {
@@ -41,7 +69,6 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         setMessage('');
         const weekKey = `week${week}`;
         const showsToSave = selectedShows[weekKey] || [];
-
         try {
             const selectUserShows = httpsCallable(functions, 'selectUserShows');
             const result = await selectUserShows({ week, shows: showsToSave });
@@ -52,15 +79,36 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
         }
         setIsLoading(false);
     };
-    
+
+    const getCalendarDateForDay = (offSeasonDay) => {
+        if (!seasonStartDate) return null;
+        const calendarDate = new Date(seasonStartDate.getTime());
+        calendarDate.setUTCDate(calendarDate.getUTCDate() + offSeasonDay - 1);
+        return calendarDate;
+    };
+
     const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
     
-    const startDay = (activeWeek - 1) * 7 + 1;
-    const endDay = activeWeek * 7;
-    const weekEvents = seasonEvents
-        .filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay)
-        .flatMap(day => day.shows.map(show => ({...show, offSeasonDay: day.offSeasonDay})))
-        .sort((a,b) => a.offSeasonDay - b.offSeasonDay);
+    // Group shows by formatted date
+    const showsGroupedByDate = useMemo(() => {
+        const startDay = (activeWeek - 1) * 7 + 1;
+        const endDay = activeWeek * 7;
+        const weekEvents = seasonEvents
+            .filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay)
+            .flatMap(day => day.shows.map(show => ({ ...show, offSeasonDay: day.offSeasonDay })))
+            .sort((a, b) => a.offSeasonDay - b.offSeasonDay);
+
+        return weekEvents.reduce((acc, show) => {
+            const date = getCalendarDateForDay(show.offSeasonDay);
+            if (!date) return acc;
+            const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (!acc[formattedDate]) {
+                acc[formattedDate] = [];
+            }
+            acc[formattedDate].push(show);
+            return acc;
+        }, {});
+    }, [activeWeek, seasonEvents, seasonStartDate]);
 
     const userSelectionsForWeek = selectedShows[`week${activeWeek}`] || [];
     const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7);
@@ -68,6 +116,20 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
 
     return (
         <div>
+            <Modal isOpen={!!registrantsModalShow} onClose={() => setRegistrantsModalShow(null)} title={`Attendees for ${registrantsModalShow?.eventName.replace(/DCI/g, 'marching.art')}`}>
+                {isRegistrantsLoading ? (
+                    <p className="text-text-secondary dark:text-text-secondary-dark">Loading...</p>
+                ) : (
+                    registrants.length > 0 ? (
+                        <ul className="space-y-2 list-disc list-inside">
+                            {registrants.map((name, i) => <li key={i}>{name}</li>)}
+                        </ul>
+                    ) : (
+                        <p className="text-text-secondary dark:text-text-secondary-dark">No corps have registered for this show yet.</p>
+                    )
+                )}
+            </Modal>
+
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h2>
                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">Select up to 4 shows per week.</p>
@@ -85,32 +147,42 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay }) => {
                 ))}
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                {weekEvents.length > 0 ? weekEvents.map((show, index) => {
-                    const showIdentifier = `week${activeWeek}-show${index}`;
-                    const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
-                    const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
-                    const isPastShow = show.offSeasonDay < currentOffSeasonDay;
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                {Object.keys(showsGroupedByDate).length > 0 ? Object.entries(showsGroupedByDate).map(([date, shows]) => (
+                    <div key={date}>
+                        <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark border-b border-accent dark:border-accent-dark pb-1 mb-2">{date}</h3>
+                        <div className="space-y-3">
+                            {shows.map((show, index) => {
+                                const showIdentifier = `week${activeWeek}-show${index}`;
+                                const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
+                                const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
+                                const isPastShow = show.offSeasonDay < currentOffSeasonDay;
 
-                    return (
-                        <div key={showIdentifier} className={`p-3 rounded-theme flex items-center gap-4 transition-opacity ${isPastShow ? 'bg-surface dark:bg-surface-dark opacity-60' : 'bg-background dark:bg-background-dark'}`}>
-                             <input
-                                type="checkbox"
-                                id={showIdentifier}
-                                checked={isSelected}
-                                disabled={isPastShow || (isSelectionLimitReached && !isSelected)}
-                                onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)}
-                                className="h-5 w-5 rounded text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0"
-                            />
-                            <div>
-                                <label htmlFor={showIdentifier} className={`font-semibold text-text-primary dark:text-text-primary-dark ${!isPastShow && 'cursor-pointer'}`}>
-                                    {show.eventName.replace(/DCI/g, 'marching.art')}
-                                </label>
-                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location} - <span className="font-medium">Day {show.offSeasonDay}</span></p>
-                            </div>
+                                return (
+                                    <div key={showIdentifier} className={`p-3 rounded-theme flex items-center gap-4 transition-opacity ${isPastShow ? 'bg-surface dark:bg-surface-dark opacity-60' : 'bg-background dark:bg-background-dark'}`}>
+                                        <input
+                                            type="checkbox"
+                                            id={showIdentifier}
+                                            checked={isSelected}
+                                            disabled={isPastShow || (isSelectionLimitReached && !isSelected)}
+                                            onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)}
+                                            className="h-5 w-5 rounded text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0"
+                                        />
+                                        <div className="flex-grow">
+                                            <label htmlFor={showIdentifier} className={`font-semibold text-text-primary dark:text-text-primary-dark ${!isPastShow && 'cursor-pointer'}`}>
+                                                {show.eventName.replace(/DCI/g, 'marching.art')}
+                                            </label>
+                                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
+                                        </div>
+                                        <button onClick={() => setRegistrantsModalShow(show)} className="text-sm text-primary dark:text-primary-dark hover:underline flex-shrink-0">
+                                            Who's Going?
+                                        </button>
+                                    </div>
+                                )
+                            })}
                         </div>
-                    )
-                }) : <p className="text-center text-text-secondary dark:text-text-secondary-dark py-4">No shows scheduled for this week.</p>}
+                    </div>
+                )) : <p className="text-center text-text-secondary dark:text-text-secondary-dark py-4">No shows scheduled for this week.</p>}
             </div>
 
             { !isPastWeek && (

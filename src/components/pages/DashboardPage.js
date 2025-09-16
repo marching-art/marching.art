@@ -95,6 +95,7 @@ const DashboardPage = ({ profile, userId }) => {
                                 seasonEvents={seasonSettings.events || []}
                                 profile={profile}
                                 currentOffSeasonDay={currentOffSeasonDay}
+                                seasonStartDate={seasonStartDate}
                             />
                         )}
                     </div>
