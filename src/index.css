@@ -6,9 +6,10 @@
   :root {
     /* Light Mode Colors (Gold & Dark Brown Theme) */
 
-    /* Primary: Gold */
-    --color-primary: 255 215 0; /* A rich gold */
-    --on-primary: 255 255 255; /* White text on gold */
+    /* Primary: Gold - UPDATED to user's specific hex #F7941D */
+    --color-primary: 247 148 29;
+    /* On-Primary: UPDATED to dark text for better contrast on gold */
+    --on-primary: 30 30 30;
 
     /* Secondary: Medium Brown */
     --color-secondary: 139 69 19; /* Saddle Brown */
@@ -31,8 +32,8 @@
   .dark {
     /* Dark Mode Colors */
 
-    /* Primary: Gold (slightly muted for dark mode) */
-    --color-primary-dark: 218 165 32; /* Goldenrod, slightly less bright */
+    /* Primary: Gold (slightly muted for dark mode) - UPDATED */
+    --color-primary-dark: 224 133 26;
 
     /* Secondary: Medium Brown (for contrast) */
     --color-secondary-dark: 160 82 45; /* Sienna */
