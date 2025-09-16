@@ -56,20 +56,14 @@ const Leaderboard = ({ profile }) => {
     }, [selectedLeague]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
-
-    const CardContainer = ({ children }) => (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-            {children}
-        </div>
-    );
     
     // This assumes the profile object now contains a leagues array.
     // This would be fetched and added to the profile state in App.js
     const userLeagues = profile?.leagues || [];
 
     return (
-        <CardContainer>
-            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
+        <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
@@ -93,28 +87,30 @@ const Leaderboard = ({ profile }) => {
             {isLoading ? (
                 <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
             ) : (
-                <ol className="list-decimal list-inside space-y-2">
-                    {leaderboard.map((player, index) => {
-                        const isCurrentUser = player.id === profile.userId;
+                <div className="max-h-96 overflow-y-auto pr-2">
+                    <ol className="list-decimal list-inside space-y-2">
+                        {leaderboard.map((player, index) => {
+                            const isCurrentUser = player.id === profile.userId;
 
-                        return (
-                            <li 
-                                key={player.id} 
-                                className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
-                            >
-                                <div>
-                                    <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
-                                    <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
-                                </div>
-                                <span className="font-bold text-lg text-primary dark:text-primary-dark">
-                                    {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
-                                </span>
-                            </li>
-                        );
-                    })}
-                </ol>
+                            return (
+                                <li 
+                                    key={player.id} 
+                                    className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
+                                >
+                                    <div>
+                                        <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
+                                        <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
+                                    </div>
+                                    <span className="font-bold text-lg text-primary dark:text-primary-dark">
+                                        {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                </div>
             )}
-        </CardContainer>
+        </div>
     );
 };
 
