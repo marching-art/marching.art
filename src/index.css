@@ -2,36 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==================================================================
-  Theme Definitions
-  This new, unified theme provides a professional and highly readable
-  experience in both light and dark modes.
-  ==================================================================
-*/
+@layer base {
+  :root {
+    /* Light Mode Colors (Gold & Dark Brown Theme) */
 
-:root, :root.theme-brand, :root.theme-brutalist {
-  /* --- COLOR PALETTE (Light Mode) --- */
-  --color-primary: 59 130 246;      /* Professional Blue */
-  --color-secondary: 55 65 81;      /* Dark Gray for text/elements */
-  --color-accent: 229 231 235;     /* Light Gray for borders */
-  --color-background: 249 250 251;  /* Off-white to reduce glare */
-  --color-surface: 255 255 255;    /* Pure white for cards */
-  --text-primary: 17 24 39;       /* Nearly black for high contrast */
-  --text-secondary: 107 114 128;   /* Medium gray for supporting text */
-  --color-on-primary: 255 255 255;   /* White text on blue buttons */
-  --color-on-secondary: 255 255 255; /* White text on gray buttons */
+    /* Primary: Gold */
+    --color-primary: 255 215 0; /* A rich gold */
+    --on-primary: 255 255 255; /* White text on gold */
 
-  /* --- DARK MODE OVERRIDES --- */
-  --color-primary-dark: 96 165 250;    /* Lighter blue for dark mode contrast */
-  --color-secondary-dark: 209 213 219;  /* Light gray for text/elements */
-  --color-accent-dark: 55 65 81;       /* Dark gray for borders */
-  --color-background-dark: 17 24 39;     /* Deep, cool navy for background */
-  --color-surface-dark: 31 41 55;      /* Lighter navy for cards */
-  --text-primary-dark: 249 250 251;     /* Off-white for main text */
-  --text-secondary-dark: 156 163 175;   /* Lighter gray for supporting text */
+    /* Secondary: Medium Brown */
+    --color-secondary: 139 69 19; /* Saddle Brown */
+    --on-secondary: 255 255 255; /* White text on brown */
 
-  /* --- STRUCTURAL & TYPOGRAPHIC STYLES --- */
-  --border-radius-theme: 0.5rem; /* rounded-lg */
-  --shadow-theme: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
-  --border-width-theme: 1px;
+    /* Accent: Light Tan/Warm Grey */
+    --color-accent: 220 200 170; /* Light Tan */
+
+    /* Background: Off-white/Light Cream */
+    --color-background: 250 250 240; /* Very light cream */
+
+    /* Surface: Slightly darker cream/light tan */
+    --color-surface: 245 245 230; /* Light cream */
+
+    /* Text Colors */
+    --text-primary: 30 30 30; /* Very dark grey for primary text */
+    --text-secondary: 90 90 90; /* Medium grey for secondary text */
+  }
+
+  .dark {
+    /* Dark Mode Colors */
+
+    /* Primary: Gold (slightly muted for dark mode) */
+    --color-primary-dark: 218 165 32; /* Goldenrod, slightly less bright */
+
+    /* Secondary: Medium Brown (for contrast) */
+    --color-secondary-dark: 160 82 45; /* Sienna */
+
+    /* Accent: Darker Tan/Muted Gold */
+    --color-accent-dark: 101 67 33; /* Darker brown/tan */
+
+    /* Background: Very Dark Brown */
+    --color-background-dark: 29 20 15; /* Almost black-brown */
+
+    /* Surface: Darker Brown */
+    --color-surface-dark: 40 28 20; /* Dark brown */
+
+    /* Text Colors */
+    --text-primary-dark: 240 240 240; /* Off-white for primary text */
+    --text-secondary-dark: 180 180 180; /* Light grey for secondary text */
+  }
+
+  /* Base styles for the body to apply dark mode background and text colors */
+  body {
+    @apply bg-background text-text-primary dark:bg-background-dark dark:text-text-primary-dark;
+  }
 }
