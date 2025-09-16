@@ -30,7 +30,7 @@ const Header = ({
     );
 
     return (
-        <header className="bg-surface dark:bg-background-dark border-b-4 border-secondary p-4 flex justify-between items-center shadow-theme relative">
+        <header className="bg-surface dark:bg-background-dark border-b-4 border-secondary dark:border-secondary-dark p-4 flex justify-between items-center shadow-theme relative">
             <div onClick={() => setPage('home')} className="flex items-center space-x-3 cursor-pointer">
                 <LogoIcon className="h-9 w-9" />
                 <span className="text-xl sm:text-2xl md:text-3xl font-semibold text-text-primary tracking-wide">
