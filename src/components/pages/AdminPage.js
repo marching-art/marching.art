@@ -15,6 +15,22 @@ const AdminPage = () => {
     const [isCrawling, setIsCrawling] = useState(false);
     const [crawlerMessage, setCrawlerMessage] = useState('');
     const [jobStatus, setJobStatus] = useState({});
+    const [isMigrating, setIsMigrating] = useState(false);
+    const [migrationMessage, setMigrationMessage] = useState('');
+
+    const handleMigrateProfiles = async () => {
+        setMigrationMessage('Starting profile migration...');
+        setIsMigrating(true);
+        try {
+            const migrateUserProfiles = httpsCallable(functions, 'migrateUserProfiles');
+            const result = await migrateUserProfiles();
+            setMigrationMessage(result.data.message);
+        } catch (error) {
+            console.error("Error calling migration function:", error);
+            setMigrationMessage(`Error: ${error.message}`);
+        }
+        setIsMigrating(false);
+    };
 
     const handleRoleChange = async (makeAdmin) => {
         setMessage('');
@@ -120,6 +136,27 @@ const AdminPage = () => {
                 </div>
             </AdminCard>
             
+            <AdminCard title="Profile Migration">
+                <div className="space-y-4">
+                    <div>
+                        <p className='text-sm text-text-secondary dark:text-text-secondary-dark mb-2'>
+                            <strong>Migrate User Profiles:</strong> Converts existing single-corps user profiles to the new multi-corps structure. 
+                            This should be run once after deploying the multi-corps update. Existing profiles will be preserved as World Class corps.
+                        </p>
+                        <div className="flex items-center space-x-4">
+                            <button 
+                                onClick={handleMigrateProfiles} 
+                                disabled={isMigrating} 
+                                className="bg-yellow-600 hover:opacity-90 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                            >
+                                {isMigrating ? 'Migrating...' : 'Migrate User Profiles'}
+                            </button>
+                            {migrationMessage && <p className="text-sm font-semibold">{migrationMessage}</p>}
+                        </div>
+                    </div>
+                </div>
+            </AdminCard>
+
             <AdminCard title="Manual Job Triggers">
                 <div className="space-y-4">
                     <div className="flex items-center space-x-4">

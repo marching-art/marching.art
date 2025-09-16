@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
 import Modal from '../ui/Modal'; 
+import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
+
 
 const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStartDate }) => {
     const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
@@ -10,15 +12,31 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     const [registrantsModalShow, setRegistrantsModalShow] = useState(null);
     const [registrants, setRegistrants] = useState([]);
     const [isRegistrantsLoading, setIsRegistrantsLoading] = useState(false);
+    const [activeCorpsClass, setActiveCorpsClass] = useState('worldClass');
+    const [userCorps, setUserCorps] = useState({});
     
     const initialWeek = Math.ceil(currentOffSeasonDay / 7);
     const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1);
 
     useEffect(() => {
-        setSelectedShows(profile.selectedShows || {});
+       const allCorps = getAllUserCorps(profile);
+        setUserCorps(allCorps);
+    
+        // Set active to first corps they have
+        const firstCorpsKey = Object.keys(allCorps)[0] || 'worldClass';
+        setActiveCorpsClass(firstCorpsKey);
+    
+        // Initialize selected shows for the active corps
+        const activeCorpsData = allCorps[firstCorpsKey];
+        setSelectedShows(activeCorpsData?.selectedShows || {});
+    }, [profile]);
+
+    useEffect(() => {
+        const activeCorpsData = userCorps[activeCorpsClass];
+        setSelectedShows(activeCorpsData?.selectedShows || {});
         const currentWeek = Math.ceil(currentOffSeasonDay / 7);
         setActiveWeek(currentWeek > 0 ? currentWeek : 1);
-    }, [profile, currentOffSeasonDay]);
+    }, [activeCorpsClass, userCorps, currentOffSeasonDay]);
 
     useEffect(() => {
         if (!registrantsModalShow) return;
@@ -68,7 +86,11 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
         const showsToSave = selectedShows[weekKey] || [];
         try {
             const selectUserShows = httpsCallable(functions, 'selectUserShows');
-            const result = await selectUserShows({ week, shows: showsToSave });
+            const result = await selectUserShows({ 
+                week, 
+                shows: showsToSave, 
+                corpsClass: activeCorpsClass // ADD this line
+            });
             setMessage(result.data.message);
         } catch (error) {
             console.error("Error saving show selections:", error);
@@ -126,7 +148,28 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
                 <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h2>
                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">Select up to 4 shows per week.</p>
             </div>
-            
+
+            {/* Corps Class Selector - NEW */}
+            {Object.keys(userCorps).length > 1 && (
+                <div className="flex gap-2 mb-4 overflow-x-auto">
+                    {Object.keys(userCorps).map(corpsClass => (
+                        <button
+                            key={corpsClass}
+                            onClick={() => setActiveCorpsClass(corpsClass)}
+                            className={`px-3 py-2 rounded-theme whitespace-nowrap text-sm font-semibold transition-all ${
+                                activeCorpsClass === corpsClass
+                                    ? 'bg-secondary text-on-secondary'
+                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                            }`}
+                        >
+                            <div className={`inline-block w-2 h-2 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mr-2`}></div>
+                            {userCorps[corpsClass].corpsName}
+                        </button>
+                    ))}
+                </div>
+            )}
+        
+            {/* Week Tabs */}
             <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
                     <button

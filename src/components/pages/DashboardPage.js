@@ -51,7 +51,7 @@ const DashboardPage = ({ profile, userId }) => {
         );
     }
     
-    const hasJoinedCurrentSeason = profile?.activeSeasonId === seasonSettings.seasonUid;
+    const hasJoinedCurrentSeason = hasJoinedSeason(profile, seasonSettings.seasonUid);
 
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
@@ -73,18 +73,17 @@ const DashboardPage = ({ profile, userId }) => {
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
             {hasJoinedCurrentSeason ? (
                 <div className="flex flex-col gap-8">
-                    {/* Row 1: Lineup Editor & League Manager (2 Columns) */}
+                    {/* Row 1: Corps Selector & League Manager (2 Columns) */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                             <LineupEditor 
+                            <CorpsSelector 
                                 profile={profile}  
                                 corpsData={corpsData}
-                                pointCap={seasonSettings.currentPointCap}
                                 seasonSettings={seasonSettings}
                             />
                         </div>
                         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                             <LeagueManager profile={profile} />
+                            <LeagueManager profile={profile} />
                         </div>
                     </div>
 

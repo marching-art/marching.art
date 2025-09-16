@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
+import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../../utils/profileCompatibility';
 import Icon from '../ui/Icon';
 import UniformDisplay from '../profile/UniformDisplay';
 import TrophyCase from '../profile/TrophyCase';
@@ -37,32 +38,82 @@ const timeSince = (date) => {
 // --- Child Components ---
 
 const MySchedule = ({ profile }) => {
-    // This component now uses the standard theme classes for a consistent look.
+    const userCorps = getAllUserCorps(profile);
+    
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">My Season Schedule</h3>
-            {!profile.activeSeasonId || !profile.selectedShows || Object.keys(profile.selectedShows).length === 0 ? (
-                 <p className="text-text-secondary dark:text-text-secondary-dark">No shows have been selected for the current season.</p>
+            {Object.keys(userCorps).length === 0 || !profile.activeSeasonId ? (
+                <p className="text-text-secondary dark:text-text-secondary-dark">No shows have been selected for the current season.</p>
             ) : (
-                <div className="space-y-4">
-                    {Object.keys(profile.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
-                        const weekNum = weekKey.replace('week', '');
-                        const shows = profile.selectedShows[weekKey];
-                        return (
-                            <div key={weekKey}>
-                                <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">Week {weekNum}</h4>
-                                {shows && shows.length > 0 ? (
-                                    <ul className="list-disc list-inside pl-2 mt-1 text-sm text-text-secondary dark:text-text-secondary-dark space-y-1">
-                                        {shows.map((show, index) => (
-                                            <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="pl-2 mt-1 text-sm text-text-secondary dark:text-text-secondary-dark italic">No shows selected for this week.</p>
-                                )}
+                <div className="space-y-6">
+                    {Object.entries(userCorps).map(([corpsClass, corps]) => (
+                        <div key={corpsClass}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className={`w-3 h-3 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'}`}></div>
+                                <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                    {corps.corpsName} ({CORPS_CLASSES[corpsClass]?.name || corpsClass})
+                                </h4>
                             </div>
-                        );
-                    })}
+                            
+                            {!corps.selectedShows || Object.keys(corps.selectedShows).length === 0 ? (
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic pl-5">No shows selected</p>
+                            ) : (
+                                <div className="space-y-3 pl-5">
+                                    {Object.keys(corps.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
+                                        const weekNum = weekKey.replace('week', '');
+                                        const shows = corps.selectedShows[weekKey];
+                                        return (
+                                            <div key={weekKey}>
+                                                <h5 className="font-medium text-text-primary dark:text-text-primary-dark text-sm">Week {weekNum}</h5>
+                                                {shows && shows.length > 0 ? (
+                                                    <ul className="list-disc list-inside pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark space-y-1">
+                                                        {shows.map((show, index) => (
+                                                            <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const CorpsSummary = ({ profile }) => {
+    const userCorps = getAllUserCorps(profile);
+    const totalScore = getTotalUserScore(profile);
+    
+    if (Object.keys(userCorps).length === 0) {
+        return null;
+    }
+    
+    return (
+        <div className="bg-surface dark:bg-surface-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark mt-4">
+            <h4 className="font-semibold text-text-primary dark:text-text-primary-dark mb-3">Current Season Corps</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {Object.entries(userCorps).map(([corpsClass, corps]) => (
+                    <div key={corpsClass} className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
+                        <div className={`w-4 h-4 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mx-auto mb-2`}></div>
+                        <div className="font-medium text-sm">{CORPS_CLASSES[corpsClass]?.name || corpsClass}</div>
+                        <div className="font-semibold text-text-primary dark:text-text-primary-dark">{corps.corpsName}</div>
+                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">{corps.totalSeasonScore || 0} pts</div>
+                    </div>
+                ))}
+            </div>
+            {Object.keys(userCorps).length > 1 && (
+                <div className="text-center mt-3 pt-3 border-t border-accent dark:border-accent-dark">
+                    <div className="font-bold text-text-primary dark:text-text-primary-dark">
+                        Combined Score: {totalScore} pts
+                    </div>
                 </div>
             )}
         </div>
@@ -184,17 +235,21 @@ const ProfilePage = ({ profile, userId }) => {
                         )}
                     </div>
                     <div className="flex-grow text-center md:text-left">
-                         <h1 className="text-4xl md:text-5xl font-bold text-text-primary dark:text-text-primary-dark">{profile.username}</h1>
-                        {profile.corpsName && (
-                            <h2 className="text-2xl font-semibold text-secondary dark:text-secondary-dark mt-1">{profile.corpsName}</h2>
+                        <h1 className="text-4xl md:text-5xl font-bold text-text-primary dark:text-text-primary-dark">{profile.username}</h1>
+                        {/* Show primary corps name for backward compatibility */}
+                        {(profile.corpsName || getAllUserCorps(profile).worldClass?.corpsName) && (
+                            <h2 className="text-2xl font-semibold text-secondary dark:text-secondary-dark mt-1">
+                                {profile.corpsName || getAllUserCorps(profile).worldClass?.corpsName}
+                            </h2>
                         )}
                         <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
                             Member since {profile.createdAt?.toDate().toLocaleDateString()}
                         </p>
-                         <p className="text-text-secondary dark:text-text-secondary-dark">
+                        <p className="text-text-secondary dark:text-text-secondary-dark">
                             Last active: {timeSinceActive}
                         </p>
                         <div className="mt-4 bg-surface dark:bg-surface-dark p-4 rounded-theme border-l-4 border-primary dark:border-primary-dark">
+                            {/* Bio section remains the same */}
                             {isEditingBio ? (
                                 <div className="space-y-2">
                                     <textarea 
@@ -217,6 +272,7 @@ const ProfilePage = ({ profile, userId }) => {
                                 </div>
                             )}
                         </div>
+                        <CorpsSummary profile={profile} />
                     </div>
                 </div>
                 <div className="grid lg:grid-cols-3 gap-8 items-start">                
