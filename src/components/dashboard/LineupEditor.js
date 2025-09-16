@@ -199,7 +199,8 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
             </div>
 
             <div className="mt-6 flex justify-end items-center space-x-4">
-                {message && <p className="text-sm font-semibold">{message}</p>}
+                {message && !isNewCorps && <p className="text-sm font-semibold">{message}</p>}
+                {message && isNewCorps && !message.includes('trade limit') && <p className="text-sm font-semibold">{message}</p>}
                 <button 
                     onClick={handleSave} 
                     disabled={
