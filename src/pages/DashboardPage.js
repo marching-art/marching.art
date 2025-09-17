@@ -70,7 +70,7 @@ const DashboardPage = ({ profile, userId }) => {
             {hasJoinedCurrentSeason ? (
                 <>
                     {/* New Status Header */}
-                    <MyStatus username={profile.username} />
+                    <MyStatus username={profile.username} profile={profile} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         {/* Main Hub: Corps & Show Management */}

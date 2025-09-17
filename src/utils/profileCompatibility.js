@@ -62,12 +62,6 @@ export const hasAnyCorps = (profile) => {
     return profile?.corps ? Object.keys(profile.corps).some(key => profile.corps[key]?.corpsName) : !!profile?.corpsName;
 };
 
-export const getTotalUserScore = (profile) => {
-    const allCorps = getAllUserCorps(profile);
-    return Object.values(allCorps).reduce((total, corps) => {
-        return total + (corps.totalSeasonScore || 0);
-    }, 0);
-};
 
 export const hasJoinedSeason = (profile, seasonUid) => {
     if (!profile || !seasonUid) return false;

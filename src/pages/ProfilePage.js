@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../firebase';
-import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../utils/profileCompatibility';
+import { getAllUserCorps, CORPS_CLASSES } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
 import TrophyCase from '../components/profile/TrophyCase';
@@ -76,7 +76,6 @@ const MySchedule = ({ profile }) => {
 
 const CorpsSummary = ({ profile }) => {
     const userCorps = getAllUserCorps(profile);
-    const totalScore = getTotalUserScore(profile);
     if (Object.keys(userCorps).length === 0) return null;
     return (
         <div className="bg-surface dark:bg-surface-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark mt-4">
@@ -91,13 +90,6 @@ const CorpsSummary = ({ profile }) => {
                     </div>
                 ))}
             </div>
-            {Object.keys(userCorps).length > 1 && (
-                <div className="text-center mt-3 pt-3 border-t border-accent dark:border-accent-dark">
-                    <div className="font-bold text-text-primary dark:text-text-primary-dark">
-                        Combined Score: {totalScore.toFixed(3)} pts
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

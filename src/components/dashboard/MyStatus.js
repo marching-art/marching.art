@@ -1,33 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
+import { getAllUserCorps, CORPS_CLASSES } from '../../utils/profileCompatibility';
 
-const MyStatus = ({ username }) => {
-    const [stats, setStats] = useState({ globalRank: '...', totalPlayers: '...', totalScore: '...' });
+const MyStatus = ({ username, profile }) => {
+    const [userCorps, setUserCorps] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchRank = async () => {
-            try {
-                const getUserRankings = httpsCallable(functions, 'getUserRankings');
-                const result = await getUserRankings();
-                setStats(result.data);
-            } catch (error) {
-                console.error("Error fetching user rank:", error);
-                setStats({ globalRank: 'N/A', totalPlayers: 'N/A', totalScore: 'N/A' });
-            }
+        if (profile) {
+            const corps = getAllUserCorps(profile);
+            setUserCorps(corps);
             setIsLoading(false);
-        };
-        fetchRank();
-    }, []);
+        }
+    }, [profile]);
 
-    const StatCard = ({ label, value, large = false }) => (
+    const StatCard = ({ label, value, color, large = false }) => (
         <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
-            <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
+            <div className="flex items-center justify-center gap-2 mb-2">
+                {color && <div className={`w-3 h-3 rounded-full ${color}`}></div>}
+                <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
+            </div>
             {isLoading ? (
                 <div className="h-8 mt-1 bg-surface dark:bg-surface-dark rounded animate-pulse w-3/4 mx-auto"></div>
             ) : (
-                <p className={`${large ? 'text-4xl' : 'text-2xl'} font-bold text-primary dark:text-primary-dark`}>{value}</p>
+                <p className={`${large ? 'text-2xl' : 'text-xl'} font-bold text-primary dark:text-primary-dark`}>{value}</p>
             )}
         </div>
     );
@@ -37,12 +32,25 @@ const MyStatus = ({ username }) => {
             <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
                 Welcome back, <span className="text-primary dark:text-primary-dark">{username}!</span>
             </h2>
-            <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Here's your current status for the season.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard label="Total Score" value={typeof stats.totalScore === 'number' ? stats.totalScore.toFixed(3) : '...'} large />
-                <StatCard label="Global Rank" value={`${stats.globalRank}`} />
-                <StatCard label="Total Players" value={stats.totalPlayers} />
-            </div>
+            <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Here are your current corps scores for the season.</p>
+            
+            {Object.keys(userCorps).length === 0 ? (
+                <div className="text-center py-8">
+                    <p className="text-text-secondary dark:text-text-secondary-dark">No corps have been created yet. Visit the Lineup Editor to get started!</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {Object.entries(userCorps).map(([corpsClass, corps]) => (
+                        <StatCard 
+                            key={corpsClass}
+                            label={`${CORPS_CLASSES[corpsClass]?.name || corpsClass}`}
+                            value={`${(corps.totalSeasonScore || 0).toFixed(3)} pts`}
+                            color={CORPS_CLASSES[corpsClass]?.color}
+                            large={Object.keys(userCorps).length === 1}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
