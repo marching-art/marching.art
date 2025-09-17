@@ -160,6 +160,16 @@ const AdminPage = () => {
             <AdminCard title="Manual Job Triggers">
                 <div className="flex items-center space-x-4">
                     <button 
+                        onClick={() => handleManualTrigger('calculateCorpsStatistics')} 
+                        disabled={jobStatus.calculateCorpsStatistics?.loading} 
+                        className="bg-secondary hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                    >
+                        {jobStatus.calculateCorpsStatistics?.loading ? 'Calculating...' : 'Calculate Season Statistics'}
+                    </button>
+                    {jobStatus.calculateCorpsStatistics?.message && <p className="text-sm font-semibold">{jobStatus.calculateCorpsStatistics.message}</p>}
+                </div>
+                <div className="flex items-center space-x-4">
+                    <button 
                         onClick={() => handleManualTrigger('archiveSeasonResults')} 
                         disabled={jobStatus.archiveSeasonResults?.loading} 
                         className="bg-yellow-600 hover:opacity-90 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50"

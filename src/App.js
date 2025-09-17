@@ -10,6 +10,7 @@ import ProfilePage from './components/pages/ProfilePage';
 import AdminPage from './components/pages/AdminPage';
 import SchedulePage from './components/pages/SchedulePage';
 import ScoresPage from './components/pages/ScoresPage';
+import StatsPage from './components/pages/StatsPage';
 import LeaderboardPage from './components/pages/LeaderboardPage';
 import HowToPlayPage from './components/pages/HowToPlayPage';
 import LeaguePage from './components/pages/LeaguePage';
@@ -125,6 +126,7 @@ export default function App() {
             case 'howtoplay': return <HowToPlayPage />;
             case 'schedule': return <SchedulePage setPage={setPage} />;
             case 'scores': return <ScoresPage theme={theme} />;
+            case 'stats': return <StatsPage />;
             case 'leaderboard': return <LeaderboardPage profile={profile} onViewProfile={handleViewProfile} />;
             case 'leagues': return <LeaguePage profile={profile} setPage={setPage} onViewLeague={handleViewLeague} />;
             case 'leagueDetail': return <LeagueDetailPage profile={profile} leagueId={viewingLeagueId} setPage={setPage} onViewProfile={handleViewProfile} />;
@@ -144,6 +146,7 @@ export default function App() {
     return (
         <div className="bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark min-h-screen flex flex-col font-sans">
             <Header
+                user={user} // Pass the user object
                 isLoggedIn={isLoggedIn}
                 isAdmin={isAdmin}
                 onLoginClick={openLoginModal}
@@ -151,6 +154,7 @@ export default function App() {
                 onLogout={handleLogout}
                 setPage={setPage}
                 onViewOwnProfile={handleViewOwnProfile}
+                onViewLeague={handleViewLeague} // Pass the league handler
                 themeMode={theme.mode}
                 toggleThemeMode={toggleThemeMode}
             />

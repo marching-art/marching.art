@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import LogoIcon from '../ui/LogoIcon';
 import Icon from '../ui/Icon';
+import NotificationsIcon from '../ui/NotificationsIcon';
 
 const Header = ({
+    user,
+    onViewLeague,
     isLoggedIn,
     isAdmin,
     onLoginClick,
@@ -42,6 +45,7 @@ const Header = ({
                     <NavButton page="howtoplay">How to Play</NavButton>
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
+                    <NavButton page="stats">Stats</NavButton>
                     {isLoggedIn && (
                         <>
                             <NavButton page="leaderboard">Leaderboard</NavButton>
@@ -54,6 +58,7 @@ const Header = ({
                 <div className="flex items-center space-x-4">
                     {isLoggedIn ? (
                         <>
+                            <NotificationsIcon user={user} setPage={setPage} onViewLeague={onViewLeague} /> {/* ADD THIS */}
                             <button onClick={onViewOwnProfile} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">Profile</button>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 font-bold hover:underline text-sm">Admin</button>}
                             <button onClick={onLogout} className="border border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-secondary dark:text-text-secondary-dark font-bold py-2 px-3 rounded-theme transition-all text-sm">
@@ -89,6 +94,7 @@ const Header = ({
                         <MobileNavButton page="howtoplay">How to Play</MobileNavButton>
                         <MobileNavButton page="schedule">Schedule</MobileNavButton>
                         <MobileNavButton page="scores">Scores</MobileNavButton>
+                        <MobileNavButton page="stats">Stats</MobileNavButton>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                         
                         {isLoggedIn ? (

@@ -5,6 +5,7 @@ import { db } from '../../firebase';
 import SeasonSignup from '../dashboard/SeasonSignup';
 import LeagueManager from '../dashboard/LeagueManager';
 import CorpsSelector from '../dashboard/CorpsSelector';
+import MyStatus from '../dashboard/MyStatus'; // NEW IMPORT
 
 import { hasJoinedSeason } from '../../utils/profileCompatibility';
 
@@ -65,26 +66,33 @@ const DashboardPage = ({ profile, userId }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
             {hasJoinedCurrentSeason ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    {/* Column 1 & 2: Main Corps Management Hub */}
-                    <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                        <CorpsSelector 
-                            profile={profile}  
-                            corpsData={corpsData}
-                            seasonSettings={seasonSettings}
-                            seasonEvents={seasonSettings.events || []}
-                            currentOffSeasonDay={currentOffSeasonDay}
-                            seasonStartDate={seasonStartDate}
-                        />
-                    </div>
+                <>
+                    {/* New Status Header */}
+                    <MyStatus username={profile.username} />
 
-                    {/* Column 3: Leagues and other modules */}
-                    <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                        <LeagueManager profile={profile} />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                        {/* Main Hub: Corps & Show Management */}
+                        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manage Your Corps</h2>
+                            <CorpsSelector 
+                                profile={profile}  
+                                corpsData={corpsData}
+                                seasonSettings={seasonSettings}
+                                seasonEvents={seasonSettings.events || []}
+                                currentOffSeasonDay={currentOffSeasonDay}
+                                seasonStartDate={seasonStartDate}
+                            />
+                        </div>
+
+                        {/* Side Column: Leagues and other modules */}
+                        <div className="space-y-8">
+                             <LeagueManager profile={profile} />
+                             {/* You can add more summary modules here in the future */}
+                        </div>
                     </div>
-                </div>
+                </>
             ) : (
                 <SeasonSignup
                     profile={profile}

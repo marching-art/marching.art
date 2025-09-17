@@ -5,6 +5,7 @@ import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../../utils/p
 import Icon from '../ui/Icon';
 import UniformDisplay from '../profile/UniformDisplay';
 import TrophyCase from '../profile/TrophyCase';
+import AchievementsCase from '../profile/AchievementsCase';
 import SeasonArchive from '../profile/SeasonArchive';
 import UniformBuilder from '../profile/UniformBuilder';
 
@@ -266,6 +267,9 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                         <MySchedule profile={profile} />
                     </div>
                     <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                            <AchievementsCase achievements={profile.achievements} />
+                        </div>
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                             <TrophyCase trophies={profile.trophies} />
                         </div>
