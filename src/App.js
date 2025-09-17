@@ -106,7 +106,7 @@ function AppContent() {
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
             />
-            <main className="flex-grow relative">
+            <main className="flex-grow relative flex">
                 {renderPage()}
             </main>
             <Footer setPage={handleSetPage} />
