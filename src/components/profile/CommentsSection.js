@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions, appId } from '../../../firebase';
+import { db, functions, appId } from '../../firebase';
 import Icon from '../ui/Icon';
 
 const timeSince = (timestamp) => {
