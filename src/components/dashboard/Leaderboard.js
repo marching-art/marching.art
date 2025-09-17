@@ -92,7 +92,7 @@ const Leaderboard = ({ profile }) => {
                     <button
                         key={key}
                         onClick={() => setSelectedCorpsClass(key)}
-                        className={`px-3 py-1 rounded-theme font-semibold transition-all ${
+                        className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
                             selectedCorpsClass === key
                                 ? 'bg-primary text-on-primary'
                                 : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
@@ -105,7 +105,7 @@ const Leaderboard = ({ profile }) => {
             </div>
 
             {/* League Selector */}
-            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4">
+            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
                     className={`py-2 px-4 font-semibold transition-colors ${!selectedLeague ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
@@ -126,22 +126,27 @@ const Leaderboard = ({ profile }) => {
             {isLoading ? (
                 <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
             ) : (
-                <ol className="list-decimal list-inside space-y-2">
+                <ol className="space-y-1">
                     {leaderboard.map((player, index) => {
-                        const isCurrentUser = player.id === profile.userId;
-
+                        const isCurrentUser = player.userId === profile?.userId;
                         return (
-                            <li 
-                                key={player.id} 
-                                className={`p-2 rounded-theme bg-background dark:bg-background-dark flex justify-between items-center ${isCurrentUser ? 'border-theme border-primary dark:border-primary-dark' : 'border-theme border-transparent'}`}
-                            >
-                                <div>
-                                    <span className="font-bold text-text-primary dark:text-text-primary-dark">{index + 1}. {player.corpsName}</span>
-                                    <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
-                                </div>
-                                <span className="font-bold text-lg text-primary dark:text-primary-dark">
-                                    {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
-                                </span>
+                            <li key={player.id}>
+                                <button
+                                    onClick={() => onViewProfile && onViewProfile(player.userId)}
+                                    disabled={!onViewProfile}
+                                    className={`w-full p-2 rounded-theme flex justify-between items-center text-left transition-colors ${isCurrentUser ? 'bg-primary/10' : ''} hover:bg-accent dark:hover:bg-accent-dark/20`}
+                                >
+                                    <div className="flex items-center">
+                                        <span className="font-bold text-text-secondary dark:text-text-secondary-dark w-8">{index + 1}.</span>
+                                        <div>
+                                            <span className="font-bold text-text-primary dark:text-text-primary-dark">{player.corpsName}</span>
+                                            <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-lg text-primary dark:text-primary-dark">
+                                        {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
+                                    </span>
+                                </button>
                             </li>
                         );
                     })}

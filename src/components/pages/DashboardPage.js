@@ -3,10 +3,7 @@ import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 import SeasonSignup from '../dashboard/SeasonSignup';
-import LineupEditor from '../dashboard/LineupEditor';
 import LeagueManager from '../dashboard/LeagueManager';
-import ShowSelection from '../dashboard/ShowSelection';
-import LiveShowSelection from '../dashboard/LiveShowSelection';
 import CorpsSelector from '../dashboard/CorpsSelector';
 
 import { hasJoinedSeason } from '../../utils/profileCompatibility';
@@ -59,14 +56,9 @@ const DashboardPage = ({ profile, userId }) => {
     const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
     let currentOffSeasonDay = 0;
     if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        // This logic creates a "logical" date by subtracting 6 hours.
-        // This makes the daily rollover happen at 6 AM instead of midnight.
         const logicalNow = new Date();
         logicalNow.setHours(logicalNow.getHours() - 24);
-
-        // Use this logical date to determine "today" for selection purposes
         const todayForLogic = new Date(logicalNow.getFullYear(), logicalNow.getMonth(), logicalNow.getDate());
-        
         const startDayForLogic = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
         const diff = todayForLogic.getTime() - startDayForLogic.getTime();
         currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
@@ -75,37 +67,22 @@ const DashboardPage = ({ profile, userId }) => {
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
             {hasJoinedCurrentSeason ? (
-                <div className="flex flex-col gap-8">
-                    {/* Row 1: Corps Selector & League Manager (2 Columns) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                            <CorpsSelector 
-                                profile={profile}  
-                                corpsData={corpsData}
-                                seasonSettings={seasonSettings}
-                            />
-                        </div>
-                        <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                            <LeagueManager profile={profile} />
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    {/* Column 1 & 2: Main Corps Management Hub */}
+                    <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+                        <CorpsSelector 
+                            profile={profile}  
+                            corpsData={corpsData}
+                            seasonSettings={seasonSettings}
+                            seasonEvents={seasonSettings.events || []}
+                            currentOffSeasonDay={currentOffSeasonDay}
+                            seasonStartDate={seasonStartDate}
+                        />
                     </div>
 
-                    {/* Row 2: Show Selection (Full Width) */}
+                    {/* Column 3: Leagues and other modules */}
                     <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                        {seasonSettings.status === 'live-season' ? (
-                            <LiveShowSelection
-                                seasonEvents={seasonSettings.events || []}
-                                profile={profile}
-                                seasonStartDate={seasonStartDate}
-                            />
-                        ) : (
-                            <ShowSelection 
-                                seasonEvents={seasonSettings.events || []}
-                                profile={profile}
-                                currentOffSeasonDay={currentOffSeasonDay}
-                                seasonStartDate={seasonStartDate}
-                            />
-                        )}
+                        <LeagueManager profile={profile} />
                     </div>
                 </div>
             ) : (

@@ -10,7 +10,8 @@ import ProfilePage from './components/pages/ProfilePage';
 import AdminPage from './components/pages/AdminPage';
 import SchedulePage from './components/pages/SchedulePage';
 import ScoresPage from './components/pages/ScoresPage';
-import LeaderboardPage from './components/pages/LeaderboardPage'; // 1. IMPORT THE NEW PAGE
+import LeaderboardPage from './components/pages/LeaderboardPage';
+import HowToPlayPage from './components/pages/HowToPlayPage'; // IMPORTED
 
 // Import Layout & UI Components
 import Header from './components/layout/Header';
@@ -27,9 +28,8 @@ export default function App() {
     const [page, setPage] = useState('home');
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
+    const [viewingUserId, setViewingUserId] = useState(null);
 
-    // This theme state is not used by the new single-theme design,
-    // but is kept here in case you want to re-enable a theme switcher later.
     const [theme, setTheme] = useState({
         style: localStorage.getItem('themeStyle') || 'brand',
         mode: localStorage.getItem('themeMode') || 'dark',
@@ -37,7 +37,6 @@ export default function App() {
 
     useEffect(() => {
         const root = document.documentElement;
-        // Simplified for single theme
         root.classList.remove('dark', 'light');
         root.classList.add(theme.mode);
         localStorage.setItem('themeMode', theme.mode);
@@ -50,12 +49,8 @@ export default function App() {
         }));
     };
     
-    // Kept for potential future use
     const switchThemeStyle = (newStyle) => {
-        setTheme(prevTheme => ({
-            ...prevTheme,
-            style: newStyle,
-        }));
+        setTheme(prevTheme => ({ ...prevTheme, style: newStyle }));
     };
 
     useEffect(() => {
@@ -94,14 +89,22 @@ export default function App() {
             setPage('home');
         }
     }, [user]);
+    
+    const handleViewProfile = (userId) => {
+        setViewingUserId(userId);
+        setPage('profile');
+    };
+    
+    const handleViewOwnProfile = () => {
+        setViewingUserId(user?.uid);
+        setPage('profile');
+    };
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
             setPage('home');
-        } catch (error) {
-            console.error("Error signing out: ", error);
-        }
+        } catch (error) { console.error("Error signing out: ", error); }
     };
 
     const openLoginModal = () => setLoginModalOpen(true);
@@ -115,16 +118,18 @@ export default function App() {
 
     const renderPage = () => {
         switch (page) {
+            case 'howtoplay':
+                return <HowToPlayPage />;
             case 'schedule':
                 return <SchedulePage setPage={setPage} />;
             case 'scores':
                 return <ScoresPage theme={theme} />;
             case 'leaderboard':
-                return <LeaderboardPage profile={profile} />;
+                return <LeaderboardPage profile={profile} onViewProfile={handleViewProfile} />;
             case 'dashboard': 
                 return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'profile': 
-                return isLoggedIn ? <ProfilePage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
+                return isLoggedIn ? <ProfilePage loggedInProfile={profile} loggedInUserId={user?.uid} viewingUserId={viewingUserId} /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'admin':
                 return isLoggedIn && isAdmin ? <AdminPage /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'home': 
@@ -146,21 +151,20 @@ export default function App() {
             <Header
                 isLoggedIn={isLoggedIn}
                 isAdmin={isAdmin}
-                profile={profile}
                 onLoginClick={openLoginModal}
                 onSignUpClick={openSignUpModal}
                 onLogout={handleLogout}
                 setPage={setPage}
+                onViewOwnProfile={handleViewOwnProfile}
                 themeMode={theme.mode}
                 toggleThemeMode={toggleThemeMode}
-                // The following props are no longer needed for a single theme but are kept for reference
                 switchThemeStyle={switchThemeStyle} 
                 currentThemeStyle={theme.style}
             />
             <main className="flex-grow w-full">
                 {renderPage()}
             </main>
-            <Footer />
+            <Footer setPage={setPage} />
             <Modal isOpen={isLoginModalOpen} onClose={closeModal} title="LOGIN">
                 <LoginForm onLoginSuccess={closeModal} switchToSignUp={() => { closeModal(); openSignUpModal(); }} />
             </Modal>

@@ -1,42 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
-import Modal from '../ui/Modal'; 
-import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
+import Modal from '../ui/Modal';
 
-
-const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStartDate }) => {
-    const [selectedShows, setSelectedShows] = useState(profile.selectedShows || {});
+const ShowSelection = ({ seasonEvents, corpsProfile, corpsClass, currentOffSeasonDay, seasonStartDate }) => {
+    const [selectedShows, setSelectedShows] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [registrantsModalShow, setRegistrantsModalShow] = useState(null);
     const [registrants, setRegistrants] = useState([]);
     const [isRegistrantsLoading, setIsRegistrantsLoading] = useState(false);
-    const [activeCorpsClass, setActiveCorpsClass] = useState('worldClass');
-    const [userCorps, setUserCorps] = useState({});
     
-    const initialWeek = Math.ceil(currentOffSeasonDay / 7);
+    const initialWeek = useMemo(() => Math.ceil(currentOffSeasonDay / 7), [currentOffSeasonDay]);
     const [activeWeek, setActiveWeek] = useState(initialWeek > 0 ? initialWeek : 1);
 
     useEffect(() => {
-       const allCorps = getAllUserCorps(profile);
-        setUserCorps(allCorps);
-    
-        // Set active to first corps they have
-        const firstCorpsKey = Object.keys(allCorps)[0] || 'worldClass';
-        setActiveCorpsClass(firstCorpsKey);
-    
-        // Initialize selected shows for the active corps
-        const activeCorpsData = allCorps[firstCorpsKey];
-        setSelectedShows(activeCorpsData?.selectedShows || {});
-    }, [profile]);
-
-    useEffect(() => {
-        const activeCorpsData = userCorps[activeCorpsClass];
-        setSelectedShows(activeCorpsData?.selectedShows || {});
+        setSelectedShows(corpsProfile?.selectedShows || {});
+        // Reset to the current week whenever the corps changes
         const currentWeek = Math.ceil(currentOffSeasonDay / 7);
         setActiveWeek(currentWeek > 0 ? currentWeek : 1);
-    }, [activeCorpsClass, userCorps, currentOffSeasonDay]);
+    }, [corpsProfile, currentOffSeasonDay]);
 
     useEffect(() => {
         if (!registrantsModalShow) return;
@@ -89,7 +72,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             const result = await selectUserShows({ 
                 week, 
                 shows: showsToSave, 
-                corpsClass: activeCorpsClass // ADD this line
+                corpsClass: corpsClass
             });
             setMessage(result.data.message);
         } catch (error) {
@@ -102,13 +85,9 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
     const getCalendarDateForDay = (offSeasonDay) => {
         if (!seasonStartDate) return null;
         const calendarDate = new Date(seasonStartDate.getTime());
-        // CORRECTED: Add the offSeasonDay and then subtract 1 to get the offset, then add 1 to shift the calendar.
-        // This simplifies to just adding the offSeasonDay.
         calendarDate.setDate(calendarDate.getDate() + offSeasonDay);
         return calendarDate;
     };
-
-    const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
     
     const showsGroupedByDate = useMemo(() => {
         const startDay = (activeWeek - 1) * 7 + 1;
@@ -126,14 +105,26 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             acc[formattedDate].push(show);
             return acc;
         }, {});
-    }, [activeWeek, seasonEvents, seasonStartDate]);
+    }, [activeWeek, seasonEvents, seasonStartDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    if (!corpsProfile) {
+        return (
+            <div className="mt-8 text-center bg-background dark:bg-background-dark p-6 rounded-theme">
+                <h3 className="text-xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h3>
+                <p className="mt-2 text-text-secondary dark:text-text-secondary-dark">
+                    Once you create and save this corps, you can select its weekly show schedule here.
+                </p>
+            </div>
+        );
+    }
+    
+    const weeks = Array.from({ length: 7 }, (_, i) => i + 1);
     const userSelectionsForWeek = selectedShows[`week${activeWeek}`] || [];
     const currentWeekNumber = Math.ceil(currentOffSeasonDay / 7);
     const isPastWeek = activeWeek < currentWeekNumber;
 
     return (
-        <div>
+        <div className="mt-8">
             <Modal isOpen={!!registrantsModalShow} onClose={() => setRegistrantsModalShow(null)} title={`Attendees for ${registrantsModalShow?.eventName.replace(/DCI/g, 'marching.art')}`}>
                 {isRegistrantsLoading ? ( <p>Loading...</p> ) : (
                     registrants.length > 0 ? (
@@ -145,31 +136,10 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             </Modal>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h2>
+                <h3 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h3>
                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">Select up to 4 shows per week.</p>
             </div>
-
-            {/* Corps Class Selector - NEW */}
-            {Object.keys(userCorps).length > 1 && (
-                <div className="flex gap-2 mb-4 overflow-x-auto">
-                    {Object.keys(userCorps).map(corpsClass => (
-                        <button
-                            key={corpsClass}
-                            onClick={() => setActiveCorpsClass(corpsClass)}
-                            className={`px-3 py-2 rounded-theme whitespace-nowrap text-sm font-semibold transition-all ${
-                                activeCorpsClass === corpsClass
-                                    ? 'bg-secondary text-on-secondary'
-                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                            }`}
-                        >
-                            <div className={`inline-block w-2 h-2 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mr-2`}></div>
-                            {userCorps[corpsClass].corpsName}
-                        </button>
-                    ))}
-                </div>
-            )}
         
-            {/* Week Tabs */}
             <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
                     <button
@@ -185,7 +155,7 @@ const ShowSelection = ({ seasonEvents, profile, currentOffSeasonDay, seasonStart
             <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                 {Object.keys(showsGroupedByDate).length > 0 ? Object.entries(showsGroupedByDate).map(([date, shows]) => (
                     <div key={date}>
-                        <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark border-b border-accent dark:border-accent-dark pb-1 mb-2">{date}</h3>
+                        <h4 className="font-bold text-lg text-text-primary dark:text-text-primary-dark border-b border-accent dark:border-accent-dark pb-1 mb-2">{date}</h4>
                         <div className="space-y-3">
                             {shows.map((show, index) => {
                                 const showIdentifier = `week${activeWeek}-show${index}`;

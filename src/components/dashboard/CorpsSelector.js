@@ -1,31 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import LineupEditor from './LineupEditor';
+import ShowSelection from './ShowSelection';
+import LiveShowSelection from './LiveShowSelection';
 import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps } from '../../utils/profileCompatibility';
 
-const CorpsSelector = ({ profile, corpsData, seasonSettings }) => {
+const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
     const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
 
     useEffect(() => {
-        // Get all user's corps using compatibility helper
         const allCorps = getAllUserCorps(profile);
         setUserCorps(allCorps);
         
-        // Set active corps to first one they have, or worldClass as default
         const firstCorpsKey = Object.keys(allCorps)[0] || 'worldClass';
         setActiveCorps(firstCorpsKey);
     }, [profile]);
 
     const hasCorps = (corpsClass) => {
         return userCorps[corpsClass] && userCorps[corpsClass].corpsName;
-    };
-
-    const getCorpsDisplayName = (corpsClass) => {
-        const corps = userCorps[corpsClass];
-        if (corps && corps.corpsName) {
-            return corps.corpsName;
-        }
-        return `Create ${CORPS_CLASSES[corpsClass].name}`;
     };
 
     const handleCorpsCreated = (corpsClass, newCorpsData) => {
@@ -36,9 +28,10 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings }) => {
     };
 
     if (!hasAnyCorps(profile)) {
-        // User hasn't joined the season yet - show season signup
         return null; // Let DashboardPage handle SeasonSignup
     }
+
+    const activeCorpsProfile = userCorps[activeCorps];
 
     return (
         <div className="space-y-6">
@@ -48,20 +41,23 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings }) => {
                     <button
                         key={key}
                         onClick={() => setActiveCorps(key)}
-                        className={`relative px-4 py-2 rounded-theme font-semibold transition-all ${
+                        className={`relative px-3 py-2 text-left rounded-theme font-semibold transition-all w-32 ${
                             activeCorps === key
-                                ? 'bg-primary text-on-primary'
-                                : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                                ? 'bg-primary text-on-primary shadow-lg'
+                                : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
                         }`}
                     >
-                        <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${classInfo.color} ${
+                        <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ${classInfo.color} ${
                             hasCorps(key) ? 'opacity-100' : 'opacity-30'
                         }`}></div>
                         <span className="block text-sm">{classInfo.name}</span>
-                        <span className="block text-xs opacity-75">{classInfo.pointCap} pts</span>
-                        {hasCorps(key) && (
-                            <span className="block text-xs mt-1 truncate max-w-24">
+                        {hasCorps(key) ? (
+                            <span className="block text-xs font-normal mt-1 truncate">
                                 {userCorps[key].corpsName}
+                            </span>
+                        ) : (
+                             <span className="block text-xs font-normal mt-1 opacity-75">
+                                + Create New
                             </span>
                         )}
                     </button>
@@ -69,9 +65,9 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings }) => {
             </div>
 
             {/* Active Corps Editor */}
-            <div className="min-h-96">
+            <div>
                 <LineupEditor
-                    profile={userCorps[activeCorps]}
+                    profile={activeCorpsProfile}
                     corpsData={corpsData}
                     pointCap={CORPS_CLASSES[activeCorps].pointCap}
                     seasonSettings={seasonSettings}
@@ -80,28 +76,28 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings }) => {
                     onCorpsCreated={(newCorpsData) => handleCorpsCreated(activeCorps, newCorpsData)}
                 />
             </div>
+            
+            {/* Divider */}
+            <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
 
-            {/* Summary Stats */}
-            <div className="bg-surface dark:bg-surface-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark">
-                <h3 className="font-semibold text-text-primary dark:text-text-primary-dark mb-2">Your Corps Summary</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                        <div key={key} className="text-center">
-                            <div className={`inline-block w-3 h-3 rounded-full ${classInfo.color} mb-1`}></div>
-                            <div className="font-semibold">{classInfo.name}</div>
-                            <div className="text-text-secondary dark:text-text-secondary-dark">
-                                {hasCorps(key) ? (
-                                    <>
-                                        <div>{userCorps[key].corpsName}</div>
-                                        <div>{userCorps[key].totalSeasonScore || 0} pts</div>
-                                    </>
-                                ) : (
-                                    <div>Not Created</div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            {/* Show Selection for Active Corps */}
+            <div>
+                {seasonSettings.status === 'live-season' ? (
+                    <LiveShowSelection
+                        seasonEvents={seasonEvents}
+                        corpsProfile={activeCorpsProfile}
+                        corpsClass={activeCorps}
+                        seasonStartDate={seasonStartDate}
+                    />
+                ) : (
+                    <ShowSelection 
+                        seasonEvents={seasonEvents}
+                        corpsProfile={activeCorpsProfile}
+                        corpsClass={activeCorps}
+                        currentOffSeasonDay={currentOffSeasonDay}
+                        seasonStartDate={seasonStartDate}
+                    />
+                )}
             </div>
         </div>
     );

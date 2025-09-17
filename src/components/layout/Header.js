@@ -9,6 +9,7 @@ const Header = ({
     onSignUpClick,
     onLogout,
     setPage,
+    onViewOwnProfile,
     profile,
     themeMode,
     toggleThemeMode,
@@ -38,6 +39,8 @@ const Header = ({
             
             <nav className="hidden md:flex items-center space-x-6">
                 <div className="flex items-center space-x-6">
+                    {/* NEW LINK ADDED HERE */}
+                    <NavButton page="howtoplay">How to Play</NavButton>
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
                     {isLoggedIn && (
@@ -51,7 +54,7 @@ const Header = ({
                 <div className="flex items-center space-x-4">
                     {isLoggedIn ? (
                         <>
-                            <NavButton page="profile">Profile</NavButton>
+                            <button onClick={onViewOwnProfile} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">Profile</button>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 font-bold hover:underline text-sm">Admin</button>}
                             <button onClick={onLogout} className="border border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-secondary dark:text-text-secondary-dark font-bold py-2 px-3 rounded-theme transition-all text-sm">
                                 Logout
@@ -83,6 +86,7 @@ const Header = ({
             {isMobileMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-56 bg-surface dark:bg-surface-dark rounded-theme shadow-lg border border-accent dark:border-accent-dark z-20">
                     <nav className="flex flex-col p-2">
+                        <MobileNavButton page="howtoplay">How to Play</MobileNavButton>
                         <MobileNavButton page="schedule">Schedule</MobileNavButton>
                         <MobileNavButton page="scores">Scores</MobileNavButton>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
@@ -91,15 +95,15 @@ const Header = ({
                             <>
                                 <MobileNavButton page="leaderboard">Leaderboard</MobileNavButton>
                                 <MobileNavButton page="dashboard">Dashboard</MobileNavButton>
-                                <MobileNavButton page="profile">Profile</MobileNavButton>
+                                <button onClick={() => { onViewOwnProfile(); setIsMobileMenuOpen(false); }} className="text-text-primary dark:text-text-primary-dark p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 font-semibold w-full">Profile</button>
                                 {isAdmin && <button onClick={() => { setPage('admin'); setIsMobileMenuOpen(false); }} className="text-red-500 font-bold p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 w-full">Admin</button>}
                                 <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                                 <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="text-text-primary dark:text-text-primary-dark p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 font-semibold w-full">Logout</button>
                             </>
                         ) : (
                             <>
-                                <MobileNavButton page="login">Log In</MobileNavButton>
-                                <MobileNavButton page="signup">Sign Up</MobileNavButton>
+                                <button onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="text-text-primary dark:text-text-primary-dark p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 font-semibold w-full">Log In</button>
+                                <button onClick={() => { onSignUpClick(); setIsMobileMenuOpen(false); }} className="text-text-primary dark:text-text-primary-dark p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 font-semibold w-full">Sign Up</button>
                             </>
                         )}
                     </nav>

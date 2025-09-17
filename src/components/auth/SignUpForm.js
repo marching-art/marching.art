@@ -1,29 +1,47 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db, appId } from '../../firebase';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { auth, db, appId, functions } from '../../firebase';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSignUp = async (e) => {
         e.preventDefault();
         setError('');
-        if (!username.trim()) {
+        setIsLoading(true);
+
+        const trimmedUsername = username.trim();
+
+        if (!trimmedUsername) {
             setError("Please enter a username.");
+            setIsLoading(false);
             return;
         }
+
         try {
+            // Step 1: Check if username is available via Cloud Function
+            const checkUsername = httpsCallable(functions, 'checkUsername');
+            await checkUsername({ username: trimmedUsername });
+
+            // Step 2: Create the user with Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
+            // Step 3: Create profile and username documents in a batch write
+            const batch = writeBatch(db);
+
             const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            // Default uniform data now matches the builder's structure
-            await setDoc(userDocRef, {
-                username: username,
+            const usernameDocRef = doc(db, 'usernames', trimmedUsername.toLowerCase());
+
+            // Create Profile Document
+            batch.set(userDocRef, {
+                username: trimmedUsername,
                 email: user.email,
                 createdAt: new Date(),
                 lastActive: new Date(),
@@ -41,10 +59,17 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                 lineup: {}
             });
             
+            // Create Username Document to enforce uniqueness
+            batch.set(usernameDocRef, { uid: user.uid });
+
+            await batch.commit();
+            
             onSignUpSuccess();
+
         } catch (err) {
             setError(err.message);
         }
+        setIsLoading(false);
     };
 
     return (
@@ -77,9 +102,10 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
             
             <button 
                 type="submit" 
-                className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme transition-all"
+                disabled={isLoading}
+                className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme transition-all disabled:opacity-50"
             >
-                Sign Up
+                {isLoading ? 'Signing Up...' : 'Sign Up'}
             </button>
             
             <p className="text-center pt-2 text-sm text-text-secondary dark:text-text-secondary-dark">

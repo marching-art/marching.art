@@ -56,15 +56,19 @@ const SeasonControls = () => {
         setIsLoading(false);
     };
     
-    const handleForceStartLiveSeason = () => {
-        // This logic would calculate the correct start day based on the DCI calendar
-        // For now, it's a placeholder.
-        const today = new Date();
-        const secondSaturdayOfAugust = new Date(); // Placeholder for calculation
-        const diff = today - secondSaturdayOfAugust;
-        const startDay = Math.floor(diff / (1000 * 60 * 60 * 24)) + 70; // Example calculation
-        
-        alert(`This would force start the live season on day ${startDay}. Backend logic to be implemented.`);
+const handleForceStartLiveSeason = async () => {
+        if (!window.confirm('Are you sure you want to end any active season and start a new live season? This will use the previous year\'s final rankings to generate the corps list.')) return;
+        setIsLoading(true);
+        setMessage('');
+        try {
+            const startNewLiveSeasonFunc = httpsCallable(functions, 'startNewLiveSeason');
+            const result = await startNewLiveSeasonFunc();
+            setMessage(result.data.message);
+        } catch (error) {
+            setMessage(error.message);
+            console.error(error);
+        }
+        setIsLoading(false);
     };
 
     return (
