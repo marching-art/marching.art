@@ -19,4 +19,4 @@ const functions = getFunctions(app);
 
 export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
 
-export { auth, db, functions, dataNamespace };
+export { auth, db, functions };
