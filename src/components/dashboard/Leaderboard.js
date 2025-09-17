@@ -30,10 +30,9 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             
             setSeasonName(seasonData.name);
 
-            let baseQuery = query(
-                collectionGroup(db, 'profile'),
-                where('activeSeasonId', '==', activeSeasonId)
-            );
+            // Query all profiles instead of filtering by activeSeasonId
+            // We'll filter by season participation in the client-side logic
+            let baseQuery = query(collectionGroup(db, 'profile'));
 
             if (selectedLeague) {
                 baseQuery = query(baseQuery, where('leagueIds', 'array-contains', selectedLeague.id));
@@ -108,8 +107,12 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
-                    disabled={!!initialLeague} // Disable Global button
-                    // ...
+                    disabled={!!initialLeague}
+                    className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
+                        !selectedLeague
+                            ? 'border-primary text-primary dark:text-primary-dark'
+                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                    } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     Global
                 </button>
@@ -117,8 +120,12 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     <button
                         key={league.id}
                         onClick={() => setSelectedLeague(league)}
-                        disabled={!!initialLeague} // Disable other league buttons
-                        // ...
+                        disabled={!!initialLeague}
+                        className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
+                            selectedLeague?.id === league.id
+                                ? 'border-primary text-primary dark:text-primary-dark'
+                                : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                        } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {league.name}
                     </button>
