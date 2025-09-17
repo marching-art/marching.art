@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../firebase';
 
 const SchedulePage = ({ setPage }) => {
     const [season, setSeason] = useState(null);

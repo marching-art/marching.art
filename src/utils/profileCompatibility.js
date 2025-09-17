@@ -82,3 +82,32 @@ export const hasJoinedSeason = (profile, seasonUid) => {
     // Backward compatibility
     return profile.activeSeasonId === seasonUid && profile.corpsName;
 };
+
+export const ensureProfileCompatibility = (profileData) => {
+    if (!profileData) return profileData;
+    
+    // If profile already has the new corps structure, return as-is
+    if (profileData.corps) {
+        return profileData;
+    }
+    
+    // Convert old single-corps structure to new multi-corps structure
+    if (profileData.corpsName) {
+        return {
+            ...profileData,
+            corps: {
+                worldClass: {
+                    corpsName: profileData.corpsName,
+                    lineup: profileData.lineup || {},
+                    totalSeasonScore: profileData.totalSeasonScore || 0,
+                    selectedShows: profileData.selectedShows || {},
+                    weeklyTrades: profileData.weeklyTrades || { used: 0 },
+                    lastScoredDay: profileData.lastScoredDay || 0,
+                    lineupKey: profileData.lineupKey
+                }
+            }
+        };
+    }
+    
+    return profileData;
+};

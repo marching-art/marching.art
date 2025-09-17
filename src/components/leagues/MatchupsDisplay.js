@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, appId } from '../../firebase';
-import { CORPS_CLASSES } from '../../utils/profileCompatibility'; // Assuming you have this from previous steps
+import { CORPS_CLASSES } from '../../utils/profileCompatibility';
 
 const MatchupCard = ({ matchup, members, onViewProfile }) => {
     const [p1_uid, p2_uid] = matchup.pair;
@@ -47,47 +47,43 @@ const MatchupsDisplay = ({ league, currentWeek, onViewProfile, season }) => {
 
     useEffect(() => {
         const fetchMatchupsAndMembers = async () => {
-            setIsLoading(true);
-            
-            // Fetch member profiles
-            if (league.members && league.members.length > 0) {
-                const memberProfilesQuery = query(collection(db, `artifacts/${appId}/users`), where('__name__', 'in', league.members));
-                const profilesSnapshot = await getDocs(memberProfilesQuery);
-                const membersData = profilesSnapshot.docs.map(doc => {
-                    const profile = doc.data().profile?.data;
-                    return {
-                        id: doc.id,
-                        username: profile.username,
-                        corpsName: profile.corps?.worldClass?.corpsName || profile.corpsName || 'Unnamed', // Simplified for display
-                    };
-                });
-                setLeagueMembers(membersData);
+            if (!league?.id || currentWeek <= 0) {
+                setIsLoading(false);
+                return;
             }
 
-            // Fetch matchups for the current week
-            const matchupRef = doc(db, `leagues/${league.id}/matchups/week${currentWeek}`);
-            const matchupSnap = await getDoc(matchupRef);
-            if (matchupSnap.exists()) {
-                setMatchups(matchupSnap.data().matchups || []);
-            } else {
-                setMatchups([]);
+            setIsLoading(true);
+            
+            try {
+                // Fetch member profiles
+                if (league.members && league.members.length > 0) {
+                    const memberProfilesQuery = query(collection(db, `artifacts/${appId}/users`), where('__name__', 'in', league.members));
+                    const profilesSnapshot = await getDocs(memberProfilesQuery);
+                    const membersData = profilesSnapshot.docs.map(doc => {
+                        const profile = doc.data().profile?.data;
+                        return {
+                            id: doc.id,
+                            username: profile?.username || 'Unknown User',
+                            corpsName: profile?.corps?.worldClass?.corpsName || profile?.corpsName || 'Unnamed Corps',
+                        };
+                    });
+                    setLeagueMembers(membersData);
+                }
+
+                // Fetch matchups for the current week
+                const matchupRef = doc(db, `leagues/${league.id}/matchups/week${currentWeek}`);
+                const matchupSnap = await getDoc(matchupRef);
+                setMatchupData(matchupSnap.exists() ? matchupSnap.data() : null);
+            } catch (error) {
+                console.error('Error fetching matchups and members:', error);
+                setMatchupData(null);
             }
 
             setIsLoading(false);
         };
 
-        useEffect(() => {
-            const fetchMatchups = async () => {
-                setIsLoading(true);
-                const matchupRef = doc(db, `leagues/${league.id}/matchups/week${currentWeek}`);
-                const matchupSnap = await getDoc(matchupRef);
-                setMatchupData(matchupSnap.exists() ? matchupSnap.data() : null);
-                setIsLoading(false);
-            };
-            if (league?.id && currentWeek > 0) fetchMatchups();
-        }, [league, currentWeek]);
-
-    }, [league, currentWeek]);
+        fetchMatchupsAndMembers();
+    }, [league?.id, currentWeek]);
 
     const matchups = matchupData?.[`${selectedClass}Matchups`] || [];
 

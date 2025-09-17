@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../firebase';
 
-import SeasonSignup from '../dashboard/SeasonSignup';
-import LeagueManager from '../dashboard/LeagueManager';
-import CorpsSelector from '../dashboard/CorpsSelector';
-import MyStatus from '../dashboard/MyStatus'; // NEW IMPORT
+import SeasonSignup from '../components/dashboard/SeasonSignup';
+import LeagueManager from '../components/dashboard/LeagueManager';
+import CorpsSelector from '../components/dashboard/CorpsSelector';
+import MyStatus from '../components/dashboard/MyStatus'; // NEW IMPORT
 
-import { hasJoinedSeason } from '../../utils/profileCompatibility';
+import { hasJoinedSeason } from '../utils/profileCompatibility';
 
 const DashboardPage = ({ profile, userId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { functions, db } from '../../firebase';
-import CreateLeagueModal from '../dashboard/CreateLeagueModal';
+import { functions, db } from '../firebase';
+import CreateLeagueModal from '../components/dashboard/CreateLeagueModal';
 
 const LeaguePage = ({ profile, setPage, onViewLeague }) => {
     const [userLeagues, setUserLeagues] = useState([]);

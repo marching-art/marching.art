@@ -1,8 +1,11 @@
-import { functions, db } from '../../firebase'; // Make sure db is exported from firebase config
-import FinalRankingsManager from '../admin/FinalRankingsManager';
-import LiveSeasonScheduler from '../admin/LiveSeasonScheduler';
-import SeasonControls from '../admin/SeasonControls';
-import ScoreDataViewer from '../admin/ScoreDataViewer'; 
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { functions, db } from '../firebase';
+import FinalRankingsManager from '../components/admin/FinalRankingsManager';
+import LiveSeasonScheduler from '../components/admin/LiveSeasonScheduler';
+import SeasonControls from '../components/admin/SeasonControls';
+import ScoreDataViewer from '../components/admin/ScoreDataViewer';
 
 // NEW COMPONENT for managing reports
 const ReportsManager = () => {

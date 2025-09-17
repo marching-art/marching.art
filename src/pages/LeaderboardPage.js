@@ -1,5 +1,5 @@
 import React from 'react';
-import Leaderboard from '../dashboard/Leaderboard';
+import Leaderboard from '../components/dashboard/Leaderboard';
 
 const LeaderboardPage = ({ profile, onViewProfile }) => {
     return (

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, appId } from '../../firebase';
-import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../../utils/profileCompatibility';
-import Icon from '../ui/Icon';
-import UniformDisplay from '../profile/UniformDisplay';
-import TrophyCase from '../profile/TrophyCase';
-import AchievementsCase from '../profile/AchievementsCase';
-import SeasonArchive from '../profile/SeasonArchive';
-import UniformBuilder from '../profile/UniformBuilder';
-import CommentsSection from '../profile/CommentsSection'; // IMPORT THE NEW COMPONENT
+import { auth, db, appId } from '../firebase';
+import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../utils/profileCompatibility';
+import Icon from '../components/ui/Icon';
+import UniformDisplay from '../components/profile/UniformDisplay';
+import TrophyCase from '../components/profile/TrophyCase';
+import AchievementsCase from '../components/profile/AchievementsCase';
+import SeasonArchive from '../components/profile/SeasonArchive';
+import UniformBuilder from '../components/profile/UniformBuilder';
+import CommentsSection from '../components/profile/CommentsSection'; // IMPORT THE NEW COMPONENT
 
 const timeSince = (date) => {
     if (!date) return 'never';

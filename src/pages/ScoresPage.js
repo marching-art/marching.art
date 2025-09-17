@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query } from 'firebase/firestore';
-import { db } from '../../firebase';
-import Modal from '../ui/Modal';
-import CaptionChart from '../charts/CaptionChart';
-import { CORPS_CLASSES } from '../../utils/profileCompatibility';
+import { db } from '../firebase';
+import Modal from '../components/ui/Modal';
+import CaptionChart from '../components/charts/CaptionChart';
+import { CORPS_CLASSES } from '../utils/profileCompatibility';
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
