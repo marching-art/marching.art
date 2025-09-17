@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, appId } from '../firebase';
-import { getAllUserCorps, CORPS_CLASSES } from '../utils/profileCompatibility';
+import { auth, db } from '../firebase';
+// MODIFIED: Import CORPS_CLASS_ORDER to enforce hierarchy
+import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
 import TrophyCase from '../components/profile/TrophyCase';
 import AchievementsCase from '../components/profile/AchievementsCase';
 import SeasonArchive from '../components/profile/SeasonArchive';
 import UniformBuilder from '../components/profile/UniformBuilder';
-import CommentsSection from '../components/profile/CommentsSection'; // IMPORT THE NEW COMPONENT
+import CommentsSection from '../components/profile/CommentsSection';
 
 const timeSince = (date) => {
     if (!date) return 'never';
@@ -22,8 +23,6 @@ const timeSince = (date) => {
     return "a moment ago";
 };
 
-// --- Child Components (MySchedule, CorpsSummary) remain the same ---
-// To save space, they are not repeated here but should be kept in your file.
 
 const MySchedule = ({ profile }) => {
     const userCorps = getAllUserCorps(profile);
@@ -34,40 +33,46 @@ const MySchedule = ({ profile }) => {
                 <p className="text-text-secondary dark:text-text-secondary-dark">No shows have been selected for the current season.</p>
             ) : (
                 <div className="space-y-6">
-                    {Object.entries(userCorps).map(([corpsClass, corps]) => (
-                        <div key={corpsClass}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className={`w-3 h-3 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'}`}></div>
-                                <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">
-                                    {corps.corpsName} ({CORPS_CLASSES[corpsClass]?.name || corpsClass})
-                                </h4>
-                            </div>
-                            {!corps.selectedShows || Object.keys(corps.selectedShows).length === 0 ? (
-                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic pl-5">No shows selected</p>
-                            ) : (
-                                <div className="space-y-3 pl-5">
-                                    {Object.keys(corps.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
-                                        const weekNum = weekKey.replace('week', '');
-                                        const shows = corps.selectedShows[weekKey];
-                                        return (
-                                            <div key={weekKey}>
-                                                <h5 className="font-medium text-text-primary dark:text-text-primary-dark text-sm">Week {weekNum}</h5>
-                                                {shows && shows.length > 0 ? (
-                                                    <ul className="list-disc list-inside pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark space-y-1">
-                                                        {shows.map((show, index) => (
-                                                            <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
-                                                        ))}
-                                                    </ul>
-                                                ) : (
-                                                    <p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                    {/* MODIFIED: Iterate over the ordered array */}
+                    {CORPS_CLASS_ORDER.map(corpsClassKey => {
+                        const corps = userCorps[corpsClassKey];
+                        if (!corps) return null; // Don't render if the user doesn't have a corps in this class
+
+                        return (
+                            <div key={corpsClassKey}>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className={`w-3 h-3 rounded-full ${CORPS_CLASSES[corpsClassKey]?.color || 'bg-gray-400'}`}></div>
+                                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                        {corps.corpsName} ({CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey})
+                                    </h4>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {!corps.selectedShows || Object.keys(corps.selectedShows).length === 0 ? (
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic pl-5">No shows selected</p>
+                                ) : (
+                                    <div className="space-y-3 pl-5">
+                                        {Object.keys(corps.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
+                                            const weekNum = weekKey.replace('week', '');
+                                            const shows = corps.selectedShows[weekKey];
+                                            return (
+                                                <div key={weekKey}>
+                                                    <h5 className="font-medium text-text-primary dark:text-text-primary-dark text-sm">Week {weekNum}</h5>
+                                                    {shows && shows.length > 0 ? (
+                                                        <ul className="list-disc list-inside pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark space-y-1">
+                                                            {shows.map((show, index) => (
+                                                                <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
             )}
         </div>
@@ -81,15 +86,20 @@ const CorpsSummary = ({ profile }) => {
         <div className="bg-surface dark:bg-surface-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark mt-4">
             <h4 className="font-semibold text-text-primary dark:text-text-primary-dark mb-3">Current Season Corps</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {Object.entries(userCorps).map(([corpsClass, corps]) => (
-                    <div key={corpsClass} className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
-                        <div className={`w-4 h-4 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mx-auto mb-2`}></div>
-                        <div className="font-medium text-sm">{CORPS_CLASSES[corpsClass]?.name || corpsClass}</div>
-                        <div className="font-semibold text-text-primary dark:text-text-primary-dark">{corps.corpsName}</div>
-                        {/* MODIFIED LINE BELOW */}
-                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">{(corps.totalSeasonScore || 0).toFixed(3)} pts</div>
-                    </div>
-                ))}
+                {/* MODIFIED: Iterate over the ordered array */}
+                {CORPS_CLASS_ORDER.map(corpsClassKey => {
+                    const corps = userCorps[corpsClassKey];
+                    if (!corps) return null; // Don't render if the user doesn't have a corps in this class
+
+                    return (
+                        <div key={corpsClassKey} className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
+                            <div className={`w-4 h-4 rounded-full ${CORPS_CLASSES[corpsClassKey]?.color || 'bg-gray-400'} mx-auto mb-2`}></div>
+                            <div className="font-medium text-sm">{CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}</div>
+                            <div className="font-semibold text-text-primary dark:text-text-primary-dark">{corps.corpsName}</div>
+                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">{(corps.totalSeasonScore || 0).toFixed(3)} pts</div>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     );
@@ -111,6 +121,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true);
+            const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
             const targetUserId = viewingUserId || loggedInUserId;
 
             if (!targetUserId) {
@@ -119,18 +130,17 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                 return;
             }
             
-            // Use logged-in profile if viewing own page to avoid re-fetch
             if (isOwner) {
                 setProfile(loggedInProfile);
                 setIsLoading(false);
             } else {
                 try {
-                    const userDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'profile', 'data');
+                    const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', targetUserId, 'profile', 'data');
                     const docSnap = await getDoc(userDocRef);
                     if (docSnap.exists()) {
                         setProfile({ userId: targetUserId, ...docSnap.data() });
                     } else {
-                        setProfile(null); // Or a "not found" state
+                        setProfile(null);
                     }
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
@@ -144,7 +154,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
         fetchProfileData();
     }, [viewingUserId, loggedInUserId, loggedInProfile, isOwner]);
 
-    // This effect can stay as it only runs when viewing your own profile
     useEffect(() => {
         if (isOwner) {
             const fetchCurrentSeasonData = async () => {
@@ -181,7 +190,8 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
 
     const handleSaveBio = async () => {
         if (!isOwner || !loggedInUserId) return;
-        const userDocRef = doc(db, 'artifacts', appId, 'users', loggedInUserId, 'profile', 'data');
+        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
+        const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { bio: bioText }, { merge: true });
             setProfile(p => ({ ...p, bio: bioText }));
@@ -191,7 +201,8 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     
     const handleSaveUniform = async (newUniform) => {
         if (!isOwner || !loggedInUserId) return;
-        const userDocRef = doc(db, 'artifacts', appId, 'users', loggedInUserId, 'profile', 'data');
+        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
+        const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { uniform: newUniform }, { merge: true });
             setProfile(p => ({ ...p, uniform: newUniform }));
@@ -268,7 +279,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                             <TrophyCase trophies={profile.trophies} />
                         </div>
-                        {/* ADD THE COMMENTS SECTION HERE */}
                         <CommentsSection
                             profileOwnerId={profileUserId}
                             loggedInProfile={loggedInProfile}
