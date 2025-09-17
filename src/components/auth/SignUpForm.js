@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, writeBatch } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 // MODIFIED: Import dataNamespace instead of appId
-import { auth, db, functions, dataNamespace } from '../../firebase';
+import { auth, functions, dataNamespace } from '../../firebase';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');
@@ -26,45 +25,26 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
         }
 
         try {
+            // First check if username is available
             const checkUsername = httpsCallable(functions, 'checkUsername');
             await checkUsername({ username: trimmedUsername });
 
+            // Create the user account
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            const batch = writeBatch(db);
-
-            // MODIFIED: Use the clear dataNamespace variable to build the path
-            const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', user.uid, 'profile', 'data');
-            const usernameDocRef = doc(db, 'usernames', trimmedUsername.toLowerCase());
-
-            batch.set(userDocRef, {
+            // Use backend function to create the complete user profile
+            const createUserProfile = httpsCallable(functions, 'createUserProfile');
+            await createUserProfile({ 
                 username: trimmedUsername,
-                email: user.email,
-                createdAt: new Date(),
-                lastActive: new Date(),
-                bio: `Welcome to my marching.art profile!`,
-                uniform: {
-                  skinTone: '#d8aa7c',
-                  headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } },
-                  plume: { style: 'fountain', colors: { plume: '#ff0000' } },
-                  jacket: { style: 'sash', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700' } },
-                  pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } },
-                  shoes: { style: 'white' },
-                },
-                trophies: { championships: [], regionals: [], finalistMedals: [] },
-                seasons: [],
-                lineup: {}
+                email: user.email 
             });
-            
-            batch.set(usernameDocRef, { uid: user.uid });
-
-            await batch.commit();
             
             onSignUpSuccess();
 
         } catch (err) {
-            setError(err.message);
+            console.error('Sign up error:', err);
+            setError(err.message || 'An error occurred during sign up. Please try again.');
         }
         setIsLoading(false);
     };

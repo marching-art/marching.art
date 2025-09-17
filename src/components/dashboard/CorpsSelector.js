@@ -13,9 +13,13 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         const allCorps = getAllUserCorps(profile);
         setUserCorps(allCorps);
         
-        const firstCorpsKey = Object.keys(allCorps)[0] || 'worldClass';
-        setActiveCorps(firstCorpsKey);
-    }, [profile]);
+        // Only reset activeCorps if the current selection is invalid or doesn't exist
+        const availableCorpsKeys = Object.keys(allCorps);
+        if (!availableCorpsKeys.includes(activeCorps)) {
+            const firstCorpsKey = availableCorpsKeys[0] || 'worldClass';
+            setActiveCorps(firstCorpsKey);
+        }
+    }, [profile, activeCorps]);
 
     const hasCorps = (corpsClass) => {
         return userCorps[corpsClass] && userCorps[corpsClass].corpsName;
