@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-// NOTE: I have left your original FeatureCard and the new CommunityCard here for completeness.
-// No changes are needed in these components.
+// No changes needed for these card components
 const FeatureCard = ({ title, children, accentText }) => (
     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
@@ -9,7 +8,7 @@ const FeatureCard = ({ title, children, accentText }) => (
         </span>
         <div className="relative">
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-2">{title}</h3>
-            <p className="text-text-secondary leading-relaxed">{children}</p>
+            <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">{children}</p>
         </div>
     </div>
 );
@@ -34,6 +33,7 @@ const CommunityCard = () => (
     </div>
 );
 
+
 const HomePage = ({ onSignUpClick }) => {
     const videoRef = useRef(null);
 
@@ -44,25 +44,29 @@ const HomePage = ({ onSignUpClick }) => {
     }, []);
 
     return (
-        <div className="relative w-full h-full overflow-hidden">
+        // This container establishes the boundary and stacking context
+        <div className="relative w-full h-full">
             {/* --- VIDEO BACKGROUND --- */}
+            {/* The video is now the base layer (z-0) */}
             <video
                 ref={videoRef}
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
+                className="absolute inset-0 w-full h-full object-cover z-0"
             >
                 <source src="/montage.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
             </video>
 
-            {/* --- OVERLAY to ensure text readability --- */}
-            <div className="absolute top-0 left-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-[-1]"></div>
+            {/* --- OVERLAY --- */}
+            {/* The overlay sits on top of the video (z-10) */}
+            <div className="absolute inset-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-10"></div>
 
             {/* --- PAGE CONTENT --- */}
-            <div className="relative z-10 text-center p-6 md:p-8 h-full overflow-y-auto">
+            {/* The content sits on top of everything (z-20) and is scrollable */}
+            <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8">
                 <div className="py-20 md:py-32">
                     <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
                         Your Field of Dreams Awaits
@@ -80,10 +84,17 @@ const HomePage = ({ onSignUpClick }) => {
                     </button>
                 </div>
                 
+                {/* --- FIX: Added the text content back inside the FeatureCard components --- */}
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                    <FeatureCard title="Live Scoring" accentText="LIVE" />
-                    <FeatureCard title="Off-Season Fun" accentText="365" />
-                    <FeatureCard title="Build Your Legacy" accentText="YOU" />
+                    <FeatureCard title="Live Scoring" accentText="LIVE">
+                        Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
+                    </FeatureCard>
+                    <FeatureCard title="Off-Season Fun" accentText="365">
+                        The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.
+                    </FeatureCard>
+                    <FeatureCard title="Build Your Legacy" accentText="YOU">
+                        Create your manager profile, design a unique uniform, and track your history to show off your championship titles.
+                    </FeatureCard>
                     <CommunityCard />
                 </div>
             </div>
