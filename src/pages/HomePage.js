@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-// No changes needed for these card components
+// Card components (no changes needed here)
 const FeatureCard = ({ title, children, accentText }) => (
     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
@@ -44,9 +44,8 @@ const HomePage = ({ onSignUpClick }) => {
     }, []);
 
     return (
-        // This container establishes the boundary and stacking context
-        <div className="relative w-full h-full">
-            {/* --- VIDEO BACKGROUND --- */}
+        // --- THIS IS THE CHANGED LINE ---
+        <div className="absolute inset-0">
             {/* The video is now the base layer (z-0) */}
             <video
                 ref={videoRef}
@@ -60,11 +59,9 @@ const HomePage = ({ onSignUpClick }) => {
                 Your browser does not support the video tag.
             </video>
 
-            {/* --- OVERLAY --- */}
             {/* The overlay sits on top of the video (z-10) */}
             <div className="absolute inset-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-10"></div>
 
-            {/* --- PAGE CONTENT --- */}
             {/* The content sits on top of everything (z-20) and is scrollable */}
             <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8">
                 <div className="py-20 md:py-32">
@@ -84,7 +81,6 @@ const HomePage = ({ onSignUpClick }) => {
                     </button>
                 </div>
                 
-                {/* --- FIX: Added the text content back inside the FeatureCard components --- */}
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                     <FeatureCard title="Live Scoring" accentText="LIVE">
                         Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
