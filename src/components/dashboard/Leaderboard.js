@@ -3,11 +3,11 @@ import { collectionGroup, query, where, orderBy, onSnapshot, getDoc, doc } from 
 import { db } from '../../firebase';
 import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
 
-const Leaderboard = ({ profile, onViewProfile }) => {
+const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [seasonName, setSeasonName] = useState('');
-    const [selectedLeague, setSelectedLeague] = useState(null);
+    const [selectedLeague, setSelectedLeague] = useState(initialLeague);
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
 
     useEffect(() => {
@@ -108,7 +108,8 @@ const Leaderboard = ({ profile, onViewProfile }) => {
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
-                    className={`py-2 px-4 font-semibold transition-colors ${!selectedLeague ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
+                    disabled={!!initialLeague} // Disable Global button
+                    // ...
                 >
                     Global
                 </button>
@@ -116,7 +117,8 @@ const Leaderboard = ({ profile, onViewProfile }) => {
                     <button
                         key={league.id}
                         onClick={() => setSelectedLeague(league)}
-                        className={`py-2 px-4 font-semibold transition-colors whitespace-nowrap ${selectedLeague?.id === league.id ? 'border-b-2 border-primary text-primary dark:border-primary-dark dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}
+                        disabled={!!initialLeague} // Disable other league buttons
+                        // ...
                     >
                         {league.name}
                     </button>

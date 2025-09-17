@@ -158,6 +158,16 @@ const AdminPage = () => {
             </AdminCard>
 
             <AdminCard title="Manual Job Triggers">
+                <div className="flex items-center space-x-4">
+                    <button 
+                        onClick={() => handleManualTrigger('archiveSeasonResults')} 
+                        disabled={jobStatus.archiveSeasonResults?.loading} 
+                        className="bg-yellow-600 hover:opacity-90 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50"
+                    >
+                        {jobStatus.archiveSeasonResults?.loading ? 'Archiving...' : 'Archive Season Champions'}
+                    </button>
+                    {jobStatus.archiveSeasonResults?.message && <p className="text-sm font-semibold">{jobStatus.archiveSeasonResults.message}</p>}
+                </div>
                 <div className="space-y-4">
                     <div className="flex items-center space-x-4">
                         <button 

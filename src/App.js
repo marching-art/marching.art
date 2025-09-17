@@ -11,7 +11,9 @@ import AdminPage from './components/pages/AdminPage';
 import SchedulePage from './components/pages/SchedulePage';
 import ScoresPage from './components/pages/ScoresPage';
 import LeaderboardPage from './components/pages/LeaderboardPage';
-import HowToPlayPage from './components/pages/HowToPlayPage'; // IMPORTED
+import HowToPlayPage from './components/pages/HowToPlayPage';
+import LeaguePage from './components/pages/LeaguePage';
+import LeagueDetailPage from './components/pages/LeagueDetailPage';
 
 // Import Layout & UI Components
 import Header from './components/layout/Header';
@@ -29,6 +31,7 @@ export default function App() {
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
     const [viewingUserId, setViewingUserId] = useState(null);
+    const [viewingLeagueId, setViewingLeagueId] = useState(null); // State for viewing a specific league
 
     const [theme, setTheme] = useState({
         style: localStorage.getItem('themeStyle') || 'brand',
@@ -49,10 +52,6 @@ export default function App() {
         }));
     };
     
-    const switchThemeStyle = (newStyle) => {
-        setTheme(prevTheme => ({ ...prevTheme, style: newStyle }));
-    };
-
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -100,6 +99,11 @@ export default function App() {
         setPage('profile');
     };
 
+    const handleViewLeague = (leagueId) => {
+        setViewingLeagueId(leagueId);
+        setPage('leagueDetail');
+    };
+
     const handleLogout = async () => {
         try {
             await signOut(auth);
@@ -118,20 +122,15 @@ export default function App() {
 
     const renderPage = () => {
         switch (page) {
-            case 'howtoplay':
-                return <HowToPlayPage />;
-            case 'schedule':
-                return <SchedulePage setPage={setPage} />;
-            case 'scores':
-                return <ScoresPage theme={theme} />;
-            case 'leaderboard':
-                return <LeaderboardPage profile={profile} onViewProfile={handleViewProfile} />;
-            case 'dashboard': 
-                return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
-            case 'profile': 
-                return isLoggedIn ? <ProfilePage loggedInProfile={profile} loggedInUserId={user?.uid} viewingUserId={viewingUserId} /> : <HomePage onSignUpClick={openSignUpModal} />;
-            case 'admin':
-                return isLoggedIn && isAdmin ? <AdminPage /> : <HomePage onSignUpClick={openSignUpModal} />;
+            case 'howtoplay': return <HowToPlayPage />;
+            case 'schedule': return <SchedulePage setPage={setPage} />;
+            case 'scores': return <ScoresPage theme={theme} />;
+            case 'leaderboard': return <LeaderboardPage profile={profile} onViewProfile={handleViewProfile} />;
+            case 'leagues': return <LeaguePage profile={profile} setPage={setPage} onViewLeague={handleViewLeague} />;
+            case 'leagueDetail': return <LeagueDetailPage profile={profile} leagueId={viewingLeagueId} setPage={setPage} onViewProfile={handleViewProfile} />;
+            case 'dashboard': return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
+            case 'profile': return isLoggedIn ? <ProfilePage loggedInProfile={profile} loggedInUserId={user?.uid} viewingUserId={viewingUserId} /> : <HomePage onSignUpClick={openSignUpModal} />;
+            case 'admin': return isLoggedIn && isAdmin ? <AdminPage /> : <HomePage onSignUpClick={openSignUpModal} />;
             case 'home': 
             default: 
                 return <HomePage onSignUpClick={openSignUpModal} />;
@@ -139,11 +138,7 @@ export default function App() {
     };
 
     if (loading) {
-        return (
-             <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary-dark text-2xl font-sans">
-                Loading System...
-            </div>
-        );
+        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary-dark text-2xl font-sans">Loading System...</div>;
     }
 
     return (
@@ -158,8 +153,6 @@ export default function App() {
                 onViewOwnProfile={handleViewOwnProfile}
                 themeMode={theme.mode}
                 toggleThemeMode={toggleThemeMode}
-                switchThemeStyle={switchThemeStyle} 
-                currentThemeStyle={theme.style}
             />
             <main className="flex-grow w-full">
                 {renderPage()}

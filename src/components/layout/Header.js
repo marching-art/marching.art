@@ -39,13 +39,13 @@ const Header = ({
             
             <nav className="hidden md:flex items-center space-x-6">
                 <div className="flex items-center space-x-6">
-                    {/* NEW LINK ADDED HERE */}
                     <NavButton page="howtoplay">How to Play</NavButton>
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
                     {isLoggedIn && (
                         <>
                             <NavButton page="leaderboard">Leaderboard</NavButton>
+                            <NavButton page="leagues">Leagues</NavButton>
                             <NavButton page="dashboard">Dashboard</NavButton>
                         </>
                     )}
@@ -94,6 +94,7 @@ const Header = ({
                         {isLoggedIn ? (
                             <>
                                 <MobileNavButton page="leaderboard">Leaderboard</MobileNavButton>
+                                <MobileNavButton page="leagues">Leagues</MobileNavButton>
                                 <MobileNavButton page="dashboard">Dashboard</MobileNavButton>
                                 <button onClick={() => { onViewOwnProfile(); setIsMobileMenuOpen(false); }} className="text-text-primary dark:text-text-primary-dark p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 font-semibold w-full">Profile</button>
                                 {isAdmin && <button onClick={() => { setPage('admin'); setIsMobileMenuOpen(false); }} className="text-red-500 font-bold p-3 text-left rounded-theme hover:bg-accent dark:hover:bg-accent-dark/20 w-full">Admin</button>}
