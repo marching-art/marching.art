@@ -17,7 +17,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 
-// For convenience in frontend files that need it without context
-export const appId = process.env.REACT_APP_FIREBASE_APP_ID;
+export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
 
 export { auth, db, functions };

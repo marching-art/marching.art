@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { auth, db, functions } from '../../firebase';
+// MODIFIED: Import dataNamespace instead of appId
+import { auth, db, functions, dataNamespace } from '../../firebase';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');
@@ -25,21 +26,18 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
         }
 
         try {
-            // Step 1: Check if username is available via Cloud Function
             const checkUsername = httpsCallable(functions, 'checkUsername');
             await checkUsername({ username: trimmedUsername });
 
-            // Step 2: Create the user with Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Step 3: Create profile and username documents in a batch write
             const batch = writeBatch(db);
 
-            const userDocRef = doc(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', user.uid, 'profile', 'data');
+            // MODIFIED: Use the clear dataNamespace variable to build the path
+            const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', user.uid, 'profile', 'data');
             const usernameDocRef = doc(db, 'usernames', trimmedUsername.toLowerCase());
 
-            // Create Profile Document
             batch.set(userDocRef, {
                 username: trimmedUsername,
                 email: user.email,
@@ -54,12 +52,11 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
                   pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } },
                   shoes: { style: 'white' },
                 },
-                trophies: { championships: [], regionals: [] },
+                trophies: { championships: [], regionals: [], finalistMedals: [] },
                 seasons: [],
                 lineup: {}
             });
             
-            // Create Username Document to enforce uniqueness
             batch.set(usernameDocRef, { uid: user.uid });
 
             await batch.commit();
