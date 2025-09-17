@@ -8,6 +8,7 @@ import TrophyCase from '../profile/TrophyCase';
 import AchievementsCase from '../profile/AchievementsCase';
 import SeasonArchive from '../profile/SeasonArchive';
 import UniformBuilder from '../profile/UniformBuilder';
+import CommentsSection from '../profile/CommentsSection'; // IMPORT THE NEW COMPONENT
 
 const timeSince = (date) => {
     if (!date) return 'never';
@@ -216,6 +217,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
       skinTone: '#d8aa7c', headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } }, plume: { style: 'fountain', colors: { plume: '#ff0000' } }, jacket: { style: 'sash', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700' } }, pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } }, shoes: { style: 'white' },
     };
     const userUniform = profile?.uniform ? { ...defaultUniform, ...profile.uniform } : defaultUniform;
+    const profileUserId = viewingUserId || loggedInUserId;
 
     return (
         <>
@@ -273,10 +275,15 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                             <TrophyCase trophies={profile.trophies} />
                         </div>
+                        {/* ADD THE COMMENTS SECTION HERE */}
+                        <CommentsSection
+                            profileOwnerId={profileUserId}
+                            loggedInProfile={loggedInProfile}
+                        />
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                              <SeasonArchive 
                                 seasons={profile.seasons} 
-                                userId={viewingUserId || loggedInUserId}
+                                userId={profileUserId}
                                 seasonSettings={seasonSettings}
                                 fantasyRecaps={fantasyRecaps}
                             />               

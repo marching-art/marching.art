@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
-import Leaderboard from '../dashboard/Leaderboard'; // Re-using the Leaderboard component
+import Leaderboard from '../dashboard/Leaderboard';
+import MatchupsDisplay from '../leagues/MatchupsDisplay'; // Import new component
 
 const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
     const [league, setLeague] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [season, setSeason] = useState(null); // State for season data
 
     useEffect(() => {
+        const seasonRef = doc(db, 'game-settings', 'season');
+        const unsubSeason = onSnapshot(seasonRef, (docSnap) => {
+            setSeason(docSnap.data());
+        });
+        
         if (!leagueId) {
             setIsLoading(false);
             return;
         }
         const leagueRef = doc(db, 'leagues', leagueId);
-        const unsubscribe = onSnapshot(leagueRef, (docSnap) => {
+        const unsubLeague = onSnapshot(leagueRef, (docSnap) => {
             if (docSnap.exists()) {
                 setLeague({ id: docSnap.id, ...docSnap.data() });
             } else {
@@ -21,15 +28,26 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
             }
             setIsLoading(false);
         });
-        return () => unsubscribe();
+
+        return () => {
+            unsubSeason();
+            unsubLeague();
+        };
     }, [leagueId]);
 
     if (isLoading) {
         return <div className="p-8 text-center"><p>Loading League...</p></div>;
     }
-
     if (!league) {
         return <div className="p-8 text-center"><p>League not found.</p></div>;
+    }
+
+    // Calculate current week
+    let currentWeek = 0;
+    if (season?.schedule?.startDate) {
+        const startDate = season.schedule.startDate.toDate();
+        const diff = new Date().getTime() - startDate.getTime();
+        currentWeek = Math.ceil((Math.floor(diff / (1000 * 60 * 60 * 24)) + 1) / 7);
     }
 
     const champions = league.champions || [];
@@ -47,12 +65,18 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
                 </div>
             </div>
 
+            {currentWeek > 0 && <MatchupsDisplay 
+                league={league} 
+                currentWeek={currentWeek} 
+                onViewProfile={onViewProfile} 
+                season={season}
+            />}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2">
                     <Leaderboard 
                         profile={profile} 
                         onViewProfile={onViewProfile}
-                        // This effectively scopes the leaderboard to the current league
                         initialLeague={league} 
                     />
                 </div>

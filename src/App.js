@@ -1,173 +1,156 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut, getIdTokenResult } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db, appId } from './firebase';
 
-// Import Page Components
-import HomePage from './components/pages/HomePage';
-import DashboardPage from './components/pages/DashboardPage';
-import ProfilePage from './components/pages/ProfilePage';
-import AdminPage from './components/pages/AdminPage';
-import SchedulePage from './components/pages/SchedulePage';
-import ScoresPage from './components/pages/ScoresPage';
-import StatsPage from './components/pages/StatsPage';
-import LeaderboardPage from './components/pages/LeaderboardPage';
-import HowToPlayPage from './components/pages/HowToPlayPage';
-import LeaguePage from './components/pages/LeaguePage';
-import LeagueDetailPage from './components/pages/LeagueDetailPage';
-
-// Import Layout & UI Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import Modal from './components/ui/Modal';
-import LoginForm from './components/auth/LoginForm';
-import SignUpForm from './components/auth/SignUpForm';
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminPage from './pages/AdminPage';
+import LeaguePage from './pages/LeaguePage';
+import LeagueDetailPage from './pages/LeagueDetailPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import SchedulePage from './pages/SchedulePage';
+import ScoresPage from './pages/ScoresPage';
+import StatsPage from './pages/StatsPage';
+import HowToPlayPage from './pages/HowToPlayPage';
 
-export default function App() {
+import AuthModal from './components/auth/AuthModal';
+import { ensureProfileCompatibility } from './utils/profileCompatibility';
+
+function App() {
     const [user, setUser] = useState(null);
-    const [profile, setProfile] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loggedInProfile, setLoggedInProfile] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
-    const [isLoginModalOpen, setLoginModalOpen] = useState(false);
-    const [isSignUpModalOpen, setSignUpModalOpen] = useState(false);
-    const [viewingUserId, setViewingUserId] = useState(null);
-    const [viewingLeagueId, setViewingLeagueId] = useState(null); // State for viewing a specific league
+    const [pageProps, setPageProps] = useState({});
+    const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
 
-    const [theme, setTheme] = useState({
-        style: localStorage.getItem('themeStyle') || 'brand',
-        mode: localStorage.getItem('themeMode') || 'dark',
-    });
-
-    useEffect(() => {
-        const root = document.documentElement;
-        root.classList.remove('dark', 'light');
-        root.classList.add(theme.mode);
-        localStorage.setItem('themeMode', theme.mode);
-    }, [theme.mode]);
-
-    const toggleThemeMode = () => {
-        setTheme(prevTheme => ({
-            ...prevTheme,
-            mode: prevTheme.mode === 'light' ? 'dark' : 'light',
-        }));
-    };
-    
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+            setIsLoading(true);
             if (currentUser) {
-                const tokenResult = await getIdTokenResult(currentUser);
-                setIsAdmin(!!tokenResult.claims.admin);
+                setUser(currentUser);
+
+                // *** NEW LOGIC TO INCLUDE ADMIN ROLE ***
+                // When a user logs in, get their ID token to check for custom claims.
+                const idTokenResult = await currentUser.getIdTokenResult();
+                const isAdmin = idTokenResult.claims.admin === true;
+
+                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+                
+                // Set lastActive status on login
+                await setDoc(userDocRef, { lastActive: new Date() }, { merge: true });
+
+                const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const profileData = ensureProfileCompatibility(docSnap.data());
+                        // Merge Firestore profile data with the admin status from the token
+                        setLoggedInProfile({ 
+                            userId: currentUser.uid, 
+                            ...profileData, 
+                            isAdmin: isAdmin // Add the isAdmin flag here
+                        });
+                    } else {
+                        setLoggedInProfile(null);
+                    }
+                });
+                
+                setIsLoading(false);
+                return () => unsubProfile();
+
             } else {
-                setIsAdmin(false);
+                setUser(null);
+                setLoggedInProfile(null);
+                setIsLoading(false);
+                setPage('home');
             }
-            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
 
     useEffect(() => {
-        let unsubscribe;
-        if (user && !user.isAnonymous) {
-            const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-            unsubscribe = onSnapshot(userDocRef, (doc) => {
-                setProfile(doc.exists() ? { userId: user.uid, ...doc.data() } : null);
-            }, (error) => {
-                console.error("Error fetching profile:", error);
-            });
+        if (themeMode === 'dark') {
+            document.documentElement.classList.add('dark');
         } else {
-            setProfile(null);
+            document.documentElement.classList.remove('dark');
         }
-        return () => { if (unsubscribe) unsubscribe(); };
-    }, [user]);
-
-    useEffect(() => {
-        if (user && !user.isAnonymous) {
-            setPage('dashboard');
-        } else {
-            setPage('home');
-        }
-    }, [user]);
-    
-    const handleViewProfile = (userId) => {
-        setViewingUserId(userId);
-        setPage('profile');
-    };
-    
-    const handleViewOwnProfile = () => {
-        setViewingUserId(user?.uid);
-        setPage('profile');
-    };
-
-    const handleViewLeague = (leagueId) => {
-        setViewingLeagueId(leagueId);
-        setPage('leagueDetail');
-    };
+        localStorage.setItem('theme', themeMode);
+    }, [themeMode]);
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
+            setUser(null);
+            setLoggedInProfile(null);
             setPage('home');
-        } catch (error) { console.error("Error signing out: ", error); }
-    };
-
-    const openLoginModal = () => setLoginModalOpen(true);
-    const openSignUpModal = () => setSignUpModalOpen(true);
-    const closeModal = () => {
-        setLoginModalOpen(false);
-        setSignUpModalOpen(false);
-    };
-    
-    const isLoggedIn = user && !user.isAnonymous;
-
-    const renderPage = () => {
-        switch (page) {
-            case 'howtoplay': return <HowToPlayPage />;
-            case 'schedule': return <SchedulePage setPage={setPage} />;
-            case 'scores': return <ScoresPage theme={theme} />;
-            case 'stats': return <StatsPage />;
-            case 'leaderboard': return <LeaderboardPage profile={profile} onViewProfile={handleViewProfile} />;
-            case 'leagues': return <LeaguePage profile={profile} setPage={setPage} onViewLeague={handleViewLeague} />;
-            case 'leagueDetail': return <LeagueDetailPage profile={profile} leagueId={viewingLeagueId} setPage={setPage} onViewProfile={handleViewProfile} />;
-            case 'dashboard': return isLoggedIn ? <DashboardPage profile={profile} userId={user?.uid} /> : <HomePage onSignUpClick={openSignUpModal} />;
-            case 'profile': return isLoggedIn ? <ProfilePage loggedInProfile={profile} loggedInUserId={user?.uid} viewingUserId={viewingUserId} /> : <HomePage onSignUpClick={openSignUpModal} />;
-            case 'admin': return isLoggedIn && isAdmin ? <AdminPage /> : <HomePage onSignUpClick={openSignUpModal} />;
-            case 'home': 
-            default: 
-                return <HomePage onSignUpClick={openSignUpModal} />;
+        } catch (error) {
+            console.error("Error signing out:", error);
         }
     };
 
-    if (loading) {
-        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary-dark text-2xl font-sans">Loading System...</div>;
+    const handleSetPage = (newPage, props = {}) => {
+        setPage(newPage);
+        setPageProps(props);
+    };
+
+    const renderPage = () => {
+        switch (page) {
+            case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
+            case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
+            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+            case 'leagues': return <LeaguePage profile={loggedInProfile} setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
+            case 'leagueDetail': return <LeagueDetailPage profile={loggedInProfile} leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'leaderboard': return <LeaderboardPage profile={loggedInProfile} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'schedule': return <SchedulePage setPage={handleSetPage} />;
+            case 'scores': return <ScoresPage theme={themeMode} />;
+            case 'stats': return <StatsPage />;
+            case 'howtoplay': return <HowToPlayPage />;
+            case 'home':
+            default:
+                return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+        }
+    };
+
+    if (isLoading) {
+        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
     }
 
     return (
-        <div className="bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark min-h-screen flex flex-col font-sans">
-            <Header
-                user={user} // Pass the user object
-                isLoggedIn={isLoggedIn}
-                isAdmin={isAdmin}
-                onLoginClick={openLoginModal}
-                onSignUpClick={openSignUpModal}
-                onLogout={handleLogout}
-                setPage={setPage}
-                onViewOwnProfile={handleViewOwnProfile}
-                onViewLeague={handleViewLeague} // Pass the league handler
-                themeMode={theme.mode}
-                toggleThemeMode={toggleThemeMode}
+        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                initialView={authModalView}
+                onAuthSuccess={() => {
+                    setIsAuthModalOpen(false);
+                    setPage('dashboard');
+                }}
             />
-            <main className="flex-grow w-full">
+            <Header
+                user={user}
+                isLoggedIn={!!user}
+                isAdmin={loggedInProfile?.isAdmin}
+                onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
+                onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
+                onLogout={handleLogout}
+                setPage={handleSetPage}
+                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
+                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
+                profile={loggedInProfile}
+                themeMode={themeMode}
+                toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+            />
+            <main className="flex-grow">
                 {renderPage()}
             </main>
-            <Footer setPage={setPage} />
-            <Modal isOpen={isLoginModalOpen} onClose={closeModal} title="LOGIN">
-                <LoginForm onLoginSuccess={closeModal} switchToSignUp={() => { closeModal(); openSignUpModal(); }} />
-            </Modal>
-            <Modal isOpen={isSignUpModalOpen} onClose={closeModal} title="CREATE ACCOUNT">
-                <SignUpForm onSignUpSuccess={closeModal} switchToLogin={() => { closeModal(); openLoginModal(); }} />
-            </Modal>
+            <Footer setPage={handleSetPage} />
         </div>
     );
 }
+
+export default App;

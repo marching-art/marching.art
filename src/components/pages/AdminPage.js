@@ -1,10 +1,71 @@
-import React, { useState } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
+import { functions, db } from '../../firebase'; // Make sure db is exported from firebase config
 import FinalRankingsManager from '../admin/FinalRankingsManager';
 import LiveSeasonScheduler from '../admin/LiveSeasonScheduler';
 import SeasonControls from '../admin/SeasonControls';
 import ScoreDataViewer from '../admin/ScoreDataViewer'; 
+
+// NEW COMPONENT for managing reports
+const ReportsManager = () => {
+    const [reports, setReports] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const reportsRef = collection(db, 'reports');
+        const q = query(reportsRef, where('status', '==', 'new'), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setReports(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleUpdateStatus = async (reportId, status) => {
+        const reportRef = doc(db, 'reports', reportId);
+        await updateDoc(reportRef, { status });
+    };
+
+    const handleDeleteComment = async (report) => {
+        if (!window.confirm("This will permanently delete the comment. Are you sure?")) return;
+        try {
+            const deleteComment = httpsCallable(functions, 'deleteComment');
+            await deleteComment({
+                profileOwnerId: report.reportedOnProfileUid,
+                commentId: report.commentId
+            });
+            // Mark report as resolved after deleting comment
+            await handleUpdateStatus(report.id, 'resolved');
+        } catch (error) {
+            alert(`Error deleting comment: ${error.message}`);
+        }
+    };
+    
+    return (
+        <div className="space-y-4">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">New Comment Reports</h3>
+            {isLoading && <p>Loading reports...</p>}
+            {!isLoading && reports.length === 0 && <p className="text-text-secondary dark:text-text-secondary-dark">No new reports found.</p>}
+            <div className="space-y-3">
+                {reports.map(report => (
+                    <div key={report.id} className="p-3 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark">
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                            Reported by: <span className="font-mono text-xs">{report.reporterUid}</span>
+                        </p>
+                        <blockquote className="border-l-4 border-accent dark:border-accent-dark pl-3 my-2 italic">
+                           "{report.commentText}"
+                        </blockquote>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                            Original Author: <span className="font-mono text-xs">{report.commentAuthorUid}</span>
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                            <button onClick={() => handleDeleteComment(report)} className="text-sm border border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-1 px-3 rounded-theme transition-colors">Delete Comment</button>
+                            <button onClick={() => handleUpdateStatus(report.id, 'reviewed')} className="text-sm border border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 font-bold py-1 px-3 rounded-theme transition-colors">Mark as Reviewed</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const AdminPage = () => {
     const [email, setEmail] = useState('');
@@ -96,6 +157,10 @@ const AdminPage = () => {
         <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
             <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-6">Admin Panel</h1>
             
+            <AdminCard title="Content Moderation">
+                <ReportsManager />
+            </AdminCard>
+
             <ScoreDataViewer />
 
             <AdminCard title="Data & Scoring Tools">
