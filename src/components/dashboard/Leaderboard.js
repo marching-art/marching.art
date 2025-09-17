@@ -30,8 +30,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             
             setSeasonName(seasonData.name);
 
-            // Query all profiles instead of filtering by activeSeasonId
-            // We'll filter by season participation in the client-side logic
+            // Use a broader query to get all profiles, then filter client-side
             let baseQuery = query(collectionGroup(db, 'profile'));
 
             if (selectedLeague) {
@@ -44,6 +43,10 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 querySnapshot.docs.forEach(doc => {
                     const playerData = doc.data();
                     const userId = doc.ref.parent.parent.id;
+                    
+                    // Skip if no username (incomplete profile)
+                    if (!playerData.username) return;
+                    
                     const userCorps = getAllUserCorps(playerData);
                     
                     // Add each corps class as a separate leaderboard entry
