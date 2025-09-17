@@ -1,24 +1,23 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
-// These global variables are provided by the environment.
-// eslint-disable-next-line no-undef
-export const appId = typeof __app_id !== 'undefined' ? __app_id : 'marching-art';
-// eslint-disable-next-line no-undef
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-    apiKey: "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
-    authDomain: "marching-art.firebaseapp.com",
-    projectId: "marching-art",
-    storageBucket: "marching-art.firebasestorage.app",
-    messagingSenderId: "278086562126",
-    appId: "1:278086562126:web:f7737ee897774c3d9a6e1f",
-    measurementId: "G-H0KE8GJS7M"
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase and export the services
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const functions = getFunctions(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app);
+
+// For convenience in frontend files that need it without context
+export const appId = process.env.REACT_APP_FIREBASE_APP_ID;
+
+export { auth, db, functions };

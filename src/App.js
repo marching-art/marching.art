@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { auth, db, appId } from './firebase';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -16,62 +17,21 @@ import SchedulePage from './pages/SchedulePage';
 import ScoresPage from './pages/ScoresPage';
 import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
-
 import AuthModal from './components/auth/AuthModal';
-import { ensureProfileCompatibility } from './utils/profileCompatibility';
 
-function App() {
-    const [user, setUser] = useState(null);
-    const [loggedInProfile, setLoggedInProfile] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+function AppContent() {
+    const { user, loggedInProfile, isLoadingAuth } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
     const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
-
+    
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setIsLoading(true);
-            if (currentUser) {
-                setUser(currentUser);
-
-                // *** NEW LOGIC TO INCLUDE ADMIN ROLE ***
-                // When a user logs in, get their ID token to check for custom claims.
-                const idTokenResult = await currentUser.getIdTokenResult();
-                const isAdmin = idTokenResult.claims.admin === true;
-
-                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
-                
-                // Set lastActive status on login
-                await setDoc(userDocRef, { lastActive: new Date() }, { merge: true });
-
-                const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const profileData = ensureProfileCompatibility(docSnap.data());
-                        // Merge Firestore profile data with the admin status from the token
-                        setLoggedInProfile({ 
-                            userId: currentUser.uid, 
-                            ...profileData, 
-                            isAdmin: isAdmin // Add the isAdmin flag here
-                        });
-                    } else {
-                        setLoggedInProfile(null);
-                    }
-                });
-                
-                setIsLoading(false);
-                return () => unsubProfile();
-
-            } else {
-                setUser(null);
-                setLoggedInProfile(null);
-                setIsLoading(false);
-                setPage('home');
-            }
-        });
-        return () => unsubscribe();
-    }, []);
+        if (!isLoadingAuth && !user) {
+            setPage('home');
+        }
+    }, [user, isLoadingAuth]);
 
     useEffect(() => {
         if (themeMode === 'dark') {
@@ -85,8 +45,6 @@ function App() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            setUser(null);
-            setLoggedInProfile(null);
             setPage('home');
         } catch (error) {
             console.error("Error signing out:", error);
@@ -99,6 +57,8 @@ function App() {
     };
 
     const renderPage = () => {
+        // Now profile is accessed from context within components where needed
+        // Or passed explicitly like here for simplicity
         switch (page) {
             case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
             case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
@@ -116,12 +76,13 @@ function App() {
         }
     };
 
-    if (isLoading) {
+    if (isLoadingAuth) {
         return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
     }
 
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
@@ -150,6 +111,14 @@ function App() {
             </main>
             <Footer setPage={handleSetPage} />
         </div>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 }
 
