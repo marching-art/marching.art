@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { db, appId } from '../../firebase';
 import Icon from './Icon';
 import NotificationsPanel from './NotificationsPanel';
