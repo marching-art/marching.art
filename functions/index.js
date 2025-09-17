@@ -748,6 +748,12 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
 
     try {
         switch (jobName) {
+            case 'calculateCorpsStatistics':
+                await calculateCorpsStatisticsLogic();
+                return { success: true, message: "Successfully calculated and saved corps statistics." };
+            case 'archiveSeasonResults':
+                await archiveSeasonResultsLogic();
+                return { success: true, message: "Season results and league champions have been archived." };
             case 'processAndArchiveOffSeasonScores':
                 await processAndArchiveOffSeasonScoresLogic();
                 return { success: true, message: "Off-Season Score Processor & Archiver finished successfully." };
@@ -888,6 +894,59 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
     }
 });
 
+exports.getUserRankings = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to perform this action.");
+    }
+    const uid = request.auth.uid;
+    const db = getDb();
+
+    // 1. Get current season ID
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) {
+        throw new HttpsError("not-found", "No active season found.");
+    }
+    const activeSeasonId = seasonDoc.data().seasonUid;
+
+    // 2. Query all profiles participating in the current season
+    const profilesQuery = db.collectionGroup('profile').where('activeSeasonId', '==', activeSeasonId);
+    const profilesSnapshot = await profilesQuery.get();
+    
+    if (profilesSnapshot.empty) {
+        return { globalRank: 1, totalPlayers: 1 };
+    }
+
+    // 3. Process scores and find the user's rank
+    const allPlayerScores = [];
+    let myTotalScore = 0;
+
+    profilesSnapshot.docs.forEach(doc => {
+        const profile = doc.data();
+        const userId = doc.ref.parent.parent.id;
+        
+        const userCorps = profile.corps || {};
+        if (profile.corpsName && !userCorps.worldClass) {
+            userCorps.worldClass = { totalSeasonScore: profile.totalSeasonScore || 0 };
+        }
+        const totalScore = Object.values(userCorps).reduce((sum, corps) => sum + (corps.totalSeasonScore || 0), 0);
+        
+        allPlayerScores.push(totalScore);
+        if (userId === uid) {
+            myTotalScore = totalScore;
+        }
+    });
+
+    // 4. Calculate rank
+    allPlayerScores.sort((a, b) => b - a);
+    const rank = allPlayerScores.findIndex(score => score === myTotalScore) + 1;
+
+    return {
+        globalRank: rank > 0 ? rank : allPlayerScores.length,
+        totalPlayers: allPlayerScores.length,
+        totalScore: myTotalScore
+    };
+});
+
 // ================================================================= //
 //                      INTERNAL HELPER LOGIC                        //
 // ================================================================= //
@@ -942,6 +1001,91 @@ function shuffleArray(array) {
   return array;
 }
 
+async function calculateCorpsStatisticsLogic() {
+    logger.info("Starting corps statistics calculation...");
+    const db = getDb();
+
+    // 1. Get the current season to identify the active corps list
+    const seasonSettingsRef = db.doc("game-settings/season");
+    const seasonDoc = await seasonSettingsRef.get();
+    if (!seasonDoc.exists) {
+        throw new HttpsError("not-found", "No active season document found.");
+    }
+    const seasonData = seasonDoc.data();
+    const seasonId = seasonData.seasonUid;
+
+    const corpsDataRef = db.doc(`dci-data/${seasonData.dataDocId}`);
+    const corpsSnap = await getDoc(corpsDataRef);
+    if (!corpsSnap.exists()) {
+        throw new HttpsError("not-found", `Corps data document not found: ${seasonData.dataDocId}`);
+    }
+    const corpsInSeason = corpsSnap.data().corpsValues || [];
+    const yearsToFetch = [...new Set(corpsInSeason.map(c => c.sourceYear))];
+
+    // 2. Fetch all necessary historical score documents
+    const historicalPromises = yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get());
+    const historicalDocs = await Promise.all(historicalPromises);
+    const historicalData = {};
+    historicalDocs.forEach(doc => { 
+        if (doc.exists) { historicalData[doc.id] = doc.data().data; }
+    });
+
+    // 3. Process the data for each corps
+    const allCorpsStats = [];
+    for (const corps of corpsInSeason) {
+        const uniqueId = `${corps.corpsName}|${corps.sourceYear}`;
+        const corpsEvents = (historicalData[corps.sourceYear] || []).filter(event => 
+            event.scores.some(s => s.corps === corps.corpsName)
+        );
+
+        const captionScores = { GE1: [], GE2: [], VP: [], VA: [], CG: [], B: [], MA: [], P: [] };
+        
+        corpsEvents.forEach(event => {
+            const scoreData = event.scores.find(s => s.corps === corps.corpsName);
+            if (scoreData) {
+                for (const caption in captionScores) {
+                    if (scoreData.captions[caption] > 0) {
+                        captionScores[caption].push(scoreData.captions[caption]);
+                    }
+                }
+            }
+        });
+
+        const calculatedStats = {};
+        for (const caption in captionScores) {
+            const scores = captionScores[caption];
+            if (scores.length > 0) {
+                const sum = scores.reduce((a, b) => a + b, 0);
+                calculatedStats[caption] = {
+                    avg: parseFloat((sum / scores.length).toFixed(3)),
+                    max: Math.max(...scores),
+                    min: Math.min(...scores),
+                    count: scores.length
+                };
+            } else {
+                calculatedStats[caption] = { avg: 0, max: 0, min: 0, count: 0 };
+            }
+        }
+
+        allCorpsStats.push({
+            id: uniqueId,
+            corpsName: corps.corpsName,
+            sourceYear: corps.sourceYear,
+            points: corps.points,
+            stats: calculatedStats
+        });
+    }
+
+    // 4. Save the aggregated data to a new document
+    const statsDocRef = db.doc(`dci-stats/${seasonId}`);
+    await statsDocRef.set({
+        seasonName: seasonData.name,
+        lastUpdated: new Date(),
+        data: allCorpsStats
+    });
+
+    logger.info(`Successfully processed and saved stats for ${allCorpsStats.length} corps.`);
+}
 async function processAndArchiveOffSeasonScoresLogic() {
     const db = getDb();
     logger.info("Running Daily Off-Season Score Processor & Archiver...");
@@ -1079,6 +1223,111 @@ async function processAndArchiveOffSeasonScoresLogic() {
     // Commit all database writes at once
     await batch.commit();
     logger.info(`Successfully processed and archived scores for day ${scoredDay}.`);
+}
+
+async function archiveSeasonResultsLogic() {
+    logger.info("Starting end-of-season archival process...");
+    const db = getDb();
+    
+    const seasonSettingsRef = db.doc("game-settings/season");
+    const seasonDoc = await seasonSettingsRef.get();
+    if (!seasonDoc.exists) {
+        logger.error("No season document found. Cannot archive results.");
+        throw new HttpsError("not-found", "No active season document found.");
+    }
+    const seasonData = seasonDoc.data();
+    const seasonId = seasonData.seasonUid;
+    const seasonName = seasonData.name;
+
+    const leaguesSnapshot = await db.collection('leagues').get();
+    if (leaguesSnapshot.empty) {
+        logger.info("No leagues found to archive.");
+        return;
+    }
+
+    const batch = db.batch();
+
+    for (const leagueDoc of leaguesSnapshot.docs) {
+        const league = leagueDoc.data();
+        const leagueId = leagueDoc.id;
+        const members = league.members || [];
+
+        if (members.length === 0) continue;
+
+        let leagueWinner = { userId: null, username: 'Unknown', finalScore: -1, corpsName: 'Unknown' };
+
+        const profilePromises = members.map(uid => db.doc(`artifacts/${appId}/users/${uid}/profile/data`).get());
+        const profileDocs = await Promise.all(profilePromises);
+
+        profileDocs.forEach(profileDoc => {
+            if (profileDoc.exists) {
+                const profileData = profileDoc.data();
+                if (profileData.activeSeasonId === seasonId) {
+                    const userCorps = profileData.corps || {};
+                    if (profileData.corpsName && !userCorps.worldClass) {
+                        userCorps.worldClass = { totalSeasonScore: profileData.totalSeasonScore || 0 };
+                    }
+                    const totalScore = Object.values(userCorps).reduce((sum, corps) => sum + (corps.totalSeasonScore || 0), 0);
+
+                    if (totalScore > leagueWinner.finalScore) {
+                        leagueWinner = {
+                            userId: profileDoc.ref.parent.parent.id,
+                            username: profileData.username,
+                            finalScore: totalScore,
+                            corpsName: userCorps.worldClass?.corpsName || profileData.corpsName || 'Unnamed Corps',
+                        };
+                    }
+                }
+            }
+        });
+
+        if (leagueWinner.userId) {
+            const leagueRef = db.doc(`leagues/${leagueId}`);
+            const championEntry = {
+                seasonName: seasonName,
+                winnerId: leagueWinner.userId,
+                winnerUsername: leagueWinner.username,
+                winnerCorpsName: leagueWinner.corpsName,
+                score: leagueWinner.finalScore,
+                archivedAt: new Date(),
+            };
+            batch.update(leagueRef, {
+                champions: admin.firestore.FieldValue.arrayUnion(championEntry)
+            });
+            logger.info(`Archived winner for league '${league.name}': ${leagueWinner.username}`);
+
+            // --- ACHIEVEMENT LOGIC ---
+            const winnerProfileRef = db.doc(`artifacts/${appId}/users/${leagueWinner.userId}/profile/data`);
+            const championAchievement = {
+                id: `league_champion_${seasonId}`, // Unique ID for this achievement
+                name: `League Champion: ${seasonName}`,
+                description: `Finished 1st in the ${league.name} league during the ${seasonName}.`,
+                earnedAt: new Date(),
+                icon: 'trophy' // An identifier for the frontend to use
+            };
+            batch.update(winnerProfileRef, {
+                achievements: admin.firestore.FieldValue.arrayUnion(championAchievement)
+            });
+            logger.info(`Granted 'League Champion' achievement to ${leagueWinner.username}.`);
+
+            // --- NEW NOTIFICATION LOGIC ---
+            const notificationMessage = `🏆 ${leagueWinner.username} has won the ${seasonName} championship in your league, ${league.name}!`;
+            members.forEach(memberUid => {
+                const notificationRef = db.collection(`artifacts/${appId}/users/${memberUid}/notifications`).doc();
+                batch.set(notificationRef, {
+                    type: 'new_champion',
+                    message: notificationMessage,
+                    link: `/leagues/${leagueId}`, // This will be used for client-side routing
+                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    isRead: false,
+                });
+            });
+            logger.info(`Created notifications for all ${members.length} members of league '${league.name}'.`);
+        }
+    }
+
+    await batch.commit();
+    logger.info("End-of-season archival process complete.");
 }
 
 async function scrapeDciScoresLogic(urlToScrape, topic = "dci-scores-topic") {
