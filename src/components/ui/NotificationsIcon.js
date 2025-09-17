@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, dataNamespace } from '../../firebase';
 import Icon from './Icon';
 import NotificationsPanel from './NotificationsPanel';
 
@@ -12,7 +12,7 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
     useEffect(() => {
         if (!user?.uid) return;
 
-        const notifsRef = collection(db, `artifacts/${process.env.REACT_APP_DATA_NAMESPACE}/users/${user.uid}/notifications`);
+        const notifsRef = collection(db, `artifacts/${dataNamespace}/users/${user.uid}/notifications`);
         const q = query(notifsRef, orderBy('timestamp', 'desc'));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -42,7 +42,7 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
         const batch = writeBatch(db);
         notifications.forEach(notif => {
             if (!notif.isRead) {
-                const notifRef = doc(db, `artifacts/${process.env.REACT_APP_DATA_NAMESPACE}/users/${user.uid}/notifications`, notif.id);
+                const notifRef = doc(db, `artifacts/${dataNamespace}/users/${user.uid}/notifications`, notif.id);
                 batch.update(notifRef, { isRead: true });
             }
         });

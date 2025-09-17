@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../firebase';
+import { db, functions, dataNamespace } from '../../firebase';
 import Icon from '../ui/Icon';
 import Modal from '../ui/Modal';
 
@@ -41,7 +41,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
 
     useEffect(() => {
         if (!profileOwnerId) return;
-        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         setIsLoading(true);
         const commentsRef = collection(db, 'artifacts', dataNamespace, 'users', profileOwnerId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
@@ -59,7 +58,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
         if (!newComment.trim() || !loggedInProfile) return;
-        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         setIsSubmitting(true);
         setError('');
         try {

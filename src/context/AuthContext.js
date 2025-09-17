@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db, dataNamespace } from '../firebase';
 import { ensureProfileCompatibility } from '../utils/profileCompatibility';
 
 const AuthContext = createContext();
@@ -17,8 +17,6 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setIsLoading(true);
             if (currentUser) {
-                // This new, unambiguous variable points to the "marching-art" document ID
-                const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
                 if (!dataNamespace) {
                     console.error("DATA_NAMESPACE is not set in frontend environment variables!");
                     setIsLoading(false);

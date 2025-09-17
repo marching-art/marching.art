@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db, dataNamespace } from '../firebase';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
@@ -118,7 +118,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true);
-            const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
             const targetUserId = viewingUserId || loggedInUserId;
 
             if (!targetUserId) {
@@ -187,7 +186,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
 
     const handleSaveBio = async () => {
         if (!isOwner || !loggedInUserId) return;
-        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { bio: bioText }, { merge: true });
@@ -198,7 +196,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     
     const handleSaveUniform = async (newUniform) => {
         if (!isOwner || !loggedInUserId) return;
-        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { uniform: newUniform }, { merge: true });
