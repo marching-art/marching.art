@@ -50,15 +50,17 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     const userCorps = getAllUserCorps(playerData);
                     
                     // Add each corps class as a separate leaderboard entry
+                    // Only show corps that have season scores on file
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
+                            corps.totalSeasonScore && corps.totalSeasonScore > 0) {
                             allCorpsEntries.push({
                                 id: `${userId}_${corpsClass}`,
                                 userId: userId,
                                 username: playerData.username,
                                 corpsName: corps.corpsName,
                                 corpsClass: corpsClass,
-                                totalSeasonScore: corps.totalSeasonScore || 0
+                                totalSeasonScore: corps.totalSeasonScore
                             });
                         }
                     });
