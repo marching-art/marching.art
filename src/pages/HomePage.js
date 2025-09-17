@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 
+// NOTE: I have left your original FeatureCard and the new CommunityCard here for completeness.
+// No changes are needed in these components.
 const FeatureCard = ({ title, children, accentText }) => (
     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
@@ -32,7 +34,6 @@ const CommunityCard = () => (
     </div>
 );
 
-
 const HomePage = ({ onSignUpClick }) => {
     const videoRef = useRef(null);
 
@@ -43,7 +44,7 @@ const HomePage = ({ onSignUpClick }) => {
     }, []);
 
     return (
-        <div className="relative min-h-screen overflow-hidden">
+        <div className="relative w-full h-full overflow-hidden">
             {/* --- VIDEO BACKGROUND --- */}
             <video
                 ref={videoRef}
@@ -57,12 +58,11 @@ const HomePage = ({ onSignUpClick }) => {
                 Your browser does not support the video tag.
             </video>
 
-            {/* --- OVERLAY --- */}
+            {/* --- OVERLAY to ensure text readability --- */}
             <div className="absolute top-0 left-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-[-1]"></div>
 
             {/* --- PAGE CONTENT --- */}
-            <div className="relative z-10 text-center p-6 md:p-8">
-                {/* --- HERO SECTION --- */}
+            <div className="relative z-10 text-center p-6 md:p-8 h-full overflow-y-auto">
                 <div className="py-20 md:py-32">
                     <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
                         Your Field of Dreams Awaits
@@ -80,17 +80,10 @@ const HomePage = ({ onSignUpClick }) => {
                     </button>
                 </div>
                 
-                {/* --- FEATURES SECTION --- */}
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                    <FeatureCard title="Live Scoring" accentText="LIVE">
-                        Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
-                    </FeatureCard>
-                    <FeatureCard title="Off-Season Fun" accentText="365">
-                        The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.
-                    </FeatureCard>
-                    <FeatureCard title="Build Your Legacy" accentText="YOU">
-                        Create your manager profile, design a unique uniform, and track your history to show off your championship titles.
-                    </FeatureCard>
+                    <FeatureCard title="Live Scoring" accentText="LIVE" />
+                    <FeatureCard title="Off-Season Fun" accentText="365" />
+                    <FeatureCard title="Build Your Legacy" accentText="YOU" />
                     <CommunityCard />
                 </div>
             </div>
