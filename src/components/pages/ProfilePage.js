@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, appId } from '../../firebase';
 import { getAllUserCorps, getTotalUserScore, CORPS_CLASSES } from '../../utils/profileCompatibility';
 import Icon from '../ui/Icon';

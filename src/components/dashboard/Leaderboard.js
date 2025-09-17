@@ -3,7 +3,7 @@ import { collectionGroup, query, where, orderBy, onSnapshot, getDoc, doc } from 
 import { db } from '../../firebase';
 import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
 
-const Leaderboard = ({ profile }) => {
+const Leaderboard = ({ profile, onViewProfile }) => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [seasonName, setSeasonName] = useState('');
