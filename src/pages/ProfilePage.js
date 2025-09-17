@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-// MODIFIED: Import CORPS_CLASS_ORDER to enforce hierarchy
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
@@ -33,10 +32,9 @@ const MySchedule = ({ profile }) => {
                 <p className="text-text-secondary dark:text-text-secondary-dark">No shows have been selected for the current season.</p>
             ) : (
                 <div className="space-y-6">
-                    {/* MODIFIED: Iterate over the ordered array */}
                     {CORPS_CLASS_ORDER.map(corpsClassKey => {
                         const corps = userCorps[corpsClassKey];
-                        if (!corps) return null; // Don't render if the user doesn't have a corps in this class
+                        if (!corps) return null;
 
                         return (
                             <div key={corpsClassKey}>
@@ -86,10 +84,9 @@ const CorpsSummary = ({ profile }) => {
         <div className="bg-surface dark:bg-surface-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark mt-4">
             <h4 className="font-semibold text-text-primary dark:text-text-primary-dark mb-3">Current Season Corps</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* MODIFIED: Iterate over the ordered array */}
                 {CORPS_CLASS_ORDER.map(corpsClassKey => {
                     const corps = userCorps[corpsClassKey];
-                    if (!corps) return null; // Don't render if the user doesn't have a corps in this class
+                    if (!corps) return null; 
 
                     return (
                         <div key={corpsClassKey} className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
@@ -279,10 +276,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                             <TrophyCase trophies={profile.trophies} />
                         </div>
-                        <CommentsSection
-                            profileOwnerId={profileUserId}
-                            loggedInProfile={loggedInProfile}
-                        />
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
                              <SeasonArchive 
                                 seasons={profile.seasons} 
@@ -291,6 +284,10 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                                 fantasyRecaps={fantasyRecaps}
                             />               
                         </div>
+                        <CommentsSection
+                            profileOwnerId={profileUserId}
+                            loggedInProfile={loggedInProfile}
+                        />
                     </div> 
                 </div>
             </div>

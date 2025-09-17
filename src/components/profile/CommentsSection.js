@@ -3,6 +3,7 @@ import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../firebase';
 import Icon from '../ui/Icon';
+import Modal from '../ui/Modal';
 
 const timeSince = (timestamp) => {
     if (!timestamp) return 'just now';
@@ -22,10 +23,12 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [menuOpenFor, setMenuOpenFor] = useState(null); // State for the '...' menu
+    const [menuOpenFor, setMenuOpenFor] = useState(null);
     const menuRef = useRef(null);
 
-    // Close menu when clicking outside
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState(null);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -38,8 +41,9 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
 
     useEffect(() => {
         if (!profileOwnerId) return;
+        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         setIsLoading(true);
-        const commentsRef = collection(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', profileOwnerId, 'comments');
+        const commentsRef = collection(db, 'artifacts', dataNamespace, 'users', profileOwnerId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             setComments(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -55,10 +59,11 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
         if (!newComment.trim() || !loggedInProfile) return;
+        const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
         setIsSubmitting(true);
         setError('');
         try {
-            const commentsRef = collection(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', profileOwnerId, 'comments');
+            const commentsRef = collection(db, 'artifacts', dataNamespace, 'users', profileOwnerId, 'comments');
             await addDoc(commentsRef, {
                 text: newComment.trim(),
                 authorUid: loggedInProfile.userId,
@@ -79,15 +84,24 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
         setIsSubmitting(false);
     };
     
-    const handleDelete = async (commentId) => {
+    const handleDeleteRequest = (comment) => {
         setMenuOpenFor(null);
-        if (!window.confirm("Are you sure you want to permanently delete this comment?")) return;
+        setCommentToDelete(comment);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!commentToDelete) return;
+        setIsSubmitting(true);
         try {
             const deleteComment = httpsCallable(functions, 'deleteComment');
-            await deleteComment({ profileOwnerId, commentId });
+            await deleteComment({ profileOwnerId, commentId: commentToDelete.id });
         } catch (err) {
             setError(err.message || "Failed to delete comment.");
         }
+        setIsSubmitting(false);
+        setIsDeleteModalOpen(false);
+        setCommentToDelete(null);
     };
 
     const handleReport = async (comment) => {
@@ -109,6 +123,24 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
 
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            {/* NEW: Delete Confirmation Modal */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Comment">
+                 <div>
+                    <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Are you sure you want to permanently delete this comment?</p>
+                    <blockquote className="border-l-4 border-accent dark:border-accent-dark pl-4 my-2 italic text-text-secondary dark:text-text-secondary-dark">
+                        {commentToDelete?.text}
+                    </blockquote>
+                    <div className="flex justify-end space-x-2 mt-6">
+                        <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark font-bold py-2 px-4 rounded-theme transition-colors">
+                            Cancel
+                        </button>
+                        <button type="button" onClick={handleDeleteConfirm} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                            {isSubmitting ? 'Deleting...' : 'Delete'}
+                        </button>
+                    </div>
+                 </div>
+            </Modal>
+
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Comments</h3>
             {loggedInProfile && (
                 <form onSubmit={handleCommentSubmit} className="mb-6">
@@ -140,7 +172,8 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
                                         {menuOpenFor === comment.id && (
                                             <div ref={menuRef} className="absolute top-full right-0 mt-1 w-32 bg-surface dark:bg-surface-dark rounded-theme shadow-lg border border-accent dark:border-accent-dark z-10">
                                                 {canReport && <button onClick={() => handleReport(comment)} className="w-full text-left px-3 py-2 text-sm hover:bg-accent dark:hover:bg-accent-dark/20">Report</button>}
-                                                {canDelete && <button onClick={() => handleDelete(comment.id)} className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-accent dark:hover:bg-accent-dark/20">Delete</button>}
+                                                {/* MODIFIED: This now opens the modal instead of calling the delete function directly */}
+                                                {canDelete && <button onClick={() => handleDeleteRequest(comment)} className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-accent dark:hover:bg-accent-dark/20">Delete</button>}
                                             </div>
                                         )}
                                     </div>

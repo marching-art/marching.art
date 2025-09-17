@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUserCorps, CORPS_CLASSES } from '../../utils/profileCompatibility';
+// MODIFIED: Import CORPS_CLASS_ORDER to enforce hierarchy
+import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
 const MyStatus = ({ username, profile }) => {
     const [userCorps, setUserCorps] = useState({});
@@ -27,6 +28,8 @@ const MyStatus = ({ username, profile }) => {
         </div>
     );
 
+    const orderedCorpsToDisplay = CORPS_CLASS_ORDER.filter(key => userCorps[key]);
+
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -40,15 +43,19 @@ const MyStatus = ({ username, profile }) => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {Object.entries(userCorps).map(([corpsClass, corps]) => (
-                        <StatCard 
-                            key={corpsClass}
-                            label={`${CORPS_CLASSES[corpsClass]?.name || corpsClass}`}
-                            value={`${(corps.totalSeasonScore || 0).toFixed(3)} pts`}
-                            color={CORPS_CLASSES[corpsClass]?.color}
-                            large={Object.keys(userCorps).length === 1}
-                        />
-                    ))}
+                    {/* MODIFIED: Iterate over the ordered and filtered array */}
+                    {orderedCorpsToDisplay.map(corpsClassKey => {
+                        const corps = userCorps[corpsClassKey];
+                        return (
+                             <StatCard 
+                                key={corpsClassKey}
+                                label={`${CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}`}
+                                value={`${(corps.totalSeasonScore || 0).toFixed(3)} pts`}
+                                color={CORPS_CLASSES[corpsClassKey]?.color}
+                                large={Object.keys(userCorps).length === 1}
+                            />
+                        )
+                    })}
                 </div>
             )}
         </div>
