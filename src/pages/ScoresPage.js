@@ -3,7 +3,8 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import Modal from '../components/ui/Modal';
 import CaptionChart from '../components/charts/CaptionChart';
-import { CORPS_CLASSES } from '../utils/profileCompatibility';
+// MODIFIED: Import CORPS_CLASS_ORDER
+import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
@@ -84,9 +85,13 @@ const ScoresPage = ({ theme }) => {
                     <div className="flex items-center gap-2">
                         <label htmlFor="class-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">Class:</label>
                         <select id="class-select" value={selectedCorpsClass} onChange={e => setSelectedCorpsClass(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary">
-                            {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                                <option key={key} value={key}>{classInfo.name}</option>
-                            ))}
+                            {/* MODIFIED: Map over CORPS_CLASS_ORDER */}
+                            {CORPS_CLASS_ORDER.map(key => {
+                                const classInfo = CORPS_CLASSES[key];
+                                return (
+                                    <option key={key} value={key}>{classInfo.name}</option>
+                                )
+                            })}
                         </select>
                     </div>
                 </div>

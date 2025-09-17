@@ -91,6 +91,7 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
                                         &#127942; {champ.winnerUsername}
                                     </p>
                                     <p className="text-sm text-text-primary dark:text-text-primary-dark">{champ.winnerCorpsName}</p>
+                                    {/* MODIFIED LINE BELOW */}
                                     <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{champ.score.toFixed(3)} pts</p>
                                 </li>
                             ))}

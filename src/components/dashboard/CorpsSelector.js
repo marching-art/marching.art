@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import LineupEditor from './LineupEditor';
 import ShowSelection from './ShowSelection';
 import LiveShowSelection from './LiveShowSelection';
-import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps } from '../../utils/profileCompatibility';
+// MODIFIED: Import CORPS_CLASS_ORDER
+import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
 const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
     const [activeCorps, setActiveCorps] = useState('worldClass');
@@ -37,31 +38,35 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         <div className="space-y-6">
             {/* Corps Class Tabs */}
             <div className="flex flex-wrap gap-2 border-b-theme border-accent dark:border-accent-dark pb-4">
-                {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                    <button
-                        key={key}
-                        onClick={() => setActiveCorps(key)}
-                        className={`relative px-3 py-2 text-left rounded-theme font-semibold transition-all w-32 ${
-                            activeCorps === key
-                                ? 'bg-primary text-on-primary shadow-lg'
-                                : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
-                        }`}
-                    >
-                        <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ${classInfo.color} ${
-                            hasCorps(key) ? 'opacity-100' : 'opacity-30'
-                        }`}></div>
-                        <span className="block text-sm">{classInfo.name}</span>
-                        {hasCorps(key) ? (
-                            <span className="block text-xs font-normal mt-1 truncate">
-                                {userCorps[key].corpsName}
-                            </span>
-                        ) : (
-                             <span className="block text-xs font-normal mt-1 opacity-75">
-                                + Create New
-                            </span>
-                        )}
-                    </button>
-                ))}
+                {/* MODIFIED: Map over CORPS_CLASS_ORDER instead of Object.entries */}
+                {CORPS_CLASS_ORDER.map(key => {
+                    const classInfo = CORPS_CLASSES[key];
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => setActiveCorps(key)}
+                            className={`relative px-3 py-2 text-left rounded-theme font-semibold transition-all w-32 ${
+                                activeCorps === key
+                                    ? 'bg-primary text-on-primary shadow-lg'
+                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
+                            }`}
+                        >
+                            <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ${classInfo.color} ${
+                                hasCorps(key) ? 'opacity-100' : 'opacity-30'
+                            }`}></div>
+                            <span className="block text-sm">{classInfo.name}</span>
+                            {hasCorps(key) ? (
+                                <span className="block text-xs font-normal mt-1 truncate">
+                                    {userCorps[key].corpsName}
+                                </span>
+                            ) : (
+                                 <span className="block text-xs font-normal mt-1 opacity-75">
+                                    + Create New
+                                </span>
+                            )}
+                        </button>
+                    )
+                })}
             </div>
 
             {/* Active Corps Editor */}

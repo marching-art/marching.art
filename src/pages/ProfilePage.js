@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth, db, appId } from '../firebase';
 import { getAllUserCorps, CORPS_CLASSES } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
@@ -21,6 +21,9 @@ const timeSince = (date) => {
     interval = seconds / 60; if (interval > 1) return Math.floor(interval) + " minutes ago";
     return "a moment ago";
 };
+
+// --- Child Components (MySchedule, CorpsSummary) remain the same ---
+// To save space, they are not repeated here but should be kept in your file.
 
 const MySchedule = ({ profile }) => {
     const userCorps = getAllUserCorps(profile);
@@ -83,7 +86,8 @@ const CorpsSummary = ({ profile }) => {
                         <div className={`w-4 h-4 rounded-full ${CORPS_CLASSES[corpsClass]?.color || 'bg-gray-400'} mx-auto mb-2`}></div>
                         <div className="font-medium text-sm">{CORPS_CLASSES[corpsClass]?.name || corpsClass}</div>
                         <div className="font-semibold text-text-primary dark:text-text-primary-dark">{corps.corpsName}</div>
-                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">{corps.totalSeasonScore || 0} pts</div>
+                        {/* MODIFIED LINE BELOW */}
+                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">{(corps.totalSeasonScore || 0).toFixed(3)} pts</div>
                     </div>
                 ))}
             </div>
@@ -121,7 +125,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                 setIsLoading(false);
             } else {
                 try {
-                    const userDocRef = doc(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', targetUserId, 'profile', 'data');
+                    const userDocRef = doc(db, 'artifacts', appId, 'users', targetUserId, 'profile', 'data');
                     const docSnap = await getDoc(userDocRef);
                     if (docSnap.exists()) {
                         setProfile({ userId: targetUserId, ...docSnap.data() });
@@ -140,6 +144,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
         fetchProfileData();
     }, [viewingUserId, loggedInUserId, loggedInProfile, isOwner]);
 
+    // This effect can stay as it only runs when viewing your own profile
     useEffect(() => {
         if (isOwner) {
             const fetchCurrentSeasonData = async () => {
@@ -176,7 +181,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
 
     const handleSaveBio = async () => {
         if (!isOwner || !loggedInUserId) return;
-        const userDocRef = doc(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', loggedInUserId, 'profile', 'data');
+        const userDocRef = doc(db, 'artifacts', appId, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { bio: bioText }, { merge: true });
             setProfile(p => ({ ...p, bio: bioText }));
@@ -186,7 +191,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     
     const handleSaveUniform = async (newUniform) => {
         if (!isOwner || !loggedInUserId) return;
-        const userDocRef = doc(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', loggedInUserId, 'profile', 'data');
+        const userDocRef = doc(db, 'artifacts', appId, 'users', loggedInUserId, 'profile', 'data');
         try {
             await setDoc(userDocRef, { uniform: newUniform }, { merge: true });
             setProfile(p => ({ ...p, uniform: newUniform }));
