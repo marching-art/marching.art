@@ -30,10 +30,42 @@ exports.setUserRole = onCall({ cors: true }, async (request) => {
     if (!request.auth || !request.auth.token.admin) {
         throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
     }
+
     const { email, makeAdmin } = request.data;
     logger.info(`Admin ${request.auth.uid} attempting to set role for ${email} to admin: ${makeAdmin}`);
-    // TODO: Add logic to set custom claims using the Firebase Admin Auth SDK.
-    return { success: true, message: `Role change for ${email} processed.` };
+
+    try {
+        const user = await admin.auth().getUserByEmail(email);
+        await admin.auth().setCustomUserClaims(user.uid, { admin: makeAdmin });
+
+        const action = makeAdmin ? "granted" : "revoked";
+        return { success: true, message: `Admin privileges have been ${action} for ${email}. User must re-login to see changes.` };
+    } catch (error) {
+        logger.error(`Error setting user role for ${email}:`, error);
+        if (error.code === 'auth/user-not-found') {
+            throw new HttpsError("not-found", `User with email ${email} was not found.`);
+        }
+        throw new HttpsError("internal", "An error occurred while setting the user role.");
+    }
+});
+
+exports.checkUsername = onCall({ cors: true }, async (request) => {
+    const { username } = request.data;
+    if (!username || username.length < 3 || username.length > 15) {
+        throw new HttpsError("invalid-argument", "Username must be between 3 and 15 characters.");
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        throw new HttpsError("invalid-argument", "Username can only contain letters, numbers, and underscores.");
+    }
+
+    const usernameRef = getDb().doc(`usernames/${username.toLowerCase()}`);
+    const usernameDoc = await usernameRef.get();
+
+    if (usernameDoc.exists) {
+        throw new HttpsError("already-exists", "This username is already taken.");
+    }
+
+    return { success: true, message: "Username is available." };
 });
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
@@ -47,6 +79,20 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
     } catch (error) {
         logger.error("Error manually starting new off-season:", error);
         throw new HttpsError("internal", "An error occurred while starting the season.");
+    }
+});
+
+exports.startNewLiveSeason = onCall({ cors: true }, async (request) => {
+    if (!request.auth || !request.auth.token.admin) {
+        throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+    }
+    try {
+        logger.info(`Manual override triggered by admin: ${request.auth.uid}. Starting new live-season.`);
+        await startNewLiveSeason();
+        return { success: true, message: "A new live-season has been started successfully." };
+    } catch (error) {
+        logger.error("Error manually starting new live-season:", error);
+        throw new HttpsError("internal", `An error occurred while starting the live season: ${error.message}`);
     }
 });
 
@@ -118,6 +164,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
             
             const isNewSeasonSignup = userProfileData.activeSeasonId !== activeSeasonId;
             const currentCorpsData = userProfileData.corps[corpsClass] || {};
+            const isNewCorps = !currentCorpsData.corpsName; // This specific corps class doesn't exist yet
             const oldLineupKey = currentCorpsData.lineupKey;
 
             // Remove old lineup from activeLineups if it exists and is different
@@ -134,7 +181,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
 
             let profileUpdateData = {};
             
-            if (isNewSeasonSignup) {
+            if (isNewSeasonSignup || isNewCorps) {
                 if (!corpsName) throw new HttpsError("invalid-argument", "A corps name is required.");
                 
                 profileUpdateData = {
