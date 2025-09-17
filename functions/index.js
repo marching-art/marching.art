@@ -766,6 +766,171 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
     }
 });
 
+exports.sendCommentNotification = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to send a notification.");
+    }
+    const { recipientUid, commenterUsername } = request.data;
+    const commenterUid = request.auth.uid;
+
+    if (!recipientUid || !commenterUsername) {
+        throw new HttpsError("invalid-argument", "Missing recipient UID or commenter username.");
+    }
+
+    // Prevent users from sending notifications to themselves
+    if (recipientUid === commenterUid) {
+        return { success: true, message: "Self-notification ignored." };
+    }
+
+    const db = getDb();
+    const notificationRef = db.collection(`artifacts/${appId}/users/${recipientUid}/notifications`).doc();
+
+    try {
+        await notificationRef.set({
+            type: 'new_comment',
+            message: `${commenterUsername} left a comment on your profile.`,
+            link: `/profile/${commenterUid}`, // Link back to the commenter's profile
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            isRead: false,
+            senderUid: commenterUid,
+        });
+        logger.info(`Notification sent from ${commenterUid} to ${recipientUid}`);
+        return { success: true, message: "Notification sent." };
+    } catch (error) {
+        logger.error("Error sending comment notification:", error);
+        throw new HttpsError("internal", "An error occurred while sending the notification.");
+    }
+});
+
+exports.deleteComment = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to delete comments.");
+    }
+
+    const { profileOwnerId, commentId } = request.data;
+    const callerUid = request.auth.uid;
+    const isAdmin = request.auth.token.admin === true;
+
+    if (!profileOwnerId || !commentId) {
+        throw new HttpsError("invalid-argument", "Missing profile owner ID or comment ID.");
+    }
+
+    // Security Check: Only the profile owner or an admin can delete.
+    if (callerUid !== profileOwnerId && !isAdmin) {
+        throw new HttpsError("permission-denied", "You do not have permission to delete this comment.");
+    }
+
+    try {
+        const commentRef = getDb().doc(`artifacts/${appId}/users/${profileOwnerId}/comments/${commentId}`);
+        await commentRef.delete();
+        return { success: true, message: "Comment deleted successfully." };
+    } catch (error) {
+        logger.error(`Error deleting comment ${commentId} by user ${callerUid}:`, error);
+        throw new HttpsError("internal", "An error occurred while deleting the comment.");
+    }
+});
+
+exports.reportComment = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to report comments.");
+    }
+
+    const { profileOwnerId, commentId, commentText, commentAuthorUid } = request.data;
+    const reporterUid = request.auth.uid;
+
+    if (!profileOwnerId || !commentId || !commentText || !commentAuthorUid) {
+        throw new HttpsError("invalid-argument", "Missing required report data.");
+    }
+
+    try {
+        const reportRef = getDb().collection('reports').doc();
+        await reportRef.set({
+            type: 'comment',
+            commentId,
+            commentText,
+            commentAuthorUid,
+            reportedOnProfileUid: profileOwnerId,
+            reporterUid,
+            status: 'new', // 'new', 'reviewed', 'resolved'
+            createdAt: serverTimestamp(),
+        });
+        return { success: true, message: "Comment reported. Thank you for your feedback." };
+    } catch (error) {
+        logger.error(`Error reporting comment ${commentId} by user ${reporterUid}:`, error);
+        throw new HttpsError("internal", "Could not submit report.");
+    }
+});
+
+exports.generateWeeklyMatchups = onSchedule({
+    schedule: "every monday 04:00",
+    timeZone: "America/New_York",
+}, async (_context) => {
+    logger.info("Starting class-based weekly matchup generation...");
+    const db = getFirestore();
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists()) {
+        logger.error("No active season found. Aborting.");
+        return;
+    }
+    const seasonData = seasonDoc.data();
+    const now = new Date();
+    const diffInMillis = now.getTime() - seasonData.schedule.startDate.toDate().getTime();
+    const currentWeek = Math.ceil((Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1) / 7);
+
+    const leaguesSnapshot = await db.collection('leagues').get();
+    if (leaguesSnapshot.empty) return;
+
+    const batch = db.batch();
+    const corpsClasses = ['worldClass', 'openClass', 'aClass'];
+
+    for (const leagueDoc of leaguesSnapshot.docs) {
+        const league = leagueDoc.data();
+        const members = league.members || [];
+        if (members.length < 2) continue;
+
+        const weeklyMatchupData = {
+            week: currentWeek,
+            seasonUid: seasonData.seasonUid
+        };
+
+        // Fetch all member profiles at once for efficiency
+        const profilePromises = members.map(uid => db.doc(`artifacts/${appId}/users/${uid}/profile/data`).get());
+        const profileDocs = await Promise.all(profilePromises);
+
+        for (const corpsClass of corpsClasses) {
+            // Find all members in the league who have a corps of the current class
+            const eligibleMembers = profileDocs
+                .filter(pDoc => pDoc.exists() && pDoc.data().corps && pDoc.data().corps[corpsClass])
+                .map(pDoc => pDoc.ref.parent.parent.id); // Get the UID
+
+            if (eligibleMembers.length < 2) continue; // Not enough players for a matchup in this class
+
+            const shuffledMembers = [...eligibleMembers].sort(() => 0.5 - Math.random());
+            const matchups = [];
+            while (shuffledMembers.length > 1) {
+                const p1 = shuffledMembers.pop();
+                const p2 = shuffledMembers.pop();
+                matchups.push({ pair: [p1, p2], scores: { [p1]: 0, [p2]: 0 }, winner: null });
+            }
+            if (shuffledMembers.length === 1) {
+                const p = shuffledMembers.pop();
+                matchups.push({ pair: [p, 'BYE'], scores: { [p]: 0 }, winner: p });
+            }
+            
+            // Store matchups in a class-specific field
+            weeklyMatchupData[`${corpsClass}Matchups`] = matchups;
+        }
+
+        const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${currentWeek}`);
+        batch.set(matchupDocRef, weeklyMatchupData);
+        logger.info(`Generated matchups for league ${league.name} for week ${currentWeek}.`);
+    }
+
+    await batch.commit();
+    logger.info("Weekly matchup generation complete.");
+    return null;
+});
+
 exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (message) => {
     logger.info("Received new live score recap to process.");
     const db = getDb();
@@ -971,6 +1136,16 @@ async function fetchHistoricalData(dataDocId) {
         }
     });
     return historicalData;
+}
+
+function getTotalUserScore(profile) {
+    if (!profile) return 0;
+    const userCorps = profile.corps || {};
+    // Handle legacy structure
+    if (profile.corpsName && !userCorps.worldClass) {
+        userCorps.worldClass = { totalSeasonScore: profile.totalSeasonScore || 0 };
+    }
+    return Object.values(userCorps).reduce((sum, corps) => sum + (corps.totalSeasonScore || 0), 0);
 }
 
 function simpleLinearRegression(data) {
@@ -1223,6 +1398,75 @@ async function processAndArchiveOffSeasonScoresLogic() {
     // Commit all database writes at once
     await batch.commit();
     logger.info(`Successfully processed and archived scores for day ${scoredDay}.`);
+
+    if (scoredDay % 7 === 0) {
+    const week = scoredDay / 7;
+    logger.info(`End of week ${week}. Determining class-based matchup winners...`);
+
+    const leaguesSnapshot = await db.collection('leagues').get();
+    const winnerBatch = db.batch();
+    const corpsClasses = ['worldClass', 'openClass', 'aClass'];
+
+    for (const leagueDoc of leaguesSnapshot.docs) {
+        const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`);
+        const matchupDoc = await matchupDocRef.get();
+
+        if (matchupDoc.exists) {
+            const matchupData = matchupDoc.data();
+            let hasUpdates = false;
+
+            for (const corpsClass of corpsClasses) {
+                const matchupArrayKey = `${corpsClass}Matchups`;
+                const matchups = matchupData[matchupArrayKey] || [];
+                if (matchups.length === 0) continue;
+
+                const updatedMatchupsForClass = [];
+
+                for (const matchup of matchups) {
+                    if (matchup.winner) {
+                        updatedMatchupsForClass.push(matchup);
+                        continue;
+                    }
+
+                    const [p1_uid, p2_uid] = matchup.pair;
+                    const p1_profileDoc = await db.doc(`artifacts/${appId}/users/${p1_uid}/profile/data`).get();
+                    const p2_profileDoc = await db.doc(`artifacts/${appId}/users/${p2_uid}/profile/data`).get();
+                    
+                    // IMPORTANT: Get score for the SPECIFIC corps class, not total score
+                    const p1_score = p1_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+                    const p2_score = p2_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+
+                    let winnerUid = null;
+                    if (p1_score > p2_score) winnerUid = p1_uid;
+                    if (p2_score > p1_score) winnerUid = p2_uid;
+                    
+                    // Path to the new, class-specific record
+                    const seasonRecordPath = (uid) => `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
+
+                    if (winnerUid === p1_uid) {
+                        winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath(p1_uid)]: { w: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                        winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath(p2_uid)]: { l: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                    } else if (winnerUid === p2_uid) {
+                        winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath(p1_uid)]: { l: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                        winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath(p2_uid)]: { w: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                    } else { // Tie
+                        winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath(p1_uid)]: { t: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                        winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath(p2_uid)]: { t: admin.firestore.FieldValue.increment(1) } }, { merge: true });
+                    }
+                    
+                    updatedMatchupsForClass.push({ ...matchup, scores: { [p1_uid]: p1_score, [p2_uid]: p2_score }, winner: winnerUid });
+                }
+                matchupData[matchupArrayKey] = updatedMatchupsForClass;
+                hasUpdates = true;
+            }
+            if (hasUpdates) {
+                winnerBatch.update(matchupDocRef, matchupData);
+            }
+        }
+    }
+    await winnerBatch.commit();
+    logger.info(`Matchup winner determination for week ${week} complete.`);
+}
 }
 
 async function archiveSeasonResultsLogic() {
