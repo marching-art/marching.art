@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions, appId } from '../../firebase';
+import { db, functions } from '../../firebase';
 import Icon from '../ui/Icon';
 
 const timeSince = (timestamp) => {
@@ -39,7 +39,7 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     useEffect(() => {
         if (!profileOwnerId) return;
         setIsLoading(true);
-        const commentsRef = collection(db, 'artifacts', appId, 'users', profileOwnerId, 'comments');
+        const commentsRef = collection(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', profileOwnerId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             setComments(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -58,7 +58,7 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
         setIsSubmitting(true);
         setError('');
         try {
-            const commentsRef = collection(db, 'artifacts', appId, 'users', profileOwnerId, 'comments');
+            const commentsRef = collection(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', profileOwnerId, 'comments');
             await addDoc(commentsRef, {
                 text: newComment.trim(),
                 authorUid: loggedInProfile.userId,

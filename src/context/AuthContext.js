@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { ensureProfileCompatibility } from '../utils/profileCompatibility';
 
@@ -17,13 +17,25 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setIsLoading(true);
             if (currentUser) {
-                const appId = process.env.REACT_APP_FIREBASE_APP_ID;
+                // This new, unambiguous variable points to the "marching-art" document ID
+                const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
+                if (!dataNamespace) {
+                    console.error("DATA_NAMESPACE is not set in frontend environment variables!");
+                    setIsLoading(false);
+                    return;
+                }
+                
                 setUser(currentUser);
                 const idTokenResult = await currentUser.getIdTokenResult();
                 const isAdmin = idTokenResult.claims.admin === true;
-                const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+                // The path is now constructed with the correct variable
+                const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', currentUser.uid, 'profile', 'data');
                 
-                await setDoc(userDocRef, { lastActive: new Date() }, { merge: true });
+                try {
+                    await updateDoc(userDocRef, { lastActive: new Date() });
+                } catch (error) {
+                    console.warn("Could not update lastActive status. This may be the user's first login or the profile document is missing.", error.message);
+                }
 
                 const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
                     if (docSnap.exists()) {
@@ -34,7 +46,8 @@ export const AuthProvider = ({ children }) => {
                             isAdmin: isAdmin
                         });
                     } else {
-                        setLoggedInProfile(null); // Profile creation is pending
+                        console.error("Profile document does not exist for this user at the specified path.");
+                        setLoggedInProfile(null);
                     }
                     setIsLoading(false);
                 }, (error) => {

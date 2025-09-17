@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { auth, db, appId, functions } from '../../firebase';
+import { auth, db, functions } from '../../firebase';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');
@@ -36,7 +36,7 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
             // Step 3: Create profile and username documents in a batch write
             const batch = writeBatch(db);
 
-            const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            const userDocRef = doc(db, 'artifacts', process.env.REACT_APP_DATA_NAMESPACE, 'users', user.uid, 'profile', 'data');
             const usernameDocRef = doc(db, 'usernames', trimmedUsername.toLowerCase());
 
             // Create Profile Document

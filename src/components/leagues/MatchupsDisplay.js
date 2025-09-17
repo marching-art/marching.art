@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db, appId } from '../../firebase';
+import { db } from '../../firebase';
 import { CORPS_CLASSES } from '../../utils/profileCompatibility';
 
 const MatchupCard = ({ matchup, members, onViewProfile }) => {
@@ -57,7 +57,7 @@ const MatchupsDisplay = ({ league, currentWeek, onViewProfile, season }) => {
             try {
                 // Fetch member profiles
                 if (league.members && league.members.length > 0) {
-                    const memberProfilesQuery = query(collection(db, `artifacts/${appId}/users`), where('__name__', 'in', league.members));
+                    const memberProfilesQuery = query(collection(db, `artifacts/${process.env.REACT_APP_DATA_NAMESPACE}/users`), where('__name__', 'in', league.members));
                     const profilesSnapshot = await getDocs(memberProfilesQuery);
                     const membersData = profilesSnapshot.docs.map(doc => {
                         const profile = doc.data().profile?.data;
