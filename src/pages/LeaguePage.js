@@ -5,7 +5,7 @@ import { useUserStore } from '../store/userStore';
 
 // Import your components
 import LeagueManager from '../components/dashboard/LeagueManager';
-import Leaderboard from '../components/leagues/Leaderboard';
+import Leaderboard from '../components/dashboard/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 
 const LeaguePage = ({ setPage, onViewLeague }) => {
