@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useUserStore } from '../store/userStore';
-import CaptionChart from '../components/scores/CaptionChart';
+import CaptionChart from '../components/charts/CaptionChart';
 
 const ScoresPage = ({ theme }) => {
     const { loggedInProfile, isLoadingAuth } = useUserStore();
