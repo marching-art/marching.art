@@ -16,7 +16,7 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
     }
 
     try {
-        const notifsRef = collection(db, `artifacts/${dataNamespace}/users/${user.uid}/notifications`);
+        const notifsRef = collection(db, 'artifacts', dataNamespace, 'users', user.uid, 'notifications');
         const q = query(notifsRef, orderBy('timestamp', 'desc'));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
