@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { useUserStore } from './store/userStore';
 
+import AuthModal from './components/auth/AuthModal';
+
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
     // You can also get the profile directly here if needed,
