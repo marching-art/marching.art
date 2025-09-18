@@ -3,8 +3,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { useAuth } from './context/AuthContext';
-import { useUserStore } from './store/userStore'; // Import the store hook
+import { useUserStore } from './store/userStore';
 
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
