@@ -11,27 +11,39 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
 
     useEffect(() => {
-        setIsLoading(true);
-        let unsubscribe;
-        const fetchLeaderboardData = async () => {
+    setIsLoading(true);
+    let unsubscribe;
+    
+    const fetchLeaderboardData = async () => {
+        try {
             const seasonSettingsRef = doc(db, 'game-settings', 'season');
             const seasonDoc = await getDoc(seasonSettingsRef);
+            
             if (!seasonDoc.exists()) {
+                console.error("No active season found");
+                setLeaderboard([]);
+                setSeasonName('No Active Season');
                 setIsLoading(false);
                 return;
             }
+            
             const seasonData = seasonDoc.data();
             const activeSeasonId = seasonData.seasonUid;
+            
             if (!activeSeasonId) {
                 console.error("Season UID is not configured in game-settings/season");
+                setLeaderboard([]);
+                setSeasonName('Configuration Error');
                 setIsLoading(false);
                 return;
             }
             
             setSeasonName(seasonData.name);
 
-            // Use a broader query to get all profiles, then filter client-side
-            let baseQuery = query(collectionGroup(db, 'profile'));
+            let baseQuery = query(
+                collectionGroup(db, 'profile'),
+                where('activeSeasonId', '==', activeSeasonId)
+            );
 
             if (selectedLeague) {
                 baseQuery = query(baseQuery, where('leagueIds', 'array-contains', selectedLeague.id));
@@ -49,8 +61,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     
                     const userCorps = getAllUserCorps(playerData);
                     
-                    // Add each corps class as a separate leaderboard entry
-                    // Only show corps that have season scores on file
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
                         if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
                             corps.totalSeasonScore && corps.totalSeasonScore > 0) {
@@ -73,13 +83,21 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 setIsLoading(false);
             }, (error) => {
                 console.error("Error fetching leaderboard:", error);
+                setLeaderboard([]);
                 setIsLoading(false);
             });
-        };
-        
-        fetchLeaderboardData();
-        return () => { if (unsubscribe) unsubscribe(); };
-    }, [selectedLeague, selectedCorpsClass]);
+            
+        } catch (error) {
+            console.error("Error setting up leaderboard:", error);
+            setLeaderboard([]);
+            setSeasonName('Error Loading Season');
+            setIsLoading(false);
+        }
+    };
+    
+    fetchLeaderboardData();
+    return () => { if (unsubscribe) unsubscribe(); };
+}, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     

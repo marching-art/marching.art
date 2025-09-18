@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-// MODIFIED: Import dataNamespace instead of appId
-import { auth, functions, dataNamespace } from '../../firebase';
+import { auth, db, functions, dataNamespace } from '../../firebase';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');

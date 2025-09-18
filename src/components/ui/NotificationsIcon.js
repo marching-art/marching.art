@@ -10,8 +10,12 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     useEffect(() => {
-        if (!user?.uid) return;
+    if (!user?.uid || !dataNamespace) {
+        console.warn("Cannot load notifications: user or dataNamespace missing");
+        return;
+    }
 
+    try {
         const notifsRef = collection(db, `artifacts/${dataNamespace}/users/${user.uid}/notifications`);
         const q = query(notifsRef, orderBy('timestamp', 'desc'));
 
@@ -27,10 +31,19 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
             });
             setNotifications(fetchedNotifs);
             setUnreadCount(count);
+        }, (error) => {
+            console.error("Error loading notifications:", error);
+            setNotifications([]);
+            setUnreadCount(0);
         });
 
         return () => unsubscribe();
-    }, [user]);
+    } catch (error) {
+        console.error("Error setting up notifications listener:", error);
+        setNotifications([]);
+        setUnreadCount(0);
+    }
+}, [user, dataNamespace]);
 
     const handleTogglePanel = () => {
         setIsPanelOpen(prev => !prev);

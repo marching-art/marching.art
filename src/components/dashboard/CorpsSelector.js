@@ -12,13 +12,12 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
     useEffect(() => {
         const allCorps = getAllUserCorps(profile);
         setUserCorps(allCorps);
-        
-        // Only reset activeCorps if we have no corps at all, otherwise let user click freely
+    
         const availableCorpsKeys = Object.keys(allCorps);
         if (availableCorpsKeys.length === 0) {
-            setActiveCorps('worldClass'); // Default to worldClass when no corps exist
+            setActiveCorps('worldClass');
         }
-    }, [profile]); // Remove activeCorps from dependencies to prevent reset on tab clicks
+    }, [profile]);
 
     const hasCorps = (corpsClass) => {
         return userCorps[corpsClass] && userCorps[corpsClass].corpsName;
