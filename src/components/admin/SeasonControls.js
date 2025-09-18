@@ -14,7 +14,7 @@ const SeasonControls = () => {
     useEffect(() => {
         const docRef = doc(db, 'game-settings', 'season');
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
                 const data = docSnap.data();
                 setSeasonSettings(data);
                 setPointCap(data.nextPointCap || data.currentPointCap || DEFAULT_POINT_CAP);

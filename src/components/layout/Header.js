@@ -2,22 +2,32 @@ import React, { useState } from 'react';
 import LogoIcon from '../ui/LogoIcon';
 import Icon from '../ui/Icon';
 import NotificationsIcon from '../ui/NotificationsIcon';
+import { useUserStore } from '../../store/userStore';
 
 const Header = ({
-    user,
-    onViewLeague,
-    isLoggedIn,
-    isAdmin,
-    onLoginClick,
-    onSignUpClick,
-    onLogout,
-    setPage,
-    onViewOwnProfile,
-    profile,
-    themeMode,
-    toggleThemeMode,
+  setPage,
+  onLoginClick,
+  onSignUpClick,
+  onLogout,
+  onViewOwnProfile,
+  onViewLeague,
+  themeMode,
+  toggleThemeMode,
 }) => {
+
+    const { user, loggedInProfile, isLoadingAuth } = useUserStore();
+    const isLoggedIn = !!user;
+    const isAdmin = loggedInProfile?.isAdmin;
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // TEMPORARY DEBUG - REMOVE AFTER TESTING
+    console.log('Header Debug:', {
+        user: user,
+        loggedInProfile: loggedInProfile,
+        isLoadingAuth: isLoadingAuth,
+        isAdmin: isAdmin,
+        isLoggedIn: isLoggedIn
+    });
 
     const NavButton = ({ page, children }) => (
         <button onClick={() => setPage(page)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">
@@ -40,6 +50,13 @@ const Header = ({
                 </span>
             </div>
             
+            {/* TEMPORARY DEBUG INFO - REMOVE AFTER TESTING */}
+            {isLoggedIn && (
+                <div className="hidden md:block text-xs text-red-500 bg-red-100 p-1 rounded">
+                    DEBUG: Admin={isAdmin ? 'YES' : 'NO'} | User={user?.email} | Loading={isLoadingAuth ? 'YES' : 'NO'}
+                </div>
+            )}
+            
             <nav className="hidden md:flex items-center space-x-6">
                 <div className="flex items-center space-x-6">
                     <NavButton page="howtoplay">How to Play</NavButton>
@@ -58,7 +75,7 @@ const Header = ({
                 <div className="flex items-center space-x-4">
                     {isLoggedIn ? (
                         <>
-                            <NotificationsIcon user={user} setPage={setPage} onViewLeague={onViewLeague} /> {/* ADD THIS */}
+                            <NotificationsIcon user={user} setPage={setPage} onViewLeague={onViewLeague} />
                             <button onClick={onViewOwnProfile} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">Profile</button>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 font-bold hover:underline text-sm">Admin</button>}
                             <button onClick={onLogout} className="border border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-secondary dark:text-text-secondary-dark font-bold py-2 px-3 rounded-theme transition-all text-sm">
@@ -119,4 +136,5 @@ const Header = ({
         </header>
     );
 };
+
 export default Header;

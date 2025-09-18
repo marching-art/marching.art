@@ -1,106 +1,114 @@
 import React, { useState, useEffect } from 'react';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useUserStore } from '../store/userStore';
+import { hasAnyCorps } from '../utils/profileCompatibility';
 
-import SeasonSignup from '../components/dashboard/SeasonSignup';
-import LeagueManager from '../components/dashboard/LeagueManager';
+// Import your components
+import MyStatus from '../components/dashboard/MyStatus';
 import CorpsSelector from '../components/dashboard/CorpsSelector';
-import MyStatus from '../components/dashboard/MyStatus'; // NEW IMPORT
+import SeasonSignup from '../components/dashboard/SeasonSignup';
 
-import { hasJoinedSeason } from '../utils/profileCompatibility';
-
-const DashboardPage = ({ profile, userId }) => {
+const DashboardPage = () => {
+    const { loggedInProfile, isLoadingAuth } = useUserStore();
     const [seasonSettings, setSeasonSettings] = useState(null);
     const [corpsData, setCorpsData] = useState([]);
+    const [seasonEvents, setSeasonEvents] = useState([]);
+    const [currentOffSeasonDay, setCurrentOffSeasonDay] = useState(0);
+    const [seasonStartDate, setSeasonStartDate] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const seasonSettingsRef = doc(db, 'game-settings', 'season');
-        
-        const unsubscribe = onSnapshot(seasonSettingsRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                const settings = { id: docSnap.id, ...docSnap.data() };
-                setSeasonSettings(settings);
+        const fetchDashboardData = async () => {
+            if (isLoadingAuth) return; // Wait for auth to finish loading
+            
+            setIsLoading(true);
+            try {
+                // Fetch season settings
+                const seasonDoc = await getDoc(doc(db, 'game-settings', 'season'));
+                if (seasonDoc.exists()) {
+                    const seasonData = seasonDoc.data();
+                    setSeasonSettings(seasonData);
+                    setSeasonStartDate(seasonData.schedule?.startDate?.toDate() || null);
+                    setSeasonEvents(seasonData.events || []);
 
-                if (settings.dataDocId) {
-                    const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
-                    const corpsDocSnap = await getDoc(corpsDataRef);
-                    if (corpsDocSnap.exists()) {
-                        setCorpsData(corpsDocSnap.data().corpsValues || []);
-                    } else {
-                        console.error(`Corps data document not found: ${settings.dataDocId}`);
-                        setCorpsData([]);
+                    // Calculate current day
+                    if (seasonData.schedule?.startDate) {
+                        const startDate = seasonData.schedule.startDate.toDate();
+                        const diffInMillis = new Date().getTime() - startDate.getTime();
+                        const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+                        setCurrentOffSeasonDay(Math.max(1, currentDay));
+                    }
+
+                    // Fetch corps data
+                    if (seasonData.dataDocId) {
+                        const corpsDoc = await getDoc(doc(db, 'dci-data', seasonData.dataDocId));
+                        if (corpsDoc.exists()) {
+                            setCorpsData(corpsDoc.data().corpsValues || []);
+                        }
                     }
                 }
-            } else {
-                setSeasonSettings(null);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Error fetching season settings:", error);
-            setIsLoading(false);
-        });
+        };
 
-        return () => unsubscribe();
-    }, []);
+        fetchDashboardData();
+    }, [isLoadingAuth]);
 
-    if (isLoading || !seasonSettings) {
+    // Show loading state
+    if (isLoadingAuth || isLoading) {
         return (
-            <div className="text-center p-8">
-                <p className="text-lg font-semibold text-primary dark:text-primary-dark">Loading Season Data...</p>
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary dark:border-primary-dark"></div>
+                    <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading your dashboard...</p>
+                </div>
             </div>
         );
     }
-    
-    const hasJoinedCurrentSeason = hasJoinedSeason(profile, seasonSettings.seasonUid);
 
-    const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
-    let currentOffSeasonDay = 0;
-    if (seasonSettings.status === 'off-season' && seasonStartDate) {
-        const logicalNow = new Date();
-        logicalNow.setHours(logicalNow.getHours() - 24);
-        const todayForLogic = new Date(logicalNow.getFullYear(), logicalNow.getMonth(), logicalNow.getDate());
-        const startDayForLogic = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
-        const diff = todayForLogic.getTime() - startDayForLogic.getTime();
-        currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+    // Show error state if no season
+    if (!seasonSettings) {
+        return (
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-8">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">No Active Season</h2>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">There's no active season right now. Check back later!</p>
+                </div>
+            </div>
+        );
     }
 
-    return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-            {hasJoinedCurrentSeason ? (
-                <>
-                    {/* New Status Header */}
-                    <MyStatus username={profile.username} profile={profile} />
+    // Check if user needs to sign up for the season
+    const needsSeasonSignup = !loggedInProfile || !hasAnyCorps(loggedInProfile) || 
+        loggedInProfile.activeSeasonId !== seasonSettings.seasonUid;
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        {/* Main Hub: Corps & Show Management */}
-                        <div className="lg:col-span-2 bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-4">Manage Your Corps</h2>
-                            <CorpsSelector 
-                                profile={profile}  
+    return (
+        <div className="min-h-screen bg-background dark:bg-background-dark">
+            <div className="container mx-auto px-4 py-8">
+                <div className="space-y-8">
+                    {needsSeasonSignup ? (
+                        <SeasonSignup 
+                            seasonSettings={seasonSettings}
+                            corpsData={corpsData}
+                        />
+                    ) : (
+                        <>
+                            <MyStatus />
+                            <CorpsSelector
                                 corpsData={corpsData}
                                 seasonSettings={seasonSettings}
-                                seasonEvents={seasonSettings.events || []}
+                                seasonEvents={seasonEvents}
                                 currentOffSeasonDay={currentOffSeasonDay}
                                 seasonStartDate={seasonStartDate}
                             />
-                        </div>
-
-                        {/* Side Column: Leagues and other modules */}
-                        <div className="space-y-8">
-                             <LeagueManager profile={profile} />
-                             {/* You can add more summary modules here in the future */}
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <SeasonSignup
-                    profile={profile}
-                    userId={userId}
-                    seasonSettings={seasonSettings}
-                    corpsData={corpsData}
-                />
-            )}
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

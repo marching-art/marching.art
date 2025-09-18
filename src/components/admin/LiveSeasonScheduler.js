@@ -39,7 +39,7 @@ const LiveSeasonScheduler = () => {
     useEffect(() => {
         const docRef = doc(db, 'schedules', 'live_season_template');
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
                 setSchedule(docSnap.data().events || []);
             } else {
                 setSchedule([]);

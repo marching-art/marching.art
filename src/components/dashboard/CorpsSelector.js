@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import LineupEditor from './LineupEditor';
 import ShowSelection from './ShowSelection';
+import { useUserStore } from '../../store/userStore';
 import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
-const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
+// CORRECTED: The component's props are now explicitly listed.
+const CorpsSelector = ({ corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
+    const { loggedInProfile: profile } = useUserStore();
     const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
 
@@ -27,7 +30,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         }));
     };
 
-    if (!hasAnyCorps(profile)) {
+    if (!profile || !hasAnyCorps(profile)) {
         return null; // Let DashboardPage handle SeasonSignup
     }
 
