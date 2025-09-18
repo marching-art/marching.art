@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from './firebase';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { Toaster } from 'react-hot-toast';
+import React, { useState, useEffect } from 'react'; 
+import { signOut } from 'firebase/auth'; 
+import { auth } from './firebase'; 
+import { AuthProvider, useAuth } from './context/AuthContext'; 
+import { Toaster } from 'react-hot-toast'; 
 import { useUserStore } from './store/userStore';
 
-import AuthModal from './components/auth/AuthModal';
 import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import AdminPage from './pages/AdminPage';
+import LeaguePage from './pages/LeaguePage';
+import LeagueDetailPage from './pages/LeagueDetailPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import SchedulePage from './pages/SchedulePage';
+import ScoresPage from './pages/ScoresPage';
+import StatsPage from './pages/StatsPage';
+import HowToPlayPage from './pages/HowToPlayPage';
+import AuthModal from './components/auth/AuthModal';
 
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
