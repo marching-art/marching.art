@@ -19,7 +19,6 @@ import ScoresPage from './pages/ScoresPage';
 import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
 import AuthModal from './components/auth/AuthModal';
-import DebugAuth from './components/DebugAuth';
 
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
@@ -125,7 +124,6 @@ function AppContent() {
                 {renderPage()}
             </main>
             <Footer setPage={handleSetPage} />
-        <DebugAuth />
         </div>
     );
 }
