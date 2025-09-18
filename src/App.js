@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { useUserStore } from './store/userStore';
 
 import AuthModal from './components/auth/AuthModal';
+import Header from './components/Header';
 
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
