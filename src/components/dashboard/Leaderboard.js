@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, query, where, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { CORPS_CLASSES, getAllUserCorps } from '../../utils/profileCompatibility';
+import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
 
 const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -9,107 +9,133 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [seasonName, setSeasonName] = useState('');
     const [selectedLeague, setSelectedLeague] = useState(initialLeague);
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
+    const [userLeagues, setUserLeagues] = useState([]);
 
     useEffect(() => {
-        setIsLoading(true);
-        let unsubscribe;
+        const fetchLeagues = async () => {
+            if (profile?.leagueIds?.length > 0) {
+                const leaguesQuery = query(collection(db, 'leagues'), where('__name__', 'in', profile.leagueIds));
+                const querySnapshot = await getDocs(leaguesQuery);
+                const leagues = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                setUserLeagues(leagues);
+            } else {
+                setUserLeagues([]);
+            }
+        };
+        fetchLeagues();
+    }, [profile]);
+
+    // MODIFIED: This useEffect now uses getDocs for a stable, one-time fetch.
+    useEffect(() => {
         const fetchLeaderboardData = async () => {
-            const seasonSettingsRef = doc(db, 'game-settings', 'season');
-            const seasonDoc = await getDoc(seasonSettingsRef);
-            if (!seasonDoc.exists()) {
-                setIsLoading(false);
-                return;
-            }
-            const seasonData = seasonDoc.data();
-            const activeSeasonId = seasonData.seasonUid;
-            if (!activeSeasonId) {
-                console.error("Season UID is not configured in game-settings/season");
-                setIsLoading(false);
-                return;
-            }
-            
-            setSeasonName(seasonData.name);
+            setIsLoading(true);
+            try {
+                const seasonSettingsRef = doc(db, 'game-settings', 'season');
+                const seasonDoc = await getDoc(seasonSettingsRef);
+                
+                if (!seasonDoc.exists()) {
+                    setLeaderboard([]);
+                    setSeasonName('No Active Season');
+                    setIsLoading(false);
+                    return;
+                }
+                
+                const seasonData = seasonDoc.data();
+                const activeSeasonId = seasonData.seasonUid;
+                setSeasonName(seasonData.name);
 
-            let baseQuery = query(
-                collectionGroup(db, 'profile'),
-                where('activeSeasonId', '==', activeSeasonId)
-            );
+                const profilesRef = collectionGroup(db, 'profile');
+                let leaderboardQuery;
 
-            if (selectedLeague) {
-                baseQuery = query(baseQuery, where('leagueIds', 'array-contains', selectedLeague.id));
-            }
+                if (selectedLeague) {
+                    leaderboardQuery = query(
+                        profilesRef,
+                        where('activeSeasonId', '==', activeSeasonId),
+                        where('leagueIds', 'array-contains', selectedLeague.id)
+                    );
+                } else {
+                    leaderboardQuery = query(
+                        profilesRef,
+                        where('activeSeasonId', '==', activeSeasonId)
+                    );
+                }
 
-            unsubscribe = onSnapshot(baseQuery, (querySnapshot) => {
-                const allCorpsEntries = [];
+                const querySnapshot = await getDocs(leaderboardQuery);
+                
+                let allCorpsEntries = [];
                 
                 querySnapshot.docs.forEach(doc => {
                     const playerData = doc.data();
                     const userId = doc.ref.parent.parent.id;
+                    
                     const userCorps = getAllUserCorps(playerData);
                     
-                    // Add each corps class as a separate leaderboard entry
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
+                            corps.totalSeasonScore && corps.totalSeasonScore > 0) {
                             allCorpsEntries.push({
                                 id: `${userId}_${corpsClass}`,
                                 userId: userId,
-                                username: playerData.username,
+                                username: playerData.username || 'Unnamed Manager',
                                 corpsName: corps.corpsName,
                                 corpsClass: corpsClass,
-                                totalSeasonScore: corps.totalSeasonScore || 0
+                                totalSeasonScore: corps.totalSeasonScore
                             });
                         }
                     });
                 });
                 
-                // Sort by score descending
                 allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
                 
                 setLeaderboard(allCorpsEntries);
+                
+            } catch (error) {
+                console.error("Leaderboard query failed. This might be a missing Firestore index.", error);
+                setLeaderboard([]);
+            } finally {
                 setIsLoading(false);
-            }, (error) => {
-                console.error("Error fetching leaderboard:", error);
-                setIsLoading(false);
-            });
+            }
         };
         
         fetchLeaderboardData();
-        return () => { if (unsubscribe) unsubscribe(); };
     }, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
-    const userLeagues = profile?.leagues || [];
-
     return (
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
-            {/* Corps Class Selector */}
             <div className="flex flex-wrap gap-2 mb-4">
-                {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                    <button
-                        key={key}
-                        onClick={() => setSelectedCorpsClass(key)}
-                        className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
-                            selectedCorpsClass === key
-                                ? 'bg-primary text-on-primary'
-                                : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                        }`}
-                    >
-                        <div className={`inline-block w-2 h-2 rounded-full ${classInfo.color} mr-2`}></div>
-                        {classInfo.name}
-                    </button>
-                ))}
+                {CORPS_CLASS_ORDER.map(key => {
+                    const classInfo = CORPS_CLASSES[key];
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => setSelectedCorpsClass(key)}
+                            className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
+                                selectedCorpsClass === key
+                                    ? 'bg-primary text-on-primary'
+                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                            }`}
+                        >
+                            <div className={`inline-block w-2 h-2 rounded-full ${classInfo.color} mr-2`}></div>
+                            {classInfo.name}
+                        </button>
+                    )
+                })}
             </div>
 
-            {/* League Selector */}
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
-                    disabled={!!initialLeague} // Disable Global button
-                    // ...
+                    disabled={!!initialLeague}
+                    className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
+                        !selectedLeague
+                            ? 'border-primary text-primary dark:text-primary-dark'
+                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                    } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     Global
                 </button>
@@ -117,8 +143,12 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     <button
                         key={league.id}
                         onClick={() => setSelectedLeague(league)}
-                        disabled={!!initialLeague} // Disable other league buttons
-                        // ...
+                        disabled={!!initialLeague}
+                        className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
+                            selectedLeague?.id === league.id
+                                ? 'border-primary text-primary dark:text-primary-dark'
+                                : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                        } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {league.name}
                     </button>
@@ -127,6 +157,8 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
 
             {isLoading ? (
                 <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
+            ) : leaderboard.length === 0 ? (
+                <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">No corps with scores found for this filter.</p>
             ) : (
                 <ol className="space-y-1">
                     {leaderboard.map((player, index) => {
