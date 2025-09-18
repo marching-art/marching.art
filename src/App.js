@@ -22,9 +22,7 @@ import AuthModal from './components/auth/AuthModal';
 
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
-    // You can also get the profile directly here if needed,
-    // but the real benefit is in child components.
-    const { loggedInProfile } = useUserStore(); 
+    const { loggedInProfile } = useUserStore();
 
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
@@ -62,18 +60,27 @@ function AppContent() {
     };
 
     const renderPage = () => {
-        // MODIFIED: No need to pass props like `profile` or `loggedInProfile`
         switch (page) {
-            case 'dashboard': return <DashboardPage />;
-            case 'profile': return <ProfilePage viewingUserId={pageProps.userId} />;
-            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { /*...*/ }} />;
-            case 'leagues': return <LeaguePage setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
-            case 'leagueDetail': return <LeagueDetailPage leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'leaderboard': return <LeaderboardPage onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'schedule': return <SchedulePage setPage={handleSetPage} />;
-            case 'scores': return <ScoresPage theme={themeMode} />;
-            case 'stats': return <StatsPage />;
-            case 'howtoplay': return <HowToPlayPage />;
+            case 'dashboard': 
+                return <DashboardPage />;
+            case 'profile': 
+                return <ProfilePage viewingUserId={pageProps.userId} />;
+            case 'admin': 
+                return <AdminPage />;
+            case 'leagues': 
+                return <LeaguePage setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
+            case 'leagueDetail': 
+                return <LeagueDetailPage leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'leaderboard': 
+                return <LeaderboardPage onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'schedule': 
+                return <SchedulePage setPage={handleSetPage} />;
+            case 'scores': 
+                return <ScoresPage theme={themeMode} />;
+            case 'stats': 
+                return <StatsPage />;
+            case 'howtoplay': 
+                return <HowToPlayPage />;
             case 'home':
             default:
                 return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
@@ -81,7 +88,14 @@ function AppContent() {
     };
 
     if (isLoadingAuth) {
-        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
+        return (
+            <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary dark:border-primary-dark"></div>
+                    <p className="mt-4">Loading marching.art...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -101,7 +115,7 @@ function AppContent() {
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
                 onLogout={handleLogout}
                 setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
+                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
                 onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}

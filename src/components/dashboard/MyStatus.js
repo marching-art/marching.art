@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserStore } from '../../store/userStore'; // Import the store hook
+import { useUserStore } from '../../store/userStore';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
 const MyStatus = () => {
@@ -14,7 +14,7 @@ const MyStatus = () => {
                 {color && <div className={`w-3 h-3 rounded-full ${color}`}></div>}
                 <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
             </div>
-            {isLoading ? (
+            {isLoadingAuth ? (
                 <div className="h-8 mt-1 bg-surface dark:bg-surface-dark rounded animate-pulse w-3/4 mx-auto"></div>
             ) : (
                 <p className={`${large ? 'text-2xl' : 'text-xl'} font-bold text-primary dark:text-primary-dark`}>{value}</p>
@@ -27,7 +27,7 @@ const MyStatus = () => {
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-                Welcome back, <span className="text-primary dark:text-primary-dark">{username}!</span>
+                Welcome back, <span className="text-primary dark:text-primary-dark">{username || 'Manager'}!</span>
             </h2>
             <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Here are your current corps scores for the season.</p>
             
