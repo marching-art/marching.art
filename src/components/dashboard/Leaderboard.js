@@ -9,10 +9,8 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [seasonName, setSeasonName] = useState('');
     const [selectedLeague, setSelectedLeague] = useState(initialLeague);
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
-    // NEW: State to hold the user's league details.
     const [userLeagues, setUserLeagues] = useState([]);
 
-    // NEW: useEffect to fetch league details when the user's profile is available.
     useEffect(() => {
         const fetchLeagues = async () => {
             if (profile?.leagueIds?.length > 0) {
@@ -37,7 +35,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 const seasonDoc = await getDoc(seasonSettingsRef);
                 
                 if (!seasonDoc.exists()) {
-                    console.error("No active season found");
                     setLeaderboard([]);
                     setSeasonName('No Active Season');
                     setIsLoading(false);
@@ -46,49 +43,46 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 
                 const seasonData = seasonDoc.data();
                 const activeSeasonId = seasonData.seasonUid;
-                
-                if (!activeSeasonId) {
-                    console.error("Season UID is not configured in game-settings/season");
-                    setLeaderboard([]);
-                    setSeasonName('Configuration Error');
-                    setIsLoading(false);
-                    return;
-                }
-                
                 setSeasonName(seasonData.name);
 
-                let baseQuery = query(
-                    collectionGroup(db, 'profile'),
-                    where('activeSeasonId', '==', activeSeasonId)
-                );
+                // --- MODIFIED QUERY LOGIC ---
+                // Base query that will be used for both Global and League leaderboards
+                let leaderboardQuery;
+                const profilesRef = collectionGroup(db, 'profile');
 
-                // Note: Firestore does not support collectionGroup queries with array-contains filters.
-                // The league filtering will be done on the client side.
+                if (selectedLeague) {
+                    // If a league is selected, build a query that filters by league on the backend.
+                    leaderboardQuery = query(
+                        profilesRef,
+                        where('activeSeasonId', '==', activeSeasonId),
+                        where('leagueIds', 'array-contains', selectedLeague.id)
+                    );
+                } else {
+                    // If "Global" is selected, query for all active players.
+                    leaderboardQuery = query(
+                        profilesRef,
+                        where('activeSeasonId', '==', activeSeasonId)
+                    );
+                }
+                // --- END MODIFIED QUERY LOGIC ---
 
-                unsubscribe = onSnapshot(baseQuery, (querySnapshot) => {
+                unsubscribe = onSnapshot(leaderboardQuery, (querySnapshot) => {
                     let allCorpsEntries = [];
                     
                     querySnapshot.docs.forEach(doc => {
                         const playerData = doc.data();
                         const userId = doc.ref.parent.parent.id;
                         
-                        if (!playerData.username) return;
-                        
-                        // Client-side filter for selected league
-                        if (selectedLeague && (!playerData.leagueIds || !playerData.leagueIds.includes(selectedLeague.id))) {
-                            return;
-                        }
-
                         const userCorps = getAllUserCorps(playerData);
                         
                         Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                            // MODIFIED: This condition now correctly includes scores of 0.
+                            // This filter now only checks for corps details and score, not the league.
                             if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
-                                typeof corps.totalSeasonScore === 'number') {
+                                corps.totalSeasonScore && corps.totalSeasonScore > 0) {
                                 allCorpsEntries.push({
                                     id: `${userId}_${corpsClass}`,
                                     userId: userId,
-                                    username: playerData.username,
+                                    username: playerData.username || 'Unnamed Manager',
                                     corpsName: corps.corpsName,
                                     corpsClass: corpsClass,
                                     totalSeasonScore: corps.totalSeasonScore
@@ -102,15 +96,13 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     setLeaderboard(allCorpsEntries);
                     setIsLoading(false);
                 }, (error) => {
-                    console.error("Error fetching leaderboard:", error);
+                    console.error("Leaderboard query failed. This likely requires a new Firestore index. See the browser console for an error message containing a link to create it.", error);
                     setLeaderboard([]);
                     setIsLoading(false);
                 });
                 
             } catch (error) {
                 console.error("Error setting up leaderboard:", error);
-                setLeaderboard([]);
-                setSeasonName('Error Loading Season');
                 setIsLoading(false);
             }
         };
@@ -122,13 +114,12 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
     return (
+        // ... JSX is unchanged from the previous version ...
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
-            {/* Corps Class Selector */}
             <div className="flex flex-wrap gap-2 mb-4">
-                {/* MODIFIED: Iterate over the ordered array for correct hierarchy */}
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
                     return (
@@ -148,7 +139,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 })}
             </div>
 
-            {/* League Selector */}
             <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
@@ -161,7 +151,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 >
                     Global
                 </button>
-                {/* MODIFIED: Use the new userLeagues state to render tabs */}
                 {userLeagues.map(league => (
                     <button
                         key={league.id}
