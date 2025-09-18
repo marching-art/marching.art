@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import Leaderboard from '../components/dashboard/Leaderboard';
-import MatchupsDisplay from '../components/leagues/MatchupsDisplay'; // Import new component
+import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 
 const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
     const [league, setLeague] = useState(null);

@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useUserStore } from '../store/userStore';
 
 // Import your components
-import LeagueManager from '../components/leagues/LeagueManager';
+import LeagueManager from '../components/dashboard/LeagueManager';
 import Leaderboard from '../components/leagues/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 
