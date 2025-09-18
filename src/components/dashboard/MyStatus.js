@@ -50,7 +50,7 @@ const MyStatus = ({ username, profile }) => {
                              <StatCard 
                                 key={corpsClassKey}
                                 label={`${CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}`}
-                                value={`${(corps.totalSeasonScore || 0).toFixed(3)} pts`}
+                                value={`${(corps.totalSeasonScore || 0).toFixed(3)}`}
                                 color={CORPS_CLASSES[corpsClassKey]?.color}
                                 large={Object.keys(userCorps).length === 1}
                             />
