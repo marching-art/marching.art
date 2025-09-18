@@ -20,15 +20,6 @@ const Header = ({
     const isAdmin = loggedInProfile?.isAdmin;
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // TEMPORARY DEBUG - REMOVE AFTER TESTING
-    console.log('Header Debug:', {
-        user: user,
-        loggedInProfile: loggedInProfile,
-        isLoadingAuth: isLoadingAuth,
-        isAdmin: isAdmin,
-        isLoggedIn: isLoggedIn
-    });
-
     const NavButton = ({ page, children }) => (
         <button onClick={() => setPage(page)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">
             {children}
@@ -49,13 +40,6 @@ const Header = ({
                     marching<span className="text-primary dark:text-primary-dark font-bold">.art</span>
                 </span>
             </div>
-            
-            {/* TEMPORARY DEBUG INFO - REMOVE AFTER TESTING */}
-            {isLoggedIn && (
-                <div className="hidden md:block text-xs text-red-500 bg-red-100 p-1 rounded">
-                    DEBUG: Admin={isAdmin ? 'YES' : 'NO'} | User={user?.email} | Loading={isLoadingAuth ? 'YES' : 'NO'}
-                </div>
-            )}
             
             <nav className="hidden md:flex items-center space-x-6">
                 <div className="flex items-center space-x-6">

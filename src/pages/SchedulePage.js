@@ -1,101 +1,236 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useUserStore } from '../store/userStore';
 
 const SchedulePage = ({ setPage }) => {
-    const [season, setSeason] = useState(null);
+    const { loggedInProfile, isLoadingAuth } = useUserStore();
+    const [seasonSettings, setSeasonSettings] = useState(null);
+    const [currentDay, setCurrentDay] = useState(0);
+    const [selectedWeek, setSelectedWeek] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
-    const [fantasyRecaps, setFantasyRecaps] = useState(null);
 
     useEffect(() => {
-        const fetchSeasonData = async () => {
+        const fetchScheduleData = async () => {
+            if (isLoadingAuth) return;
+            
             setIsLoading(true);
             try {
-                const seasonRef = doc(db, 'game-settings', 'season');
-                const seasonSnap = await getDoc(seasonRef);
-                
-                if (seasonSnap.exists) {
-                    const seasonData = seasonSnap.data();
-                    setSeason(seasonData);
+                const seasonDoc = await getDoc(doc(db, 'game-settings', 'season'));
+                if (seasonDoc.exists()) {
+                    const seasonData = seasonDoc.data();
+                    setSeasonSettings(seasonData);
 
-                    const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-                    const recapSnap = await getDoc(recapRef);
-                    if (recapSnap.exists) {
-                        const recapsMap = new Map();
-                        recapSnap.data().recaps.forEach(recap => {
-                            recapsMap.set(recap.offSeasonDay, recap);
-                        });
-                        setFantasyRecaps(recapsMap);
+                    // Calculate current day
+                    if (seasonData.schedule?.startDate) {
+                        const startDate = seasonData.schedule.startDate.toDate();
+                        const diffInMillis = new Date().getTime() - startDate.getTime();
+                        const day = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+                        setCurrentDay(Math.max(1, day));
+                        setSelectedWeek(Math.ceil(Math.max(1, day) / 7));
                     }
                 }
             } catch (error) {
-                console.error("Error fetching season data:", error);
+                console.error("Error fetching schedule data:", error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
-        fetchSeasonData();
-    }, []);
-    
-    if (isLoading) return <div className="p-8 text-center"><p className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Loading Schedule...</p></div>;
-    if (!season || !season.schedule?.startDate) return <div className="p-8 text-center"><p className="text-text-secondary dark:text-text-secondary-dark">No active season schedule found.</p></div>;
 
-    const getCalendarDateForDay = (offSeasonDay) => {
-        const startDate = season.schedule.startDate.toDate();
-        const calendarDate = new Date(startDate.getTime());
-        // CORRECTED: Add the offSeasonDay directly to shift calendar forward by one day
-        calendarDate.setDate(calendarDate.getDate() + offSeasonDay);
-        return calendarDate;
+        fetchScheduleData();
+    }, [isLoadingAuth]);
+
+    // Show loading state
+    if (isLoadingAuth || isLoading) {
+        return (
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary dark:border-primary-dark"></div>
+                    <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading schedule...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!seasonSettings) {
+        return (
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-8">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">No Active Season</h2>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">There's no active season schedule to display.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const isLiveSeason = seasonSettings.status === 'live-season';
+    const maxWeeks = isLiveSeason ? 10 : 7;
+    const weeks = Array.from({ length: maxWeeks }, (_, i) => i + 1);
+    
+    // Get events for selected week
+    const eventsForWeek = seasonSettings.events?.filter(event => {
+        if (isLiveSeason) {
+            return event.week === selectedWeek;
+        } else {
+            // Off-season: group by week (7 days each)
+            const startDay = (selectedWeek - 1) * 7 + 1;
+            const endDay = selectedWeek * 7;
+            return event.offSeasonDay >= startDay && event.offSeasonDay <= endDay;
+        }
+    }) || [];
+
+    const getCalendarDate = (dayOffset) => {
+        if (!seasonSettings.schedule?.startDate) return null;
+        const startDate = seasonSettings.schedule.startDate.toDate();
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + dayOffset - 1);
+        return date;
     };
 
-    const eventsByWeek = (season.events || []).reduce((acc, event) => {
-        const week = Math.ceil(event.offSeasonDay / 7);
-        if (!acc[week]) {
-            acc[week] = [];
-        }
-        acc[week].push(event);
-        return acc;
-    }, {});
-
     return (
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-8 text-center">{season.name}</h1>
-            <div className="space-y-10">
-                {Object.keys(eventsByWeek).map(week => (
-                    <div key={week} className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-                        <h2 className="text-3xl font-bold text-primary dark:text-primary-dark border-b-theme border-accent dark:border-accent-dark pb-3 mb-6">Week {week}</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {eventsByWeek[week].sort((a, b) => a.offSeasonDay - b.offSeasonDay).map(day => {
-                                const calendarDate = getCalendarDateForDay(day.offSeasonDay);
-                                const hasResults = fantasyRecaps?.has(day.offSeasonDay);
-                                
-                                return (
-                                    <div key={day.offSeasonDay} className="flex flex-col bg-background dark:bg-background-dark p-4 rounded-theme border-theme border-accent dark:border-accent-dark">
-                                        <div className="flex justify-between items-center border-b-theme border-accent dark:border-accent-dark pb-2 mb-3">
-                                            <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark">
-                                                {calendarDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                                            </h3>
-                                        </div>
-                                        <div className="space-y-3 flex-grow">
-                                            {day.shows.length > 0 ? day.shows.map((show, index) => (
-                                                <div key={index} className="text-sm">
-                                                    <p className="font-semibold text-text-primary dark:text-text-primary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</p>
-                                                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
-                                                </div>
-                                            )) : (
-                                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic">No shows scheduled.</p>
-                                            )}
-                                        </div>
-                                         {hasResults && (
-                                            <button onClick={() => setPage('scores')} className="bg-secondary/80 dark:bg-secondary-dark/80 hover:opacity-90 text-on-secondary font-bold py-2 px-3 rounded-theme transition-all text-sm mt-4">
-                                                View Results
-                                            </button>
-                                        )}
-                                    </div>
-                                );
-                            })}
+        <div className="min-h-screen bg-background dark:bg-background-dark">
+            <div className="container mx-auto px-4 py-8">
+                <div className="space-y-8">
+                    {/* Page Header */}
+                    <div className="text-center">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-primary dark:text-primary-dark">
+                            Season Schedule
+                        </h1>
+                        <p className="text-text-secondary dark:text-text-secondary-dark mt-2">
+                            {seasonSettings.name} • {isLiveSeason ? 'Live Season' : 'Off-Season'}
+                        </p>
+                    </div>
+
+                    {/* Season Info */}
+                    <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                            <div>
+                                <p className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                    Day {currentDay}
+                                </p>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Current Day</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                    Week {Math.ceil(currentDay / 7)}
+                                </p>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Current Week</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                    {maxWeeks} Weeks
+                                </p>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Season Length</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                    {seasonSettings.currentPointCap}
+                                </p>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Point Cap</p>
+                            </div>
                         </div>
                     </div>
-                ))}
+
+                    {/* Week Selector */}
+                    <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                        <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                            Select Week to View
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-2">
+                            {weeks.map(week => (
+                                <button
+                                    key={week}
+                                    onClick={() => setSelectedWeek(week)}
+                                    className={`p-3 rounded-theme font-semibold transition-all ${
+                                        selectedWeek === week
+                                            ? 'bg-primary text-on-primary shadow-lg'
+                                            : 'bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
+                                    }`}
+                                >
+                                    Week {week}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Events for Selected Week */}
+                    <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                        <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                            Week {selectedWeek} Events
+                        </h2>
+                        
+                        {eventsForWeek.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-text-secondary dark:text-text-secondary-dark">
+                                    No events scheduled for this week.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {eventsForWeek.map((event, eventIndex) => (
+                                    <div key={eventIndex} className="border-l-4 border-primary dark:border-primary-dark pl-4">
+                                        <div className="mb-2">
+                                            <p className="text-sm font-bold text-primary dark:text-primary-dark">
+                                                Day {isLiveSeason ? event.dayIndex + 1 : event.offSeasonDay}
+                                                {getCalendarDate(isLiveSeason ? event.dayIndex + 1 : event.offSeasonDay) && (
+                                                    <span className="ml-2 font-normal">
+                                                        ({getCalendarDate(isLiveSeason ? event.dayIndex + 1 : event.offSeasonDay).toLocaleDateString()})
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {(event.shows || []).map((show, showIndex) => (
+                                                <div key={showIndex} className="bg-background dark:bg-background-dark p-3 rounded-theme">
+                                                    <h4 className="font-bold text-text-primary dark:text-text-primary-dark">
+                                                        {show.eventName?.replace(/DCI/g, 'marching.art') || show.name?.replace(/DCI/g, 'marching.art')}
+                                                    </h4>
+                                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                                        📍 {show.location}
+                                                    </p>
+                                                    {show.mandatory && (
+                                                        <span className="inline-block mt-1 px-2 py-1 bg-primary/20 text-primary dark:text-primary-dark text-xs rounded-theme">
+                                                            Championship Event
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Quick Actions */}
+                    {loggedInProfile && (
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                            <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                                Quick Actions
+                            </h3>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button 
+                                    onClick={() => setPage('dashboard')}
+                                    className="flex-1 bg-primary hover:opacity-90 text-on-primary font-bold py-3 px-6 rounded-theme transition-all"
+                                >
+                                    📋 Manage My Corps
+                                </button>
+                                <button 
+                                    onClick={() => setPage('scores')}
+                                    className="flex-1 bg-secondary hover:opacity-90 text-on-secondary font-bold py-3 px-6 rounded-theme transition-all"
+                                >
+                                    📊 View Scores
+                                </button>
+                                <button 
+                                    onClick={() => setPage('leaderboard')}
+                                    className="flex-1 bg-accent hover:opacity-90 text-text-primary dark:text-text-primary-dark font-bold py-3 px-6 rounded-theme transition-all"
+                                >
+                                    🏆 Leaderboard
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
