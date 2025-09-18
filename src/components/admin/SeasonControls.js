@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db, functions } from '../../firebase';
-import { httpsCallable } from 'firebase/functions';
+import { db } from '../../firebase';
+import { startNewOffSeason, startNewLiveSeason } from '../../utils/api';
 
 const DEFAULT_POINT_CAP = 150;
 
@@ -42,31 +42,27 @@ const SeasonControls = () => {
     };
 
     const handleForceStartOffSeason = async () => {
-        if (!window.confirm('Are you sure you want to end any active season and start a new 7-week off-season? This will generate a new random corps list and schedule.')) return;
+        if (!window.confirm('Are you sure you want to end any active season and start a new 7-week off-season?')) return;
         setIsLoading(true);
         setMessage('');
         try {
-            const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
             const result = await startNewOffSeason();
             setMessage(result.data.message);
         } catch (error) {
             setMessage(error.message);
-            console.error(error);
         }
         setIsLoading(false);
     };
     
-const handleForceStartLiveSeason = async () => {
-        if (!window.confirm('Are you sure you want to end any active season and start a new live season? This will use the previous year\'s final rankings to generate the corps list.')) return;
+    const handleForceStartLiveSeason = async () => {
+        if (!window.confirm('Are you sure you want to end any active season and start a new live season?')) return;
         setIsLoading(true);
         setMessage('');
         try {
-            const startNewLiveSeasonFunc = httpsCallable(functions, 'startNewLiveSeason');
-            const result = await startNewLiveSeasonFunc();
+            const result = await startNewLiveSeason();
             setMessage(result.data.message);
         } catch (error) {
             setMessage(error.message);
-            console.error(error);
         }
         setIsLoading(false);
     };

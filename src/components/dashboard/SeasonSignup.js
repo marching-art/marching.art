@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
+import { validateAndSaveLineup } from '../../utils/api';
 import { CORPS_CLASSES } from '../../utils/profileCompatibility';
+import { useUserStore } from '../../store/userStore';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
-const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
+const SeasonSignup = ({ seasonSettings, corpsData }) => {
+    const { loggedInProfile: profile } = useUserStore();
+    const userId = profile?.userId;
     const [step, setStep] = useState(1);
     const [corpsName, setCorpsName] = useState('');
     const [lineup, setLineup] = useState({});
@@ -46,11 +48,10 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
         setIsSaving(true);
         setMessage('');
         try {
-            const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
             const result = await validateAndSaveLineup({
                 lineup: lineup,
                 corpsName: corpsName.trim(),
-                corpsClass: selectedCorpsClass // ADD this line
+                corpsClass: selectedCorpsClass
             });
             setMessage(result.data.message);
         } catch (error) {
@@ -66,21 +67,14 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
     const renderStepOne = () => (
         <div>
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark">Step 1: Choose Your Corps Class</h3>
-            <p className="mt-2 mb-4 text-text-secondary dark:text-text-secondary-dark">
-                Welcome to the {seasonSettings.name}! First, choose which class of corps you'd like to create.
-            </p>
+            <p className="mt-2 mb-4 text-text-secondary dark:text-text-secondary-dark">Welcome to the {seasonSettings.name}! First, choose which class of corps you'd like to create.</p>
         
-            {/* Corps Class Selection */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
                     <button
                         key={key}
                         onClick={() => setSelectedCorpsClass(key)}
-                        className={`p-4 rounded-theme border-2 transition-all ${
-                            selectedCorpsClass === key
-                                ? 'border-primary bg-primary/10 text-primary dark:text-primary-dark'
-                                : 'border-accent dark:border-accent-dark text-text-secondary dark:text-text-secondary-dark hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-theme border-2 transition-all ${selectedCorpsClass === key ? 'border-primary bg-primary/10 text-primary dark:text-primary-dark' : 'border-accent dark:border-accent-dark text-text-secondary dark:text-text-secondary-dark hover:border-primary/50'}`}
                     >
                         <div className={`w-4 h-4 rounded-full ${classInfo.color} mx-auto mb-2`}></div>
                         <h4 className="font-bold text-lg">{classInfo.name}</h4>
@@ -94,11 +88,8 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                 ))}
             </div>
 
-            {/* Corps Name Input */}
             <div className="space-y-2">
-                <label className="block text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-                    Name Your {CORPS_CLASSES[selectedCorpsClass].name} Corps:
-                </label>
+                <label className="block text-sm font-semibold text-text-primary dark:text-text-primary-dark">Name Your {CORPS_CLASSES[selectedCorpsClass].name} Corps:</label>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                         type="text"
@@ -107,13 +98,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                         placeholder={`e.g., The Phantom Regiment ${CORPS_CLASSES[selectedCorpsClass].name}`}
                         className="flex-grow bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-3 text-lg text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary"
                     />
-                    <button
-                        onClick={handleCreateCorps}
-                        disabled={!corpsName.trim()}
-                        className="bg-secondary hover:opacity-90 text-on-secondary font-bold py-3 px-6 rounded-theme text-lg disabled:opacity-50 transition-colors"
-                    >
-                        Next: Create Lineup
-                    </button>
+                    <button onClick={handleCreateCorps} disabled={!corpsName.trim()} className="bg-secondary hover:opacity-90 text-on-secondary font-bold py-3 px-6 rounded-theme text-lg disabled:opacity-50 transition-colors">Next: Create Lineup</button>
                 </div>
             </div>
         </div>
@@ -121,19 +106,13 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
 
     const renderStepTwo = () => (
         <div>
-            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark">
-                Step 2: Create Your {CORPS_CLASSES[selectedCorpsClass].name} Lineup
-            </h3>
+            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark">Step 2: Create Your {CORPS_CLASSES[selectedCorpsClass].name} Lineup</h3>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center my-4 gap-2">
                 <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${CORPS_CLASSES[selectedCorpsClass].color}`}></div>
-                    <p className="text-text-secondary dark:text-text-secondary-dark">
-                        Select a corps for each caption. Stay under the {pointCap} point cap!
-                    </p>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">Select a corps for each caption. Stay under the {pointCap} point cap!</p>
                 </div>
-                <div className={`text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
-                    Total Points: {totalPoints} / {pointCap}
-                </div>
+                <div className={`text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Total Points: {totalPoints} / {pointCap}</div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {CAPTIONS.map(caption => (
@@ -146,7 +125,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData
-                                .filter(corps => corps.points <= pointCap) // Filter by selected class point cap
+                                .filter(corps => corps.points <= pointCap)
                                 .map(corps => (
                                     <option key={uniqueCorpsValue(corps)} value={uniqueCorpsValue(corps)}>
                                         {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
@@ -157,17 +136,8 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                 ))}
             </div>
             <div className="flex justify-between items-center">
-                <button 
-                    onClick={() => setStep(1)}
-                    className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark font-semibold underline"
-                >
-                    ← Back to Corps Selection
-                </button>
-                <button 
-                    onClick={handleJoinSeason} 
-                    disabled={isSaving || totalPoints > pointCap || !isLineupComplete}
-                    className="bg-primary hover:opacity-90 text-on-primary font-bold py-3 px-8 rounded-theme text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
+                <button onClick={() => setStep(1)} className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark font-semibold underline">← Back to Corps Selection</button>
+                <button onClick={handleJoinSeason} disabled={isSaving || totalPoints > pointCap || !isLineupComplete} className="bg-primary hover:opacity-90 text-on-primary font-bold py-3 px-8 rounded-theme text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     {isSaving ? 'Joining...' : `Join Season with ${CORPS_CLASSES[selectedCorpsClass].name}`}
                 </button>
             </div>

@@ -3,24 +3,15 @@ import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import DashboardPage from './pages/DashboardPage';
-import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
-import LeaguePage from './pages/LeaguePage';
-import LeagueDetailPage from './pages/LeagueDetailPage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import SchedulePage from './pages/SchedulePage';
-import ScoresPage from './pages/ScoresPage';
-import StatsPage from './pages/StatsPage';
-import HowToPlayPage from './pages/HowToPlayPage';
-import AuthModal from './components/auth/AuthModal';
+import { useAuth } from './context/AuthContext';
+import { useUserStore } from './store/userStore'; // Import the store hook
 
 function AppContent() {
-    const { user, loggedInProfile, isLoadingAuth } = useAuth();
+    const { user, isLoadingAuth } = useAuth();
+    // You can also get the profile directly here if needed,
+    // but the real benefit is in child components.
+    const { loggedInProfile } = useUserStore(); 
+
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
@@ -57,15 +48,14 @@ function AppContent() {
     };
 
     const renderPage = () => {
-        // Now profile is accessed from context within components where needed
-        // Or passed explicitly like here for simplicity
+        // MODIFIED: No need to pass props like `profile` or `loggedInProfile`
         switch (page) {
-            case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
-            case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
-            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
-            case 'leagues': return <LeaguePage profile={loggedInProfile} setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
-            case 'leagueDetail': return <LeagueDetailPage profile={loggedInProfile} leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'leaderboard': return <LeaderboardPage profile={loggedInProfile} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'dashboard': return <DashboardPage />;
+            case 'profile': return <ProfilePage viewingUserId={pageProps.userId} />;
+            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { /*...*/ }} />;
+            case 'leagues': return <LeaguePage setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
+            case 'leagueDetail': return <LeagueDetailPage leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'leaderboard': return <LeaderboardPage onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
             case 'schedule': return <SchedulePage setPage={handleSetPage} />;
             case 'scores': return <ScoresPage theme={themeMode} />;
             case 'stats': return <StatsPage />;
@@ -93,16 +83,12 @@ function AppContent() {
                 }}
             />
             <Header
-                user={user}
-                isLoggedIn={!!user}
-                isAdmin={loggedInProfile?.isAdmin}
                 onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
                 onLogout={handleLogout}
                 setPage={handleSetPage}
                 onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
                 onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
-                profile={loggedInProfile}
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
             />

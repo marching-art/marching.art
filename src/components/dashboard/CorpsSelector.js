@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import LineupEditor from './LineupEditor';
 import ShowSelection from './ShowSelection';
-import LiveShowSelection from './LiveShowSelection';
-// MODIFIED: Import CORPS_CLASS_ORDER
+import { useUserStore } from '../../store/userStore';
 import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
-const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
+// CORRECTED: The component's props are now explicitly listed.
+const CorpsSelector = ({ corpsData, seasonSettings, seasonEvents, currentOffSeasonDay, seasonStartDate }) => {
+    const { loggedInProfile: profile } = useUserStore();
     const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
 
@@ -13,8 +14,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         const allCorps = getAllUserCorps(profile);
         setUserCorps(allCorps);
     
-        const availableCorpsKeys = Object.keys(allCorps);
-        if (availableCorpsKeys.length === 0) {
+        if (Object.keys(allCorps).length === 0) {
             setActiveCorps('worldClass');
         }
     }, [profile]);
@@ -30,7 +30,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         }));
     };
 
-    if (!hasAnyCorps(profile)) {
+    if (!profile || !hasAnyCorps(profile)) {
         return null; // Let DashboardPage handle SeasonSignup
     }
 
@@ -38,9 +38,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
 
     return (
         <div className="space-y-6">
-            {/* Corps Class Tabs */}
             <div className="flex flex-wrap gap-2 border-b-theme border-accent dark:border-accent-dark pb-4">
-                {/* MODIFIED: Map over CORPS_CLASS_ORDER instead of Object.entries */}
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
                     return (
@@ -71,7 +69,6 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
                 })}
             </div>
 
-            {/* Active Corps Editor */}
             <div>
                 <LineupEditor
                     profile={activeCorpsProfile}
@@ -84,27 +81,17 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
                 />
             </div>
             
-            {/* Divider */}
             <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
 
-            {/* Show Selection for Active Corps */}
             <div>
-                {seasonSettings.status === 'live-season' ? (
-                    <LiveShowSelection
-                        seasonEvents={seasonEvents}
-                        corpsProfile={activeCorpsProfile}
-                        corpsClass={activeCorps}
-                        seasonStartDate={seasonStartDate}
-                    />
-                ) : (
-                    <ShowSelection 
-                        seasonEvents={seasonEvents}
-                        corpsProfile={activeCorpsProfile}
-                        corpsClass={activeCorps}
-                        currentOffSeasonDay={currentOffSeasonDay}
-                        seasonStartDate={seasonStartDate}
-                    />
-                )}
+                <ShowSelection
+                    seasonMode={seasonSettings.status === 'live-season' ? 'live' : 'off'}
+                    seasonEvents={seasonEvents}
+                    corpsProfile={activeCorpsProfile}
+                    corpsClass={activeCorps}
+                    currentDay={currentOffSeasonDay}
+                    seasonStartDate={seasonStartDate}
+                />
             </div>
         </div>
     );

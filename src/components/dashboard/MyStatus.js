@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from 'react';
-// MODIFIED: Import CORPS_CLASS_ORDER to enforce hierarchy
+import React from 'react';
+import { useUserStore } from '../../store/userStore'; // Import the store hook
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
-const MyStatus = ({ username, profile }) => {
-    const [userCorps, setUserCorps] = useState({});
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (profile) {
-            const corps = getAllUserCorps(profile);
-            setUserCorps(corps);
-            setIsLoading(false);
-        }
-    }, [profile]);
-
+const MyStatus = () => {
+    const { loggedInProfile, isLoadingAuth } = useUserStore();
+    
+    const userCorps = loggedInProfile ? getAllUserCorps(loggedInProfile) : {};
+    const username = loggedInProfile?.username || '';
+    
     const StatCard = ({ label, value, color, large = false }) => (
         <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -37,13 +31,18 @@ const MyStatus = ({ username, profile }) => {
             </h2>
             <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Here are your current corps scores for the season.</p>
             
-            {Object.keys(userCorps).length === 0 ? (
+            {isLoadingAuth ? (
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="h-24 bg-background dark:bg-background-dark rounded-theme animate-pulse"></div>
+                    <div className="h-24 bg-background dark:bg-background-dark rounded-theme animate-pulse"></div>
+                    <div className="h-24 bg-background dark:bg-background-dark rounded-theme animate-pulse"></div>
+                 </div>
+            ) : Object.keys(userCorps).length === 0 ? (
                 <div className="text-center py-8">
                     <p className="text-text-secondary dark:text-text-secondary-dark">No corps have been created yet. Visit the Lineup Editor to get started!</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* MODIFIED: Iterate over the ordered and filtered array */}
                     {orderedCorpsToDisplay.map(corpsClassKey => {
                         const corps = userCorps[corpsClassKey];
                         return (

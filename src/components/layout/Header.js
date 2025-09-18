@@ -2,21 +2,14 @@ import React, { useState } from 'react';
 import LogoIcon from '../ui/LogoIcon';
 import Icon from '../ui/Icon';
 import NotificationsIcon from '../ui/NotificationsIcon';
+import { useUserStore } from '../store/userStore';
 
 const Header = ({
-    user,
-    onViewLeague,
-    isLoggedIn,
-    isAdmin,
-    onLoginClick,
-    onSignUpClick,
-    onLogout,
-    setPage,
-    onViewOwnProfile,
-    profile,
-    themeMode,
-    toggleThemeMode,
+    
 }) => {
+    const { user, loggedInProfile } = useUserStore();
+    const isLoggedIn = !!user;
+    const isAdmin = loggedInProfile?.isAdmin
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const NavButton = ({ page, children }) => (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc } from 'firebase/firestore';
-import { functions, db } from '../../firebase';
+import { db } from '../../firebase';
+import { joinLeague, createLeague, leaveLeague } from '../../utils/api';
 import CreateLeagueModal from './CreateLeagueModal';
 
 const LeagueManager = ({ profile }) => {
@@ -43,7 +43,6 @@ const LeagueManager = ({ profile }) => {
         setMessage({ type: '', text: '' });
         setNewLeagueInfo(null);
         try {
-            const joinLeague = httpsCallable(functions, 'joinLeague');
             const result = await joinLeague({ inviteCode: inviteCode.trim() });
             setMessage({ type: 'success', text: result.data.message });
             setInviteCode('');
@@ -57,7 +56,6 @@ const LeagueManager = ({ profile }) => {
         setIsLoading(true);
         setMessage({ type: '', text: '' });
         try {
-            const createLeague = httpsCallable(functions, 'createLeague');
             const result = await createLeague({ leagueName });
             setNewLeagueInfo({ name: leagueName, code: result.data.inviteCode });
             setMessage({ type: 'success', text: result.data.message });
@@ -74,7 +72,6 @@ const LeagueManager = ({ profile }) => {
             setMessage({ type: '', text: '' });
             setNewLeagueInfo(null);
             try {
-                const leaveLeague = httpsCallable(functions, 'leaveLeague');
                 const result = await leaveLeague({ leagueId });
                 setMessage({ type: 'success', text: result.data.message });
             } catch (error) {

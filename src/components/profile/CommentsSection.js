@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions, dataNamespace } from '../../firebase';
+import { db, dataNamespace } from '../../firebase';
+import { sendCommentNotification, deleteComment, reportComment } from '../../utils/api';
 import Icon from '../ui/Icon';
 import Modal from '../ui/Modal';
 
@@ -25,7 +25,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     const [error, setError] = useState('');
     const [menuOpenFor, setMenuOpenFor] = useState(null);
     const menuRef = useRef(null);
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
 
@@ -69,7 +68,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
                 timestamp: serverTimestamp(),
             });
             if (profileOwnerId !== loggedInProfile.userId) {
-                const sendCommentNotification = httpsCallable(functions, 'sendCommentNotification');
                 await sendCommentNotification({
                     recipientUid: profileOwnerId,
                     commenterUsername: loggedInProfile.username
@@ -92,7 +90,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
         if (!commentToDelete) return;
         setIsSubmitting(true);
         try {
-            const deleteComment = httpsCallable(functions, 'deleteComment');
             await deleteComment({ profileOwnerId, commentId: commentToDelete.id });
         } catch (err) {
             setError(err.message || "Failed to delete comment.");
@@ -106,7 +103,6 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
         setMenuOpenFor(null);
         if (!window.confirm("Are you sure you want to report this comment for review?")) return;
         try {
-            const reportComment = httpsCallable(functions, 'reportComment');
             await reportComment({
                 profileOwnerId: profileOwnerId,
                 commentId: comment.id,
@@ -121,20 +117,13 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
 
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
-            {/* NEW: Delete Confirmation Modal */}
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Comment">
                  <div>
                     <p className="text-text-secondary dark:text-text-secondary-dark mb-4">Are you sure you want to permanently delete this comment?</p>
-                    <blockquote className="border-l-4 border-accent dark:border-accent-dark pl-4 my-2 italic text-text-secondary dark:text-text-secondary-dark">
-                        {commentToDelete?.text}
-                    </blockquote>
+                    <blockquote className="border-l-4 border-accent dark:border-accent-dark pl-4 my-2 italic text-text-secondary dark:text-text-secondary-dark">{commentToDelete?.text}</blockquote>
                     <div className="flex justify-end space-x-2 mt-6">
-                        <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark font-bold py-2 px-4 rounded-theme transition-colors">
-                            Cancel
-                        </button>
-                        <button type="button" onClick={handleDeleteConfirm} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50">
-                            {isSubmitting ? 'Deleting...' : 'Delete'}
-                        </button>
+                        <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark font-bold py-2 px-4 rounded-theme transition-colors">Cancel</button>
+                        <button type="button" onClick={handleDeleteConfirm} disabled={isSubmitting} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-theme disabled:opacity-50">{isSubmitting ? 'Deleting...' : 'Delete'}</button>
                     </div>
                  </div>
             </Modal>
@@ -145,9 +134,7 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
                     <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Leave a comment..." className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary" rows="3" disabled={isSubmitting} />
                     {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
                     <div className="text-right mt-2">
-                        <button type="submit" disabled={isSubmitting || !newComment.trim()} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
-                            {isSubmitting ? 'Posting...' : 'Post Comment'}
-                        </button>
+                        <button type="submit" disabled={isSubmitting || !newComment.trim()} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">{isSubmitting ? 'Posting...' : 'Post Comment'}</button>
                     </div>
                 </form>
             )}
@@ -163,14 +150,11 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
                                     <div className="flex items-center gap-2 relative">
                                         <span className="text-text-secondary dark:text-text-secondary-dark">{timeSince(comment.timestamp)}</span>
                                         {(canDelete || canReport) && (
-                                            <button onClick={() => setMenuOpenFor(comment.id === menuOpenFor ? null : comment.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark">
-                                                <Icon path="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" className="w-5 h-5" />
-                                            </button>
+                                            <button onClick={() => setMenuOpenFor(comment.id === menuOpenFor ? null : comment.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark"><Icon path="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" className="w-5 h-5" /></button>
                                         )}
                                         {menuOpenFor === comment.id && (
                                             <div ref={menuRef} className="absolute top-full right-0 mt-1 w-32 bg-surface dark:bg-surface-dark rounded-theme shadow-lg border border-accent dark:border-accent-dark z-10">
                                                 {canReport && <button onClick={() => handleReport(comment)} className="w-full text-left px-3 py-2 text-sm hover:bg-accent dark:hover:bg-accent-dark/20">Report</button>}
-                                                {/* MODIFIED: This now opens the modal instead of calling the delete function directly */}
                                                 {canDelete && <button onClick={() => handleDeleteRequest(comment)} className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-accent dark:hover:bg-accent-dark/20">Delete</button>}
                                             </div>
                                         )}

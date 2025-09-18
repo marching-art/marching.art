@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase';
+import { validateAndSaveLineup } from '../../utils/api';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
@@ -28,7 +27,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
             setLineup({});
             setOriginalLineup({});
         }
-    }, [profile, corpsClass]); // Add corpsClass as dependency to reset when switching corps
+    }, [profile, corpsClass]);
 
     useEffect(() => {
         const seasonStartDate = seasonSettings?.schedule?.startDate?.toDate();
@@ -81,7 +80,6 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
         setMessage('');
         setIsLoading(true);
         try {
-            const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
             const result = await validateAndSaveLineup({ 
                 lineup: lineup,
                 corpsName: corpsName.trim(),
@@ -89,7 +87,6 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
             });
             setMessage(result.data.message);
             
-            // Notify parent component if this was a new corps creation
             if (isNewCorps && onCorpsCreated) {
                 onCorpsCreated({
                     corpsName: corpsName.trim(),
@@ -110,12 +107,8 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
     if (!corpsData || corpsData.length === 0) {
         return (
             <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">
-                    {corpsClassName} Lineup
-                </h2>
-                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">
-                    Corps data not available. Please check back later.
-                </p>
+                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">{corpsClassName} Lineup</h2>
+                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Corps data not available. Please check back later.</p>
             </div>
         );
     }
@@ -128,9 +121,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
     return (
         <div>
             <div className="border-b-theme border-accent dark:border-accent-dark pb-4 mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">
-                    {corpsClassName} ({pointCap} pts max)
-                </h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">{corpsClassName} ({pointCap} pts max)</h2>
                 {isNewCorps ? (
                     <div className="mt-2">
                         <input
@@ -142,40 +133,28 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
                         />
                     </div>
                 ) : (
-                    <h3 className="text-lg font-semibold text-secondary dark:text-secondary-dark">
-                        {profile.corpsName}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-secondary dark:text-secondary-dark">{profile.corpsName}</h3>
                 )}
-                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
-                    Lineups lock each Saturday at 12:00 PM EST.
-                </p>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">Lineups lock each Saturday at 12:00 PM EST.</p>
             </div>
             
             {!isNewCorps && (
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
-                        Trades Remaining: {tradesRemaining}
-                    </div>
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
-                        Total Points: {totalPoints} / {pointCap}
-                    </div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Trades Remaining: {tradesRemaining}</div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Total Points: {totalPoints} / {pointCap}</div>
                 </div>
             )}
 
             {isNewCorps && (
                 <div className="flex justify-end mb-4">
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
-                        Total Points: {totalPoints} / {pointCap}
-                    </div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Total Points: {totalPoints} / {pointCap}</div>
                 </div>
             )}
 
             <div className="grid grid-cols-1 gap-4">
                 {CAPTIONS.map(caption => (
                     <div key={caption} className="flex items-center">
-                        <label className="w-12 font-semibold text-text-primary dark:text-text-primary-dark">
-                            {caption}:
-                        </label>
+                        <label className="w-12 font-semibold text-text-primary dark:text-text-primary-dark">{caption}:</label>
                         <select 
                             value={lineup[caption] || ''} 
                             onChange={(e) => setLineup(prev => ({...prev, [caption]: e.target.value}))}
@@ -183,7 +162,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
                         >
                             <option value="">-- Select a Corps --</option>
                             {corpsData
-                                .filter(corps => corps.points <= pointCap) // Filter by point cap
+                                .filter(corps => corps.points <= pointCap)
                                 .map(corps => {
                                     const uniqueValue = `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
                                     return (
@@ -200,23 +179,11 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
 
             <div className="mt-6 flex justify-end items-center space-x-4">
                 {message && (
-                    <p className={`text-sm font-semibold ${
-                        message.toLowerCase().includes('successfully') || message.toLowerCase().includes('saved') 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                    }`}>
-                        {message}
-                    </p>
+                    <p className={`text-sm font-semibold ${message.toLowerCase().includes('successfully') || message.toLowerCase().includes('saved') ? 'text-green-600' : 'text-red-600'}`}>{message}</p>
                 )}
                 <button 
                     onClick={handleSave} 
-                    disabled={
-                        isLoading || 
-                        totalPoints > pointCap || 
-                        (!isNewCorps && pendingTrades === 0) || 
-                        (!isNewCorps && hasExceededTrades) ||
-                        (isNewCorps && (!isLineupComplete || !corpsName.trim()))
-                    }
+                    disabled={isLoading || totalPoints > pointCap || (!isNewCorps && pendingTrades === 0) || (!isNewCorps && hasExceededTrades) || (isNewCorps && (!isLineupComplete || !corpsName.trim()))}
                     className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? 'Saving...' : isNewCorps ? 'Create Corps' : 'Save Lineup'}

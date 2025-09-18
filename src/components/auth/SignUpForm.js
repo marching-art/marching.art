@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
-import { auth, db, functions, dataNamespace } from '../../firebase';
+import { auth } from '../../firebase';
+import { checkUsername, createUserProfile } from '../../utils/api';
 
 const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
     const [email, setEmail] = useState('');
@@ -24,16 +24,11 @@ const SignUpForm = ({ onSignUpSuccess, switchToLogin }) => {
         }
 
         try {
-            // First check if username is available
-            const checkUsername = httpsCallable(functions, 'checkUsername');
             await checkUsername({ username: trimmedUsername });
 
-            // Create the user account
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Use backend function to create the complete user profile
-            const createUserProfile = httpsCallable(functions, 'createUserProfile');
             await createUserProfile({ 
                 username: trimmedUsername,
                 email: user.email 
