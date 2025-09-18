@@ -2,16 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  :root {
+    /* Light Mode Colors (Gold & Dark Brown Theme) */
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+    /* Primary: Gold - UPDATED to user's specific hex #F7941D */
+    --color-primary: 247 148 29;
+    /* On-Primary: UPDATED to dark text for better contrast on gold */
+    --on-primary: 30 30 30;
+
+    /* Secondary: Medium Brown */
+    --color-secondary: 139 69 19; /* Saddle Brown */
+    --on-secondary: 255 255 255; /* White text on brown */
+
+    /* Accent: Light Tan/Warm Grey */
+    --color-accent: 220 200 170; /* Light Tan */
+
+    /* Background: Off-white/Light Cream */
+    --color-background: 250 250 240; /* Very light cream */
+
+    /* Surface: Slightly darker cream/light tan */
+    --color-surface: 245 245 230; /* Light cream */
+
+    /* Text Colors */
+    --text-primary: 30 30 30; /* Very dark grey for primary text */
+    --text-secondary: 90 90 90; /* Medium grey for secondary text */
+  }
+
+  .dark {
+    /* Dark Mode Colors */
+
+    /* Primary: Gold (slightly muted for dark mode) - UPDATED */
+    --color-primary-dark: 224 133 26;
+
+    /* Secondary: Medium Brown (for contrast) */
+    --color-secondary-dark: 160 82 45; /* Sienna */
+
+    /* Accent: Darker Tan/Muted Gold */
+    --color-accent-dark: 101 67 33; /* Darker brown/tan */
+
+    /* Background: Very Dark Brown */
+    --color-background-dark: 29 20 15; /* Almost black-brown */
+
+    /* Surface: Darker Brown */
+    --color-surface-dark: 40 28 20; /* Dark brown */
+
+    /* Text Colors */
+    --text-primary-dark: 240 240 240; /* Off-white for primary text */
+    --text-secondary-dark: 180 180 180; /* Light grey for secondary text */
+  }
+
+  /* Base styles for the body to apply dark mode background and text colors */
+  body {
+    @apply bg-background text-text-primary dark:bg-background-dark dark:text-text-primary-dark;
+  }
 }
