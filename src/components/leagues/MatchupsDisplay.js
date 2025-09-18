@@ -8,7 +8,7 @@ const MatchupCard = ({ matchup, members, onViewProfile }) => {
     const p1 = members.find(m => m.id === p1_uid);
     const p2 = p2_uid === 'BYE' ? { username: 'BYE WEEK', corpsName: '—' } : members.find(m => m.id === p2_uid);
 
-    if (!p1 || !p2) return null; // Member data not loaded yet
+    if (!p1 || !p2) return null; // Member data not loaded yet or user deleted
 
     const p1_isWinner = matchup.winner === p1_uid;
     const p2_isWinner = matchup.winner === p2_uid;
