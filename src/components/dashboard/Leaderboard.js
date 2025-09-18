@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, query, where, onSnapshot, getDoc, doc, collection, getDocs } from 'firebase/firestore';
+import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
 
@@ -25,11 +25,10 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
         fetchLeagues();
     }, [profile]);
 
+    // MODIFIED: This useEffect now uses getDocs for a stable, one-time fetch.
     useEffect(() => {
-        setIsLoading(true);
-        let unsubscribe;
-        
         const fetchLeaderboardData = async () => {
+            setIsLoading(true);
             try {
                 const seasonSettingsRef = doc(db, 'game-settings', 'season');
                 const seasonDoc = await getDoc(seasonSettingsRef);
@@ -45,76 +44,65 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 const activeSeasonId = seasonData.seasonUid;
                 setSeasonName(seasonData.name);
 
-                // --- MODIFIED QUERY LOGIC ---
-                // Base query that will be used for both Global and League leaderboards
-                let leaderboardQuery;
                 const profilesRef = collectionGroup(db, 'profile');
+                let leaderboardQuery;
 
                 if (selectedLeague) {
-                    // If a league is selected, build a query that filters by league on the backend.
                     leaderboardQuery = query(
                         profilesRef,
                         where('activeSeasonId', '==', activeSeasonId),
                         where('leagueIds', 'array-contains', selectedLeague.id)
                     );
                 } else {
-                    // If "Global" is selected, query for all active players.
                     leaderboardQuery = query(
                         profilesRef,
                         where('activeSeasonId', '==', activeSeasonId)
                     );
                 }
-                // --- END MODIFIED QUERY LOGIC ---
 
-                unsubscribe = onSnapshot(leaderboardQuery, (querySnapshot) => {
-                    let allCorpsEntries = [];
+                const querySnapshot = await getDocs(leaderboardQuery);
+                
+                let allCorpsEntries = [];
+                
+                querySnapshot.docs.forEach(doc => {
+                    const playerData = doc.data();
+                    const userId = doc.ref.parent.parent.id;
                     
-                    querySnapshot.docs.forEach(doc => {
-                        const playerData = doc.data();
-                        const userId = doc.ref.parent.parent.id;
-                        
-                        const userCorps = getAllUserCorps(playerData);
-                        
-                        Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                            // This filter now only checks for corps details and score, not the league.
-                            if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
-                                corps.totalSeasonScore && corps.totalSeasonScore > 0) {
-                                allCorpsEntries.push({
-                                    id: `${userId}_${corpsClass}`,
-                                    userId: userId,
-                                    username: playerData.username || 'Unnamed Manager',
-                                    corpsName: corps.corpsName,
-                                    corpsClass: corpsClass,
-                                    totalSeasonScore: corps.totalSeasonScore
-                                });
-                            }
-                        });
+                    const userCorps = getAllUserCorps(playerData);
+                    
+                    Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
+                            corps.totalSeasonScore && corps.totalSeasonScore > 0) {
+                            allCorpsEntries.push({
+                                id: `${userId}_${corpsClass}`,
+                                userId: userId,
+                                username: playerData.username || 'Unnamed Manager',
+                                corpsName: corps.corpsName,
+                                corpsClass: corpsClass,
+                                totalSeasonScore: corps.totalSeasonScore
+                            });
+                        }
                     });
-                    
-                    allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
-                    
-                    setLeaderboard(allCorpsEntries);
-                    setIsLoading(false);
-                }, (error) => {
-                    console.error("Leaderboard query failed. This likely requires a new Firestore index. See the browser console for an error message containing a link to create it.", error);
-                    setLeaderboard([]);
-                    setIsLoading(false);
                 });
                 
+                allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
+                
+                setLeaderboard(allCorpsEntries);
+                
             } catch (error) {
-                console.error("Error setting up leaderboard:", error);
+                console.error("Leaderboard query failed. This might be a missing Firestore index.", error);
+                setLeaderboard([]);
+            } finally {
                 setIsLoading(false);
             }
         };
         
         fetchLeaderboardData();
-        return () => { if (unsubscribe) unsubscribe(); };
     }, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
     return (
-        // ... JSX is unchanged from the previous version ...
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
