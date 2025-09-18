@@ -18,14 +18,14 @@ const DashboardPage = ({ profile, userId }) => {
         const seasonSettingsRef = doc(db, 'game-settings', 'season');
         
         const unsubscribe = onSnapshot(seasonSettingsRef, async (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
                 const settings = { id: docSnap.id, ...docSnap.data() };
                 setSeasonSettings(settings);
 
                 if (settings.dataDocId) {
                     const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
                     const corpsDocSnap = await getDoc(corpsDataRef);
-                    if (corpsDocSnap.exists()) {
+                    if (corpsDocSnap.exists) {
                         setCorpsData(corpsDocSnap.data().corpsValues || []);
                     } else {
                         console.error(`Corps data document not found: ${settings.dataDocId}`);

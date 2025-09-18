@@ -19,7 +19,7 @@ const ScoreDataViewer = () => {
                 const seasonRef = doc(db, 'game-settings', 'season');
                 const seasonSnap = await getDoc(seasonRef);
 
-                if (!seasonSnap.exists()) return;
+                if (!seasonSnap.exists) return;
                 
                 const settings = seasonSnap.data();
                 if (!settings.dataDocId) return;
@@ -27,7 +27,7 @@ const ScoreDataViewer = () => {
                 const corpsDataRef = doc(db, 'dci-data', settings.dataDocId);
                 const corpsSnap = await getDoc(corpsDataRef);
                 let localCorpsList = [];
-                if (corpsSnap.exists()) {
+                if (corpsSnap.exists) {
                     localCorpsList = corpsSnap.data().corpsValues || [];
                     setCorpsList(localCorpsList.sort((a, b) => b.points - a.points));
                 }
@@ -38,7 +38,7 @@ const ScoreDataViewer = () => {
                 
                 const localHistoricalData = {};
                 historicalDocs.forEach(docSnap => {
-                    if (docSnap.exists()) {
+                    if (docSnap.exists) {
                         localHistoricalData[docSnap.id] = docSnap.data().data;
                     }
                 });

@@ -126,7 +126,7 @@ const ProfilePage = ({ viewingUserId }) => {
                 try {
                     const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', profileUserId, 'profile', 'data');
                     const docSnap = await getDoc(userDocRef);
-                    if (docSnap.exists()) {
+                    if (docSnap.exists) {
                         setProfile({ userId: profileUserId, ...docSnap.data() });
                     } else {
                         setProfile(null);
@@ -149,14 +149,14 @@ const ProfilePage = ({ viewingUserId }) => {
             
             const seasonRef = doc(db, 'game-settings', 'season');
             const seasonSnap = await getDoc(seasonRef);
-            if (seasonSnap.exists()) {
+            if (seasonSnap.exists) {
                 const settings = seasonSnap.data();
                 setSeasonSettings(settings);
 
                 if (profile.activeSeasonId === settings.seasonUid) {
                     const recapRef = doc(db, 'fantasy_recaps', settings.seasonUid);
                     const recapSnap = await getDoc(recapRef);
-                    if (recapSnap.exists()) {
+                    if (recapSnap.exists) {
                         setFantasyRecaps(recapSnap.data());
                     }
                 } else {

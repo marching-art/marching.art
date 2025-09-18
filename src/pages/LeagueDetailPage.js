@@ -21,7 +21,7 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
         }
         const leagueRef = doc(db, 'leagues', leagueId);
         const unsubLeague = onSnapshot(leagueRef, (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
                 setLeague({ id: docSnap.id, ...docSnap.data() });
             } else {
                 setLeague(null);

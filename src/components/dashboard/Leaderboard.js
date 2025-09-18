@@ -35,7 +35,7 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 const seasonSettingsRef = doc(db, 'game-settings', 'season');
                 const seasonDoc = await getDoc(seasonSettingsRef);
                 
-                if (!seasonDoc.exists()) {
+                if (!seasonDoc.exists) {
                     setLeaderboard([]);
                     setSeasonName('No Active Season');
                     setIsLoading(false);

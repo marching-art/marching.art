@@ -19,7 +19,7 @@ const LeagueManager = ({ profile }) => {
                 const leaguePromises = profile.leagueIds.map(id => getDoc(doc(db, 'leagues', id)));
                 const leagueDocs = await Promise.all(leaguePromises);
                 const leagues = leagueDocs
-                    .filter(doc => doc.exists())
+                    .filter(doc => doc.exists)
                     .map(doc => ({ id: doc.id, ...doc.data() }));
                 setUserLeagues(leagues);
             } else {

@@ -30,7 +30,7 @@ export const useUserStore = create((set) => ({
         // Listen for real-time updates to the user's profile document
         const profileRef = doc(db, `artifacts/${dataNamespace}/users/${user.uid}/profile/data`);
         profileListener = onSnapshot(profileRef, (docSnap) => {
-          if (docSnap.exists()) {
+          if (docSnap.exists) {
             // Combine the user ID with the profile data for easy access
             set({ loggedInProfile: { userId: user.uid, ...docSnap.data() } });
           } else {
