@@ -3,85 +3,93 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    //============================================//
-    //           USER-SPECIFIC RULES              //
-    //============================================//
-
-    // User profiles are readable by any authenticated user (for leaderboards)
-    // but only writable by the user themselves.
-    match /artifacts/{appId}/users/{userId}/profile/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // --- USER DATA ---
+    match /artifacts/{namespace}/users/{userId} {
+      // Profile data is public to read, but only the owner can write.
+      match /profile/data {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      // Comments are public to read. Logged-in users can create.
+      // Owner or author can delete/update.
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null && request.auth.uid == resource.data.authorUid;
+        allow delete: if request.auth != null &&
+          (request.auth.uid == userId || request.auth.uid == resource.data.authorUid);
+      }
+      // Notifications are private.
+      match /notifications/{notificationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
-    //============================================//
-    //           LEAGUE-SPECIFIC RULES            //
-    //============================================//
-    
-    // Rules for the `leagues` collection
-    match /leagues/{leagueId} {
-      // Allow a user to read a league's document only if they are a member.
-      allow read: if request.auth != null && resource.data.members.hasAny([request.auth.uid]);
-      
-      // Any authenticated user can create a league via the cloud function.
-      allow create: if request.auth != null;
-      
-      // Allow updates from authenticated users. The `joinLeague` cloud function
-      // will securely handle the logic (e.g., only adding new members).
-      allow update: if request.auth != null;
+    match /{path=**}/profile/{docId} {
+        allow get, list: if request.auth != null;
     }
 
-    // Rules for the `leagueInvites` collection, used for quick lookups.
-    match /leagueInvites/{inviteCode} {
-      // Any authenticated user can read an invite to verify it.
-      // Creation is handled by the trusted `createLeague` cloud function.
-      allow read, create: if request.auth != null;
-
-      // Invites should never be changed or deleted by a client.
-      allow update, delete: if false;
-    }
-
-    //============================================//
-    //            GAME DATA RULES                 //
-    //============================================//
-
-    // Game settings are readable by all players, but only writable by an admin.
+    // --- PUBLIC GAME DATA ---
     match /game-settings/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.admin == true;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
-
-    // These collections contain data populated by the backend.
-    // Clients can read this data but should NEVER write to it directly.
     match /dci-data/{docId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
-    match /historical_scores/{docId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+    match /dci-stats/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
     }
     match /fantasy_recaps/{docId} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if true;
+      allow write: if false; // Backend only
     }
-
-    // This collection is used by the backend to ensure lineup uniqueness.
-    // No client should ever interact with it directly.
-    match /activeLineups/{lineupKey} {
-    	allow read, write: if false;
-    }
-
-    //============================================//
-    //            ADMIN-ONLY RULES                //
-    //============================================//
-    
-    // These collections are managed entirely by admins through the admin panel.
     match /final_rankings/{docId} {
-    	allow read, write: if request.auth.token.admin == true;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
+    match /historical_scores/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+    match /live_scores/{seasonId}/scores/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+    
     match /schedules/{docId} {
-    	allow read, write: if request.auth.token.admin == true;
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+
+    // --- LEAGUES ---
+    match /leagues/{leagueId} {
+      // Admins can read any league, members can read their own.
+      allow read: if request.auth != null && (request.auth.uid in resource.data.members || request.auth.token.admin == true);
+      allow write: if false; // Writes handled by backend functions
+    }
+    match /leagues/{leagueId}/matchups/{week} {
+      allow read: if request.auth != null;
+      allow write: if false; // Backend only
+    }
+    match /leagueInvites/{code} {
+      allow read, write: if false; // Backend only
+    }
+
+    // --- MISC & ADMIN ---
+    match /activeLineups/{lineupKey} {
+      allow read, write: if false; // Backend only
+    }
+    match /usernames/{username} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+    match /reports/{reportId} {
+      allow read, update: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null;
     }
   }
 }
