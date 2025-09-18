@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { validateAndSaveLineup } from '../../utils/api';
 import { CORPS_CLASSES } from '../../utils/profileCompatibility';
-import { useUserStore } from '../../store/userStore';
 
 const CAPTIONS = ["GE1", "GE2", "VP", "VA", "CG", "B", "MA", "P"];
 
-const SeasonSignup = ({ seasonSettings, corpsData }) => {
-    const { loggedInProfile: profile } = useUserStore();
-    const userId = profile?.userId;
+const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
     const [step, setStep] = useState(1);
     const [corpsName, setCorpsName] = useState('');
     const [lineup, setLineup] = useState({});

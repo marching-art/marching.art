@@ -73,7 +73,7 @@ const MatchupsDisplay = ({ league, currentWeek, onViewProfile, season }) => {
                 // Fetch matchups for the current week
                 const matchupRef = doc(db, `leagues/${league.id}/matchups/week${currentWeek}`);
                 const matchupSnap = await getDoc(matchupRef);
-                setMatchupData(matchupSnap.exists ? matchupSnap.data() : null);
+                setMatchupData(matchupSnap.exists() ? matchupSnap.data() : null);
             } catch (error) {
                 console.error('Error fetching matchups and members:', error);
                 setMatchupData(null);

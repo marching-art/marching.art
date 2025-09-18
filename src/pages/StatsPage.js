@@ -17,13 +17,13 @@ const StatsPage = () => {
             try {
                 const seasonRef = doc(db, 'game-settings', 'season');
                 const seasonSnap = await getDoc(seasonRef);
-                if (seasonSnap.exists) {
+                if (seasonSnap.exists()) {
                     const seasonId = seasonSnap.data().seasonUid;
                     setSeasonName(seasonSnap.data().name);
 
                     const statsRef = doc(db, 'dci-stats', seasonId);
                     const statsSnap = await getDoc(statsRef);
-                    if (statsSnap.exists) {
+                    if (statsSnap.exists()) {
                         setStatsData(statsSnap.data().data || []);
                     } else {
                         console.log("Stats document not found. Please run calculation from admin panel.");

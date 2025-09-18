@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import Leaderboard from '../components/dashboard/Leaderboard';
-import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
+import MatchupsDisplay from '../components/leagues/MatchupsDisplay'; // Import new component
 
 const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
     const [league, setLeague] = useState(null);
@@ -21,7 +21,7 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
         }
         const leagueRef = doc(db, 'leagues', leagueId);
         const unsubLeague = onSnapshot(leagueRef, (docSnap) => {
-            if (docSnap.exists) {
+            if (docSnap.exists()) {
                 setLeague({ id: docSnap.id, ...docSnap.data() });
             } else {
                 setLeague(null);

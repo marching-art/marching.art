@@ -14,13 +14,13 @@ const SchedulePage = ({ setPage }) => {
                 const seasonRef = doc(db, 'game-settings', 'season');
                 const seasonSnap = await getDoc(seasonRef);
                 
-                if (seasonSnap.exists) {
+                if (seasonSnap.exists()) {
                     const seasonData = seasonSnap.data();
                     setSeason(seasonData);
 
                     const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
                     const recapSnap = await getDoc(recapRef);
-                    if (recapSnap.exists) {
+                    if (recapSnap.exists()) {
                         const recapsMap = new Map();
                         recapSnap.data().recaps.forEach(recap => {
                             recapsMap.set(recap.offSeasonDay, recap);

@@ -49,7 +49,7 @@ const FinalRankingsManager = () => {
                 const rankingsDocRef = doc(db, 'final_rankings', selectedYear);
                 const docSnap = await getDoc(rankingsDocRef);
 
-                if (docSnap.exists) {
+                if (docSnap.exists()) {
                     const rankingsData = docSnap.data().data || [];
                     const newPlacements = Array(25).fill({ corps: '', originalScore: null, points: null });
                     rankingsData.forEach(item => {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db, dataNamespace } from '../firebase';
-import { useUserStore } from '../store/userStore';
+import { auth, db, dataNamespace } from '../firebase';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
@@ -23,6 +22,7 @@ const timeSince = (date) => {
     return "a moment ago";
 };
 
+
 const MySchedule = ({ profile }) => {
     const userCorps = getAllUserCorps(profile);
     return (
@@ -35,11 +35,14 @@ const MySchedule = ({ profile }) => {
                     {CORPS_CLASS_ORDER.map(corpsClassKey => {
                         const corps = userCorps[corpsClassKey];
                         if (!corps) return null;
+
                         return (
                             <div key={corpsClassKey}>
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className={`w-3 h-3 rounded-full ${CORPS_CLASSES[corpsClassKey]?.color || 'bg-gray-400'}`}></div>
-                                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">{corps.corpsName} ({CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey})</h4>
+                                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                        {corps.corpsName} ({CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey})
+                                    </h4>
                                 </div>
                                 {!corps.selectedShows || Object.keys(corps.selectedShows).length === 0 ? (
                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic pl-5">No shows selected</p>
@@ -53,9 +56,13 @@ const MySchedule = ({ profile }) => {
                                                     <h5 className="font-medium text-text-primary dark:text-text-primary-dark text-sm">Week {weekNum}</h5>
                                                     {shows && shows.length > 0 ? (
                                                         <ul className="list-disc list-inside pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark space-y-1">
-                                                            {shows.map((show, index) => (<li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>))}
+                                                            {shows.map((show, index) => (
+                                                                <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
+                                                            ))}
                                                         </ul>
-                                                    ) : (<p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>)}
+                                                    ) : (
+                                                        <p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -80,6 +87,7 @@ const CorpsSummary = ({ profile }) => {
                 {CORPS_CLASS_ORDER.map(corpsClassKey => {
                     const corps = userCorps[corpsClassKey];
                     if (!corps) return null; 
+
                     return (
                         <div key={corpsClassKey} className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
                             <div className={`w-4 h-4 rounded-full ${CORPS_CLASSES[corpsClassKey]?.color || 'bg-gray-400'} mx-auto mb-2`}></div>
@@ -94,10 +102,8 @@ const CorpsSummary = ({ profile }) => {
     );
 };
 
-const ProfilePage = ({ viewingUserId }) => {
-    const { loggedInProfile } = useUserStore();
-    const loggedInUserId = loggedInProfile?.userId;
 
+const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [profile, setProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditingBio, setIsEditingBio] = useState(false);
@@ -107,27 +113,26 @@ const ProfilePage = ({ viewingUserId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
     const [fantasyRecaps, setFantasyRecaps] = useState(null);
 
-    const isOwner = viewingUserId === loggedInUserId;
-    const profileUserId = viewingUserId || loggedInUserId;
+    const isOwner = loggedInUserId && viewingUserId === loggedInUserId;
 
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true);
+            const targetUserId = viewingUserId || loggedInUserId;
 
-            if (!profileUserId) {
-                setIsLoading(false);
+            if (!targetUserId) {
+                // ...
                 return;
             }
             
-            if (isOwner && loggedInProfile) {
-                setProfile(loggedInProfile);
-                setIsLoading(false);
+            if (isOwner) {
+                // ...
             } else {
                 try {
-                    const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', profileUserId, 'profile', 'data');
+                    const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', targetUserId, 'profile', 'data');
                     const docSnap = await getDoc(userDocRef);
-                    if (docSnap.exists) {
-                        setProfile({ userId: profileUserId, ...docSnap.data() });
+                    if (docSnap.exists()) {
+                        setProfile({ userId: targetUserId, ...docSnap.data() });
                     } else {
                         setProfile(null);
                     }
@@ -141,31 +146,27 @@ const ProfilePage = ({ viewingUserId }) => {
         };
 
         fetchProfileData();
-    }, [viewingUserId, loggedInUserId, loggedInProfile, isOwner, profileUserId]);
+    }, [viewingUserId, loggedInUserId, loggedInProfile, isOwner]);
 
     useEffect(() => {
-        const fetchCurrentSeasonData = async () => {
-            if (!profile) return;
-            
-            const seasonRef = doc(db, 'game-settings', 'season');
-            const seasonSnap = await getDoc(seasonRef);
-            if (seasonSnap.exists) {
-                const settings = seasonSnap.data();
-                setSeasonSettings(settings);
+        if (isOwner) {
+            const fetchCurrentSeasonData = async () => {
+                const seasonRef = doc(db, 'game-settings', 'season');
+                const seasonSnap = await getDoc(seasonRef);
+                if (seasonSnap.exists()) {
+                    const settings = seasonSnap.data();
+                    setSeasonSettings(settings);
 
-                if (profile.activeSeasonId === settings.seasonUid) {
                     const recapRef = doc(db, 'fantasy_recaps', settings.seasonUid);
                     const recapSnap = await getDoc(recapRef);
-                    if (recapSnap.exists) {
+                    if (recapSnap.exists()) {
                         setFantasyRecaps(recapSnap.data());
                     }
-                } else {
-                    setFantasyRecaps(null);
                 }
-            }
-        };
-        fetchCurrentSeasonData();
-    }, [profile]);
+            };
+            fetchCurrentSeasonData();
+        }
+    }, [isOwner]);
     
     useEffect(() => {
         setBioText(profile?.bio || '');
@@ -212,6 +213,7 @@ const ProfilePage = ({ viewingUserId }) => {
       skinTone: '#d8aa7c', headwear: { style: 'shako', colors: { hat: '#1a1a1a', trim: '#ffffff' } }, plume: { style: 'fountain', colors: { plume: '#ff0000' } }, jacket: { style: 'sash', colors: { base: '#000080', accent: '#ffffff', trim: '#ffd700' } }, pants: { style: 'stripe', colors: { base: '#ffffff', stripe: '#000080' } }, shoes: { style: 'white' },
     };
     const userUniform = profile?.uniform ? { ...defaultUniform, ...profile.uniform } : defaultUniform;
+    const profileUserId = viewingUserId || loggedInUserId;
 
     return (
         <>
@@ -277,7 +279,10 @@ const ProfilePage = ({ viewingUserId }) => {
                                 fantasyRecaps={fantasyRecaps}
                             />               
                         </div>
-                        <CommentsSection profileOwnerId={profileUserId} />
+                        <CommentsSection
+                            profileOwnerId={profileUserId}
+                            loggedInProfile={loggedInProfile}
+                        />
                     </div> 
                 </div>
             </div>
