@@ -5,8 +5,16 @@ import NotificationsIcon from '../ui/NotificationsIcon';
 import { useUserStore } from '../../store/userStore';
 
 const Header = ({
-    
+  setPage,
+  onLoginClick,
+  onSignUpClick,
+  onLogout,
+  onViewOwnProfile,
+  onViewLeague,
+  themeMode,
+  toggleThemeMode,
 }) => {
+
     const { user, loggedInProfile } = useUserStore();
     const isLoggedIn = !!user;
     const isAdmin = loggedInProfile?.isAdmin
