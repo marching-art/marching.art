@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LogoIcon from '../ui/LogoIcon';
 import Icon from '../ui/Icon';
 import NotificationsIcon from '../ui/NotificationsIcon';
-import { useUserStore } from '../store/userStore';
+import { useUserStore } from '../../store/userStore';
 
 const Header = ({
     
