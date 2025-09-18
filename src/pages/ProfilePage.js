@@ -121,14 +121,12 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
             const targetUserId = viewingUserId || loggedInUserId;
 
             if (!targetUserId) {
-                setIsLoading(false);
-                setProfile(null);
+                // ...
                 return;
             }
             
             if (isOwner) {
-                setProfile(loggedInProfile);
-                setIsLoading(false);
+                // ...
             } else {
                 try {
                     const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', targetUserId, 'profile', 'data');

@@ -17,13 +17,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 
-export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE || 'marching-art';
-
-if (!dataNamespace) {
-    console.error('CRITICAL: DATA_NAMESPACE not configured! App may not function correctly.');
-}
-
-// Log configuration for debugging (remove in production)
-console.log('Firebase initialized with dataNamespace:', dataNamespace);
+export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
 
 export { auth, db, functions };
