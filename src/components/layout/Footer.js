@@ -1,11 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Footer = ({ setPage }) => { // Accept setPage as a prop
+const Footer = () => {
+    const navigate = useNavigate();
+
     return (
         <footer className="bg-surface dark:bg-surface-dark border-t-theme border-accent dark:border-accent-dark p-4 text-center text-text-secondary dark:text-text-secondary-dark mt-auto">
             <div className="mb-2">
-                {/* NEW LINK ADDED HERE */}
-                <button onClick={() => setPage('howtoplay')} className="text-primary dark:text-primary-dark hover:underline font-semibold">
+                <button onClick={() => navigate('/howtoplay')} className="text-primary dark:text-primary-dark hover:underline font-semibold">
                     How to Play
                 </button>
                 <span className="mx-2 text-accent dark:text-accent-dark">|</span>
