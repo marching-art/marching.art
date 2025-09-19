@@ -16,7 +16,7 @@ const FeatureCard = ({ title, children, accentText }) => (
 const CommunityCard = () => (
     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
          <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
-            CHAT
+            🗣
         </span>
         <div className="relative text-left">
             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-2">Join the Community</h3>
@@ -82,13 +82,13 @@ const HomePage = ({ onSignUpClick }) => {
                 </div>
                 
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                    <FeatureCard title="Live Scoring" accentText="LIVE">
+                    <FeatureCard title="Live Scoring" accentText="">
                         Scores are updated during the 10-week DCI season, culminating at Finals. Your fantasy points reflect real-world performance.
                     </FeatureCard>
-                    <FeatureCard title="Off-Season Fun" accentText="365">
+                    <FeatureCard title="Off-Season Fun" accentText="">
                         The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.
                     </FeatureCard>
-                    <FeatureCard title="Build Your Legacy" accentText="YOU">
+                    <FeatureCard title="Build Your Legacy" accentText="">
                         Create your director profile, design a unique uniform, and track your history to show off your championship titles.
                     </FeatureCard>
                     <CommunityCard />
