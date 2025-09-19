@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
 const ShowCard = ({
@@ -12,17 +14,15 @@ const ShowCard = ({
     onSetModalData
 }) => {
     const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+    const [computedAttendance, setComputedAttendance] = useState(null);
 
     const getScoresForShow = (day, eventName) => {
-        // Find the recap for this day
         const recap = fantasyRecaps?.recaps?.find(r => r.offSeasonDay === day);
         if (!recap) return null;
 
-        // Find the show in the recap
         const showData = recap.shows.find(s => s.eventName === eventName);
         if (!showData?.results?.length) return null;
 
-        // Group results by corps class and sort by score
         const scoresByClass = { worldClass: [], openClass: [], aClass: [] };
         showData.results.forEach(result => {
             if (scoresByClass[result.corpsClass]) {
@@ -37,10 +37,81 @@ const ShowCard = ({
         return scoresByClass;
     };
 
-    const getAttendanceForShow = (day, eventName) => {
-        // Since you don't have pre-computed attendance stats yet,
-        // we'll return empty data for now
-        // This would be populated by a backend function that processes user selectedShows
+    const computeAttendanceForShow = async () => {
+        if (!seasonUid || isLoadingAttendance || computedAttendance) return;
+
+        setIsLoadingAttendance(true);
+        try {
+            const week = Math.ceil(dayNumber / 7);
+            const attendance = {
+                counts: { worldClass: 0, openClass: 0, aClass: 0 },
+                attendees: { worldClass: [], openClass: [], aClass: [] }
+            };
+
+            // Query all profiles for this season
+            const profilesQuery = query(
+                collection(db, 'artifacts', 'marching-art', 'users'),
+                // Note: We can't query nested fields directly, so we'll get all users and filter
+            );
+            
+            const snapshot = await getDocs(profilesQuery);
+            
+            snapshot.docs.forEach(doc => {
+                const userData = doc.data();
+                const profile = userData.profile;
+                
+                // Check if user is in this season
+                if (profile?.activeSeasonId !== seasonUid) return;
+                
+                // Check each corps class
+                CORPS_CLASS_ORDER.forEach(corpsClass => {
+                    const corps = profile.corps?.[corpsClass];
+                    if (!corps?.selectedShows || !corps.corpsName) return;
+
+                    // Check if this corps selected this show for this week
+                    const weekShows = corps.selectedShows[`week${week}`] || [];
+                    const hasSelectedThisShow = weekShows.some(s => s.eventName === show.eventName);
+
+                    if (hasSelectedThisShow) {
+                        attendance.counts[corpsClass]++;
+                        attendance.attendees[corpsClass].push({
+                            uid: doc.id,
+                            username: profile.username || 'Unknown',
+                            corpsName: corps.corpsName
+                        });
+                    }
+                });
+            });
+
+            setComputedAttendance(attendance);
+        } catch (error) {
+            console.error('Error computing attendance:', error);
+            setComputedAttendance({
+                counts: { worldClass: 0, openClass: 0, aClass: 0 },
+                attendees: { worldClass: [], openClass: [], aClass: [] }
+            });
+        } finally {
+            setIsLoadingAttendance(false);
+        }
+    };
+
+    // Compute attendance when component mounts or show changes
+    useEffect(() => {
+        if (!isPastDay && seasonUid) { // Only compute for future shows
+            computeAttendanceForShow();
+        }
+    }, [show.eventName, dayNumber, seasonUid]);
+
+    const getAttendanceForShow = () => {
+        // Try pre-computed stats first
+        const showKey = `${dayNumber}_${show.eventName}`;
+        const precomputed = attendanceStats?.shows?.[showKey];
+        if (precomputed) return precomputed;
+
+        // Use computed attendance
+        if (computedAttendance) return computedAttendance;
+
+        // Default empty
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
@@ -55,9 +126,8 @@ const ShowCard = ({
         }
     };
 
-    const handleViewCompetingCorps = async () => {
-        const attendance = getAttendanceForShow(dayNumber, show.eventName);
-        
+    const handleViewCompetingCorps = () => {
+        const attendance = getAttendanceForShow();
         onSetModalData({ 
             type: 'attendees', 
             day: dayNumber, 
@@ -67,7 +137,7 @@ const ShowCard = ({
         onShowModal('attendees');
     };
 
-    const attendance = getAttendanceForShow(dayNumber, show.eventName);
+    const attendance = getAttendanceForShow();
     const scores = getScoresForShow(dayNumber, show.eventName);
     const totalAttendees = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
     const hasScores = scores && Object.values(scores).some(classResults => classResults.length > 0);
@@ -88,29 +158,35 @@ const ShowCard = ({
                 📍 {show.location}
             </p>
 
-            {/* Corps Attendance Counts - Currently empty until backend computes attendance */}
-            {totalAttendees > 0 && (
+            {/* Corps Attendance Counts */}
+            {(totalAttendees > 0 || isLoadingAttendance) && (
                 <div className="mb-3">
                     <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
-                        Competing Corps:
+                        {isLoadingAttendance ? 'Loading participants...' : 'Competing Corps:'}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {CORPS_CLASS_ORDER.map(corpsClass => {
-                            const classData = CORPS_CLASSES[corpsClass];
-                            const count = attendance.counts[corpsClass];
-                            
-                            if (count === 0) return null;
+                    {isLoadingAttendance ? (
+                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                            Computing attendance...
+                        </div>
+                    ) : totalAttendees > 0 ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {CORPS_CLASS_ORDER.map(corpsClass => {
+                                const classData = CORPS_CLASSES[corpsClass];
+                                const count = attendance.counts[corpsClass];
+                                
+                                if (count === 0) return null;
 
-                            return (
-                                <div key={corpsClass} className="flex items-center gap-1">
-                                    <div className={`w-2 h-2 rounded-full ${classData.color}`}></div>
-                                    <span className="text-xs font-medium text-text-primary dark:text-text-primary-dark">
-                                        {classData.classShorthand}: {count}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                return (
+                                    <div key={corpsClass} className="flex items-center gap-1">
+                                        <div className={`w-2 h-2 rounded-full ${classData.color}`}></div>
+                                        <span className="text-xs font-medium text-text-primary dark:text-text-primary-dark">
+                                            {classData.classShorthand}: {count}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : null}
                 </div>
             )}
 
@@ -128,16 +204,15 @@ const ShowCard = ({
                 {totalAttendees > 0 && !hasScores && (
                     <button
                         onClick={handleViewCompetingCorps}
-                        disabled={isLoadingAttendance}
-                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all disabled:opacity-50"
+                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all"
                     >
-                        {isLoadingAttendance ? '⏳ Loading...' : '👥 Competing Corps'}
+                        👥 Competing Corps
                     </button>
                 )}
                 
-                {totalAttendees === 0 && !hasScores && (
+                {totalAttendees === 0 && !hasScores && !isLoadingAttendance && (
                     <div className="flex-1 text-xs text-text-secondary dark:text-text-secondary-dark text-center py-2 italic">
-                        {hasScores ? '' : 'No participants yet'}
+                        No participants yet
                     </div>
                 )}
             </div>
