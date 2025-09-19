@@ -64,10 +64,17 @@ function AppContent() {
     };
 
     const handleViewOwnProfile = () => {
-        if (loggedInProfile?.id) {
-            navigate(`/profile/${loggedInProfile.id}`);
-        }
-    };
+    if (user?.uid) {
+        // Use user.uid directly since that's the actual user ID
+        navigate(`/profile/${user.uid}`);
+    } else if (loggedInProfile?.userId) {
+        // Fallback to userId from profile
+        navigate(`/profile/${loggedInProfile.userId}`);
+    } else {
+        console.error('No user ID available for profile navigation');
+        // Optionally show an error message or redirect to login
+    }
+};
 
     if (isLoadingAuth) {
         return (
