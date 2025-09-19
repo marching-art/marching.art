@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, dataNamespace } from '../firebase';
+import { db, dataNamespace } from '../../firebase';
 import { useUserStore } from '../store/userStore';
 import UniformBuilder from './UniformBuilder';
 import UniformDisplay from './UniformDisplay';
