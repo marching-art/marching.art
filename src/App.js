@@ -7,6 +7,9 @@ import { useUserStore } from './store/userStore';
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+// Import the new ProtectedRoute component
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
@@ -64,19 +67,16 @@ function AppContent() {
     };
 
     const handleViewOwnProfile = () => {
-    if (user?.uid) {
-        // Use user.uid directly since that's the actual user ID
-        navigate(`/profile/${user.uid}`);
-    } else if (loggedInProfile?.userId) {
-        // Fallback to userId from profile
-        navigate(`/profile/${loggedInProfile.userId}`);
-    } else {
-        console.error('No user ID available for profile navigation');
-        // Optionally show an error message or redirect to login
-    }
-};
+        if (user?.uid) {
+            navigate(`/profile/${user.uid}`);
+        } else if (loggedInProfile?.userId) {
+            navigate(`/profile/${loggedInProfile.userId}`);
+        } else {
+            console.error('No user ID available for profile navigation');
+        }
+    };
 
-    if (isLoadingAuth) {
+    if (isLoadingAuth && !user) { // Only show full page loader on initial load without a user
         return (
             <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">
                 <div className="text-center">
@@ -112,17 +112,20 @@ function AppContent() {
             <ErrorBoundary>
                 <main className="flex-grow relative">
                     <Routes>
+                        {/* Public Routes */}
                         <Route path="/" element={<HomePage onSignUpClick={openSignUpModal} />} />
-                        <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/profile/:userId" element={<ProfilePageWrapper />} />
-                        <Route path="/admin" element={<AdminPage />} />
-                        <Route path="/leagues" element={<LeaguePage />} />
-                        <Route path="/league/:leagueId" element={<LeagueDetailPageWrapper />} />
-                        <Route path="/leaderboard" element={<LeaderboardPage />} />
+                        <Route path="/howtoplay" element={<HowToPlayPage />} />
                         <Route path="/schedule" element={<SchedulePage />} />
                         <Route path="/scores" element={<ScoresPage theme={themeMode} />} />
-                        <Route path="/stats" element={<StatsPage />} />
-                        <Route path="/howtoplay" element={<HowToPlayPage />} />
+
+                        {/* Protected Routes */}
+                        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                        <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePageWrapper /></ProtectedRoute>} />
+                        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+                        <Route path="/leagues" element={<ProtectedRoute><LeaguePage /></ProtectedRoute>} />
+                        <Route path="/league/:leagueId" element={<ProtectedRoute><LeagueDetailPageWrapper /></ProtectedRoute>} />
+                        <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+                        <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </ErrorBoundary>
