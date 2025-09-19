@@ -4,7 +4,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, dataNamespace } from '../firebase';
 import { useUserStore } from '../store/userStore';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getAllUserCorps, CORPS_CLASSES } from '../utils/profileCompatibility';
+import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility'; // Import CORPS_CLASS_ORDER
 import Leaderboard from '../components/dashboard/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 import LeagueChat from '../components/leagues/LeagueChat';
@@ -484,16 +484,22 @@ const LeagueDetailPage = () => {
                                         </div>
                                         
                                         <div className="grid grid-cols-3 gap-2 text-xs">
-                                            {Object.entries(member.corps).map(([corpsClass, corps]) => (
-                                                <div key={corpsClass} className="text-center p-2 bg-surface dark:bg-surface-dark rounded">
-                                                    <div className="font-medium text-text-primary dark:text-text-primary-dark truncate">
-                                                        {corps.corpsName || 'No Corps'}
-                                                    </div>
-                                                    <div className="text-text-secondary dark:text-text-secondary-dark">
-                                                        {CORPS_CLASSES[corpsClass]?.name}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                            {CORPS_CLASS_ORDER.map((corpsClass) => {
+                                                const corps = member.corps[corpsClass];
+                                                if (corps) {
+                                                    return (
+                                                        <div key={corpsClass} className="text-center p-2 bg-surface dark:bg-surface-dark rounded">
+                                                            <div className="font-medium text-text-primary dark:text-text-primary-dark truncate">
+                                                                {corps.corpsName || 'No Corps'}
+                                                            </div>
+                                                            <div className="text-text-secondary dark:text-text-secondary-dark">
+                                                                {CORPS_CLASSES[corpsClass]?.name}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
                                         </div>
                                     </div>
                                 ))}

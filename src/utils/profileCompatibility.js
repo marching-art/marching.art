@@ -1,14 +1,19 @@
-// utils/profileCompatibility.js
-// Helper functions to handle both old and new profile structures
-
 export const CORPS_CLASSES = {
-    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' },
-    openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
-    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' }
+    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500', classShorthand: 'WC' },
+    openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500', classShorthand: 'OC' },
+    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500', classShorthand: 'AC' }
 };
 
-// NEW: Added an array to enforce display order.
 export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
+
+/**
+ * Helper function to get all details for a specific corps class.
+ * @param {string} corpsClass - The key of the corps class (e.g., 'worldClass').
+ * @returns {object} The details for the specified class.
+ */
+export const getCorpsClassDetails = (corpsClass) => {
+    return CORPS_CLASSES[corpsClass];
+};
 
 export const getCorpsData = (profile, corpsClass = 'worldClass') => {
     // New multi-corps structure

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { CORPS_CLASSES } from '../../utils/profileCompatibility';
+import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility'; // Import CORPS_CLASS_ORDER
 
 // Re-using a similar card structure from MatchupsDisplay for consistency
 const HistoryMatchupCard = ({ matchup, members, onViewProfile }) => {
@@ -117,17 +117,20 @@ const LeagueHistory = ({ league, leagueMembers, currentWeek, onViewProfile }) =>
             
             {/* Class Selector */}
             <div className="flex flex-wrap gap-2 mb-4">
-                 {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                    <button
-                        key={key}
-                        onClick={() => setSelectedClass(key)}
-                        className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
-                            selectedClass === key ? 'bg-primary text-on-primary' : 'bg-surface dark:bg-background-dark'
-                        }`}
-                    >
-                        {classInfo.name}
-                    </button>
-                ))}
+                 {CORPS_CLASS_ORDER.map((key) => {
+                    const classInfo = CORPS_CLASSES[key];
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => setSelectedClass(key)}
+                            className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
+                                selectedClass === key ? 'bg-primary text-on-primary' : 'bg-surface dark:bg-background-dark'
+                            }`}
+                        >
+                            {classInfo.name}
+                        </button>
+                    );
+                })}
             </div>
             
             {/* Matchups Grid */}

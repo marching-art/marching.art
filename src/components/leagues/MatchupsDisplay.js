@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, dataNamespace } from '../../firebase';
-import { CORPS_CLASSES } from '../../utils/profileCompatibility';
+import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility'; // Import CORPS_CLASS_ORDER
 
 const MatchupCard = ({ matchup, members, onViewProfile }) => {
     const [p1_uid, p2_uid] = matchup.pair;
@@ -93,17 +93,20 @@ const MatchupsDisplay = ({ league, currentWeek, onViewProfile, season }) => {
                 <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">Week {currentWeek} Matchups</h2>
                 {/* Class Selector Tabs */}
                 <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                    {Object.entries(CORPS_CLASSES).map(([key, classInfo]) => (
-                        <button
-                            key={key}
-                            onClick={() => setSelectedClass(key)}
-                            className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
-                                selectedClass === key ? 'bg-primary text-on-primary' : 'bg-surface dark:bg-background-dark'
-                            }`}
-                        >
-                            {classInfo.name}
-                        </button>
-                    ))}
+                    {CORPS_CLASS_ORDER.map((key) => {
+                        const classInfo = CORPS_CLASSES[key];
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setSelectedClass(key)}
+                                className={`px-3 py-1 rounded-theme font-semibold transition-all text-sm ${
+                                    selectedClass === key ? 'bg-primary text-on-primary' : 'bg-surface dark:bg-background-dark'
+                                }`}
+                            >
+                                {classInfo.name}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
