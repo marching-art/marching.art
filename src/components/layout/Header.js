@@ -51,9 +51,9 @@ const Header = ({
                     <NavLink to="/howtoplay">How to Play</NavLink>
                     <NavLink to="/schedule">Schedule</NavLink>
                     <NavLink to="/scores">Scores</NavLink>
-                    <NavLink to="/stats">Stats</NavLink>
                     {isLoggedIn && (
                         <>
+                            <NavLink to="/stats">Stats</NavLink>
                             <NavLink to="/leaderboard">Leaderboard</NavLink>
                             <NavLink to="/leagues">Leagues</NavLink>
                             <NavLink to="/dashboard">Dashboard</NavLink>
@@ -102,11 +102,11 @@ const Header = ({
                         <MobileNavLink to="/howtoplay">How to Play</MobileNavLink>
                         <MobileNavLink to="/schedule">Schedule</MobileNavLink>
                         <MobileNavLink to="/scores">Scores</MobileNavLink>
-                        <MobileNavLink to="/stats">Stats</MobileNavLink>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                         
                         {isLoggedIn ? (
                             <>
+                                <MobileNavLink to="/stats">Stats</MobileNavLink>
                                 <MobileNavLink to="/leaderboard">Leaderboard</MobileNavLink>
                                 <MobileNavLink to="/leagues">Leagues</MobileNavLink>
                                 <MobileNavLink to="/dashboard">Dashboard</MobileNavLink>
