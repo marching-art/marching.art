@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
+import { getDoc, doc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db, dataNamespace } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
 import { useUserStore } from '../../store/userStore';
@@ -31,6 +31,7 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
             try {
+                // Get season settings
                 const seasonSettingsRef = doc(db, 'game-settings', 'season');
                 const seasonDoc = await getDoc(seasonSettingsRef);
                 
@@ -45,35 +46,56 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 const activeSeasonId = seasonData.seasonUid;
                 setSeasonName(seasonData.name);
 
-                // FIXED: Query the 'data' collection group instead of 'profile'
-                // Since your structure is: artifacts/{namespace}/users/{userId}/profile/data
-                // The collection group name should be 'data', not 'profile'
-                const profilesRef = collectionGroup(db, 'data');
-                let leaderboardQuery;
-
+                // Get all user IDs to check - either from selected league or all leagues
+                let userIds = [];
+                
                 if (selectedLeague) {
-                    leaderboardQuery = query(
-                        profilesRef,
-                        where('activeSeasonId', '==', activeSeasonId),
-                        where('leagueIds', 'array-contains', selectedLeague.id)
-                    );
+                    // Get users from specific league
+                    userIds = selectedLeague.members || [];
                 } else {
-                    leaderboardQuery = query(
-                        profilesRef,
-                        where('activeSeasonId', '==', activeSeasonId)
-                    );
+                    // Get users from all leagues (for global leaderboard)
+                    // First get all leagues to find all participating users
+                    const allLeaguesQuery = query(collection(db, 'leagues'));
+                    const allLeaguesSnapshot = await getDocs(allLeaguesQuery);
+                    
+                    const allUserIds = new Set();
+                    allLeaguesSnapshot.docs.forEach(leagueDoc => {
+                        const leagueData = leagueDoc.data();
+                        if (leagueData.members) {
+                            leagueData.members.forEach(uid => allUserIds.add(uid));
+                        }
+                    });
+                    
+                    userIds = Array.from(allUserIds);
                 }
 
-                const querySnapshot = await getDocs(leaderboardQuery);
+                if (userIds.length === 0) {
+                    setLeaderboard([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Fetch all user profiles individually (like the working components do)
+                const profilePromises = userIds.map(userId => 
+                    getDoc(doc(db, `artifacts/${dataNamespace}/users/${userId}/profile/data`))
+                        .catch(error => {
+                            console.warn(`Failed to fetch profile for ${userId}:`, error);
+                            return null;
+                        })
+                );
+
+                const profileDocs = await Promise.all(profilePromises);
                 
                 let allCorpsEntries = [];
                 
-                querySnapshot.docs.forEach(doc => {
-                    const playerData = doc.data();
-                    // FIXED: Get userId from the correct path level
-                    // Path is: artifacts/{namespace}/users/{userId}/profile/data
-                    // So we need to go up 3 levels: data -> profile -> userId
-                    const userId = doc.ref.parent.parent.parent.id;
+                profileDocs.forEach(profileDoc => {
+                    if (!profileDoc || !profileDoc.exists()) return;
+                    
+                    const playerData = profileDoc.data();
+                    const userId = profileDoc.id;
+                    
+                    // Only include users with matching activeSeasonId
+                    if (playerData.activeSeasonId !== activeSeasonId) return;
                     
                     const userCorps = getAllUserCorps(playerData);
                     
@@ -97,7 +119,7 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 setLeaderboard(allCorpsEntries);
                 
             } catch (error) {
-                console.error("Leaderboard query failed. This might be a missing Firestore index.", error);
+                console.error("Leaderboard query failed:", error);
                 setLeaderboard([]);
             } finally {
                 setIsLoading(false);
