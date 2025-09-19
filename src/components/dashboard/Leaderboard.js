@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, dataNamespace } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
 import { useUserStore } from '../../store/userStore';
 
@@ -27,7 +27,6 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
         fetchLeagues();
     }, [profile]);
 
-    // MODIFIED: This useEffect now uses getDocs for a stable, one-time fetch.
     useEffect(() => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
@@ -46,7 +45,10 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 const activeSeasonId = seasonData.seasonUid;
                 setSeasonName(seasonData.name);
 
-                const profilesRef = collectionGroup(db, 'profile');
+                // FIXED: Query the 'data' collection group instead of 'profile'
+                // Since your structure is: artifacts/{namespace}/users/{userId}/profile/data
+                // The collection group name should be 'data', not 'profile'
+                const profilesRef = collectionGroup(db, 'data');
                 let leaderboardQuery;
 
                 if (selectedLeague) {
@@ -68,7 +70,10 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 
                 querySnapshot.docs.forEach(doc => {
                     const playerData = doc.data();
-                    const userId = doc.ref.parent.parent.id;
+                    // FIXED: Get userId from the correct path level
+                    // Path is: artifacts/{namespace}/users/{userId}/profile/data
+                    // So we need to go up 3 levels: data -> profile -> userId
+                    const userId = doc.ref.parent.parent.parent.id;
                     
                     const userCorps = getAllUserCorps(playerData);
                     
