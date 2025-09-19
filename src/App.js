@@ -3,7 +3,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from './firebase'; 
 import { AuthProvider, useAuth } from './context/AuthContext'; 
 import { Toaster } from 'react-hot-toast'; 
-import { useUserStore } from '/store/userStore';
+import { useUserStore } from './store/userStore';
 import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
 
 import Header from './components/layout/Header';
