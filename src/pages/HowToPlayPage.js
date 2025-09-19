@@ -25,7 +25,7 @@ const HowToPlayPage = () => {
                             </h3>
                             <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
                                 marching.art is a fantasy sports game based on drum corps competitions. Create your ideal corps 
-                                by selecting performers from different real-world drum corps, then compete against other managers 
+                                by selecting performers from different real-world drum corps, then compete against other directors 
                                 as your fantasy corps performs at virtual competitions.
                             </p>
                             <div className="bg-primary/10 dark:bg-primary-dark/10 border border-primary/20 dark:border-primary-dark/20 rounded-theme p-4">

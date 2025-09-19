@@ -291,10 +291,10 @@ const LeaguePage = ({ setPage, onViewLeague }) => {
                                                     </div>
                                                 </div>
 
-                                                {/* Top Members Preview */}
+                                                {/* Top Directors Preview */}
                                                 <div className="border-t border-accent dark:border-accent-dark pt-4">
                                                     <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-                                                        Top Members
+                                                        Top Directors
                                                     </div>
                                                     <div className="space-y-1">
                                                         {league.members.slice(0, 3).map((member, index) => (

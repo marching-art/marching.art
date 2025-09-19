@@ -169,7 +169,7 @@ const ScoresPage = ({ theme }) => {
                                                 <tr>
                                                     <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Rank</th>
                                                     <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Corps Name</th>
-                                                    <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Manager</th>
+                                                    <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Director</th>
                                                     <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">GE</th>
                                                     <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Visual</th>
                                                     <th className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">Music</th>
@@ -188,7 +188,7 @@ const ScoresPage = ({ theme }) => {
                                                             {result.corpsName}
                                                         </td>
                                                         <td className="p-3 text-text-secondary dark:text-text-secondary-dark">
-                                                            Manager Name
+                                                            Director
                                                         </td>
                                                         <td className="p-3 text-text-primary dark:text-text-primary-dark">
                                                             {result.geScore?.toFixed(3)}

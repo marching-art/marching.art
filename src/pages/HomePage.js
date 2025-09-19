@@ -89,7 +89,7 @@ const HomePage = ({ onSignUpClick }) => {
                         The competition never stops. During the off-season, we use a mix of historical scores to keep the game exciting year-round.
                     </FeatureCard>
                     <FeatureCard title="Build Your Legacy" accentText="YOU">
-                        Create your manager profile, design a unique uniform, and track your history to show off your championship titles.
+                        Create your director profile, design a unique uniform, and track your history to show off your championship titles.
                     </FeatureCard>
                     <CommunityCard />
                 </div>
