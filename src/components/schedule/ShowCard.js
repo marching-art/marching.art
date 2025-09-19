@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
-import { fetchAttendanceForShow, getCachedAttendanceData, cacheAttendanceData } from '../../services/attendanceService';
 
 const ShowCard = ({
     show,
@@ -13,14 +12,17 @@ const ShowCard = ({
     onSetModalData
 }) => {
     const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
+
     const getScoresForShow = (day, eventName) => {
+        // Find the recap for this day
         const recap = fantasyRecaps?.recaps?.find(r => r.offSeasonDay === day);
         if (!recap) return null;
 
+        // Find the show in the recap
         const showData = recap.shows.find(s => s.eventName === eventName);
         if (!showData?.results?.length) return null;
 
-        // Group by corps class and sort by score
+        // Group results by corps class and sort by score
         const scoresByClass = { worldClass: [], openClass: [], aClass: [] };
         showData.results.forEach(result => {
             if (scoresByClass[result.corpsClass]) {
@@ -36,8 +38,10 @@ const ShowCard = ({
     };
 
     const getAttendanceForShow = (day, eventName) => {
-        const showKey = `${day}_${eventName}`;
-        return attendanceStats?.shows?.[showKey] || {
+        // Since you don't have pre-computed attendance stats yet,
+        // we'll return empty data for now
+        // This would be populated by a backend function that processes user selectedShows
+        return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
@@ -45,41 +49,15 @@ const ShowCard = ({
 
     const handleViewScores = () => {
         const scores = getScoresForShow(dayNumber, show.eventName);
-        if (scores) {
+        if (scores && Object.values(scores).some(classResults => classResults.length > 0)) {
             onSetModalData({ type: 'scores', day: dayNumber, eventName: show.eventName, scores });
             onShowModal('scores');
         }
     };
 
     const handleViewCompetingCorps = async () => {
-        const showKey = `${dayNumber}_${show.eventName}`;
+        const attendance = getAttendanceForShow(dayNumber, show.eventName);
         
-        // First try cached data
-        let attendance = getCachedAttendanceData(showKey);
-        
-        if (!attendance) {
-            // Try pre-computed stats
-            attendance = attendanceStats?.shows?.[showKey];
-        }
-        
-        if (!attendance) {
-            // Fetch on-demand if not available
-            setIsLoadingAttendance(true);
-            try {
-                const week = Math.ceil(dayNumber / 7);
-                attendance = await fetchAttendanceForShow(seasonUid, show.eventName, week);
-                cacheAttendanceData(showKey, attendance);
-            } catch (error) {
-                console.error('Error fetching attendance:', error);
-                attendance = {
-                    counts: { worldClass: 0, openClass: 0, aClass: 0 },
-                    attendees: { worldClass: [], openClass: [], aClass: [] }
-                };
-            } finally {
-                setIsLoadingAttendance(false);
-            }
-        }
-
         onSetModalData({ 
             type: 'attendees', 
             day: dayNumber, 
@@ -102,17 +80,15 @@ const ShowCard = ({
                     : 'border-accent/50 dark:border-accent-dark/30 bg-surface dark:bg-surface-dark hover:border-primary/50'
             }`}
         >
-            {/* Show Title */}
             <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2">
                 {show.eventName?.replace(/DCI/g, 'marching.art')}
             </h4>
             
-            {/* Location */}
             <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-3 flex items-center gap-1">
                 📍 {show.location}
             </p>
 
-            {/* Corps Attendance Counts */}
+            {/* Corps Attendance Counts - Currently empty until backend computes attendance */}
             {totalAttendees > 0 && (
                 <div className="mb-3">
                     <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
@@ -161,7 +137,7 @@ const ShowCard = ({
                 
                 {totalAttendees === 0 && !hasScores && (
                     <div className="flex-1 text-xs text-text-secondary dark:text-text-secondary-dark text-center py-2 italic">
-                        No participants yet
+                        {hasScores ? '' : 'No participants yet'}
                     </div>
                 )}
             </div>
