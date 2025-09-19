@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { getAllUserCorps } from '../utils/profileCompatibility';
@@ -84,6 +82,11 @@ const SchedulePage = () => {
     const jumpToWeek = (weekNumber) => {
         setSelectedWeek(weekNumber);
         setQuickFilter('all');
+    };
+
+    const handleCloseModal = () => {
+        setSelectedModal(null);
+        setModalData(null);
     };
 
     if (isLoading) {
@@ -178,10 +181,7 @@ const SchedulePage = () => {
 
                     <ScheduleModal
                         isOpen={selectedModal !== null}
-                        onClose={() => {
-                            setSelectedModal(null);
-                            setModalData(null);
-                        }}
+                        onClose={handleCloseModal}
                         modalType={selectedModal}
                         modalData={modalData}
                     />
