@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
@@ -19,53 +19,44 @@ const ShowCard = ({
 
     const log = (message, data) => {
         console.log(`[ShowCard ${show.eventName}] ${message}`, data);
-        setDebugInfo(prev => prev + `\n${message}: ${JSON.stringify(data, null, 2)}`);
+        // Only update debug info if it's actually different to prevent render loops
+        const newDebugEntry = `${message}: ${JSON.stringify(data, null, 2)}`;
+        setDebugInfo(prev => {
+            if (prev.includes(newDebugEntry)) return prev;
+            return prev + `\n${newDebugEntry}`;
+        });
     };
 
-    const getScoresForShow = (day, eventName) => {
-        log('Getting scores for show', { day, eventName });
-        
+    // Memoize scores calculation to prevent infinite loops
+    const scores = useMemo(() => {
         if (!fantasyRecaps) {
-            log('ERROR: No fantasyRecaps data', null);
+            // Only log once when fantasyRecaps is null, not on every render
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[ShowCard ${show.eventName}] No fantasyRecaps data available`);
+            }
             return null;
         }
 
-        log('Available fantasyRecaps', {
-            hasRecaps: !!fantasyRecaps.recaps,
-            recapCount: fantasyRecaps.recaps?.length || 0,
-            availableDays: fantasyRecaps.recaps?.map(r => r.offSeasonDay) || []
-        });
-
-        const recap = fantasyRecaps?.recaps?.find(r => r.offSeasonDay === day);
+        const recap = fantasyRecaps?.recaps?.find(r => r.offSeasonDay === dayNumber);
         if (!recap) {
-            log('ERROR: No recap found for day', { day, availableDays: fantasyRecaps.recaps?.map(r => r.offSeasonDay) });
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[ShowCard ${show.eventName}] No recap found for day ${dayNumber}`);
+            }
             return null;
         }
 
-        log('Found recap for day', { day, showCount: recap.shows?.length || 0 });
-
-        const showData = recap.shows.find(s => s.eventName === eventName);
-        if (!showData) {
-            log('ERROR: No show data found', { 
-                eventName, 
-                availableShows: recap.shows?.map(s => s.eventName) || [] 
-            });
+        const showData = recap.shows?.find(s => s.eventName === show.eventName);
+        if (!showData?.results?.length) {
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[ShowCard ${show.eventName}] No show data or results found`);
+            }
             return null;
         }
-
-        if (!showData.results?.length) {
-            log('ERROR: No results in show data', { showData });
-            return null;
-        }
-
-        log('Found show results', { resultCount: showData.results.length, results: showData.results });
 
         const scoresByClass = { worldClass: [], openClass: [], aClass: [] };
         showData.results.forEach(result => {
             if (scoresByClass[result.corpsClass]) {
                 scoresByClass[result.corpsClass].push(result);
-            } else {
-                log('WARNING: Unknown corps class', { corpsClass: result.corpsClass, result });
             }
         });
 
@@ -73,9 +64,8 @@ const ShowCard = ({
             scoresByClass[corpsClass].sort((a, b) => b.totalScore - a.totalScore);
         });
 
-        log('Processed scores by class', scoresByClass);
         return scoresByClass;
-    };
+    }, [fantasyRecaps, dayNumber, show.eventName]);
 
     const computeAttendanceForShow = async () => {
         if (!seasonUid) {
@@ -84,7 +74,6 @@ const ShowCard = ({
         }
 
         if (isLoadingAttendance || computedAttendance) {
-            log('Skipping attendance computation', { isLoadingAttendance, hasComputedAttendance: !!computedAttendance });
             return;
         }
 
@@ -100,15 +89,8 @@ const ShowCard = ({
                 attendees: { worldClass: [], openClass: [], aClass: [] }
             };
 
-            // Query all user documents first
             const usersCollection = collection(db, 'artifacts', 'marching-art', 'users');
-            log('Querying users collection', { collectionPath: 'artifacts/marching-art/users' });
-            
             const snapshot = await getDocs(usersCollection);
-            log('Users query result', { 
-                totalDocs: snapshot.size,
-                docs: snapshot.docs.map(doc => ({ id: doc.id, hasProfile: !!doc.data().profile }))
-            });
 
             if (snapshot.empty) {
                 log('ERROR: No user documents found', null);
@@ -124,31 +106,14 @@ const ShowCard = ({
                 processedUsers++;
                 const userData = doc.data();
                 const profile = userData.profile;
-                
-                log(`Processing user ${doc.id}`, { 
-                    hasProfile: !!profile,
-                    activeSeasonId: profile?.activeSeasonId,
-                    targetSeasonId: seasonUid
-                });
 
-                if (!profile) {
-                    log(`User ${doc.id} has no profile`, null);
-                    return;
-                }
-
-                if (profile.activeSeasonId !== seasonUid) {
-                    log(`User ${doc.id} not in target season`, { 
-                        userSeason: profile.activeSeasonId, 
-                        targetSeason: seasonUid 
-                    });
+                if (!profile || profile.activeSeasonId !== seasonUid) {
                     return;
                 }
 
                 usersInSeason++;
-                log(`User ${doc.id} is in target season`, { username: profile.username });
 
                 if (!profile.corps) {
-                    log(`User ${doc.id} has no corps data`, null);
                     return;
                 }
 
@@ -157,48 +122,20 @@ const ShowCard = ({
                 CORPS_CLASS_ORDER.forEach(corpsClass => {
                     const corps = profile.corps[corpsClass];
                     
-                    if (!corps) {
-                        log(`User ${doc.id} has no ${corpsClass} corps`, null);
-                        return;
-                    }
-
-                    if (!corps.corpsName) {
-                        log(`User ${doc.id} ${corpsClass} corps has no name`, { corps });
-                        return;
-                    }
-
-                    if (!corps.selectedShows) {
-                        log(`User ${doc.id} ${corpsClass} corps has no selectedShows`, { corps });
+                    if (!corps?.corpsName || !corps.selectedShows) {
                         return;
                     }
 
                     const weekKey = `week${week}`;
                     const weekShows = corps.selectedShows[weekKey] || [];
-                    
-                    log(`User ${doc.id} ${corpsClass} week ${week} shows`, { 
-                        weekKey,
-                        showCount: weekShows.length,
-                        shows: weekShows.map(s => s.eventName),
-                        targetShow: show.eventName
-                    });
-
                     const hasSelectedThisShow = weekShows.some(s => s.eventName === show.eventName);
 
                     if (hasSelectedThisShow) {
-                        log(`User ${doc.id} ${corpsClass} selected this show!`, { 
-                            corpsName: corps.corpsName,
-                            username: profile.username 
-                        });
-
                         attendance.counts[corpsClass]++;
                         attendance.attendees[corpsClass].push({
                             uid: doc.id,
                             username: profile.username || 'Unknown',
                             corpsName: corps.corpsName
-                        });
-                    } else {
-                        log(`User ${doc.id} ${corpsClass} did NOT select this show`, { 
-                            availableShows: weekShows.map(s => s.eventName)
                         });
                     }
                 });
@@ -229,38 +166,23 @@ const ShowCard = ({
     };
 
     useEffect(() => {
-        log('ShowCard mounted/updated', { 
-            show: show.eventName, 
-            dayNumber, 
-            isPastDay, 
-            seasonUid,
-            hasFantasyRecaps: !!fantasyRecaps,
-            hasAttendanceStats: !!attendanceStats
-        });
-
         if (!isPastDay && seasonUid) {
-            log('Triggering attendance computation for future show', null);
             computeAttendanceForShow();
-        } else {
-            log('Skipping attendance computation', { isPastDay, seasonUid });
         }
-    }, [show.eventName, dayNumber, seasonUid]);
+    }, [show.eventName, dayNumber, seasonUid, isPastDay]);
 
     const getAttendanceForShow = () => {
         const showKey = `${dayNumber}_${show.eventName}`;
         const precomputed = attendanceStats?.shows?.[showKey];
         
         if (precomputed) {
-            log('Using precomputed attendance', { showKey, precomputed });
             return precomputed;
         }
 
         if (computedAttendance) {
-            log('Using computed attendance', { computedAttendance });
             return computedAttendance;
         }
 
-        log('Using default empty attendance', null);
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
@@ -268,21 +190,14 @@ const ShowCard = ({
     };
 
     const handleViewScores = () => {
-        log('View scores clicked', null);
-        const scores = getScoresForShow(dayNumber, show.eventName);
         if (scores && Object.values(scores).some(classResults => classResults.length > 0)) {
-            log('Opening scores modal', { scores });
             onSetModalData({ type: 'scores', day: dayNumber, eventName: show.eventName, scores });
             onShowModal('scores');
-        } else {
-            log('ERROR: No scores to display', { scores });
         }
     };
 
     const handleViewCompetingCorps = () => {
-        log('View competing corps clicked', null);
         const attendance = getAttendanceForShow();
-        log('Opening attendees modal', { attendance });
         onSetModalData({ 
             type: 'attendees', 
             day: dayNumber, 
@@ -293,16 +208,8 @@ const ShowCard = ({
     };
 
     const attendance = getAttendanceForShow();
-    const scores = getScoresForShow(dayNumber, show.eventName);
     const totalAttendees = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
     const hasScores = scores && Object.values(scores).some(classResults => classResults.length > 0);
-
-    log('Final render state', {
-        hasScores,
-        totalAttendees,
-        isLoadingAttendance,
-        isPastDay
-    });
 
     return (
         <div 
@@ -320,13 +227,22 @@ const ShowCard = ({
                 📍 {show.location}
             </p>
 
-            {/* Debug Info Toggle */}
-            <details className="mb-2">
-                <summary className="text-xs text-red-600 cursor-pointer">Debug Info</summary>
-                <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto max-h-32">
-                    {debugInfo || 'No debug info yet'}
-                </pre>
-            </details>
+            {/* Debug Info Toggle - Only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+                <details className="mb-2">
+                    <summary className="text-xs text-red-600 cursor-pointer">Debug Info</summary>
+                    <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto max-h-32">
+                        {debugInfo || 'No debug info yet'}
+                    </pre>
+                </details>
+            )}
+
+            {/* Status Message for Missing Data */}
+            {!fantasyRecaps && (
+                <div className="mb-3 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                    Scores data not yet available
+                </div>
+            )}
 
             {/* Corps Attendance Counts */}
             {(totalAttendees > 0 || isLoadingAttendance) && (
@@ -336,7 +252,7 @@ const ShowCard = ({
                     </div>
                     {isLoadingAttendance ? (
                         <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                            Computing attendance... (check console for details)
+                            Computing attendance...
                         </div>
                     ) : totalAttendees > 0 ? (
                         <div className="flex items-center gap-2 flex-wrap">
