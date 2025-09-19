@@ -97,7 +97,13 @@ const DashboardPage = () => {
                         />
                     ) : (
                         <>
-                            <MyStatus />
+                            {/* MyStatus now receives all the schedule-related props */}
+                            <MyStatus 
+                                seasonSettings={seasonSettings}
+                                seasonEvents={seasonEvents}
+                                currentOffSeasonDay={currentOffSeasonDay}
+                                seasonStartDate={seasonStartDate}
+                            />
                             <CorpsSelector
                                 corpsData={corpsData}
                                 seasonSettings={seasonSettings}

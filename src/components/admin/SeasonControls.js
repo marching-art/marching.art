@@ -33,7 +33,8 @@ const SeasonControls = () => {
             return;
         }
         try {
-            await setDoc(doc(db, 'game-settings', 'season'), { nextPointCap: newCap }, { merge: true });
+            const seasonRef = doc(db, 'game-settings', 'season');
+            await setDoc(seasonRef, { nextPointCap: newCap }, { merge: true });
             setMessage("Next season's point cap updated!");
         } catch (error) {
             setMessage("Error updating point cap.");

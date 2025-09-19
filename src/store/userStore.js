@@ -41,16 +41,17 @@ export const useUserStore = create((set, get) => ({
             const isAdminInProfile = profileData.isAdmin === true;
             
             // If admin status doesn't match, update the profile document
-            if (isAdminFromClaims && !isAdminInProfile) {
-              try {
-                await updateDoc(profileRef, { isAdmin: true });
-                console.log('Admin status synced to profile document');
-                // The onSnapshot will fire again with the updated data
-                return;
-              } catch (error) {
-                console.error('Error syncing admin status:', error);
-              }
-            }
+            // If admin status doesn't match, update the profile document
+if (isAdminFromClaims && !isAdminInProfile) {
+  try {
+    await updateDoc(profileRef, { isAdmin: true });
+    console.log('Admin status synced to profile document');
+    // The onSnapshot will fire again with the updated data
+    return;
+  } catch (error) {
+    console.error('Error syncing admin status:', error);
+  }
+}
             
             // Combine the user ID with the profile data for easy access
             // Use the custom claims value for isAdmin to ensure consistency

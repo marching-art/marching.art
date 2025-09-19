@@ -6,7 +6,7 @@ import { getAllUserCorps } from '../utils/profileCompatibility';
 
 // Import your profile components
 import UniformDisplay from '../components/profile/UniformDisplay';
-import UniformBuilder from '../components/profile/UniformBuilder';
+import UniformBuilderContainer from '../components/profile/UniformBuilderContainer';
 import TrophyCase from '../components/profile/TrophyCase';
 import AchievementsCase from '../components/profile/AchievementsCase';
 import SeasonArchive from '../components/profile/SeasonArchive';
@@ -93,21 +93,12 @@ const ProfilePage = ({ viewingUserId }) => {
         fetchProfileData();
     }, [targetUserId, isViewingOwnProfile, loggedInProfile, isLoadingAuth]);
 
-    const handleSaveUniform = async (newUniform) => {
-        if (!isViewingOwnProfile) return;
+    // Handle uniform save success - update local state
+    const handleUniformSaveSuccess = (newUniform) => {
+        setViewingProfile(prev => ({ ...prev, uniform: newUniform }));
         
-        try {
-            // Update the uniform in the database
-            const profileRef = doc(db, `artifacts/${dataNamespace}/users/${user.uid}/profile/data`);
-            await profileRef.update({ uniform: newUniform });
-            
-            // Update local state
-            setViewingProfile(prev => ({ ...prev, uniform: newUniform }));
-            setIsEditingUniform(false);
-        } catch (error) {
-            console.error('Error saving uniform:', error);
-            alert('Failed to save uniform. Please try again.');
-        }
+        // If this is the logged-in user's profile, we should also refresh the store
+        // This could be done by calling a refresh function from the store if needed
     };
 
     // Loading state
@@ -155,15 +146,13 @@ const ProfilePage = ({ viewingUserId }) => {
 
     return (
         <div className="min-h-screen bg-background dark:bg-background-dark">
-            {/* Uniform Builder Modal */}
-            {isEditingUniform && (
-                <UniformBuilder
-                    uniform={viewingProfile.uniform}
-                    onSave={handleSaveUniform}
-                    onCancel={() => setIsEditingUniform(false)}
-                    UniformDisplayComponent={UniformDisplay}
-                />
-            )}
+            {/* Uniform Builder Modal - Now using the container component */}
+            <UniformBuilderContainer
+                isOpen={isEditingUniform}
+                onClose={() => setIsEditingUniform(false)}
+                initialUniform={viewingProfile.uniform}
+                onSaveSuccess={handleUniformSaveSuccess}
+            />
 
             <div className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -61,8 +61,14 @@ const OptionSelector = ({ title, options, selected, onSelect }) => (
     </div>
 );
 
-
-const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisplayComponent }) => {
+const UniformBuilder = ({ 
+    uniform: initialUniform, 
+    onSave, 
+    onCancel, 
+    UniformDisplayComponent, 
+    isSaving = false, 
+    error = '' 
+}) => {
     const [uniform, setUniform] = useState(initialUniform);
     const [activeTab, setActiveTab] = useState('body');
 
@@ -100,12 +106,28 @@ const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisp
                 <div className="w-full md:w-1/3 bg-background dark:bg-background-dark flex flex-col justify-center items-center p-6 space-y-4 border-r-theme border-accent dark:border-accent-dark">
                     <h3 className="text-2xl font-bold text-primary dark:text-primary-dark">Avatar Preview</h3>
                     <UniformDisplayComponent uniform={uniform} />
+                    
+                    {/* Error Display */}
+                    {error && (
+                        <div className="w-full p-3 bg-red-500/10 border border-red-500 rounded-theme">
+                            <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+                        </div>
+                    )}
+                    
                     <div className="flex w-full space-x-2 pt-4">
-                       <button onClick={onCancel} className="w-full bg-secondary hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme transition-colors">
+                       <button 
+                           onClick={onCancel} 
+                           disabled={isSaving}
+                           className="w-full bg-secondary hover:opacity-90 text-on-secondary font-bold py-2 px-4 rounded-theme transition-colors disabled:opacity-50"
+                       >
                            Cancel
                        </button>
-                       <button onClick={() => onSave(uniform)} className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme transition-colors">
-                           Save & Close
+                       <button 
+                           onClick={() => onSave(uniform)} 
+                           disabled={isSaving}
+                           className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme transition-colors disabled:opacity-50"
+                       >
+                           {isSaving ? 'Saving...' : 'Save & Close'}
                        </button>
                     </div>
                 </div>
@@ -121,7 +143,8 @@ const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisp
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-lg ${activeTab === tab.id ? 'border-primary dark:border-primary-dark text-primary dark:text-primary-dark' : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:border-accent dark:hover:border-accent-dark'}`}
+                                    disabled={isSaving}
+                                    className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-lg transition-colors disabled:opacity-50 ${activeTab === tab.id ? 'border-primary dark:border-primary-dark text-primary dark:text-primary-dark' : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:border-accent dark:hover:border-accent-dark'}`}
                                 >
                                     {tab.name}
                                 </button>
@@ -139,8 +162,9 @@ const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisp
                                         <button 
                                             key={color}
                                             onClick={() => setUniform(prev => ({...prev, skinTone: color}))}
+                                            disabled={isSaving}
                                             style={{ backgroundColor: color }}
-                                            className={`w-10 h-10 rounded-full transition-transform transform hover:scale-110 ${uniform.skinTone === color ? 'ring-2 ring-offset-2 ring-primary dark:ring-offset-surface-dark dark:ring-primary-dark' : ''}`}
+                                            className={`w-10 h-10 rounded-full transition-transform transform hover:scale-110 disabled:opacity-50 ${uniform.skinTone === color ? 'ring-2 ring-offset-2 ring-primary dark:ring-offset-surface-dark dark:ring-primary-dark' : ''}`}
                                         />
                                     ))}
                                 </div>
@@ -149,17 +173,39 @@ const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisp
 
                         {activeTab === 'headwear' && (
                             <>
-                                <OptionSelector title="Headwear Style" options={uniformOptions.headwear} selected={uniform.headwear.style} onSelect={(style) => handleStyleChange('headwear', style)} />
+                                <OptionSelector 
+                                    title="Headwear Style" 
+                                    options={uniformOptions.headwear} 
+                                    selected={uniform.headwear.style} 
+                                    onSelect={(style) => handleStyleChange('headwear', style)} 
+                                />
                                 {uniform.headwear.style !== 'none' && (
                                     <div className="p-4 bg-background dark:bg-background-dark rounded-theme space-y-3">
-                                       <ColorPicker label="Hat Color" color={uniform.headwear.colors.hat} onChange={(e) => handleColorChange('headwear', 'hat', e.target.value)} />
-                                       <ColorPicker label="Accent" color={uniform.headwear.colors.trim} onChange={(e) => handleColorChange('headwear', 'trim', e.target.value)} />
+                                       <ColorPicker 
+                                           label="Hat Color" 
+                                           color={uniform.headwear.colors.hat} 
+                                           onChange={(e) => handleColorChange('headwear', 'hat', e.target.value)} 
+                                       />
+                                       <ColorPicker 
+                                           label="Accent" 
+                                           color={uniform.headwear.colors.trim} 
+                                           onChange={(e) => handleColorChange('headwear', 'trim', e.target.value)} 
+                                       />
                                     </div>
                                 )}
-                                <OptionSelector title="Plume Style" options={uniformOptions.plumes} selected={uniform.plume.style} onSelect={(style) => handleStyleChange('plume', style)} />
+                                <OptionSelector 
+                                    title="Plume Style" 
+                                    options={uniformOptions.plumes} 
+                                    selected={uniform.plume.style} 
+                                    onSelect={(style) => handleStyleChange('plume', style)} 
+                                />
                                 {uniform.plume.style !== 'none' && (
                                      <div className="p-4 bg-background dark:bg-background-dark rounded-theme space-y-3">
-                                        <ColorPicker label="Plume Color" color={uniform.plume.colors.plume} onChange={(e) => handleColorChange('plume', 'plume', e.target.value)} />
+                                        <ColorPicker 
+                                            label="Plume Color" 
+                                            color={uniform.plume.colors.plume} 
+                                            onChange={(e) => handleColorChange('plume', 'plume', e.target.value)} 
+                                        />
                                      </div>
                                 )}
                             </>
@@ -167,25 +213,60 @@ const UniformBuilder = ({ uniform: initialUniform, onSave, onCancel, UniformDisp
                         
                         {activeTab === 'jacket' && (
                              <>
-                                <OptionSelector title="Jacket Style" options={uniformOptions.jackets} selected={uniform.jacket.style} onSelect={(style) => handleStyleChange('jacket', style)} />
+                                <OptionSelector 
+                                    title="Jacket Style" 
+                                    options={uniformOptions.jackets} 
+                                    selected={uniform.jacket.style} 
+                                    onSelect={(style) => handleStyleChange('jacket', style)} 
+                                />
                                 <div className="p-4 bg-background dark:bg-background-dark rounded-theme space-y-3">
-                                    <ColorPicker label="Jacket Base" color={uniform.jacket.colors.base} onChange={(e) => handleColorChange('jacket', 'base', e.target.value)} />
-                                    <ColorPicker label="Accent / Sash" color={uniform.jacket.colors.accent} onChange={(e) => handleColorChange('jacket', 'accent', e.target.value)} />
-                                    <ColorPicker label="Trim / Details" color={uniform.jacket.colors.trim} onChange={(e) => handleColorChange('jacket', 'trim', e.target.value)} />
+                                    <ColorPicker 
+                                        label="Jacket Base" 
+                                        color={uniform.jacket.colors.base} 
+                                        onChange={(e) => handleColorChange('jacket', 'base', e.target.value)} 
+                                    />
+                                    <ColorPicker 
+                                        label="Accent / Sash" 
+                                        color={uniform.jacket.colors.accent} 
+                                        onChange={(e) => handleColorChange('jacket', 'accent', e.target.value)} 
+                                    />
+                                    <ColorPicker 
+                                        label="Trim / Details" 
+                                        color={uniform.jacket.colors.trim} 
+                                        onChange={(e) => handleColorChange('jacket', 'trim', e.target.value)} 
+                                    />
                                 </div>
                              </>
                         )}
 
                         {activeTab === 'pants' && (
                             <>
-                               <OptionSelector title="Pants Style" options={uniformOptions.pants} selected={uniform.pants.style} onSelect={(style) => handleStyleChange('pants', style)} />
+                               <OptionSelector 
+                                   title="Pants Style" 
+                                   options={uniformOptions.pants} 
+                                   selected={uniform.pants.style} 
+                                   onSelect={(style) => handleStyleChange('pants', style)} 
+                               />
                                <div className="p-4 bg-background dark:bg-background-dark rounded-theme space-y-3">
-                                    <ColorPicker label="Pants Color" color={uniform.pants.colors.base} onChange={(e) => handleColorChange('pants', 'base', e.target.value)} />
+                                    <ColorPicker 
+                                        label="Pants Color" 
+                                        color={uniform.pants.colors.base} 
+                                        onChange={(e) => handleColorChange('pants', 'base', e.target.value)} 
+                                    />
                                     {uniform.pants.style === 'stripe' && (
-                                        <ColorPicker label="Stripe Color" color={uniform.pants.colors.stripe} onChange={(e) => handleColorChange('pants', 'stripe', e.target.value)} />
+                                        <ColorPicker 
+                                            label="Stripe Color" 
+                                            color={uniform.pants.colors.stripe} 
+                                            onChange={(e) => handleColorChange('pants', 'stripe', e.target.value)} 
+                                        />
                                     )}
                                </div>
-                               <OptionSelector title="Shoes" options={uniformOptions.shoes} selected={uniform.shoes.style} onSelect={(style) => handleStyleChange('shoes', style)} />
+                               <OptionSelector 
+                                   title="Shoes" 
+                                   options={uniformOptions.shoes} 
+                                   selected={uniform.shoes.style} 
+                                   onSelect={(style) => handleStyleChange('shoes', style)} 
+                               />
                             </>
                         )}
                     </div>

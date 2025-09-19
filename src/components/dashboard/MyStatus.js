@@ -1,8 +1,14 @@
 import React from 'react';
 import { useUserStore } from '../../store/userStore';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
+import PersonalSchedule from './PersonalSchedule';
 
-const MyStatus = () => {
+const MyStatus = ({ 
+    seasonSettings = null, 
+    seasonEvents = [], 
+    currentOffSeasonDay = 0, 
+    seasonStartDate = null 
+}) => {
     const { loggedInProfile, isLoadingAuth } = useUserStore();
     
     const userCorps = loggedInProfile ? getAllUserCorps(loggedInProfile) : {};
@@ -42,20 +48,34 @@ const MyStatus = () => {
                     <p className="text-text-secondary dark:text-text-secondary-dark">No corps have been created yet. Visit the Lineup Editor to get started!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {orderedCorpsToDisplay.map(corpsClassKey => {
-                        const corps = userCorps[corpsClassKey];
-                        return (
-                             <StatCard 
-                                key={corpsClassKey}
-                                label={`${CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}`}
-                                value={`${(corps.totalSeasonScore || 0).toFixed(3)}`}
-                                color={CORPS_CLASSES[corpsClassKey]?.color}
-                                large={Object.keys(userCorps).length === 1}
-                            />
-                        )
-                    })}
-                </div>
+                <>
+                    {/* Corps Scores */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        {orderedCorpsToDisplay.map(corpsClassKey => {
+                            const corps = userCorps[corpsClassKey];
+                            return (
+                                 <StatCard 
+                                    key={corpsClassKey}
+                                    label={`${CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}`}
+                                    value={`${(corps.totalSeasonScore || 0).toFixed(3)}`}
+                                    color={CORPS_CLASSES[corpsClassKey]?.color}
+                                    large={Object.keys(userCorps).length === 1}
+                                />
+                            )
+                        })}
+                    </div>
+
+                    {/* Personal Schedule */}
+                    <div className="border-t border-accent dark:border-accent-dark pt-6">
+                        <PersonalSchedule
+                            userCorps={userCorps}
+                            seasonEvents={seasonEvents}
+                            currentDay={currentOffSeasonDay}
+                            seasonStartDate={seasonStartDate}
+                            seasonMode={seasonSettings?.status === 'live-season' ? 'live' : 'off'}
+                        />
+                    </div>
+                </>
             )}
         </div>
     );

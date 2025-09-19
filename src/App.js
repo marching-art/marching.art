@@ -4,6 +4,7 @@ import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext'; 
 import { Toaster } from 'react-hot-toast'; 
 import { useUserStore } from './store/userStore';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -54,9 +55,16 @@ function AppContent() {
         }
     };
 
+    const navigate = useNavigate();
+  
     const handleSetPage = (newPage, props = {}) => {
-        setPage(newPage);
-        setPageProps(props);
+        if (newPage === 'profile' && props.userId) {
+            navigate(`/profile/${props.userId}`);
+        } else if (newPage === 'leagueDetail' && props.leagueId) {
+            navigate(`/league/${props.leagueId}`);
+        } else {
+            navigate(`/${newPage}`);
+        }
     };
 
     const renderPage = () => {
@@ -110,22 +118,24 @@ function AppContent() {
                     setPage('dashboard');
                 }}
             />
-            <Header
-                onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
-                onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
-                onLogout={handleLogout}
-                setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
-                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
-                themeMode={themeMode}
-                toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
-            />
-            <main className="flex-grow relative">
-                {renderPage()}
-            </main>
-            <Footer setPage={handleSetPage} />
-        </div>
-    );
+            <Header onSetPage={handleSetPage} />
+      <main className="flex-grow relative">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile/:userId" element={<ProfilePageWrapper />} />
+          <Route path="/league/:leagueId" element={<LeagueDetailPageWrapper />} />
+          <Route path="/scores" element={<ScoresPage />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/leagues" element={<LeaguePage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/howtoplay" element={<HowToPlayPage />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 function App() {
@@ -134,6 +144,16 @@ function App() {
             <AppContent />
         </AuthProvider>
     );
+}
+
+function ProfilePageWrapper() {
+  const { userId } = useParams();
+  return <ProfilePage viewingUserId={userId} />;
+}
+
+function LeagueDetailPageWrapper() {
+  const { leagueId } = useParams();
+  return <LeagueDetailPage leagueId={leagueId} />;
 }
 
 export default App;
