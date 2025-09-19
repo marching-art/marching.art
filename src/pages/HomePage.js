@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 
 // Card components (no changes needed here)
 const FeatureCard = ({ title, children, accentText }) => (
-    <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
+    <div className="relative bg-surface dark:bg-surface-dark p-6 rounded-theme border-t border-l border-r border-accent dark:border-accent-dark border-b-4 border-b-secondary/50 dark:border-b-secondary-dark/50 overflow-hidden shadow-theme-dark">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
             {accentText}
         </span>
@@ -60,7 +60,7 @@ const HomePage = ({ onSignUpClick }) => {
             </video>
 
             {/* The overlay sits on top of the video (z-10) */}
-            <div className="absolute inset-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-10"></div>
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-background via-transparent to-background dark:bg-gradient-to-t dark:from-background-dark dark:via-background-dark/50 dark:to-background-dark z-10"></div>
 
             {/* The content sits on top of everything (z-20) and is scrollable */}
             <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8">
