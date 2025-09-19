@@ -28,106 +28,142 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
     }, [profile]);
 
     useEffect(() => {
-        const fetchLeaderboardData = async () => {
-            setIsLoading(true);
-            try {
-                // Get season settings
-                const seasonSettingsRef = doc(db, 'game-settings', 'season');
-                const seasonDoc = await getDoc(seasonSettingsRef);
-                
-                if (!seasonDoc.exists) {
-                    setLeaderboard([]);
-                    setSeasonName('No Active Season');
-                    setIsLoading(false);
-                    return;
-                }
-                
-                const seasonData = seasonDoc.data();
-                const activeSeasonId = seasonData.seasonUid;
-                setSeasonName(seasonData.name);
+    const fetchLeaderboardData = async () => {
+        setIsLoading(true);
+        try {
+            // Get season settings
+            const seasonSettingsRef = doc(db, 'game-settings', 'season');
+            const seasonDoc = await getDoc(seasonSettingsRef);
+            
+            if (!seasonDoc.exists) {
+                setLeaderboard([]);
+                setSeasonName('No Active Season');
+                setIsLoading(false);
+                return;
+            }
+            
+            const seasonData = seasonDoc.data();
+            const activeSeasonId = seasonData.seasonUid;
+            setSeasonName(seasonData.name);
 
-                // Get all user IDs to check - either from selected league or all leagues
-                let userIds = [];
+            // Get all user IDs to check
+            let userIds = [];
+            
+            if (selectedLeague) {
+                userIds = selectedLeague.members || [];
+                console.log('League members:', userIds);
+            } else {
+                // Get users from all leagues
+                const allLeaguesQuery = query(collection(db, 'leagues'));
+                const allLeaguesSnapshot = await getDocs(allLeaguesQuery);
                 
-                if (selectedLeague) {
-                    // Get users from specific league
-                    userIds = selectedLeague.members || [];
-                } else {
-                    // Get users from all leagues (for global leaderboard)
-                    // First get all leagues to find all participating users
-                    const allLeaguesQuery = query(collection(db, 'leagues'));
-                    const allLeaguesSnapshot = await getDocs(allLeaguesQuery);
-                    
-                    const allUserIds = new Set();
-                    allLeaguesSnapshot.docs.forEach(leagueDoc => {
-                        const leagueData = leagueDoc.data();
-                        if (leagueData.members) {
-                            leagueData.members.forEach(uid => allUserIds.add(uid));
-                        }
-                    });
-                    
-                    userIds = Array.from(allUserIds);
-                }
-
-                if (userIds.length === 0) {
-                    setLeaderboard([]);
-                    setIsLoading(false);
-                    return;
-                }
-
-                // Fetch all user profiles individually (like the working components do)
-                const profilePromises = userIds.map(userId => 
-                    getDoc(doc(db, `artifacts/${dataNamespace}/users/${userId}/profile/data`))
-                        .catch(error => {
-                            console.warn(`Failed to fetch profile for ${userId}:`, error);
-                            return null;
-                        })
-                );
-
-                const profileDocs = await Promise.all(profilePromises);
-                
-                let allCorpsEntries = [];
-                
-                profileDocs.forEach(profileDoc => {
-                    if (!profileDoc || !profileDoc.exists()) return;
-                    
-                    const playerData = profileDoc.data();
-                    const userId = profileDoc.id;
-                    
-                    // Only include users with matching activeSeasonId
-                    if (playerData.activeSeasonId !== activeSeasonId) return;
-                    
-                    const userCorps = getAllUserCorps(playerData);
-                    
-                    Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
-                            corps.totalSeasonScore && corps.totalSeasonScore > 0) {
-                            allCorpsEntries.push({
-                                id: `${userId}_${corpsClass}`,
-                                userId: userId,
-                                username: playerData.username || 'Unnamed Manager',
-                                corpsName: corps.corpsName,
-                                corpsClass: corpsClass,
-                                totalSeasonScore: corps.totalSeasonScore
-                            });
-                        }
-                    });
+                const allUserIds = new Set();
+                allLeaguesSnapshot.docs.forEach(leagueDoc => {
+                    const leagueData = leagueDoc.data();
+                    if (leagueData.members) {
+                        leagueData.members.forEach(uid => allUserIds.add(uid));
+                    }
                 });
                 
-                allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
-                
-                setLeaderboard(allCorpsEntries);
-                
-            } catch (error) {
-                console.error("Leaderboard query failed:", error);
-                setLeaderboard([]);
-            } finally {
-                setIsLoading(false);
+                userIds = Array.from(allUserIds);
+                console.log('All league users:', userIds);
             }
-        };
-        
-        fetchLeaderboardData();
-    }, [selectedLeague, selectedCorpsClass]);
+
+            if (userIds.length === 0) {
+                console.log('No user IDs found');
+                setLeaderboard([]);
+                setIsLoading(false);
+                return;
+            }
+
+            // Test individual profile access
+            console.log('Testing access to individual profiles...');
+            for (let i = 0; i < Math.min(userIds.length, 3); i++) {
+                const userId = userIds[i];
+                const profilePath = `artifacts/${dataNamespace}/users/${userId}/profile/data`;
+                console.log(`Testing access to: ${profilePath}`);
+                
+                try {
+                    const testDoc = await getDoc(doc(db, profilePath));
+                    if (testDoc.exists()) {
+                        console.log(`✓ Can access ${userId}:`, testDoc.data().username);
+                    } else {
+                        console.log(`✗ Document doesn't exist for ${userId}`);
+                    }
+                } catch (error) {
+                    console.error(`✗ Permission denied for ${userId}:`, error);
+                }
+            }
+
+            // Fetch all user profiles individually
+            const profilePromises = userIds.map(userId => 
+                getDoc(doc(db, `artifacts/${dataNamespace}/users/${userId}/profile/data`))
+                    .then(doc => ({ userId, doc }))
+                    .catch(error => {
+                        console.warn(`Failed to fetch profile for ${userId}:`, error);
+                        return { userId, doc: null, error };
+                    })
+            );
+
+            const profileResults = await Promise.all(profilePromises);
+            console.log('Profile fetch results:', profileResults);
+            
+            let allCorpsEntries = [];
+            
+            profileResults.forEach(({ userId, doc, error }) => {
+                if (error) {
+                    console.log(`Error for ${userId}:`, error.message);
+                    return;
+                }
+                
+                if (!doc || !doc.exists()) {
+                    console.log(`No document for ${userId}`);
+                    return;
+                }
+                
+                const playerData = doc.data();
+                console.log(`Processing ${userId}:`, playerData.username, 'activeSeasonId:', playerData.activeSeasonId);
+                
+                // Only include users with matching activeSeasonId
+                if (playerData.activeSeasonId !== activeSeasonId) {
+                    console.log(`Skipping ${userId} - wrong season`);
+                    return;
+                }
+                
+                const userCorps = getAllUserCorps(playerData);
+                console.log(`Corps for ${userId}:`, userCorps);
+                
+                Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                    if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
+                        corps.totalSeasonScore && corps.totalSeasonScore > 0) {
+                        console.log(`Adding ${userId} to leaderboard:`, corps.corpsName, corps.totalSeasonScore);
+                        allCorpsEntries.push({
+                            id: `${userId}_${corpsClass}`,
+                            userId: userId,
+                            username: playerData.username || 'Unnamed Manager',
+                            corpsName: corps.corpsName,
+                            corpsClass: corpsClass,
+                            totalSeasonScore: corps.totalSeasonScore
+                        });
+                    }
+                });
+            });
+            
+            console.log('Final leaderboard entries:', allCorpsEntries);
+            allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
+            
+            setLeaderboard(allCorpsEntries);
+            
+        } catch (error) {
+            console.error("Leaderboard query failed:", error);
+            setLeaderboard([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    fetchLeaderboardData();
+}, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
