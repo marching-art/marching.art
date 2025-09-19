@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
+import { useUserStore } from '../../store/userStore';
 
-const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
+const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
+    const { loggedInProfile: profile } = useUserStore();
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [seasonName, setSeasonName] = useState('');
@@ -33,7 +35,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 const seasonSettingsRef = doc(db, 'game-settings', 'season');
                 const seasonDoc = await getDoc(seasonSettingsRef);
                 
-                if (!seasonDoc.exists()) {
+                if (!seasonDoc.exists) {
                     setLeaderboard([]);
                     setSeasonName('No Active Season');
                     setIsLoading(false);
