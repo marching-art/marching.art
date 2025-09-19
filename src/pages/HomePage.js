@@ -15,7 +15,7 @@ const FeatureCard = ({ title, children, accentText }) => (
 
 const CommunityCard = () => (
     <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
-         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
+         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-10">
             🗣
         </span>
         <div className="relative text-left">
