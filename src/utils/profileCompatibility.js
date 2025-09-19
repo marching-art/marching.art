@@ -4,6 +4,7 @@ export const CORPS_CLASSES = {
     aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500', classShorthand: 'AC' }
 };
 
+// Enforce display order.
 export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
 
 /**
