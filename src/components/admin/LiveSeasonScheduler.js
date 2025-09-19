@@ -107,6 +107,7 @@ const LiveSeasonScheduler = () => {
     const handleClearSchedule = () => {
         if (window.confirm('Are you sure you want to clear the entire live schedule? This cannot be undone.')) {
             setSchedule([]);
+            setMessage('Schedule cleared. Remember to save changes.');
         }
     };
 

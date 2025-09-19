@@ -179,23 +179,18 @@ const PersonalSchedule = ({
                                             key={index} 
                                             className={`p-3 rounded-theme border transition-opacity ${
                                                 show.isPast 
-                                                    ? 'bg-surface dark:bg-surface-dark opacity-60 border-accent dark:border-accent-dark' 
-                                                    : 'bg-surface dark:bg-surface-dark border-accent dark:border-accent-dark'
+                                                    ? 'border-accent dark:border-accent-dark opacity-60'
+                                                    : 'border-primary dark:border-primary-dark'
                                             }`}
                                         >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${CORPS_CLASSES[show.corpsClass]?.color} text-white`}>
-                                                            {CORPS_CLASSES[show.corpsClass]?.name}
-                                                        </span>
-                                                        <span className="font-medium text-text-primary dark:text-text-primary-dark">
-                                                            {show.corpsName}
-                                                        </span>
-                                                    </div>
-                                                    <h7 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h5 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                                        {show.corpsName}
+                                                    </h5>
+                                                    <p className="text-sm text-text-primary dark:text-text-primary-dark">
                                                         {show.eventName.replace(/DCI/g, 'marching.art')}
-                                                    </h7>
+                                                    </p>
                                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
                                                         {show.location}
                                                     </p>
