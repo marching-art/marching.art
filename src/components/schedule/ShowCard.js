@@ -15,18 +15,57 @@ const ShowCard = ({
 }) => {
     const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
     const [computedAttendance, setComputedAttendance] = useState(null);
+    const [debugInfo, setDebugInfo] = useState('');
+
+    const log = (message, data) => {
+        console.log(`[ShowCard ${show.eventName}] ${message}`, data);
+        setDebugInfo(prev => prev + `\n${message}: ${JSON.stringify(data, null, 2)}`);
+    };
 
     const getScoresForShow = (day, eventName) => {
+        log('Getting scores for show', { day, eventName });
+        
+        if (!fantasyRecaps) {
+            log('ERROR: No fantasyRecaps data', null);
+            return null;
+        }
+
+        log('Available fantasyRecaps', {
+            hasRecaps: !!fantasyRecaps.recaps,
+            recapCount: fantasyRecaps.recaps?.length || 0,
+            availableDays: fantasyRecaps.recaps?.map(r => r.offSeasonDay) || []
+        });
+
         const recap = fantasyRecaps?.recaps?.find(r => r.offSeasonDay === day);
-        if (!recap) return null;
+        if (!recap) {
+            log('ERROR: No recap found for day', { day, availableDays: fantasyRecaps.recaps?.map(r => r.offSeasonDay) });
+            return null;
+        }
+
+        log('Found recap for day', { day, showCount: recap.shows?.length || 0 });
 
         const showData = recap.shows.find(s => s.eventName === eventName);
-        if (!showData?.results?.length) return null;
+        if (!showData) {
+            log('ERROR: No show data found', { 
+                eventName, 
+                availableShows: recap.shows?.map(s => s.eventName) || [] 
+            });
+            return null;
+        }
+
+        if (!showData.results?.length) {
+            log('ERROR: No results in show data', { showData });
+            return null;
+        }
+
+        log('Found show results', { resultCount: showData.results.length, results: showData.results });
 
         const scoresByClass = { worldClass: [], openClass: [], aClass: [] };
         showData.results.forEach(result => {
             if (scoresByClass[result.corpsClass]) {
                 scoresByClass[result.corpsClass].push(result);
+            } else {
+                log('WARNING: Unknown corps class', { corpsClass: result.corpsClass, result });
             }
         });
 
@@ -34,58 +73,152 @@ const ShowCard = ({
             scoresByClass[corpsClass].sort((a, b) => b.totalScore - a.totalScore);
         });
 
+        log('Processed scores by class', scoresByClass);
         return scoresByClass;
     };
 
     const computeAttendanceForShow = async () => {
-        if (!seasonUid || isLoadingAttendance || computedAttendance) return;
+        if (!seasonUid) {
+            log('ERROR: No seasonUid provided', { seasonUid });
+            return;
+        }
 
+        if (isLoadingAttendance || computedAttendance) {
+            log('Skipping attendance computation', { isLoadingAttendance, hasComputedAttendance: !!computedAttendance });
+            return;
+        }
+
+        log('Starting attendance computation', { show: show.eventName, dayNumber, seasonUid });
         setIsLoadingAttendance(true);
+        
         try {
             const week = Math.ceil(dayNumber / 7);
+            log('Computed week from day', { dayNumber, week });
+
             const attendance = {
                 counts: { worldClass: 0, openClass: 0, aClass: 0 },
                 attendees: { worldClass: [], openClass: [], aClass: [] }
             };
 
-            // Query all profiles for this season
-            const profilesQuery = query(
-                collection(db, 'artifacts', 'marching-art', 'users'),
-                // Note: We can't query nested fields directly, so we'll get all users and filter
-            );
+            // Query all user documents first
+            const usersCollection = collection(db, 'artifacts', 'marching-art', 'users');
+            log('Querying users collection', { collectionPath: 'artifacts/marching-art/users' });
             
-            const snapshot = await getDocs(profilesQuery);
-            
+            const snapshot = await getDocs(usersCollection);
+            log('Users query result', { 
+                totalDocs: snapshot.size,
+                docs: snapshot.docs.map(doc => ({ id: doc.id, hasProfile: !!doc.data().profile }))
+            });
+
+            if (snapshot.empty) {
+                log('ERROR: No user documents found', null);
+                setComputedAttendance(attendance);
+                return;
+            }
+
+            let processedUsers = 0;
+            let usersInSeason = 0;
+            let usersWithCorps = 0;
+
             snapshot.docs.forEach(doc => {
+                processedUsers++;
                 const userData = doc.data();
                 const profile = userData.profile;
                 
-                // Check if user is in this season
-                if (profile?.activeSeasonId !== seasonUid) return;
-                
-                // Check each corps class
-                CORPS_CLASS_ORDER.forEach(corpsClass => {
-                    const corps = profile.corps?.[corpsClass];
-                    if (!corps?.selectedShows || !corps.corpsName) return;
+                log(`Processing user ${doc.id}`, { 
+                    hasProfile: !!profile,
+                    activeSeasonId: profile?.activeSeasonId,
+                    targetSeasonId: seasonUid
+                });
 
-                    // Check if this corps selected this show for this week
-                    const weekShows = corps.selectedShows[`week${week}`] || [];
+                if (!profile) {
+                    log(`User ${doc.id} has no profile`, null);
+                    return;
+                }
+
+                if (profile.activeSeasonId !== seasonUid) {
+                    log(`User ${doc.id} not in target season`, { 
+                        userSeason: profile.activeSeasonId, 
+                        targetSeason: seasonUid 
+                    });
+                    return;
+                }
+
+                usersInSeason++;
+                log(`User ${doc.id} is in target season`, { username: profile.username });
+
+                if (!profile.corps) {
+                    log(`User ${doc.id} has no corps data`, null);
+                    return;
+                }
+
+                usersWithCorps++;
+
+                CORPS_CLASS_ORDER.forEach(corpsClass => {
+                    const corps = profile.corps[corpsClass];
+                    
+                    if (!corps) {
+                        log(`User ${doc.id} has no ${corpsClass} corps`, null);
+                        return;
+                    }
+
+                    if (!corps.corpsName) {
+                        log(`User ${doc.id} ${corpsClass} corps has no name`, { corps });
+                        return;
+                    }
+
+                    if (!corps.selectedShows) {
+                        log(`User ${doc.id} ${corpsClass} corps has no selectedShows`, { corps });
+                        return;
+                    }
+
+                    const weekKey = `week${week}`;
+                    const weekShows = corps.selectedShows[weekKey] || [];
+                    
+                    log(`User ${doc.id} ${corpsClass} week ${week} shows`, { 
+                        weekKey,
+                        showCount: weekShows.length,
+                        shows: weekShows.map(s => s.eventName),
+                        targetShow: show.eventName
+                    });
+
                     const hasSelectedThisShow = weekShows.some(s => s.eventName === show.eventName);
 
                     if (hasSelectedThisShow) {
+                        log(`User ${doc.id} ${corpsClass} selected this show!`, { 
+                            corpsName: corps.corpsName,
+                            username: profile.username 
+                        });
+
                         attendance.counts[corpsClass]++;
                         attendance.attendees[corpsClass].push({
                             uid: doc.id,
                             username: profile.username || 'Unknown',
                             corpsName: corps.corpsName
                         });
+                    } else {
+                        log(`User ${doc.id} ${corpsClass} did NOT select this show`, { 
+                            availableShows: weekShows.map(s => s.eventName)
+                        });
                     }
                 });
             });
 
+            log('Attendance computation complete', { 
+                processedUsers,
+                usersInSeason,
+                usersWithCorps,
+                finalAttendance: attendance
+            });
+
             setComputedAttendance(attendance);
         } catch (error) {
-            console.error('Error computing attendance:', error);
+            log('ERROR during attendance computation', { 
+                error: error.message, 
+                stack: error.stack 
+            });
+            console.error('Full attendance computation error:', error);
+            
             setComputedAttendance({
                 counts: { worldClass: 0, openClass: 0, aClass: 0 },
                 attendees: { worldClass: [], openClass: [], aClass: [] }
@@ -95,23 +228,39 @@ const ShowCard = ({
         }
     };
 
-    // Compute attendance when component mounts or show changes
     useEffect(() => {
-        if (!isPastDay && seasonUid) { // Only compute for future shows
+        log('ShowCard mounted/updated', { 
+            show: show.eventName, 
+            dayNumber, 
+            isPastDay, 
+            seasonUid,
+            hasFantasyRecaps: !!fantasyRecaps,
+            hasAttendanceStats: !!attendanceStats
+        });
+
+        if (!isPastDay && seasonUid) {
+            log('Triggering attendance computation for future show', null);
             computeAttendanceForShow();
+        } else {
+            log('Skipping attendance computation', { isPastDay, seasonUid });
         }
     }, [show.eventName, dayNumber, seasonUid]);
 
     const getAttendanceForShow = () => {
-        // Try pre-computed stats first
         const showKey = `${dayNumber}_${show.eventName}`;
         const precomputed = attendanceStats?.shows?.[showKey];
-        if (precomputed) return precomputed;
+        
+        if (precomputed) {
+            log('Using precomputed attendance', { showKey, precomputed });
+            return precomputed;
+        }
 
-        // Use computed attendance
-        if (computedAttendance) return computedAttendance;
+        if (computedAttendance) {
+            log('Using computed attendance', { computedAttendance });
+            return computedAttendance;
+        }
 
-        // Default empty
+        log('Using default empty attendance', null);
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
@@ -119,15 +268,21 @@ const ShowCard = ({
     };
 
     const handleViewScores = () => {
+        log('View scores clicked', null);
         const scores = getScoresForShow(dayNumber, show.eventName);
         if (scores && Object.values(scores).some(classResults => classResults.length > 0)) {
+            log('Opening scores modal', { scores });
             onSetModalData({ type: 'scores', day: dayNumber, eventName: show.eventName, scores });
             onShowModal('scores');
+        } else {
+            log('ERROR: No scores to display', { scores });
         }
     };
 
     const handleViewCompetingCorps = () => {
+        log('View competing corps clicked', null);
         const attendance = getAttendanceForShow();
+        log('Opening attendees modal', { attendance });
         onSetModalData({ 
             type: 'attendees', 
             day: dayNumber, 
@@ -141,6 +296,13 @@ const ShowCard = ({
     const scores = getScoresForShow(dayNumber, show.eventName);
     const totalAttendees = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
     const hasScores = scores && Object.values(scores).some(classResults => classResults.length > 0);
+
+    log('Final render state', {
+        hasScores,
+        totalAttendees,
+        isLoadingAttendance,
+        isPastDay
+    });
 
     return (
         <div 
@@ -158,6 +320,14 @@ const ShowCard = ({
                 📍 {show.location}
             </p>
 
+            {/* Debug Info Toggle */}
+            <details className="mb-2">
+                <summary className="text-xs text-red-600 cursor-pointer">Debug Info</summary>
+                <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto max-h-32">
+                    {debugInfo || 'No debug info yet'}
+                </pre>
+            </details>
+
             {/* Corps Attendance Counts */}
             {(totalAttendees > 0 || isLoadingAttendance) && (
                 <div className="mb-3">
@@ -166,7 +336,7 @@ const ShowCard = ({
                     </div>
                     {isLoadingAttendance ? (
                         <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                            Computing attendance...
+                            Computing attendance... (check console for details)
                         </div>
                     ) : totalAttendees > 0 ? (
                         <div className="flex items-center gap-2 flex-wrap">
