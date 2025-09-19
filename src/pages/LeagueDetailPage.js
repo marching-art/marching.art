@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, dataNamespace } from '../firebase';
 import { useUserStore } from '../store/userStore';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -9,6 +10,7 @@ import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 import LeagueChat from '../components/leagues/LeagueChat';
 import LeagueHistory from '../components/leagues/LeagueHistory';
 import Icon from '../components/ui/Icon';
+import toast from 'react-hot-toast';
 
 const LeagueDetailPage = () => {
     const { leagueId } = useParams();
@@ -21,6 +23,7 @@ const LeagueDetailPage = () => {
     const [currentWeek, setCurrentWeek] = useState(1);
     const [activeTab, setActiveTab] = useState('overview');
     const [isLoading, setIsLoading] = useState(true);
+    const [isLeaving, setIsLeaving] = useState(false);
     const [error, setError] = useState(null);
     const [leagueStats, setLeagueStats] = useState(null);
 
@@ -120,6 +123,26 @@ const LeagueDetailPage = () => {
 
         } catch (error) {
             console.error("Error fetching member profiles:", error);
+        }
+    };
+    
+    const handleLeaveLeague = async () => {
+        if (window.confirm('Are you sure you want to leave this league? This action cannot be undone.')) {
+            setIsLeaving(true);
+            const toastId = toast.loading('Leaving league...');
+            try {
+                const functions = getFunctions();
+                const leaveLeague = httpsCallable(functions, 'leaveLeague');
+                await leaveLeague({ leagueId: league.id });
+                
+                toast.success('You have left the league.', { id: toastId });
+                navigate('/leagues');
+            } catch (error) {
+                console.error('Error leaving league:', error);
+                toast.error(error.message || 'Failed to leave the league. Please try again.', { id: toastId });
+            } finally {
+                setIsLeaving(false);
+            }
         }
     };
 
@@ -383,6 +406,14 @@ const LeagueDetailPage = () => {
                                     >
                                         <div className="font-medium text-text-primary dark:text-text-primary-dark">View All Members</div>
                                         <div className="text-xs text-text-secondary dark:text-text-secondary-dark">See complete member list</div>
+                                    </button>
+                                    <button
+                                        onClick={handleLeaveLeague}
+                                        disabled={isLeaving}
+                                        className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-red-600 dark:hover:border-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <div className="font-medium text-red-600 dark:text-red-500">Leave League</div>
+                                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">This action cannot be undone</div>
                                     </button>
                                 </div>
                             </div>
