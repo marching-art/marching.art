@@ -4,8 +4,8 @@ import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { useUserStore } from './store/userStore';
-// Import useNavigate
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -81,27 +81,32 @@ function AppContent() {
     }
 
     return (
-        // The Router needs to be moved up to wrap AppContent in App()
-        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
-            <AuthModal
-                isOpen={isAuthModalOpen}
-                onClose={() => setIsAuthModalOpen(false)}
-                initialView={authModalView}
-                onAuthSuccess={() => {
-                    setIsAuthModalOpen(false);
-                }}
-                />
-                <Header 
-                onLoginClick={openLoginModal}
-                onSignUpClick={openSignUpModal}
-                onLogout={handleLogout}
-                onViewOwnProfile={handleViewOwnProfile}
-                themeMode={themeMode}
-                toggleThemeMode={toggleThemeMode}
-            />
-            <main className="flex-grow relative">
-                <Routes>
+    <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+      <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialView={authModalView}
+        onAuthSuccess={() => {
+          setIsAuthModalOpen(false);
+        }}
+      />
+      
+      <Header
+        setPage={setPage}
+        onLoginClick={handleLoginClick}
+        onSignUpClick={handleSignUpClick}
+        onLogout={handleLogout}
+        onViewOwnProfile={handleViewOwnProfile}
+        onViewLeague={onViewLeague}
+        themeMode={themeMode}
+        toggleThemeMode={toggleThemeMode}
+      />
+      
+      <ErrorBoundary>
+        <main className="flex-grow relative">
+          <Routes>
                     <Route path="/" element={<HomePage onSignUpClick={openSignUpModal} />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/profile/:userId" element={<ProfilePageWrapper />} />
@@ -114,10 +119,12 @@ function AppContent() {
                     <Route path="/stats" element={<StatsPage />} />
                     <Route path="/howtoplay" element={<HowToPlayPage />} />
                 </Routes>
-            </main>
-            <Footer />
-        </div>
-    );
+        </main>
+      </ErrorBoundary>
+      
+      <Footer setPage={setPage} />
+    </div>
+  );
 }
 
 function App() {
@@ -140,5 +147,15 @@ function LeagueDetailPageWrapper() {
     const { leagueId } = useParams();
     return <LeagueDetailPage leagueId={leagueId} />;
 }
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  // Send to error tracking service
+});
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+  // Send to error tracking service
+});
 
 export default App;

@@ -18,46 +18,59 @@ const LeaguePage = ({ setPage, onViewLeague }) => {
 
     useEffect(() => {
         const fetchLeagueData = async () => {
-            if (isLoadingAuth) return;
-            
-            setIsLoading(true);
+    if (isLoadingAuth) return;
+    
+    setIsLoading(true);
+    try {
+        // Fetch season settings first
+        const seasonDoc = await getDoc(doc(db, 'game-settings', 'season'));
+        if (seasonDoc.exists()) {
+            const seasonData = seasonDoc.data();
+            setSeasonSettings(seasonData);
+
+            // Calculate current week
+            if (seasonData.schedule?.startDate) {
+                const startDate = seasonData.schedule.startDate.toDate();
+                const diffInMillis = new Date().getTime() - startDate.getTime();
+                const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+                const week = Math.ceil(currentDay / 7);
+                setCurrentWeek(Math.max(1, week));
+            }
+        }
+
+        // FIXED: Better error handling for league member fetching
+        if (loggedInProfile?.leagueIds?.length > 0) {
             try {
-                // Fetch season settings to get current week
-                const seasonDoc = await getDoc(doc(db, 'game-settings', 'season'));
-                if (seasonDoc.exists()) {
-                    const seasonData = seasonDoc.data();
-                    setSeasonSettings(seasonData);
-
-                    // Calculate current week
-                    if (seasonData.schedule?.startDate) {
-                        const startDate = seasonData.schedule.startDate.toDate();
-                        const diffInMillis = new Date().getTime() - startDate.getTime();
-                        const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
-                        const week = Math.ceil(currentDay / 7);
-                        setCurrentWeek(Math.max(1, week));
-                    }
-                }
-
-                // Fetch user's leagues with detailed information
-                if (loggedInProfile?.leagueIds?.length > 0) {
-                    const leaguesQuery = query(
-                        collection(db, 'leagues'), 
-                        where('__name__', 'in', loggedInProfile.leagueIds)
-                    );
-                    const querySnapshot = await getDocs(leaguesQuery);
-                    const leagues = await Promise.all(querySnapshot.docs.map(async (leagueDoc) => {
-                        const leagueData = { id: leagueDoc.id, ...leagueDoc.data() };
-                        
-                        // Get member profiles for league stats
-                        if (leagueData.members && leagueData.members.length > 0) {
-                            try {
-                                const memberProfilesQuery = query(
-                                    collection(db, `artifacts/${dataNamespace}/users`), 
-                                    where('__name__', 'in', leagueData.members.slice(0, 10)) // Limit for performance
-                                );
-                                const profilesSnapshot = await getDocs(memberProfilesQuery);
-                                const membersData = profilesSnapshot.docs.map(doc => {
-                                    const profileData = doc.data().profile?.data || {};
+                const leaguesQuery = query(
+                    collection(db, 'leagues'), 
+                    where('__name__', 'in', loggedInProfile.leagueIds)
+                );
+                const querySnapshot = await getDocs(leaguesQuery);
+                
+                const leagues = await Promise.all(querySnapshot.docs.map(async (leagueDoc) => {
+                    const leagueData = { id: leagueDoc.id, ...leagueDoc.data() };
+                    
+                    // FIXED: Safer member profile fetching with error handling
+                    if (leagueData.members && leagueData.members.length > 0) {
+                        try {
+                            // Limit to first 10 members for performance
+                            const memberIds = leagueData.members.slice(0, 10);
+                            
+                            // FIXED: Use individual document gets instead of collectionGroup query
+                            const memberPromises = memberIds.map(memberId => 
+                                getDoc(doc(db, `artifacts/${dataNamespace}/users/${memberId}/profile/data`))
+                                    .catch(error => {
+                                        console.warn(`Failed to fetch profile for ${memberId}:`, error);
+                                        return null; // Return null for failed fetches
+                                    })
+                            );
+                            
+                            const memberDocs = await Promise.all(memberPromises);
+                            
+                            const membersData = memberDocs
+                                .filter(doc => doc && doc.exists()) // Filter out failed fetches
+                                .map(doc => {
+                                    const profileData = doc.data();
                                     const userCorps = getAllUserCorps(profileData);
                                     return {
                                         id: doc.id,
@@ -66,57 +79,62 @@ const LeaguePage = ({ setPage, onViewLeague }) => {
                                             sum + (corps.totalSeasonScore || 0), 0)
                                     };
                                 });
-                                
-                                const sortedMembers = membersData.sort((a, b) => b.totalScore - a.totalScore);
-                                const userRank = sortedMembers.findIndex(m => m.id === loggedInProfile.userId) + 1;
-                                const topScore = sortedMembers[0]?.totalScore || 0;
-                                const userMember = sortedMembers.find(m => m.id === loggedInProfile.userId);
-                                const userScore = userMember?.totalScore || 0;
+                            
+                            const sortedMembers = membersData.sort((a, b) => b.totalScore - a.totalScore);
+                            const userRank = sortedMembers.findIndex(m => m.id === loggedInProfile.userId) + 1;
+                            const topScore = sortedMembers[0]?.totalScore || 0;
+                            const userMember = sortedMembers.find(m => m.id === loggedInProfile.userId);
+                            const userScore = userMember?.totalScore || 0;
 
-                                return {
-                                    ...leagueData,
-                                    memberCount: leagueData.members.length,
-                                    userRank: userRank || leagueData.members.length,
-                                    topScore: topScore,
-                                    userScore: userScore,
-                                    isLeading: userRank === 1,
-                                    members: sortedMembers.slice(0, 3) // Top 3 for preview
-                                };
-                            } catch (error) {
-                                console.error('Error fetching member profiles:', error);
-                                return {
-                                    ...leagueData,
-                                    memberCount: leagueData.members.length,
-                                    userRank: leagueData.members.length,
-                                    topScore: 0,
-                                    userScore: 0,
-                                    isLeading: false,
-                                    members: []
-                                };
-                            }
+                            return {
+                                ...leagueData,
+                                memberCount: leagueData.members.length,
+                                userRank: userRank || leagueData.members.length,
+                                topScore: topScore,
+                                userScore: userScore,
+                                isLeading: userRank === 1,
+                                members: sortedMembers.slice(0, 3) // Top 3 for preview
+                            };
+                        } catch (error) {
+                            console.error('Error fetching member profiles:', error);
+                            // Return league data without member details
+                            return {
+                                ...leagueData,
+                                memberCount: leagueData.members.length,
+                                userRank: leagueData.members.length,
+                                topScore: 0,
+                                userScore: 0,
+                                isLeading: false,
+                                members: []
+                            };
                         }
-                        
-                        return {
-                            ...leagueData,
-                            memberCount: 0,
-                            userRank: 1,
-                            topScore: 0,
-                            userScore: 0,
-                            isLeading: false,
-                            members: []
-                        };
-                    }));
+                    }
                     
-                    setUserLeagues(leagues.sort((a, b) => a.userRank - b.userRank));
-                } else {
-                    setUserLeagues([]);
-                }
+                    return {
+                        ...leagueData,
+                        memberCount: 0,
+                        userRank: 1,
+                        topScore: 0,
+                        userScore: 0,
+                        isLeading: false,
+                        members: []
+                    };
+                }));
+                
+                setUserLeagues(leagues.sort((a, b) => a.userRank - b.userRank));
             } catch (error) {
-                console.error("Error fetching league data:", error);
-            } finally {
-                setIsLoading(false);
+                console.error("Error fetching leagues:", error);
+                setUserLeagues([]);
             }
-        };
+        } else {
+            setUserLeagues([]);
+        }
+    } catch (error) {
+        console.error("Error fetching league data:", error);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
         fetchLeagueData();
     }, [loggedInProfile, isLoadingAuth]);

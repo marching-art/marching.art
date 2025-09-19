@@ -37,17 +37,25 @@ const LiveSeasonScheduler = () => {
     const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     useEffect(() => {
-        const docRef = doc(db, 'schedules', 'live_season_template');
-        const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists) {
-                setSchedule(docSnap.data().events || []);
-            } else {
-                setSchedule([]);
-            }
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
+    const docRef = doc(db, 'schedules', 'live_season_template');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // FIXED: Safely access events property with fallback
+            setSchedule(data?.events || []);
+        } else {
+            console.warn('Live season template document does not exist');
+            setSchedule([]);
+        }
+        setIsLoading(false);
+    }, (error) => {
+        console.error('Error loading live season schedule:', error);
+        setSchedule([]);
+        setIsLoading(false);
+    });
+    
+    return () => unsubscribe();
+}, []);
 
     const openModal = (dayIndex) => {
         if (dayIndex >= 67) return;
