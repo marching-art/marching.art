@@ -7,6 +7,7 @@ import { getAllUserCorps, CORPS_CLASSES } from '../utils/profileCompatibility';
 import Leaderboard from '../components/dashboard/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 import LeagueChat from '../components/leagues/LeagueChat';
+import LeagueHistory from '../components/leagues/LeagueHistory';
 import Icon from '../components/ui/Icon';
 
 const LeagueDetailPage = () => {
@@ -474,11 +475,12 @@ const LeagueDetailPage = () => {
                     <div className="max-w-4xl mx-auto">
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
                             <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">League History</h3>
-                            <div className="text-center py-12">
-                                <div className="text-text-secondary dark:text-text-secondary-dark">
-                                    League history features coming soon! This will include weekly results, championship history, and member achievements.
-                                </div>
-                            </div>
+                            <LeagueHistory 
+                                league={league}
+                                leagueMembers={leagueMembers}
+                                currentWeek={currentWeek}
+                                onViewProfile={handleViewProfile}
+                            />
                         </div>
                     </div>
                 )}
