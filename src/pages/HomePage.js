@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 
 // Card components (no changes needed here)
 const FeatureCard = ({ title, children, accentText }) => (
-    <div className="relative bg-surface dark:bg-surface-dark p-6 rounded-theme border-t border-l border-r border-accent dark:border-accent-dark border-b-4 border-b-secondary/50 dark:border-b-secondary-dark/50 overflow-hidden shadow-theme-dark">
+    <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
             {accentText}
         </span>
@@ -14,8 +14,8 @@ const FeatureCard = ({ title, children, accentText }) => (
 );
 
 const CommunityCard = () => (
-    <div className="relative bg-surface dark:bg-surface-dark p-6 rounded-theme border-t border-l border-r border-accent dark:border-accent-dark border-b-4 border-b-secondary/50 dark:border-b-secondary-dark/50 overflow-hidden shadow-theme-dark">
-        <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
+    <div className="relative bg-surface/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-theme border-theme border-accent overflow-hidden shadow-theme">
+         <span className="absolute -bottom-4 -right-2 text-[8rem] font-black text-accent dark:text-accent-dark/10 select-none opacity-50">
             CHAT
         </span>
         <div className="relative text-left">
@@ -44,6 +44,7 @@ const HomePage = ({ onSignUpClick }) => {
     }, []);
 
     return (
+        // --- THIS IS THE CHANGED LINE ---
         <div className="absolute inset-0">
             {/* The video is now the base layer (z-0) */}
             <video
@@ -58,26 +59,23 @@ const HomePage = ({ onSignUpClick }) => {
                 Your browser does not support the video tag.
             </video>
 
-            {/* MODIFIED: The overlay sits on top of the video (z-10) with a less intense fade */}
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-background/70 via-background/20 to-background/70 dark:bg-gradient-to-t dark:from-background-dark/80 dark:via-background-dark/40 dark:to-background-dark/80 z-10"></div>
+            {/* The overlay sits on top of the video (z-10) */}
+            <div className="absolute inset-0 w-full h-full bg-background dark:bg-background-dark opacity-80 z-10"></div>
 
             {/* The content sits on top of everything (z-20) and is scrollable */}
-            <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8 flex flex-col justify-center">
+            <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8">
                 <div className="py-20 md:py-32">
-                    {/* MODIFIED: Headline now has a text shadow for pop */}
-                    <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight text-shadow-lg">
+                    <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
                         Your Field of Dreams Awaits
                     </h1>
                     
-                    {/* MODIFIED: Sub-headline also has a text shadow */}
-                    <p className="text-lg text-text-secondary dark:text-text-secondary-dark mt-6 mb-10 max-w-3xl mx-auto leading-relaxed text-shadow">
+                    <p className="text-lg text-text-secondary dark:text-text-secondary-dark mt-6 mb-10 max-w-3xl mx-auto leading-relaxed">
                         Assemble your ultimate drum corps lineup from legends of the past. Compete against friends in a season-long fantasy league and rise to the top of the leaderboard.
                     </p>
                     
-                    {/* MODIFIED: Button now has the tactile border and shadow */}
                     <button 
                         onClick={onSignUpClick} 
-                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-4 px-10 rounded-theme text-lg transition-transform duration-150 ease-in-out transform hover:scale-105 border-b-4 border-b-secondary/50 dark:border-b-secondary-dark/50 shadow-theme-dark"
+                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-4 px-10 rounded-theme text-lg transition-transform duration-150 ease-in-out transform hover:scale-105 shadow-lg"
                     >
                         Become a Founding Director Today
                     </button>
