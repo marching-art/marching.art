@@ -63,22 +63,25 @@ const HomePage = ({ onSignUpClick }) => {
             <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-background via-transparent to-background dark:bg-gradient-to-t dark:from-background-dark dark:via-background-dark/50 dark:to-background-dark z-10"></div>
 
             {/* The content sits on top of everything (z-20) and is scrollable */}
-            <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8">
+            <div className="relative z-20 h-full overflow-y-auto text-center p-6 md:p-8 flex flex-col justify-center">
                 <div className="py-20 md:py-32">
-                    <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
-                        Your Field of Dreams Awaits
-                    </h1>
-                    
-                    <p className="text-lg text-text-secondary dark:text-text-secondary-dark mt-6 mb-10 max-w-3xl mx-auto leading-relaxed">
-                        Assemble your ultimate drum corps lineup from legends of the past. Compete against friends in a season-long fantasy league and rise to the top of the leaderboard.
-                    </p>
-                    
-                    <button 
-                        onClick={onSignUpClick} 
-                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-4 px-10 rounded-theme text-lg transition-transform duration-150 ease-in-out transform hover:scale-105 shadow-lg"
-                    >
-                        Start Your Corps Today
-                    </button>
+                    {/* New Wrapper for the Hero Content */}
+                    <div className="max-w-4xl mx-auto bg-surface/50 dark:bg-surface-dark/50 backdrop-blur-sm p-8 md:p-12 rounded-theme border border-accent/50 dark:border-accent-dark/50 shadow-lg">
+                        <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary dark:text-text-primary-dark tracking-tight">
+                            Your Field of Dreams Awaits
+                        </h1>
+                        
+                        <p className="text-lg text-text-secondary dark:text-text-secondary-dark mt-6 mb-10 max-w-3xl mx-auto leading-relaxed">
+                            Assemble your ultimate drum corps lineup from legends of the past. Compete against friends in a season-long fantasy league and rise to the top of the leaderboard.
+                        </p>
+                        
+                        <button 
+                            onClick={onSignUpClick} 
+                            className="bg-primary hover:opacity-90 text-on-primary font-bold py-4 px-10 rounded-theme text-lg transition-transform duration-150 ease-in-out transform hover:scale-105 shadow-lg"
+                        >
+                            Become a Founding Director Today
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
