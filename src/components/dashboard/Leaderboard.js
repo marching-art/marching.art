@@ -9,23 +9,12 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [seasonName, setSeasonName] = useState('');
-    const [selectedLeague, setSelectedLeague] = useState(initialLeague);
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
-    const [userLeagues, setUserLeagues] = useState([]);
 
-    useEffect(() => {
-        const fetchLeagues = async () => {
-            if (profile?.leagueIds?.length > 0) {
-                const leaguesQuery = query(collection(db, 'leagues'), where('__name__', 'in', profile.leagueIds));
-                const querySnapshot = await getDocs(leaguesQuery);
-                const leagues = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                setUserLeagues(leagues);
-            } else {
-                setUserLeagues([]);
-            }
-        };
-        fetchLeagues();
-    }, [profile]);
+    // If initialLeague is provided, we're on a league page - only show that league
+    // If no initialLeague, we're on the main leaderboard page - only show global
+    const isLeaguePage = !!initialLeague;
+    const displayLeague = initialLeague;
 
     useEffect(() => {
         const fetchLeaderboardData = async () => {
@@ -48,9 +37,9 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
 
                 let allCorpsEntries = [];
 
-                if (selectedLeague) {
+                if (isLeaguePage) {
                     // League-specific leaderboard - use individual profile reads
-                    const userIds = selectedLeague.members || [];
+                    const userIds = displayLeague.members || [];
                     
                     if (userIds.length > 0) {
                         const profilePromises = userIds.map(userId => 
@@ -85,9 +74,7 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                         });
                     }
                 } else {
-                    // Universal leaderboard - use fantasy_recaps (like ScoresPage does)
-                    console.log('Fetching universal leaderboard from fantasy_recaps...');
-                    
+                    // Universal leaderboard - use fantasy_recaps
                     const recapsQuery = query(
                         collection(db, 'fantasy_recaps'),
                         where('seasonName', '==', seasonData.name)
@@ -126,7 +113,7 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                     }
                 }
                 
-                // Remove duplicates (in case a user appears multiple times) and sort
+                // Remove duplicates and sort
                 const uniqueEntries = allCorpsEntries.reduce((acc, entry) => {
                     const existing = acc.find(e => e.userId === entry.userId && e.corpsClass === entry.corpsClass);
                     if (!existing || entry.totalSeasonScore > existing.totalSeasonScore) {
@@ -148,15 +135,17 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
         };
         
         fetchLeaderboardData();
-    }, [selectedLeague, selectedCorpsClass]);
+    }, [selectedCorpsClass, isLeaguePage, displayLeague]);
 
-    const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
+    // Dynamic title based on context
+    const leaderboardTitle = isLeaguePage ? `${displayLeague.name} League` : 'Global Leaderboard';
     
     return (
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
+            {/* Corps Class Selection */}
             <div className="flex flex-wrap gap-2 mb-4">
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
@@ -177,40 +166,13 @@ const Leaderboard = ({ onViewProfile, initialLeague = null }) => {
                 })}
             </div>
 
-            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
-                <button
-                    onClick={() => setSelectedLeague(null)}
-                    disabled={!!initialLeague}
-                    className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
-                        !selectedLeague
-                            ? 'border-primary text-primary dark:text-primary-dark'
-                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                    } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                    Global
-                </button>
-                {userLeagues.map(league => (
-                    <button
-                        key={league.id}
-                        onClick={() => setSelectedLeague(league)}
-                        disabled={!!initialLeague}
-                        className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${
-                            selectedLeague?.id === league.id
-                                ? 'border-primary text-primary dark:text-primary-dark'
-                                : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                        } ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        {league.name}
-                    </button>
-                ))}
-            </div>
-
+            {/* Leaderboard Content */}
             {isLoading ? (
                 <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
             ) : leaderboard.length === 0 ? (
                 <div className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">
                     <p>No corps with scores found for this filter.</p>
-                    {selectedLeague && <p className="text-sm mt-2">League members need to create profiles and play games to appear here.</p>}
+                    {isLeaguePage && <p className="text-sm mt-2">League members need to create profiles and play games to appear here.</p>}
                 </div>
             ) : (
                 <ol className="space-y-1">
