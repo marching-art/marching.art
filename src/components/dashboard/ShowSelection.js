@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Modal from '../ui/Modal';
-import Icon from '../ui/Icon'; // Assuming a generic Icon component
+import Icon from '../ui/Icon';
 
 const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, currentDay, seasonStartDate }) => {
     const [selectedShows, setSelectedShows] = useState({});
@@ -27,7 +27,7 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
     }, [corpsProfile, currentDay, WEEKS_IN_SEASON]);
 
     useEffect(() => {
-        if (!registrantsModalShow || seasonMode !== 'off') return;
+        if (!registrantsModalShow) return;
         const fetchRegistrants = async () => {
             setIsRegistrantsLoading(true);
             try {
@@ -44,7 +44,7 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
             setIsRegistrantsLoading(false);
         };
         fetchRegistrants();
-    }, [registrantsModalShow, activeWeek, seasonMode, getShowRegistrations]);
+    }, [registrantsModalShow, getShowRegistrations]);
 
     const handleSelectShow = (week, show, isSelected) => {
         const weekKey = `week${week}`;
@@ -90,23 +90,23 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
 
     const showsForActiveWeekGrouped = useMemo(() => {
         if (!seasonEvents) return {};
+        const startDay = (activeWeek - 1) * 7 + 1;
+        const endDay = activeWeek * 7;
         
-        let showsForWeek = [];
-        if (seasonMode === 'live') {
-            showsForWeek = (seasonEvents.find(e => e.week === activeWeek)?.shows || []);
-        } else { // off-season
-            const startDay = (activeWeek - 1) * 7 + 1;
-            const endDay = activeWeek * 7;
-            showsForWeek = seasonEvents
-                .filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay)
-                .flatMap(day => day.shows.map(show => ({ ...show, day: day.offSeasonDay })));
-        }
+        const showsForWeek = seasonEvents
+            .filter(e => {
+                const day = seasonMode === 'live' ? e.dayIndex + 1 : e.offSeasonDay;
+                return day >= startDay && day <= endDay;
+            })
+            .flatMap(dayEvent => dayEvent.shows.map(show => ({
+                ...show,
+                day: seasonMode === 'live' ? dayEvent.dayIndex + 1 : dayEvent.offSeasonDay,
+            })));
 
         const grouped = {};
         showsForWeek.forEach(show => {
-            const day = seasonMode === 'live' ? (seasonEvents.find(e => e.shows.includes(show))?.dayIndex + 1) : show.day;
-            if (!grouped[day]) grouped[day] = [];
-            grouped[day].push(show);
+            if (!grouped[show.day]) grouped[show.day] = [];
+            grouped[show.day].push(show);
         });
 
         Object.keys(grouped).forEach(day => {
@@ -130,7 +130,6 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
     const weeks = Array.from({ length: WEEKS_IN_SEASON }, (_, i) => i + 1);
     const userSelectionsForWeek = selectedShows[`week${activeWeek}`] || [];
     const isPastWeek = activeWeek < currentWeek;
-    const isChampionshipWeek = (seasonMode === 'off' && activeWeek === 7) || (seasonMode === 'live' && activeWeek === 10);
 
     return (
         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
@@ -145,7 +144,7 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                 <h3 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Show Selection</h3>
                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">
-                    {isChampionshipWeek ? 'Championship events are automatic' : `Week ${activeWeek} Selections: ${userSelectionsForWeek.length} / 4`}
+                    Week {activeWeek} Selections: {userSelectionsForWeek.length} / 4
                 </p>
             </div>
         
@@ -153,61 +152,63 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
                 {weeks.map(week => (
                     <button key={week} onClick={() => setActiveWeek(week)} className={`py-2 px-3 sm:px-4 whitespace-nowrap text-sm md:text-base font-bold transition-colors ${activeWeek === week ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}>
                         Week {week}
-                        {((seasonMode === 'off' && week === 7) || (seasonMode === 'live' && week === 10)) && ' (Championships)'}
                     </button>
                 ))}
             </div>
 
-            {isChampionshipWeek && (
-                <div className="p-4 bg-primary/10 rounded-theme">
-                    <h4 className="font-bold text-primary dark:text-primary-dark">Championship Week</h4>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
-                        All corps are automatically enrolled in championship events. No show selection is needed.
-                    </p>
-                </div>
-            )}
+            <div className="space-y-6">
+                {Object.keys(showsForActiveWeekGrouped).length > 0 ? (
+                    Object.keys(showsForActiveWeekGrouped).sort((a, b) => parseInt(a) - parseInt(b)).map(day => {
+                            const dayNumber = parseInt(day);
+                            const showsForDay = showsForActiveWeekGrouped[day];
+                            const calendarDate = getCalendarDateForDay(dayNumber);
+                            const isPastDay = dayNumber < currentDay;
 
-            {!isChampionshipWeek && (
-                <div className="space-y-6">
-                    {Object.keys(showsForActiveWeekGrouped).length > 0 ? (
-                        Object.keys(showsForActiveWeekGrouped).sort((a, b) => parseInt(a) - parseInt(b)).map(day => {
-                                const dayNumber = parseInt(day);
-                                const showsForDay = showsForActiveWeekGrouped[day];
-                                const calendarDate = getCalendarDateForDay(dayNumber);
-                                const isPastDay = dayNumber < currentDay;
-
-                                return (
-                                    <div key={day} className="bg-background dark:bg-background-dark/50 p-4 rounded-theme">
-                                        <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-3">
-                                            {calendarDate ? calendarDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : `Day ${day}`}
-                                            {isPastDay && <span className="ml-2 text-xs bg-accent dark:bg-accent-dark px-2 py-1 rounded-theme text-text-secondary dark:text-text-secondary-dark">Past</span>}
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {showsForDay.map((show, index) => {
-                                                const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
-                                                const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
+                            return (
+                                <div key={day} className="bg-background dark:bg-background-dark/50 p-4 rounded-theme">
+                                    <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-3">
+                                        {calendarDate ? calendarDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) : `Day ${day}`}
+                                        {isPastDay && <span className="ml-2 text-xs bg-accent dark:bg-accent-dark px-2 py-1 rounded-theme text-text-secondary dark:text-text-secondary-dark">Past</span>}
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {showsForDay.map((show, index) => {
+                                            const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
+                                            const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
+                                            
+                                            // MODIFIED: Check individual shows for the 'mandatory' flag
+                                            if (show.mandatory) {
                                                 return (
-                                                    <div key={`${day}-${index}`} className={`p-3 rounded-theme flex items-start gap-3 transition-opacity ${isPastDay ? 'opacity-60' : ''}`}>
-                                                        <input type="checkbox" id={`${day}-${index}`} checked={isSelected} disabled={isPastDay || (isSelectionLimitReached && !isSelected)} onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)} className="h-5 w-5 rounded mt-0.5 text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0 cursor-pointer disabled:cursor-not-allowed" />
-                                                        <div className="flex-grow">
-                                                            <label htmlFor={`${day}-${index}`} className={`font-semibold text-text-primary dark:text-text-primary-dark ${!isPastDay && 'cursor-pointer'}`}>{show.eventName.replace(/DCI/g, 'marching.art')}</label>
-                                                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
+                                                    <div key={`${day}-${index}`} className="p-3 rounded-theme flex items-start gap-3 bg-primary/10">
+                                                        <Icon name="check-circle" className="h-5 w-5 text-primary dark:text-primary-dark mt-0.5 flex-shrink-0" />
+                                                        <div>
+                                                            <p className="font-semibold text-text-primary dark:text-text-primary-dark">{show.eventName.replace(/DCI/g, 'marching.art')}</p>
+                                                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Automatic Enrollment</p>
                                                         </div>
-                                                        {seasonMode === 'off' && !isPastDay && (
-                                                            <button onClick={() => setRegistrantsModalShow(show)} className="text-xs text-primary dark:text-primary-dark hover:underline flex-shrink-0">Who's Going?</button>
-                                                        )}
                                                     </div>
                                                 );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })
-                    ) : <p className="text-center text-text-secondary dark:text-text-secondary-dark py-8">No shows scheduled for this week.</p>}
-                </div>
-            )}
+                                            }
 
-            {!isPastWeek && !isChampionshipWeek && (
+                                            return (
+                                                <div key={`${day}-${index}`} className={`p-3 rounded-theme flex items-start gap-3 transition-opacity ${isPastDay ? 'opacity-60' : ''}`}>
+                                                    <input type="checkbox" id={`${day}-${index}`} checked={isSelected} disabled={isPastDay || (isSelectionLimitReached && !isSelected)} onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)} className="h-5 w-5 rounded mt-0.5 text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0 cursor-pointer disabled:cursor-not-allowed" />
+                                                    <div className="flex-grow">
+                                                        <label htmlFor={`${day}-${index}`} className={`font-semibold text-text-primary dark:text-text-primary-dark ${!isPastDay && 'cursor-pointer'}`}>{show.eventName.replace(/DCI/g, 'marching.art')}</label>
+                                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location}</p>
+                                                    </div>
+                                                    {seasonMode === 'off' && !isPastDay && (
+                                                        <button onClick={() => setRegistrantsModalShow(show)} className="text-xs text-primary dark:text-primary-dark hover:underline flex-shrink-0">Who's Going?</button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })
+                ) : <p className="text-center text-text-secondary dark:text-text-secondary-dark py-8">No shows scheduled for this week.</p>}
+            </div>
+
+            {!isPastWeek && (
                 <div className="flex justify-end items-center mt-6 pt-4 border-t border-accent dark:border-accent-dark">
                     <button onClick={() => handleSaveWeek(activeWeek)} disabled={isLoading} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-5 rounded-theme disabled:opacity-50 flex items-center gap-2">
                         <Icon name="save" className="h-4 w-4" />
