@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'; 
-import { signOut } from 'firebase/auth'; 
-import { auth } from './firebase'; 
-import { AuthProvider, useAuth } from './context/AuthContext'; 
-import { Toaster } from 'react-hot-toast'; 
+import React, { useState, useEffect } from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 import { useUserStore } from './store/userStore';
-import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
+// Import useNavigate
+import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -24,6 +25,7 @@ import AuthModal from './components/auth/AuthModal';
 function AppContent() {
     const { user, isLoadingAuth } = useAuth();
     const { loggedInProfile } = useUserStore();
+    const navigate = useNavigate(); // Add useNavigate hook
 
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
@@ -38,11 +40,32 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
+    const toggleThemeMode = () => {
+        setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
+    };
+
     const handleLogout = async () => {
         try {
             await signOut(auth);
+            navigate('/'); // Navigate to home after logout
         } catch (error) {
             console.error("Error signing out:", error);
+        }
+    };
+
+    const openLoginModal = () => {
+        setAuthModalView('login');
+        setIsAuthModalOpen(true);
+    };
+
+    const openSignUpModal = () => {
+        setAuthModalView('signup');
+        setIsAuthModalOpen(true);
+    };
+
+    const handleViewOwnProfile = () => {
+        if (loggedInProfile?.id) {
+            navigate(`/profile/${loggedInProfile.id}`);
         }
     };
 
@@ -58,44 +81,53 @@ function AppContent() {
     }
 
     return (
-        <Router>
-            <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-                <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
-                <AuthModal
-                    isOpen={isAuthModalOpen}
-                    onClose={() => setIsAuthModalOpen(false)}
-                    initialView={authModalView}
-                    onAuthSuccess={() => {
-                        setIsAuthModalOpen(false);
-                    }}
+        // The Router needs to be moved up to wrap AppContent in App()
+        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                initialView={authModalView}
+                onAuthSuccess={() => {
+                    setIsAuthModalOpen(false);
+                }}
                 />
-                <Header />
-                <main className="flex-grow relative">
-                    <Routes>
-                        <Route path="/" element={<HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />} />
-                        <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/profile/:userId" element={<ProfilePageWrapper />} />
-                        <Route path="/admin" element={<AdminPage />} />
-                        <Route path="/leagues" element={<LeaguePage />} />
-                        <Route path="/league/:leagueId" element={<LeagueDetailPageWrapper />} />
-                        <Route path="/leaderboard" element={<LeaderboardPage />} />
-                        <Route path="/schedule" element={<SchedulePage />} />
-                        <Route path="/scores" element={<ScoresPage theme={themeMode} />} />
-                        <Route path="/stats" element={<StatsPage />} />
-                        <Route path="/howtoplay" element={<HowToPlayPage />} />
-                    </Routes>
-                </main>
-                <Footer />
-            </div>
-        </Router>
+                <Header 
+                onLoginClick={openLoginModal}
+                onSignUpClick={openSignUpModal}
+                onLogout={handleLogout}
+                onViewOwnProfile={handleViewOwnProfile}
+                themeMode={themeMode}
+                toggleThemeMode={toggleThemeMode}
+            />
+            <main className="flex-grow relative">
+                <Routes>
+                    <Route path="/" element={<HomePage onSignUpClick={openSignUpModal} />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/profile/:userId" element={<ProfilePageWrapper />} />
+                    <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/leagues" element={<LeaguePage />} />
+                    <Route path="/league/:leagueId" element={<LeagueDetailPageWrapper />} />
+                    <Route path="/leaderboard" element={<LeaderboardPage />} />
+                    <Route path="/schedule" element={<SchedulePage />} />
+                    <Route path="/scores" element={<ScoresPage theme={themeMode} />} />
+                    <Route path="/stats" element={<StatsPage />} />
+                    <Route path="/howtoplay" element={<HowToPlayPage />} />
+                </Routes>
+            </main>
+            <Footer />
+        </div>
     );
 }
 
 function App() {
     return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        // Wrap AppContent with Router here
+        <Router>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </Router>
     );
 }
 
