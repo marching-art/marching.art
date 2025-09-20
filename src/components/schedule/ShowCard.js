@@ -12,18 +12,20 @@ const ShowCard = ({
     seasonUid,
     onShowModal,
     onSetModalData,
-    onViewRecap
+    onViewRecap // THIS WAS MISSING
 }) => {
     const [isLoadingAttendees, setIsLoadingAttendees] = useState(false);
     
     // SCALABLE: Get attendance from precomputed data or registration counters
     const attendance = useMemo(() => {
+        // Priority 1: Use precomputed attendance stats (most efficient)
         const showKey = `${dayNumber}_${show.eventName}`;
         const precomputed = attendanceStats?.shows?.[showKey];
         if (precomputed) {
             return precomputed;
         }
 
+        // Priority 2: Use registration counters from season events (efficient)
         const event = seasonEvents?.find(e => e.offSeasonDay === dayNumber);
         const showData = event?.shows?.find(s => s.eventName === show.eventName);
         if (showData?.registrationCounts) {
@@ -33,12 +35,25 @@ const ShowCard = ({
             };
         }
 
+        // Priority 3: Default empty (no expensive queries)
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
     }, [dayNumber, show.eventName, attendanceStats, seasonEvents]);
 
+    console.log('🔍 Attendance Debug:', {
+        dayNumber,
+        eventName: show.eventName,
+        showKey: `${dayNumber}_${show.eventName}`,
+        attendanceStats: !!attendanceStats,
+        seasonEventsCount: seasonEvents?.length,
+        event: seasonEvents?.find(e => e.offSeasonDay === dayNumber),
+        registrationCounts: seasonEvents?.find(e => e.offSeasonDay === dayNumber)?.shows?.find(s => s.eventName === show.eventName)?.registrationCounts,
+        finalCounts: attendance.counts
+    });
+
+    // SCALABLE: Get scores from fantasy recaps (single document read)
     const scores = useMemo(() => {
         if (!fantasyRecaps?.recaps) return null;
 
@@ -171,7 +186,7 @@ const ShowCard = ({
 
             {/* Action Buttons */}
             <div className="flex gap-2 mt-3">
-                {/* Recap Button for Past Shows */}
+                {/* Recap Button for Past Shows with Scores */}
                 {isPastDay && hasScores && (
                     <button
                         onClick={handleViewRecap}
@@ -181,8 +196,8 @@ const ShowCard = ({
                     </button>
                 )}
 
-                {/* Scores Button */}
-                {hasScores && (
+                {/* Scores Button for Current/Future Shows */}
+                {hasScores && !isPastDay && (
                     <button
                         onClick={handleViewScores}
                         className="flex-1 text-xs bg-primary text-on-primary font-semibold py-2 px-3 rounded-theme hover:bg-primary/90 transition-all"
@@ -191,7 +206,7 @@ const ShowCard = ({
                     </button>
                 )}
                 
-                {/* Enhanced Competing Corps Button */}
+                {/* Competing Corps Button */}
                 {totalAttendees > 0 && (
                     <button
                         onClick={handleViewCompetingCorps}

@@ -10,6 +10,11 @@ import EventsDisplay from '../components/schedule/EventsDisplay';
 import ScheduleModal from '../components/schedule/ScheduleModal';
 import { useScheduleData } from '../hooks/useScheduleData';
 
+const goToCurrentWeek = (currentDay, setSelectedWeek) => {
+    const currentWeekValue = Math.ceil(currentDay / 7);
+    setSelectedWeek(currentWeekValue);
+};
+
 const SchedulePage = () => {
     const navigate = useNavigate();
     const { loggedInProfile } = useUserStore();
@@ -174,8 +179,8 @@ const SchedulePage = () => {
             <div className="container mx-auto px-4 py-8">
                 <div className="space-y-6">
                     <ScheduleHeader 
-                        seasonSettings={seasonSettings}
-                        userCorps={userCorps}
+                        seasonName={seasonSettings?.name || 'Season'}
+                        isLiveSeason={seasonSettings?.status === 'live-season'}
                         currentDay={currentDay}
                     />
 
@@ -184,11 +189,8 @@ const SchedulePage = () => {
                         setViewMode={setViewMode}
                         quickFilter={quickFilter}
                         setQuickFilter={setQuickFilter}
-                        selectedWeek={selectedWeek}
-                        setSelectedWeek={setSelectedWeek}
-                        currentWeek={currentWeek}
-                        maxWeeks={maxWeeks}
-                        onJumpToWeek={jumpToWeek}
+                        goToCurrentWeek={() => goToCurrentWeek(currentDay, setSelectedWeek)}
+                        hasUserCorps={Object.keys(userCorps).length > 0}
                     />
 
                     {/* Personal Schedule */}
