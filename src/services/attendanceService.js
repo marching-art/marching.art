@@ -1,10 +1,13 @@
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
+import { db, dataNamespace } from '../firebase';
 import { CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
+
+// Memory cache for session
+const memoryCache = new Map();
 
 /**
  * Efficiently fetch attendance data for a specific show
- * Only queries users who might be attending rather than all users
+ * Uses collection group queries that work with your Firestore rules
  */
 export const fetchAttendanceForShow = async (seasonUid, eventName, week) => {
     try {
@@ -13,18 +16,19 @@ export const fetchAttendanceForShow = async (seasonUid, eventName, week) => {
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
 
-        // Query for each corps class separately to optimize Firestore queries
-        for (const corpsClass of CORPS_CLASS_ORDER) {
-            const profilesQuery = query(
-                collection(db, 'artifacts', 'marching-art', 'users'),
-                where('profile.activeSeasonId', '==', seasonUid),
-                where(`profile.corps.${corpsClass}.corpsName`, '!=', null)
-            );
+        // Use collection group query on 'data' documents (this is allowed by your rules)
+        const profilesQuery = query(
+            collectionGroup(db, 'data'),
+            where('activeSeasonId', '==', seasonUid)
+        );
 
-            const snapshot = await getDocs(profilesQuery);
+        const snapshot = await getDocs(profilesQuery);
+        
+        snapshot.docs.forEach(doc => {
+            const profile = doc.data();
             
-            snapshot.docs.forEach(doc => {
-                const profile = doc.data().profile;
+            // Process each corps class
+            CORPS_CLASS_ORDER.forEach(corpsClass => {
                 const corps = profile?.corps?.[corpsClass];
                 
                 if (!corps?.selectedShows) return;
@@ -41,7 +45,7 @@ export const fetchAttendanceForShow = async (seasonUid, eventName, week) => {
                     });
                 }
             });
-        }
+        });
 
         return attendance;
     } catch (error) {
@@ -55,7 +59,6 @@ export const fetchAttendanceForShow = async (seasonUid, eventName, week) => {
 
 /**
  * Cache attendance data in localStorage for quick access
- * Useful for recently viewed shows
  */
 export const cacheAttendanceData = (showKey, attendanceData) => {
     try {
@@ -96,68 +99,6 @@ export const getCachedAttendanceData = (showKey) => {
         console.error('Error reading cached attendance data:', error);
         return null;
     }
-};
-
-// Memory cache for session
-const memoryCache = new Map();
-
-/**
- * Batch load attendance data for multiple shows efficiently
- * Reduces database queries by batching requests
- */
-export const batchLoadAttendance = async (showKeys, seasonUid, seasonEvents, attendanceStats) => {
-    const results = {};
-    const uncachedKeys = [];
-    
-    // First pass: Check cache for each show
-    for (const showKey of showKeys) {
-        if (memoryCache.has(showKey)) {
-            results[showKey] = memoryCache.get(showKey);
-            continue;
-        }
-        
-        const cached = getCachedAttendanceData(showKey);
-        if (cached && cached.attendees.worldClass.length > 0) {
-            results[showKey] = cached;
-            memoryCache.set(showKey, cached);
-            continue;
-        }
-        
-        // Check precomputed stats
-        if (attendanceStats?.shows?.[showKey]) {
-            const stats = attendanceStats.shows[showKey];
-            results[showKey] = stats;
-            memoryCache.set(showKey, stats);
-            continue;
-        }
-        
-        uncachedKeys.push(showKey);
-    }
-    
-    // Second pass: Batch load uncached data
-    if (uncachedKeys.length > 0) {
-        const batchPromises = uncachedKeys.map(async (showKey) => {
-            const [dayNumber, eventName] = showKey.split('_', 2);
-            const week = Math.ceil(parseInt(dayNumber) / 7);
-            
-            try {
-                const attendance = await fetchAttendanceForShow(seasonUid, eventName, week);
-                results[showKey] = attendance;
-                cacheAttendanceData(showKey, attendance);
-                memoryCache.set(showKey, attendance);
-            } catch (error) {
-                console.error(`Failed to load attendance for ${showKey}:`, error);
-                results[showKey] = {
-                    counts: { worldClass: 0, openClass: 0, aClass: 0 },
-                    attendees: { worldClass: [], openClass: [], aClass: [] }
-                };
-            }
-        });
-        
-        await Promise.all(batchPromises);
-    }
-    
-    return results;
 };
 
 /**
@@ -223,27 +164,23 @@ export const clearAttendanceCache = () => {
 
 // Cleanup memory cache on app visibility change
 if (typeof window !== 'undefined') {
-    // Clear cache when user leaves the page
     window.addEventListener('beforeunload', () => {
         memoryCache.clear();
     });
     
-    // Clear cache when page becomes hidden
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            // Clear memory cache but keep localStorage cache
             memoryCache.clear();
         }
     });
     
-    // Clear old localStorage entries on app start
     const clearOldCache = () => {
         try {
             const cache = JSON.parse(localStorage.getItem('schedule_attendance_cache') || '{}');
             const oneHourAgo = Date.now() - (60 * 60 * 1000);
             const validEntries = Object.entries(cache)
                 .filter(([, entry]) => entry.timestamp > oneHourAgo)
-                .slice(-50); // Keep max 50 entries
+                .slice(-50);
             
             localStorage.setItem('schedule_attendance_cache', JSON.stringify(Object.fromEntries(validEntries)));
         } catch (error) {
@@ -252,6 +189,5 @@ if (typeof window !== 'undefined') {
         }
     };
     
-    // Clean cache on app start
     clearOldCache();
 }
