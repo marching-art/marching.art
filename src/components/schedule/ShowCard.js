@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
+import { getAttendanceWithCaching } from '../../utils/attendanceService';
 
 const ShowCard = ({
     show,
@@ -7,39 +8,37 @@ const ShowCard = ({
     isPastDay,
     fantasyRecaps,
     attendanceStats,
-    seasonEvents, // ADD: For reading registration counters
+    seasonEvents,
     seasonUid,
     onShowModal,
-    onSetModalData
+    onSetModalData,
+    onViewRecap
 }) => {
-
+    const [isLoadingAttendees, setIsLoadingAttendees] = useState(false);
+    
     // SCALABLE: Get attendance from precomputed data or registration counters
     const attendance = useMemo(() => {
-        // Priority 1: Use precomputed attendance stats (most efficient)
         const showKey = `${dayNumber}_${show.eventName}`;
         const precomputed = attendanceStats?.shows?.[showKey];
         if (precomputed) {
             return precomputed;
         }
 
-        // Priority 2: Use registration counters from season events (efficient)
         const event = seasonEvents?.find(e => e.offSeasonDay === dayNumber);
         const showData = event?.shows?.find(s => s.eventName === show.eventName);
         if (showData?.registrationCounts) {
             return {
                 counts: showData.registrationCounts,
-                attendees: { worldClass: [], openClass: [], aClass: [] } // No individual attendee data
+                attendees: { worldClass: [], openClass: [], aClass: [] }
             };
         }
 
-        // Priority 3: Default empty (no expensive queries)
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
     }, [dayNumber, show.eventName, attendanceStats, seasonEvents]);
 
-    // SCALABLE: Get scores from fantasy recaps (single document read)
     const scores = useMemo(() => {
         if (!fantasyRecaps?.recaps) return null;
 
@@ -65,6 +64,7 @@ const ShowCard = ({
 
     const totalAttendees = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
     const hasScores = scores && Object.values(scores).some(classResults => classResults.length > 0);
+    const hasDetailedAttendees = Object.values(attendance.attendees).some(classAttendees => classAttendees.length > 0);
 
     const handleViewScores = () => {
         if (hasScores) {
@@ -73,14 +73,57 @@ const ShowCard = ({
         }
     };
 
-    const handleViewCompetingCorps = () => {
-        onSetModalData({ 
-            type: 'attendees', 
-            day: dayNumber, 
-            eventName: show.eventName, 
-            attendance 
-        });
-        onShowModal('attendees');
+    const handleViewRecap = () => {
+        if (onViewRecap) {
+            onViewRecap(dayNumber);
+        }
+    };
+
+    const handleViewCompetingCorps = async () => {
+        if (hasDetailedAttendees) {
+            // Use existing detailed data
+            onSetModalData({ 
+                type: 'attendees', 
+                day: dayNumber, 
+                eventName: show.eventName, 
+                attendance 
+            });
+            onShowModal('attendees');
+        } else if (totalAttendees > 0) {
+            // Lazy load detailed attendance data
+            setIsLoadingAttendees(true);
+            try {
+                const showKey = `${dayNumber}_${show.eventName}`;
+                const detailedAttendance = await getAttendanceWithCaching(
+                    showKey, 
+                    seasonUid, 
+                    show.eventName, 
+                    dayNumber, 
+                    seasonEvents, 
+                    attendanceStats
+                );
+                
+                onSetModalData({ 
+                    type: 'attendees', 
+                    day: dayNumber, 
+                    eventName: show.eventName, 
+                    attendance: detailedAttendance 
+                });
+                onShowModal('attendees');
+            } catch (error) {
+                console.error('Failed to load detailed attendance:', error);
+                // Fallback to counts only
+                onSetModalData({ 
+                    type: 'attendees', 
+                    day: dayNumber, 
+                    eventName: show.eventName, 
+                    attendance 
+                });
+                onShowModal('attendees');
+            } finally {
+                setIsLoadingAttendees(false);
+            }
+        }
     };
 
     return (
@@ -99,32 +142,26 @@ const ShowCard = ({
                 📍 {show.location}
             </p>
 
-            {/* Fantasy Recaps Status */}
-            {!fantasyRecaps && (
-                <div className="mb-3 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-200">
-                    Scores data loading...
-                </div>
-            )}
-
-            {/* Corps Attendance Counts */}
+            {/* Enhanced Corps Attendance Display */}
             {totalAttendees > 0 && (
-                <div className="mb-3">
-                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
-                        Competing Corps:
+                <div className="mb-3 p-2 bg-background dark:bg-background-dark rounded-theme">
+                    <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-2 text-center">
+                        Competing Corps: {totalAttendees}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="grid grid-cols-3 gap-2">
                         {CORPS_CLASS_ORDER.map(corpsClass => {
                             const classData = CORPS_CLASSES[corpsClass];
-                            const count = attendance.counts[corpsClass];
+                            const count = attendance.counts[corpsClass] || 0;
                             
-                            if (count === 0) return null;
-
                             return (
-                                <div key={corpsClass} className="flex items-center gap-1">
-                                    <div className={`w-2 h-2 rounded-full ${classData.color}`}></div>
-                                    <span className="text-xs font-medium text-text-primary dark:text-text-primary-dark">
-                                        {classData.classShorthand}: {count}
-                                    </span>
+                                <div key={corpsClass} className="text-center">
+                                    <div className={`w-4 h-4 mx-auto rounded-full ${classData.color} mb-1`}></div>
+                                    <div className="text-xs font-bold text-text-primary dark:text-text-primary-dark">
+                                        {classData.classShorthand}
+                                    </div>
+                                    <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                                        {count}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -134,6 +171,17 @@ const ShowCard = ({
 
             {/* Action Buttons */}
             <div className="flex gap-2 mt-3">
+                {/* Recap Button for Past Shows */}
+                {isPastDay && hasScores && (
+                    <button
+                        onClick={handleViewRecap}
+                        className="flex-1 text-xs bg-green-600 text-white font-semibold py-2 px-3 rounded-theme hover:bg-green-700 transition-all"
+                    >
+                        📊 View Recap
+                    </button>
+                )}
+
+                {/* Scores Button */}
                 {hasScores && (
                     <button
                         onClick={handleViewScores}
@@ -143,12 +191,18 @@ const ShowCard = ({
                     </button>
                 )}
                 
-                {totalAttendees > 0 && !hasScores && (
+                {/* Enhanced Competing Corps Button */}
+                {totalAttendees > 0 && (
                     <button
                         onClick={handleViewCompetingCorps}
-                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all"
+                        disabled={isLoadingAttendees}
+                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all disabled:opacity-50"
                     >
-                        👥 Competing Corps
+                        {isLoadingAttendees ? (
+                            <>🔄 Loading...</>
+                        ) : (
+                            <>👥 View Corps ({totalAttendees})</>
+                        )}
                     </button>
                 )}
                 
@@ -158,15 +212,6 @@ const ShowCard = ({
                     </div>
                 )}
             </div>
-
-            {/* Total Participants Badge */}
-            {totalAttendees > 0 && (
-                <div className="mt-2 text-center">
-                    <span className="text-xs bg-accent/20 text-text-primary dark:text-text-primary-dark px-2 py-1 rounded-full">
-                        {totalAttendees} total participant{totalAttendees !== 1 ? 's' : ''}
-                    </span>
-                </div>
-            )}
         </div>
     );
 };

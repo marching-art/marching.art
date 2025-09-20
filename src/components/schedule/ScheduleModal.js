@@ -63,6 +63,7 @@ const ScheduleModal = ({ isOpen, onClose, modalType, modalData }) => {
 
         const { attendance } = modalData;
         const totalAttendees = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
+        const hasDetailedAttendees = Object.values(attendance.attendees).some(classAttendees => classAttendees.length > 0);
 
         return (
             <div className="space-y-6">
@@ -75,37 +76,96 @@ const ScheduleModal = ({ isOpen, onClose, modalType, modalData }) => {
                     </p>
                 </div>
 
-                {CORPS_CLASS_ORDER.map(corpsClass => {
-                    const classData = CORPS_CLASSES[corpsClass];
-                    const attendees = attendance.attendees[corpsClass];
-                    
-                    if (!attendees?.length) return null;
-
-                    return (
-                        <div key={corpsClass} className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className={`w-3 h-3 rounded-full ${classData.color}`}></div>
-                                <h5 className="font-bold text-text-primary dark:text-text-primary-dark">
-                                    {classData.name} ({attendees.length})
-                                </h5>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                    {CORPS_CLASS_ORDER.map(corpsClass => {
+                        const classData = CORPS_CLASSES[corpsClass];
+                        const count = attendance.counts[corpsClass] || 0;
+                        
+                        return (
+                            <div key={corpsClass} className="text-center p-4 bg-background dark:bg-background-dark rounded-theme">
+                                <div className={`w-6 h-6 mx-auto rounded-full ${classData.color} mb-2`}></div>
+                                <div className="font-bold text-text-primary dark:text-text-primary-dark">
+                                    {classData.name}
+                                </div>
+                                <div className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                    {count}
+                                </div>
+                                <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                    corps competing
+                                </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {attendees.map(attendee => (
-                                    <div key={attendee.uid} className="p-3 bg-surface dark:bg-surface-dark rounded-theme border border-accent/30 dark:border-accent-dark/30">
-                                        <div className="font-medium text-text-primary dark:text-text-primary-dark">
-                                            {attendee.corpsName}
-                                        </div>
-                                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                            {attendee.username}
+                        );
+                    })}
+                </div>
+
+                {/* Detailed Attendee Lists or Count-Only Display */}
+                {hasDetailedAttendees ? (
+                    // Show detailed attendee lists
+                    <div className="space-y-4">
+                        <h5 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                            Competing Corps
+                        </h5>
+                        {CORPS_CLASS_ORDER.map(corpsClass => {
+                            const classData = CORPS_CLASSES[corpsClass];
+                            const attendees = attendance.attendees[corpsClass];
+                            
+                            if (!attendees?.length) return null;
+
+                            return (
+                                <div key={corpsClass} className="bg-background dark:bg-background-dark p-4 rounded-theme">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className={`w-3 h-3 rounded-full ${classData.color}`}></div>
+                                        <h6 className="font-bold text-text-primary dark:text-text-primary-dark">
+                                            {classData.name} ({attendees.length})
+                                        </h6>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {attendees.map(attendee => (
+                                            <div key={attendee.uid} className="p-3 bg-surface dark:bg-surface-dark rounded-theme border border-accent/30 dark:border-accent-dark/30">
+                                                <div className="font-medium text-text-primary dark:text-text-primary-dark">
+                                                    {attendee.corpsName}
+                                                </div>
+                                                <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                                    {attendee.username}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : totalAttendees > 0 ? (
+                    // Show count-only message
+                    <div className="text-center py-8 bg-background dark:bg-background-dark rounded-theme">
+                        <div className="text-4xl mb-4">🏟️</div>
+                        <h5 className="font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                            {totalAttendees} Corps Competing
+                        </h5>
+                        <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
+                            Individual corps details are being loaded...
+                        </p>
+                        <div className="mt-4 grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                            {CORPS_CLASS_ORDER.map(corpsClass => {
+                                const classData = CORPS_CLASSES[corpsClass];
+                                const count = attendance.counts[corpsClass] || 0;
+                                
+                                if (count === 0) return null;
+                                
+                                return (
+                                    <div key={corpsClass} className="text-center">
+                                        <div className={`w-3 h-3 mx-auto rounded-full ${classData.color} mb-1`}></div>
+                                        <div className="text-xs font-bold text-text-primary dark:text-text-primary-dark">
+                                            {classData.classShorthand}: {count}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
-                    );
-                })}
-
-                {totalAttendees === 0 && (
+                    </div>
+                ) : (
+                    // No attendees
                     <div className="text-center py-8">
                         <div className="text-4xl mb-2">🏟️</div>
                         <p className="text-text-secondary dark:text-text-secondary-dark">

@@ -126,6 +126,7 @@ const EventsDisplay = ({
                                             seasonEvents={events}
                                             onShowModal={onShowModal}
                                             onSetModalData={onSetModalData}
+                                            onViewRecap={onViewRecap}
                                         />
                                     ))}
                                 </div>

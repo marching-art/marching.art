@@ -91,41 +91,89 @@ const SchedulePage = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary dark:border-primary-dark"></div>
-                    <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading schedule...</p>
+            <div className="min-h-screen bg-background dark:bg-background-dark">
+                <div className="container mx-auto px-4 py-8">
+                    <div className="space-y-6">
+                        {/* Header Skeleton */}
+                        <div className="animate-pulse">
+                            <div className="h-8 bg-accent/20 rounded w-1/4 mb-4"></div>
+                            <div className="h-4 bg-accent/20 rounded w-1/2"></div>
+                        </div>
+                        
+                        {/* Controls Skeleton */}
+                        <div className="animate-pulse bg-surface dark:bg-surface-dark p-6 rounded-theme">
+                            <div className="flex gap-4 mb-4">
+                                <div className="h-10 bg-accent/20 rounded w-32"></div>
+                                <div className="h-10 bg-accent/20 rounded w-32"></div>
+                                <div className="h-10 bg-accent/20 rounded w-32"></div>
+                            </div>
+                            <div className="flex gap-2">
+                                {Array.from({ length: 7 }, (_, i) => (
+                                    <div key={i} className="h-8 bg-accent/20 rounded w-16"></div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {/* Events Skeleton */}
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme">
+                            <div className="animate-pulse space-y-4">
+                                {Array.from({ length: 3 }, (_, i) => (
+                                    <div key={i} className="space-y-4">
+                                        <div className="h-6 bg-accent/20 rounded w-1/3"></div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {Array.from({ length: 3 }, (_, j) => (
+                                                <div key={j} className="p-4 border border-accent/20 rounded-theme">
+                                                    <div className="h-5 bg-accent/20 rounded w-3/4 mb-2"></div>
+                                                    <div className="h-4 bg-accent/20 rounded w-1/2 mb-3"></div>
+                                                    <div className="h-8 bg-accent/20 rounded w-full"></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    if (error || !seasonSettings) {
+    // Show error state
+    if (error) {
         return (
-            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-8">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-                        {error ? 'Error Loading Schedule' : 'No Active Season'}
-                    </h2>
-                    <p className="text-text-secondary dark:text-text-secondary-dark">
-                        {error?.message || "There's no active season schedule to display."}
-                    </p>
+            <div className="min-h-screen bg-background dark:bg-background-dark">
+                <div className="container mx-auto px-4 py-8">
+                    <div className="max-w-md mx-auto text-center">
+                        <div className="bg-surface dark:bg-surface-dark p-8 rounded-theme border border-red-500/20">
+                            <div className="text-6xl mb-4">⚠️</div>
+                            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                                Unable to Load Schedule
+                            </h2>
+                            <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
+                                {error.message || 'There was an error loading the schedule data.'}
+                            </p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-primary text-on-primary px-6 py-2 rounded-theme font-semibold hover:bg-primary/90 transition-all"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    const isLiveSeason = seasonSettings.status === 'live-season';
-    const maxWeeks = isLiveSeason ? 10 : 7;
-    const currentWeek = Math.ceil(currentDay / 7);
-
+    // Normal render continues here...
     return (
         <div className="min-h-screen bg-background dark:bg-background-dark">
             <div className="container mx-auto px-4 py-8">
-                <div className="space-y-8">
+                <div className="space-y-6">
                     <ScheduleHeader 
-                        seasonName={seasonSettings.name}
-                        isLiveSeason={isLiveSeason}
+                        seasonSettings={seasonSettings}
+                        userCorps={userCorps}
                         currentDay={currentDay}
                     />
 
@@ -134,19 +182,21 @@ const SchedulePage = () => {
                         setViewMode={setViewMode}
                         quickFilter={quickFilter}
                         setQuickFilter={setQuickFilter}
-                        goToCurrentWeek={goToCurrentWeek}
-                        hasUserCorps={Object.keys(userCorps).length > 0}
+                        selectedWeek={selectedWeek}
+                        setSelectedWeek={setSelectedWeek}
+                        currentWeek={currentWeek}
+                        maxWeeks={maxWeeks}
+                        onJumpToWeek={jumpToWeek}
                     />
 
-                    {/* Personal Schedule View */}
-                    {viewMode === 'personal' && Object.keys(userCorps).length > 0 && (
-                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                    {/* Personal Schedule */}
+                    {Object.keys(userCorps).length > 0 && (
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
                             <PersonalSchedule
                                 userCorps={userCorps}
-                                seasonEvents={seasonSettings.events || []}
+                                seasonEvents={seasonSettings?.events}
                                 currentDay={currentDay}
-                                seasonStartDate={seasonSettings.schedule?.startDate}
-                                seasonMode={isLiveSeason ? 'live' : 'off'}
+                                seasonMode={seasonSettings?.status === 'live-season' ? 'live' : 'off'}
                             />
                         </div>
                     )}

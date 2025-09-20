@@ -34,25 +34,37 @@ export const useScheduleData = () => {
                     setCurrentDay(Math.max(1, day));
                 }
 
-                // Fetch other data in parallel
-                const [recapsSnapshot, statsDoc] = await Promise.all([
+                // Fetch other data in parallel with optimized queries
+                const promises = [];
+
+                // Optimized recaps query
+                promises.push(
                     getDocs(query(
                         collection(db, 'fantasy_recaps'), 
                         where('seasonUid', '==', seasonData.seasonUid), 
                         limit(1)
-                    )),
-                    getDoc(doc(db, 'attendance_stats', seasonData.seasonUid))
-                ]);
+                    )).then(snapshot => {
+                        if (!snapshot.empty) {
+                            const recapsData = snapshot.docs[0].data();
+                            // Sort recaps by day for faster lookup
+                            if (recapsData.recaps) {
+                                recapsData.recaps.sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+                            }
+                            setFantasyRecaps(recapsData);
+                        }
+                    })
+                );
 
-                // Set recaps data
-                if (!recapsSnapshot.empty) {
-                    setFantasyRecaps(recapsSnapshot.docs[0].data());
-                }
+                // Optimized attendance stats query
+                promises.push(
+                    getDoc(doc(db, 'attendance_stats', seasonData.seasonUid)).then(statsDoc => {
+                        if (statsDoc.exists()) {
+                            setAttendanceStats(statsDoc.data());
+                        }
+                    })
+                );
 
-                // Set pre-computed attendance stats (if available)
-                if (statsDoc.exists()) {
-                    setAttendanceStats(statsDoc.data());
-                }
+                await Promise.all(promises);
 
             } catch (err) {
                 console.error("Error fetching schedule data:", err);
