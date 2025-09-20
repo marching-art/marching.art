@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
-import { getAttendanceWithCaching } from '../../utils/attendanceService';
+import { getAttendanceWithCaching } from '../../services/attendanceService';
 
 const ShowCard = ({
     show,
