@@ -13,6 +13,20 @@ const ShowCard = ({
     onShowModal,
     onSetModalData
 }) => {
+    
+    // ADD THIS DEBUG LOG AT THE TOP
+    console.log(`[ShowCard ${show.eventName}] PROPS DEBUG:`, {
+        dayNumber,
+        show: show.eventName,
+        fantasyRecaps: fantasyRecaps ? {
+            hasRecaps: !!fantasyRecaps.recaps,
+            recapCount: fantasyRecaps.recaps?.length,
+            availableDays: fantasyRecaps.recaps?.map(r => r.offSeasonDay)
+        } : 'NULL',
+        attendanceStats: attendanceStats ? 'HAS_DATA' : 'NULL',
+        seasonUid
+    });
+    
     const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
     const [computedAttendance, setComputedAttendance] = useState(null);
     const [debugInfo, setDebugInfo] = useState('');
