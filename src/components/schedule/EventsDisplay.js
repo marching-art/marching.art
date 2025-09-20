@@ -18,8 +18,11 @@ const EventsDisplay = ({
     const getCalendarDate = (dayOffset) => {
         if (!seasonSettings?.schedule?.startDate) return null;
         const startDate = seasonSettings.schedule.startDate.toDate();
-        const date = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
-        date.setUTCDate(date.getUTCDate() + dayOffset - 1);
+        
+        // Create a new date object and add the day offset
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + dayOffset - 1);
+        
         return date;
     };
 

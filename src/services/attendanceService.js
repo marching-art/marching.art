@@ -7,17 +7,57 @@ const memoryCache = new Map();
 
 /**
  * Efficiently fetch attendance data for a specific show
- * Uses a simplified approach that doesn't require complex Firestore queries
+ * Uses collection group queries that work with your Firestore rules
  */
 export const fetchAttendanceForShow = async (seasonUid, eventName, week) => {
     try {
-        // For now, return empty data to avoid permissions issues
-        // This will rely on the precomputed stats and registration counters
-        console.log('Live attendance fetching disabled due to permissions');
-        return {
+        console.log(`🔍 Fetching attendance for: ${eventName} (Week ${week}, Season: ${seasonUid})`);
+        
+        const attendance = {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
+
+        // Use collection group query on 'data' documents (this is allowed by your rules)
+        const profilesQuery = query(
+            collectionGroup(db, 'data'),
+            where('activeSeasonId', '==', seasonUid)
+        );
+
+        const snapshot = await getDocs(profilesQuery);
+        console.log(`📊 Found ${snapshot.docs.length} active profiles for season ${seasonUid}`);
+        
+        snapshot.docs.forEach(doc => {
+            const profile = doc.data();
+            // Extract user ID from the document reference path
+            // Path will be: artifacts/marching-art/users/{userId}/profile/data
+            const pathParts = doc.ref.path.split('/');
+            const userId = pathParts[3]; // Gets userId from the 4th position (0-indexed)
+            
+            // Process each corps class
+            CORPS_CLASS_ORDER.forEach(corpsClass => {
+                const corps = profile?.corps?.[corpsClass];
+                
+                if (!corps?.selectedShows) return;
+
+                const weekShows = corps.selectedShows[`week${week}`] || [];
+                const isAttending = weekShows.some(s => s.eventName === eventName);
+
+                if (isAttending) {
+                    attendance.counts[corpsClass]++;
+                    attendance.attendees[corpsClass].push({
+                        uid: userId,
+                        username: profile.username,
+                        corpsName: corps.corpsName
+                    });
+                }
+            });
+        });
+
+        const totalFound = attendance.counts.worldClass + attendance.counts.openClass + attendance.counts.aClass;
+        console.log(`✅ Found ${totalFound} corps attending ${eventName}`);
+        
+        return attendance;
     } catch (error) {
         console.error('Error fetching attendance data:', error);
         return {
