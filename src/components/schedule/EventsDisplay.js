@@ -80,7 +80,6 @@ const EventsDisplay = ({
                                         : 'bg-background dark:bg-background-dark border-accent/50 hover:border-accent'
                                 }`}
                             >
-                                {/* Event Header */}
                                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
                                     <div>
                                         <div className="flex items-center gap-3 mb-1">
@@ -114,7 +113,6 @@ const EventsDisplay = ({
                                     </div>
                                 </div>
 
-                                {/* Shows Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {(event.shows || []).map((show, showIndex) => (
                                         <ShowCard
@@ -124,7 +122,8 @@ const EventsDisplay = ({
                                             isPastDay={isPastDay}
                                             fantasyRecaps={fantasyRecaps}
                                             attendanceStats={attendanceStats}
-                                            seasonUid={seasonSettings?.seasonUid} // ADDED THIS LINE
+                                            seasonUid={seasonSettings?.seasonUid}
+                                            seasonEvents={events}
                                             onShowModal={onShowModal}
                                             onSetModalData={onSetModalData}
                                         />
