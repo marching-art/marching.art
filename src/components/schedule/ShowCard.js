@@ -86,12 +86,12 @@ const ShowCard = ({
                 }
             };
 
-            // Stagger requests to avoid overwhelming Firestore
-            const showHash = show.eventName.split('').reduce((a, b) => {
+            // Stagger requests to avoid overwhelming Firestore and prevent race conditions
+            const showHash = (show.eventName + dayNumber).split('').reduce((a, b) => {
                 a = ((a << 5) - a) + b.charCodeAt(0);
                 return a & a;
             }, 0);
-            const delay = Math.abs(showHash % 2000) + 500; // 500-2500ms delay
+            const delay = Math.abs(showHash % 5000) + 1000; // 1000-6000ms delay for better distribution
             
             const timer = setTimeout(fetchLiveAttendance, delay);
             return () => clearTimeout(timer);
