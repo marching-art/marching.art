@@ -43,6 +43,27 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
+    // Handle modal events from ScheduleAuthPrompt
+    useEffect(() => {
+        const handleOpenSignUpModal = () => {
+            setAuthModalView('signup');
+            setIsAuthModalOpen(true);
+        };
+
+        const handleOpenLoginModal = () => {
+            setAuthModalView('login');
+            setIsAuthModalOpen(true);
+        };
+
+        window.addEventListener('openSignUpModal', handleOpenSignUpModal);
+        window.addEventListener('openLoginModal', handleOpenLoginModal);
+
+        return () => {
+            window.removeEventListener('openSignUpModal', handleOpenSignUpModal);
+            window.removeEventListener('openLoginModal', handleOpenLoginModal);
+        };
+    }, []);
+
     const toggleThemeMode = () => {
         setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
     };
@@ -97,6 +118,10 @@ function AppContent() {
                 initialView={authModalView}
                 onAuthSuccess={() => {
                     setIsAuthModalOpen(false);
+                    // If user was trying to access schedule, navigate them there
+                    if (window.location.pathname === '/' && window.history.state?.from?.pathname === '/schedule') {
+                        navigate('/schedule');
+                    }
                 }}
             />
             
@@ -115,10 +140,10 @@ function AppContent() {
                         {/* Public Routes */}
                         <Route path="/" element={<HomePage onSignUpClick={openSignUpModal} />} />
                         <Route path="/howtoplay" element={<HowToPlayPage />} />
-                        <Route path="/schedule" element={<SchedulePage />} />
                         <Route path="/scores" element={<ScoresPage theme={themeMode} />} />
 
-                        {/* Protected Routes */}
+                        {/* Protected Routes - Schedule now requires authentication */}
+                        <Route path="/schedule" element={<ProtectedRoute showAuthPrompt={true}><SchedulePage /></ProtectedRoute>} />
                         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                         <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePageWrapper /></ProtectedRoute>} />
                         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
@@ -155,6 +180,7 @@ function LeagueDetailPageWrapper() {
     return <LeagueDetailPage leagueId={leagueId} />;
 }
 
+// Enhanced global error handling for better user experience
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
     // Send to error tracking service
