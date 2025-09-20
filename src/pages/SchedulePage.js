@@ -32,6 +32,25 @@ const SchedulePage = () => {
         error
     } = useScheduleData();
 
+    // Calculate derived values
+    const currentWeek = Math.ceil(currentDay / 7);
+    const maxWeeks = seasonSettings?.status === 'live-season' ? 10 : 7;
+
+    // Event handlers
+    const handleViewRecap = (dayNumber) => {
+        navigate(`/scores?day=${dayNumber}`);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedModal(null);
+        setModalData(null);
+    };
+
+    const jumpToWeek = (weekNumber) => {
+        setSelectedWeek(weekNumber);
+        setQuickFilter('all');
+    };
+
     // Set initial week to current week
     useEffect(() => {
         if (currentDay > 0) {
@@ -40,6 +59,7 @@ const SchedulePage = () => {
         }
     }, [currentDay]);
 
+    // Filter events based on current selections
     const filteredEvents = useMemo(() => {
         if (!seasonSettings?.events) return [];
         
@@ -58,7 +78,7 @@ const SchedulePage = () => {
             });
         }
 
-        if (viewMode === 'calendar') {
+        if (viewMode === 'calendar' && quickFilter === 'all') {
             const startDayOfWeek = (selectedWeek - 1) * 7 + 1;
             const endDayOfWeek = selectedWeek * 7;
             events = events.filter(event => {
@@ -70,25 +90,7 @@ const SchedulePage = () => {
         return events;
     }, [seasonSettings, selectedWeek, viewMode, quickFilter, currentDay]);
 
-    const handleViewRecap = (day) => {
-        navigate(`/scores?day=${day}`);
-    };
-
-    const goToCurrentWeek = () => {
-        const currentWeekValue = Math.ceil(currentDay / 7);
-        setSelectedWeek(currentWeekValue);
-    };
-
-    const jumpToWeek = (weekNumber) => {
-        setSelectedWeek(weekNumber);
-        setQuickFilter('all');
-    };
-
-    const handleCloseModal = () => {
-        setSelectedModal(null);
-        setModalData(null);
-    };
-
+    // Show loading state
     if (isLoading) {
         return (
             <div className="min-h-screen bg-background dark:bg-background-dark">
@@ -166,7 +168,7 @@ const SchedulePage = () => {
         );
     }
 
-    // Normal render continues here...
+    // Normal render
     return (
         <div className="min-h-screen bg-background dark:bg-background-dark">
             <div className="container mx-auto px-4 py-8">
