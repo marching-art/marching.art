@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 import { getAttendanceWithCaching } from '../../services/attendanceService';
 
@@ -12,20 +12,20 @@ const ShowCard = ({
     seasonUid,
     onShowModal,
     onSetModalData,
-    onViewRecap // THIS WAS MISSING
+    onViewRecap
 }) => {
     const [isLoadingAttendees, setIsLoadingAttendees] = useState(false);
+    const [liveAttendance, setLiveAttendance] = useState(null);
+    const [loadingError, setLoadingError] = useState(false);
     
     // SCALABLE: Get attendance from precomputed data or registration counters
-    const attendance = useMemo(() => {
-        // Priority 1: Use precomputed attendance stats (most efficient)
+    const baseAttendance = useMemo(() => {
         const showKey = `${dayNumber}_${show.eventName}`;
         const precomputed = attendanceStats?.shows?.[showKey];
         if (precomputed) {
             return precomputed;
         }
 
-        // Priority 2: Use registration counters from season events (efficient)
         const event = seasonEvents?.find(e => e.offSeasonDay === dayNumber);
         const showData = event?.shows?.find(s => s.eventName === show.eventName);
         if (showData?.registrationCounts) {
@@ -35,25 +35,54 @@ const ShowCard = ({
             };
         }
 
-        // Priority 3: Default empty (no expensive queries)
         return {
             counts: { worldClass: 0, openClass: 0, aClass: 0 },
             attendees: { worldClass: [], openClass: [], aClass: [] }
         };
     }, [dayNumber, show.eventName, attendanceStats, seasonEvents]);
 
-    console.log('🔍 Attendance Debug:', {
-        dayNumber,
-        eventName: show.eventName,
-        showKey: `${dayNumber}_${show.eventName}`,
-        attendanceStats: !!attendanceStats,
-        seasonEventsCount: seasonEvents?.length,
-        event: seasonEvents?.find(e => e.offSeasonDay === dayNumber),
-        registrationCounts: seasonEvents?.find(e => e.offSeasonDay === dayNumber)?.shows?.find(s => s.eventName === show.eventName)?.registrationCounts,
-        finalCounts: attendance.counts
-    });
+    // Use live attendance if base attendance is empty
+    const attendance = liveAttendance || baseAttendance;
 
-    // SCALABLE: Get scores from fantasy recaps (single document read)
+    // Fixed: Better async loading with proper error handling and unique delays
+    useEffect(() => {
+        const totalBase = baseAttendance.counts.worldClass + baseAttendance.counts.openClass + baseAttendance.counts.aClass;
+        
+        if (totalBase === 0 && seasonUid && !liveAttendance && !isLoadingAttendees && !loadingError) {
+            const fetchLiveAttendance = async () => {
+                setIsLoadingAttendees(true);
+                setLoadingError(false);
+                try {
+                    const showKey = `${dayNumber}_${show.eventName}`;
+                    const liveData = await getAttendanceWithCaching(
+                        showKey, 
+                        seasonUid, 
+                        show.eventName, 
+                        dayNumber, 
+                        seasonEvents, 
+                        attendanceStats
+                    );
+                    setLiveAttendance(liveData);
+                } catch (error) {
+                    console.error('Failed to fetch live attendance:', error);
+                    setLoadingError(true);
+                } finally {
+                    setIsLoadingAttendees(false);
+                }
+            };
+
+            // Use show name hash to create consistent but unique delays
+            const showHash = show.eventName.split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+            }, 0);
+            const delay = Math.abs(showHash % 3000) + 500; // 500-3500ms delay
+            
+            const timer = setTimeout(fetchLiveAttendance, delay);
+            return () => clearTimeout(timer);
+        }
+    }, [baseAttendance, dayNumber, show.eventName, seasonUid, seasonEvents, attendanceStats, liveAttendance, isLoadingAttendees, loadingError]);
+
     const scores = useMemo(() => {
         if (!fantasyRecaps?.recaps) return null;
 
@@ -94,51 +123,14 @@ const ShowCard = ({
         }
     };
 
-    const handleViewCompetingCorps = async () => {
-        if (hasDetailedAttendees) {
-            // Use existing detailed data
-            onSetModalData({ 
-                type: 'attendees', 
-                day: dayNumber, 
-                eventName: show.eventName, 
-                attendance 
-            });
-            onShowModal('attendees');
-        } else if (totalAttendees > 0) {
-            // Lazy load detailed attendance data
-            setIsLoadingAttendees(true);
-            try {
-                const showKey = `${dayNumber}_${show.eventName}`;
-                const detailedAttendance = await getAttendanceWithCaching(
-                    showKey, 
-                    seasonUid, 
-                    show.eventName, 
-                    dayNumber, 
-                    seasonEvents, 
-                    attendanceStats
-                );
-                
-                onSetModalData({ 
-                    type: 'attendees', 
-                    day: dayNumber, 
-                    eventName: show.eventName, 
-                    attendance: detailedAttendance 
-                });
-                onShowModal('attendees');
-            } catch (error) {
-                console.error('Failed to load detailed attendance:', error);
-                // Fallback to counts only
-                onSetModalData({ 
-                    type: 'attendees', 
-                    day: dayNumber, 
-                    eventName: show.eventName, 
-                    attendance 
-                });
-                onShowModal('attendees');
-            } finally {
-                setIsLoadingAttendees(false);
-            }
-        }
+    const handleViewCompetingCorps = () => {
+        onSetModalData({ 
+            type: 'attendees', 
+            day: dayNumber, 
+            eventName: show.eventName, 
+            attendance 
+        });
+        onShowModal('attendees');
     };
 
     return (
@@ -157,30 +149,34 @@ const ShowCard = ({
                 📍 {show.location}
             </p>
 
-            {/* Enhanced Corps Attendance Display */}
+            {/* Subtle Attendance Display */}
             {totalAttendees > 0 && (
-                <div className="mb-3 p-2 bg-background dark:bg-background-dark rounded-theme">
-                    <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-2 text-center">
-                        Competing Corps: {totalAttendees}
+                <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+                        <span>Competing Corps: {totalAttendees}</span>
+                        <div className="flex items-center gap-1">
+                            {CORPS_CLASS_ORDER.map(corpsClass => {
+                                const classData = CORPS_CLASSES[corpsClass];
+                                const count = attendance.counts[corpsClass] || 0;
+                                
+                                if (count === 0) return null;
+
+                                return (
+                                    <span key={corpsClass} className="flex items-center gap-1 text-xs">
+                                        <div className={`w-2 h-2 rounded-full ${classData.color}`}></div>
+                                        <span className="font-medium">{classData.classShorthand}:{count}</span>
+                                    </span>
+                                );
+                            })}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        {CORPS_CLASS_ORDER.map(corpsClass => {
-                            const classData = CORPS_CLASSES[corpsClass];
-                            const count = attendance.counts[corpsClass] || 0;
-                            
-                            return (
-                                <div key={corpsClass} className="text-center">
-                                    <div className={`w-4 h-4 mx-auto rounded-full ${classData.color} mb-1`}></div>
-                                    <div className="text-xs font-bold text-text-primary dark:text-text-primary-dark">
-                                        {classData.classShorthand}
-                                    </div>
-                                    <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-                                        {count}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                </div>
+            )}
+
+            {/* Loading indicator - more subtle */}
+            {isLoadingAttendees && (
+                <div className="mb-3 text-xs text-text-secondary dark:text-text-secondary-dark italic">
+                    Loading attendance...
                 </div>
             )}
 
@@ -196,8 +192,8 @@ const ShowCard = ({
                     </button>
                 )}
 
-                {/* Scores Button for Current/Future Shows */}
-                {hasScores && !isPastDay && (
+                {/* Scores Button */}
+                {hasScores && (
                     <button
                         onClick={handleViewScores}
                         className="flex-1 text-xs bg-primary text-on-primary font-semibold py-2 px-3 rounded-theme hover:bg-primary/90 transition-all"
@@ -210,18 +206,13 @@ const ShowCard = ({
                 {totalAttendees > 0 && (
                     <button
                         onClick={handleViewCompetingCorps}
-                        disabled={isLoadingAttendees}
-                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all disabled:opacity-50"
+                        className="flex-1 text-xs bg-secondary text-on-secondary font-semibold py-2 px-3 rounded-theme hover:bg-secondary/90 transition-all"
                     >
-                        {isLoadingAttendees ? (
-                            <>🔄 Loading...</>
-                        ) : (
-                            <>👥 View Corps ({totalAttendees})</>
-                        )}
+                        👥 View Corps ({totalAttendees})
                     </button>
                 )}
                 
-                {totalAttendees === 0 && !hasScores && (
+                {totalAttendees === 0 && !hasScores && !isLoadingAttendees && (
                     <div className="flex-1 text-xs text-text-secondary dark:text-text-secondary-dark text-center py-2 italic">
                         No participants yet
                     </div>
