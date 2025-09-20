@@ -86,40 +86,31 @@ const EventsDisplay = ({
                                         <div className="flex items-center gap-3 mb-1">
                                             <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
                                                 {calendarDate 
-                                                    ? calendarDate.toLocaleDateString(undefined, { 
-                                                        timeZone: 'UTC', 
+                                                    ? calendarDate.toLocaleDateString('en-US', { 
                                                         weekday: 'long', 
                                                         month: 'long', 
                                                         day: 'numeric' 
-                                                    }) 
+                                                    })
                                                     : `Day ${dayNumber}`
                                                 }
                                             </h3>
                                             {isCurrentDay && (
-                                                <span className="text-xs bg-primary text-on-primary font-bold px-2 py-1 rounded-full animate-pulse">
+                                                <span className="px-2 py-1 bg-primary text-on-primary text-xs font-bold rounded-full">
                                                     TODAY
                                                 </span>
                                             )}
-                                            {isPastDay && (
-                                                <span className="text-xs bg-accent/50 text-text-secondary dark:text-text-secondary-dark px-2 py-1 rounded-full">
-                                                    PAST
-                                                </span>
-                                            )}
                                         </div>
-                                        <p className="text-text-secondary dark:text-text-secondary-dark">
-                                            Day {dayNumber} • Week {Math.ceil(dayNumber / 7)}
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 mt-3 sm:mt-0">
                                         {hasRecapForDay(dayNumber) && (
-                                            <button 
-                                                onClick={() => onViewRecap(dayNumber)} 
-                                                className="bg-accent hover:bg-accent/80 text-text-primary dark:text-text-primary-dark font-bold py-2 px-4 rounded-theme transition-all flex items-center gap-2"
+                                            <button
+                                                onClick={() => onViewRecap && onViewRecap(dayNumber)}
+                                                className="text-sm text-primary dark:text-primary-dark hover:underline flex items-center gap-1"
                                             >
-                                                📊 View Recap
+                                                📊 View Day Recap
                                             </button>
                                         )}
+                                    </div>
+                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                        {event.shows?.length || 0} show{(event.shows?.length || 0) !== 1 ? 's' : ''}
                                     </div>
                                 </div>
 
@@ -133,6 +124,7 @@ const EventsDisplay = ({
                                             isPastDay={isPastDay}
                                             fantasyRecaps={fantasyRecaps}
                                             attendanceStats={attendanceStats}
+                                            seasonUid={seasonSettings?.seasonUid} // ADDED THIS LINE
                                             onShowModal={onShowModal}
                                             onSetModalData={onSetModalData}
                                         />
