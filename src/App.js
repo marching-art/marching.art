@@ -23,6 +23,7 @@ import SchedulePage from './pages/SchedulePage';
 import ScoresPage from './pages/ScoresPage';
 import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
+import UserSettingsPage from './pages/UserSettingsPage'; // Import the new settings page
 import AuthModal from './components/auth/AuthModal';
 
 function AppContent() {
@@ -68,15 +69,6 @@ function AppContent() {
         setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
     };
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            navigate('/');
-        } catch (error) {
-            console.error("Error signing out:", error);
-        }
-    };
-
     const openLoginModal = () => {
         setAuthModalView('login');
         setIsAuthModalOpen(true);
@@ -87,30 +79,57 @@ function AppContent() {
         setIsAuthModalOpen(true);
     };
 
-    const handleViewOwnProfile = () => {
-        if (user?.uid) {
-            navigate(`/profile/${user.uid}`);
-        } else if (loggedInProfile?.userId) {
-            navigate(`/profile/${loggedInProfile.userId}`);
-        } else {
-            console.error('No user ID available for profile navigation');
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigate('/');
+        } catch (error) {
+            console.error('Error signing out:', error);
         }
     };
 
-    if (isLoadingAuth && !user) { // Only show full page loader on initial load without a user
+    const handleViewOwnProfile = () => {
+        if (loggedInProfile?.username) {
+            navigate(`/profile/${loggedInProfile.username}`);
+        }
+    };
+
+    // Component for handling profile routes with username parameter
+    const ProfileRouteHandler = () => {
+        const { username } = useParams();
+        return <ProfilePage username={username} />;
+    };
+
+    // Component for handling league detail routes
+    const LeagueDetailRouteHandler = () => {
+        const { leagueId } = useParams();
+        return <LeagueDetailPage leagueId={leagueId} />;
+    };
+
+    if (isLoadingAuth) {
         return (
-            <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary dark:border-primary-dark"></div>
-                    <p className="mt-4">Loading marching.art...</p>
+                    <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading marching.art...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+        <div className="min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark flex flex-col">
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: themeMode === 'dark' ? '#374151' : '#f9fafb',
+                        color: themeMode === 'dark' ? '#f9fafb' : '#374151',
+                        border: `1px solid ${themeMode === 'dark' ? '#4b5563' : '#d1d5db'}`,
+                    },
+                }}
+            />
             
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -145,12 +164,31 @@ function AppContent() {
                         {/* Protected Routes - Schedule now requires authentication */}
                         <Route path="/schedule" element={<ProtectedRoute showAuthPrompt={true}><SchedulePage /></ProtectedRoute>} />
                         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                        <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePageWrapper /></ProtectedRoute>} />
-                        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-                        <Route path="/leagues" element={<ProtectedRoute><LeaguePage /></ProtectedRoute>} />
-                        <Route path="/league/:leagueId" element={<ProtectedRoute><LeagueDetailPageWrapper /></ProtectedRoute>} />
-                        <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+                        <Route path="/settings" element={<ProtectedRoute><UserSettingsPage /></ProtectedRoute>} />
                         <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+                        <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+                        <Route path="/leagues" element={<ProtectedRoute><LeaguePage /></ProtectedRoute>} />
+                        <Route path="/leagues/:leagueId" element={<ProtectedRoute><LeagueDetailRouteHandler /></ProtectedRoute>} />
+                        <Route path="/profile/:username" element={<ProtectedRoute><ProfileRouteHandler /></ProtectedRoute>} />
+
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+
+                        {/* Catch-all route */}
+                        <Route path="*" element={
+                            <div className="min-h-screen flex items-center justify-center">
+                                <div className="text-center">
+                                    <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-4">404</h1>
+                                    <p className="text-text-secondary dark:text-text-secondary-dark mb-6">Page not found</p>
+                                    <button
+                                        onClick={() => navigate('/')}
+                                        className="bg-primary dark:bg-primary-dark text-white font-bold py-2 px-4 rounded-theme hover:bg-primary-dark dark:hover:bg-primary transition-colors"
+                                    >
+                                        Go Home
+                                    </button>
+                                </div>
+                            </div>
+                        } />
                     </Routes>
                 </main>
             </ErrorBoundary>
@@ -162,33 +200,12 @@ function AppContent() {
 
 function App() {
     return (
-        <Router>
-            <AuthProvider>
+        <AuthProvider>
+            <Router>
                 <AppContent />
-            </AuthProvider>
-        </Router>
+            </Router>
+        </AuthProvider>
     );
 }
-
-function ProfilePageWrapper() {
-    const { userId } = useParams();
-    return <ProfilePage viewingUserId={userId} />;
-}
-
-function LeagueDetailPageWrapper() {
-    const { leagueId } = useParams();
-    return <LeagueDetailPage leagueId={leagueId} />;
-}
-
-// Enhanced global error handling for better user experience
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Unhandled promise rejection:', event.reason);
-    // Send to error tracking service
-});
-
-window.addEventListener('error', (event) => {
-    console.error('Global error:', event.error);
-    // Send to error tracking service
-});
 
 export default App;
