@@ -1,4 +1,4 @@
-// src/store/userStore.js - Complete User State Management with Zustand
+// src/store/userStore.js - Fixed User State Management with Zustand
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
@@ -29,6 +29,11 @@ const useUserStore = create(
       
       // Initialize user data
       initializeUser: async (firebaseUser) => {
+        if (!firebaseUser) {
+          console.error('No firebase user provided to initializeUser');
+          return;
+        }
+
         try {
           set({ loading: true });
           
@@ -101,7 +106,10 @@ const useUserStore = create(
       // Update user profile
       updateProfile: async (updates) => {
         const { user } = get();
-        if (!user) return;
+        if (!user) {
+          console.error('No user found for profile update');
+          return;
+        }
         
         try {
           await updateDoc(doc(db, 'users', user.uid), {
@@ -123,7 +131,10 @@ const useUserStore = create(
       // Award experience points
       awardXP: async (amount, reason = '') => {
         const { user, experience, level } = get();
-        if (!user) return;
+        if (!user) {
+          console.error('No user found for XP award');
+          return;
+        }
         
         try {
           const newXP = experience + amount;
@@ -145,13 +156,17 @@ const useUserStore = create(
           
         } catch (error) {
           console.error('Error awarding XP:', error);
+          toast.error('Failed to award experience points');
         }
       },
       
       // Update total score
       updateScore: async (score) => {
         const { user } = get();
-        if (!user) return;
+        if (!user) {
+          console.error('No user found for score update');
+          return;
+        }
         
         try {
           await updateDoc(doc(db, 'users', user.uid), {
@@ -163,13 +178,16 @@ const useUserStore = create(
           
         } catch (error) {
           console.error('Error updating score:', error);
+          toast.error('Failed to update score');
         }
       },
       
       // Add achievement
       addAchievement: async (achievementId) => {
         const { user, achievements } = get();
-        if (!user || achievements.includes(achievementId)) return;
+        if (!user || achievements.includes(achievementId)) {
+          return;
+        }
         
         try {
           const newAchievements = [...achievements, achievementId];
@@ -184,6 +202,7 @@ const useUserStore = create(
           
         } catch (error) {
           console.error('Error adding achievement:', error);
+          toast.error('Failed to unlock achievement');
         }
       },
       
@@ -195,7 +214,10 @@ const useUserStore = create(
       // Update settings
       updateSettings: async (settings) => {
         const { user } = get();
-        if (!user) return;
+        if (!user) {
+          console.error('No user found for settings update');
+          return;
+        }
         
         try {
           await updateDoc(doc(db, 'users', user.uid), {
@@ -212,6 +234,7 @@ const useUserStore = create(
             notifications: settings.notifications !== undefined ? settings.notifications : state.notifications
           }));
           
+          toast.success('Settings updated successfully');
         } catch (error) {
           console.error('Error updating settings:', error);
           toast.error('Failed to update settings');
@@ -246,36 +269,9 @@ const useUserStore = create(
         }
       },
       
-      // Check achievements based on user actions
-      checkAchievements: async (action, data = {}) => {
-        const { user, level, totalScore, experience } = get();
-        if (!user) return;
-        
-        const achievementsToAward = [];
-        
-        // Define achievement conditions
-        const achievementConditions = {
-          firstLogin: () => action === 'login',
-          levelUp5: () => level >= 5,
-          levelUp10: () => level >= 10,
-          score1000: () => totalScore >= 1000,
-          score5000: () => totalScore >= 5000,
-          experience1000: () => experience >= 1000,
-          firstLineup: () => action === 'createLineup',
-          firstTrade: () => action === 'completeTrade'
-        };
-        
-        // Check each condition
-        for (const [achievementId, condition] of Object.entries(achievementConditions)) {
-          if (condition() && !get().achievements.includes(achievementId)) {
-            achievementsToAward.push(achievementId);
-          }
-        }
-        
-        // Award achievements
-        for (const achievementId of achievementsToAward) {
-          await get().addAchievement(achievementId);
-        }
+      // Simplified experience update (alias for awardXP)
+      updateUserExperience: async (amount, reason = '') => {
+        return get().awardXP(amount, reason);
       }
     }),
     {
