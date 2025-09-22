@@ -1,540 +1,263 @@
-// context/AuthContext.js - Enhanced Authentication Context
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { 
-  onAuthStateChanged, 
+// src/context/AuthContext.js - Fixed Authentication Context
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
-  updatePassword,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  deleteUser
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs
-} from 'firebase/firestore';
-import { auth, db, dataNamespace, firebaseUtils } from '../firebase';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import toast from 'react-hot-toast';
 
-// Create AuthContext
-const AuthContext = createContext({});
+const AuthContext = createContext();
 
-// Enhanced user profile structure
-const createUserProfile = (user, additionalData = {}) => ({
-  userId: user.uid,
-  email: user.email,
-  displayName: additionalData.displayName || user.displayName || '',
-  username: additionalData.username || '',
-  bio: additionalData.bio || '',
-  location: additionalData.location || '',
-  favoriteCorps: additionalData.favoriteCorps || [],
-  profileImage: user.photoURL || '',
-  
-  // Game-specific data
-  experience: 0,
-  level: 1,
-  totalPoints: 0,
-  gamesPlayed: 0,
-  achievements: [],
-  unlockedClasses: ['aClass'], // Start with A Class unlocked
-  
-  // Corps data structure
-  corps: {
-    aClass: null,
-    openClass: null,
-    worldClass: null
-  },
-  
-  // Enhanced preferences
-  preferences: {
-    theme: 'auto',
-    notifications: {
-      email: true,
-      push: true,
-      scores: true,
-      trades: true,
-      achievements: true,
-      leagues: true
-    },
-    privacy: {
-      profileVisible: true,
-      statsVisible: true,
-      corpsVisible: true
-    },
-    accessibility: {
-      reduceMotion: false,
-      highContrast: false,
-      fontSize: 'medium'
-    }
-  },
-  
-  // Social features
-  isPublic: true,
-  friends: [],
-  blockedUsers: [],
-  
-  // Timestamps
-  createdAt: serverTimestamp(),
-  lastActive: serverTimestamp(),
-  lastLogin: serverTimestamp(),
-  
-  // Administrative
-  isAdmin: false,
-  isModerator: false,
-  isPremium: false,
-  premiumExpiry: null,
-  
-  // Onboarding
-  hasCompletedOnboarding: false,
-  onboardingStep: 0,
-  
-  // Statistics
-  stats: {
-    loginStreak: 0,
-    longestStreak: 0,
-    totalPlayTime: 0,
-    favoritePage: '',
-    lastSeasonParticipated: null
-  },
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
 
-  // Additional metadata
-  ...additionalData
-});
-
-// Enhanced AuthProvider component
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [authError, setAuthError] = useState(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Track authentication state
+  // Sign up function
+  async function signup(email, password, additionalData = {}) {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      // Update profile with display name
+      if (additionalData.displayName) {
+        await updateProfile(user, {
+          displayName: additionalData.displayName
+        });
+      }
+
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: additionalData.displayName || user.email.split('@')[0],
+        createdAt: new Date(),
+        isAdmin: false,
+        level: 1,
+        experience: 0,
+        totalScore: 0,
+        settings: {
+          notifications: true,
+          theme: 'light'
+        },
+        ...additionalData
+      });
+
+      toast.success('Account created successfully!');
+      return result;
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Login function
+  async function login(email, password) {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      toast.success('Logged in successfully!');
+      return result;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Google sign in
+  async function signInWithGoogle() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user document exists, create if not
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          createdAt: new Date(),
+          isAdmin: false,
+          level: 1,
+          experience: 0,
+          totalScore: 0,
+          settings: {
+            notifications: true,
+            theme: 'light'
+          }
+        });
+      }
+
+      toast.success('Signed in with Google!');
+      return result;
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Logout function
+  async function logout() {
+    try {
+      await signOut(auth);
+      setUserProfile(null);
+      setIsAdmin(false);
+      toast.success('Logged out successfully!');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Reset password
+  async function resetPassword(email) {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success('Password reset email sent!');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Update user profile
+  async function updateUserProfile(data) {
+    try {
+      if (!currentUser) throw new Error('No user logged in');
+
+      // Update Firebase Auth profile
+      if (data.displayName || data.photoURL) {
+        await updateProfile(currentUser, {
+          displayName: data.displayName || currentUser.displayName,
+          photoURL: data.photoURL || currentUser.photoURL
+        });
+      }
+
+      // Update Firestore document
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        ...data,
+        updatedAt: new Date()
+      });
+
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast.error(error.message);
+      throw error;
+    }
+  }
+
+  // Check if user is admin
+  async function checkAdminStatus(user) {
+    if (!user) return false;
+
+    try {
+      // Check hardcoded admin UID
+      if (user.uid === 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
+        return true;
+      }
+
+      // Check custom claims
+      const tokenResult = await user.getIdTokenResult();
+      return tokenResult.claims.admin === true;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
+  }
+
+  // Fetch user profile from Firestore
+  async function fetchUserProfile(user) {
+    if (!user) return null;
+
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        return userDoc.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  }
+
+  // Monitor auth state changes
   useEffect(() => {
-    setIsLoadingAuth(true);
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
-        if (firebaseUser) {
-          setUser(firebaseUser);
-          
-          // Fetch or create user profile
-          const profile = await fetchOrCreateUserProfile(firebaseUser);
+        setCurrentUser(user);
+        
+        if (user) {
+          // Check admin status
+          const adminStatus = await checkAdminStatus(user);
+          setIsAdmin(adminStatus);
+
+          // Fetch user profile
+          const profile = await fetchUserProfile(user);
           setUserProfile(profile);
-          
+
           // Update last login
-          await updateLastLogin(firebaseUser.uid);
-          
-          // Track login event
-          firebaseUtils.trackEvent('user_login', {
-            user_id: firebaseUser.uid,
-            login_method: 'email'
-          });
-          
-          setAuthError(null);
+          if (profile) {
+            await updateDoc(doc(db, 'users', user.uid), {
+              lastLogin: new Date()
+            });
+          }
         } else {
-          setUser(null);
+          setIsAdmin(false);
           setUserProfile(null);
         }
       } catch (error) {
         console.error('Auth state change error:', error);
-        setAuthError(firebaseUtils.handleFirebaseError(error, 'auth state change'));
       } finally {
-        setIsLoadingAuth(false);
+        setLoading(false);
       }
     });
 
     return unsubscribe;
   }, []);
 
-  // Monitor online status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Fetch or create user profile
-  const fetchOrCreateUserProfile = async (firebaseUser) => {
-    try {
-      const profileRef = doc(db, `artifacts/${dataNamespace}/users/${firebaseUser.uid}/profile/data`);
-      const profileSnap = await getDoc(profileRef);
-      
-      if (profileSnap.exists()) {
-        const existingProfile = profileSnap.data();
-        
-        // Update profile with any missing fields from new structure
-        const updatedProfile = {
-          ...createUserProfile(firebaseUser),
-          ...existingProfile,
-          lastLogin: serverTimestamp()
-        };
-        
-        // Save updated profile
-        await updateDoc(profileRef, {
-          lastLogin: serverTimestamp(),
-          // Only update missing fields, don't overwrite existing data
-          ...Object.fromEntries(
-            Object.entries(updatedProfile).filter(([key]) => 
-              !existingProfile.hasOwnProperty(key)
-            )
-          )
-        });
-        
-        return updatedProfile;
-      } else {
-        // Create new user profile
-        const newProfile = createUserProfile(firebaseUser);
-        await setDoc(profileRef, newProfile);
-        
-        // Track new user registration
-        firebaseUtils.trackEvent('user_registration', {
-          user_id: firebaseUser.uid,
-          registration_method: 'email'
-        });
-        
-        return newProfile;
-      }
-    } catch (error) {
-      console.error('Error fetching/creating user profile:', error);
-      throw new Error(firebaseUtils.handleFirebaseError(error, 'profile creation'));
-    }
-  };
-
-  // Update last login timestamp
-  const updateLastLogin = async (uid) => {
-    try {
-      const profileRef = doc(db, `artifacts/${dataNamespace}/users/${uid}/profile/data`);
-      await updateDoc(profileRef, {
-        lastLogin: serverTimestamp(),
-        lastActive: serverTimestamp()
-      });
-    } catch (error) {
-      console.error('Error updating last login:', error);
-    }
-  };
-
-  // Enhanced sign up function
-  const signUp = useCallback(async (email, password, additionalData = {}) => {
-    try {
-      setAuthError(null);
-      
-      // Check if username is taken (if provided)
-      if (additionalData.username) {
-        const isUsernameTaken = await checkUsernameAvailability(additionalData.username);
-        if (isUsernameTaken) {
-          throw new Error('Username is already taken');
-        }
-      }
-      
-      // Create user account
-      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Update display name if provided
-      if (additionalData.displayName) {
-        await updateProfile(firebaseUser, {
-          displayName: additionalData.displayName
-        });
-      }
-      
-      // Create user profile with additional data
-      const profile = await fetchOrCreateUserProfile(firebaseUser, additionalData);
-      setUserProfile(profile);
-      
-      // Reserve username if provided
-      if (additionalData.username) {
-        await reserveUsername(additionalData.username, firebaseUser.uid);
-      }
-      
-      toast.success('Account created successfully!');
-      return firebaseUser;
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'sign up');
-      setAuthError(errorMessage);
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, []);
-
-  // Enhanced sign in function
-  const signIn = useCallback(async (email, password) => {
-    try {
-      setAuthError(null);
-      
-      const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Update login streak
-      await updateLoginStreak(firebaseUser.uid);
-      
-      toast.success('Welcome back!');
-      return firebaseUser;
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'sign in');
-      setAuthError(errorMessage);
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, []);
-
-  // Enhanced logout function
-  const logout = useCallback(async () => {
-    try {
-      // Track logout event
-      if (user) {
-        firebaseUtils.trackEvent('user_logout', {
-          user_id: user.uid,
-          session_duration: Date.now() - (userProfile?.lastLogin?.toMillis() || 0)
-        });
-      }
-      
-      await signOut(auth);
-      setUser(null);
-      setUserProfile(null);
-      setAuthError(null);
-      
-      toast.success('Signed out successfully');
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'logout');
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, [user, userProfile]);
-
-  // Password reset function
-  const resetPassword = useCallback(async (email) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-      toast.success('Password reset email sent');
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'password reset');
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, []);
-
-  // Update user profile
-  const updateUserProfile = useCallback(async (updates) => {
-    if (!user) throw new Error('No user logged in');
-    
-    try {
-      const profileRef = doc(db, `artifacts/${dataNamespace}/users/${user.uid}/profile/data`);
-      const updateData = {
-        ...updates,
-        lastActive: serverTimestamp()
-      };
-      
-      await updateDoc(profileRef, updateData);
-      
-      // Update local state
-      setUserProfile(prev => ({
-        ...prev,
-        ...updates
-      }));
-      
-      toast.success('Profile updated successfully');
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'profile update');
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, [user]);
-
-  // Change password
-  const changePassword = useCallback(async (currentPassword, newPassword) => {
-    if (!user) throw new Error('No user logged in');
-    
-    try {
-      // Re-authenticate user
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      
-      // Update password
-      await updatePassword(user, newPassword);
-      
-      toast.success('Password updated successfully');
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'password change');
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, [user]);
-
-  // Delete account
-  const deleteAccount = useCallback(async (password) => {
-    if (!user) throw new Error('No user logged in');
-    
-    try {
-      // Re-authenticate user
-      const credential = EmailAuthProvider.credential(user.email, password);
-      await reauthenticateWithCredential(user, credential);
-      
-      // Delete user data (implement as needed)
-      // await deleteUserData(user.uid);
-      
-      // Delete user account
-      await deleteUser(user);
-      
-      setUser(null);
-      setUserProfile(null);
-      
-      toast.success('Account deleted successfully');
-      
-    } catch (error) {
-      const errorMessage = firebaseUtils.handleFirebaseError(error, 'account deletion');
-      toast.error(errorMessage);
-      throw error;
-    }
-  }, [user]);
-
-  // Check username availability
-  const checkUsernameAvailability = async (username) => {
-    try {
-      const usernameRef = doc(db, 'usernames', username.toLowerCase());
-      const usernameSnap = await getDoc(usernameRef);
-      return usernameSnap.exists();
-    } catch (error) {
-      console.error('Error checking username:', error);
-      return true; // Assume taken on error
-    }
-  };
-
-  // Reserve username
-  const reserveUsername = async (username, uid) => {
-    try {
-      const usernameRef = doc(db, 'usernames', username.toLowerCase());
-      await setDoc(usernameRef, {
-        uid,
-        username,
-        createdAt: serverTimestamp()
-      });
-    } catch (error) {
-      console.error('Error reserving username:', error);
-    }
-  };
-
-  // Update login streak
-  const updateLoginStreak = async (uid) => {
-    try {
-      const profileRef = doc(db, `artifacts/${dataNamespace}/users/${uid}/profile/data`);
-      const profileSnap = await getDoc(profileRef);
-      
-      if (profileSnap.exists()) {
-        const profile = profileSnap.data();
-        const lastLogin = profile.lastLogin?.toDate();
-        const now = new Date();
-        const oneDayMs = 24 * 60 * 60 * 1000;
-        
-        let newStreak = 1;
-        
-        if (lastLogin) {
-          const daysSinceLastLogin = Math.floor((now - lastLogin) / oneDayMs);
-          
-          if (daysSinceLastLogin === 1) {
-            // Consecutive day
-            newStreak = (profile.stats?.loginStreak || 0) + 1;
-          } else if (daysSinceLastLogin === 0) {
-            // Same day
-            newStreak = profile.stats?.loginStreak || 1;
-          }
-          // daysSinceLastLogin > 1 means streak is broken, reset to 1
-        }
-        
-        const longestStreak = Math.max(
-          newStreak, 
-          profile.stats?.longestStreak || 0
-        );
-        
-        await updateDoc(profileRef, {
-          'stats.loginStreak': newStreak,
-          'stats.longestStreak': longestStreak
-        });
-      }
-    } catch (error) {
-      console.error('Error updating login streak:', error);
-    }
-  };
-
-  // Refresh user profile
-  const refreshProfile = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const profile = await fetchOrCreateUserProfile(user);
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-    }
-  }, [user]);
-
-  const contextValue = {
-    // User state
-    user,
+  const value = {
+    currentUser,
     userProfile,
-    isLoadingAuth,
-    authError,
-    isOnline,
-    
-    // Authentication functions
-    signUp,
-    signIn,
+    isAdmin,
+    loading,
+    signup,
+    login,
     logout,
     resetPassword,
-    
-    // Profile management
     updateUserProfile,
-    refreshProfile,
-    
-    // Account management
-    changePassword,
-    deleteAccount,
-    
-    // Utility functions
-    checkUsernameAvailability,
-    
-    // Computed properties
-    isAuthenticated: !!user,
-    isProfileComplete: !!(userProfile?.displayName && userProfile?.hasCompletedOnboarding)
+    signInWithGoogle,
+    checkAdminStatus
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
-
-// Custom hook to use auth context
-export function useAuth() {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
-}
-
-// Export context for advanced usage
-export { AuthContext };

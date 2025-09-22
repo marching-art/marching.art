@@ -1,8 +1,5 @@
-// src/App.js - Ultimate Fantasy Drum Corps Game Application
-// No framer-motion dependencies - using CSS animations instead
-
-import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// src/App.js - Fixed Ultimate Fantasy Drum Corps Game Application
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useUserStore } from './store/userStore';
 import { Toaster } from 'react-hot-toast';
@@ -52,37 +49,41 @@ class ErrorBoundary extends React.Component {
 }
 
 // Header Component
-const Header = ({ user, isAdmin, onAuthClick }) => (
-  <header className="app-header">
-    <div className="header-content">
-      <div className="logo">
-        <h1>Ultimate Fantasy Drum Corps</h1>
-      </div>
-      <nav className="nav-menu">
-        <a href="#dashboard">Dashboard</a>
-        <a href="#lineup">Lineup</a>
-        <a href="#trading">Trading</a>
-        <a href="#leaderboard">Leaderboard</a>
-        {isAdmin && <a href="#admin" className="admin-link">Admin</a>}
-      </nav>
-      <div className="auth-section">
-        {user ? (
-          <div className="user-info">
-            <span>Welcome, {user.displayName || user.email}</span>
-            {isAdmin && <span className="admin-badge">ADMIN</span>}
-            <button onClick={() => useAuth().logout()} className="logout-btn">
-              Logout
+const Header = ({ user, isAdmin, onAuthClick }) => {
+  const auth = useAuth();
+  
+  return (
+    <header className="app-header">
+      <div className="header-content">
+        <div className="logo">
+          <h1>Ultimate Fantasy Drum Corps</h1>
+        </div>
+        <nav className="nav-menu">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#lineup">Lineup</a>
+          <a href="#trading">Trading</a>
+          <a href="#leaderboard">Leaderboard</a>
+          {isAdmin && <a href="#admin" className="admin-link">Admin</a>}
+        </nav>
+        <div className="auth-section">
+          {user ? (
+            <div className="user-info">
+              <span>Welcome, {user.displayName || user.email}</span>
+              {isAdmin && <span className="admin-badge">ADMIN</span>}
+              <button onClick={() => auth.logout()} className="logout-btn">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button onClick={onAuthClick} className="auth-btn">
+              Sign In
             </button>
-          </div>
-        ) : (
-          <button onClick={onAuthClick} className="auth-btn">
-            Sign In
-          </button>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 // Authentication Modal with CSS transitions
 const AuthModal = ({ isOpen, onClose }) => {
@@ -91,7 +92,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signup, signInWithGoogle } = useAuth();
+  const auth = useAuth();
 
   if (!isOpen) return null;
 
@@ -101,13 +102,18 @@ const AuthModal = ({ isOpen, onClose }) => {
 
     try {
       if (isLogin) {
-        await login(email, password);
+        await auth.login(email, password);
       } else {
-        await signup(email, password, { displayName });
+        await auth.signup(email, password, { displayName });
       }
       onClose();
+      // Reset form
+      setEmail('');
+      setPassword('');
+      setDisplayName('');
     } catch (error) {
       console.error('Auth error:', error);
+      // Error is already handled in auth context with toast
     } finally {
       setLoading(false);
     }
@@ -116,10 +122,11 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await signInWithGoogle();
+      await auth.signInWithGoogle();
       onClose();
     } catch (error) {
       console.error('Google sign in error:', error);
+      // Error is already handled in auth context with toast
     } finally {
       setLoading(false);
     }
@@ -128,7 +135,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   return (
     <div className="modal-overlay fade-in" onClick={onClose}>
       <div 
-        className="auth-modal slide-up"
+        className="auth-modal scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
@@ -141,6 +148,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
+              disabled={loading}
             />
           )}
           <input
@@ -149,6 +157,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading}
           />
           <input
             type="password"
@@ -156,6 +165,8 @@ const AuthModal = ({ isOpen, onClose }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
+            minLength={6}
           />
           
           <button type="submit" disabled={loading} className="auth-submit">
@@ -165,8 +176,13 @@ const AuthModal = ({ isOpen, onClose }) => {
 
         <div className="auth-divider">or</div>
 
-        <button onClick={handleGoogleSignIn} disabled={loading} className="google-btn">
-          Sign in with Google
+        <button 
+          onClick={handleGoogleSignIn} 
+          disabled={loading} 
+          className="google-btn"
+          type="button"
+        >
+          {loading ? 'Loading...' : 'Sign in with Google'}
         </button>
 
         <div className="auth-footer">
@@ -174,12 +190,15 @@ const AuthModal = ({ isOpen, onClose }) => {
             type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="toggle-auth"
+            disabled={loading}
           >
             {isLogin ? 'Need an account? Sign up' : 'Have an account? Sign in'}
           </button>
         </div>
 
-        <button onClick={onClose} className="close-btn">×</button>
+        <button onClick={onClose} className="close-btn" disabled={loading}>
+          ×
+        </button>
       </div>
     </div>
   );
@@ -307,7 +326,7 @@ const AppContent = () => {
         setCurrentView('dashboard');
       }
     }
-  }, [currentUser, initializeUser]);
+  }, [currentUser, initializeUser, currentView]);
 
   if (loading) {
     return <LoadingScreen message="Loading Ultimate Fantasy Drum Corps..." />;
