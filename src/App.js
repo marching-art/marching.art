@@ -1,15 +1,14 @@
 // src/App.js - Ultimate Fantasy Drum Corps Game Application
-// Complete functional version with all features
+// No framer-motion dependencies - using CSS animations instead
 
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useUserStore } from './store/userStore';
 import { Toaster } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
-// Loading component
+// Loading component with CSS animation
 const LoadingScreen = ({ message = 'Loading...' }) => (
   <div className="loading-screen">
     <div className="loading-content">
@@ -85,7 +84,7 @@ const Header = ({ user, isAdmin, onAuthClick }) => (
   </header>
 );
 
-// Authentication Modal
+// Authentication Modal with CSS transitions
 const AuthModal = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -127,13 +126,10 @@ const AuthModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <motion.div 
-        className="auth-modal"
+    <div className="modal-overlay fade-in" onClick={onClose}>
+      <div 
+        className="auth-modal slide-up"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
       >
         <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
         
@@ -184,7 +180,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         </div>
 
         <button onClick={onClose} className="close-btn">×</button>
-      </motion.div>
+      </div>
     </div>
   );
 };
@@ -206,25 +202,25 @@ const Dashboard = ({ user, isAdmin }) => {
       </div>
 
       <div className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card slide-in-left">
           <h3>Level</h3>
           <div className="stat-value">{level}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card slide-in-down" style={{animationDelay: '0.1s'}}>
           <h3>Experience</h3>
           <div className="stat-value">{experience.toLocaleString()}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card slide-in-down" style={{animationDelay: '0.2s'}}>
           <h3>Total Score</h3>
           <div className="stat-value">{totalScore.toLocaleString()}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card slide-in-right" style={{animationDelay: '0.3s'}}>
           <h3>Achievements</h3>
           <div className="stat-value">{achievements.length}</div>
         </div>
       </div>
 
-      <div className="recent-activity">
+      <div className="recent-activity slide-in-up">
         <h3>Recent Activity</h3>
         <div className="activity-list">
           <div className="activity-item">Welcome to Ultimate Fantasy Drum Corps!</div>
@@ -244,27 +240,27 @@ const Dashboard = ({ user, isAdmin }) => {
 const Home = ({ onGetStarted }) => (
   <div className="home">
     <div className="hero-section">
-      <h1>Ultimate Fantasy Drum Corps Game</h1>
-      <p className="hero-subtitle">
+      <h1 className="fade-in-up">Ultimate Fantasy Drum Corps Game</h1>
+      <p className="hero-subtitle fade-in-up" style={{animationDelay: '0.2s'}}>
         Create your dream drum corps lineup with real DCI Hall of Fame staff
       </p>
       
       <div className="features">
-        <div className="feature">
+        <div className="feature slide-in-left" style={{animationDelay: '0.4s'}}>
           <h3>Authentic DCI Integration</h3>
           <p>Real Hall of Fame staff with accurate specialties</p>
         </div>
-        <div className="feature">
+        <div className="feature slide-in-up" style={{animationDelay: '0.6s'}}>
           <h3>Dynamic Trading System</h3>
           <p>Full marketplace with supply/demand economics</p>
         </div>
-        <div className="feature">
+        <div className="feature slide-in-right" style={{animationDelay: '0.8s'}}>
           <h3>Class Progression</h3>
           <p>A Class → Open Class → World Class advancement</p>
         </div>
       </div>
 
-      <button onClick={onGetStarted} className="cta-button">
+      <button onClick={onGetStarted} className="cta-button pulse" style={{animationDelay: '1s'}}>
         Get Started
       </button>
     </div>
@@ -278,7 +274,7 @@ const AdminPanel = ({ user }) => {
   }
 
   return (
-    <div className="admin-panel">
+    <div className="admin-panel slide-in-up">
       <h2>Admin Panel</h2>
       <div className="admin-info">
         <p>Admin Account: {user.uid}</p>

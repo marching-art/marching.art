@@ -1,4 +1,4 @@
-/* src/App.css - Complete Application Styles */
+/* src/App.css - Complete Application Styles with CSS Animations */
 
 /* Reset and base styles */
 * {
@@ -24,6 +24,121 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* Animation Keyframes */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideInLeft {
+  from { 
+    opacity: 0; 
+    transform: translateX(-30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0; 
+    transform: translateX(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes slideInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideInDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.6s ease-out forwards;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.6s ease-out forwards;
+}
+
+.slide-in-down {
+  animation: slideInDown 0.6s ease-out forwards;
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
 }
 
 /* Loading Screen */
@@ -55,11 +170,6 @@ body {
   margin: 0 auto 20px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .loading-subtitle {
   font-size: 0.9rem;
   opacity: 0.8;
@@ -83,6 +193,11 @@ body {
   border-radius: 4px;
   cursor: pointer;
   margin-top: 20px;
+  transition: background 0.2s;
+}
+
+.error-boundary button:hover {
+  background: #0056b3;
 }
 
 /* Header */
@@ -223,6 +338,12 @@ body {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 }
 
 .feature h3 {
@@ -302,6 +423,14 @@ body {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
 }
 
 .stat-card h3 {
@@ -323,6 +452,8 @@ body {
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  opacity: 0;
+  animation-fill-mode: forwards;
 }
 
 .recent-activity h3 {
@@ -341,6 +472,11 @@ body {
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 4px solid #667eea;
+  transition: transform 0.2s;
+}
+
+.activity-item:hover {
+  transform: translateX(5px);
 }
 
 .admin-activity {
@@ -354,6 +490,8 @@ body {
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  opacity: 0;
+  animation-fill-mode: forwards;
 }
 
 .admin-panel h2 {
@@ -388,11 +526,12 @@ body {
   margin-right: 10px;
   margin-bottom: 10px;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .admin-btn:hover {
   background: #0056b3;
+  transform: translateY(-1px);
 }
 
 /* Auth Modal */
@@ -407,6 +546,7 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .auth-modal {
@@ -417,6 +557,7 @@ body {
   width: 90%;
   max-width: 400px;
   position: relative;
+  animation: scaleIn 0.3s ease-out;
 }
 
 .auth-modal h2 {
@@ -432,6 +573,12 @@ body {
   border-radius: 6px;
   margin-bottom: 15px;
   font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.auth-modal input:focus {
+  border-color: #667eea;
+  outline: none;
 }
 
 .auth-submit, .google-btn {
@@ -443,7 +590,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 15px;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .auth-submit {
@@ -453,6 +600,7 @@ body {
 
 .auth-submit:hover:not(:disabled) {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .google-btn {
@@ -462,11 +610,13 @@ body {
 
 .google-btn:hover:not(:disabled) {
   background: #c23321;
+  transform: translateY(-1px);
 }
 
 .auth-submit:disabled, .google-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .auth-divider {
@@ -505,6 +655,11 @@ body {
   color: #667eea;
   cursor: pointer;
   text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.toggle-auth:hover {
+  color: #5a6fd8;
 }
 
 .close-btn {
@@ -516,6 +671,7 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   color: #999;
+  transition: color 0.2s;
 }
 
 .close-btn:hover {
@@ -553,6 +709,7 @@ body {
 
 .bottom-nav button:hover {
   background: rgba(102, 126, 234, 0.05);
+  transform: translateY(-1px);
 }
 
 /* Access Denied */
@@ -604,4 +761,38 @@ body {
     align-items: flex-start;
     gap: 15px;
   }
+}
+
+/* Enhanced Interactive Elements */
+.interactive-element {
+  transition: all 0.2s ease;
+}
+
+.interactive-element:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Utility Animation Classes */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-out;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }

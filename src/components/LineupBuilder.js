@@ -1,6 +1,6 @@
 // components/LineupBuilder.js
-// Complete Enhanced LineupBuilder for Fantasy Drum Corps Game
-// Optimized for 10,000+ users with ultimate efficiency and premium features
+// Complete LineupBuilder for Fantasy Drum Corps Game
+// No framer-motion - using CSS animations instead
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
@@ -8,7 +8,6 @@ import { db, dataNamespace } from '../firebase';
 import { useUserStore } from '../store/userStore';
 import { CORPS_CLASSES } from '../utils/profileCompatibility';
 import { DCI_HALL_OF_FAME_STAFF, calculateStaffMultiplier } from '../data/dciHallOfFameStaff';
-import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './ui/Icon';
 import toast from 'react-hot-toast';
 
@@ -23,10 +22,6 @@ const LineupBuilder = ({
 }) => {
     const { user, loggedInProfile, updateProfile, updateUserExperience } = useUserStore();
     
-    // ===========================
-    // CORE STATE MANAGEMENT
-    // ===========================
-    
     // Core lineup state
     const [lineup, setLineup] = useState({});
     const [staffLineup, setStaffLineup] = useState({});
@@ -35,23 +30,17 @@ const LineupBuilder = ({
     // UI state
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
-    const [activeTab, setActiveTab] = useState('corps'); // 'corps' or 'staff'
+    const [activeTab, setActiveTab] = useState('corps');
     const [selectedCaption, setSelectedCaption] = useState('GE1');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('points');
-    const [showAdvanced, setShowAdvanced] = useState(false);
     const [showStaffPreview, setShowStaffPreview] = useState(false);
     const [showAIRecommendations, setShowAIRecommendations] = useState(false);
 
     // Premium features state
     const [recommendations, setRecommendations] = useState({});
-    const [analyticsData, setAnalyticsData] = useState(null);
     const [historicalMode, setHistoricalMode] = useState(false);
 
-    // ===========================
-    // COMPUTED VALUES
-    // ===========================
-    
     const classDetails = CORPS_CLASSES[corpsClass];
     const pointCap = classDetails?.pointCap || 150;
     const isNewCorps = initialData === null;
@@ -85,7 +74,7 @@ const LineupBuilder = ({
     }, [lineup]);
 
     const isStaffComplete = useMemo(() => {
-        return Object.keys(staffLineup).length >= 4; // Minimum 4 staff for bonuses
+        return Object.keys(staffLineup).length >= 4;
     }, [staffLineup]);
 
     // Staff bonus calculations
@@ -130,7 +119,6 @@ const LineupBuilder = ({
             return searchMatch && withinBudget && points > 0;
         });
 
-        // Sort filtered results
         return filtered.sort((a, b) => {
             switch (sortBy) {
                 case 'points':
@@ -145,10 +133,6 @@ const LineupBuilder = ({
         });
     }, [corpsData, searchTerm, budgetRemaining, lineup, selectedCaption, sortBy]);
 
-    // ===========================
-    // LIFECYCLE EFFECTS
-    // ===========================
-
     // Initialize component with existing data
     useEffect(() => {
         if (initialData) {
@@ -158,22 +142,10 @@ const LineupBuilder = ({
         }
     }, [initialData]);
 
-    // Load AI recommendations for premium users
-    useEffect(() => {
-        if (premiumFeatures.aiRecommendations && lineup && Object.keys(lineup).length > 0) {
-            generateAIRecommendations();
-        }
-    }, [lineup, premiumFeatures.aiRecommendations]);
-
-    // ===========================
-    // EVENT HANDLERS
-    // ===========================
-
     const handleCorpsSelection = useCallback((corps, caption) => {
         const uniqueValue = `${corps.corpsName}|${corps.points || corps.totalScore}|${corps.sourceYear}`;
         
         setLineup(prev => {
-            // Remove the corps from other captions if already selected
             const newLineup = { ...prev };
             Object.keys(newLineup).forEach(key => {
                 if (newLineup[key] === uniqueValue && key !== caption) {
@@ -181,7 +153,6 @@ const LineupBuilder = ({
                 }
             });
             
-            // Add to selected caption
             newLineup[caption] = uniqueValue;
             return newLineup;
         });
@@ -195,10 +166,7 @@ const LineupBuilder = ({
             }
         }
 
-        // Clear message on successful selection
         setMessage('');
-        
-        // Show success feedback
         toast.success(`${corps.corpsName} added to ${caption}!`, { duration: 2000 });
     }, [lineup]);
 
@@ -230,78 +198,6 @@ const LineupBuilder = ({
         
         toast.success('Staff member removed', { duration: 2000 });
     }, []);
-
-    // AI-powered recommendations
-    const generateAIRecommendations = useCallback(async () => {
-        if (!premiumFeatures.aiRecommendations) return;
-
-        try {
-            // Simple AI recommendation logic
-            const emptyPositions = CAPTIONS.filter(caption => !lineup[caption]);
-            const newRecommendations = {};
-
-            emptyPositions.forEach(caption => {
-                // Find best value corps for remaining budget
-                const suitableCorps = filteredCorpsData
-                    .filter(corps => (corps.points || corps.totalScore) <= budgetRemaining)
-                    .slice(0, 3);
-
-                newRecommendations[caption] = suitableCorps;
-            });
-
-            setRecommendations(newRecommendations);
-        } catch (error) {
-            console.error('Error generating AI recommendations:', error);
-        }
-    }, [premiumFeatures.aiRecommendations, lineup, filteredCorpsData, budgetRemaining]);
-
-    // Auto-fill lineup optimization
-    const handleAutoOptimization = useCallback(async () => {
-        if (!premiumFeatures.autoOptimization) {
-            toast.error('Auto-optimization requires Level 25+');
-            return;
-        }
-
-        if (!window.confirm('Auto-optimize your lineup? This will replace current selections to maximize points within budget.')) {
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            // Advanced optimization algorithm
-            const optimizedLineup = {};
-            let remainingBudget = pointCap;
-            const availableCorps = [...corpsData].sort((a, b) => 
-                ((b.points || b.totalScore) / Math.max(1, b.points || b.totalScore)) - 
-                ((a.points || a.totalScore) / Math.max(1, a.points || a.totalScore))
-            );
-
-            // Greedy algorithm for optimization
-            CAPTIONS.forEach(caption => {
-                const bestCorps = availableCorps.find(corps => {
-                    const points = corps.points || corps.totalScore || 0;
-                    const alreadyUsed = Object.values(optimizedLineup).some(selection => 
-                        selection && selection.includes(corps.corpsName)
-                    );
-                    return !alreadyUsed && points <= remainingBudget && points > 0;
-                });
-
-                if (bestCorps) {
-                    const uniqueValue = `${bestCorps.corpsName}|${bestCorps.points || bestCorps.totalScore}|${bestCorps.sourceYear}`;
-                    optimizedLineup[caption] = uniqueValue;
-                    remainingBudget -= (bestCorps.points || bestCorps.totalScore || 0);
-                }
-            });
-
-            setLineup(optimizedLineup);
-            toast.success('🤖 Lineup optimized by AI!');
-        } catch (error) {
-            console.error('Auto-optimization error:', error);
-            toast.error('Optimization failed. Please try manually.');
-        } finally {
-            setIsLoading(false);
-        }
-    }, [premiumFeatures.autoOptimization, corpsData, pointCap]);
 
     // Auto-fill staff recommendations
     const handleAutoFillStaff = useCallback(() => {
@@ -335,7 +231,7 @@ const LineupBuilder = ({
         toast.success(`Auto-filled ${emptyPositions.length} staff positions!`);
     }, [staffLineup]);
 
-    // Save lineup with enhanced validation
+    // Save lineup with validation
     const handleSaveLineup = useCallback(async () => {
         if (!user) {
             toast.error('Please log in to save your lineup.');
@@ -371,7 +267,6 @@ const LineupBuilder = ({
                     staffBonusesActive: isStaffComplete,
                     premiumFeaturesUsed: {
                         aiRecommendations: showAIRecommendations,
-                        autoOptimization: false,
                         historicalMode: historicalMode
                     }
                 }
@@ -379,7 +274,6 @@ const LineupBuilder = ({
 
             await updateDoc(profileRef, updateData);
 
-            // Award experience for lineup completion
             let experienceAwarded = 0;
             if (isNewCorps) {
                 experienceAwarded = isStaffComplete ? 300 : 200;
@@ -402,23 +296,15 @@ const LineupBuilder = ({
         }
     }, [user, totalPoints, pointCap, isLineupComplete, corpsName, classDetails, lineup, staffLineup, isStaffComplete, initialData, corpsClass, updateUserExperience, onSave, isNewCorps, showAIRecommendations, historicalMode]);
 
-    // ===========================
-    // RENDER HELPERS
-    // ===========================
-
     const tabs = [
         { id: 'corps', label: 'Corps Selection', icon: 'music', count: Object.keys(lineup).length },
         { id: 'staff', label: 'Staff Selection', icon: 'users', count: Object.keys(staffLineup).length }
     ];
 
-    // ===========================
-    // MAIN RENDER
-    // ===========================
-
     return (
         <div className="space-y-6">
             {/* Header Section with Budget and Progress */}
-            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 border border-accent dark:border-accent-dark">
+            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 border border-accent dark:border-accent-dark slide-in-up">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <div>
                         <input
@@ -479,7 +365,7 @@ const LineupBuilder = ({
 
                 {/* Premium Features Indicator */}
                 {userLevel >= 5 && (
-                    <div className="flex flex-wrap items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 rounded-theme border border-yellow-500/20">
+                    <div className="flex flex-wrap items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 rounded-theme border border-yellow-500/20 fade-in">
                         <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                             <Icon name="star" size={16} />
                             <span className="font-medium">Premium Features Active</span>
@@ -495,15 +381,6 @@ const LineupBuilder = ({
                                     }`}
                                 >
                                     🤖 AI Tips
-                                </button>
-                            )}
-                            {premiumFeatures.autoOptimization && (
-                                <button
-                                    onClick={handleAutoOptimization}
-                                    disabled={isLoading}
-                                    className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/30 transition-colors disabled:opacity-50"
-                                >
-                                    ⚡ Auto-Optimize
                                 </button>
                             )}
                             {premiumFeatures.historicalSimulation && (
@@ -541,34 +418,27 @@ const LineupBuilder = ({
                 )}
 
                 {/* Staff Bonus Preview */}
-                <AnimatePresence>
-                    {showStaffPreview && isStaffComplete && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2"
-                        >
-                            {CAPTIONS.map(caption => (
-                                <div key={caption} className="text-center p-2 bg-background dark:bg-background-dark rounded-theme">
-                                    <div className="text-xs font-semibold text-text-primary dark:text-text-primary-dark">
-                                        {caption}
-                                    </div>
-                                    <div className={`text-sm font-bold ${
-                                        staffBonusPreview[caption]?.percentBonus >= 0 ? 'text-green-500' : 'text-red-500'
-                                    }`}>
-                                        {staffBonusPreview[caption]?.percentBonus >= 0 ? '+' : ''}
-                                        {staffBonusPreview[caption]?.percentBonus || '0.0'}%
-                                    </div>
+                {showStaffPreview && isStaffComplete && (
+                    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 fade-in">
+                        {CAPTIONS.map(caption => (
+                            <div key={caption} className="text-center p-2 bg-background dark:bg-background-dark rounded-theme">
+                                <div className="text-xs font-semibold text-text-primary dark:text-text-primary-dark">
+                                    {caption}
                                 </div>
-                            ))}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                <div className={`text-sm font-bold ${
+                                    staffBonusPreview[caption]?.percentBonus >= 0 ? 'text-green-500' : 'text-red-500'
+                                }`}>
+                                    {staffBonusPreview[caption]?.percentBonus >= 0 ? '+' : ''}
+                                    {staffBonusPreview[caption]?.percentBonus || '0.0'}%
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 slide-in-left">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -595,65 +465,49 @@ const LineupBuilder = ({
             </div>
 
             {/* Main Content */}
-            <AnimatePresence mode="wait">
-                {activeTab === 'corps' ? (
-                    <motion.div
-                        key="corps"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <CorpsLineupBuilder
-                            lineup={lineup}
-                            selectedCaption={selectedCaption}
-                            setSelectedCaption={setSelectedCaption}
-                            filteredCorpsData={filteredCorpsData}
-                            searchTerm={searchTerm}
-                            setSearchTerm={setSearchTerm}
-                            sortBy={sortBy}
-                            setSortBy={setSortBy}
-                            onCorpsSelection={handleCorpsSelection}
-                            onRemoveCorps={removeCorpsFromLineup}
-                            budgetRemaining={budgetRemaining}
-                            pointCap={pointCap}
-                            recommendations={recommendations}
-                            showAIRecommendations={showAIRecommendations}
-                            historicalMode={historicalMode}
-                        />
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="staff"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <StaffLineupBuilder
-                            staffLineup={staffLineup}
-                            onStaffSelection={handleStaffSelection}
-                            onRemoveStaff={removeStaffFromLineup}
-                            onAutoFill={handleAutoFillStaff}
-                            premiumFeatures={premiumFeatures}
-                        />
-                    </motion.div>
+            <div className={`transition-opacity duration-300 ${activeTab === 'corps' ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'}`}>
+                {activeTab === 'corps' && (
+                    <CorpsLineupBuilder
+                        lineup={lineup}
+                        selectedCaption={selectedCaption}
+                        setSelectedCaption={setSelectedCaption}
+                        filteredCorpsData={filteredCorpsData}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
+                        onCorpsSelection={handleCorpsSelection}
+                        onRemoveCorps={removeCorpsFromLineup}
+                        budgetRemaining={budgetRemaining}
+                        pointCap={pointCap}
+                        recommendations={recommendations}
+                        showAIRecommendations={showAIRecommendations}
+                        historicalMode={historicalMode}
+                    />
                 )}
-            </AnimatePresence>
+            </div>
+
+            <div className={`transition-opacity duration-300 ${activeTab === 'staff' ? 'opacity-100' : 'opacity-0 pointer-events-none absolute'}`}>
+                {activeTab === 'staff' && (
+                    <StaffLineupBuilder
+                        staffLineup={staffLineup}
+                        onStaffSelection={handleStaffSelection}
+                        onRemoveStaff={removeStaffFromLineup}
+                        onAutoFill={handleAutoFillStaff}
+                        premiumFeatures={premiumFeatures}
+                    />
+                )}
+            </div>
 
             {/* Error Message */}
             {message && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-4 rounded-theme"
-                >
+                <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-4 rounded-theme fade-in">
                     {message}
-                </motion.div>
+                </div>
             )}
 
             {/* Action Buttons */}
-            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 border border-accent dark:border-accent-dark">
+            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 border border-accent dark:border-accent-dark slide-in-up">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -710,10 +564,7 @@ const LineupBuilder = ({
     );
 };
 
-// ===========================
-// CORPS LINEUP BUILDER COMPONENT
-// ===========================
-
+// Corps Lineup Builder Component
 const CorpsLineupBuilder = ({
     lineup,
     selectedCaption,
@@ -732,7 +583,7 @@ const CorpsLineupBuilder = ({
     historicalMode
 }) => {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 slide-in-right">
             {/* Search and Filters */}
             <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 border border-accent dark:border-accent-dark">
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -759,11 +610,7 @@ const CorpsLineupBuilder = ({
 
             {/* AI Recommendations */}
             {showAIRecommendations && recommendations[selectedCaption] && (
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-theme p-4 border border-blue-500/20"
-                >
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-theme p-4 border border-blue-500/20 fade-in">
                     <div className="flex items-center gap-2 mb-3">
                         <Icon name="brain" size={16} />
                         <span className="font-semibold text-text-primary dark:text-text-primary-dark">
@@ -784,7 +631,7 @@ const CorpsLineupBuilder = ({
                             </button>
                         ))}
                     </div>
-                </motion.div>
+                </div>
             )}
 
             {/* Caption Grid and Corps Selection */}
@@ -902,10 +749,7 @@ const CorpsLineupBuilder = ({
     );
 };
 
-// ===========================
-// STAFF LINEUP BUILDER COMPONENT
-// ===========================
-
+// Staff Lineup Builder Component
 const StaffLineupBuilder = ({
     staffLineup,
     onStaffSelection,
@@ -925,7 +769,8 @@ const StaffLineupBuilder = ({
     ];
 
     const filteredStaff = useMemo(() => {
-        let filtered = DCI_HALL_OF_FAME_STAFF.filter(staff => {
+        const allStaff = Object.values(DCI_HALL_OF_FAME_STAFF).flat();
+        let filtered = allStaff.filter(staff => {
             const searchMatch = !searchTerm || 
                 staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 staff.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -951,7 +796,7 @@ const StaffLineupBuilder = ({
     }, [searchTerm, staffLineup, sortBy]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 slide-in-left">
             {/* Staff Selection Header */}
             <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 border border-accent dark:border-accent-dark">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -1035,7 +880,7 @@ const StaffLineupBuilder = ({
                                 </div>
                                 {staffLineup[position.id] && (
                                     <div className="text-xs mt-1 opacity-75">
-                                        {DCI_HALL_OF_FAME_STAFF.find(s => s.id === staffLineup[position.id])?.name}
+                                        {filteredStaff.find(s => s.id === staffLineup[position.id])?.name}
                                     </div>
                                 )}
                             </button>
