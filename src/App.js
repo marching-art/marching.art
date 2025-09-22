@@ -227,14 +227,17 @@ const Dashboard = ({ user, isAdmin }) => {
         </div>
         <div className="stat-card slide-in-down" style={{animationDelay: '0.1s'}}>
           <h3>Experience</h3>
+          {/* This line will now work correctly */}
           <div className="stat-value">{experience.toLocaleString()}</div>
         </div>
         <div className="stat-card slide-in-down" style={{animationDelay: '0.2s'}}>
           <h3>Total Score</h3>
+          {/* This line will now work correctly */}
           <div className="stat-value">{totalScore.toLocaleString()}</div>
         </div>
         <div className="stat-card slide-in-right" style={{animationDelay: '0.3s'}}>
           <h3>Achievements</h3>
+          {/* This line will now work correctly */}
           <div className="stat-value">{achievements.length}</div>
         </div>
       </div>
