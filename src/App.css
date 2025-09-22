@@ -69,7 +69,7 @@
 
 /* Main Content */
 .main-content {
-  @apply flex-1 mt-16 mb-15 p-5 max-w-6xl mx-auto w-full;
+  @apply flex-1 mt-16 mb-16 p-5 max-w-6xl mx-auto w-full;
 }
 
 /* Home Page */
@@ -258,7 +258,7 @@
 
 /* Bottom Navigation */
 .bottom-nav {
-  @apply fixed bottom-0 left-0 right-0 bg-surface border-t border-accent flex h-15 z-40;
+  @apply fixed bottom-0 left-0 right-0 bg-surface border-t border-accent flex h-16 z-40;
 }
 
 .bottom-nav button {
@@ -271,7 +271,7 @@
 
 /* Access Denied */
 .access-denied {
-  @apply text-center py-15 px-5 text-text-secondary text-lg;
+  @apply text-center py-16 px-5 text-text-secondary text-lg;
 }
 
 /* Custom animations */
