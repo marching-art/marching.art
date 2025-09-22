@@ -33,7 +33,7 @@ const HowToPlayPage = lazy(() => import('./pages/HowToPlayPage'));
 const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow'));
 const AchievementsPage = lazy(() => import('./pages/AchievementsPage'));
 const TradingCenterPage = lazy(() => import('./pages/TradingCenterPage'));
-const EnhancedLineupBuilder = lazy(() => import('./components/EnhancedLineupBuilder'));
+const LineupBuilder = lazy(() => import('./components/LineupBuilder')); // FIXED: Using correct component name
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -46,92 +46,94 @@ const AppLoadingFallback = ({ message = 'Loading...', showProgress = false }) =>
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary dark:border-primary-dark mx-auto"></div>
         {showProgress && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary dark:text-primary-dark">⚡</span>
+            <span className="text-xs font-bold text-primary dark:text-primary-dark">
+              %
+            </span>
           </div>
         )}
       </div>
-      <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+      <p className="text-text-secondary dark:text-text-secondary-dark font-medium">
         {message}
-      </h3>
-      <p className="text-text-secondary dark:text-text-secondary-dark">
-        Building the ultimate fantasy drum corps experience...
       </p>
+      <div className="text-xs text-text-secondary dark:text-text-secondary-dark mt-2 opacity-60">
+        🎺 Preparing the ultimate drum corps experience...
+      </div>
     </div>
   </div>
 );
 
-// Page transition animations
-const pageVariants = {
-  initial: { opacity: 0, y: 20 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -20 }
+// Performance monitoring component
+const PerformanceTracker = () => {
+  useEffect(() => {
+    // Monitor core web vitals
+    if ('PerformanceObserver' in window) {
+      const observer = new PerformanceObserver((list) => {
+        list.getEntries().forEach((entry) => {
+          // Track key metrics for optimization
+          if (entry.entryType === 'navigation') {
+            console.debug('Page load time:', entry.loadEventEnd - entry.loadEventStart);
+          }
+        });
+      });
+      observer.observe({ entryTypes: ['navigation', 'paint'] });
+    }
+  }, []);
+  return null;
 };
 
-const pageTransition = {
-  type: 'tween',
-  ease: 'anticipate',
-  duration: 0.3
-};
+// Enhanced error fallback component
+const ErrorFallback = ({ error, resetErrorBoundary }) => (
+  <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-4">
+    <div className="text-center max-w-md">
+      <div className="text-6xl mb-4">🥁</div>
+      <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+        Something went off tempo!
+      </h1>
+      <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
+        Don't worry - even the best corps have bad rehearsals. Let's get back in sync.
+      </p>
+      <div className="space-y-4">
+        <button
+          onClick={resetErrorBoundary}
+          className="w-full bg-primary text-on-primary px-6 py-3 rounded-theme font-medium hover:bg-primary-hover transition-colors"
+        >
+          Try Again
+        </button>
+        <button
+          onClick={() => window.location.href = '/'}
+          className="w-full bg-surface dark:bg-surface-dark text-text-primary dark:text-text-primary-dark px-6 py-3 rounded-theme font-medium border border-accent dark:border-accent-dark hover:bg-accent/10 transition-colors"
+        >
+          Return to Home
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
-// Enhanced Error Boundary for the entire app
-class AppErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('App Error Boundary caught an error:', error, errorInfo);
-    
-    // Log error to analytics in production
-    if (process.env.NODE_ENV === 'production') {
-      // Could integrate with your analytics service here
-    }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
-          <div className="text-center max-w-md p-8">
-            <div className="text-6xl mb-4">🥁</div>
-            <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-              Oops! Something went wrong
-            </h1>
-            <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
-              Don't worry - even the best drum corps have off days! Please refresh the page to try again.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Main App Content Component
+// Main App component
 const AppContent = () => {
-  const { user, loggedInProfile, isLoadingAuth } = useUserStore();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { user, loggedInProfile, initializeUser, clearUser, isLoadingAuth } = useUserStore();
+  const [authModal, setAuthModal] = useState({ isOpen: false, mode: 'login' });
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const location = useLocation();
 
-  // Monitor online status
+  // Initialize authentication state
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
+      if (authUser) {
+        await initializeUser(authUser);
+      } else {
+        clearUser();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [initializeUser, clearUser]);
+
+  // Handle offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -142,37 +144,53 @@ const AppContent = () => {
     };
   }, []);
 
-  // Handle authentication modal
-  const openAuthModal = (mode = 'login') => {
-    setAuthMode(mode);
-    setShowAuthModal(true);
-  };
-
-  const closeAuthModal = () => {
-    setShowAuthModal(false);
-  };
-
-  // Handle user logout
+  // Enhanced logout with cleanup
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // The user store will automatically update via the auth state listener
+      clearUser();
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
-  // Show loading screen while authentication is being determined
+  // Auth modal management
+  const openAuthModal = (mode = 'login') => {
+    setAuthModal({ isOpen: true, mode });
+  };
+
+  const closeAuthModal = () => {
+    setAuthModal({ isOpen: false, mode: 'login' });
+  };
+
+  // Page transition animations
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 }
+  };
+
+  const pageTransition = {
+    type: 'tween',
+    ease: 'anticipate',
+    duration: 0.3
+  };
+
+  // Show loading screen during auth initialization
   if (isLoadingAuth) {
-    return <AppLoadingFallback message="Initializing game..." showProgress />;
+    return <LoadingScreen message="Initializing your drum corps experience..." />;
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark">
+    <div className="flex flex-col min-h-screen">
+      {/* Performance monitoring */}
+      <PerformanceTracker />
+
       {/* Offline indicator */}
-      {!isOnline && (
-        <div className="bg-yellow-500 text-white text-center py-2 text-sm font-medium">
-          🌐 You're offline. Some features may not work properly.
+      {isOffline && (
+        <div className="bg-yellow-500 text-yellow-900 px-4 py-2 text-center text-sm font-medium">
+          🚫 You're offline. Some features may not work properly.
         </div>
       )}
 
@@ -237,15 +255,16 @@ const AppContent = () => {
                   </ProtectedRoute>
                 } />
 
+                {/* FIXED: Both lineup routes now use LineupBuilder */}
                 <Route path="/lineup/:corpsClass?" element={
                   <ProtectedRoute>
-                    <EnhancedLineupBuilder />
+                    <LineupBuilder />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/enhanced-lineup/:corpsClass?" element={
                   <ProtectedRoute>
-                    <EnhancedLineupBuilder />
+                    <LineupBuilder />
                   </ProtectedRoute>
                 } />
 
@@ -297,12 +316,14 @@ const AppContent = () => {
                       <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
                         Looks like this page marched off the field!
                       </p>
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => window.history.back()}
-                        className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                        className="bg-primary text-on-primary px-6 py-3 rounded-theme font-medium hover:bg-primary-hover transition-colors"
                       >
-                        Go Back
-                      </button>
+                        Return to Formation
+                      </motion.button>
                     </div>
                   </div>
                 } />
@@ -315,43 +336,52 @@ const AppContent = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Authentication Modal */}
+      {/* Modals */}
       <AuthModal
-        isOpen={showAuthModal}
+        isOpen={authModal.isOpen}
+        mode={authModal.mode}
         onClose={closeAuthModal}
-        mode={authMode}
-        onSwitchMode={setAuthMode}
+        onSwitchMode={(newMode) => setAuthModal({ ...authModal, mode: newMode })}
       />
 
-      {/* Toast Notifications */}
+      {/* Toast notifications */}
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
-          className: 'bg-surface dark:bg-surface-dark text-text-primary dark:text-text-primary-dark',
           style: {
-            background: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-            border: '1px solid var(--color-accent)'
-          }
+            background: 'var(--surface)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--accent)',
+          },
+          success: {
+            iconTheme: {
+              primary: 'var(--primary)',
+              secondary: 'var(--on-primary)',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: 'var(--error)',
+              secondary: 'var(--on-error)',
+            },
+          },
         }}
       />
     </div>
   );
 };
 
-// Main App Component
+// Root App wrapper with providers
 const App = () => {
   return (
-    <AppErrorBoundary>
+    <ErrorBoundary fallback={ErrorFallback}>
       <AuthProvider>
         <Router>
-          <div className="App font-body">
-            <AppContent />
-          </div>
+          <AppContent />
         </Router>
       </AuthProvider>
-    </AppErrorBoundary>
+    </ErrorBoundary>
   );
 };
 
