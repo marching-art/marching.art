@@ -19,4 +19,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Data namespace for production vs development
+export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE || 'prod';
+
 export default app;
