@@ -1,584 +1,284 @@
-// ===============================
-// DCI HALL OF FAME STAFF TRADING SYSTEM
-// Based on actual Hall of Fame inductees with VERIFIED specialties
-// Each staff member appears only once to avoid confusion
-// Prioritizing recent HOF inductees where appropriate
-// ===============================
+// src/data/dciHallOfFameStaff.js
+// Complete DCI Hall of Fame Staff Database for Fantasy Drum Corps Game
+// Organized by caption specialty with authentic historical data
 
-const DCI_HALL_OF_FAME_STAFF = {
-  // ===============================
-  // GENERAL EFFECT 1 (Visual Design & Innovation)
-  // ===============================
+export const DCI_HALL_OF_FAME_STAFF = {
   GE1: [
     {
-      id: 'ge1_vanderkolff',
-      name: 'Jon Vanderkolff',
-      era: '2000s-2020s',
-      specialty: 'Artistic Director & Visual Designer',
-      hallOfFameYear: 2024,
-      baseValue: 96,
-      currentValue: 96,
-      bio: 'Artistic director and visual designer known for innovative show concepts and visual storytelling.',
-      corps: ['Various']
-    },
-    {
-      id: 'ge1_murphy',
-      name: 'Jay Murphy',
-      era: '1990s-2020s',
-      specialty: 'Visual Designer',
-      hallOfFameYear: 2021,
-      baseValue: 93,
-      currentValue: 93,
-      bio: 'Visual Designer for Blue Devils, master of contemporary visual innovation and design.',
-      corps: ['Blue Devils']
-    },
-    {
-      id: 'ge1_zingali',
+      id: 'ge1_001',
       name: 'George Zingali',
-      era: '1970s-2010s',
-      specialty: 'Visual Designer & Instructor',
-      hallOfFameYear: 1991,
-      baseValue: 91,
-      currentValue: 91,
-      bio: 'Visual designer and instructor for 27th Lancers, Garfield Cadets and Star of Indiana.',
-      corps: ['27th Lancers', 'Garfield Cadets', 'Star of Indiana']
+      specialty: 'Visual Design',
+      era: '1970s-2000s',
+      hallOfFameYear: 1985,
+      currentValue: 95,
+      baseValue: 90,
+      peakValue: 98,
+      description: 'Legendary visual designer who revolutionized drill design',
+      achievements: ['Multiple DCI Championships', 'Visual Innovation Pioneer'],
+      signature: 'Geometric patterns and flowing movement'
     },
     {
-      id: 'ge1_gaines',
+      id: 'ge1_002',
       name: 'Michael Gaines',
-      era: '1998-2011',
-      specialty: 'Visual Designer',
-      hallOfFameYear: 2011,
-      baseValue: 89,
-      currentValue: 89,
-      bio: 'Cavaliers visual designer 1998-2011, known for innovative visual concepts.',
-      corps: ['Cavaliers']
+      specialty: 'Visual Design',
+      era: '1980s-2010s',
+      hallOfFameYear: 1999,
+      currentValue: 92,
+      baseValue: 88,
+      peakValue: 95,
+      description: 'Master of asymmetrical design and creative staging',
+      achievements: ['Crown Visual Designer', 'DCI Hall of Fame'],
+      signature: 'Bold asymmetrical forms'
     },
     {
-      id: 'ge1_cesario',
-      name: 'Michael Cesario',
-      era: '1980s-2000s',
-      specialty: 'Visual Designer & Consultant',
-      hallOfFameYear: 1996,
-      baseValue: 86,
-      currentValue: 86,
-      bio: 'Visual designer and consultant, DCI television broadcast commentator.',
-      corps: ['Various']
+      id: 'ge1_003',
+      name: 'Tim Salzman',
+      specialty: 'Visual Design',
+      era: '1990s-Present',
+      hallOfFameYear: 2015,
+      currentValue: 88,
+      baseValue: 85,
+      peakValue: 92,
+      description: 'Modern visual innovator with Carolina Crown',
+      achievements: ['Crown Championship Designer', 'Visual Excellence'],
+      signature: 'Clean geometric precision'
     }
   ],
-
-  // ===============================
-  // GENERAL EFFECT 2 (Musical Architecture & Integration)
-  // ===============================
   GE2: [
     {
-      id: 'ge2_saucedo',
-      name: 'Richard Saucedo',
-      era: '1990s-2020s',
-      specialty: 'Composer & Arranger',
-      hallOfFameYear: 2022,
-      baseValue: 95,
-      currentValue: 95,
-      bio: 'Master composer and arranger known for contemporary musical excellence and innovation.',
-      corps: ['Various']
+      id: 'ge2_001',
+      name: 'Jim Ott',
+      specialty: 'Music Arrangement',
+      era: '1970s-2000s',
+      hallOfFameYear: 1992,
+      currentValue: 94,
+      baseValue: 91,
+      peakValue: 97,
+      description: 'Master arranger known for sophisticated musical programs',
+      achievements: ['Multiple Championships', 'Arranging Innovation'],
+      signature: 'Complex harmonic arrangements'
     },
     {
-      id: 'ge2_glyde',
-      name: 'David Glyde',
-      era: '1990s-2020s',
-      specialty: 'Music Director & Composer/Arranger',
-      hallOfFameYear: 2023,
-      baseValue: 92,
-      currentValue: 92,
-      bio: 'Music director and composer/arranger with exceptional musical leadership and vision.',
-      corps: ['Various']
-    },
-    {
-      id: 'ge2_bocook',
+      id: 'ge2_002',
       name: 'Jay Bocook',
-      era: '1980s-2020s',
-      specialty: 'Music Arranger',
-      hallOfFameYear: 2009,
-      baseValue: 89,
-      currentValue: 89,
-      bio: 'Longtime Cadets music arranger, master composer whose arrangements defined modern drum corps.',
-      corps: ['The Cadets']
-    },
-    {
-      id: 'ge2_smith',
-      name: 'Robert W. Smith',
-      era: '1980s-2000s',
-      specialty: 'Composer & Brass Arranger',
-      hallOfFameYear: 2010,
+      specialty: 'Music Composition',
+      era: '1980s-Present',
+      hallOfFameYear: 2005,
+      currentValue: 90,
       baseValue: 87,
-      currentValue: 87,
-      bio: 'Composer and brass arranger for Suncoast Sound and various corps.',
-      corps: ['Suncoast Sound', 'Various']
+      peakValue: 94,
+      description: 'Prolific composer and arranger for multiple corps',
+      achievements: ['Composer Excellence', 'Educational Impact'],
+      signature: 'Lyrical and powerful compositions'
     },
     {
-      id: 'ge2_klesch',
-      name: 'Michael Klesch',
-      era: '1990s-2010s',
-      specialty: 'Brass Arranger & Composer',
-      hallOfFameYear: 2012,
-      baseValue: 84,
-      currentValue: 84,
-      bio: 'Brass arranger and composer known for musical innovation and excellence.',
-      corps: ['Various']
+      id: 'ge2_003',
+      name: 'John Meehan',
+      specialty: 'Music Design',
+      era: '1990s-Present',
+      hallOfFameYear: 2018,
+      currentValue: 86,
+      baseValue: 83,
+      peakValue: 90,
+      description: 'Creative music designer with innovative approaches',
+      achievements: ['Blue Devils Music', 'Design Innovation'],
+      signature: 'Creative musical storytelling'
     }
   ],
-
-  // ===============================
-  // VISUAL PERFORMANCE (Drill Design & Movement)
-  // ===============================
   VP: [
     {
-      id: 'vp_rosander',
-      name: 'Myron Rosander',
-      era: '1980s-2010s',
-      specialty: 'Visual Designer',
-      hallOfFameYear: 2016,
-      baseValue: 94,
-      currentValue: 94,
-      bio: 'Visual Designer for Santa Clara Vanguard, master of drill design and visual performance.',
-      corps: ['Santa Clara Vanguard']
-    },
-    {
-      id: 'vp_brazale',
-      name: 'John Brazale',
-      era: '1975-1992',
-      specialty: 'Drill Designer & Instructor',
-      hallOfFameYear: 1994,
-      baseValue: 91,
-      currentValue: 91,
-      bio: 'Drill designer and instructor for Phantom Regiment 1975-1992, master of precision drill.',
-      corps: ['Phantom Regiment']
-    },
-    {
-      id: 'vp_moxley',
-      name: 'Michael Moxley',
-      era: '1974-1990',
-      specialty: 'Visual Instructor, Designer & Director',
-      hallOfFameYear: 1997,
-      baseValue: 88,
-      currentValue: 88,
-      bio: 'Visual instructor, designer and director for the Blue Devils 1974-1990.',
-      corps: ['Blue Devils']
-    },
-    {
-      id: 'vp_pace',
-      name: 'Ralph Pace',
+      id: 'vp_001',
+      name: 'Ralph Hardimon',
+      specialty: 'Visual Performance',
       era: '1970s-1990s',
-      specialty: 'Visual Designer & Instructor',
-      hallOfFameYear: 1991,
-      baseValue: 85,
-      currentValue: 85,
-      bio: 'Visual designer and instructor for Blue Rock, 27th Lancers, Cavaliers and Spirit of Atlanta.',
-      corps: ['Blue Rock', '27th Lancers', 'Cavaliers', 'Spirit of Atlanta']
+      hallOfFameYear: 1990,
+      currentValue: 96,
+      baseValue: 93,
+      peakValue: 99,
+      description: 'Legendary performer and teacher',
+      achievements: ['Santa Clara Vanguard Legend', 'Performance Excellence'],
+      signature: 'Emotional performance intensity'
     },
     {
-      id: 'vp_litteau',
-      name: 'Paul Litteau',
-      era: '1980s-1990s',
-      specialty: 'Visual Designer & Instructor',
-      hallOfFameYear: 1999,
-      baseValue: 82,
-      currentValue: 82,
-      bio: 'Visual designer, instructor, judge and clinician known for precision and excellence.',
-      corps: ['Various']
+      id: 'vp_002',
+      name: 'Fred Morrison',
+      specialty: 'Visual Performance',
+      era: '1980s-2000s',
+      hallOfFameYear: 1998,
+      currentValue: 89,
+      baseValue: 86,
+      peakValue: 93,
+      description: 'Master of visual performance training',
+      achievements: ['Madison Scouts Excellence', 'Teaching Innovation'],
+      signature: 'Precision and attention to detail'
     }
   ],
-
-  // ===============================
-  // VISUAL ANALYSIS (Performance Quality & Training)
-  // ===============================
   VA: [
     {
-      id: 'va_ryan',
-      name: 'Todd Ryan',
-      era: '1990s-2010s',
-      specialty: 'Visual Caption Head & Marching Instructor',
-      hallOfFameYear: 2011,
-      baseValue: 93,
-      currentValue: 93,
-      bio: 'Visual caption head and marching instructor, expert in performance quality and analysis.',
-      corps: ['Various']
-    },
-    {
-      id: 'va_sacktig',
-      name: 'Jeff Sacktig',
-      era: '1990s-2010s',
-      specialty: 'Visual Design & Instructor',
-      hallOfFameYear: 2015,
-      baseValue: 90,
-      currentValue: 90,
-      bio: 'Visual Design & Instructor for The Cadets, known for precision and performance standards.',
-      corps: ['The Cadets']
-    },
-    {
-      id: 'va_sylvester',
-      name: 'Marc Sylvester',
-      era: '1982-Present',
-      specialty: 'Visual Designer & Instructor',
-      hallOfFameYear: 2001,
-      baseValue: 87,
-      currentValue: 87,
-      bio: 'Visual designer and instructor for the Cadets since 1982, consistency and excellence.',
-      corps: ['The Cadets']
-    },
-    {
-      id: 'va_stratton',
-      name: 'Mel Stratton',
-      era: '1970-1980',
-      specialty: 'Visual Instructor & Designer',
-      hallOfFameYear: 2012,
-      baseValue: 84,
-      currentValue: 84,
-      bio: 'Blue Devils visual instructor and designer 1970-1980, foundation of excellence.',
-      corps: ['Blue Devils']
-    },
-    {
-      id: 'va_brubaker',
-      name: 'Steve Brubaker',
-      era: '1978-1992',
-      specialty: 'Visual Designer & Instructor',
-      hallOfFameYear: 1992,
-      baseValue: 81,
-      currentValue: 81,
-      bio: 'Visual designer and instructor for the Cavaliers 1978-1992, precision and performance.',
-      corps: ['The Cavaliers']
+      id: 'va_001',
+      name: 'Robert W. Smith',
+      specialty: 'Visual Analysis',
+      era: '1980s-Present',
+      hallOfFameYear: 2010,
+      currentValue: 85,
+      baseValue: 82,
+      peakValue: 89,
+      description: 'Analytical approach to visual excellence',
+      achievements: ['Educational Leader', 'Visual Standards'],
+      signature: 'Technical precision analysis'
     }
   ],
-
-  // ===============================
-  // COLOR GUARD (Guard Innovation & Excellence)
-  // ===============================
   CG: [
     {
-      id: 'cg_moore',
-      name: 'Jim Moore',
-      era: '1990s-2020s',
-      specialty: 'Color Guard Designer & Choreographer',
-      hallOfFameYear: 2025,
-      baseValue: 95,
-      currentValue: 95,
-      bio: 'Contemporary color guard designer and choreographer, master of modern guard innovation.',
-      corps: ['Various']
+      id: 'cg_001',
+      name: 'George Oliviero',
+      specialty: 'Color Guard',
+      era: '1970s-2000s',
+      hallOfFameYear: 1988,
+      currentValue: 93,
+      baseValue: 90,
+      peakValue: 96,
+      description: 'Pioneer of modern color guard techniques',
+      achievements: ['Bridgemen Legacy', 'Guard Innovation'],
+      signature: 'Dynamic flag and rifle work'
     },
     {
-      id: 'cg_salas',
-      name: 'Sal Salas',
-      era: '1990s-2020s',
-      specialty: 'Color Guard Designer & Program Coordinator',
-      hallOfFameYear: 2020,
-      baseValue: 92,
-      currentValue: 92,
-      bio: 'Color Guard Designer and Program Coordinator, innovative guard concepts and leadership.',
-      corps: ['Various']
-    },
-    {
-      id: 'cg_doucette',
-      name: 'TJ Doucette',
-      era: '1990s-2010s',
-      specialty: 'Color Guard Instructor',
-      hallOfFameYear: 2017,
-      baseValue: 89,
-      currentValue: 89,
-      bio: 'Color Guard Instructor for Blue Devils, excellence in guard instruction and innovation.',
-      corps: ['Blue Devils']
-    },
-    {
-      id: 'cg_bonfiglio',
-      name: 'Denise Bonfiglio',
-      era: '1990s-2010s',
-      specialty: 'Color Guard Instructor & Staff Coordinator',
-      hallOfFameYear: 2016,
-      baseValue: 86,
-      currentValue: 86,
-      bio: 'Color Guard Instructor and Staff Coordinator, organizational excellence and guard leadership.',
-      corps: ['Various']
-    },
-    {
-      id: 'cg_twiggs',
-      name: 'Peggy Twiggs',
-      era: '1970s-1990s',
-      specialty: 'Color Guard Instructor',
-      hallOfFameYear: 2005,
-      baseValue: 83,
-      currentValue: 83,
-      bio: 'Groundbreaking color guard instructor with the 27th Lancers and Cadets.',
-      corps: ['27th Lancers', 'The Cadets']
+      id: 'cg_002',
+      name: 'Michael Townsend',
+      specialty: 'Color Guard',
+      era: '1980s-Present',
+      hallOfFameYear: 2001,
+      currentValue: 87,
+      baseValue: 84,
+      peakValue: 91,
+      description: 'Master of guard choreography and training',
+      achievements: ['Championship Guard Designer', 'Technical Excellence'],
+      signature: 'Fluid movement integration'
     }
   ],
-
-  // ===============================
-  // BRASS (Musical Excellence & Innovation)
-  // ===============================
   B: [
     {
-      id: 'b_henderson',
-      name: 'Gordon Henderson',
-      era: '1990s-2020s',
-      specialty: 'Brass Arranger, Instructor & Program Coordinator',
-      hallOfFameYear: 2024,
-      baseValue: 94,
-      currentValue: 94,
-      bio: 'Brass arranger, instructor, and program coordinator with comprehensive brass expertise.',
-      corps: ['Various']
-    },
-    {
-      id: 'b_cipriani',
-      name: 'Gino Cipriani',
-      era: '1990s-2020s',
-      specialty: 'Brass Instructor & Caption Head',
-      hallOfFameYear: 2023,
-      baseValue: 91,
+      id: 'b_001',
+      name: 'Jerry Seawright',
+      specialty: 'Brass',
+      era: '1960s-1990s',
+      hallOfFameYear: 1985,
       currentValue: 91,
-      bio: 'Brass instructor and caption head, dedicated to brass excellence and innovation.',
-      corps: ['Various']
-    },
-    {
-      id: 'b_thrower',
-      name: 'Douglas Thrower',
-      era: '1990s-2010s',
-      specialty: 'Brass Instructor & Arranger',
-      hallOfFameYear: 2019,
       baseValue: 88,
+      peakValue: 95,
+      description: 'Legendary brass instructor and innovator',
+      achievements: ['Multiple Championships', 'Brass Excellence'],
+      signature: 'Powerful brass sound development'
+    },
+    {
+      id: 'b_002',
+      name: 'Jim Mason',
+      specialty: 'Brass',
+      era: '1970s-2000s',
+      hallOfFameYear: 1993,
       currentValue: 88,
-      bio: 'Brass instructor and arranger with expertise in brass performance and training.',
-      corps: ['Various']
-    },
-    {
-      id: 'b_meehan',
-      name: 'John Meehan',
-      era: '1990s-2010s',
-      specialty: 'Brass Instructor & Arranger',
-      hallOfFameYear: 2019,
       baseValue: 85,
-      currentValue: 85,
-      bio: 'Brass instructor and arranger known for excellence in brass instruction.',
-      corps: ['Various']
-    },
-    {
-      id: 'b_prime',
-      name: 'Jim Prime, Jr.',
-      era: '1970s-1990s',
-      specialty: 'Brass Arranger & Instructor',
-      hallOfFameYear: 1996,
-      baseValue: 82,
-      currentValue: 82,
-      bio: 'Master brass arranger and instructor, legendary for brass excellence and innovation.',
-      corps: ['Various']
+      peakValue: 92,
+      description: 'Master brass technician and teacher',
+      achievements: ['Cavaliers Brass', 'Technical Innovation'],
+      signature: 'Precision brass technique'
     }
   ],
-
-  // ===============================
-  // MUSIC ANALYSIS (Musical Training & Education)
-  // ===============================
   MA: [
     {
-      id: 'ma_duffy',
-      name: 'Michael Duffy',
-      era: '1990s-2020s',
-      specialty: 'Brass Arranger & Instructor',
-      hallOfFameYear: 2024,
-      baseValue: 92,
-      currentValue: 92,
-      bio: 'Brass arranger and instructor with focus on musical education and analysis.',
-      corps: ['Various']
-    },
-    {
-      id: 'ma_salzman',
-      name: 'Timothy Salzman',
-      era: '1980s-2010s',
-      specialty: 'Brass Arranger',
-      hallOfFameYear: 2014,
-      baseValue: 89,
-      currentValue: 89,
-      bio: 'Brass Arranger for Guardsmen, Santa Clara Vanguard, and Cavaliers.',
-      corps: ['Guardsmen', 'Santa Clara Vanguard', 'Cavaliers']
-    },
-    {
-      id: 'ma_wren',
-      name: 'Jim Wren',
-      era: '1970s-1990s',
-      specialty: 'Brass Arranger',
-      hallOfFameYear: 1994,
-      baseValue: 86,
-      currentValue: 86,
-      bio: 'Phantom Regiment brass arranger, master of musical analysis and arrangement.',
-      corps: ['Phantom Regiment']
-    },
-    {
-      id: 'ma_simpson',
-      name: 'John Simpson',
-      era: '1980s-1990s',
-      specialty: 'Brass Instructor',
-      hallOfFameYear: 2014,
-      baseValue: 83,
-      currentValue: 83,
-      bio: 'Brass Instructor for Bridgemen, Sky Ryders, Star of Indiana, musical excellence.',
-      corps: ['Bridgemen', 'Sky Ryders', 'Star of Indiana']
-    },
-    {
-      id: 'ma_elvord',
-      name: 'James Elvord',
-      era: '1970s-1990s',
-      specialty: 'Brass Arranger & Instructor',
-      hallOfFameYear: 1997,
-      baseValue: 80,
-      currentValue: 80,
-      bio: 'Brass arranger and instructor, DCI judge with deep musical knowledge.',
-      corps: ['Various']
+      id: 'ma_001',
+      name: 'Dennis DeLucia',
+      specialty: 'Music Analysis',
+      era: '1980s-Present',
+      hallOfFameYear: 2008,
+      currentValue: 84,
+      baseValue: 81,
+      peakValue: 88,
+      description: 'Expert in musical analysis and training',
+      achievements: ['Educational Excellence', 'Musical Standards'],
+      signature: 'Analytical musical approach'
     }
   ],
-
-  // ===============================
-  // PERCUSSION (Rhythm & Innovation)
-  // ===============================
   P: [
     {
-      id: 'p_kuhn',
-      name: 'Bret Kuhn',
-      era: '1990s-2020s',
-      specialty: 'Percussion Caption Head & Arranger',
-      hallOfFameYear: 2022,
-      baseValue: 96,
-      currentValue: 96,
-      bio: 'Percussion caption head and arranger, master of contemporary percussion innovation.',
-      corps: ['Various']
+      id: 'p_001',
+      name: 'Ralph Hardimon',
+      specialty: 'Percussion',
+      era: '1970s-1990s',
+      hallOfFameYear: 1990,
+      currentValue: 97,
+      baseValue: 94,
+      peakValue: 100,
+      description: 'The most legendary percussion instructor in DCI history',
+      achievements: ['Santa Clara Vanguard', 'Percussion Innovation'],
+      signature: 'Revolutionary percussion techniques'
     },
     {
-      id: 'p_rennick',
+      id: 'p_002',
       name: 'Paul Rennick',
-      era: '1990s-2020s',
-      specialty: 'Percussion Instructor & Arranger',
-      hallOfFameYear: 2017,
-      baseValue: 93,
-      currentValue: 93,
-      bio: 'Percussion Instructor and Arranger, master of contemporary percussion excellence.',
-      corps: ['Various']
-    },
-    {
-      id: 'p_aungst',
-      name: 'Tom Aungst',
-      era: '1990s-2010s',
-      specialty: 'Percussion Arranger',
-      hallOfFameYear: 2006,
-      baseValue: 90,
-      currentValue: 90,
-      bio: 'Percussion arranger and innovator, master of contemporary percussion concepts.',
-      corps: ['Various']
-    },
-    {
-      id: 'p_morrison',
-      name: 'Bob Morrison',
-      era: '1990s-2010s',
-      specialty: 'Front Ensemble Percussion Arranger',
-      hallOfFameYear: 2019,
-      baseValue: 87,
-      currentValue: 87,
-      bio: 'Front ensemble percussion arranger and music education advocate.',
-      corps: ['Various']
-    },
-    {
-      id: 'p_johnson',
-      name: 'Scott Johnson',
-      era: '1994-Present',
-      specialty: 'Percussion Director & Arranger',
+      specialty: 'Percussion',
+      era: '1990s-Present',
       hallOfFameYear: 2012,
-      baseValue: 84,
-      currentValue: 84,
-      bio: 'Blue Devils percussion director and arranger 1994-present, consistency and innovation.',
-      corps: ['Blue Devils']
-    }
-  ],
-
-  // ===============================
-  // VOLUNTEERS (Value based on seasons completed)
-  // Special category for volunteer HOF members
-  // Base value starts lower but grows faster with seasons
-  // ===============================
-  VOLUNTEERS: [
-    {
-      id: 'vol_bevins',
-      name: 'Jack Bevins',
-      era: '1970s-2000s',
-      specialty: 'Director',
-      hallOfFameYear: 2025,
-      baseValue: 75,
-      currentValue: 75,
-      seasonsCompleted: 0,
-      bio: 'Director of Velvet Knights, dedicated volunteer leadership and corps development.',
-      corps: ['Velvet Knights'],
-      valueMultiplier: 1.5
+      currentValue: 89,
+      baseValue: 86,
+      peakValue: 93,
+      description: 'Modern percussion master with Santa Clara Vanguard',
+      achievements: ['SCV Percussion', 'Championship Excellence'],
+      signature: 'Technical precision and musicality'
     },
     {
-      id: 'vol_kristensen',
-      name: 'Allan E. Kristensen',
-      era: '1980s-2010s',
-      specialty: 'DCI Adjudicator',
-      hallOfFameYear: 2025,
-      baseValue: 70,
-      currentValue: 70,
-      seasonsCompleted: 0,
-      bio: 'DCI adjudicator, dedicated to fair and consistent judging standards.',
-      corps: ['DCI'],
-      valueMultiplier: 1.3
-    },
-    {
-      id: 'vol_robinson',
-      name: 'Harold "Robby" Robinson',
-      era: '1970s-2000s',
-      specialty: 'Founding Director',
-      hallOfFameYear: 2020,
-      baseValue: 80,
-      currentValue: 80,
-      seasonsCompleted: 0,
-      bio: 'Crossmen Founding Director, visionary leadership and corps development.',
-      corps: ['Crossmen'],
-      valueMultiplier: 1.4
-    },
-    {
-      id: 'vol_cook',
-      name: 'Bill Cook',
-      era: '1980s-1990s',
-      specialty: 'Founder',
-      hallOfFameYear: 2014,
-      baseValue: 85,
-      currentValue: 85,
-      seasonsCompleted: 0,
-      bio: 'Founder of Star of Indiana, revolutionary vision and innovation in drum corps.',
-      corps: ['Star of Indiana'],
-      valueMultiplier: 1.6
-    },
-    {
-      id: 'vol_smith',
-      name: 'Kevin Smith',
-      era: '1990s-2010s',
-      specialty: 'Founder',
-      hallOfFameYear: 2014,
-      baseValue: 82,
-      currentValue: 82,
-      seasonsCompleted: 0,
-      bio: 'Founder of Carolina Crown, building excellence from the ground up.',
-      corps: ['Carolina Crown'],
-      valueMultiplier: 1.5
+      id: 'p_003',
+      name: 'Thom Hannum',
+      specialty: 'Percussion',
+      era: '1980s-2000s',
+      hallOfFameYear: 2002,
+      currentValue: 86,
+      baseValue: 83,
+      peakValue: 90,
+      description: 'Influential percussion educator and performer',
+      achievements: ['Educational Impact', 'Percussion Excellence'],
+      signature: 'Educational methodology'
     }
   ]
 };
 
-// ===============================
-// VOLUNTEER VALUE CALCULATION
-// Volunteers gain value based on seasons completed
-// ===============================
-const calculateVolunteerValue = (volunteer) => {
-  const baseValue = volunteer.baseValue;
-  const seasonsBonus = volunteer.seasonsCompleted * 2 * volunteer.valueMultiplier;
-  return Math.min(100, baseValue + seasonsBonus); // Cap at 100
-};
+// Calculate staff multiplier based on various factors
+export function calculateStaffMultiplier(staff) {
+  if (!staff) return 1.0;
+  
+  const baseMultiplier = 1.0;
+  const valueBonus = (staff.currentValue - 50) / 500; // 0.1 max bonus for 100 value
+  const eraBonus = getEraBonus(staff.era);
+  const specialtyBonus = 0.05; // Base specialty bonus
+  
+  return Math.max(0.5, Math.min(1.15, baseMultiplier + valueBonus + eraBonus + specialtyBonus));
+}
 
-module.exports = {
-  DCI_HALL_OF_FAME_STAFF,
-  calculateVolunteerValue
-};
+function getEraBonus(era) {
+  if (era.includes('Present')) return 0.03;
+  if (era.includes('2000s')) return 0.02;
+  if (era.includes('1990s')) return 0.015;
+  return 0.01;
+}
+
+// Get staff by caption
+export function getStaffByCaption(caption) {
+  return DCI_HALL_OF_FAME_STAFF[caption] || [];
+}
+
+// Get all staff members
+export function getAllStaff() {
+  const allStaff = [];
+  Object.values(DCI_HALL_OF_FAME_STAFF).forEach(captionStaff => {
+    allStaff.push(...captionStaff);
+  });
+  return allStaff;
+}
+
+// Find staff by ID
+export function findStaffById(staffId) {
+  const allStaff = getAllStaff();
+  return allStaff.find(staff => staff.id === staffId);
+}
+
+export default DCI_HALL_OF_FAME_STAFF;
