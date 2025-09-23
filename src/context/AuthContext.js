@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   // Firebase Functions
   const checkUsernameAvailability = httpsCallable(functions, 'checkUsername');
   const createUserProfileFunc = httpsCallable(functions, 'createUserProfile');
-  const setUserRoleFunc = httysCallable(functions, 'setUserRole');
+  const setUserRoleFunc = httpsCallable(functions, 'setUserRole');
   const updateEmailVerificationFunc = httpsCallable(functions, 'updateEmailVerification');
 
   // Auth state listener
