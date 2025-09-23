@@ -1,4 +1,4 @@
-// Enhanced AuthContext.js - Complete Authentication System for marching.art
+// src/contexts/AuthContext.js - Complete Authentication Context for marching.art
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   createUserWithEmailAndPassword, 
@@ -38,7 +38,8 @@ export const AuthProvider = ({ children }) => {
   // Firebase Functions
   const checkUsernameAvailability = httpsCallable(functions, 'checkUsername');
   const createUserProfileFunc = httpsCallable(functions, 'createUserProfile');
-  const setUserRoleFunc = httpsCallable(functions, 'setUserRole');
+  const setUserRoleFunc = httysCallable(functions, 'setUserRole');
+  const updateEmailVerificationFunc = httpsCallable(functions, 'updateEmailVerification');
 
   // Auth state listener
   useEffect(() => {
@@ -484,6 +485,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update email verification status
+  const updateEmailVerification = async (emailVerified) => {
+    try {
+      if (!user) return;
+      
+      await updateEmailVerificationFunc({ emailVerified });
+      
+      // Update local state
+      setUserProfile(prev => ({
+        ...prev,
+        emailVerified
+      }));
+    } catch (error) {
+      console.error('Email verification update error:', error);
+    }
+  };
+
   // Set user role (admin only)
   const setUserRole = async (email, makeAdmin) => {
     try {
@@ -535,6 +553,7 @@ export const AuthProvider = ({ children }) => {
     updateUserEmail,
     updateUserPassword,
     deleteAccount,
+    updateEmailVerification,
     
     // Admin methods
     setUserRole,
