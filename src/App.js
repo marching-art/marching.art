@@ -1,19 +1,20 @@
-// src/App.js - Main app with AuthProvider wrapper (Updated for existing structure)
+// src/App.js - Complete App with all routing and authentication
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
 import { useUserStore } from './store/userStore';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 
-// Import existing pages
+// Layout Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+
+// Page Components
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import ProfileSetupPage from './pages/ProfileSetupPage';
 import AdminPage from './pages/AdminPage';
 import LeaguePage from './pages/LeaguePage';
 import LeagueDetailPage from './pages/LeagueDetailPage';
@@ -41,7 +42,7 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
-    // Handle modal events from ScheduleAuthPrompt
+    // Handle modal events from components
     useEffect(() => {
         const handleOpenSignUpModal = () => {
             setAuthModalView('signup');
@@ -68,47 +69,36 @@ function AppContent() {
 
     const handleAuthSuccess = () => {
         setIsAuthModalOpen(false);
-        // Redirect to dashboard after successful auth
-        navigate('/dashboard');
+        // Navigation will be handled by ProtectedRoute based on profile status
     };
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background-dark">
+        <div className="min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
+            {/* Header - show on all pages except setup */}
             <Header 
                 themeMode={themeMode}
                 toggleThemeMode={toggleThemeMode}
-                onSignUpClick={() => {
-                    setAuthModalView('signup');
-                    setIsAuthModalOpen(true);
-                }}
-                onLoginClick={() => {
-                    setAuthModalView('login');
-                    setIsAuthModalOpen(true);
-                }}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
             />
-            
-            <main className="flex-grow">
+
+            {/* Main Content */}
+            <main className="flex-1">
                 <Routes>
                     {/* Public Routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/how-to-play" element={<HowToPlayPage />} />
+
+                    {/* Profile Setup - Requires auth but not profile */}
                     <Route 
-                        path="/" 
+                        path="/setup" 
                         element={
-                            <HomePage 
-                                onSignUpClick={() => {
-                                    setAuthModalView('signup');
-                                    setIsAuthModalOpen(true);
-                                }}
-                            />
+                            <ProtectedRoute requireProfile={false}>
+                                <ProfileSetupPage />
+                            </ProtectedRoute>
                         } 
                     />
-                    <Route path="/profile/:username" element={<ProfilePage />} />
-                    <Route path="/schedule" element={<SchedulePage />} />
-                    <Route path="/scores" element={<ScoresPage />} />
-                    <Route path="/stats" element={<StatsPage />} />
-                    <Route path="/leaderboard" element={<LeaderboardPage />} />
-                    <Route path="/how-to-play" element={<HowToPlayPage />} />
-                    
-                    {/* Protected Routes */}
+
+                    {/* Protected Routes - Require both auth and profile */}
                     <Route 
                         path="/dashboard" 
                         element={
@@ -117,14 +107,52 @@ function AppContent() {
                             </ProtectedRoute>
                         } 
                     />
+
                     <Route 
-                        path="/settings" 
+                        path="/profile/:userId?" 
                         element={
                             <ProtectedRoute>
-                                <UserSettingsPage />
+                                <ProfilePage />
                             </ProtectedRoute>
                         } 
                     />
+
+                    <Route 
+                        path="/scores" 
+                        element={
+                            <ProtectedRoute>
+                                <ScoresPage />
+                            </ProtectedRoute>
+                        } 
+                    />
+
+                    <Route 
+                        path="/schedule" 
+                        element={
+                            <ProtectedRoute>
+                                <SchedulePage />
+                            </ProtectedRoute>
+                        } 
+                    />
+
+                    <Route 
+                        path="/leaderboard" 
+                        element={
+                            <ProtectedRoute>
+                                <LeaderboardPage />
+                            </ProtectedRoute>
+                        } 
+                    />
+
+                    <Route 
+                        path="/stats" 
+                        element={
+                            <ProtectedRoute>
+                                <StatsPage />
+                            </ProtectedRoute>
+                        } 
+                    />
+
                     <Route 
                         path="/leagues" 
                         element={
@@ -133,51 +161,65 @@ function AppContent() {
                             </ProtectedRoute>
                         } 
                     />
+
                     <Route 
-                        path="/leagues/:leagueId" 
+                        path="/league/:leagueId" 
                         element={
                             <ProtectedRoute>
                                 <LeagueDetailPage />
                             </ProtectedRoute>
                         } 
                     />
-                    
+
+                    <Route 
+                        path="/settings" 
+                        element={
+                            <ProtectedRoute>
+                                <UserSettingsPage />
+                            </ProtectedRoute>
+                        } 
+                    />
+
                     {/* Admin Routes */}
                     <Route 
                         path="/admin" 
                         element={
-                            <ProtectedRoute adminOnly={true}>
+                            <ProtectedRoute requireAdmin={true}>
                                 <AdminPage />
                             </ProtectedRoute>
                         } 
                     />
+
+                    {/* Catch-all redirect to home */}
+                    <Route path="*" element={<HomePage />} />
                 </Routes>
             </main>
-            
+
+            {/* Footer - show on all pages except setup */}
             <Footer />
-            
+
             {/* Auth Modal */}
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                onAuthSuccess={handleAuthSuccess}
                 initialView={authModalView}
+                onAuthSuccess={handleAuthSuccess}
             />
-            
+
             {/* Toast Notifications */}
             <Toaster
                 position="top-right"
                 toastOptions={{
                     duration: 4000,
                     style: {
-                        background: 'var(--surface)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--accent)',
+                        background: themeMode === 'dark' ? '#374151' : '#ffffff',
+                        color: themeMode === 'dark' ? '#f3f4f6' : '#111827',
+                        border: themeMode === 'dark' ? '1px solid #4b5563' : '1px solid #d1d5db',
                     },
                     success: {
                         iconTheme: {
-                            primary: 'var(--primary)',
-                            secondary: 'var(--on-primary)',
+                            primary: '#10b981',
+                            secondary: '#ffffff',
                         },
                     },
                     error: {
@@ -194,13 +236,9 @@ function AppContent() {
 
 function App() {
     return (
-        <ErrorBoundary>
-            <AuthProvider>
-                <Router>
-                    <AppContent />
-                </Router>
-            </AuthProvider>
-        </ErrorBoundary>
+        <Router>
+            <AppContent />
+        </Router>
     );
 }
 
