@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const { getDb } = require("../config");
+const { getDb } = require("../../config");
 
 /**
  * Live Season Scheduler - Handles real-time DCI season events
