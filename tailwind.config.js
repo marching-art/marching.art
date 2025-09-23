@@ -1,131 +1,80 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require('tailwindcss/plugin');
+
 module.exports = {
+  darkMode: 'class', // Enable dark mode with a class
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
-    "./public/index.html"
   ],
   theme: {
     extend: {
+      // Add this new textShadow utility
+      textShadow: {
+        DEFAULT: '2px 2px 4px rgb(0 0 0 / 0.5)',
+        lg: '3px 3px 6px rgb(0 0 0 / 0.5)',
+      },
       colors: {
+        // Primary brand color - now gold
         primary: {
-          DEFAULT: '#667eea',
-          hover: '#5a6fd8',
-          50: '#f0f2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#667eea',
-          600: '#5145cd',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
+        // Secondary brand color - now a medium brown/tan
         secondary: {
-          DEFAULT: '#764ba2',
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#764ba2',
-          600: '#9333ea',
-          700: '#7c3aed',
-          800: '#6b21a8',
-          900: '#581c87',
+          DEFAULT: 'rgb(var(--color-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--color-secondary-dark) / <alpha-value>)',
         },
-        background: {
-          DEFAULT: '#f5f7fa',
-          dark: '#1a202c',
-        },
-        surface: {
-          DEFAULT: '#ffffff',
-          dark: '#2d3748',
-        },
-        text: {
-          primary: {
-            DEFAULT: '#333333',
-            dark: '#f7fafc',
-          },
-          secondary: {
-            DEFAULT: '#666666',
-            dark: '#a0aec0',
-          },
-        },
+        // Accent color for borders, minor elements - now a lighter, warm grey/tan
         accent: {
-          DEFAULT: '#e2e8f0',
-          dark: '#4a5568',
-          hover: '#cbd5e0',
+          DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
+          dark: 'rgb(var(--color-accent-dark) / <alpha-value>)',
         },
-      },
-      fontFamily: {
-        sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Oxygen',
-          'Ubuntu',
-          'Cantarell',
-          'Fira Sans',
-          'Droid Sans',
-          'Helvetica Neue',
-          'sans-serif',
-        ],
-      },
-      spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
+        // Background color - light for light mode, very dark brown for dark mode
+        background: {
+          DEFAULT: 'rgb(var(--color-background) / <alpha-value>)',
+          dark: 'rgb(var(--color-background-dark) / <alpha-value>)',
+        },
+        // Surface color for cards, modals - slightly darker than background in light mode, dark brown in dark mode
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          dark: 'rgb(var(--color-surface-dark) / <alpha-value>)',
+        },
+        // Text colors
+        'text-primary': {
+          DEFAULT: 'rgb(var(--text-primary) / <alpha-value>)',
+          dark: 'rgb(var(--text-primary-dark) / <alpha-value>)',
+        },
+        'text-secondary': {
+          DEFAULT: 'rgb(var(--text-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--text-secondary-dark) / <alpha-value>)',
+        },
+        // On-color for text/icons placed on primary/secondary buttons/elements
+        'on-primary': 'rgb(var(--on-primary) / <alpha-value>)', // Typically white or very light
+        'on-secondary': 'rgb(var(--on-secondary) / <alpha-value>)', // Typically white or very light
       },
       borderRadius: {
-        'theme': '8px',
+        'theme': '0.75rem', // A slightly larger border radius for a softer look
       },
       boxShadow: {
-        'theme': '0 4px 20px rgba(0, 0, 0, 0.08)',
-        'theme-lg': '0 8px 30px rgba(0, 0, 0, 0.12)',
+        'theme': '0 4px 10px rgba(0, 0, 0, 0.05)', // A subtle shadow for depth
+        'theme-dark': '0 4px 10px rgba(0, 0, 0, 0.4)', // Darker shadow for dark mode
       },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'fade-in-up': 'fadeInUp 0.6s ease-out',
-        'slide-in-left': 'slideInLeft 0.6s ease-out',
-        'slide-in-right': 'slideInRight 0.6s ease-out',
-        'slide-in-up': 'slideInUp 0.6s ease-out',
-        'slide-in-down': 'slideInDown 0.6s ease-out',
-        'scale-in': 'scaleIn 0.3s ease-out',
-        'pulse-slow': 'pulse 2s ease-in-out infinite',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideInLeft: {
-          '0%': { opacity: '0', transform: 'translateX(-30px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        slideInRight: {
-          '0%': { opacity: '0', transform: 'translateX(30px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        slideInUp: {
-          '0%': { opacity: '0', transform: 'translateY(30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideInDown: {
-          '0%': { opacity: '0', transform: 'translateY(-30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-      },
+      borderWidth: {
+        'theme': '1px', // Standard border width for elements
+      }
     },
   },
-  plugins: [],
-  darkMode: 'class',
+  // Add this new plugin
+  plugins: [
+    plugin(function ({ matchUtilities, theme }) {
+      matchUtilities(
+        {
+          'text-shadow': (value) => ({
+            textShadow: value,
+          }),
+        },
+        { values: theme('textShadow') }
+      )
+    }),
+  ],
 }
