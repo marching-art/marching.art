@@ -1,6 +1,6 @@
 // src/components/auth/ProtectedRoute.js - Route protection component
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import AuthModal from './AuthModal';
 import Icon from '../ui/Icon';
 

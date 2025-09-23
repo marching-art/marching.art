@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js - Complete Authentication Context for marching.art
+// src/context/AuthContext.js - Complete Authentication Context for marching.art
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   createUserWithEmailAndPassword, 

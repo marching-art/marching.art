@@ -1,6 +1,6 @@
 // src/components/auth/AvatarUpload.js - Avatar upload component with image optimization
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import Icon from '../ui/Icon';
 import toast from 'react-hot-toast';
 
