@@ -60,7 +60,7 @@ const RegistrationDeadlineBar = ({ profile, seasonSettings }) => {
   const { weekNumber, weeksRemaining } = calculateWeeksRemaining(seasonSettings);
   const registrationDeadline = getRegistrationDeadline(seasonSettings);
   const isRegistrationOpen = canCreateCorps(seasonSettings, weekNumber);
-  const hasJoined = hasJoinedSeason(profile);
+  const hasJoined = hasJoinedSeason(profile, seasonSettings?.seasonUid);
   
   if (!registrationDeadline || hasJoined) return null;
 
@@ -245,6 +245,15 @@ const DashboardPage = ({ profile, userId }) => {
     return Math.max(1, daysDiff + 1);
   }, [seasonSettings]);
 
+  // Debug season recognition
+  console.log('Dashboard Debug:', {
+    profileActiveSeasonId: profile?.activeSeasonId,
+    seasonSettingsUid: seasonSettings?.seasonUid,
+    seasonSettingsExists: !!seasonSettings,
+    profileExists: !!profile,
+    hasJoinedResult: seasonSettings ? hasJoinedSeason(profile, seasonSettings.seasonUid) : 'no seasonSettings'
+  });
+
   if (isLoadingSeason) {
     return <LoadingScreen />;
   }
@@ -260,8 +269,17 @@ const DashboardPage = ({ profile, userId }) => {
     );
   }
 
-  const hasJoined = hasJoinedSeason(profile);
+  const hasJoined = hasJoinedSeason(profile, seasonSettings.seasonUid);
   const hasCorps = hasAnyCorps(profile);
+
+  // Show season signup if user hasn't joined current season
+  if (!hasJoined) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+        <SeasonSignup profile={profile} seasonSettings={seasonSettings} userId={userId} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
@@ -291,96 +309,90 @@ const DashboardPage = ({ profile, userId }) => {
       {/* Registration Deadline Warning */}
       <RegistrationDeadlineBar profile={profile} seasonSettings={seasonSettings} />
 
-      {!hasJoined ? (
-        <SeasonSignup profile={profile} seasonSettings={seasonSettings} />
-      ) : (
-        <div className="space-y-8">
-          {/* Status Overview */}
-          <MyStatus 
-            profile={profile} 
-            seasonSettings={seasonSettings}
-            seasonEvents={seasonEvents}
-            currentOffSeasonDay={currentOffSeasonDay}
-          />
+      {/* Status Overview */}
+      <MyStatus 
+        profile={profile} 
+        seasonSettings={seasonSettings}
+        seasonEvents={seasonEvents}
+        currentOffSeasonDay={currentOffSeasonDay}
+      />
 
-          {/* Uniform Builder Section - MOVED HERE */}
-          {hasCorps && (
-            <UniformBuilderSection 
-              profile={profile}
-              onOpenUniformManager={handleOpenUniformManager}
-            />
-          )}
+      {/* Uniform Builder Section - MOVED HERE */}
+      {hasCorps && (
+        <UniformBuilderSection 
+          profile={profile}
+          onOpenUniformManager={handleOpenUniformManager}
+        />
+      )}
 
-          {/* Corps Management */}
-          <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                  Corps Management
-                </h2>
-                <p className="text-text-secondary dark:text-text-secondary-dark">
-                  Create and manage your drum corps lineups
-                </p>
-              </div>
+      {/* Corps Management */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+              Corps Management
+            </h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              Create and manage your drum corps lineups
+            </p>
+          </div>
+        </div>
+
+        <CorpsSelector
+          profile={profile}
+          corpsData={corpsData}
+          seasonSettings={seasonSettings}
+          seasonEvents={seasonEvents}
+          currentOffSeasonDay={currentOffSeasonDay}
+          seasonStartDate={seasonSettings?.startDate?.toDate()}
+        />
+      </div>
+
+      {/* League Management */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+              League Management
+            </h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              Join or create competitive leagues
+            </p>
+          </div>
+        </div>
+
+        <LeagueManager profile={profile} />
+      </div>
+
+      {/* SoundSport Performances */}
+      {soundSportPerformances.length > 0 && (
+        <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                🎵 SoundSport Performances
+              </h2>
+              <p className="text-text-secondary dark:text-text-secondary-dark">
+                Your recent SoundSport Challenge performances
+              </p>
             </div>
-
-            <CorpsSelector
-              profile={profile}
-              corpsData={corpsData}
-              seasonSettings={seasonSettings}
-              seasonEvents={seasonEvents}
-              currentOffSeasonDay={currentOffSeasonDay}
-              seasonStartDate={seasonSettings?.startDate?.toDate()}
-            />
           </div>
 
-          {/* League Management */}
-          <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                  League Management
-                </h2>
-                <p className="text-text-secondary dark:text-text-secondary-dark">
-                  Join or create competitive leagues
-                </p>
-              </div>
-            </div>
-
-            <LeagueManager profile={profile} />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {soundSportPerformances.slice(0, 6).map((performance, index) => (
+              <SoundSportPerformanceCard 
+                key={index} 
+                performance={performance}
+                onViewDetails={(perf) => console.log('View details:', perf)}
+              />
+            ))}
           </div>
 
-          {/* SoundSport Performances */}
-          {soundSportPerformances.length > 0 && (
-            <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                    🎵 SoundSport Performances
-                  </h2>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    Your recent SoundSport Challenge performances
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {soundSportPerformances.slice(0, 6).map((performance, index) => (
-                  <SoundSportPerformanceCard 
-                    key={index} 
-                    performance={performance}
-                    onViewDetails={(perf) => console.log('View details:', perf)}
-                  />
-                ))}
-              </div>
-
-              {soundSportPerformances.length > 6 && (
-                <div className="text-center mt-4">
-                  <button className="bg-primary hover:bg-primary-hover text-on-primary font-medium py-2 px-4 rounded-theme transition-colors">
-                    View All Performances ({soundSportPerformances.length})
-                  </button>
-                </div>
-              )}
+          {soundSportPerformances.length > 6 && (
+            <div className="text-center mt-4">
+              <button className="bg-primary hover:bg-primary-hover text-on-primary font-medium py-2 px-4 rounded-theme transition-colors">
+                View All Performances ({soundSportPerformances.length})
+              </button>
             </div>
           )}
         </div>
