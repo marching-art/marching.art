@@ -1,6 +1,5 @@
-// src/components/dashboard/CorpsSelector.js - Enhanced to accept initialActiveCorps prop
+// src/components/dashboard/CorpsSelector.js - UPDATED: Uniform builder removed, moved to main dashboard
 import React, { useState, useEffect } from 'react';
-import UniformManager from '../profile/UniformManager';
 import Icon from '../ui/Icon';
 import LineupEditor from './LineupEditor';
 import ShowSelection from './ShowSelection';
@@ -18,8 +17,6 @@ const CorpsSelector = ({
     const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
     const [hasInitialized, setHasInitialized] = useState(false);
-    const [showUniformManager, setShowUniformManager] = useState(false);
-    const [uniformManagerCorpsClass, setUniformManagerCorpsClass] = useState(null);
 
     useEffect(() => {
         const allCorps = getAllUserCorps(profile);
@@ -49,11 +46,6 @@ const CorpsSelector = ({
         }));
     };
 
-    const handleUniformManager = (corpsClass) => {
-        setUniformManagerCorpsClass(corpsClass);
-        setShowUniformManager(true);
-    };
-
     if (!hasAnyCorps(profile)) {
         return null; // Let DashboardPage handle SeasonSignup
     }
@@ -62,6 +54,7 @@ const CorpsSelector = ({
 
     return (
         <div className="space-y-6">
+            {/* Corps Class Tabs */}
             <div className="flex flex-wrap gap-2 border-b-theme border-accent dark:border-accent-dark pb-4">
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
@@ -71,12 +64,14 @@ const CorpsSelector = ({
                             onClick={() => setActiveCorps(key)}
                             className={`relative px-3 py-2 text-left rounded-theme font-semibold transition-all w-32 ${
                                 activeCorps === key
-                                    ? 'bg-primary text-on-primary shadow-lg'
-                                    : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
+                                    ? 'bg-primary text-on-primary shadow-md transform scale-105' 
+                                    : 'bg-surface dark:bg-surface-dark hover:bg-accent dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark'
                             }`}
                         >
-                            <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ${classInfo.color} ${
-                                hasCorps(key) ? 'opacity-100' : 'opacity-30'
+                            <div className={`absolute top-1 right-1 w-3 h-3 rounded-full transition-opacity ${
+                                classInfo?.color || 'bg-gray-400'
+                            } ${
+                                activeCorps === key ? 'opacity-100' : 'opacity-30'
                             }`}></div>
                             <span className="block text-sm">{classInfo.name}</span>
                             {hasCorps(key) ? (
@@ -93,6 +88,7 @@ const CorpsSelector = ({
                 })}
             </div>
 
+            {/* Lineup Editor */}
             <div>
                 <LineupEditor
                     profile={activeCorpsProfile}
@@ -104,34 +100,8 @@ const CorpsSelector = ({
                     onCorpsCreated={(newCorpsData) => handleCorpsCreated(activeCorps, newCorpsData)}
                 />
             </div>
-            
-            {/* Uniform Designer Section */}
-            {hasCorps(activeCorps) && (
-                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-theme border border-purple-200 dark:border-purple-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
-                                🎨 Uniform Designer
-                            </h3>
-                            <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
-                                Create legendary uniform designs for {userCorps[activeCorps]?.corpsName}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => handleUniformManager(activeCorps)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-6 rounded-theme transition-all transform hover:scale-105 shadow-lg"
-                        >
-                            <Icon path="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" className="w-5 h-5 inline mr-2" />
-                            Design Uniforms
-                        </button>
-                    </div>
-                    
-                    <div className="text-sm text-purple-800 dark:text-purple-200">
-                        <strong>New Feature:</strong> Create up to 4 unique uniform designs with comprehensive DCI-inspired options including legendary presets from Blue Devils, Santa Clara Vanguard, and more!
-                    </div>
-                </div>
-            )}
 
+            {/* Show Selection */}
             <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
 
             <div>
@@ -144,19 +114,6 @@ const CorpsSelector = ({
                     seasonStartDate={seasonStartDate}
                 />
             </div>
-
-            {/* Uniform Manager Modal */}
-            {showUniformManager && (
-                <UniformManager
-                    userId={profile?.uid || profile?.userId}
-                    corpsClass={uniformManagerCorpsClass}
-                    corpsData={userCorps[uniformManagerCorpsClass]}
-                    onClose={() => {
-                        setShowUniformManager(false);
-                        setUniformManagerCorpsClass(null);
-                    }}
-                />
-            )}
         </div>
     );
 };
