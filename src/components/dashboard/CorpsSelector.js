@@ -11,22 +11,28 @@ const CorpsSelector = ({
   seasonEvents, 
   currentOffSeasonDay, 
   seasonStartDate,
-  initialActiveCorps = null // New prop to set which tab opens
+  initialActiveCorps = null // New prop to set which tab opens initially
 }) => {
-    const [activeCorps, setActiveCorps] = useState(initialActiveCorps || 'worldClass');
+    const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
+    const [hasInitialized, setHasInitialized] = useState(false);
 
     useEffect(() => {
         const allCorps = getAllUserCorps(profile);
         setUserCorps(allCorps);
-    
-        // Set initial active corps if provided, otherwise use default logic
-        if (initialActiveCorps) {
-            setActiveCorps(initialActiveCorps);
-        } else if (Object.keys(allCorps).length === 0) {
-            setActiveCorps('worldClass');
+    }, [profile]);
+
+    // Only use initialActiveCorps on the first load, then maintain independent state
+    useEffect(() => {
+        if (!hasInitialized && profile) {
+            if (initialActiveCorps) {
+                setActiveCorps(initialActiveCorps);
+            } else if (Object.keys(getAllUserCorps(profile)).length === 0) {
+                setActiveCorps('worldClass');
+            }
+            setHasInitialized(true);
         }
-    }, [profile, initialActiveCorps]);
+    }, [profile, initialActiveCorps, hasInitialized]);
 
     const hasCorps = (corpsClass) => {
         return userCorps[corpsClass] && userCorps[corpsClass].corpsName;

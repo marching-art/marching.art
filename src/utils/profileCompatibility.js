@@ -1,15 +1,18 @@
 // utils/profileCompatibility.js
 // Helper functions to handle both old and new profile structures including SoundSport
 
+// utils/profileCompatibility.js
+// Helper functions to handle both old and new profile structures including SoundSport
+
 export const CORPS_CLASSES = {
+    soundSport: { name: 'SoundSport', pointCap: 90, color: 'bg-orange-500' },
     aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' },
     openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
     worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' }
-    // Note: soundSport is added via soundSportSystem.js to avoid circular imports
 };
 
-// Updated order to potentially include SoundSport first (when available)
-export const CORPS_CLASS_ORDER = ['aClass', 'openClass', 'worldClass'];
+// Updated order to include SoundSport first (always available)
+export const CORPS_CLASS_ORDER = ['soundSport', 'aClass', 'openClass', 'worldClass'];
 
 export const getCorpsData = (profile, corpsClass = 'worldClass') => {
     // New multi-corps structure
