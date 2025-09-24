@@ -8,6 +8,7 @@ import { functions } from '../firebase';
 export const checkUsername = (data) => httpsCallable(functions, 'checkUsername')(data);
 export const createUserProfile = (data) => httpsCallable(functions, 'createUserProfile')(data);
 export const updateUserProfile = (data) => httpsCallable(functions, 'updateUserProfile')(data);
+export const deleteUserAccount = () => httpsCallable(functions, 'deleteUserAccount')();
 export const getShowRegistrations = (data) => httpsCallable(functions, 'getShowRegistrations')(data);
 export const getUserRankings = (data) => httpsCallable(functions, 'getUserRankings')(data);
 
