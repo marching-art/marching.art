@@ -1,93 +1,88 @@
+// src/store/userStore.js
 import { create } from 'zustand';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { auth, db, dataNamespace } from '../firebase';
 
-// This is the single source of truth for user authentication and profile data.
-let profileListener = null; // To hold the unsubscribe function for Firestore
-
 export const useUserStore = create((set, get) => ({
-  // STATE: The data we want to share globally
   user: null,
   loggedInProfile: null,
   isLoadingAuth: true,
-  
-  // ACTIONS: Functions that modify the state
-  
-  /**
-   * Initializes the authentication listener. This function should be called
-   * once when the application loads.
-   */
+  lastActiveUpdate: null,
+
+  // Initialize authentication listener
   initAuthListener: () => {
-    onAuthStateChanged(auth, async (user) => {
-      // If a user is logged in
-      if (user) {
-        set({ user });
-        
-        // Unsubscribe from any previous profile listener
-        if (profileListener) profileListener();
-
-        // Get the user's custom claims to check admin status
-        const tokenResult = await user.getIdTokenResult();
-        const isAdminFromClaims = tokenResult.claims.admin === true;
-
-        // Listen for real-time updates to the user's profile document
-        const profileRef = doc(db, `artifacts/${dataNamespace}/users/${user.uid}/profile/data`);
-        profileListener = onSnapshot(profileRef, async (docSnap) => {
-          if (docSnap.exists()) {
-            const profileData = docSnap.data();
-            
-            // Check if we need to sync the admin status
-            const isAdminInProfile = profileData.isAdmin === true;
-            
-            // If admin status doesn't match, update the profile document
-            // If admin status doesn't match, update the profile document
-if (isAdminFromClaims && !isAdminInProfile) {
-  try {
-    await updateDoc(profileRef, { isAdmin: true });
-    console.log('Admin status synced to profile document');
-    // The onSnapshot will fire again with the updated data
-    return;
-  } catch (error) {
-    console.error('Error syncing admin status:', error);
-  }
-}
-            
-            // Combine the user ID with the profile data for easy access
-            // Use the custom claims value for isAdmin to ensure consistency
-            set({ 
-              loggedInProfile: { 
-                userId: user.uid, 
-                ...profileData,
-                isAdmin: isAdminFromClaims // Always use the authoritative source
-              } 
-            });
-          } else {
-            // Profile doesn't exist yet (e.g., during signup)
-            set({ 
-              loggedInProfile: { 
-                userId: user.uid,
-                isAdmin: isAdminFromClaims 
-              } 
-            });
-          }
-          set({ isLoadingAuth: false });
-        }, (error) => {
-          console.error("Error listening to profile:", error);
-          set({ 
-            isLoadingAuth: false, 
-            loggedInProfile: {
-              userId: user.uid,
-              isAdmin: isAdminFromClaims
-            }
-          });
-        });
-        
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      set({ user: firebaseUser, isLoadingAuth: false });
+      
+      if (firebaseUser) {
+        get().initProfileListener(firebaseUser.uid);
+        get().startActivityTracking(firebaseUser.uid);
       } else {
-        // If no user is logged in (or they logged out)
-        if (profileListener) profileListener();
-        set({ user: null, loggedInProfile: null, isLoadingAuth: false });
+        set({ 
+          loggedInProfile: null,
+          lastActiveUpdate: null
+        });
+        get().stopActivityTracking();
       }
     });
+    
+    return unsubscribe;
   },
+
+  // Initialize profile listener
+  initProfileListener: (userId) => {
+    const profileRef = doc(db, 'artifacts', dataNamespace, 'users', userId, 'profile', 'data');
+    
+    // Profile listener
+    const profileUnsubscribe = onSnapshot(profileRef, (doc) => {
+      if (doc.exists()) {
+        const profileData = { userId, ...doc.data() };
+        set({ loggedInProfile: profileData });
+      } else {
+        set({ loggedInProfile: null });
+      }
+    }, (error) => {
+      console.error('Profile listener error:', error);
+      set({ loggedInProfile: null });
+    });
+
+    // Store unsubscribe function for cleanup
+    set({ profileUnsubscribe });
+  },
+
+  // Activity tracking for "last active" updates
+  startActivityTracking: (userId) => {
+    const updateActivity = async () => {
+      try {
+        const profileRef = doc(db, 'artifacts', dataNamespace, 'users', userId, 'profile', 'data');
+        await updateDoc(profileRef, {
+          lastActive: new Date()
+        });
+      } catch (error) {
+        console.error('Error updating last active:', error);
+      }
+    };
+
+    // Update immediately and then every 5 minutes
+    updateActivity();
+    const intervalId = setInterval(updateActivity, 5 * 60 * 1000);
+    
+    set({ lastActiveUpdate: intervalId });
+  },
+
+  stopActivityTracking: () => {
+    const { lastActiveUpdate } = get();
+    if (lastActiveUpdate) {
+      clearInterval(lastActiveUpdate);
+      set({ lastActiveUpdate: null });
+    }
+  },
+
+  // Cleanup function
+  cleanup: () => {
+    const { profileUnsubscribe } = get();
+    if (profileUnsubscribe) profileUnsubscribe();
+    get().stopActivityTracking();
+  }
 }));
