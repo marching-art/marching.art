@@ -601,19 +601,55 @@ const UniformDisplay = ({ uniform, size = 'medium', onClick, showInfo = true }) 
         accessories: { style: 'none', colors: { accessory: '#ffd700' } }
     };
     
-    // Deep merge logic to ensure all parts of the uniform have default values
-    const currentUniform = { ...defaultUniform, ...(uniform || {}) };
-    currentUniform.headwear = { ...defaultUniform.headwear, ...(uniform?.headwear || {}) };
-    currentUniform.headwear.colors = { ...defaultUniform.headwear.colors, ...(uniform?.headwear?.colors || {}) };
-    currentUniform.plume = { ...defaultUniform.plume, ...(uniform?.plume || {}) };
-    currentUniform.plume.colors = { ...defaultUniform.plume.colors, ...(uniform?.plume?.colors || {}) };
-    currentUniform.jacket = { ...defaultUniform.jacket, ...(uniform?.jacket || {}) };
-    currentUniform.jacket.colors = { ...defaultUniform.jacket.colors, ...(uniform?.jacket?.colors || {}) };
-    currentUniform.pants = { ...defaultUniform.pants, ...(uniform?.pants || {}) };
-    currentUniform.pants.colors = { ...defaultUniform.pants.colors, ...(uniform?.pants?.colors || {}) };
-    currentUniform.shoes = { ...defaultUniform.shoes, ...(uniform?.shoes || {}) };
-    currentUniform.accessories = { ...defaultUniform.accessories, ...(uniform?.accessories || {}) };
-    currentUniform.accessories.colors = { ...defaultUniform.accessories.colors, ...(uniform?.accessories?.colors || {}) };
+    // **FIXED**: Robust deep merge logic
+    const currentUniform = {
+        ...defaultUniform,
+        ...(uniform || {}),
+        headwear: {
+            ...defaultUniform.headwear,
+            ...(uniform?.headwear || {}),
+            colors: {
+                ...defaultUniform.headwear.colors,
+                ...(uniform?.headwear?.colors || {}),
+            },
+        },
+        plume: {
+            ...defaultUniform.plume,
+            ...(uniform?.plume || {}),
+            colors: {
+                ...defaultUniform.plume.colors,
+                ...(uniform?.plume?.colors || {}),
+            },
+        },
+        jacket: {
+            ...defaultUniform.jacket,
+            ...(uniform?.jacket || {}),
+            colors: {
+                ...defaultUniform.jacket.colors,
+                ...(uniform?.jacket?.colors || {}),
+            },
+        },
+        pants: {
+            ...defaultUniform.pants,
+            ...(uniform?.pants || {}),
+            colors: {
+                ...defaultUniform.pants.colors,
+                ...(uniform?.pants?.colors || {}),
+            },
+        },
+        shoes: {
+            ...defaultUniform.shoes,
+            ...(uniform?.shoes || {}),
+        },
+        accessories: {
+            ...defaultUniform.accessories,
+            ...(uniform?.accessories || {}),
+            colors: {
+                ...defaultUniform.accessories.colors,
+                ...(uniform?.accessories?.colors || {}),
+            },
+        },
+    };
     
     // Dynamic sizing
     const sizeClasses = {
