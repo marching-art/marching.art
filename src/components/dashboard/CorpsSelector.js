@@ -1,5 +1,7 @@
 // src/components/dashboard/CorpsSelector.js - Enhanced to accept initialActiveCorps prop
 import React, { useState, useEffect } from 'react';
+import UniformManager from '../profile/UniformManager';
+import Icon from '../ui/Icon';
 import LineupEditor from './LineupEditor';
 import ShowSelection from './ShowSelection';
 import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
@@ -16,6 +18,8 @@ const CorpsSelector = ({
     const [activeCorps, setActiveCorps] = useState('worldClass');
     const [userCorps, setUserCorps] = useState({});
     const [hasInitialized, setHasInitialized] = useState(false);
+    const [showUniformManager, setShowUniformManager] = useState(false);
+    const [uniformManagerCorpsClass, setUniformManagerCorpsClass] = useState(null);
 
     useEffect(() => {
         const allCorps = getAllUserCorps(profile);
@@ -43,6 +47,11 @@ const CorpsSelector = ({
             ...prev,
             [corpsClass]: newCorpsData
         }));
+    };
+
+    const handleUniformManager = (corpsClass) => {
+        setUniformManagerCorpsClass(corpsClass);
+        setShowUniformManager(true);
     };
 
     if (!hasAnyCorps(profile)) {
@@ -80,7 +89,7 @@ const CorpsSelector = ({
                                 </span>
                             )}
                         </button>
-                    )
+                    );
                 })}
             </div>
 
@@ -96,6 +105,33 @@ const CorpsSelector = ({
                 />
             </div>
             
+            {/* Uniform Designer Section */}
+            {hasCorps(activeCorps) && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-theme border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
+                                🎨 Uniform Designer
+                            </h3>
+                            <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
+                                Create legendary uniform designs for {userCorps[activeCorps]?.corpsName}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => handleUniformManager(activeCorps)}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-6 rounded-theme transition-all transform hover:scale-105 shadow-lg"
+                        >
+                            <Icon path="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" className="w-5 h-5 inline mr-2" />
+                            Design Uniforms
+                        </button>
+                    </div>
+                    
+                    <div className="text-sm text-purple-800 dark:text-purple-200">
+                        <strong>New Feature:</strong> Create up to 4 unique uniform designs with comprehensive DCI-inspired options including legendary presets from Blue Devils, Santa Clara Vanguard, and more!
+                    </div>
+                </div>
+            )}
+
             <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
 
             <div>
@@ -108,6 +144,19 @@ const CorpsSelector = ({
                     seasonStartDate={seasonStartDate}
                 />
             </div>
+
+            {/* Uniform Manager Modal */}
+            {showUniformManager && (
+                <UniformManager
+                    userId={profile?.uid || profile?.userId}
+                    corpsClass={uniformManagerCorpsClass}
+                    corpsData={userCorps[uniformManagerCorpsClass]}
+                    onClose={() => {
+                        setShowUniformManager(false);
+                        setUniformManagerCorpsClass(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

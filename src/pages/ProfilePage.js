@@ -7,7 +7,205 @@ import LoadingScreen from '../components/ui/LoadingScreen';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
 import UniformBuilder from '../components/profile/UniformBuilder';
+import UniformManager from '../components/profile/UniformManager';
 import CommentsSection from '../components/profile/CommentsSection';
+
+const CorpsUniformShowcase = ({ profile, isOwner, onEditUniform }) => {
+    const [selectedCorps, setSelectedCorps] = useState(null);
+    const [selectedUniform, setSelectedUniform] = useState(0);
+    
+    const userCorps = getAllUserCorps(profile);
+    const hasAnyCorps = Object.values(userCorps).some(corps => corps && corps.corpsName);
+
+    if (!hasAnyCorps) {
+        return (
+            <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark shadow-theme p-8 text-center">
+                <div className="text-6xl mb-4">🥁</div>
+                <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                    No Corps Yet
+                </h3>
+                <p className="text-text-secondary dark:text-text-secondary-dark">
+                    {isOwner ? "Start your drum corps journey on your dashboard!" : "This director hasn't created any corps yet."}
+                </p>
+            </div>
+        );
+    }
+
+    // Get the first corps with uniforms or fallback to first corps
+    const corpsWithUniforms = Object.entries(userCorps).find(([_, corps]) => 
+        corps?.uniforms && Object.keys(corps.uniforms).length > 0
+    );
+    
+    const displayCorps = selectedCorps || (corpsWithUniforms ? corpsWithUniforms[0] : Object.keys(userCorps)[0]);
+    const displayCorpsData = selectedCorps ? userCorps[selectedCorps] : (corpsWithUniforms ? corpsWithUniforms[1] : Object.values(userCorps)[0]);
+    
+    const uniforms = displayCorpsData?.uniforms || {};
+    const uniformSlots = [0, 1, 2, 3].map(slot => uniforms[slot.toString()] || null);
+    const activeUniform = uniformSlots[selectedUniform] || null;
+
+    return (
+        <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark shadow-theme overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 dark:from-primary-dark/10 dark:to-accent-dark/10 p-6 border-b border-accent dark:border-accent-dark">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                            Corps Uniform Collection
+                        </h3>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">
+                            {isOwner ? "Your custom uniform designs" : `${profile?.username || 'Director'}'s uniform designs`}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Corps Selector if multiple corps */}
+                {Object.keys(userCorps).length > 1 && (
+                    <div className="mt-4">
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(userCorps).map(([corpsClass, corps]) => (
+                                <button
+                                    key={corpsClass}
+                                    onClick={() => {
+                                        setSelectedCorps(corpsClass);
+                                        setSelectedUniform(0);
+                                    }}
+                                    className={`px-4 py-2 rounded-theme text-sm font-medium transition-colors ${
+                                        (selectedCorps || displayCorps) === corpsClass
+                                            ? 'bg-primary text-on-primary'
+                                            : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                                    }`}
+                                >
+                                    {corps.corpsName}
+                                    <span className="ml-1 text-xs opacity-75">
+                                        ({CORPS_CLASSES[corpsClass]?.name})
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Uniform Display */}
+                    <div className="lg:col-span-2">
+                        {activeUniform ? (
+                            <div className="text-center">
+                                <div className="flex justify-center mb-4">
+                                    <UniformDisplay uniform={activeUniform} size="large" />
+                                </div>
+                                <h4 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                                    {activeUniform.name}
+                                </h4>
+                                <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
+                                    {displayCorpsData?.corpsName} • Uniform {selectedUniform + 1}
+                                </p>
+                                
+                                {/* Uniform Details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+                                        <div className="font-medium text-text-secondary dark:text-text-secondary-dark">Headwear</div>
+                                        <div className="text-text-primary dark:text-text-primary-dark capitalize">
+                                            {activeUniform.headwear?.style?.replace('_', ' ') || 'None'}
+                                        </div>
+                                    </div>
+                                    <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+                                        <div className="font-medium text-text-secondary dark:text-text-secondary-dark">Jacket</div>
+                                        <div className="text-text-primary dark:text-text-primary-dark capitalize">
+                                            {activeUniform.jacket?.style?.replace('_', ' ') || 'Classic'}
+                                        </div>
+                                    </div>
+                                    <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+                                        <div className="font-medium text-text-secondary dark:text-text-secondary-dark">Pants</div>
+                                        <div className="text-text-primary dark:text-text-primary-dark capitalize">
+                                            {activeUniform.pants?.style?.replace('_', ' ') || 'Plain'}
+                                        </div>
+                                    </div>
+                                    <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+                                        <div className="font-medium text-text-secondary dark:text-text-secondary-dark">Shoes</div>
+                                        <div className="text-text-primary dark:text-text-primary-dark capitalize">
+                                            {activeUniform.shoes?.style?.replace('_', ' ') || 'White'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isOwner && (
+                                    <button
+                                        onClick={() => onEditUniform && onEditUniform(selectedCorps || displayCorps, selectedUniform)}
+                                        className="mt-4 bg-primary hover:opacity-90 text-on-primary px-6 py-2 rounded-theme font-medium transition-colors"
+                                    >
+                                        Edit This Uniform
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <div className="text-6xl mb-4">👕</div>
+                                <h4 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                                    No Uniform Yet
+                                </h4>
+                                <p className="text-text-secondary dark:text-text-secondary-dark">
+                                    {isOwner ? "Create your first uniform design!" : "No uniform created for this slot."}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Uniform Selector */}
+                    <div className="space-y-4">
+                        <h5 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                            All Uniforms ({uniformSlots.filter(u => u !== null).length}/4)
+                        </h5>
+                        
+                        <div className="space-y-3">
+                            {uniformSlots.map((uniform, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setSelectedUniform(index)}
+                                    className={`w-full p-3 rounded-theme border-2 transition-all ${
+                                        selectedUniform === index
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-accent dark:border-accent-dark hover:border-primary/50'
+                                    } ${!uniform ? 'opacity-50' : ''}`}
+                                    disabled={!uniform}
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-shrink-0">
+                                            {uniform ? (
+                                                <UniformDisplay uniform={uniform} size="small" showInfo={false} />
+                                            ) : (
+                                                <div className="w-12 h-18 bg-background dark:bg-background-dark rounded border-2 border-dashed border-accent dark:border-accent-dark flex items-center justify-center text-text-secondary dark:text-text-secondary-dark">
+                                                    <span className="text-xs">+</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <div className="font-medium text-text-primary dark:text-text-primary-dark text-sm">
+                                                {uniform ? uniform.name : `Slot ${index + 1}`}
+                                            </div>
+                                            <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                                {uniform ? 'Ready' : 'Empty'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {isOwner && (
+                            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-theme border border-blue-200 dark:border-blue-800">
+                                <div className="text-sm text-blue-800 dark:text-blue-200">
+                                    <strong>💡 Pro Tip:</strong> Create multiple uniform designs for different performances, seasons, or show themes!
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [profile, setProfile] = useState(null);
@@ -20,9 +218,19 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [careerStats, setCareerStats] = useState({});
     const [recentActivity, setRecentActivity] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
+    const [showUniformManager, setShowUniformManager] = useState(false);
+    const [editingCorpsClass, setEditingCorpsClass] = useState(null);
+    const [editingUniformSlot, setEditingUniformSlot] = useState(0);
 
     const isOwner = loggedInUserId && viewingUserId === loggedInUserId;
     const profileUserId = viewingUserId || loggedInUserId;
+
+    // Add the missing function to handle editing corps uniforms
+    const handleEditCorpsUniform = (corpsClass, uniformSlot) => {
+        setEditingCorpsClass(corpsClass);
+        setEditingUniformSlot(uniformSlot);
+        setShowUniformManager(true);
+    };
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -283,34 +491,21 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
 
     return (
         <>
-            {/* Uniform Builder Modal */}
-            {isBuildingUniform && (
-                <UniformBuilder 
-                    uniform={userUniform}
-                    onSave={handleSaveUniform}
-                    onCancel={() => setIsBuildingUniform(false)}
-                    UniformDisplayComponent={UniformDisplay}
-                />
-            )}
-
             <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
                 {/* Profile Header */}
                 <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark shadow-theme overflow-hidden">
                     <div className="p-6 md:p-8">
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            {/* Profile Avatar with Uniform Builder */}
+                            {/* Profile Avatar - Keep the simple avatar for profile identity */}
                             <div className="flex-shrink-0 relative">
-                                <UniformDisplay uniform={userUniform} />
-                                {isOwner && (
-                                    <button 
-                                        onClick={() => setIsBuildingUniform(true)} 
-                                        className="absolute top-2 right-2 bg-primary/90 hover:bg-primary text-on-primary p-2 rounded-full shadow-lg backdrop-blur-sm transition-all" 
-                                        aria-label="Edit Avatar"
-                                        title="Customize Your Avatar"
-                                    >
-                                        <Icon path="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" className="w-5 h-5" />
-                                    </button>
-                                )}
+                                <div className="w-24 h-32 bg-gradient-to-b from-primary/20 to-accent/20 dark:from-primary-dark/20 dark:to-accent-dark/20 rounded-theme flex items-center justify-center border-2 border-accent dark:border-accent-dark">
+                                    <div className="text-4xl font-bold text-primary dark:text-primary-dark">
+                                        {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 bg-primary text-on-primary text-xs px-2 py-1 rounded-full">
+                                    Lv.{profile?.level || 1}
+                                </div>
                             </div>
 
                             {/* Profile Info */}
@@ -544,63 +739,12 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
 
                     {activeTab === 'corps' && (
                         <div className="space-y-6">
-                            {hasAnyCorps ? (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {CORPS_CLASS_ORDER.map(corpsClassKey => {
-                                        const corps = userCorps[corpsClassKey];
-                                        const classConfig = CORPS_CLASSES[corpsClassKey];
-                                        
-                                        if (!corps || !corps.corpsName || !classConfig) return null;
-
-                                        return (
-                                            <div key={corpsClassKey} className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-6">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <div className={`w-4 h-4 rounded-full ${classConfig.color}`}></div>
-                                                    <div>
-                                                        <h4 className="font-bold text-text-primary dark:text-text-primary-dark">
-                                                            {corps.corpsName}
-                                                        </h4>
-                                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                                            {classConfig.name}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-text-secondary dark:text-text-secondary-dark text-sm">Season Score</span>
-                                                        <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-                                                            {(corps.totalSeasonScore || 0).toFixed(3)} pts
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-text-secondary dark:text-text-secondary-dark text-sm">Best Rank</span>
-                                                        <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-                                                            {corps.bestRank ? `#${corps.bestRank}` : 'N/A'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-text-secondary dark:text-text-secondary-dark text-sm">Competitions</span>
-                                                        <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-                                                            {corps.showsAttended || 0}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark p-8 text-center">
-                                    <Icon path="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" className="w-12 h-12 text-text-secondary dark:text-text-secondary-dark mx-auto mb-4" />
-                                    <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-                                        No Corps Yet
-                                    </h3>
-                                    <p className="text-text-secondary dark:text-text-secondary-dark">
-                                        {isOwner ? "Start building your fantasy corps empire!" : "This director hasn't created any corps yet."}
-                                    </p>
-                                </div>
-                            )}
+                            {/* Corps Uniform Showcase - NEW SECTION */}
+                            <CorpsUniformShowcase 
+                                profile={profile}
+                                isOwner={isOwner}
+                                onEditUniform={handleEditCorpsUniform}
+                            />
                         </div>
                     )}
 
@@ -671,6 +815,19 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                     loggedInProfile={loggedInProfile}
                 />
             </div>
+
+            {/* Uniform Manager Modal */}
+            {showUniformManager && (
+                <UniformManager
+                    userId={loggedInUserId}
+                    corpsClass={editingCorpsClass}
+                    corpsData={getAllUserCorps(profile)[editingCorpsClass]}
+                    onClose={() => {
+                        setShowUniformManager(false);
+                        setEditingCorpsClass(null);
+                    }}
+                />
+            )}
         </>
     );
 };
