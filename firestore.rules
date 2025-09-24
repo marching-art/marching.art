@@ -5,28 +5,37 @@ service cloud.firestore {
 
     // --- USER DATA ---
     match /artifacts/{namespace}/users/{userId} {
-      // Profile data is public to read, but only the owner can write.
+      // Profile data is readable by anyone (for public profiles)
+      // Users can update their own profile data including uniforms
       match /profile/data {
-        allow read: if true;
+        allow read: if true; // Profiles are public for leaderboards, leagues, etc.
         allow write: if request.auth != null && request.auth.uid == userId;
+        allow update: if request.auth != null && request.auth.uid == userId;
       }
+      
+      // Private data is only accessible to the owner (via cloud functions)
+      match /private/data {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // All writes handled by cloud functions
+      }
+      
+      // Subscription data is only accessible to the owner
+      match /subscription/data {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
       // Comments are public to read. Logged-in users can create.
-      // Owner or author can delete/update.
+      // Deletion handled by cloud functions only
       match /comments/{commentId} {
         allow read: if true;
         allow create: if request.auth != null;
-        allow update: if request.auth != null && request.auth.uid == resource.data.authorUid;
-        allow delete: if request.auth != null &&
-          (request.auth.uid == userId || request.auth.uid == resource.data.authorUid);
+        allow update, delete: if false; // Handled by cloud functions only
       }
-      // Notifications are private.
+      
+      // Notifications are private to the user
       match /notifications/{notificationId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-    }
-
-    match /{path=**}/profile/{docId} {
-        allow get, list: if request.auth != null;
     }
 
     // --- PUBLIC GAME DATA ---
@@ -34,26 +43,32 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
+    
     match /dci-data/{docId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
+    
     match /dci-stats/{docId} {
       allow read: if true;
       allow write: if false; // Backend only
     }
+    
     match /fantasy_recaps/{docId} {
       allow read: if true;
       allow write: if false; // Backend only
     }
+    
     match /final_rankings/{docId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
+    
     match /historical_scores/{docId} {
       allow read: if true;
       allow write: if false; // Backend only
     }
+    
     match /live_scores/{seasonId}/scores/{docId} {
       allow read: if true;
       allow write: if false; // Backend only
@@ -64,32 +79,92 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
 
-
     // --- LEAGUES ---
     match /leagues/{leagueId} {
-      // Admins can read any league, members can read their own.
-      allow read: if request.auth != null && (request.auth.uid in resource.data.members || request.auth.token.admin == true);
-      allow write: if false; // Writes handled by backend functions
+      // League members and admins can read league data
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.members || 
+         request.auth.token.admin == true);
+      // Only backend functions can write/update league data
+      allow write: if false; // Backend only
     }
+
+    // League matchups are readable by authenticated users
     match /leagues/{leagueId}/matchups/{week} {
       allow read: if request.auth != null;
       allow write: if false; // Backend only
     }
-    match /leagueInvites/{code} {
+
+    // League invites are handled entirely by backend
+    match /leagueInvites/{inviteCode} {
       allow read, write: if false; // Backend only
     }
 
-    // --- MISC & ADMIN ---
-    match /activeLineups/{lineupKey} {
-      allow read, write: if false; // Backend only
-    }
-    match /usernames/{username} {
+    // League archives are public to read
+    match /league_archives/{archiveId} {
       allow read: if true;
       allow write: if false; // Backend only
     }
+
+    // --- USER MANAGEMENT ---
+    match /usernames/{username} {
+      allow read: if true; // Needed for username availability checking
+      allow write: if false; // Backend only
+    }
+
+    match /activeLineups/{lineupKey} {
+      allow read, write: if false; // Backend only
+    }
+
+    // --- REPORTS AND MODERATION ---
     match /reports/{reportId} {
       allow read, update: if request.auth != null && request.auth.token.admin == true;
       allow create: if request.auth != null;
+      allow delete: if false; // Reports should not be deleted
+    }
+
+    // --- PAYMENT AND SUBSCRIPTION DATA ---
+    match /stripe_customers/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /stripe_subscriptions/{subscriptionId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow write: if false; // Backend only
+    }
+
+    // --- ADMIN DATA ---
+    match /admin/{docId} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // --- SYSTEM LOGS (for debugging and analytics) ---
+    match /system_logs/{logId} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // --- NOTIFICATION SYSTEM ---
+    match /notifications/{userId}/messages/{messageId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- PERFORMANCE OPTIMIZATIONS ---
+    // Allow reading game data for dashboard performance
+    match /fantasy_recaps/{docId} {
+      allow read: if true; // Allow reading recap data for dashboard
+    }
+    
+    match /dci-data/{docId} {
+      allow read: if true; // Allow reading DCI data
+    }
+    
+    match /game-settings/{docId} {
+      allow read: if true; // Allow reading game settings
+    }
+
+    // Default deny rule for security - this should be last
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
