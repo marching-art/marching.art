@@ -15,6 +15,7 @@ import LoadingScreen from '../components/ui/LoadingScreen';
 import SeasonSignup from '../components/dashboard/SeasonSignup';
 import LeagueManager from '../components/dashboard/LeagueManager';
 import MyStatus from '../components/dashboard/MyStatus';
+import CorpsSelector from '../components/dashboard/CorpsSelector';
 import Icon from '../components/ui/Icon';
 
 // Merge existing CORPS_CLASSES with SoundSport
@@ -229,13 +230,7 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
       </button>
 
       {/* Official DCI Compliance Badge for SoundSport */}
-      {isSoundSport && (
-        <div className="mt-3 text-center">
-          <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
-            <span>✓</span> Official DCI SoundSport™ Compliant
-          </div>
-        </div>
-      )}
+      {/* Removed - no longer displaying compliance badge */}
     </div>
   );
 };
@@ -245,6 +240,8 @@ const DashboardPage = ({ profile, userId }) => {
   const [seasonSettings, setSeasonSettings] = useState(null);
   const [corpsData, setCorpsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCorpsSelector, setShowCorpsSelector] = useState(false);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
 
   // Use existing Firebase integration (from original DashboardPage)
   useEffect(() => {
@@ -308,8 +305,14 @@ const DashboardPage = ({ profile, userId }) => {
   }, [profile, userCorps]);
 
   const handleCorpsAction = (corpsClass) => {
-    console.log(`Action for ${corpsClass}`);
-    // This would integrate with your existing navigation system
+    if (corpsClass === 'soundSport') {
+      console.log(`Creating SoundSport team`);
+      // This would integrate with your existing soundSport creation system
+    } else {
+      // For A, Open, World Class - show the existing CorpsSelector
+      setSelectedCorpsClass(corpsClass);
+      setShowCorpsSelector(true);
+    }
   };
 
   if (isLoading || !seasonSettings) {
@@ -332,6 +335,47 @@ const DashboardPage = ({ profile, userId }) => {
 
   // Main dashboard view (existing users)
   if (hasJoinedCurrentSeason) {
+    // If showing CorpsSelector for management
+    if (showCorpsSelector && selectedCorpsClass) {
+      const seasonStartDate = seasonSettings.schedule?.startDate?.toDate();
+      let currentOffSeasonDay = 0;
+      if (seasonSettings.status === 'off-season' && seasonStartDate) {
+        const logicalNow = new Date();
+        logicalNow.setHours(logicalNow.getHours() - 24);
+        const todayForLogic = new Date(logicalNow.getFullYear(), logicalNow.getMonth(), logicalNow.getDate());
+        const startDayForLogic = new Date(seasonStartDate.getFullYear(), seasonStartDate.getMonth(), seasonStartDate.getDate());
+        const diff = todayForLogic.getTime() - startDayForLogic.getTime();
+        currentOffSeasonDay = Math.round(diff / (1000 * 60 * 60 * 24)) + 1;
+      }
+
+      return (
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+          <div className="flex items-center gap-4 mb-6">
+            <button 
+              onClick={() => setShowCorpsSelector(false)}
+              className="text-primary dark:text-primary-dark hover:underline"
+            >
+              ← Back to Dashboard
+            </button>
+            <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+              Manage {ALL_CORPS_CLASSES[selectedCorpsClass]?.name || 'Corps'}
+            </h1>
+          </div>
+          
+          <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border-theme border-accent dark:border-accent-dark shadow-theme">
+            <CorpsSelector 
+              profile={profile}  
+              corpsData={corpsData}
+              seasonSettings={seasonSettings}
+              seasonEvents={seasonSettings.events || []}
+              currentOffSeasonDay={currentOffSeasonDay}
+              seasonStartDate={seasonStartDate}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
         <MyStatus username={profile?.username || 'Director'} profile={profile} />
