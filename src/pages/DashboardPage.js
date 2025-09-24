@@ -305,14 +305,9 @@ const DashboardPage = ({ profile, userId }) => {
   }, [profile, userCorps]);
 
   const handleCorpsAction = (corpsClass) => {
-    if (corpsClass === 'soundSport') {
-      console.log(`Creating SoundSport team`);
-      // This would integrate with your existing soundSport creation system
-    } else {
-      // For A, Open, World Class - show the existing CorpsSelector
-      setSelectedCorpsClass(corpsClass);
-      setShowCorpsSelector(true);
-    }
+    // For all corps classes (including SoundSport) - show the CorpsSelector
+    setSelectedCorpsClass(corpsClass);
+    setShowCorpsSelector(true);
   };
 
   if (isLoading || !seasonSettings) {
