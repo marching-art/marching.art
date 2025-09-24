@@ -1,4 +1,4 @@
-// src/pages/DashboardPage.js - FIXED: Compatible with Existing Backend
+// src/pages/DashboardPage.js - UPDATED: With Registration Cutoffs
 import React, { useState, useEffect, useMemo } from 'react';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -6,7 +6,10 @@ import { SoundSportDisplay } from '../utils/soundSportSystem';
 import { 
   getAllUserCorps, 
   hasJoinedSeason, 
-  CORPS_CLASSES 
+  CORPS_CLASSES,
+  canCreateCorps,
+  calculateWeeksRemaining,
+  getRegistrationDeadline
 } from '../utils/profileCompatibility';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import SeasonSignup from '../components/dashboard/SeasonSignup';
@@ -49,15 +52,95 @@ const SoundSportPerformanceCard = ({ performance, onViewDetails }) => {
   );
 };
 
-// Corps Class Card Component
-const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
+// Registration Status Banner
+const RegistrationBanner = ({ seasonEndDate }) => {
+  const weeksRemaining = calculateWeeksRemaining(seasonEndDate);
+  
+  const cutoffInfo = [
+    { class: 'worldClass', name: 'World Class', weeks: 6 },
+    { class: 'openClass', name: 'Open Class', weeks: 5 },
+    { class: 'aClass', name: 'A Class', weeks: 4 }
+  ];
+
+  const upcomingCutoffs = cutoffInfo.filter(info => weeksRemaining <= info.weeks && weeksRemaining > 0);
+  const passedCutoffs = cutoffInfo.filter(info => weeksRemaining < info.weeks);
+
+  if (weeksRemaining === 0) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="text-red-500 text-xl">⚠️</div>
+          <div>
+            <h4 className="font-bold text-red-800 dark:text-red-200">Season Ending</h4>
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Registration closed for all competitive classes. Only SoundSport teams can still be created.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (upcomingCutoffs.length > 0 || passedCutoffs.length > 0) {
+    return (
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="text-yellow-600 text-xl">⏰</div>
+          <div>
+            <h4 className="font-bold text-yellow-800 dark:text-yellow-200">Registration Deadlines</h4>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              {weeksRemaining} week{weeksRemaining !== 1 ? 's' : ''} remaining in season
+            </p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {passedCutoffs.length > 0 && (
+            <div>
+              <p className="font-semibold text-red-700 dark:text-red-300 mb-1">Registration Closed:</p>
+              <ul className="space-y-1">
+                {passedCutoffs.map(info => (
+                  <li key={info.class} className="text-red-600 dark:text-red-400">
+                    • {info.name} (required {info.weeks}+ weeks)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {upcomingCutoffs.length > 0 && (
+            <div>
+              <p className="font-semibold text-yellow-700 dark:text-yellow-300 mb-1">Closing Soon:</p>
+              <ul className="space-y-1">
+                {upcomingCutoffs.map(info => (
+                  <li key={info.class} className="text-yellow-600 dark:text-yellow-400">
+                    • {info.name} (requires {info.weeks}+ weeks)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// Corps Class Card Component - UPDATED with registration cutoffs
+const CorpsClassCard = ({ classInfo, registrationStatus, onAction, seasonEndDate }) => {
   const isSoundSport = classInfo.className === 'soundSport';
   const classConfig = CORPS_CLASSES[classInfo.className];
   
   if (!classConfig) return null;
 
-  const getStatusColor = (status, registrationOpen) => {
-    if (!registrationOpen && !isSoundSport) return 'border-red-300 bg-red-50 dark:bg-red-900/20';
+  const registrationCheck = canCreateCorps(null, classInfo.className, seasonEndDate);
+  const canRegister = registrationCheck.canCreate || classInfo.hasCorps;
+  const registrationDeadline = getRegistrationDeadline(classInfo.className, seasonEndDate);
+
+  const getStatusColor = (status, canReg) => {
+    if (!canReg && !classInfo.hasCorps) return 'border-red-300 bg-red-50 dark:bg-red-900/20';
     
     switch (status) {
       case 'active': return 'border-green-500 bg-green-50 dark:bg-green-900/20';
@@ -69,8 +152,8 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
 
   return (
     <div
-      className={`relative rounded-2xl p-6 border-2 transition-all duration-300 hover:scale-105 cursor-pointer ${getStatusColor(classInfo.status, registrationStatus?.canRegister)}`}
-      onClick={() => registrationStatus?.canRegister && onAction(classInfo.className)}
+      className={`relative rounded-2xl p-6 border-2 transition-all duration-300 hover:scale-105 cursor-pointer ${getStatusColor(classInfo.status, canRegister)}`}
+      onClick={() => canRegister && onAction(classInfo.className)}
     >
       {/* Class Header */}
       <div className="flex items-center justify-between mb-4">
@@ -96,7 +179,7 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
         
         <div className="text-right">
           <div className="text-2xl mb-1">
-            {classInfo.hasCorps ? '✅' : registrationStatus?.canRegister ? '🎯' : '🔒'}
+            {classInfo.hasCorps ? '✅' : canRegister ? '🎯' : '🔒'}
           </div>
           {isSoundSport && (
             <div className="text-xs font-semibold text-orange-600 dark:text-orange-400">
@@ -105,6 +188,21 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
           )}
         </div>
       </div>
+
+      {/* Registration Deadline Warning */}
+      {!classInfo.hasCorps && !canRegister && registrationDeadline?.hasDeadline && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Registration Closed
+            </span>
+          </div>
+          <p className="text-xs text-red-700 dark:text-red-300">
+            {classConfig.name} requires {registrationDeadline.weeksRequired} weeks remaining in the season. 
+            Registration deadline has passed.
+          </p>
+        </div>
+      )}
 
       {/* SoundSport Information */}
       {isSoundSport && (
@@ -193,7 +291,7 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
       {/* Action Button */}
       <button
         className={`w-full py-3 px-4 rounded-lg font-semibold text-sm transition-all ${
-          (!registrationStatus?.canRegister && !classInfo.hasCorps && !isSoundSport)
+          (!canRegister && !classInfo.hasCorps)
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : classInfo.hasCorps
             ? 'bg-secondary text-on-secondary hover:bg-secondary/90'
@@ -201,10 +299,10 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
             ? 'bg-orange-500 text-white hover:bg-orange-600'
             : 'bg-primary text-on-primary hover:bg-primary/90'
         }`}
-        disabled={!registrationStatus?.canRegister && !classInfo.hasCorps && !isSoundSport}
+        disabled={!canRegister && !classInfo.hasCorps}
         onClick={(e) => {
           e.stopPropagation();
-          if (registrationStatus?.canRegister || classInfo.hasCorps || isSoundSport) {
+          if (canRegister || classInfo.hasCorps) {
             onAction(classInfo.className);
           }
         }}
@@ -213,7 +311,7 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
           ? 'Manage Corps'
           : isSoundSport
           ? 'Create SoundSport Team'
-          : registrationStatus?.canRegister
+          : canRegister
           ? `Create ${classConfig.name} Corps`
           : 'Registration Closed'
         }
@@ -222,7 +320,7 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
   );
 };
 
-// Main Dashboard Component - COMPATIBLE WITH EXISTING BACKEND
+// Main Dashboard Component - UPDATED with registration cutoffs
 const DashboardPage = ({ profile, userId }) => {
   const [seasonSettings, setSeasonSettings] = useState(null);
   const [corpsData, setCorpsData] = useState([]);
@@ -230,7 +328,7 @@ const DashboardPage = ({ profile, userId }) => {
   const [showCorpsSelector, setShowCorpsSelector] = useState(false);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
 
-  // Use existing Firebase integration (from original DashboardPage)
+  // Use existing Firebase integration
   useEffect(() => {
     const seasonSettingsRef = doc(db, 'game-settings', 'season');
     
@@ -265,8 +363,10 @@ const DashboardPage = ({ profile, userId }) => {
   const hasAnyCorps = Object.keys(userCorps).length > 0;
   const hasJoinedCurrentSeason = seasonSettings ? hasJoinedSeason(profile, seasonSettings.seasonUid) : false;
 
-  // Create corps cards with existing data structure
+  // Create corps cards with registration cutoff logic
   const corpsCards = useMemo(() => {
+    if (!seasonSettings) return [];
+    
     const availableClasses = ['soundSport', 'aClass', 'openClass', 'worldClass'];
     const userLevel = profile?.level || 1;
     
@@ -275,24 +375,25 @@ const DashboardPage = ({ profile, userId }) => {
       if (!classConfig) return null;
       
       const hasCorps = !!userCorps[className];
-      const canUnlock = userLevel >= 1; // Simplified - all classes available for now
-      const canRegister = className === 'soundSport' || canUnlock;
+      const registrationCheck = canCreateCorps(profile, className, seasonSettings.schedule?.endDate);
       
       return {
         className,
         hasCorps,
         corps: userCorps[className],
-        status: hasCorps ? 'active' : (canRegister ? 'available' : 'locked'),
+        status: hasCorps ? 'active' : (registrationCheck.canCreate ? 'available' : 'locked'),
         registrationStatus: { 
-          canRegister,
-          deadline: className === 'soundSport' ? 'Always Open' : 'Season Dependent'
+          canRegister: registrationCheck.canCreate || hasCorps,
+          reason: registrationCheck.reason,
+          weeksRemaining: registrationCheck.weeksRemaining,
+          requiredWeeks: registrationCheck.requiredWeeks,
+          deadline: className === 'soundSport' ? 'Always Open' : 'Time-limited'
         }
       };
-    }).filter(Boolean).filter(classInfo => classInfo.status !== 'locked');
-  }, [profile, userCorps]);
+    }).filter(Boolean);
+  }, [profile, userCorps, seasonSettings]);
 
   const handleCorpsAction = (corpsClass) => {
-    // For all corps classes (including SoundSport) - show the CorpsSelector
     setSelectedCorpsClass(corpsClass);
     setShowCorpsSelector(true);
   };
@@ -363,6 +464,9 @@ const DashboardPage = ({ profile, userId }) => {
       <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
         <MyStatus username={profile?.username || 'Director'} profile={profile} />
         
+        {/* Registration Status Banner */}
+        <RegistrationBanner seasonEndDate={seasonSettings.schedule?.endDate} />
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Corps Management with SoundSport */}
           <div className="lg:col-span-2 space-y-6">
@@ -377,13 +481,14 @@ const DashboardPage = ({ profile, userId }) => {
                       classInfo={classInfo}
                       registrationStatus={classInfo.registrationStatus}
                       onAction={handleCorpsAction}
+                      seasonEndDate={seasonSettings.schedule?.endDate}
                     />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-text-secondary dark:text-text-secondary-dark">
-                    No corps classes available at your current level.
+                    No corps classes available.
                   </p>
                 </div>
               )}
@@ -413,6 +518,9 @@ const DashboardPage = ({ profile, userId }) => {
             Create your drum corps empire with official DCI SoundSport™ and competitive classes
           </p>
         </div>
+
+        {/* Registration Status Banner */}
+        <RegistrationBanner seasonEndDate={seasonSettings.schedule?.endDate} />
 
         {/* SoundSport Promotion */}
         <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-2xl p-8 border border-orange-200 dark:border-orange-800 mb-8">
@@ -468,7 +576,7 @@ const DashboardPage = ({ profile, userId }) => {
               Available Corps Classes
             </h2>
             <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-              {corpsCards.length} classes available
+              {corpsCards.filter(c => c.registrationStatus.canRegister || c.hasCorps).length} classes available
             </div>
           </div>
 
@@ -479,6 +587,7 @@ const DashboardPage = ({ profile, userId }) => {
                 classInfo={classInfo}
                 registrationStatus={classInfo.registrationStatus}
                 onAction={handleCorpsAction}
+                seasonEndDate={seasonSettings.schedule?.endDate}
               />
             ))}
           </div>

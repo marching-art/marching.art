@@ -1,13 +1,13 @@
 // src/utils/profileCompatibility.js
 // Helper functions to handle both old and new profile structures including SoundSport
-// FIXED: Integrated with soundSportSystem.js to avoid conflicts
+// UPDATED: Added registration cutoff logic
 
 export const CORPS_CLASSES = {
     // SoundSport integrated from soundSportSystem
-    soundSport: { name: 'SoundSport', pointCap: 90, color: 'bg-orange-500' },
-    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' },
-    openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
-    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' }
+    soundSport: { name: 'SoundSport', pointCap: 90, color: 'bg-orange-500', registrationCutoff: 0 },
+    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500', registrationCutoff: 4 },
+    openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500', registrationCutoff: 5 },
+    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500', registrationCutoff: 6 }
 };
 
 // Updated order to include SoundSport first (always available)
@@ -82,17 +82,75 @@ export const getSoundSportScore = (corps) => {
     return corps?.totalSeasonScore || 0;
 };
 
-export const canCreateCorps = (profile, corpsClass) => {
+// UPDATED: Registration cutoff logic
+export const calculateWeeksRemaining = (seasonEndDate) => {
+    if (!seasonEndDate) return 0;
+    
+    const now = new Date();
+    const endDate = seasonEndDate.toDate ? seasonEndDate.toDate() : new Date(seasonEndDate);
+    
+    if (isNaN(endDate.getTime())) return 0;
+    
+    const diffInMillis = endDate.getTime() - now.getTime();
+    const weeksRemaining = Math.ceil(diffInMillis / (1000 * 60 * 60 * 24 * 7));
+    
+    return Math.max(0, weeksRemaining);
+};
+
+export const canCreateCorps = (profile, corpsClass, seasonEndDate) => {
+    // Check if user already has this corps class (updates always allowed)
+    const existingCorps = getAllUserCorps(profile);
+    if (existingCorps[corpsClass]) {
+        return { canCreate: true, isUpdate: true };
+    }
+    
     // SoundSport is always available
-    if (corpsClass === 'soundSport') return true;
+    if (corpsClass === 'soundSport') {
+        return { canCreate: true, isUpdate: false };
+    }
     
-    // Other classes based on existing logic
-    const userLevel = profile?.level || 1;
-    const unlockLevels = {
-        aClass: 1,
-        openClass: 5,
-        worldClass: 10
+    // Check registration cutoffs for new corps creation
+    const weeksRemaining = calculateWeeksRemaining(seasonEndDate);
+    const classConfig = CORPS_CLASSES[corpsClass];
+    const requiredWeeks = classConfig?.registrationCutoff || 0;
+    
+    if (weeksRemaining >= requiredWeeks) {
+        return { 
+            canCreate: true, 
+            isUpdate: false,
+            weeksRemaining,
+            requiredWeeks 
+        };
+    }
+    
+    return { 
+        canCreate: false, 
+        isUpdate: false,
+        reason: `Registration closed. ${classConfig.name} requires ${requiredWeeks} weeks remaining, but only ${weeksRemaining} weeks remain.`,
+        weeksRemaining,
+        requiredWeeks 
     };
+};
+
+export const getRegistrationDeadline = (corpsClass, seasonEndDate) => {
+    const classConfig = CORPS_CLASSES[corpsClass];
+    if (!classConfig || !seasonEndDate) return null;
     
-    return userLevel >= (unlockLevels[corpsClass] || 1);
+    if (corpsClass === 'soundSport') {
+        return { 
+            deadline: 'Always Open',
+            weeksRequired: 0,
+            hasDeadline: false 
+        };
+    }
+    
+    const endDate = seasonEndDate.toDate ? seasonEndDate.toDate() : new Date(seasonEndDate);
+    const deadlineDate = new Date(endDate.getTime() - (classConfig.registrationCutoff * 7 * 24 * 60 * 60 * 1000));
+    
+    return {
+        deadline: deadlineDate,
+        weeksRequired: classConfig.registrationCutoff,
+        hasDeadline: true,
+        isPast: new Date() > deadlineDate
+    };
 };

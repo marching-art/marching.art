@@ -1,3 +1,4 @@
+// src/App.js - Updated with Settings page route
 import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
@@ -9,6 +10,7 @@ import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import LeaguePage from './pages/LeaguePage';
 import LeagueDetailPage from './pages/LeagueDetailPage';
@@ -57,19 +59,56 @@ function AppContent() {
     };
 
     const renderPage = () => {
-        // Now profile is accessed from context within components where needed
-        // Or passed explicitly like here for simplicity
+        // Authentication-required pages
+        if (['dashboard', 'settings', 'profile', 'leagues', 'leaderboard'].includes(page) && !user) {
+            setPage('home');
+            return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+        }
+
         switch (page) {
-            case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
-            case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
-            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
-            case 'leagues': return <LeaguePage profile={loggedInProfile} setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
-            case 'leagueDetail': return <LeagueDetailPage profile={loggedInProfile} leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'leaderboard': return <LeaderboardPage profile={loggedInProfile} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'schedule': return <SchedulePage setPage={handleSetPage} />;
-            case 'scores': return <ScoresPage theme={themeMode} />;
-            case 'stats': return <StatsPage />;
-            case 'howtoplay': return <HowToPlayPage />;
+            case 'dashboard': 
+                return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
+            case 'profile': 
+                return <ProfilePage 
+                    loggedInProfile={loggedInProfile} 
+                    loggedInUserId={user?.uid} 
+                    viewingUserId={pageProps.userId} 
+                />;
+            case 'settings':
+                return <SettingsPage 
+                    setPage={handleSetPage} 
+                    onLogout={handleLogout} 
+                />;
+            case 'admin': 
+                return loggedInProfile?.isAdmin 
+                    ? <AdminPage /> 
+                    : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+            case 'leagues': 
+                return <LeaguePage 
+                    profile={loggedInProfile} 
+                    setPage={handleSetPage} 
+                    onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} 
+                />;
+            case 'leagueDetail': 
+                return <LeagueDetailPage 
+                    profile={loggedInProfile} 
+                    leagueId={pageProps.leagueId} 
+                    setPage={handleSetPage} 
+                    onViewProfile={(id) => handleSetPage('profile', { userId: id })} 
+                />;
+            case 'leaderboard': 
+                return <LeaderboardPage 
+                    profile={loggedInProfile} 
+                    onViewProfile={(id) => handleSetPage('profile', { userId: id })} 
+                />;
+            case 'schedule': 
+                return <SchedulePage setPage={handleSetPage} />;
+            case 'scores': 
+                return <ScoresPage theme={themeMode} />;
+            case 'stats': 
+                return <StatsPage />;
+            case 'howtoplay': 
+                return <HowToPlayPage />;
             case 'home':
             default:
                 return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
@@ -77,12 +116,28 @@ function AppContent() {
     };
 
     if (isLoadingAuth) {
-        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
+        return (
+            <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p>Loading marching.art...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+            <Toaster 
+                position="bottom-center" 
+                toastOptions={{ 
+                    style: { 
+                        background: themeMode === 'dark' ? '#333' : '#fff', 
+                        color: themeMode === 'dark' ? '#fff' : '#333' 
+                    } 
+                }} 
+            />
+            
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
@@ -92,6 +147,7 @@ function AppContent() {
                     setPage('dashboard');
                 }}
             />
+            
             <Header
                 user={user}
                 isLoggedIn={!!user}
@@ -100,15 +156,17 @@ function AppContent() {
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
                 onLogout={handleLogout}
                 setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
+                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
                 onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
                 profile={loggedInProfile}
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
             />
+            
             <main className="flex-grow relative">
                 {renderPage()}
             </main>
+            
             <Footer setPage={handleSetPage} />
         </div>
     );

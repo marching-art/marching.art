@@ -1,3 +1,4 @@
+// src/utils/api.js - Updated with user profile management functions
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase';
 
@@ -6,12 +7,16 @@ import { functions } from '../firebase';
 // User Functions
 export const checkUsername = (data) => httpsCallable(functions, 'checkUsername')(data);
 export const createUserProfile = (data) => httpsCallable(functions, 'createUserProfile')(data);
+export const updateUserProfile = (data) => httpsCallable(functions, 'updateUserProfile')(data);
 export const getShowRegistrations = (data) => httpsCallable(functions, 'getShowRegistrations')(data);
 export const getUserRankings = (data) => httpsCallable(functions, 'getUserRankings')(data);
 
 // Lineup & Corps Functions
 export const validateAndSaveLineup = (data) => httpsCallable(functions, 'validateAndSaveLineup')(data);
 export const selectUserShows = (data) => httpsCallable(functions, 'selectUserShows')(data);
+
+// Registration Status Function
+export const getRegistrationStatus = () => httpsCallable(functions, 'getRegistrationStatus')();
 
 // League Functions
 export const createLeague = (data) => httpsCallable(functions, 'createLeague')(data);
