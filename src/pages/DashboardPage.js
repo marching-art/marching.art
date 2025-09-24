@@ -166,7 +166,7 @@ const UniformBuilderSection = ({ profile, onOpenUniformManager }) => {
 const DashboardPage = ({ profile, userId }) => {
   const [seasonSettings, setSeasonSettings] = useState(null);
   const [seasonEvents, setSeasonEvents] = useState([]);
-  const [corpsData, setCorpsData] = useState({});
+  const [corpsData, setCorpsData] = useState([]);
   const [soundSportPerformances, setSoundSportPerformances] = useState([]);
   const [isLoadingSeason, setIsLoadingSeason] = useState(true);
   const [showUniformManager, setShowUniformManager] = useState(false);
@@ -184,34 +184,36 @@ const DashboardPage = ({ profile, userId }) => {
     return () => unsubscribe();
   }, []);
 
-  // Load season events
+  // Load season events and corps data
   useEffect(() => {
-    const fetchSeasonEvents = async () => {
+    const fetchSeasonData = async () => {
       try {
+        // Load season events
         const eventsDoc = await getDoc(doc(db, 'game-settings', 'season-events'));
         if (eventsDoc.exists()) {
           setSeasonEvents(eventsDoc.data().events || []);
         }
+
+        // Load corps data if season settings has dataDocId
+        if (seasonSettings?.dataDocId) {
+          const corpsDataDoc = await getDoc(doc(db, 'dci-data', seasonSettings.dataDocId));
+          if (corpsDataDoc.exists()) {
+            setCorpsData(corpsDataDoc.data().corpsValues || []);
+          } else {
+            console.error(`Corps data document not found: ${seasonSettings.dataDocId}`);
+            setCorpsData([]);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching season events:", error);
+        console.error("Error fetching season data:", error);
+        setCorpsData([]);
       }
     };
 
-    fetchSeasonEvents();
-  }, []);
-
-  // Load user's corps data
-  useEffect(() => {
-    if (!userId) return;
-
-    const unsubscribe = onSnapshot(doc(db, 'fantasy-rosters', userId), (doc) => {
-      if (doc.exists()) {
-        setCorpsData(doc.data());
-      }
-    });
-
-    return () => unsubscribe();
-  }, [userId]);
+    if (seasonSettings) {
+      fetchSeasonData();
+    }
+  }, [seasonSettings]);
 
   // Load SoundSport performances
   useEffect(() => {

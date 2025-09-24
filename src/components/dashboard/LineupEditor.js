@@ -1,3 +1,5 @@
+// src/components/dashboard/LineupEditor.js
+// Fixed lineup editor component - resolves TypeError: n.filter is not a function
 import React, { useState, useEffect } from 'react';
 import { validateAndSaveLineup } from '../../utils/api';
 
@@ -104,11 +106,19 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
         setIsLoading(false);
     };
 
-    if (!corpsData || corpsData.length === 0) {
+    // FIXED: Add safety check to ensure corpsData is an array
+    const safeCorpsData = Array.isArray(corpsData) ? corpsData : [];
+
+    if (!corpsData || safeCorpsData.length === 0) {
         return (
             <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">{corpsClassName} Lineup</h2>
-                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Corps data not available. Please check back later.</p>
+                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">
+                    {!corpsData 
+                        ? "Corps data not available. Please check back later."
+                        : "Loading corps data..."
+                    }
+                </p>
             </div>
         );
     }
@@ -140,14 +150,20 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
             
             {!isNewCorps && (
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Trades Remaining: {tradesRemaining}</div>
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Total Points: {totalPoints} / {pointCap}</div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${hasExceededTrades ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                        Trades Remaining: {tradesRemaining}
+                    </div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                        Total Points: {totalPoints} / {pointCap}
+                    </div>
                 </div>
             )}
 
             {isNewCorps && (
                 <div className="flex justify-end mb-4">
-                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>Total Points: {totalPoints} / {pointCap}</div>
+                    <div className={`text-base sm:text-xl font-bold p-2 rounded-theme ${totalPoints > pointCap ? 'text-red-500 bg-red-500/10' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                        Total Points: {totalPoints} / {pointCap}
+                    </div>
                 </div>
             )}
 
@@ -161,8 +177,9 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
                             className="flex-grow bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary"
                         >
                             <option value="">-- Select a Corps --</option>
-                            {corpsData
-                                .filter(corps => corps.points <= pointCap)
+                            {/* FIXED: Use safeCorpsData instead of corpsData directly */}
+                            {safeCorpsData
+                                .filter(corps => corps && corps.points && corps.points <= pointCap)
                                 .map(corps => {
                                     const uniqueValue = `${corps.corpsName}|${corps.points}|${corps.sourceYear}`;
                                     return (
@@ -179,11 +196,19 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
 
             <div className="mt-6 flex justify-end items-center space-x-4">
                 {message && (
-                    <p className={`text-sm font-semibold ${message.toLowerCase().includes('successfully') || message.toLowerCase().includes('saved') ? 'text-green-600' : 'text-red-600'}`}>{message}</p>
+                    <p className={`text-sm font-semibold ${message.toLowerCase().includes('successfully') || message.toLowerCase().includes('saved') ? 'text-green-600' : 'text-red-600'}`}>
+                        {message}
+                    </p>
                 )}
                 <button 
                     onClick={handleSave} 
-                    disabled={isLoading || totalPoints > pointCap || (!isNewCorps && pendingTrades === 0) || (!isNewCorps && hasExceededTrades) || (isNewCorps && (!isLineupComplete || !corpsName.trim()))}
+                    disabled={
+                        isLoading || 
+                        totalPoints > pointCap || 
+                        (!isNewCorps && pendingTrades === 0) || 
+                        (!isNewCorps && hasExceededTrades) || 
+                        (isNewCorps && (!isLineupComplete || !corpsName.trim()))
+                    }
                     className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? 'Saving...' : isNewCorps ? 'Create Corps' : 'Save Lineup'}
