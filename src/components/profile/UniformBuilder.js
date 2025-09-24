@@ -295,10 +295,10 @@ const UniformBuilder = ({
 
     const tabs = [
         { id: 'presets', name: 'Presets', icon: '🎨' },
-        { id: 'body', name: 'Body', icon: '👤' },
+        { id: 'body', name: 'Body', icon: '🧑' },
         { id: 'headwear', name: 'Headwear', icon: '🎩' },
-        { id: 'jacket', name: 'Jacket', icon: '🥇' },
-        { id: 'pants', name: 'Pants', icon: '👔' },
+        { id: 'jacket', name: 'Jacket', icon: '🧥' },
+        { id: 'pants', name: 'Pants', icon: '👖' },
         { id: 'accessories', name: 'Extras', icon: '✨' },
     ];
 
@@ -390,7 +390,7 @@ const UniformBuilder = ({
                                             className="p-4 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-all hover:scale-105 hover:shadow-lg"
                                         >
                                             <UniformDisplayComponent 
-                                                uniform={{...uniform, ...preset}} 
+                                                uniform={{ ...preset, skinTone: uniform.skinTone }} 
                                                 size="small" 
                                                 showInfo={false}
                                             />
