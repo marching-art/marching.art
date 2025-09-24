@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db, dataNamespace } from '../../firebase';
 import { sendCommentNotification, deleteComment, reportComment } from '../../utils/api';
 import Icon from '../ui/Icon';
@@ -87,18 +87,17 @@ const CommentsSection = ({ profileOwnerId, loggedInProfile }) => {
     };
 
     const handleDeleteConfirm = async () => {
-    if (!commentToDelete) return;
-    setIsSubmitting(true);
-    try {
-        const commentRef = doc(db, `artifacts/${dataNamespace}/users/${profileOwnerId}/comments`, commentToDelete.id);
-        await deleteDoc(commentRef);
-    } catch (err) {
-        setError(err.message || "Failed to delete comment.");
-    }
-    setIsSubmitting(false);
-    setIsDeleteModalOpen(false);
-    setCommentToDelete(null);
-};
+        if (!commentToDelete) return;
+        setIsSubmitting(true);
+        try {
+            await deleteComment({ profileOwnerId, commentId: commentToDelete.id });
+        } catch (err) {
+            setError(err.message || "Failed to delete comment.");
+        }
+        setIsSubmitting(false);
+        setIsDeleteModalOpen(false);
+        setCommentToDelete(null);
+    };
 
     const handleReport = async (comment) => {
         setMenuOpenFor(null);

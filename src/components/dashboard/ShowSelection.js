@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import toast from 'react-hot-toast';
+import { getShowRegistrations, selectUserShows } from '../../utils/api';
 import Modal from '../ui/Modal';
-import Icon from '../ui/Icon';
 
 const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, currentDay, seasonStartDate }) => {
     const [selectedShows, setSelectedShows] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState('');
     const [registrantsModalShow, setRegistrantsModalShow] = useState(null);
     const [registrants, setRegistrants] = useState([]);
     const [isRegistrantsLoading, setIsRegistrantsLoading] = useState(false);
@@ -16,10 +15,6 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
     const initialWeek = useMemo(() => (currentWeek > 0 ? currentWeek : 1), [currentDay]);
     const [activeWeek, setActiveWeek] = useState(initialWeek);
 
-    const functions = getFunctions();
-    const getShowRegistrations = httpsCallable(functions, 'getShowRegistrations');
-    const registerForShows = httpsCallable(functions, 'registerForShows');
-
     useEffect(() => {
         setSelectedShows(corpsProfile?.selectedShows || {});
         const week = Math.ceil(currentDay / 7);
@@ -27,53 +22,24 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
     }, [corpsProfile, currentDay, WEEKS_IN_SEASON]);
 
     useEffect(() => {
-        if (!registrantsModalShow) return;
+        if (!registrantsModalShow || seasonMode !== 'off') return;
         const fetchRegistrants = async () => {
             setIsRegistrantsLoading(true);
             try {
                 const result = await getShowRegistrations({ 
+                    week: activeWeek, 
                     eventName: registrantsModalShow.eventName, 
                     date: registrantsModalShow.date 
                 });
                 setRegistrants(result.data.registrations || []);
             } catch (error) {
                 console.error("Error fetching registrants:", error);
-                toast.error("Could not load registrant list.");
                 setRegistrants([]);
             }
             setIsRegistrantsLoading(false);
         };
         fetchRegistrants();
-    }, [registrantsModalShow, getShowRegistrations]);
-
-    // Properly group shows by week - this matches the working version from project knowledge
-    const showsForActiveWeekGrouped = useMemo(() => {
-        if (!seasonEvents) return {};
-        const startDay = (activeWeek - 1) * 7 + 1;
-        const endDay = activeWeek * 7;
-        
-        const showsForWeek = seasonEvents
-            .filter(e => {
-                const day = seasonMode === 'live' ? e.dayIndex + 1 : e.offSeasonDay;
-                return day >= startDay && day <= endDay;
-            })
-            .flatMap(dayEvent => dayEvent.shows.map(show => ({
-                ...show,
-                day: seasonMode === 'live' ? dayEvent.dayIndex + 1 : dayEvent.offSeasonDay,
-            })));
-
-        const grouped = {};
-        showsForWeek.forEach(show => {
-            if (!grouped[show.day]) grouped[show.day] = [];
-            grouped[show.day].push(show);
-        });
-
-        Object.keys(grouped).forEach(day => {
-            grouped[day].sort((a, b) => a.eventName.localeCompare(b.eventName));
-        });
-
-        return grouped;
-    }, [activeWeek, seasonEvents, seasonMode]);
+    }, [registrantsModalShow, activeWeek, seasonMode]);
 
     const handleSelectShow = (week, show, isSelected) => {
         const weekKey = `week${week}`;
@@ -87,188 +53,111 @@ const ShowSelection = ({ seasonMode, seasonEvents, corpsProfile, corpsClass, cur
         }
 
         if (newSelections.length > 4) {
-            toast.error("You can select a maximum of 4 shows per week.");
+            setMessage("You can select a maximum of 4 shows per week.");
             return;
         }
 
-        setSelectedShows(prev => ({
-            ...prev,
-            [weekKey]: newSelections
-        }));
+        setSelectedShows(prev => ({ ...prev, [weekKey]: newSelections }));
+        setMessage('');
     };
 
     const handleSaveWeek = async (week) => {
         setIsLoading(true);
-        const toastId = toast.loading('Saving selections...');
+        setMessage('');
         try {
-            const result = await registerForShows({ 
+            const result = await selectUserShows({ 
                 week, 
                 shows: selectedShows[`week${week}`] || [], 
                 corpsClass: corpsClass
             });
-            toast.success(result.data.message, { id: toastId });
+            setMessage(result.data.message);
         } catch (error) {
-            toast.error(error.message, { id: toastId });
+            setMessage(error.message);
         }
         setIsLoading(false);
     };
-
-    const handleViewRegistrants = (show) => {
-        setRegistrantsModalShow(show);
+    
+    const getCalendarDateForDay = (day) => {
+        if (!seasonStartDate) return null;
+        const calendarDate = new Date(seasonStartDate.getTime());
+        calendarDate.setDate(calendarDate.getDate() + day - 1);
+        return calendarDate;
     };
 
-    const isShowSelected = (week, show) => {
-        const weekKey = `week${week}`;
-        const weekSelections = selectedShows[weekKey] || [];
-        return weekSelections.some(s => s.eventName === show.eventName);
-    };
-
-    const getSelectedCount = (week) => {
-        const weekKey = `week${week}`;
-        return selectedShows[weekKey]?.length || 0;
-    };
-
-    const hasUnsavedChanges = () => {
-        const currentSelections = JSON.stringify(selectedShows);
-        const originalSelections = JSON.stringify(corpsProfile?.selectedShows || {});
-        return currentSelections !== originalSelections;
-    };
-
+    const showsForActiveWeek = useMemo(() => {
+        if (!seasonEvents) return [];
+        if (seasonMode === 'live') {
+            return (seasonEvents.filter(e => e.week === activeWeek)[0]?.shows || []).sort((a,b) => a.dayIndex - b.dayIndex);
+        } else { // off-season
+            const startDay = (activeWeek - 1) * 7 + 1;
+            const endDay = activeWeek * 7;
+            return seasonEvents
+                .filter(e => e.offSeasonDay >= startDay && e.offSeasonDay <= endDay)
+                .flatMap(day => day.shows.map(show => ({ ...show, day: day.offSeasonDay })))
+                .sort((a, b) => a.day - b.day);
+        }
+    }, [activeWeek, seasonEvents, seasonMode]);
+    
     if (!corpsProfile) {
         return (
-            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Select Your Shows</h3>
+            <div className="mt-8 text-center bg-background dark:bg-background-dark p-6 rounded-theme">
+                <h3 className="text-xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h3>
                 <p className="mt-2 text-text-secondary dark:text-text-secondary-dark">
                     Once you create and save this corps, you can select its weekly show schedule here.
                 </p>
             </div>
         );
     }
-
+    
     const weeks = Array.from({ length: WEEKS_IN_SEASON }, (_, i) => i + 1);
     const userSelectionsForWeek = selectedShows[`week${activeWeek}`] || [];
     const isPastWeek = activeWeek < currentWeek;
-    const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
 
     return (
-        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-            <Modal 
-                isOpen={!!registrantsModalShow} 
-                onClose={() => setRegistrantsModalShow(null)} 
-                title={`Attendees for ${registrantsModalShow?.eventName.replace(/DCI/g, 'marching.art')}`}
-            >
-                {isRegistrantsLoading ? (
-                    <p>Loading...</p>
-                ) : registrants.length > 0 ? (
-                    <ul className="space-y-2 list-disc list-inside text-text-primary dark:text-text-primary-dark">
-                        {registrants.map((reg, i) => (
-                            <li key={i}>{`${reg.corpsName} (${reg.username})`}</li>
-                        ))}
+        <div className="mt-8">
+            <Modal isOpen={!!registrantsModalShow} onClose={() => setRegistrantsModalShow(null)} title={`Attendees for ${registrantsModalShow?.eventName.replace(/DCI/g, 'marching.art')}`}>
+                {isRegistrantsLoading ? <p>Loading...</p> : registrants.length > 0 ? (
+                    <ul className="space-y-2 list-disc list-inside">
+                        {registrants.map((reg, i) => <li key={i}>{`${reg.corpsName} (${reg.username})`}</li>)}
                     </ul>
-                ) : (
-                    <p className="text-text-secondary dark:text-text-secondary-dark">
-                        No corps have registered for this show yet.
-                    </p>
-                )}
+                ) : <p>No corps have registered for this show yet.</p>}
             </Modal>
         
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                <h3 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Show Selection</h3>
-                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">
-                    Week {activeWeek} Selections: {userSelectionsForWeek.length} / 4
-                </p>
+                <h3 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark">Select Your Shows</h3>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1 sm:mt-0">Select up to 4 shows per week.</p>
             </div>
         
-            <div className="flex border-b border-accent dark:border-accent-dark mb-4 overflow-x-auto">
+            <div className="flex border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 {weeks.map(week => (
-                    <button 
-                        key={week} 
-                        onClick={() => setActiveWeek(week)} 
-                        className={`py-2 px-3 sm:px-4 whitespace-nowrap text-sm md:text-base font-bold transition-colors ${
-                            activeWeek === week 
-                                ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' 
-                                : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                        }`}
-                    >
-                        Week {week}
-                    </button>
+                    <button key={week} onClick={() => setActiveWeek(week)} className={`py-2 px-3 sm:px-4 whitespace-nowrap text-sm md:text-base font-bold transition-colors ${activeWeek === week ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'}`}>Week {week}</button>
                 ))}
             </div>
 
-            <div className="space-y-6">
-                {Object.keys(showsForActiveWeekGrouped).length > 0 ? (
-                    Object.keys(showsForActiveWeekGrouped)
-                        .sort((a, b) => Number(a) - Number(b))
-                        .map(day => {
-                            const isPastDay = Number(day) < currentDay;
-                            return (
-                                <div key={day}>
-                                    <h4 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-3">
-                                        Day {day}
-                                    </h4>
-                                    <div className="space-y-3">
-                                        {showsForActiveWeekGrouped[day].map((show, index) => {
-                                            const isSelected = isShowSelected(activeWeek, show);
-                                            return (
-                                                <div 
-                                                    key={index} 
-                                                    className={`flex items-start gap-3 p-3 border rounded-lg ${
-                                                        isPastDay ? 'opacity-60' : ''
-                                                    }`}
-                                                >
-                                                    <input 
-                                                        type="checkbox" 
-                                                        id={`${day}-${index}`} 
-                                                        checked={isSelected} 
-                                                        disabled={isPastDay || (isSelectionLimitReached && !isSelected)} 
-                                                        onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)} 
-                                                        className="h-5 w-5 rounded mt-0.5 text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0 cursor-pointer disabled:cursor-not-allowed" 
-                                                    />
-                                                    <div className="flex-grow">
-                                                        <label 
-                                                            htmlFor={`${day}-${index}`} 
-                                                            className={`font-semibold text-text-primary dark:text-text-primary-dark ${
-                                                                !isPastDay && 'cursor-pointer'
-                                                            }`}
-                                                        >
-                                                            {show.eventName.replace(/DCI/g, 'marching.art')}
-                                                        </label>
-                                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                                            {show.location}
-                                                        </p>
-                                                    </div>
-                                                    {seasonMode === 'off' && !isPastDay && (
-                                                        <button 
-                                                            onClick={() => handleViewRegistrants(show)} 
-                                                            className="text-xs text-primary dark:text-primary-dark hover:underline flex-shrink-0"
-                                                        >
-                                                            Who's Going?
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })
-                ) : (
-                    <p className="text-center text-text-secondary dark:text-text-secondary-dark py-8">
-                        No shows scheduled for this week.
-                    </p>
-                )}
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                {showsForActiveWeek.length > 0 ? showsForActiveWeek.map((show, index) => {
+                    const isSelected = userSelectionsForWeek.some(s => s.eventName === show.eventName);
+                    const isSelectionLimitReached = userSelectionsForWeek.length >= 4;
+                    const isPastShow = (seasonMode === 'live' ? show.dayIndex + 1 : show.day) < currentDay;
+
+                    return (
+                        <div key={`${activeWeek}-${index}`} className={`p-3 rounded-theme flex items-center gap-4 transition-opacity ${isPastShow ? 'bg-surface dark:bg-surface-dark opacity-60' : 'bg-background dark:bg-background-dark'}`}>
+                            <input type="checkbox" id={`${activeWeek}-${index}`} checked={isSelected} disabled={isPastShow || (isSelectionLimitReached && !isSelected)} onChange={(e) => handleSelectShow(activeWeek, show, e.target.checked)} className="h-5 w-5 rounded text-primary focus:ring-primary border-accent dark:border-accent-dark bg-surface dark:bg-surface-dark flex-shrink-0" />
+                            <div className="flex-grow">
+                                <label htmlFor={`${activeWeek}-${index}`} className={`font-semibold text-text-primary dark:text-text-primary-dark ${!isPastShow && 'cursor-pointer'}`}>{show.eventName.replace(/DCI/g, 'marching.art')}</label>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{show.location} - {getCalendarDateForDay(seasonMode === 'live' ? show.dayIndex + 1 : show.day)?.toLocaleDateString()}</p>
+                            </div>
+                            {seasonMode === 'off' && <button onClick={() => setRegistrantsModalShow(show)} className="text-sm text-primary dark:text-primary-dark hover:underline flex-shrink-0">Who's Going?</button>}
+                        </div>
+                    );
+                }) : <p className="text-center text-text-secondary dark:text-text-secondary-dark py-4">No shows scheduled for this week.</p>}
             </div>
 
             {!isPastWeek && (
-                <div className="flex justify-end items-center mt-6 pt-4 border-t border-accent dark:border-accent-dark">
-                    <button 
-                        onClick={() => handleSaveWeek(activeWeek)} 
-                        disabled={isLoading} 
-                        className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-5 rounded-theme disabled:opacity-50 flex items-center gap-2"
-                    >
-                        <Icon name="save" className="h-4 w-4" />
-                        {isLoading ? 'Saving...' : `Save Week ${activeWeek} Selections`}
-                    </button>
+                <div className="flex flex-col sm:flex-row justify-end items-center mt-4 pt-4 border-t-theme border-accent dark:border-accent-dark space-y-4 sm:space-y-0 sm:space-x-4">
+                    {message && <p className="text-sm font-semibold text-red-600">{message}</p>}
+                    <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Selections for Week {activeWeek}: {userSelectionsForWeek.length} / 4</p>
+                    <button onClick={() => handleSaveWeek(activeWeek)} disabled={isLoading} className="w-full sm:w-auto bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">{isLoading ? 'Saving...' : `Save Week ${activeWeek} Selections`}</button>
                 </div>
             )}
         </div>

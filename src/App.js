@@ -1,21 +1,14 @@
-// src/App.js - Complete App with all routing and authentication
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
-import { useUserStore } from './store/userStore';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import AuthModal from './components/auth/AuthModal';
 
-// Layout Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-
-// Page Components
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
-import ProfileSetupPage from './pages/ProfileSetupPage';
 import AdminPage from './pages/AdminPage';
 import LeaguePage from './pages/LeaguePage';
 import LeagueDetailPage from './pages/LeagueDetailPage';
@@ -24,16 +17,22 @@ import SchedulePage from './pages/SchedulePage';
 import ScoresPage from './pages/ScoresPage';
 import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
-import UserSettingsPage from './pages/UserSettingsPage';
+import AuthModal from './components/auth/AuthModal';
 
 function AppContent() {
-    const { loggedInProfile } = useUserStore();
-    const navigate = useNavigate();
-
+    const { user, loggedInProfile, isLoadingAuth } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
+    const [page, setPage] = useState('home');
+    const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
     
+    useEffect(() => {
+        if (!isLoadingAuth && !user) {
+            setPage('home');
+        }
+    }, [user, isLoadingAuth]);
+
     useEffect(() => {
         if (themeMode === 'dark') {
             document.documentElement.classList.add('dark');
@@ -43,194 +42,74 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
-    // Handle modal events from components
-    useEffect(() => {
-        const handleOpenSignUpModal = () => {
-            setAuthModalView('signup');
-            setIsAuthModalOpen(true);
-        };
-
-        const handleOpenLoginModal = () => {
-            setAuthModalView('login');
-            setIsAuthModalOpen(true);
-        };
-
-        window.addEventListener('openSignUpModal', handleOpenSignUpModal);
-        window.addEventListener('openLoginModal', handleOpenLoginModal);
-
-        return () => {
-            window.removeEventListener('openSignUpModal', handleOpenSignUpModal);
-            window.removeEventListener('openLoginModal', handleOpenLoginModal);
-        };
-    }, []);
-
-    const toggleThemeMode = () => {
-        setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            setPage('home');
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
     };
 
-    const handleAuthSuccess = () => {
-        setIsAuthModalOpen(false);
-        // Navigation will be handled by ProtectedRoute based on profile status
+    const handleSetPage = (newPage, props = {}) => {
+        setPage(newPage);
+        setPageProps(props);
     };
+
+    const renderPage = () => {
+        // Now profile is accessed from context within components where needed
+        // Or passed explicitly like here for simplicity
+        switch (page) {
+            case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
+            case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
+            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+            case 'leagues': return <LeaguePage profile={loggedInProfile} setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
+            case 'leagueDetail': return <LeagueDetailPage profile={loggedInProfile} leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'leaderboard': return <LeaderboardPage profile={loggedInProfile} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
+            case 'schedule': return <SchedulePage setPage={handleSetPage} />;
+            case 'scores': return <ScoresPage theme={themeMode} />;
+            case 'stats': return <StatsPage />;
+            case 'howtoplay': return <HowToPlayPage />;
+            case 'home':
+            default:
+                return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+        }
+    };
+
+    if (isLoadingAuth) {
+        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
+    }
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
-            {/* Header - show on all pages except setup */}
-            <Header 
-                themeMode={themeMode}
-                toggleThemeMode={toggleThemeMode}
-                onOpenAuthModal={() => setIsAuthModalOpen(true)}
-            />
-
-            {/* Main Content */}
-            <main className="flex-1">
-                <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/how-to-play" element={<HowToPlayPage />} />
-
-                    {/* Profile Setup - Requires auth but not profile */}
-                    <Route 
-                        path="/setup" 
-                        element={
-                            <ProtectedRoute requireProfile={false}>
-                                <ProfileSetupPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    {/* Protected Routes - Require both auth and profile */}
-                    <Route 
-                        path="/dashboard" 
-                        element={
-                            <ProtectedRoute>
-                                <DashboardPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/profile/:userId?" 
-                        element={
-                            <ProtectedRoute>
-                                <ProfilePage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/scores" 
-                        element={
-                            <ProtectedRoute>
-                                <ScoresPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/schedule" 
-                        element={
-                            <ProtectedRoute>
-                                <SchedulePage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/leaderboard" 
-                        element={
-                            <ProtectedRoute>
-                                <LeaderboardPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/stats" 
-                        element={
-                            <ProtectedRoute>
-                                <StatsPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/leagues" 
-                        element={
-                            <ProtectedRoute>
-                                <LeaguePage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/league/:leagueId" 
-                        element={
-                            <ProtectedRoute>
-                                <LeagueDetailPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    <Route 
-                        path="/settings" 
-                        element={
-                            <ProtectedRoute>
-                                <UserSettingsPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    {/* Admin Routes */}
-                    <Route 
-                        path="/admin" 
-                        element={
-                            <ProtectedRoute requireAdmin={true}>
-                                <AdminPage />
-                            </ProtectedRoute>
-                        } 
-                    />
-
-                    {/* Catch-all redirect to home */}
-                    <Route path="*" element={<HomePage />} />
-                </Routes>
-            </main>
-
-            {/* Footer - show on all pages except setup */}
-            <Footer />
-
-            {/* Auth Modal */}
+        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 initialView={authModalView}
-                onAuthSuccess={handleAuthSuccess}
-            />
-
-            {/* Toast Notifications */}
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 4000,
-                    style: {
-                        background: themeMode === 'dark' ? '#374151' : '#ffffff',
-                        color: themeMode === 'dark' ? '#f3f4f6' : '#111827',
-                        border: themeMode === 'dark' ? '1px solid #4b5563' : '1px solid #d1d5db',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#10b981',
-                            secondary: '#ffffff',
-                        },
-                    },
-                    error: {
-                        iconTheme: {
-                            primary: '#ef4444',
-                            secondary: '#ffffff',
-                        },
-                    },
+                onAuthSuccess={() => {
+                    setIsAuthModalOpen(false);
+                    setPage('dashboard');
                 }}
             />
+            <Header
+                user={user}
+                isLoggedIn={!!user}
+                isAdmin={loggedInProfile?.isAdmin}
+                onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
+                onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
+                onLogout={handleLogout}
+                setPage={handleSetPage}
+                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
+                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
+                profile={loggedInProfile}
+                themeMode={themeMode}
+                toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+            />
+            <main className="flex-grow relative">
+                {renderPage()}
+            </main>
+            <Footer setPage={handleSetPage} />
         </div>
     );
 }
@@ -238,9 +117,7 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <AppContent />
-            </Router>
+            <AppContent />
         </AuthProvider>
     );
 }

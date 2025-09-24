@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-const plugin = require('tailwindcss/plugin');
-
 module.exports = {
   darkMode: 'class', // Enable dark mode with a class
   content: [
@@ -8,11 +6,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Add this new textShadow utility
-      textShadow: {
-        DEFAULT: '2px 2px 4px rgb(0 0 0 / 0.5)',
-        lg: '3px 3px 6px rgb(0 0 0 / 0.5)',
-      },
       colors: {
         // Primary brand color - now gold
         primary: {
@@ -64,17 +57,5 @@ module.exports = {
       }
     },
   },
-  // Add this new plugin
-  plugins: [
-    plugin(function ({ matchUtilities, theme }) {
-      matchUtilities(
-        {
-          'text-shadow': (value) => ({
-            textShadow: value,
-          }),
-        },
-        { values: theme('textShadow') }
-      )
-    }),
-  ],
+  plugins: [],
 }

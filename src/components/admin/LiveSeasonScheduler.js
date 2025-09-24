@@ -1,312 +1,190 @@
-// src/components/admin/LiveSeasonScheduler.js
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import toast from 'react-hot-toast';
+
+const Icon = ({ path, className = "w-6 h-6" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d={path} />
+    </svg>
+);
+
+const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+    if (!isOpen) return null;
+    const sizeClasses = { md: 'max-w-md', lg: 'max-w-3xl', xl: 'max-w-5xl' };
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className={`bg-surface dark:bg-surface-dark border-theme border-accent dark:border-accent-dark rounded-theme shadow-theme w-full ${sizeClasses[size]} p-6 relative text-text-primary dark:text-text-primary-dark`}>
+                <button onClick={onClose} className="absolute top-3 right-3 text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors">
+                    <Icon path="M6 18L18 6M6 6l12 12" />
+                </button>
+                <h2 className="text-2xl font-bold mb-4 text-primary dark:text-primary-dark">{title}</h2>
+                {children}
+            </div>
+        </div>
+    );
+};
+
 
 const LiveSeasonScheduler = () => {
-    const [scheduleSettings, setScheduleSettings] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({
-        startDate: '',
-        endDate: '',
-        description: ''
-    });
+    const [schedule, setSchedule] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [newEvent, setNewEvent] = useState({ name: '', location: '', type: 'Standard' });
+    const [isLoading, setIsLoading] = useState(true);
+    const [message, setMessage] = useState('');
+
+    const WEEKS = 10;
+    const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     useEffect(() => {
-        fetchScheduleSettings();
+        const docRef = doc(db, 'schedules', 'live_season_template');
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setSchedule(docSnap.data().events || []);
+            } else {
+                setSchedule([]);
+            }
+            setIsLoading(false);
+        });
+        return () => unsubscribe();
     }, []);
 
-    const fetchScheduleSettings = async () => {
-        try {
-            const seasonDoc = await getDoc(doc(db, 'game-settings', 'season'));
-            if (seasonDoc.exists()) {
-                const data = seasonDoc.data();
-                setScheduleSettings(data.schedule || {});
-                
-                // Populate edit form
-                if (data.schedule) {
-                    setEditForm({
-                        startDate: data.schedule.startDate ? formatDateForInput(data.schedule.startDate) : '',
-                        endDate: data.schedule.endDate ? formatDateForInput(data.schedule.endDate) : '',
-                        description: data.schedule.description || ''
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching schedule settings:', error);
-            toast.error('Failed to load schedule settings');
+    const openModal = (dayIndex) => {
+        if (dayIndex >= 67) return;
+        setSelectedDay(dayIndex);
+        setNewEvent({ name: '', location: '', type: 'Standard' });
+        setIsModalOpen(true);
+    };
+
+    const handleAddEvent = () => {
+        if (!newEvent.name.trim() || selectedDay === null) return;
+        const week = Math.floor(selectedDay / 7) + 1;
+        const dayName = DAYS_OF_WEEK[selectedDay % 7];
+        const finalEvent = { ...newEvent, week, day: dayName, dayIndex: selectedDay };
+        
+        const dayData = schedule.find(d => d.dayIndex === selectedDay);
+        if (dayData) {
+            const updatedDay = { ...dayData, shows: [...dayData.shows, { name: newEvent.name, location: newEvent.location }] };
+            setSchedule(prev => prev.map(d => d.dayIndex === selectedDay ? updatedDay : d));
+        } else {
+            setSchedule(prev => [...prev, { dayIndex: selectedDay, shows: [{ name: newEvent.name, location: newEvent.location }] }]);
         }
-    };
 
-    const formatDateForInput = (timestamp) => {
-        if (!timestamp) return '';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toISOString().split('T')[0];
+        setNewEvent({ name: '', location: '', type: 'Standard' });
     };
-
-    const formatDateForDisplay = (timestamp) => {
-        if (!timestamp) return 'Not set';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+    
+    const handleRemoveEvent = (dayIndex, eventName) => {
+         const dayData = schedule.find(d => d.dayIndex === dayIndex);
+         if(dayData) {
+            const updatedShows = dayData.shows.filter(s => s.name !== eventName);
+            const updatedDay = { ...dayData, shows: updatedShows };
+            setSchedule(prev => prev.map(d => d.dayIndex === dayIndex ? updatedDay : d));
+         }
     };
 
     const handleSaveSchedule = async () => {
-        if (!editForm.startDate || !editForm.endDate) {
-            toast.error('Please provide both start and end dates');
-            return;
-        }
-
-        const startDate = new Date(editForm.startDate);
-        const endDate = new Date(editForm.endDate);
-
-        if (endDate <= startDate) {
-            toast.error('End date must be after start date');
-            return;
-        }
-
         setIsLoading(true);
+        setMessage('');
         try {
-            const seasonRef = doc(db, 'game-settings', 'season');
-            const seasonDoc = await getDoc(seasonRef);
-            
-            if (seasonDoc.exists()) {
-                const currentData = seasonDoc.data();
-                const updatedSchedule = {
-                    ...currentData.schedule,
-                    startDate: startDate,
-                    endDate: endDate,
-                    description: editForm.description,
-                    lastUpdated: new Date()
-                };
-
-                await updateDoc(seasonRef, {
-                    schedule: updatedSchedule
-                });
-
-                setScheduleSettings(updatedSchedule);
-                setIsEditing(false);
-                toast.success('Schedule updated successfully');
-            }
+            const scheduleRef = doc(db, 'schedules', 'live_season_template');
+            await setDoc(scheduleRef, { events: schedule });
+            setMessage('Schedule saved successfully!');
         } catch (error) {
-            console.error('Error updating schedule:', error);
-            toast.error('Failed to update schedule');
-        } finally {
-            setIsLoading(false);
+            setMessage('Error saving schedule.');
+            console.error(error);
+        }
+        setIsLoading(false);
+    };
+
+    const handleClearSchedule = () => {
+        if (window.confirm('Are you sure you want to clear the entire live schedule? This cannot be undone.')) {
+            setSchedule([]);
         }
     };
 
-    const calculateDuration = () => {
-        if (!scheduleSettings?.startDate || !scheduleSettings?.endDate) return 'N/A';
-        
-        const start = scheduleSettings.startDate.toDate ? scheduleSettings.startDate.toDate() : new Date(scheduleSettings.startDate);
-        const end = scheduleSettings.endDate.toDate ? scheduleSettings.endDate.toDate() : new Date(scheduleSettings.endDate);
-        
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        return `${diffDays} days`;
-    };
+    const eventsByDay = schedule.reduce((acc, event) => {
+        acc[event.dayIndex] = event.shows;
+        return acc;
+    }, {});
 
-    const getSeasonStatus = () => {
-        if (!scheduleSettings?.startDate || !scheduleSettings?.endDate) return 'Unknown';
-        
-        const now = new Date();
-        const start = scheduleSettings.startDate.toDate ? scheduleSettings.startDate.toDate() : new Date(scheduleSettings.startDate);
-        const end = scheduleSettings.endDate.toDate ? scheduleSettings.endDate.toDate() : new Date(scheduleSettings.endDate);
-        
-        if (now < start) return 'Upcoming';
-        if (now > end) return 'Ended';
-        return 'Active';
-    };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                    Live Season Scheduler
-                </h2>
-                
-                {!isEditing && (
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                        Edit Schedule
-                    </button>
-                )}
+        <div className="mt-6">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Live Season Schedule (10 Weeks)</h3>
+            <div className="grid grid-cols-7 gap-1 text-center font-bold mb-2 text-text-secondary dark:text-text-secondary-dark">
+                {DAYS_OF_WEEK.map(day => <div key={day}>{day}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: WEEKS * 7 }).map((_, dayIndex) => {
+                    const events = eventsByDay[dayIndex] || [];
+                    const isChampionshipWeek = dayIndex >= 67;
+                    const dayNumber = dayIndex + 1;
+                    
+                    let championshipEvent = null;
+                    if (dayNumber === 68) championshipEvent = { name: 'Prelims', location: 'Indianapolis, IN' };
+                    if (dayNumber === 69) championshipEvent = { name: 'Semi-Finals', location: 'Indianapolis, IN' };
+                    if (dayNumber === 70) championshipEvent = { name: 'Finals', location: 'Indianapolis, IN' };
+
+                    return (
+                        <div 
+                            key={dayIndex} 
+                            onClick={() => openModal(dayIndex)}
+                            className={`h-28 bg-surface dark:bg-surface-dark border-theme border-accent dark:border-accent-dark rounded-theme p-1 text-xs ${!isChampionshipWeek && 'cursor-pointer hover:bg-accent dark:hover:bg-accent-dark/20'} transition-colors overflow-y-auto ${isChampionshipWeek ? 'bg-secondary/10 dark:bg-secondary-dark/10' : ''}`}
+                        >
+                            <span className="font-bold text-text-secondary dark:text-text-secondary-dark">{dayNumber}</span>
+                            {championshipEvent && (
+                                <div className="bg-secondary/20 dark:bg-secondary-dark/20 p-1 rounded-theme mt-1 text-text-primary dark:text-text-primary-dark">
+                                    <p className="font-bold truncate">{championshipEvent.name}</p>
+                                    <p className="truncate">{championshipEvent.location}</p>
+                                </div>
+                            )}
+                            {events.map(event => (
+                                <div key={event.name} className="bg-primary/20 p-1 rounded-theme mt-1 text-text-primary dark:text-text-primary-dark">
+                                    <p className="font-bold truncate">{event.name}</p>
+                                    <p className="truncate">{event.location}</p>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })}
+            </div>
+            <div className="flex justify-end items-center space-x-4 mt-4">
+                {message && <p className="text-sm font-semibold">{message}</p>}
+                <button onClick={handleClearSchedule} className="border-theme border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded-theme transition-colors">Clear Schedule</button>
+                <button onClick={handleSaveSchedule} disabled={isLoading} className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme disabled:opacity-50">
+                    {isLoading ? 'Saving...' : 'Save Live Schedule'}
+                </button>
             </div>
 
-            {/* Current Schedule Display */}
-            {!isEditing && (
-                <div className="bg-surface dark:bg-surface-dark p-6 rounded-lg border border-accent dark:border-accent-dark">
-                    <h3 className="text-lg font-semibold mb-4 text-text-primary dark:text-text-primary-dark">
-                        Current Schedule
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                                Start Date
-                            </label>
-                            <p className="text-text-primary dark:text-text-primary-dark">
-                                {formatDateForDisplay(scheduleSettings?.startDate)}
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                                End Date
-                            </label>
-                            <p className="text-text-primary dark:text-text-primary-dark">
-                                {formatDateForDisplay(scheduleSettings?.endDate)}
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                                Duration
-                            </label>
-                            <p className="text-text-primary dark:text-text-primary-dark">
-                                {calculateDuration()}
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                                Status
-                            </label>
-                            <p className={`font-medium ${
-                                getSeasonStatus() === 'Active' ? 'text-green-600 dark:text-green-400' :
-                                getSeasonStatus() === 'Upcoming' ? 'text-blue-600 dark:text-blue-400' :
-                                'text-red-600 dark:text-red-400'
-                            }`}>
-                                {getSeasonStatus()}
-                            </p>
-                        </div>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Manage Shows for Day ${selectedDay + 1}`}>
+                <div className="space-y-4">
+                    <div className="border-b border-accent dark:border-accent-dark pb-4">
+                        <h4 className="font-bold mb-2 text-text-primary dark:text-text-primary-dark">Existing Shows on this Day:</h4>
+                        {(eventsByDay[selectedDay] || []).length > 0 ? (
+                            <ul className="space-y-2">
+                                {(eventsByDay[selectedDay]).map(event => (
+                                    <li key={event.name} className="flex justify-between items-center bg-background dark:bg-background-dark p-2 rounded-theme">
+                                        <span>{event.name} <em className="text-text-secondary dark:text-text-secondary-dark">({event.location})</em></span>
+                                        <button onClick={() => handleRemoveEvent(selectedDay, event.name)} className="text-red-500 hover:text-red-700">
+                                            <Icon path="M6 18L18 6M6 6l12 12" className="w-4 h-4"/>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <p className="text-text-secondary dark:text-text-secondary-dark">No shows scheduled for this day.</p>}
                     </div>
-
-                    {scheduleSettings?.description && (
-                        <div className="mt-4">
-                            <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                                Description
-                            </label>
-                            <p className="text-text-primary dark:text-text-primary-dark mt-1">
-                                {scheduleSettings.description}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Edit Form */}
-            {isEditing && (
-                <div className="bg-surface dark:bg-surface-dark p-6 rounded-lg border border-accent dark:border-accent-dark">
-                    <h3 className="text-lg font-semibold mb-4 text-text-primary dark:text-text-primary-dark">
-                        Edit Schedule
-                    </h3>
-                    
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="start-date" className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                                    Start Date
-                                </label>
-                                <input
-                                    type="date"
-                                    id="start-date"
-                                    value={editForm.startDate}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
-                                    className="w-full border border-accent dark:border-accent-dark rounded-lg px-3 py-2 bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="end-date" className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                                    End Date
-                                </label>
-                                <input
-                                    type="date"
-                                    id="end-date"
-                                    value={editForm.endDate}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))}
-                                    className="w-full border border-accent dark:border-accent-dark rounded-lg px-3 py-2 bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                                Description (Optional)
-                            </label>
-                            <textarea
-                                id="description"
-                                rows={3}
-                                value={editForm.description}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="Add notes about this schedule..."
-                                className="w-full border border-accent dark:border-accent-dark rounded-lg px-3 py-2 bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
-                            />
-                        </div>
-                        
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                disabled={isLoading}
-                                className="border border-accent dark:border-accent-dark text-text-primary dark:text-text-primary-dark px-4 py-2 rounded-lg hover:bg-surface dark:hover:bg-surface-dark transition-colors disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            
-                            <button
-                                onClick={handleSaveSchedule}
-                                disabled={isLoading}
-                                className="bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    'Save Changes'
-                                )}
-                            </button>
-                        </div>
+                    <div>
+                        <h4 className="font-bold mb-2 text-text-primary dark:text-text-primary-dark">Add New Show:</h4>
+                        <input type="text" placeholder="Event Name" value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary"/>
+                        <input type="text" placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary"/>
+                        <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 mb-2 focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="Standard">Standard</option>
+                            <option value="Regional">Regional</option>
+                        </select>
+                        <button onClick={handleAddEvent} className="w-full bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-4 rounded-theme">Add Show</button>
                     </div>
                 </div>
-            )}
-
-            {/* Info Panel */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <div className="flex">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                            About Live Season Scheduling
-                        </h3>
-                        <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                            <p>
-                                The live season scheduler manages the timing for live competition seasons. 
-                                During live seasons, scores are processed in real-time and competitions 
-                                happen on scheduled dates. Make sure to coordinate with actual DCI schedules.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </Modal>
         </div>
     );
 };

@@ -14,7 +14,7 @@ const SeasonControls = () => {
     useEffect(() => {
         const docRef = doc(db, 'game-settings', 'season');
         const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists) {
+            if (docSnap.exists()) {
                 const data = docSnap.data();
                 setSeasonSettings(data);
                 setPointCap(data.nextPointCap || data.currentPointCap || DEFAULT_POINT_CAP);
@@ -33,8 +33,7 @@ const SeasonControls = () => {
             return;
         }
         try {
-            const seasonRef = doc(db, 'game-settings', 'season');
-            await setDoc(seasonRef, { nextPointCap: newCap }, { merge: true });
+            await setDoc(doc(db, 'game-settings', 'season'), { nextPointCap: newCap }, { merge: true });
             setMessage("Next season's point cap updated!");
         } catch (error) {
             setMessage("Error updating point cap.");
