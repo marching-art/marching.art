@@ -1,14 +1,15 @@
 // utils/profileCompatibility.js
-// Helper functions to handle both old and new profile structures
+// Helper functions to handle both old and new profile structures including SoundSport
 
 export const CORPS_CLASSES = {
-    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' },
+    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' },
     openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
-    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' }
+    worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' }
+    // Note: soundSport is added via soundSportSystem.js to avoid circular imports
 };
 
-// NEW: Added an array to enforce display order.
-export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
+// Updated order to potentially include SoundSport first (when available)
+export const CORPS_CLASS_ORDER = ['aClass', 'openClass', 'worldClass'];
 
 export const getCorpsData = (profile, corpsClass = 'worldClass') => {
     // New multi-corps structure
@@ -65,46 +66,31 @@ export const hasAnyCorps = (profile) => {
     return profile?.corps ? Object.keys(profile.corps).some(key => profile.corps[key]?.corpsName) : !!profile?.corpsName;
 };
 
-
 export const hasJoinedSeason = (profile, seasonUid) => {
-    if (!profile || !seasonUid) return false;
-    
-    // Check if user has any corps in the current season
-    if (profile.corps) {
-        return Object.values(profile.corps).some(corps => 
-            corps.corpsName && profile.activeSeasonId === seasonUid
-        );
-    }
-    
-    // Backward compatibility
-    return profile.activeSeasonId === seasonUid && profile.corpsName;
+    return profile?.activeSeasonId === seasonUid;
 };
 
-export const ensureProfileCompatibility = (profileData) => {
-    if (!profileData) return profileData;
+// SoundSport specific helpers
+export const isSoundSportCorps = (corpsClass) => {
+    return corpsClass === 'soundSport';
+};
+
+export const getSoundSportScore = (corps) => {
+    // SoundSport uses same scoring internally but displays as medals
+    return corps?.totalSeasonScore || 0;
+};
+
+export const canCreateCorps = (profile, corpsClass) => {
+    // SoundSport is always available
+    if (corpsClass === 'soundSport') return true;
     
-    // If profile already has the new corps structure, return as-is
-    if (profileData.corps) {
-        return profileData;
-    }
+    // Other classes based on existing logic
+    const userLevel = profile?.level || 1;
+    const unlockLevels = {
+        aClass: 1,
+        openClass: 5,
+        worldClass: 10
+    };
     
-    // Convert old single-corps structure to new multi-corps structure
-    if (profileData.corpsName) {
-        return {
-            ...profileData,
-            corps: {
-                worldClass: {
-                    corpsName: profileData.corpsName,
-                    lineup: profileData.lineup || {},
-                    totalSeasonScore: profileData.totalSeasonScore || 0,
-                    selectedShows: profileData.selectedShows || {},
-                    weeklyTrades: profileData.weeklyTrades || { used: 0 },
-                    lastScoredDay: profileData.lastScoredDay || 0,
-                    lineupKey: profileData.lineupKey
-                }
-            }
-        };
-    }
-    
-    return profileData;
+    return userLevel >= (unlockLevels[corpsClass] || 1);
 };
