@@ -1,4 +1,4 @@
-// src/App.js - Updated with Settings page route
+// src/App.js - Fixed authentication logic and profile routing
 import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
@@ -31,9 +31,12 @@ function AppContent() {
     
     useEffect(() => {
         if (!isLoadingAuth && !user) {
-            setPage('home');
+            // Only redirect to home if we're on a protected page
+            if (['dashboard', 'settings', 'leagues', 'leaderboard'].includes(page)) {
+                setPage('home');
+            }
         }
-    }, [user, isLoadingAuth]);
+    }, [user, isLoadingAuth, page]);
 
     useEffect(() => {
         if (themeMode === 'dark') {
@@ -59,8 +62,8 @@ function AppContent() {
     };
 
     const renderPage = () => {
-        // Authentication-required pages
-        if (['dashboard', 'settings', 'profile', 'leagues', 'leaderboard'].includes(page) && !user) {
+        // Authentication-required pages (but allow profile viewing for all users)
+        if (['dashboard', 'settings', 'leagues', 'leaderboard'].includes(page) && !user) {
             setPage('home');
             return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
         }
