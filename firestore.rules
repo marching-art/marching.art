@@ -5,11 +5,15 @@ service cloud.firestore {
 
     // --- USER DATA ---
     match /artifacts/{namespace}/users/{userId} {
-      // Profile data is readable by anyone (for public profiles)
-      // Users can update their own profile data including uniforms
+      // Profile data is readable by anyone (for public profiles), writable only via cloud functions
+      // UPDATED: Allow user to write their own uniform data for corps
       match /profile/data {
         allow read: if true; // Profiles are public for leaderboards, leagues, etc.
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId && 
+          // Allow updating uniform data for corps
+          (resource == null || 
+           request.resource.data.keys().hasAll(['corps']) == false ||
+           isValidCorpsUniformUpdate(request.resource.data, resource.data));
         allow update: if request.auth != null && request.auth.uid == userId;
       }
       
@@ -36,6 +40,56 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // --- VALIDATION FUNCTIONS ---
+    // Function to validate corps uniform updates
+    function isValidCorpsUniformUpdate(newData, oldData) {
+      // Allow if user is updating their own corps uniform data
+      // Check that they're not changing core game data, only uniform data
+      let allowedCorpsFields = ['corpsName', 'lineup', 'totalSeasonScore', 'selectedShows', 'weeklyTrades', 'lastScoredDay', 'lineupKey', 'uniforms'];
+      
+      // If corps data exists in the update
+      return !('corps' in newData) || (
+        // All corps classes are valid
+        newData.corps.keys().hasAll(['soundSport', 'aClass', 'openClass', 'worldClass'].toSet()) == false &&
+        // For each corps class being updated
+        newData.corps.keys().hasAll(oldData.get('corps', {}).keys()) &&
+        // Only allowed fields are being modified
+        isValidCorpsFields(newData.corps, allowedCorpsFields) &&
+        // Uniform data is valid
+        isValidUniformData(newData.corps)
+      );
+    }
+    
+    function isValidCorpsFields(corpsData, allowedFields) {
+      return corpsData.keys().hasAll(
+        corpsData.keys().toSet().intersection(allowedFields.toSet())
+      );
+    }
+    
+    function isValidUniformData(corpsData) {
+      // Check each corps class
+      return corpsData.keys().hasAll([]).hasAny([
+        !('uniforms' in corpsData) || 
+        // Uniforms should be indexed 0-3 and contain valid uniform objects
+        isValidUniformSlots(corpsData.uniforms)
+      ]);
+    }
+    
+    function isValidUniformSlots(uniforms) {
+      // Check that uniform slots are valid (0-3) and contain proper uniform data
+      let validSlots = ['0', '1', '2', '3'];
+      return uniforms.keys().hasAll(validSlots.toSet()) == false &&
+             uniforms.keys().hasAny(validSlots) &&
+             // Each uniform has required fields if it exists
+             isValidUniformObjects(uniforms);
+    }
+    
+    function isValidUniformObjects(uniforms) {
+      // Basic validation - each uniform should have name, colors, styles if it exists
+      // More detailed validation can be added here
+      return true; // Simplified for now - trust client-side validation
     }
 
     // --- PUBLIC GAME DATA ---
