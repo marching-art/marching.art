@@ -217,7 +217,7 @@ const Jacket = ({ style, colors }) => {
     switch (style) {
         case 'classic':
             return (
-                <g id="jacket-classic" filter="url(#shadow)">
+                <g id="jacket-classic">
                     <path d="M75,130 h50 v70 l-5,5 h-40 l-5,-5 z" fill={baseColor}/>
                     <path d="M95,135 v60" stroke={accentColor} strokeWidth="2"/>
                     <path d="M105,135 v60" stroke={accentColor} strokeWidth="2"/>
@@ -230,7 +230,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'double_breast':
             return (
-                <g id="jacket-double-breast" filter="url(#shadow)">
+                <g id="jacket-double-breast">
                     <path d="M70,135 h60 v75 l-5,5 h-50 l-5,-5 z" fill={baseColor}/>
                     <path d="M85,140 v60" stroke={accentColor} strokeWidth="2"/>
                     <path d="M115,140 v60" stroke={accentColor} strokeWidth="2"/>
@@ -245,7 +245,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'sash':
             return (
-                <g id="jacket-sash" filter="url(#shadow)">
+                <g id="jacket-sash">
                     <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
                     <path d="M75,130 L125,200" stroke={accentColor} strokeWidth="12"/>
                     <path d="M75,140 h50" stroke={trimColor} strokeWidth="4"/>
@@ -255,7 +255,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'cadet':
             return (
-                <g id="jacket-cadet" filter="url(#shadow)">
+                <g id="jacket-cadet">
                     <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
                     <path d="M75,130 L100,200 L125,130" stroke={accentColor} strokeWidth="8" fill="none"/>
                     <circle cx="100" cy="135" r="5" fill={trimColor}/>
@@ -266,7 +266,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'modern':
             return (
-                <g id="jacket-modern" filter="url(#shadow)">
+                <g id="jacket-modern">
                     <path d="M75,130 L110,130 L125,140 v60 L75,200 z" fill={baseColor}/>
                     <path d="M85,140 L115,150" stroke={accentColor} strokeWidth="3"/>
                     <path d="M85,160 L115,170" stroke={accentColor} strokeWidth="3"/>
@@ -276,7 +276,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'napoleonic':
             return (
-                <g id="jacket-napoleonic" filter="url(#shadow)">
+                <g id="jacket-napoleonic">
                     <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
                     <path d="M85,135 Q100,130 115,135" stroke={accentColor} strokeWidth="4" fill="none"/>
                     <path d="M85,150 h30" stroke={accentColor} strokeWidth="3"/>
@@ -287,7 +287,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'hussar':
             return (
-                <g id="jacket-hussar" filter="url(#shadow)">
+                <g id="jacket-hussar">
                     <path d="M75,130 h50 v55 Q100,195 75,185 z" fill={baseColor}/>
                     <path d="M80,135 Q100,130 120,135" stroke={accentColor} strokeWidth="6" fill="none"/>
                     <path d="M80,150 h40" stroke={accentColor} strokeWidth="2"/>
@@ -297,7 +297,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'swiss':
             return (
-                <g id="jacket-swiss" filter="url(#shadow)">
+                <g id="jacket-swiss">
                     <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
                     <path d="M85,140 v50 M95,140 v50 M105,140 v50 M115,140 v50" stroke={accentColor} strokeWidth="2"/>
                     <path d="M80,150 h40 M80,160 h40 M80,170 h40" stroke={trimColor} strokeWidth="1"/>
@@ -306,7 +306,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'zouave':
             return (
-                <g id="jacket-zouave" filter="url(#shadow)">
+                <g id="jacket-zouave">
                     <path d="M75,130 h50 v50 h-50 z" fill={baseColor}/>
                     <path d="M75,140 h50 M75,150 h50 M75,160 h50" stroke={accentColor} strokeWidth="3"/>
                     <circle cx="85" cy="135" r="2" fill={trimColor}/>
@@ -316,7 +316,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'highland':
             return (
-                <g id="jacket-highland" filter="url(#shadow)">
+                <g id="jacket-highland">
                     <path d="M75,130 h50 v65 Q100,205 75,195 z" fill={baseColor}/>
                     <path d="M80,135 Q100,125 120,135" stroke={accentColor} strokeWidth="5" fill="none"/>
                     <circle cx="90" cy="145" r="3" fill={trimColor}/>
@@ -326,7 +326,7 @@ const Jacket = ({ style, colors }) => {
             );
         case 'bandsman':
             return (
-                <g id="jacket-bandsman" filter="url(#shadow)">
+                <g id="jacket-bandsman">
                     <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
                     <path d="M90,135 v60 M110,135 v60" stroke={accentColor} strokeWidth="3"/>
                     <circle cx="85" cy="145" r="2" fill={trimColor}/>
@@ -353,14 +353,14 @@ const Pants = ({ style, colors }) => {
     switch (style) {
         case 'plain':
             return (
-                <g id="pants-plain" filter="url(#shadow)">
+                <g id="pants-plain">
                     <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
                 </g>
             );
         case 'stripe':
             return (
-                <g id="pants-stripe" filter="url(#shadow)">
+                <g id="pants-stripe">
                     <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M78,200 h2 v60 h-2 z" fill={stripeColor}/>
@@ -371,7 +371,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'double_stripe':
             return (
-                <g id="pants-double-stripe" filter="url(#shadow)">
+                <g id="pants-double-stripe">
                     <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M78,200 h1 v60 h-1 z" fill={stripeColor}/>
@@ -382,7 +382,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'bloused':
             return (
-                <g id="pants-bloused" filter="url(#shadow)">
+                <g id="pants-bloused">
                     <path d="M78,210 h16 v40 Q94,255 78,250 z" fill={baseColor}/>
                     <path d="M106,210 h16 v40 Q122,255 106,250 z" fill={baseColor}/>
                     <path d="M75,250 h22 v10 h-22 z" fill={baseColor}/>
@@ -391,7 +391,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'riding':
             return (
-                <g id="pants-riding" filter="url(#shadow)">
+                <g id="pants-riding">
                     <path d="M78,210 h16 v25 Q94,240 78,235 z" fill={baseColor}/>
                     <path d="M106,210 h16 v25 Q122,240 106,235 z" fill={baseColor}/>
                     <path d="M75,235 h22 v25 h-22 z" fill={baseColor}/>
@@ -401,7 +401,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'highlander':
             return (
-                <g id="pants-kilt" filter="url(#shadow)">
+                <g id="pants-kilt">
                     <path d="M75,200 h50 v40 Q125,245 100,245 Q75,245 75,240 z" fill={baseColor}/>
                     <path d="M80,210 v30 M85,210 v30 M90,210 v30 M95,210 v30 M105,210 v30 M110,210 v30 M115,210 v30 M120,210 v30" stroke={stripeColor} strokeWidth="1"/>
                     <path d="M75,220 h50 M75,230 h50" stroke={stripeColor} strokeWidth="1"/>
@@ -411,7 +411,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'dress_blues':
             return (
-                <g id="pants-dress-blues" filter="url(#shadow)">
+                <g id="pants-dress-blues">
                     <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
                     <path d="M77,200 h3 v60 h-3 z" fill={stripeColor}/>
@@ -420,7 +420,7 @@ const Pants = ({ style, colors }) => {
             );
         case 'zouave':
             return (
-                <g id="pants-zouave" filter="url(#shadow)">
+                <g id="pants-zouave">
                     <path d="M78,200 h16 v35 Q94,240 78,235 z" fill={baseColor}/>
                     <path d="M106,200 h16 v35 Q122,240 106,235 z" fill={baseColor}/>
                     <path d="M80,220 h12 M108,220 h12" stroke={stripeColor} strokeWidth="2"/>
@@ -672,7 +672,7 @@ const UniformDisplay = ({ uniform, size = 'medium', onClick, showInfo = true }) 
                         <stop offset="100%" style={{stopColor: currentUniform.skinTone, stopOpacity: 0.8}} />
                     </linearGradient>
                     <filter id="shadow">
-                        <dropShadow dx="1" dy="1" stdDeviation="0.5" floodColor="rgba(0,0,0,0.3)"/>
+                        <feDropShadow dx="1" dy="1" stdDeviation="0.5" floodColor="rgba(0,0,0,0.3)"/>
                     </filter>
                 </defs>
                 
