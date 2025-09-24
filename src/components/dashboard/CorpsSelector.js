@@ -64,20 +64,6 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
         return { status: 'complete', message: 'Ready to compete' };
     };
 
-    const StatusBadge = ({ status, message }) => {
-        const colors = {
-            empty: 'bg-gray-500',
-            incomplete: 'bg-yellow-500', 
-            complete: 'bg-green-500'
-        };
-        
-        return (
-            <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${colors[status]}`} 
-                 title={message}>
-            </div>
-        );
-    };
-
     return (
         <div className="space-y-6">
             {/* Corps Class Tabs */}
@@ -121,7 +107,6 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
                                         )}
                                     </div>
                                 </div>
-                                {hasCorps(key) && <StatusBadge {...corpsStatus} />}
                             </button>
                         );
                     })}

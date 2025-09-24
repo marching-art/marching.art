@@ -313,13 +313,13 @@ const MyStatus = ({ username, profile }) => {
             </div>
 
             {/* Performance Insights */}
-            {(recentScores.length > 0 || leagueRankings.length > 0) && (
+            {(totalSeasonScore > 0 || leagueRankings.length > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {recentScores.length > 0 && (
+                    {totalSeasonScore > 0 && (
                         <StatCard
-                            title="Recent Performance"
-                            value={`${Object.values(recentScores[0]?.scores || {}).reduce((sum, s) => sum + s.score, 0).toFixed(1)}`}
-                            subtitle={`Day ${recentScores[0]?.day || 'N/A'}`}
+                            title="Latest Score"
+                            value={totalSeasonScore.toFixed(1)}
+                            subtitle="Season Total"
                             icon="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
                             trend={recentTrend}
                         />
@@ -348,30 +348,33 @@ const MyStatus = ({ username, profile }) => {
                 </div>
             )}
 
-            {/* Quick Actions */}
+            {/* Performance Summary */}
             <div className="border-t border-accent dark:border-accent-dark pt-4">
-                <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark mb-3">Quick Actions</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <QuickAction
-                        title="Adjust Lineups"
-                        description="Make trades and optimize your corps"
-                        icon="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
-                        onClick={() => {/* Will be handled by parent components */}}
-                    />
-                    <QuickAction
-                        title="Select Shows"
-                        description="Choose which competitions to attend"
-                        icon="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                        color="bg-secondary"
-                        onClick={() => {/* Will be handled by parent components */}}
-                    />
-                    <QuickAction
-                        title="View Leagues"
-                        description="Check your competitive standings"
-                        icon="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                        color="bg-yellow-600"
-                        onClick={() => {/* Will be handled by parent components */}}
-                    />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <p className="text-xl font-bold text-primary dark:text-primary-dark">
+                            {orderedCorpsToDisplay.length}
+                        </p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Active Corps</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-bold text-primary dark:text-primary-dark">
+                            {Object.values(seasonStats).reduce((sum, stats) => sum + (stats.showsSelected || 0), 0)}
+                        </p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Shows Selected</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-bold text-primary dark:text-primary-dark">
+                            {Object.values(seasonStats).reduce((sum, stats) => sum + (stats.tradesUsed || 0), 0)}
+                        </p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Total Trades</p>
+                    </div>
+                    <div>
+                        <p className="text-xl font-bold text-primary dark:text-primary-dark">
+                            {bestRank !== Infinity ? `#${bestRank}` : 'N/A'}
+                        </p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Best Rank</p>
+                    </div>
                 </div>
             </div>
         </div>
