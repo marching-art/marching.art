@@ -1,18 +1,237 @@
 // src/components/profile/UniformDisplay.js
-// Hyper-boosted uniform display with comprehensive DCI-inspired accuracy
+// Complete uniform display with comprehensive DCI-inspired uniform rendering
 import React from 'react';
 
-// Detailed jacket component with many more historical styles
+// Comprehensive headwear rendering with all styles from UniformBuilder
+const Headwear = ({ style, colors }) => {
+    if (style === 'none') return null;
+    
+    const hatColor = colors.hat || '#1a1a1a';
+    const trimColor = colors.trim || '#ffffff';
+
+    switch (style) {
+        case 'shako':
+            return (
+                <g id="headwear-shako" filter="url(#shadow)">
+                    <rect x="85" y="70" width="30" height="25" rx="15" ry="5" fill={hatColor}/>
+                    <rect x="85" y="90" width="30" height="5" fill={trimColor}/>
+                    <circle cx="100" cy="85" r="3" fill={trimColor}/>
+                </g>
+            );
+        case 'aussie':
+            return (
+                <g id="headwear-aussie" filter="url(#shadow)">
+                    <ellipse cx="100" cy="80" rx="25" ry="8" fill={hatColor}/>
+                    <ellipse cx="100" cy="75" rx="20" ry="10" fill={hatColor}/>
+                    <circle cx="110" cy="75" r="2" fill={trimColor}/>
+                    <path d="M80,80 Q100,85 120,80" stroke={trimColor} strokeWidth="1" fill="none"/>
+                </g>
+            );
+        case 'helmet':
+            return (
+                <g id="headwear-helmet" filter="url(#shadow)">
+                    <ellipse cx="100" cy="80" rx="22" ry="15" fill={hatColor}/>
+                    <rect x="85" y="90" width="30" height="3" fill={trimColor}/>
+                    <circle cx="100" cy="75" r="2" fill={trimColor}/>
+                    <path d="M85,85 Q100,80 115,85" stroke={trimColor} strokeWidth="1" fill="none"/>
+                </g>
+            );
+        case 'busby':
+            return (
+                <g id="headwear-busby" filter="url(#shadow)">
+                    <rect x="82" y="60" width="36" height="35" rx="5" fill={hatColor}/>
+                    <rect x="82" y="85" width="36" height="3" fill={trimColor}/>
+                    <circle cx="100" cy="77" r="3" fill={trimColor}/>
+                    <path d="M85,70 h30 M85,75 h30" stroke={trimColor} strokeWidth="0.5"/>
+                </g>
+            );
+        case 'beret':
+            return (
+                <g id="headwear-beret" filter="url(#shadow)">
+                    <ellipse cx="105" cy="75" rx="20" ry="10" fill={hatColor}/>
+                    <circle cx="100" cy="80" r="2" fill={trimColor}/>
+                    <ellipse cx="100" cy="85" rx="18" ry="3" fill={hatColor}/>
+                </g>
+            );
+        case 'garrison':
+            return (
+                <g id="headwear-garrison" filter="url(#shadow)">
+                    <path d="M85,78 Q100,70 115,78 Q115,85 100,85 Q85,85 85,78" fill={hatColor}/>
+                    <path d="M85,82 Q100,78 115,82" stroke={trimColor} strokeWidth="1" fill="none"/>
+                    <circle cx="100" cy="80" r="1.5" fill={trimColor}/>
+                </g>
+            );
+        case 'kepi':
+            return (
+                <g id="headwear-kepi" filter="url(#shadow)">
+                    <ellipse cx="100" cy="75" rx="20" ry="12" fill={hatColor}/>
+                    <rect x="85" y="85" width="30" height="8" rx="3" fill={hatColor}/>
+                    <path d="M85,85 h30" stroke={trimColor} strokeWidth="1"/>
+                    <circle cx="100" cy="75" r="2" fill={trimColor}/>
+                </g>
+            );
+        case 'czapka':
+            return (
+                <g id="headwear-czapka" filter="url(#shadow)">
+                    <rect x="85" y="70" width="30" height="20" rx="8" ry="3" fill={hatColor}/>
+                    <rect x="85" y="85" width="30" height="5" fill={trimColor}/>
+                    <rect x="95" y="65" width="10" height="8" rx="5" fill={hatColor}/>
+                </g>
+            );
+        case 'bicorne':
+            return (
+                <g id="headwear-bicorne" filter="url(#shadow)">
+                    <path d="M80,80 Q100,70 120,80 Q115,85 100,83 Q85,85 80,80" fill={hatColor}/>
+                    <path d="M85,80 Q100,75 115,80" stroke={trimColor} strokeWidth="1" fill="none"/>
+                    <circle cx="100" cy="78" r="2" fill={trimColor}/>
+                </g>
+            );
+        case 'tricorne':
+            return (
+                <g id="headwear-tricorne" filter="url(#shadow)">
+                    <path d="M85,75 L100,65 L115,75 L110,85 L90,85 Z" fill={hatColor}/>
+                    <path d="M85,75 L100,70 L115,75" stroke={trimColor} strokeWidth="1" fill="none"/>
+                    <circle cx="100" cy="75" r="2" fill={trimColor}/>
+                </g>
+            );
+        case 'mirliton':
+            return (
+                <g id="headwear-mirliton" filter="url(#shadow)">
+                    <path d="M85,70 Q100,60 115,70 Q120,80 100,85 Q80,80 85,70" fill={hatColor}/>
+                    <path d="M115,70 Q125,65 130,75" stroke={hatColor} strokeWidth="3" fill="none"/>
+                    <circle cx="100" cy="75" r="2" fill={trimColor}/>
+                </g>
+            );
+        default:
+            return null;
+    }
+};
+
+// Comprehensive plume rendering with all styles
+const Plume = ({ style, colors }) => {
+    if (style === 'none') return null;
+    
+    const plumeColor = colors.plume || '#ff0000';
+
+    switch (style) {
+        case 'fountain':
+            return (
+                <g id="plume-fountain" filter="url(#shadow)">
+                    <path d="M100,65 Q95,50 90,45 Q95,40 100,45 Q105,40 110,45 Q105,50 100,65" fill={plumeColor} opacity="0.8"/>
+                    <path d="M100,65 Q98,55 96,50 Q98,48 100,50 Q102,48 104,50 Q102,55 100,65" fill={plumeColor}/>
+                </g>
+            );
+        case 'feather':
+            return (
+                <g id="plume-feather" filter="url(#shadow)">
+                    <path d="M100,65 Q102,50 105,40" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                    <path d="M100,55 Q105,50 108,48" stroke={plumeColor} strokeWidth="1" fill="none"/>
+                    <path d="M100,50 Q95,45 92,43" stroke={plumeColor} strokeWidth="1" fill="none"/>
+                </g>
+            );
+        case 'mohawk':
+            return (
+                <g id="plume-mohawk" filter="url(#shadow)">
+                    <path d="M85,65 Q100,40 115,65" stroke={plumeColor} strokeWidth="8" fill="none"/>
+                    <path d="M88,60 Q100,45 112,60" stroke={plumeColor} strokeWidth="4" fill="none"/>
+                </g>
+            );
+        case 'hackle':
+            return (
+                <g id="plume-hackle" filter="url(#shadow)">
+                    <path d="M95,65 Q98,50 100,45" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                    <path d="M100,65 Q102,50 105,45" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                    <path d="M105,65 Q108,50 110,45" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                </g>
+            );
+        case 'pompom':
+            return (
+                <g id="plume-pompom" filter="url(#shadow)">
+                    <circle cx="100" cy="55" r="8" fill={plumeColor} opacity="0.8"/>
+                    <circle cx="95" cy="52" r="3" fill={plumeColor}/>
+                    <circle cx="105" cy="52" r="3" fill={plumeColor}/>
+                    <circle cx="100" cy="48" r="3" fill={plumeColor}/>
+                </g>
+            );
+        case 'cascade':
+            return (
+                <g id="plume-cascade" filter="url(#shadow)">
+                    <path d="M95,65 Q92,45 88,35" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                    <path d="M100,65 Q98,45 95,30" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                    <path d="M105,65 Q108,45 112,35" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                    <path d="M100,60 Q105,40 110,25" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                </g>
+            );
+        case 'rooster':
+            return (
+                <g id="plume-rooster" filter="url(#shadow)">
+                    <path d="M100,65 Q105,45 115,35" stroke={plumeColor} strokeWidth="4" fill="none"/>
+                    <path d="M100,62 Q108,50 118,42" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                    <path d="M102,60 Q110,52 120,48" stroke={plumeColor} strokeWidth="2" fill="none"/>
+                </g>
+            );
+        case 'ostrich':
+            return (
+                <g id="plume-ostrich" filter="url(#shadow)">
+                    <path d="M100,65 Q90,35 85,20" stroke={plumeColor} strokeWidth="6" fill="none" opacity="0.7"/>
+                    <path d="M100,65 Q110,35 115,20" stroke={plumeColor} strokeWidth="6" fill="none" opacity="0.7"/>
+                    <path d="M100,65 Q100,35 100,15" stroke={plumeColor} strokeWidth="6" fill="none" opacity="0.7"/>
+                </g>
+            );
+        case 'dyed_tips':
+            return (
+                <g id="plume-dyed-tips" filter="url(#shadow)">
+                    <path d="M100,65 Q95,50 90,35" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                    <path d="M100,65 Q105,50 110,35" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                    <circle cx="90" cy="35" r="2" fill="#FFD700"/>
+                    <circle cx="110" cy="35" r="2" fill="#FFD700"/>
+                </g>
+            );
+        case 'panache':
+            return (
+                <g id="plume-panache" filter="url(#shadow)">
+                    <path d="M95,65 Q85,35 75,20" stroke={plumeColor} strokeWidth="4" fill="none" opacity="0.8"/>
+                    <path d="M100,65 Q100,30 100,15" stroke={plumeColor} strokeWidth="5" fill="none"/>
+                    <path d="M105,65 Q115,35 125,20" stroke={plumeColor} strokeWidth="4" fill="none" opacity="0.8"/>
+                </g>
+            );
+        case 'macaroni':
+            return (
+                <g id="plume-macaroni" filter="url(#shadow)">
+                    <path d="M100,65 Q120,50 135,40" stroke={plumeColor} strokeWidth="5" fill="none"/>
+                    <path d="M105,62 Q125,52 140,45" stroke={plumeColor} strokeWidth="3" fill="none"/>
+                    <circle cx="135" cy="40" r="3" fill={plumeColor}/>
+                </g>
+            );
+        default:
+            return null;
+    }
+};
+
+// Comprehensive jacket rendering with all styles
 const Jacket = ({ style, colors }) => {
     const baseColor = colors.base || '#000080';
     const accentColor = colors.accent || '#ffffff';
     const trimColor = colors.trim || '#ffd700';
 
     switch (style) {
+        case 'classic':
+            return (
+                <g id="jacket-classic" filter="url(#shadow)">
+                    <path d="M75,130 h50 v70 l-5,5 h-40 l-5,-5 z" fill={baseColor}/>
+                    <path d="M95,135 v60" stroke={accentColor} strokeWidth="2"/>
+                    <path d="M105,135 v60" stroke={accentColor} strokeWidth="2"/>
+                    <circle cx="90" cy="145" r="2" fill={trimColor}/>
+                    <circle cx="110" cy="145" r="2" fill={trimColor}/>
+                    <circle cx="90" cy="155" r="2" fill={trimColor}/>
+                    <circle cx="110" cy="155" r="2" fill={trimColor}/>
+                    <path d="M75,130 h50" stroke={trimColor} strokeWidth="2"/>
+                </g>
+            );
         case 'double_breast':
             return (
                 <g id="jacket-double-breast" filter="url(#shadow)">
-                    <path d="M70,135 h60 v75 l-5,5 h-50 l-5,-5 z" fill={baseColor} stroke={trimColor} strokeWidth="1"/>
+                    <path d="M70,135 h60 v75 l-5,5 h-50 l-5,-5 z" fill={baseColor}/>
                     <path d="M85,140 v60" stroke={accentColor} strokeWidth="2"/>
                     <path d="M115,140 v60" stroke={accentColor} strokeWidth="2"/>
                     <circle cx="90" cy="145" r="2" fill={trimColor}/>
@@ -26,453 +245,261 @@ const Jacket = ({ style, colors }) => {
             );
         case 'sash':
             return (
-                <g id="jacket-sash">
-                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor} />
-                    <path d="M75,130 L125,200" stroke={accentColor} strokeWidth="12" />
-                    <path d="M75,140 h50" stroke={trimColor} strokeWidth="4" />
-                    <circle cx="75" cy="140" r="2" fill={trimColor}/>
-                    <circle cx="125" cy="140" r="2" fill={trimColor}/>
+                <g id="jacket-sash" filter="url(#shadow)">
+                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
+                    <path d="M75,130 L125,200" stroke={accentColor} strokeWidth="12"/>
+                    <path d="M75,140 h50" stroke={trimColor} strokeWidth="4"/>
+                    <circle cx="75" cy="140" r="3" fill={trimColor}/>
+                    <circle cx="125" cy="140" r="3" fill={trimColor}/>
                 </g>
             );
         case 'cadet':
             return (
-                <g id="jacket-cadet">
-                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor} />
-                    <path d="M75,130 L100,200 L125,130" stroke={accentColor} strokeWidth="12" fill="none" />
-                    <circle cx="100" cy="135" r="5" fill={trimColor} />
+                <g id="jacket-cadet" filter="url(#shadow)">
+                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
+                    <path d="M75,130 L100,200 L125,130" stroke={accentColor} strokeWidth="8" fill="none"/>
+                    <circle cx="100" cy="135" r="5" fill={trimColor}/>
                     <circle cx="85" cy="145" r="2" fill={trimColor}/>
                     <circle cx="115" cy="145" r="2" fill={trimColor}/>
+                    <path d="M80,155 h40" stroke={trimColor} strokeWidth="2"/>
                 </g>
             );
         case 'modern':
             return (
-                <g id="jacket-modern">
-                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor} />
-                    <path d="M75,130 Q 100,160 75,200" stroke={accentColor} strokeWidth="8" fill="none" />
-                    <path d="M125,130 L100,200" stroke={trimColor} strokeWidth="3" fill="none" />
-                    <rect x="95" y="130" width="10" height="8" fill={trimColor}/>
+                <g id="jacket-modern" filter="url(#shadow)">
+                    <path d="M75,130 L110,130 L125,140 v60 L75,200 z" fill={baseColor}/>
+                    <path d="M85,140 L115,150" stroke={accentColor} strokeWidth="3"/>
+                    <path d="M85,160 L115,170" stroke={accentColor} strokeWidth="3"/>
+                    <circle cx="120" cy="145" r="3" fill={trimColor}/>
+                    <path d="M75,130 L110,130 L125,140" stroke={trimColor} strokeWidth="2" fill="none"/>
                 </g>
             );
         case 'napoleonic':
             return (
                 <g id="jacket-napoleonic" filter="url(#shadow)">
-                    <path d="M70,135 h60 v75 h-60 z" fill={baseColor}/>
-                    <path d="M75,140 Q100,150 125,140" stroke={accentColor} strokeWidth="6" fill="none"/>
-                    <path d="M75,150 Q100,160 125,150" stroke={accentColor} strokeWidth="6" fill="none"/>
-                    <path d="M75,160 Q100,170 125,160" stroke={accentColor} strokeWidth="6" fill="none"/>
-                    <circle cx="85" cy="145" r="1.5" fill={trimColor}/>
-                    <circle cx="115" cy="145" r="1.5" fill={trimColor}/>
-                    <rect x="95" y="135" width="10" height="10" fill={trimColor}/>
+                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
+                    <path d="M85,135 Q100,130 115,135" stroke={accentColor} strokeWidth="4" fill="none"/>
+                    <path d="M85,150 h30" stroke={accentColor} strokeWidth="3"/>
+                    <circle cx="90" cy="140" r="2" fill={trimColor}/>
+                    <circle cx="110" cy="140" r="2" fill={trimColor}/>
+                    <path d="M95,160 h10 v20 h-10 z" fill={trimColor}/>
                 </g>
             );
         case 'hussar':
             return (
                 <g id="jacket-hussar" filter="url(#shadow)">
-                    <path d="M70,135 h60 v75 h-60 z" fill={baseColor}/>
-                    <path d="M75,140 h50" stroke={accentColor} strokeWidth="3"/>
-                    <path d="M75,145 h50" stroke={accentColor} strokeWidth="3"/>
-                    <path d="M75,150 h50" stroke={accentColor} strokeWidth="3"/>
-                    <path d="M75,155 h50" stroke={accentColor} strokeWidth="3"/>
-                    <path d="M75,160 h50" stroke={accentColor} strokeWidth="3"/>
-                    <circle cx="80" cy="142" r="1" fill={trimColor}/>
-                    <circle cx="120" cy="142" r="1" fill={trimColor}/>
-                    <path d="M72,135 v15 h3 v-15 z" fill={trimColor}/>
-                    <path d="M125,135 v15 h3 v-15 z" fill={trimColor}/>
-                </g>
-            );
-        case 'zouave':
-            return (
-                <g id="jacket-zouave" filter="url(#shadow)">
-                    <path d="M75,135 h50 v50 h-50 z" fill={baseColor}/>
-                    <path d="M75,135 Q100,140 125,135" stroke={accentColor} strokeWidth="4" fill="none"/>
-                    <path d="M75,145 Q100,150 125,145" stroke={accentColor} strokeWidth="4" fill="none"/>
-                    <path d="M75,155 Q100,160 125,155" stroke={accentColor} strokeWidth="4" fill="none"/>
-                    <circle cx="90" cy="140" r="2" fill={trimColor}/>
-                    <circle cx="110" cy="140" r="2" fill={trimColor}/>
-                </g>
-            );
-        case 'highland':
-            return (
-                <g id="jacket-highland" filter="url(#shadow)">
-                    <path d="M75,135 h50 v60 h-50 z" fill={baseColor}/>
-                    <path d="M100,135 v60" stroke={accentColor} strokeWidth="6"/>
-                    <path d="M85,140 h30" stroke={trimColor} strokeWidth="2"/>
-                    <circle cx="80" cy="145" r="2" fill={trimColor}/>
-                    <circle cx="120" cy="145" r="2" fill={trimColor}/>
-                    <path d="M75,180 h50" stroke={trimColor} strokeWidth="3"/>
+                    <path d="M75,130 h50 v55 Q100,195 75,185 z" fill={baseColor}/>
+                    <path d="M80,135 Q100,130 120,135" stroke={accentColor} strokeWidth="6" fill="none"/>
+                    <path d="M80,150 h40" stroke={accentColor} strokeWidth="2"/>
+                    <circle cx="85" cy="140" r="2" fill={trimColor}/>
+                    <circle cx="115" cy="140" r="2" fill={trimColor}/>
                 </g>
             );
         case 'swiss':
             return (
                 <g id="jacket-swiss" filter="url(#shadow)">
-                    <path d="M75,135 h50 v75 h-50 z" fill={baseColor}/>
-                    <path d="M85,140 v50 h5 v-50 z" fill={accentColor}/>
-                    <path d="M110,140 v50 h5 v-50 z" fill={accentColor}/>
-                    <path d="M95,145 h10 v3 h-10 z" fill={trimColor}/>
-                    <path d="M95,155 h10 v3 h-10 z" fill={trimColor}/>
-                    <path d="M95,165 h10 v3 h-10 z" fill={trimColor}/>
+                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
+                    <path d="M85,140 v50 M95,140 v50 M105,140 v50 M115,140 v50" stroke={accentColor} strokeWidth="2"/>
+                    <path d="M80,150 h40 M80,160 h40 M80,170 h40" stroke={trimColor} strokeWidth="1"/>
+                    <rect x="95" y="135" width="10" height="10" fill={trimColor}/>
+                </g>
+            );
+        case 'zouave':
+            return (
+                <g id="jacket-zouave" filter="url(#shadow)">
+                    <path d="M75,130 h50 v50 h-50 z" fill={baseColor}/>
+                    <path d="M75,140 h50 M75,150 h50 M75,160 h50" stroke={accentColor} strokeWidth="3"/>
+                    <circle cx="85" cy="135" r="2" fill={trimColor}/>
+                    <circle cx="115" cy="135" r="2" fill={trimColor}/>
+                    <path d="M90,170 h20 v15 h-20 z" fill={accentColor}/>
+                </g>
+            );
+        case 'highland':
+            return (
+                <g id="jacket-highland" filter="url(#shadow)">
+                    <path d="M75,130 h50 v65 Q100,205 75,195 z" fill={baseColor}/>
+                    <path d="M80,135 Q100,125 120,135" stroke={accentColor} strokeWidth="5" fill="none"/>
+                    <circle cx="90" cy="145" r="3" fill={trimColor}/>
+                    <circle cx="110" cy="145" r="3" fill={trimColor}/>
+                    <path d="M85,160 h30" stroke={trimColor} strokeWidth="3"/>
                 </g>
             );
         case 'bandsman':
             return (
                 <g id="jacket-bandsman" filter="url(#shadow)">
-                    <path d="M75,135 h50 v75 h-50 z" fill={baseColor}/>
-                    <path d="M100,135 v75" stroke={accentColor} strokeWidth="6"/>
-                    <path d="M85,140 h30" stroke={trimColor} strokeWidth="2"/>
-                    <path d="M85,150 h30" stroke={trimColor} strokeWidth="2"/>
-                    <circle cx="90" cy="145" r="2" fill={trimColor}/>
-                    <circle cx="110" cy="145" r="2" fill={trimColor}/>
+                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor}/>
+                    <path d="M90,135 v60 M110,135 v60" stroke={accentColor} strokeWidth="3"/>
+                    <circle cx="85" cy="145" r="2" fill={trimColor}/>
+                    <circle cx="115" cy="145" r="2" fill={trimColor}/>
+                    <circle cx="85" cy="165" r="2" fill={trimColor}/>
+                    <circle cx="115" cy="165" r="2" fill={trimColor}/>
+                    <path d="M80,180 h40" stroke={trimColor} strokeWidth="2"/>
                 </g>
             );
-        case 'classic':
         default:
             return (
-                <g id="jacket-classic">
-                    <path d="M75,130 h50 v70 h-50 z" fill={baseColor} />
-                    <path d="M100,130 v70" stroke={accentColor} strokeWidth="4" />
-                    <path d="M80,135 h3" stroke={trimColor} strokeWidth="2" />
-                    <path d="M80,145 h3" stroke={trimColor} strokeWidth="2" />
-                    <circle cx="85" cy="145" r="2" fill={trimColor}/>
-                    <circle cx="85" cy="155" r="2" fill={trimColor}/>
-                    <path d="M75,130 h50" stroke={trimColor} strokeWidth="2"/>
+                <g id="jacket-default">
+                    <path d="M80,130 h40 v70 h-40 z" fill={baseColor}/>
                 </g>
             );
     }
 };
 
-// Detailed pants component with historical accuracy
+// Comprehensive pants rendering with all styles
 const Pants = ({ style, colors }) => {
     const baseColor = colors.base || '#ffffff';
     const stripeColor = colors.stripe || '#000080';
 
     switch (style) {
+        case 'plain':
+            return (
+                <g id="pants-plain" filter="url(#shadow)">
+                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
+                </g>
+            );
         case 'stripe':
             return (
-                <g id="pants-stripe">
-                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor} />
-                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor} />
-                    <path d="M82,200 v60" stroke={stripeColor} strokeWidth="4" />
-                    <path d="M118,200 v60" stroke={stripeColor} strokeWidth="4" />
+                <g id="pants-stripe" filter="url(#shadow)">
+                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M78,200 h2 v60 h-2 z" fill={stripeColor}/>
+                    <path d="M103,200 h2 v60 h-2 z" fill={stripeColor}/>
+                    <path d="M118,200 h2 v60 h-2 z" fill={stripeColor}/>
+                    <path d="M123,200 h2 v60 h-2 z" fill={stripeColor}/>
                 </g>
             );
         case 'double_stripe':
             return (
                 <g id="pants-double-stripe" filter="url(#shadow)">
-                    <path d="M78,210 h16 v55 h-16 z" fill={baseColor}/>
-                    <path d="M106,210 h16 v55 h-16 z" fill={baseColor}/>
-                    <path d="M80,210 v55" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M82,210 v55" stroke={stripeColor} strokeWidth="1"/>
-                    <path d="M120,210 v55" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M118,210 v55" stroke={stripeColor} strokeWidth="1"/>
-                </g>
-            );
-        case 'highlander':
-            return (
-                <g id="pants-kilt" filter="url(#shadow)">
-                    <path d="M75,210 h50 v25 L100,250 z" fill={baseColor}/>
-                    <path d="M80,215 v30" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M90,215 v30" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M110,215 v30" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M120,215 v30" stroke={stripeColor} strokeWidth="2"/>
-                    <path d="M78,250 h16 v15 h-16 z" fill={baseColor}/>
-                    <path d="M106,250 h16 v15 h-16 z" fill={baseColor}/>
-                </g>
-            );
-        case 'zouave':
-            return (
-                <g id="pants-zouave" filter="url(#shadow)">
-                    <path d="M75,210 h25 v35 h-25 z" fill={baseColor}/>
-                    <path d="M100,210 h25 v35 h-25 z" fill={baseColor}/>
-                    <path d="M75,245 h25 v-10 a10,5 0 0,0 -25,0 z" fill={stripeColor}/>
-                    <path d="M100,245 h25 v-10 a10,5 0 0,0 -25,0 z" fill={stripeColor}/>
+                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M78,200 h1 v60 h-1 z" fill={stripeColor}/>
+                    <path d="M81,200 h1 v60 h-1 z" fill={stripeColor}/>
+                    <path d="M118,200 h1 v60 h-1 z" fill={stripeColor}/>
+                    <path d="M121,200 h1 v60 h-1 z" fill={stripeColor}/>
                 </g>
             );
         case 'bloused':
             return (
                 <g id="pants-bloused" filter="url(#shadow)">
-                    <path d="M78,210 h16 v45 h-16 z" fill={baseColor}/>
-                    <path d="M106,210 h16 v45 h-16 z" fill={baseColor}/>
-                    <path d="M75,255 h22 v10 h-22 z" fill={baseColor}/>
-                    <path d="M103,255 h22 v10 h-22 z" fill={baseColor}/>
+                    <path d="M78,210 h16 v40 Q94,255 78,250 z" fill={baseColor}/>
+                    <path d="M106,210 h16 v40 Q122,255 106,250 z" fill={baseColor}/>
+                    <path d="M75,250 h22 v10 h-22 z" fill={baseColor}/>
+                    <path d="M103,250 h22 v10 h-22 z" fill={baseColor}/>
                 </g>
             );
         case 'riding':
             return (
                 <g id="pants-riding" filter="url(#shadow)">
-                    <path d="M78,210 h16 v30 a8,8 0 0,1 -16,0 z" fill={baseColor}/>
-                    <path d="M106,210 h16 v30 a8,8 0 0,1 -16,0 z" fill={baseColor}/>
-                    <path d="M75,240 h22 v25 h-22 z" fill={baseColor}/>
-                    <path d="M103,240 h22 v25 h-22 z" fill={baseColor}/>
+                    <path d="M78,210 h16 v25 Q94,240 78,235 z" fill={baseColor}/>
+                    <path d="M106,210 h16 v25 Q122,240 106,235 z" fill={baseColor}/>
+                    <path d="M75,235 h22 v25 h-22 z" fill={baseColor}/>
+                    <path d="M103,235 h22 v25 h-22 z" fill={baseColor}/>
+                    <path d="M76,240 h20 M104,240 h20" stroke={stripeColor} strokeWidth="2"/>
                 </g>
             );
-        case 'plain':
+        case 'highlander':
+            return (
+                <g id="pants-kilt" filter="url(#shadow)">
+                    <path d="M75,200 h50 v40 Q125,245 100,245 Q75,245 75,240 z" fill={baseColor}/>
+                    <path d="M80,210 v30 M85,210 v30 M90,210 v30 M95,210 v30 M105,210 v30 M110,210 v30 M115,210 v30 M120,210 v30" stroke={stripeColor} strokeWidth="1"/>
+                    <path d="M75,220 h50 M75,230 h50" stroke={stripeColor} strokeWidth="1"/>
+                    <path d="M85,245 h10 v15 h-10 z" fill={baseColor}/>
+                    <path d="M105,245 h10 v15 h-10 z" fill={baseColor}/>
+                </g>
+            );
+        case 'dress_blues':
+            return (
+                <g id="pants-dress-blues" filter="url(#shadow)">
+                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M77,200 h3 v60 h-3 z" fill={stripeColor}/>
+                    <path d="M120,200 h3 v60 h-3 z" fill={stripeColor}/>
+                </g>
+            );
+        case 'zouave_pants':
+            return (
+                <g id="pants-zouave" filter="url(#shadow)">
+                    <path d="M78,200 h16 v35 Q94,240 78,235 z" fill={baseColor}/>
+                    <path d="M106,200 h16 v35 Q122,240 106,235 z" fill={baseColor}/>
+                    <path d="M80,220 h12 M108,220 h12" stroke={stripeColor} strokeWidth="2"/>
+                    <path d="M80,230 h12 M108,230 h12" stroke={stripeColor} strokeWidth="2"/>
+                </g>
+            );
         default:
             return (
-                <g id="pants-plain">
-                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor} />
-                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor} />
+                <g id="pants-default">
+                    <path d="M80,200 h15 v60 h-15 z" fill={baseColor}/>
+                    <path d="M105,200 h15 v60 h-15 z" fill={baseColor}/>
                 </g>
             );
     }
 };
 
-// Comprehensive headwear with many DCI-inspired styles
-const Headwear = ({ style, colors }) => {
-    if (style === 'none') return null;
-    
-    const hatColor = colors.hat || '#1a1a1a';
-    const trimColor = colors.trim || '#ffffff';
-
-    switch (style) {
-        case 'aussie':
-            return <path id="head-aussie" d="M80,85 a20,10 0 0,1 40,0 l-5, -10 l-30,0 z" fill={hatColor} stroke={trimColor} strokeWidth="1.5" />;
-        case 'helmet':
-            return <path id="head-helmet" d="M80,95 a20,20 0 0,1 40,0 v-15 a20,20 0 0,1 -40,0 z" fill={hatColor} stroke={trimColor} strokeWidth="1.5" />;
-        case 'busby':
-            return (
-                <g id="head-busby">
-                    <rect x="82" y="65" width="36" height="30" rx="5" fill={hatColor} stroke={trimColor} strokeWidth="1.5" />
-                    <path d="M82,80 h36" stroke={trimColor} strokeWidth="1"/>
-                </g>
-            );
-        case 'beret':
-            return (
-                <g id="head-beret" filter="url(#shadow)">
-                    <ellipse cx="100" cy="80" rx="20" ry="8" fill={hatColor}/>
-                    <circle cx="100" cy="80" r="2" fill={trimColor}/>
-                </g>
-            );
-        case 'garrison':
-            return (
-                <g id="head-garrison" filter="url(#shadow)">
-                    <path d="M85,82 h30 v8 h-30 z" fill={hatColor}/>
-                    <path d="M80,90 h40 v3 h-40 z" fill={trimColor}/>
-                </g>
-            );
-        case 'kepi':
-            return (
-                <g id="head-kepi" filter="url(#shadow)">
-                    <path d="M85,80 h30 v15 l-15,5 l-15,-5 z" fill={hatColor}/>
-                    <path d="M85,80 h30" stroke={trimColor} strokeWidth="2"/>
-                    <circle cx="100" cy="87" r="2" fill={trimColor}/>
-                </g>
-            );
-        case 'czapka':
-            return (
-                <g id="head-czapka" filter="url(#shadow)">
-                    <path d="M85,80 h30 v10 a15,5 0 0,1 -30,0 z" fill={hatColor}/>
-                    <rect x="95" y="75" width="10" height="8" fill={trimColor}/>
-                </g>
-            );
-        case 'bicorne':
-            return (
-                <g id="head-bicorne" filter="url(#shadow)">
-                    <path d="M85,85 a15,5 0 0,1 30,0 L115,78 L100,83 L85,78 z" fill={hatColor}/>
-                    <path d="M85,85 a15,5 0 0,1 30,0" stroke={trimColor} strokeWidth="1"/>
-                </g>
-            );
-        case 'tricorne':
-            return (
-                <g id="head-tricorne" filter="url(#shadow)">
-                    <path d="M80,90 L100,70 L120,90 L100,85 z" fill={hatColor}/>
-                    <path d="M80,90 L100,70 L120,90" stroke={trimColor} strokeWidth="1.5" fill="none"/>
-                </g>
-            );
-        case 'mirliton':
-            return (
-                <g id="head-mirliton" filter="url(#shadow)">
-                    <path d="M88,75 h24 v15 a12,5 0 0,1 -24,0 z" fill={hatColor}/>
-                    <path d="M95,70 h10 v8 h-10 z" fill={trimColor}/>
-                    <circle cx="100" cy="82" r="2" fill={trimColor}/>
-                </g>
-            );
-        case 'shako':
-        default:
-            return (
-                <g id="head-shako">
-                    <path d="M85,75 h30 v20 h-30 z" fill={hatColor} stroke={trimColor} strokeWidth="1.5" />
-                    <path d="M85,75 h30" stroke={trimColor} strokeWidth="2"/>
-                    <circle cx="100" cy="85" r="3" fill={trimColor}/>
-                </g>
-            );
-    }
-};
-
-// Comprehensive plume styles
-const Plume = ({ style, colors }) => {
-    if (style === 'none') return null;
-    
-    const plumeColor = colors.plume || '#ff0000';
-    
-    switch (style) {
-        case 'feather':
-            return (
-                <g id="plume-feather" filter="url(#shadow)">
-                    <path d="M100,75 C 110,50 115,40 100,30" fill="none" stroke={plumeColor} strokeWidth="4" />
-                    <path d="M105,65 l5,-10 M105,60 l5,-10 M105,55 l5,-10" stroke={plumeColor} strokeWidth="1"/>
-                </g>
-            );
-        case 'mohawk':
-            return (
-                <g id="plume-mohawk" filter="url(#shadow)">
-                    <path d="M85,70 h30 v-10 a15,10 0 0,0 -30,0 z" fill={plumeColor} />
-                    <path d="M90,65 v-5 M95,65 v-8 M100,65 v-10 M105,65 v-8 M110,65 v-5" stroke={plumeColor} strokeWidth="2"/>
-                </g>
-            );
-        case 'hackle':
-            return (
-                <g id="plume-hackle" filter="url(#shadow)">
-                    <path d="M95,75 v-25 M100,75 v-30 M105,75 v-25" stroke={plumeColor} strokeWidth="3"/>
-                    <path d="M97,60 l6,-8 M103,55 l6,-8" stroke={plumeColor} strokeWidth="1"/>
-                </g>
-            );
-        case 'pompom':
-            return (
-                <g id="plume-pompom" filter="url(#shadow)">
-                    <circle cx="100" cy="65" r="8" fill={plumeColor}/>
-                    <circle cx="95" cy="62" r="2" fill="rgba(255,255,255,0.3)"/>
-                </g>
-            );
-        case 'cascade':
-            return (
-                <g id="plume-cascade" filter="url(#shadow)">
-                    <path d="M100,75 C 85,45 90,35 80,25 M100,75 C 95,40 100,30 85,20 M100,75 C 105,40 100,30 115,20 M100,75 C 115,45 110,35 120,25" stroke={plumeColor} strokeWidth="2" fill="none"/>
-                </g>
-            );
-        case 'rooster':
-            return (
-                <g id="plume-rooster" filter="url(#shadow)">
-                    <path d="M100,75 C 120,50 125,40 110,30" fill="none" stroke={plumeColor} strokeWidth="5"/>
-                    <path d="M100,75 C 80,50 75,40 90,30" fill="none" stroke={plumeColor} strokeWidth="5"/>
-                    <path d="M100,75 v-25" stroke={plumeColor} strokeWidth="5"/>
-                </g>
-            );
-        case 'ostrich':
-            return (
-                <g id="plume-ostrich" filter="url(#shadow)">
-                    <path d="M100,75 Q 85,55 90,35 Q 95,15 85,5" stroke={plumeColor} strokeWidth="6" fill="none"/>
-                    <path d="M100,75 Q 115,55 110,35 Q 105,15 115,5" stroke={plumeColor} strokeWidth="6" fill="none"/>
-                </g>
-            );
-        case 'dyed_tips':
-            return (
-                <g id="plume-dyed-tips" filter="url(#shadow)">
-                    <path d="M100,75 C 90,50 95,40 85,30 M100,75 C 110,50 105,40 115,30 M100,75 v-20" stroke={plumeColor} strokeWidth="3" fill="none"/>
-                    <circle cx="85" cy="30" r="3" fill="#FFD700"/>
-                    <circle cx="115" cy="30" r="3" fill="#FFD700"/>
-                    <circle cx="100" cy="55" r="3" fill="#FFD700"/>
-                </g>
-            );
-        case 'panache':
-            return (
-                <g id="plume-panache" filter="url(#shadow)">
-                    <path d="M100,75 C 80,40 85,30 75,20 M100,75 C 90,45 95,35 85,25 M100,75 C 110,45 105,35 115,25 M100,75 C 120,40 115,30 125,20" stroke={plumeColor} strokeWidth="3" fill="none"/>
-                </g>
-            );
-        case 'macaroni':
-            return (
-                <g id="plume-macaroni" filter="url(#shadow)">
-                    <path d="M100,75 Q 120,60 125,35 Q 120,15 130,5" stroke={plumeColor} strokeWidth="4" fill="none"/>
-                    <path d="M100,75 Q 115,50 120,30" stroke={plumeColor} strokeWidth="3" fill="none"/>
-                </g>
-            );
-        case 'fountain':
-        default:
-            return (
-                <g id="plume-fountain" filter="url(#shadow)">
-                    <path d="M100,75 C 90,50 95,40 85,30 M100,75 C 110,50 105,40 115,30 M100,75 v-20" stroke={plumeColor} strokeWidth="3" fill="none" />
-                    <path d="M100,75 C 95,45 100,35 90,25 M100,75 C 105,45 100,35 110,25" stroke={plumeColor} strokeWidth="2" fill="none"/>
-                </g>
-            );
-    }
-};
-
-// Comprehensive shoe styles
+// Comprehensive shoes rendering
 const Shoes = ({ style }) => {
-    const getShoeColor = (style) => {
-        switch (style) {
-            case 'white': return '#FFFFFF';
-            case 'brown': return '#8B4513';
-            case 'combat': return '#2F4F4F';
-            case 'cavalry': return '#654321';
-            case 'dress': return '#000000';
-            case 'black':
-            default: return '#1a1a1a';
-        }
-    };
-    
-    const color = getShoeColor(style);
-    
-    if (style === 'spats') {
-        return (
-            <g id="shoes-spats" filter="url(#shadow)">
-                <path d="M78,260 h18 v15 h-18 z" fill="#1a1a1a"/>
-                <path d="M104,260 h18 v15 h-18 z" fill="#1a1a1a"/>
-                <path d="M78,260 h18 v8 h-18 z" fill="#FFFFFF"/>
-                <path d="M104,260 h18 v8 h-18 z" fill="#FFFFFF"/>
-                <circle cx="87" cy="264" r="1" fill="#000000"/>
-                <circle cx="113" cy="264" r="1" fill="#000000"/>
-            </g>
-        );
+    switch (style) {
+        case 'white':
+            return (
+                <g id="shoes-white" filter="url(#shadow)">
+                    <ellipse cx="87" cy="265" rx="8" ry="4" fill="#FFFFFF" stroke="#CCCCCC" strokeWidth="0.5"/>
+                    <ellipse cx="113" cy="265" rx="8" ry="4" fill="#FFFFFF" stroke="#CCCCCC" strokeWidth="0.5"/>
+                </g>
+            );
+        case 'black':
+            return (
+                <g id="shoes-black" filter="url(#shadow)">
+                    <ellipse cx="87" cy="265" rx="8" ry="4" fill="#000000"/>
+                    <ellipse cx="113" cy="265" rx="8" ry="4" fill="#000000"/>
+                </g>
+            );
+        case 'brown':
+            return (
+                <g id="shoes-brown" filter="url(#shadow)">
+                    <ellipse cx="87" cy="265" rx="8" ry="4" fill="#8B4513"/>
+                    <ellipse cx="113" cy="265" rx="8" ry="4" fill="#8B4513"/>
+                </g>
+            );
+        case 'spats':
+            return (
+                <g id="shoes-spats" filter="url(#shadow)">
+                    <ellipse cx="87" cy="265" rx="8" ry="4" fill="#000000"/>
+                    <ellipse cx="113" cy="265" rx="8" ry="4" fill="#000000"/>
+                    <ellipse cx="87" cy="258" rx="6" ry="8" fill="#FFFFFF"/>
+                    <ellipse cx="113" cy="258" rx="6" ry="8" fill="#FFFFFF"/>
+                </g>
+            );
+        case 'boots':
+            return (
+                <g id="shoes-boots" filter="url(#shadow)">
+                    <rect x="79" y="250" width="16" height="18" rx="3" fill="#000000"/>
+                    <rect x="105" y="250" width="16" height="18" rx="3" fill="#000000"/>
+                    <path d="M81,255 h12 M107,255 h12" stroke="#333333" strokeWidth="0.5"/>
+                </g>
+            );
+        default:
+            return (
+                <g id="shoes-default">
+                    <ellipse cx="87" cy="265" rx="6" ry="4" fill="#FFFFFF"/>
+                    <ellipse cx="113" cy="265" rx="6" ry="4" fill="#FFFFFF"/>
+                </g>
+            );
     }
-    
-    if (style === 'cavalry') {
-        return (
-            <g id="shoes-cavalry" filter="url(#shadow)">
-                <path d="M78,250 h18 v25 h-18 z" fill={color}/>
-                <path d="M104,250 h18 v25 h-18 z" fill={color}/>
-                <path d="M78,260 h18" stroke="#8B4513" strokeWidth="1"/>
-                <path d="M104,260 h18" stroke="#8B4513" strokeWidth="1"/>
-                <circle cx="87" cy="255" r="1" fill="#FFD700"/>
-                <circle cx="113" cy="255" r="1" fill="#FFD700"/>
-            </g>
-        );
-    }
-    
-    if (style === 'combat') {
-        return (
-            <g id="shoes-combat" filter="url(#shadow)">
-                <path d="M78,258 h18 v17 h-18 z" fill={color}/>
-                <path d="M104,258 h18 v17 h-18 z" fill={color}/>
-                <path d="M78,265 h18 M78,270 h18" stroke="#666666" strokeWidth="0.5"/>
-                <path d="M104,265 h18 M104,270 h18" stroke="#666666" strokeWidth="0.5"/>
-            </g>
-        );
-    }
-    
-    if (style === 'hessian') {
-        return (
-            <g id="shoes-hessian" filter="url(#shadow)">
-                <path d="M78,245 h18 v30 h-18 z" fill={color}/>
-                <path d="M104,245 h18 v30 h-18 z" fill={color}/>
-                <path d="M87,245 v10" stroke="#FFD700" strokeWidth="2"/>
-                <path d="M113,245 v10" stroke="#FFD700" strokeWidth="2"/>
-                <circle cx="87" cy="250" r="2" fill="#FFD700"/>
-                <circle cx="113" cy="250" r="2" fill="#FFD700"/>
-            </g>
-        );
-    }
-    
-    return (
-        <g id="shoes-standard" filter="url(#shadow)">
-            <path d="M80,260 h15 v10 h-15 z" fill={color} />
-            <path d="M105,260 h15 v10 h-15 z" fill={color} />
-        </g>
-    );
 };
 
-// Accessories component for additional details
+// Comprehensive accessories rendering
 const Accessories = ({ style, colors }) => {
     if (style === 'none') return null;
     
-    const accessoryColor = colors.accessory || '#FFD700';
-    
+    const accessoryColor = colors.accessory || '#ffd700';
+
     switch (style) {
         case 'gloves':
             return (
                 <g id="accessories-gloves">
-                    <ellipse cx="70" cy="165" rx="6" ry="4" fill="#FFFFFF"/>
-                    <ellipse cx="130" cy="165" rx="6" ry="4" fill="#FFFFFF"/>
+                    <ellipse cx="70" cy="165" rx="6" ry="4" fill={accessoryColor}/>
+                    <ellipse cx="130" cy="165" rx="6" ry="4" fill={accessoryColor}/>
                 </g>
             );
         case 'belt':
@@ -485,21 +512,23 @@ const Accessories = ({ style, colors }) => {
         case 'shoulder_cord':
             return (
                 <g id="accessories-shoulder-cord">
-                    <path d="M75,140 Q 70,150 75,160" stroke={accessoryColor} strokeWidth="3" fill="none"/>
-                    <path d="M125,140 Q 130,150 125,160" stroke={accessoryColor} strokeWidth="3" fill="none"/>
+                    <path d="M75,140 Q70,150 75,160" stroke={accessoryColor} strokeWidth="3" fill="none"/>
+                    <path d="M125,140 Q130,150 125,160" stroke={accessoryColor} strokeWidth="3" fill="none"/>
                 </g>
             );
         case 'aiguillettes':
             return (
                 <g id="accessories-aiguillettes">
-                    <path d="M80,140 Q 75,145 80,150 Q 75,155 80,160" stroke={accessoryColor} strokeWidth="2" fill="none"/>
-                    <path d="M120,140 Q 125,145 120,150 Q 125,155 120,160" stroke={accessoryColor} strokeWidth="2" fill="none"/>
+                    <path d="M80,140 Q75,145 80,150 Q75,155 80,160" stroke={accessoryColor} strokeWidth="2" fill="none"/>
+                    <path d="M120,140 Q125,145 120,150 Q125,155 120,160" stroke={accessoryColor} strokeWidth="2" fill="none"/>
+                    <circle cx="80" cy="140" r="1" fill={accessoryColor}/>
+                    <circle cx="120" cy="140" r="1" fill={accessoryColor}/>
                 </g>
             );
         case 'gorget':
             return (
                 <g id="accessories-gorget">
-                    <path d="M85,125 Q 100,120 115,125 Q 115,135 100,135 Q 85,135 85,125" fill={accessoryColor}/>
+                    <path d="M85,125 Q100,120 115,125 Q115,135 100,135 Q85,135 85,125" fill={accessoryColor}/>
                     <circle cx="100" cy="130" r="3" fill="#FFFFFF"/>
                 </g>
             );
@@ -516,9 +545,24 @@ const Accessories = ({ style, colors }) => {
         case 'baldric':
             return (
                 <g id="accessories-baldric">
-                    <path d="M125,135 Q 90,160 85,200" stroke={accessoryColor} strokeWidth="8" fill="none"/>
+                    <path d="M125,135 Q90,160 85,200" stroke={accessoryColor} strokeWidth="8" fill="none"/>
                     <circle cx="120" cy="140" r="3" fill="#FFFFFF"/>
                     <circle cx="90" cy="195" r="3" fill="#FFFFFF"/>
+                </g>
+            );
+        case 'cross_belt':
+            return (
+                <g id="accessories-cross-belt">
+                    <path d="M75,140 L125,190" stroke={accessoryColor} strokeWidth="6" fill="none"/>
+                    <path d="M125,140 L75,190" stroke={accessoryColor} strokeWidth="6" fill="none"/>
+                    <circle cx="100" cy="165" r="4" fill={accessoryColor}/>
+                </g>
+            );
+        case 'busby_bag':
+            return (
+                <g id="accessories-busby-bag">
+                    <path d="M115,70 Q125,65 125,75 Q125,85 115,80" fill={accessoryColor}/>
+                    <path d="M115,75 h8" stroke="#FFFFFF" strokeWidth="1"/>
                 </g>
             );
         case 'shako_plate':
@@ -526,6 +570,13 @@ const Accessories = ({ style, colors }) => {
                 <g id="accessories-shako-plate">
                     <rect x="95" y="82" width="10" height="6" rx="2" fill={accessoryColor}/>
                     <circle cx="100" cy="85" r="2" fill="#FFFFFF"/>
+                </g>
+            );
+        case 'saber':
+            return (
+                <g id="accessories-saber">
+                    <path d="M125,180 Q135,175 140,180 Q135,185 125,190" fill={accessoryColor}/>
+                    <path d="M125,185 L140,200" stroke="#C0C0C0" strokeWidth="2"/>
                 </g>
             );
         default:
@@ -593,13 +644,13 @@ const UniformDisplay = ({ uniform, size = 'medium', onClick, showInfo = true }) 
                     <ellipse cx="130" cy="165" rx="8" ry="6" fill={currentUniform.skinTone} />
                 </g>
 
-                {/* Uniform Pieces */}
-                <Jacket style={currentUniform.jacket.style} colors={currentUniform.jacket.colors} />
-                <Pants style={currentUniform.pants.style} colors={currentUniform.pants.colors} />
+                {/* Uniform Pieces - Render in correct order (back to front) */}
                 <Shoes style={currentUniform.shoes.style} />
+                <Pants style={currentUniform.pants.style} colors={currentUniform.pants.colors} />
+                <Jacket style={currentUniform.jacket.style} colors={currentUniform.jacket.colors} />
+                <Accessories style={currentUniform.accessories?.style || 'none'} colors={currentUniform.accessories?.colors || {}} />
                 <Headwear style={currentUniform.headwear.style} colors={currentUniform.headwear.colors} />
                 <Plume style={currentUniform.plume.style} colors={currentUniform.plume.colors} />
-                <Accessories style={currentUniform.accessories?.style || 'none'} colors={currentUniform.accessories?.colors || {}} />
             </svg>
             
             {/* Uniform info overlay */}
