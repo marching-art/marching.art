@@ -1,11 +1,8 @@
-// src/pages/DashboardPage.js - Compatible with Existing Backend
+// src/pages/DashboardPage.js - FIXED: Compatible with Existing Backend
 import React, { useState, useEffect, useMemo } from 'react';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { 
-  SoundSportDisplay,
-  CORPS_CLASSES as SOUNDSPORT_CORPS_CLASSES
-} from '../utils/soundSportSystem';
+import { SoundSportDisplay } from '../utils/soundSportSystem';
 import { 
   getAllUserCorps, 
   hasJoinedSeason, 
@@ -16,13 +13,6 @@ import SeasonSignup from '../components/dashboard/SeasonSignup';
 import LeagueManager from '../components/dashboard/LeagueManager';
 import MyStatus from '../components/dashboard/MyStatus';
 import CorpsSelector from '../components/dashboard/CorpsSelector';
-import Icon from '../components/ui/Icon';
-
-// Merge existing CORPS_CLASSES with SoundSport
-const ALL_CORPS_CLASSES = {
-  ...CORPS_CLASSES,
-  soundSport: SOUNDSPORT_CORPS_CLASSES.soundSport
-};
 
 // SoundSport Performance Card
 const SoundSportPerformanceCard = ({ performance, onViewDetails }) => {
@@ -62,7 +52,7 @@ const SoundSportPerformanceCard = ({ performance, onViewDetails }) => {
 // Corps Class Card Component
 const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
   const isSoundSport = classInfo.className === 'soundSport';
-  const classConfig = ALL_CORPS_CLASSES[classInfo.className];
+  const classConfig = CORPS_CLASSES[classInfo.className];
   
   if (!classConfig) return null;
 
@@ -228,9 +218,6 @@ const CorpsClassCard = ({ classInfo, registrationStatus, onAction }) => {
           : 'Registration Closed'
         }
       </button>
-
-      {/* Official DCI Compliance Badge for SoundSport */}
-      {/* Removed - no longer displaying compliance badge */}
     </div>
   );
 };
@@ -284,7 +271,7 @@ const DashboardPage = ({ profile, userId }) => {
     const userLevel = profile?.level || 1;
     
     return availableClasses.map(className => {
-      const classConfig = ALL_CORPS_CLASSES[className];
+      const classConfig = CORPS_CLASSES[className];
       if (!classConfig) return null;
       
       const hasCorps = !!userCorps[className];
@@ -353,7 +340,7 @@ const DashboardPage = ({ profile, userId }) => {
               ← Back to Dashboard
             </button>
             <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-              Manage {ALL_CORPS_CLASSES[selectedCorpsClass]?.name || 'Corps'}
+              Manage {CORPS_CLASSES[selectedCorpsClass]?.name || 'Corps'}
             </h1>
           </div>
           

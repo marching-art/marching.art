@@ -1,5 +1,6 @@
 // src/utils/soundSportSystem.js
 // Official DCI SoundSport Challenge Class Implementation
+// FIXED: Compatible with existing marching.art DashboardPage imports
 
 export const SOUNDSPORT_OFFICIAL_CONFIG = {
   name: 'SoundSport',
@@ -10,10 +11,10 @@ export const SOUNDSPORT_OFFICIAL_CONFIG = {
   difficulty: 'All Ages',
   ratingSystem: { 
     type: 'medal', 
-    displayScores: false, // Scores not announced per rulebook
+    displayScores: false, // Scores not announced per official rulebook
     medals: ['Gold', 'Silver', 'Bronze']
   },
-  registrationCutoffWeeks: null, // Always open per rulebook
+  registrationCutoffWeeks: null, // Always open per official rulebook
   alwaysOpen: true,
   officialCriteria: [
     'Audience Engagement',
@@ -136,41 +137,12 @@ export const SoundSportDisplay = {
   }
 };
 
-// Integration with existing CORPS_CLASSES system
+// FIXED: Export CORPS_CLASSES that matches DashboardPage import expectations
 export const CORPS_CLASSES = {
-  soundSport: SOUNDSPORT_OFFICIAL_CONFIG,
-  aClass: {
-    name: 'A Class',
-    pointCap: 60,
-    unlockLevel: 1,
-    color: 'bg-green-500',
-    icon: '🌱',
-    difficulty: 'Beginner',
-    ratingSystem: { type: 'numerical', displayScores: true },
-    registrationCutoffWeeks: 4
-  },
-  openClass: {
-    name: 'Open Class', 
-    pointCap: 120,
-    unlockLevel: 5,
-    color: 'bg-blue-500',
-    icon: '🎯',
-    difficulty: 'Intermediate',
-    ratingSystem: { type: 'numerical', displayScores: true },
-    registrationCutoffWeeks: 5
-  },
-  worldClass: {
-    name: 'World Class',
-    pointCap: 150, 
-    unlockLevel: 10,
-    color: 'bg-yellow-500',
-    icon: '👑',
-    difficulty: 'Elite',
-    ratingSystem: { type: 'numerical', displayScores: true },
-    registrationCutoffWeeks: 6
-  }
+  soundSport: SOUNDSPORT_OFFICIAL_CONFIG
 };
 
+// Default export for compatibility
 export default {
   SOUNDSPORT_OFFICIAL_CONFIG,
   SoundSportDisplay,

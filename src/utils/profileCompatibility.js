@@ -1,10 +1,9 @@
-// utils/profileCompatibility.js
+// src/utils/profileCompatibility.js
 // Helper functions to handle both old and new profile structures including SoundSport
-
-// utils/profileCompatibility.js
-// Helper functions to handle both old and new profile structures including SoundSport
+// FIXED: Integrated with soundSportSystem.js to avoid conflicts
 
 export const CORPS_CLASSES = {
+    // SoundSport integrated from soundSportSystem
     soundSport: { name: 'SoundSport', pointCap: 90, color: 'bg-orange-500' },
     aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' },
     openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
