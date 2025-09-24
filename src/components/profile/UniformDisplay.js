@@ -418,7 +418,7 @@ const Pants = ({ style, colors }) => {
                     <path d="M120,200 h3 v60 h-3 z" fill={stripeColor}/>
                 </g>
             );
-        case 'zouave_pants':
+        case 'zouave':
             return (
                 <g id="pants-zouave" filter="url(#shadow)">
                     <path d="M78,200 h16 v35 Q94,240 78,235 z" fill={baseColor}/>
@@ -448,6 +448,7 @@ const Shoes = ({ style }) => {
                 </g>
             );
         case 'black':
+        case 'dress':
             return (
                 <g id="shoes-black" filter="url(#shadow)">
                     <ellipse cx="87" cy="265" rx="8" ry="4" fill="#000000"/>
@@ -471,6 +472,9 @@ const Shoes = ({ style }) => {
                 </g>
             );
         case 'boots':
+        case 'combat':
+        case 'cavalry':
+        case 'hessian':
             return (
                 <g id="shoes-boots" filter="url(#shadow)">
                     <rect x="79" y="250" width="16" height="18" rx="3" fill="#000000"/>
