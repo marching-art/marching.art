@@ -1,15 +1,13 @@
-// src/pages/LeaguePage.js - Complete fixed version
+// src/pages/LeaguePage.js - Complete fixed version with enhanced error handling
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { useUserStore } from '../store/userStore';
-import { useNavigate } from 'react-router-dom';
 import LeagueManager from '../components/dashboard/LeagueManager';
 import Icon from '../components/ui/Icon';
 
-const LeaguePage = () => {
+const LeaguePage = ({ navigate }) => {
     const { loggedInProfile, isLoadingAuth } = useUserStore();
-    const navigate = useNavigate();
     
     const [userLeagues, setUserLeagues] = useState([]);
     const [seasonSettings, setSeasonSettings] = useState(null);
@@ -17,6 +15,12 @@ const LeaguePage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [globalLeagueStats, setGlobalLeagueStats] = useState(null);
     const [recentActivity, setRecentActivity] = useState([]);
+    const [error, setError] = useState(null);
+
+    // Ensure navigate function exists
+    const safeNavigate = typeof navigate === 'function' ? navigate : (page) => {
+        console.warn(`Navigation requested to ${page} but navigate function not provided`);
+    };
     
     useEffect(() => {
         const fetchLeagueData = async () => {
@@ -54,12 +58,15 @@ const LeaguePage = () => {
                 
             } catch (error) {
                 console.error("Error fetching league data:", error);
+                setError('Failed to load league data');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchLeagueData();
+        if (!isLoadingAuth) {
+            fetchLeagueData();
+        }
     }, [loggedInProfile, isLoadingAuth]);
 
     const fetchGlobalStats = async () => {
@@ -138,8 +145,27 @@ const LeaguePage = () => {
     };
 
     const handleViewLeague = (leagueId) => {
-        navigate(`/league/${leagueId}`);
+        safeNavigate(`/league/${leagueId}`);
     };
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-8">
+                <div className="text-center">
+                    <Icon name="alert-triangle" className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                        {error}
+                    </h2>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="bg-primary text-on-primary hover:bg-primary/90 transition-colors font-bold py-2 px-4 rounded-theme"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (isLoadingAuth || isLoading) {
         return (
@@ -231,14 +257,14 @@ const LeaguePage = () => {
                             <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Quick Actions</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <button
-                                    onClick={() => navigate('/leaderboard')}
+                                    onClick={() => safeNavigate('/leaderboard')}
                                     className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors"
                                 >
                                     <div className="font-medium text-text-primary dark:text-text-primary-dark">View Global Leaderboard</div>
                                     <div className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">See how you rank against all directors</div>
                                 </button>
                                 <button
-                                    onClick={() => navigate('/dashboard')}
+                                    onClick={() => safeNavigate('/dashboard')}
                                     className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors"
                                 >
                                     <div className="font-medium text-text-primary dark:text-text-primary-dark">Manage Your Corps</div>
