@@ -4,9 +4,11 @@ import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import ConnectionStatus from './components/ui/ConnectionStatus';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -56,130 +58,111 @@ function AppContent() {
         }
     };
 
-    const handleSetPage = (newPage, props = {}) => {
-        setPage(newPage);
-        setPageProps(props);
+    const navigate = (newPage, props = {}) => {
+        // Handle league detail navigation with proper routing
+        if (newPage.startsWith('/league/')) {
+            const leagueId = newPage.replace('/league/', '');
+            setPage('league-detail');
+            setPageProps({ leagueId });
+        } else if (newPage.startsWith('/profile/')) {
+            const userId = newPage.replace('/profile/', '');
+            setPage('profile');
+            setPageProps({ userId });
+        } else {
+            // Convert route to page name
+            const pageName = newPage.replace('/', '') || 'home';
+            setPage(pageName);
+            setPageProps(props);
+        }
     };
 
-    const renderPage = () => {
-        // Authentication-required pages (but allow profile viewing for all users)
-        if (['dashboard', 'settings', 'leagues', 'leaderboard'].includes(page) && !user) {
-            setPage('home');
-            return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
-        }
+    const renderCurrentPage = () => {
+        const commonProps = {
+            navigate,
+            user,
+            loggedInProfile,
+            isLoadingAuth
+        };
 
         switch (page) {
-            case 'dashboard': 
-                return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
-            case 'profile': 
-                return <ProfilePage 
-                    loggedInProfile={loggedInProfile} 
-                    loggedInUserId={user?.uid} 
-                    viewingUserId={pageProps.userId} 
-                />;
-            case 'settings':
-                return <SettingsPage 
-                    setPage={handleSetPage} 
-                    onLogout={handleLogout} 
-                />;
-            case 'admin': 
-                return loggedInProfile?.isAdmin 
-                    ? <AdminPage /> 
-                    : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
-            case 'leagues': 
-                return <LeaguePage 
-                    profile={loggedInProfile} 
-                    setPage={handleSetPage} 
-                    onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} 
-                />;
-            case 'leagueDetail': 
-                return <LeagueDetailPage 
-                    profile={loggedInProfile} 
-                    leagueId={pageProps.leagueId} 
-                    setPage={handleSetPage} 
-                    onViewProfile={(id) => handleSetPage('profile', { userId: id })} 
-                />;
-            case 'leaderboard': 
-                return <LeaderboardPage 
-                    profile={loggedInProfile} 
-                    onViewProfile={(id) => handleSetPage('profile', { userId: id })} 
-                />;
-            case 'schedule': 
-                return <SchedulePage setPage={handleSetPage} />;
-            case 'scores': 
-                return <ScoresPage theme={themeMode} />;
-            case 'stats': 
-                return <StatsPage />;
-            case 'howtoplay': 
-                return <HowToPlayPage />;
             case 'home':
+                return <HomePage {...commonProps} />;
+            case 'dashboard':
+                return <DashboardPage {...commonProps} />;
+            case 'profile':
+                return <ProfilePage {...commonProps} {...pageProps} />;
+            case 'settings':
+                return <SettingsPage {...commonProps} />;
+            case 'admin':
+                return <AdminPage {...commonProps} />;
+            case 'leagues':
+                return <LeaguePage {...commonProps} />;
+            case 'league-detail':
+                return <LeagueDetailPage {...commonProps} {...pageProps} />;
+            case 'leaderboard':
+                return <LeaderboardPage {...commonProps} />;
+            case 'schedule':
+                return <SchedulePage {...commonProps} />;
+            case 'scores':
+                return <ScoresPage {...commonProps} />;
+            case 'stats':
+                return <StatsPage {...commonProps} />;
+            case 'how-to-play':
+                return <HowToPlayPage {...commonProps} />;
             default:
-                return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+                return <HomePage {...commonProps} />;
         }
     };
 
-    if (isLoadingAuth) {
-        return (
-            <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p>Loading marching.art...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            <Toaster 
-                position="bottom-center" 
-                toastOptions={{ 
-                    style: { 
-                        background: themeMode === 'dark' ? '#333' : '#fff', 
-                        color: themeMode === 'dark' ? '#fff' : '#333' 
-                    } 
-                }} 
+        <div className={`min-h-screen flex flex-col bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200`}>
+            <Header
+                user={user}
+                loggedInProfile={loggedInProfile}
+                onNavigate={navigate}
+                onLogin={() => {
+                    setAuthModalView('login');
+                    setIsAuthModalOpen(true);
+                }}
+                onSignup={() => {
+                    setAuthModalView('signup');
+                    setIsAuthModalOpen(true);
+                }}
+                onLogout={handleLogout}
+                themeMode={themeMode}
+                setThemeMode={setThemeMode}
+                currentPage={page}
             />
+            
+            <main className="flex-1">
+                {renderCurrentPage()}
+            </main>
+            
+            <Footer />
             
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 initialView={authModalView}
-                onAuthSuccess={() => {
+                onNavigateToProfile={() => {
                     setIsAuthModalOpen(false);
-                    setPage('dashboard');
+                    navigate('/profile');
                 }}
             />
             
-            <Header
-                user={user}
-                isLoggedIn={!!user}
-                isAdmin={loggedInProfile?.isAdmin}
-                onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
-                onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
-                onLogout={handleLogout}
-                setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
-                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
-                profile={loggedInProfile}
-                themeMode={themeMode}
-                toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
-            />
-            
-            <main className="flex-grow relative">
-                {renderPage()}
-            </main>
-            
-            <Footer setPage={handleSetPage} />
+            <ConnectionStatus />
+            <Toaster position="bottom-right" />
         </div>
     );
 }
 
 function App() {
     return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        <ErrorBoundary>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }
 

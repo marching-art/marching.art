@@ -1,10 +1,10 @@
+// src/pages/LeagueDetailPage.js - Fixed parameter handling and navigation
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, dataNamespace } from '../firebase';
 import { useUserStore } from '../store/userStore';
-import { useNavigate, useParams } from 'react-router-dom';
-import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility'; // Import CORPS_CLASS_ORDER
+import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
 import Leaderboard from '../components/dashboard/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay';
 import LeagueChat from '../components/leagues/LeagueChat';
@@ -12,10 +12,10 @@ import LeagueHistory from '../components/leagues/LeagueHistory';
 import Icon from '../components/ui/Icon';
 import toast from 'react-hot-toast';
 
-const LeagueDetailPage = () => {
-    const { leagueId } = useParams();
+const LeagueDetailPage = ({ leagueId: propLeagueId, navigate }) => {
+    // Use leagueId from props (passed from App.js navigation)
+    const leagueId = propLeagueId;
     const { loggedInProfile, isLoadingAuth } = useUserStore();
-    const navigate = useNavigate();
     
     const [league, setLeague] = useState(null);
     const [leagueMembers, setLeagueMembers] = useState([]);
@@ -35,6 +35,7 @@ const LeagueDetailPage = () => {
             setError(null);
             
             try {
+                // Fetch league and season data
                 const [leagueDoc, seasonDoc] = await Promise.all([
                     getDoc(doc(db, 'leagues', leagueId)),
                     getDoc(doc(db, 'game-settings', 'season'))
@@ -48,6 +49,7 @@ const LeagueDetailPage = () => {
                 const leagueData = { id: leagueDoc.id, ...leagueDoc.data() };
                 setLeague(leagueData);
 
+                // Check if user has access to this league
                 if (!leagueData.members?.includes(loggedInProfile?.userId) && !loggedInProfile?.isAdmin) {
                     setError('You do not have access to this league');
                     return;
@@ -57,6 +59,7 @@ const LeagueDetailPage = () => {
                     const seasonData = seasonDoc.data();
                     setSeasonSettings(seasonData);
                     
+                    // Calculate current week
                     if (seasonData.schedule?.startDate) {
                         const startDate = seasonData.schedule.startDate.toDate();
                         const diffInMillis = new Date().getTime() - startDate.getTime();
@@ -66,6 +69,7 @@ const LeagueDetailPage = () => {
                     }
                 }
 
+                // Fetch member profiles
                 await fetchMemberProfiles(leagueData.members || []);
 
             } catch (err) {
@@ -82,67 +86,71 @@ const LeagueDetailPage = () => {
     const fetchMemberProfiles = async (memberIds) => {
         try {
             const memberPromises = memberIds.map(async (memberId) => {
-                try {
-                    const profileDoc = await getDoc(doc(db, `artifacts/${dataNamespace}/users/${memberId}/profile/data`));
-                    if (profileDoc.exists()) {
-                        const profileData = profileDoc.data();
-                        const userCorps = getAllUserCorps(profileData);
-                        
-                        return {
-                            id: memberId,
-                            username: profileData.username || 'Unknown Director',
-                            corps: userCorps,
-                            totalScore: Object.values(userCorps).reduce((sum, corps) => 
-                                sum + (corps.totalSeasonScore || 0), 0),
-                            lastActive: profileData.lastActive || new Date(),
-                            joinedDate: profileData.createdAt || new Date(),
-                            activeSeasonId: profileData.activeSeasonId
-                        };
+                const profileDoc = await getDoc(doc(db, 'artifacts', dataNamespace, 'users', memberId, 'profile', 'data'));
+                if (!profileDoc.exists()) return null;
+                
+                const profileData = { id: memberId, userId: memberId, ...profileDoc.data() };
+                const allCorps = getAllUserCorps(profileData);
+                
+                // Calculate total score across all corps classes for this member
+                let totalSeasonScore = 0;
+                Object.keys(allCorps).forEach(corpsClass => {
+                    const corps = allCorps[corpsClass];
+                    if (corps?.totalSeasonScore) {
+                        totalSeasonScore += corps.totalSeasonScore;
                     }
-                } catch (err) {
-                    console.warn(`Failed to fetch profile for ${memberId}:`, err);
-                }
-                return null;
-            });
-
-            const members = (await Promise.all(memberPromises)).filter(Boolean);
-            members.sort((a, b) => b.totalScore - a.totalScore);
-            setLeagueMembers(members);
-
-            // Calculate league stats
-            if (members.length > 0) {
-                const scores = members.map(m => m.totalScore).filter(s => s > 0);
-                setLeagueStats({
-                    averageScore: scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0,
-                    highestScore: scores.length > 0 ? Math.max(...scores) : 0,
-                    lowestScore: scores.length > 0 ? Math.min(...scores) : 0,
-                    activeMemberCount: members.filter(m => m.totalScore > 0).length,
-                    totalMembers: members.length
                 });
-            }
-
+                
+                return {
+                    ...profileData,
+                    allCorps,
+                    totalSeasonScore,
+                    rank: 0 // Will be calculated after sorting
+                };
+            });
+            
+            const members = await Promise.all(memberPromises);
+            const validMembers = members.filter(member => member !== null);
+            
+            // Sort by total score and assign ranks
+            const sortedMembers = validMembers.sort((a, b) => b.totalSeasonScore - a.totalSeasonScore);
+            sortedMembers.forEach((member, index) => {
+                member.rank = index + 1;
+            });
+            
+            setLeagueMembers(sortedMembers);
+            
+            // Calculate league stats
+            const stats = {
+                totalMembers: sortedMembers.length,
+                avgScore: sortedMembers.length > 0 ? Math.round(sortedMembers.reduce((sum, member) => sum + member.totalSeasonScore, 0) / sortedMembers.length) : 0,
+                highScore: sortedMembers.length > 0 ? sortedMembers[0].totalSeasonScore : 0,
+                lowScore: sortedMembers.length > 0 ? sortedMembers[sortedMembers.length - 1].totalSeasonScore : 0
+            };
+            setLeagueStats(stats);
+            
         } catch (error) {
-            console.error("Error fetching member profiles:", error);
+            console.error('Error fetching member profiles:', error);
         }
     };
-    
+
     const handleLeaveLeague = async () => {
-        if (window.confirm('Are you sure you want to leave this league? This action cannot be undone.')) {
-            setIsLeaving(true);
-            const toastId = toast.loading('Leaving league...');
-            try {
-                const functions = getFunctions();
-                const leaveLeague = httpsCallable(functions, 'leaveLeague');
-                await leaveLeague({ leagueId: league.id });
-                
-                toast.success('You have left the league.', { id: toastId });
-                navigate('/leagues');
-            } catch (error) {
-                console.error('Error leaving league:', error);
-                toast.error(error.message || 'Failed to leave the league. Please try again.', { id: toastId });
-            } finally {
-                setIsLeaving(false);
-            }
+        if (!window.confirm('Are you sure you want to leave this league? This action cannot be undone.')) {
+            return;
+        }
+        
+        setIsLeaving(true);
+        try {
+            const leaveLeagueFunction = httpsCallable(getFunctions(), 'leaveLeague');
+            const result = await leaveLeagueFunction({ leagueId });
+            
+            toast.success(result.data.message);
+            navigate('/leagues');
+        } catch (error) {
+            console.error('Error leaving league:', error);
+            toast.error(error.message || 'Failed to leave league');
+        } finally {
+            setIsLeaving(false);
         }
     };
 
@@ -151,16 +159,15 @@ const LeagueDetailPage = () => {
     };
 
     const getCurrentUserRank = () => {
-        const userIndex = leagueMembers.findIndex(m => m.id === loggedInProfile?.userId);
-        return userIndex >= 0 ? userIndex + 1 : null;
+        const currentUser = leagueMembers.find(member => member.userId === loggedInProfile?.userId);
+        return currentUser?.rank || 0;
     };
 
     const tabs = [
         { id: 'overview', name: 'Overview', icon: 'home' },
-        { id: 'standings', name: 'Standings', icon: 'trophy' },
-        { id: 'chat', name: 'Chat', icon: 'chat' },
+        { id: 'leaderboard', name: 'Leaderboard', icon: 'trophy' },
         { id: 'matchups', name: 'Matchups', icon: 'users' },
-        { id: 'members', name: 'Members', icon: 'user-group' },
+        { id: 'chat', name: 'Chat', icon: 'message-circle' },
         { id: 'history', name: 'History', icon: 'clock' }
     ];
 
@@ -179,11 +186,13 @@ const LeagueDetailPage = () => {
         return (
             <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center p-8">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-red-600 mb-4">League Error</h2>
-                    <p className="text-text-secondary dark:text-text-secondary-dark mb-6">{error}</p>
+                    <Icon name="alert-triangle" className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                        {error}
+                    </h2>
                     <button
                         onClick={() => navigate('/leagues')}
-                        className="bg-primary hover:bg-primary/90 text-on-primary font-bold py-2 px-4 rounded-theme"
+                        className="bg-primary text-on-primary hover:bg-primary/90 transition-colors font-bold py-2 px-4 rounded-theme"
                     >
                         Back to Leagues
                     </button>
@@ -217,203 +226,187 @@ const LeagueDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* User Status Bar */}
+                    {/* User Stats */}
                     {userMember && (
                         <div className="bg-background dark:bg-background-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                        #{userRank || '--'}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-6">
+                                    <div>
+                                        <div className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                            #{userRank}
+                                        </div>
+                                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                            Your Rank
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Your Rank</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                        {userMember.totalScore.toFixed(0)}
+                                    <div>
+                                        <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                                            {userMember.totalSeasonScore}
+                                        </div>
+                                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                            Total Points
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Your Score</div>
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                        {leagueStats?.highestScore ? 
-                                            ((userMember.totalScore / leagueStats.highestScore) * 100).toFixed(0) : 0}%
-                                    </div>
-                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">vs Leader</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                        {Object.keys(userMember.corps).length}
-                                    </div>
-                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Active Corps</div>
-                                </div>
+                                <button
+                                    onClick={handleLeaveLeague}
+                                    disabled={isLeaving}
+                                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-theme transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLeaving ? 'Leaving...' : 'Leave League'}
+                                </button>
                             </div>
                         </div>
                     )}
 
                     {/* Navigation Tabs */}
-                    <div className="mt-6">
-                        <nav className="flex space-x-1 overflow-x-auto">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-theme font-medium transition-colors whitespace-nowrap ${
-                                        activeTab === tab.id
-                                            ? 'bg-primary text-on-primary'
-                                            : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
-                                    }`}
-                                >
-                                    <Icon name={tab.icon} className="h-4 w-4" />
-                                    {tab.name}
-                                </button>
-                            ))}
-                        </nav>
+                    <div className="flex flex-wrap gap-1 mt-6">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-theme transition-colors ${
+                                    activeTab === tab.id
+                                        ? 'bg-primary text-on-primary'
+                                        : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark/20'
+                                }`}
+                            >
+                                <Icon name={tab.icon} className="h-4 w-4" />
+                                {tab.name}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Tab Content */}
+            {/* Content Area */}
             <div className="container mx-auto px-4 py-8">
                 {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* League Stats */}
-                        <div className="lg:col-span-2">
-                            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme mb-6">
-                                <h3 className="text-xl font-bold text-primary dark:text-primary-dark mb-4">League Statistics</h3>
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                                <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">League Overview</h3>
+                                
                                 {leagueStats && (
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div className="text-center p-4 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark">
-                                            <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                                {leagueStats.averageScore.toFixed(0)}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                                                {leagueStats.totalMembers}
                                             </div>
-                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Average Score</div>
+                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Members</div>
                                         </div>
-                                        <div className="text-center p-4 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark">
-                                            <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                                {leagueStats.highestScore.toFixed(0)}
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                                                {leagueStats.avgScore}
                                             </div>
-                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Highest Score</div>
+                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Avg Score</div>
                                         </div>
-                                        <div className="text-center p-4 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark">
-                                            <div className="text-2xl font-bold text-primary dark:text-primary-dark">
-                                                {leagueStats.activeMemberCount}
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                                                {leagueStats.highScore}
                                             </div>
-                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Active Directors</div>
+                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">High Score</div>
                                         </div>
-                                        <div className="text-center p-4 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark">
-                                            <div className="text-2xl font-bold text-primary dark:text-primary-dark">
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                                                 {currentWeek}
                                             </div>
                                             <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Current Week</div>
                                         </div>
                                     </div>
                                 )}
+
+                                <p className="text-text-secondary dark:text-text-secondary-dark">
+                                    Compete against fellow directors in this exclusive league. Track your progress, 
+                                    engage in weekly matchups, and climb the leaderboard to become the ultimate corps director!
+                                </p>
                             </div>
 
-                            {/* Top Performers */}
+                            {/* Top Members Preview */}
                             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
-                                <h3 className="text-xl font-bold text-primary dark:text-primary-dark mb-4">Top Performers</h3>
+                                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Top Directors</h3>
                                 <div className="space-y-3">
                                     {leagueMembers.slice(0, 5).map((member, index) => (
-                                        <div
-                                            key={member.id}
-                                            className="flex items-center justify-between p-3 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors cursor-pointer"
-                                            onClick={() => handleViewProfile(member.id)}
-                                        >
+                                        <div key={member.id} className="flex items-center justify-between p-3 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                                                    index === 0 ? 'bg-yellow-500 text-black' :
-                                                    index === 1 ? 'bg-gray-400 text-black' :
-                                                    index === 2 ? 'bg-amber-600 text-white' :
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                                    index === 0 ? 'bg-yellow-500 text-yellow-900' :
+                                                    index === 1 ? 'bg-gray-400 text-gray-900' :
+                                                    index === 2 ? 'bg-amber-600 text-amber-900' :
                                                     'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark'
                                                 }`}>
                                                     {index + 1}
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-text-primary dark:text-text-primary-dark">
-                                                        {member.username}
-                                                        {member.id === loggedInProfile?.userId && (
-                                                            <span className="text-primary dark:text-primary-dark ml-2">(You)</span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                                        {Object.keys(member.corps).length} corps active
+                                                    <div className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                                        {member.username || 'Anonymous Director'}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-xl font-bold text-primary dark:text-primary-dark">
-                                                {member.totalScore.toFixed(0)}
+                                            <div className="text-lg font-bold text-primary dark:text-primary-dark">
+                                                {member.totalSeasonScore}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
+                                <button
+                                    onClick={() => setActiveTab('leaderboard')}
+                                    className="w-full mt-4 p-2 text-center text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    View Full Leaderboard →
+                                </button>
                             </div>
                         </div>
 
-                        {/* League Info Sidebar */}
-                        <div className="space-y-6">
-                            {/* League Chat Preview */}
+                        {/* Sidebar */}
+                        <div className="space-y-8">
+                            {/* League Info */}
                             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold text-primary dark:text-primary-dark">League Chat</h3>
-                                    <button
-                                        onClick={() => setActiveTab('chat')}
-                                        className="text-sm text-primary dark:text-primary-dark hover:underline"
-                                    >
-                                        View All
-                                    </button>
-                                </div>
-                                <LeagueChat 
-                                    leagueId={leagueId}
-                                    leagueName={league.name}
-                                    leagueMembers={leagueMembers}
-                                />
-                            </div>
-
-                            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
-                                <h3 className="text-lg font-bold text-primary dark:text-primary-dark mb-4">League Info</h3>
-                                <div className="space-y-3 text-sm">
+                                <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-3">League Details</h4>
+                                <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary dark:text-text-secondary-dark">Created:</span>
                                         <span className="text-text-primary dark:text-text-primary-dark">
-                                            {new Date(league.createdAt?.toDate?.() || Date.now()).toLocaleDateString()}
+                                            {league.createdAt ? new Date(league.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary dark:text-text-secondary-dark">Season:</span>
-                                        <span className="text-text-primary dark:text-text-primary-dark">{seasonSettings?.name}</span>
+                                        <span className="text-text-primary dark:text-text-primary-dark">
+                                            {seasonSettings?.name || 'Current Season'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-text-secondary dark:text-text-secondary-dark">Invite Code:</span>
-                                        <span className="font-mono text-primary dark:text-primary-dark">{league.inviteCode}</span>
+                                        <span className="font-mono text-primary dark:text-primary-dark">
+                                            {league.inviteCode}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Quick Actions */}
                             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
-                                <h3 className="text-lg font-bold text-primary dark:text-primary-dark mb-4">Quick Actions</h3>
-                                <div className="space-y-3">
+                                <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-3">Quick Actions</h4>
+                                <div className="space-y-2">
+                                    <button
+                                        onClick={() => setActiveTab('chat')}
+                                        className="w-full p-2 text-left text-text-primary dark:text-text-primary-dark hover:bg-background dark:hover:bg-background-dark rounded transition-colors"
+                                    >
+                                        💬 League Chat
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('matchups')}
+                                        className="w-full p-2 text-left text-text-primary dark:text-text-primary-dark hover:bg-background dark:hover:bg-background-dark rounded transition-colors"
+                                    >
+                                        ⚔️ View Matchups
+                                    </button>
                                     <button
                                         onClick={() => navigate('/dashboard')}
-                                        className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors"
+                                        className="w-full p-2 text-left text-text-primary dark:text-text-primary-dark hover:bg-background dark:hover:bg-background-dark rounded transition-colors"
                                     >
-                                        <div className="font-medium text-text-primary dark:text-text-primary-dark">Manage Your Corps</div>
-                                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">Update lineups and shows</div>
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('members')}
-                                        className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors"
-                                    >
-                                        <div className="font-medium text-text-primary dark:text-text-primary-dark">View All Members</div>
-                                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">See complete member list</div>
-                                    </button>
-                                    <button
-                                        onClick={handleLeaveLeague}
-                                        disabled={isLeaving}
-                                        className="w-full p-3 text-left bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-red-600 dark:hover:border-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <div className="font-medium text-red-600 dark:text-red-500">Leave League</div>
-                                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">This action cannot be undone</div>
+                                        🎯 Manage Corps
                                     </button>
                                 </div>
                             </div>
@@ -421,89 +414,44 @@ const LeagueDetailPage = () => {
                     </div>
                 )}
 
-                {activeTab === 'standings' && (
-                    <div className="max-w-6xl mx-auto">
-                        <Leaderboard initialLeague={league} onViewProfile={handleViewProfile} />
+                {activeTab === 'leaderboard' && (
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">League Leaderboard</h3>
+                            <Leaderboard 
+                                members={leagueMembers}
+                                currentUserId={loggedInProfile?.userId}
+                                onViewProfile={handleViewProfile}
+                                showGlobalRanking={false}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'matchups' && (
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
+                            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">Weekly Matchups</h3>
+                            <MatchupsDisplay 
+                                league={league}
+                                members={leagueMembers}
+                                currentWeek={currentWeek}
+                                onViewProfile={handleViewProfile}
+                            />
+                        </div>
                     </div>
                 )}
 
                 {activeTab === 'chat' && (
                     <div className="max-w-4xl mx-auto">
-                        <LeagueChat 
-                            leagueId={leagueId}
-                            leagueName={league.name}
-                            leagueMembers={leagueMembers}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'matchups' && (
-                    <div className="max-w-6xl mx-auto">
-                        <MatchupsDisplay 
-                            league={league} 
-                            currentWeek={currentWeek} 
-                            onViewProfile={handleViewProfile}
-                            season={seasonSettings}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'members' && (
-                    <div className="max-w-4xl mx-auto">
                         <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
-                            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">
-                                League Members ({leagueMembers.length})
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {leagueMembers.map((member, index) => (
-                                    <div
-                                        key={member.id}
-                                        className="p-4 bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-colors cursor-pointer"
-                                        onClick={() => handleViewProfile(member.id)}
-                                    >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <div className="font-bold text-text-primary dark:text-text-primary-dark">
-                                                    {member.username}
-                                                    {member.id === loggedInProfile?.userId && (
-                                                        <span className="text-primary dark:text-primary-dark ml-2">(You)</span>
-                                                    )}
-                                                </div>
-                                                <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                                    Rank #{index + 1}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-lg font-bold text-primary dark:text-primary-dark">
-                                                    {member.totalScore.toFixed(0)}
-                                                </div>
-                                                <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                                                    Total Score
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-3 gap-2 text-xs">
-                                            {CORPS_CLASS_ORDER.map((corpsClass) => {
-                                                const corps = member.corps[corpsClass];
-                                                if (corps) {
-                                                    return (
-                                                        <div key={corpsClass} className="text-center p-2 bg-surface dark:bg-surface-dark rounded">
-                                                            <div className="font-medium text-text-primary dark:text-text-primary-dark truncate">
-                                                                {corps.corpsName || 'No Corps'}
-                                                            </div>
-                                                            <div className="text-text-secondary dark:text-text-secondary-dark">
-                                                                {CORPS_CLASSES[corpsClass]?.name}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">League Chat</h3>
+                            <LeagueChat 
+                                league={league}
+                                currentUser={loggedInProfile}
+                                members={leagueMembers}
+                                onViewProfile={handleViewProfile}
+                            />
                         </div>
                     </div>
                 )}
