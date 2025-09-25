@@ -69,8 +69,11 @@ function AppContent() {
             setPage('profile');
             setPageProps({ userId });
         } else {
-            // Convert route to page name
-            const pageName = newPage.replace('/', '') || 'home';
+            // Convert route to page name and handle direct page names
+            let pageName = newPage;
+            if (newPage.startsWith('/')) {
+                pageName = newPage.replace('/', '') || 'home';
+            }
             setPage(pageName);
             setPageProps(props);
         }
@@ -118,19 +121,23 @@ function AppContent() {
         <div className={`min-h-screen flex flex-col bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200`}>
             <Header
                 user={user}
-                loggedInProfile={loggedInProfile}
-                onNavigate={navigate}
-                onLogin={() => {
+                profile={loggedInProfile}
+                isLoggedIn={!!user}
+                isAdmin={loggedInProfile?.isAdmin || false}
+                onLoginClick={() => {
                     setAuthModalView('login');
                     setIsAuthModalOpen(true);
                 }}
-                onSignup={() => {
+                onSignUpClick={() => {
                     setAuthModalView('signup');
                     setIsAuthModalOpen(true);
                 }}
                 onLogout={handleLogout}
+                setPage={navigate}
+                onViewOwnProfile={() => navigate(`/profile/${user?.uid}`)}
+                onViewLeague={(leagueId) => navigate(`/league/${leagueId}`)}
                 themeMode={themeMode}
-                setThemeMode={setThemeMode}
+                toggleThemeMode={() => setThemeMode(prev => prev === 'dark' ? 'light' : 'dark')}
                 currentPage={page}
             />
             
