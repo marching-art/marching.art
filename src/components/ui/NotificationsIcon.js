@@ -1,11 +1,4 @@
-// src/components/ui/NotificationsIcon.js - Fixed dataNamespace and error handling
-import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
-import { db, dataNamespace } from '../../firebase';
-import Icon from './Icon';
-import NotificationsPanel from './NotificationsPanel';
-
-// src/components/ui/NotificationsIcon.js - Enhanced for direct userStore integration
+// src/components/ui/NotificationsIcon.js - Clean version without duplicate React import
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { db, dataNamespace } from '../../firebase';
@@ -24,9 +17,8 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
         setHasError(false);
         setIsLoading(true);
         
-        // Debug logging - only warn if we expect a user but don't have one
+        // Early return if no user - this is normal when not logged in
         if (!user?.uid) {
-            // This is normal when not logged in - no warning needed
             console.log("NotificationsIcon: No user provided (normal when not logged in)");
             setNotifications([]);
             setUnreadCount(0);
@@ -143,7 +135,6 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
             >
                 <Icon 
                     name="bell"
-                    path="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
                     className="w-5 h-5"
                 />
                 {unreadCount > 0 && (
