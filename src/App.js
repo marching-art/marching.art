@@ -1,14 +1,15 @@
-// src/App.js - Fixed authentication logic and profile routing
+// src/App.js - Alternative version using userStore directly
 import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useUserStore } from './store/userStore';
 import { Toaster } from 'react-hot-toast';
-import ErrorBoundary from './components/ui/ErrorBoundary';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ConnectionStatus from './components/ui/ConnectionStatus';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import DebugAuth from './components/debug/DebugAuth';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -23,14 +24,24 @@ import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
 import AuthModal from './components/auth/AuthModal';
 
-function AppContent() {
-    const { user, loggedInProfile, isLoadingAuth } = useAuth();
+function App() {
+    // Use userStore directly instead of context
+    const { user, loggedInProfile, isLoadingAuth, initAuthListener } = useUserStore();
+    
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
     const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
     
+    // Initialize auth listener
+    useEffect(() => {
+        const unsubscribe = initAuthListener();
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [initAuthListener]);
+
     useEffect(() => {
         if (!isLoadingAuth && !user) {
             // Only redirect to home if we're on a protected page
@@ -118,57 +129,50 @@ function AppContent() {
     };
 
     return (
-        <div className={`min-h-screen flex flex-col bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200`}>
-            <Header
-                user={user}
-                profile={loggedInProfile}
-                isLoggedIn={!!user}
-                isAdmin={loggedInProfile?.isAdmin || false}
-                onLoginClick={() => {
-                    setAuthModalView('login');
-                    setIsAuthModalOpen(true);
-                }}
-                onSignUpClick={() => {
-                    setAuthModalView('signup');
-                    setIsAuthModalOpen(true);
-                }}
-                onLogout={handleLogout}
-                setPage={navigate}
-                onViewOwnProfile={() => navigate(`/profile/${user?.uid}`)}
-                onViewLeague={(leagueId) => navigate(`/league/${leagueId}`)}
-                themeMode={themeMode}
-                toggleThemeMode={() => setThemeMode(prev => prev === 'dark' ? 'light' : 'dark')}
-                currentPage={page}
-            />
-            
-            <main className="flex-1">
-                {renderCurrentPage()}
-            </main>
-            
-            <Footer />
-            
-            <AuthModal
-                isOpen={isAuthModalOpen}
-                onClose={() => setIsAuthModalOpen(false)}
-                initialView={authModalView}
-                onNavigateToProfile={() => {
-                    setIsAuthModalOpen(false);
-                    navigate('/profile');
-                }}
-            />
-            
-            <ConnectionStatus />
-            <Toaster position="bottom-right" />
-        </div>
-    );
-}
-
-function App() {
-    return (
         <ErrorBoundary>
-            <AuthProvider>
-                <AppContent />
-            </AuthProvider>
+            <div className={`min-h-screen flex flex-col bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200`}>
+                <Header
+                    user={user}
+                    profile={loggedInProfile}
+                    isLoggedIn={!!user}
+                    isAdmin={loggedInProfile?.isAdmin || false}
+                    onLoginClick={() => {
+                        setAuthModalView('login');
+                        setIsAuthModalOpen(true);
+                    }}
+                    onSignUpClick={() => {
+                        setAuthModalView('signup');
+                        setIsAuthModalOpen(true);
+                    }}
+                    onLogout={handleLogout}
+                    setPage={navigate}
+                    onViewOwnProfile={() => navigate(`/profile/${user?.uid}`)}
+                    onViewLeague={(leagueId) => navigate(`/league/${leagueId}`)}
+                    themeMode={themeMode}
+                    toggleThemeMode={() => setThemeMode(prev => prev === 'dark' ? 'light' : 'dark')}
+                    currentPage={page}
+                />
+                
+                <main className="flex-1">
+                    {renderCurrentPage()}
+                </main>
+                
+                <Footer />
+                
+                <AuthModal
+                    isOpen={isAuthModalOpen}
+                    onClose={() => setIsAuthModalOpen(false)}
+                    initialView={authModalView}
+                    onNavigateToProfile={() => {
+                        setIsAuthModalOpen(false);
+                        navigate('/profile');
+                    }}
+                />
+                
+                <ConnectionStatus />
+                <DebugAuth />
+                <Toaster position="bottom-right" />
+            </div>
         </ErrorBoundary>
     );
 }
