@@ -1,3 +1,4 @@
+// src/components/dashboard/Leaderboard.js - Fixed collection group query
 import React, { useState, useEffect } from 'react';
 import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -14,10 +15,15 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     useEffect(() => {
         const fetchLeagues = async () => {
             if (profile?.leagueIds?.length > 0) {
-                const leaguesQuery = query(collection(db, 'leagues'), where('__name__', 'in', profile.leagueIds));
-                const querySnapshot = await getDocs(leaguesQuery);
-                const leagues = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                setUserLeagues(leagues);
+                try {
+                    const leaguesQuery = query(collection(db, 'leagues'), where('__name__', 'in', profile.leagueIds));
+                    const querySnapshot = await getDocs(leaguesQuery);
+                    const leagues = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setUserLeagues(leagues);
+                } catch (error) {
+                    console.error('Error fetching user leagues:', error);
+                    setUserLeagues([]);
+                }
             } else {
                 setUserLeagues([]);
             }
@@ -25,7 +31,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
         fetchLeagues();
     }, [profile]);
 
-    // MODIFIED: This useEffect now uses getDocs for a stable, one-time fetch.
     useEffect(() => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
@@ -42,31 +47,45 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 
                 const seasonData = seasonDoc.data();
                 const activeSeasonId = seasonData.seasonUid;
-                setSeasonName(seasonData.name);
+                setSeasonName(seasonData.name || 'Current Season');
 
-                const profilesRef = collectionGroup(db, 'profile');
+                // FIXED: Use 'data' as the collection name since the actual collection is 
+                // artifacts/marching-art/users/{userId}/profile/data
+                const profilesRef = collectionGroup(db, 'data');
                 let leaderboardQuery;
 
                 if (selectedLeague) {
                     leaderboardQuery = query(
                         profilesRef,
-                        where('activeSeasonId', '==', activeSeasonId),
                         where('leagueIds', 'array-contains', selectedLeague.id)
                     );
                 } else {
-                    leaderboardQuery = query(
-                        profilesRef,
-                        where('activeSeasonId', '==', activeSeasonId)
-                    );
+                    // For global leaderboard, get all profile data documents
+                    leaderboardQuery = profilesRef;
                 }
 
+                console.log('Executing leaderboard query...');
                 const querySnapshot = await getDocs(leaderboardQuery);
+                console.log('Query returned', querySnapshot.docs.length, 'documents');
                 
                 let allCorpsEntries = [];
                 
                 querySnapshot.docs.forEach(doc => {
+                    // Only process documents that are profile data (not other 'data' collections)
+                    const docPath = doc.ref.path;
+                    if (!docPath.includes('/profile/data')) {
+                        return; // Skip non-profile documents
+                    }
+                    
                     const playerData = doc.data();
-                    const userId = doc.ref.parent.parent.id;
+                    // Extract userId from the document path: artifacts/namespace/users/{userId}/profile/data
+                    const pathParts = docPath.split('/');
+                    const userId = pathParts[3]; // users/{userId} -> {userId}
+                    
+                    // Skip if no username (invalid profile)
+                    if (!playerData.username) {
+                        return;
+                    }
                     
                     const userCorps = getAllUserCorps(playerData);
                     
@@ -85,12 +104,21 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     });
                 });
                 
+                // Sort by score descending
                 allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
                 
+                console.log('Processed', allCorpsEntries.length, 'leaderboard entries');
                 setLeaderboard(allCorpsEntries);
                 
             } catch (error) {
-                console.error("Leaderboard query failed. This might be a missing Firestore index.", error);
+                console.error("Leaderboard query failed:", error);
+                console.error("Error code:", error.code);
+                console.error("Error message:", error.message);
+                
+                if (error.code === 'permission-denied') {
+                    console.error("Permission denied - check Firestore rules for collection group queries");
+                }
+                
                 setLeaderboard([]);
             } finally {
                 setIsLoading(false);
@@ -107,6 +135,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
+            {/* Corps Class Filter */}
             <div className="flex flex-wrap gap-2 mb-4">
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
@@ -127,7 +156,8 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 })}
             </div>
 
-            <div className="flex flex-wrap border-b-theme border-accent dark:border-accent-dark mb-4 overflow-x-auto">
+            {/* League Filter */}
+            <div className="flex flex-wrap border-b border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button
                     onClick={() => setSelectedLeague(null)}
                     disabled={!!initialLeague}
@@ -155,10 +185,22 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 ))}
             </div>
 
+            {/* Leaderboard Content */}
             {isLoading ? (
-                <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">Loading Leaderboard...</p>
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">Loading leaderboard...</p>
+                </div>
             ) : leaderboard.length === 0 ? (
-                <p className="text-center text-text-secondary dark:text-text-secondary-dark mt-4">No corps with scores found for this filter.</p>
+                <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🏆</div>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                        No corps with scores found for this filter.
+                    </p>
+                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                        Check back after the season starts and scores are posted!
+                    </p>
+                </div>
             ) : (
                 <ol className="space-y-1">
                     {leaderboard.map((player, index) => {
@@ -168,18 +210,43 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                 <button
                                     onClick={() => onViewProfile && onViewProfile(player.userId)}
                                     disabled={!onViewProfile}
-                                    className={`w-full p-2 rounded-theme flex justify-between items-center text-left transition-colors ${isCurrentUser ? 'bg-primary/10' : ''} hover:bg-accent dark:hover:bg-accent-dark/20`}
+                                    className={`w-full p-3 rounded-theme flex justify-between items-center text-left transition-colors ${
+                                        isCurrentUser 
+                                            ? 'bg-primary/10 dark:bg-primary-dark/10 border-2 border-primary/30 dark:border-primary-dark/30' 
+                                            : 'bg-background dark:bg-background-dark hover:bg-accent/20 dark:hover:bg-accent-dark/20'
+                                    } ${onViewProfile ? 'cursor-pointer' : 'cursor-default'}`}
                                 >
-                                    <div className="flex items-center">
-                                        <span className="font-bold text-text-secondary dark:text-text-secondary-dark w-8">{index + 1}.</span>
+                                    <div className="flex items-center space-x-3">
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                            index === 0 ? 'bg-yellow-500 text-white' :
+                                            index === 1 ? 'bg-gray-400 text-white' :
+                                            index === 2 ? 'bg-yellow-600 text-white' :
+                                            'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark'
+                                        }`}>
+                                            {index + 1}
+                                        </span>
                                         <div>
-                                            <span className="font-bold text-text-primary dark:text-text-primary-dark">{player.corpsName}</span>
-                                            <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
+                                            <div className="font-semibold text-text-primary dark:text-text-primary-dark">
+                                                {player.username}
+                                                {isCurrentUser && (
+                                                    <span className="ml-2 text-xs bg-primary dark:bg-primary-dark text-white px-2 py-1 rounded-full">
+                                                        You
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                                {player.corpsName}
+                                            </div>
                                         </div>
                                     </div>
-                                    <span className="font-bold text-lg text-primary dark:text-primary-dark">
-                                        {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
-                                    </span>
+                                    <div className="text-right">
+                                        <div className="font-bold text-primary dark:text-primary-dark">
+                                            {player.totalSeasonScore.toFixed(1)}
+                                        </div>
+                                        <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                            points
+                                        </div>
+                                    </div>
                                 </button>
                             </li>
                         );
