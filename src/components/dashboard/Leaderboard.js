@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
+import { SoundSportDisplay } from '../../utils/soundSportSystem'; // <-- Import SoundSport display logic
 
 const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -33,7 +34,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             setError(null);
             
             try {
-                // Determine the correct leaderboard document to fetch
                 const leaderboardId = selectedLeague
                     ? `league_${selectedLeague.id}_${selectedCorpsClass}`
                     : `global_${selectedCorpsClass}`;
@@ -64,7 +64,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
         <div className="bg-surface dark:bg-surface-dark p-4 sm:p-6 rounded-theme border border-accent dark:border-accent-dark shadow-theme">
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
-            {/* Corps Class Filter */}
             <div className="flex flex-wrap gap-2 mb-4">
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
@@ -86,7 +85,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 })}
             </div>
 
-            {/* League Filter */}
             <div className="flex flex-wrap border-b border-accent dark:border-accent-dark mb-4 overflow-x-auto">
                 <button onClick={() => setSelectedLeague(null)} disabled={!!initialLeague} className={`px-3 py-2 font-semibold transition-all text-sm border-b-2 ${!selectedLeague ? 'border-primary text-primary dark:text-primary-dark' : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'} ${!!initialLeague ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     Global
@@ -98,7 +96,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 ))}
             </div>
 
-            {/* Leaderboard Content */}
             {isLoading ? (
                 <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div><p className="text-text-secondary dark:text-text-secondary-dark">Loading leaderboard...</p></div>
             ) : leaderboard.length === 0 ? (
@@ -107,6 +104,25 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 <ol className="space-y-1">
                     {leaderboard.map((player, index) => {
                         const isCurrentUser = player.userId === profile?.userId;
+                        
+                        // <-- START: Conditional Rendering Logic -->
+                        let scoreDisplay;
+                        if (selectedCorpsClass === 'soundSport') {
+                            const rating = SoundSportDisplay.formatRating(player.totalSeasonScore);
+                            scoreDisplay = (
+                                <div className={`font-bold text-lg ${rating.colorClass.replace('bg-','text-').replace('/20','')}`}>
+                                    {rating.primaryDisplay}
+                                </div>
+                            );
+                        } else {
+                            scoreDisplay = (
+                                <div className="font-bold text-primary dark:text-primary-dark">
+                                    {(player.totalSeasonScore || 0).toFixed(1)}
+                                </div>
+                            );
+                        }
+                        // <-- END: Conditional Rendering Logic -->
+
                         return (
                             <li key={`${player.userId}-${index}`}>
                                 <button
@@ -124,7 +140,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold text-primary dark:text-primary-dark">{(player.totalSeasonScore || 0).toFixed(1)}</div>
+                                        {scoreDisplay}
                                     </div>
                                 </button>
                             </li>
