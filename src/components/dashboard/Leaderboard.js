@@ -88,9 +88,18 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 // Start with the current user if available
                 if (profile) {
                     console.log('Processing current user profile...');
+                    console.log('Full profile data:', profile);
+                    
                     const userCorps = getAllUserCorps(profile);
+                    console.log('getAllUserCorps result:', userCorps);
+                    console.log('Profile structure check:');
+                    console.log('- profile.corps:', profile.corps);
+                    console.log('- profile.corpsName:', profile.corpsName);
+                    console.log('- profile.totalSeasonScore:', profile.totalSeasonScore);
                     
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                        console.log(`Checking corps class ${corpsClass}:`, corps);
+                        
                         if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
                             const score = corps.totalSeasonScore || 0;
                             
@@ -108,6 +117,13 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                 corpsName: corps.corpsName,
                                 corpsClass: corpsClass,
                                 totalSeasonScore: score
+                            });
+                        } else {
+                            console.log(`Skipping ${corpsClass} - no corps or wrong class:`, {
+                                hasCorps: !!corps,
+                                hasCorpsName: corps?.corpsName,
+                                isSelectedClass: corpsClass === selectedCorpsClass,
+                                selectedClass: selectedCorpsClass
                             });
                         }
                     });
@@ -157,6 +173,43 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
 
                 // Sort by score descending
                 allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
+                
+                // If no entries found, create a fallback entry for the current user if they have any corps
+                if (allCorpsEntries.length === 0 && profile) {
+                    console.log('No scored entries found, checking for any corps data...');
+                    const userCorps = getAllUserCorps(profile);
+                    
+                    // Show any corps the user has, even with 0 score
+                    Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                            console.log('Adding fallback entry for user corps:', {
+                                username: profile.username,
+                                corpsName: corps.corpsName,
+                                corpsClass,
+                                score: corps.totalSeasonScore || 0
+                            });
+                            
+                            allCorpsEntries.push({
+                                id: `${profile.userId}_${corpsClass}`,
+                                userId: profile.userId,
+                                username: profile.username,
+                                corpsName: corps.corpsName,
+                                corpsClass: corpsClass,
+                                totalSeasonScore: corps.totalSeasonScore || 0
+                            });
+                        }
+                    });
+                    
+                    // If still no entries, check if user has any corps in other classes
+                    if (allCorpsEntries.length === 0) {
+                        console.log('No corps found for selected class, checking all classes...');
+                        Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                            if (corps && corps.corpsName) {
+                                console.log(`User has corps in ${corpsClass}:`, corps.corpsName);
+                            }
+                        });
+                    }
+                }
                 
                 console.log('Final leaderboard entries:', allCorpsEntries.length);
                 setDebugInfo(`Found ${allCorpsEntries.length} total entries`);
