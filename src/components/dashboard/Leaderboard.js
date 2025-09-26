@@ -1,12 +1,8 @@
-// src/components/dashboard/Leaderboard.js - Alternative approach without collection group queries
+// src/components/dashboard/Leaderboard.js - Real data using collection group queries
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDoc, doc, getDocs, limit } from 'firebase/firestore';
-import { db, dataNamespace } from '../../firebase';
+import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
-import { httpsCallable, getFunctions } from 'firebase/functions';
-
-const functions = getFunctions();
-const getUserRankings = httpsCallable(functions, 'getUserRankings');
 
 const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -15,7 +11,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [selectedLeague, setSelectedLeague] = useState(initialLeague);
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
     const [userLeagues, setUserLeagues] = useState([]);
-    const [useBackendQuery, setUseBackendQuery] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchLeagues = async () => {
@@ -39,7 +35,10 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     useEffect(() => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
+            setError(null);
+            
             try {
+                console.log('Loading season settings...');
                 const seasonSettingsRef = doc(db, 'game-settings', 'season');
                 const seasonDoc = await getDoc(seasonSettingsRef);
                 
@@ -52,113 +51,115 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 
                 const seasonData = seasonDoc.data();
                 setSeasonName(seasonData.name || 'Current Season');
+                console.log('Season loaded:', seasonData.name);
 
-                // Try backend function first, then fall back to manual approach
-                if (useBackendQuery) {
-                    await fetchFromBackend();
+                // Use collection group query on 'data' to get all profile data documents
+                console.log('Starting collection group query on "data"...');
+                const profilesRef = collectionGroup(db, 'data');
+                
+                let leaderboardQuery;
+                if (selectedLeague) {
+                    console.log('Filtering by league:', selectedLeague.name);
+                    leaderboardQuery = query(
+                        profilesRef,
+                        where('leagueIds', 'array-contains', selectedLeague.id)
+                    );
                 } else {
-                    await fetchFromSampleUsers();
+                    console.log('Global leaderboard query');
+                    leaderboardQuery = profilesRef;
                 }
+
+                console.log('Executing collection group query...');
+                const querySnapshot = await getDocs(leaderboardQuery);
+                console.log('Collection group query returned', querySnapshot.docs.length, 'documents');
+                
+                let allCorpsEntries = [];
+                let processedProfiles = 0;
+                
+                querySnapshot.docs.forEach(doc => {
+                    const docPath = doc.ref.path;
+                    console.log('Processing document path:', docPath);
+                    
+                    // Only process documents that are profile data
+                    // Path should be: artifacts/namespace/users/{userId}/profile/data
+                    if (!docPath.includes('/profile/data')) {
+                        console.log('Skipping non-profile document:', docPath);
+                        return;
+                    }
+                    
+                    const playerData = doc.data();
+                    
+                    // Skip if no username (invalid profile)
+                    if (!playerData.username) {
+                        console.log('Skipping profile without username');
+                        return;
+                    }
+                    
+                    // Extract userId from the document path
+                    const pathParts = docPath.split('/');
+                    const userIdIndex = pathParts.findIndex(part => part === 'users') + 1;
+                    const userId = pathParts[userIdIndex];
+                    
+                    console.log('Processing profile:', {
+                        userId,
+                        username: playerData.username,
+                        path: docPath
+                    });
+                    
+                    processedProfiles++;
+                    
+                    const userCorps = getAllUserCorps(playerData);
+                    console.log('User corps for', playerData.username, ':', Object.keys(userCorps));
+                    
+                    Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                        if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                            const score = corps.totalSeasonScore || 0;
+                            
+                            console.log('Found corps:', {
+                                username: playerData.username,
+                                corpsName: corps.corpsName,
+                                corpsClass,
+                                score
+                            });
+                            
+                            allCorpsEntries.push({
+                                id: `${userId}_${corpsClass}`,
+                                userId: userId,
+                                username: playerData.username,
+                                corpsName: corps.corpsName,
+                                corpsClass: corpsClass,
+                                totalSeasonScore: score
+                            });
+                        }
+                    });
+                });
+                
+                console.log('Processed', processedProfiles, 'profiles');
+                console.log('Found', allCorpsEntries.length, 'corps entries for class', selectedCorpsClass);
+                
+                // Sort by score descending
+                allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
+                
+                // Filter out entries with zero scores for cleaner leaderboard
+                const nonZeroEntries = allCorpsEntries.filter(entry => entry.totalSeasonScore > 0);
+                console.log('Entries with scores > 0:', nonZeroEntries.length);
+                
+                setLeaderboard(nonZeroEntries);
                 
             } catch (error) {
                 console.error("Leaderboard query failed:", error);
+                console.error("Error code:", error.code);
+                console.error("Error message:", error.message);
                 
-                if (error.code === 'permission-denied' && !useBackendQuery) {
-                    console.log('Switching to backend query approach...');
-                    setUseBackendQuery(true);
-                } else {
-                    setLeaderboard([]);
-                }
+                setError(`Failed to load leaderboard: ${error.message}`);
+                setLeaderboard([]);
             } finally {
                 setIsLoading(false);
             }
         };
-
-        const fetchFromBackend = async () => {
-            try {
-                console.log('Trying backend function for rankings...');
-                const result = await getUserRankings({
-                    corpsClass: selectedCorpsClass,
-                    leagueId: selectedLeague?.id || null
-                });
-                
-                if (result.data.success) {
-                    setLeaderboard(result.data.rankings || []);
-                } else {
-                    throw new Error('Backend rankings failed');
-                }
-            } catch (error) {
-                console.error('Backend rankings failed:', error);
-                await fetchFromSampleUsers();
-            }
-        };
-
-        const fetchFromSampleUsers = async () => {
-            console.log('Attempting manual leaderboard fetch...');
-            
-            // For now, create sample data with the current user
-            const sampleLeaderboard = [];
-            
-            if (profile) {
-                const userCorps = getAllUserCorps(profile);
-                Object.entries(userCorps).forEach(([corpsClass, corps]) => {
-                    if (corps && corps.corpsName && (corpsClass === selectedCorpsClass) && 
-                        corps.totalSeasonScore && corps.totalSeasonScore > 0) {
-                        sampleLeaderboard.push({
-                            id: `${profile.userId}_${corpsClass}`,
-                            userId: profile.userId,
-                            username: profile.username || 'Your Corps',
-                            corpsName: corps.corpsName,
-                            corpsClass: corpsClass,
-                            totalSeasonScore: corps.totalSeasonScore
-                        });
-                    }
-                });
-            }
-
-            // Add some sample competitors for demonstration
-            if (selectedCorpsClass === 'worldClass') {
-                const sampleCompetitors = [
-                    {
-                        id: 'sample_1_worldClass',
-                        userId: 'sample_1',
-                        username: 'TopDirector',
-                        corpsName: 'Elite Champions',
-                        corpsClass: 'worldClass',
-                        totalSeasonScore: 950.5
-                    },
-                    {
-                        id: 'sample_2_worldClass', 
-                        userId: 'sample_2',
-                        username: 'CompetitorX',
-                        corpsName: 'Victory Corps',
-                        corpsClass: 'worldClass',
-                        totalSeasonScore: 920.3
-                    },
-                    {
-                        id: 'sample_3_worldClass',
-                        userId: 'sample_3', 
-                        username: 'FantasyPro',
-                        corpsName: 'Dream Team',
-                        corpsClass: 'worldClass',
-                        totalSeasonScore: 895.7
-                    }
-                ];
-
-                // Only add samples if no league is selected (global leaderboard)
-                if (!selectedLeague) {
-                    sampleLeaderboard.push(...sampleCompetitors);
-                }
-            }
-
-            sampleLeaderboard.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
-            
-            console.log('Sample leaderboard created with', sampleLeaderboard.length, 'entries');
-            setLeaderboard(sampleLeaderboard);
-        };
         
         fetchLeaderboardData();
-    }, [selectedLeague, selectedCorpsClass, profile, useBackendQuery]);
+    }, [selectedLeague, selectedCorpsClass]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
@@ -167,12 +168,11 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
-            {/* Permission Issue Warning */}
-            {useBackendQuery && (
-                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-theme">
-                    <div className="text-yellow-800 dark:text-yellow-200 text-sm">
-                        <strong>Notice:</strong> Using simplified leaderboard due to database permissions. 
-                        Full leaderboard requires collection group query permissions.
+            {/* Error Display */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-theme">
+                    <div className="text-red-800 dark:text-red-200 text-sm">
+                        <strong>Error:</strong> {error}
                     </div>
                 </div>
             )}
@@ -237,34 +237,26 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 <div className="text-center py-8">
                     <div className="text-4xl mb-4">🏆</div>
                     <p className="text-text-secondary dark:text-text-secondary-dark">
-                        No corps with scores found for this filter.
+                        No corps with scores found for {CORPS_CLASSES[selectedCorpsClass]?.name || selectedCorpsClass}.
                     </p>
                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
-                        Create your corps and start competing to appear on the leaderboard!
+                        Corps need to have scores recorded to appear on the leaderboard.
                     </p>
                 </div>
             ) : (
                 <ol className="space-y-1">
                     {leaderboard.map((player, index) => {
                         const isCurrentUser = player.userId === profile?.userId;
-                        const isSampleUser = player.userId.startsWith('sample_');
-                        
                         return (
                             <li key={player.id}>
                                 <button
-                                    onClick={() => {
-                                        if (!isSampleUser && onViewProfile) {
-                                            onViewProfile(player.userId);
-                                        }
-                                    }}
-                                    disabled={isSampleUser || !onViewProfile}
+                                    onClick={() => onViewProfile && onViewProfile(player.userId)}
+                                    disabled={!onViewProfile}
                                     className={`w-full p-3 rounded-theme flex justify-between items-center text-left transition-colors ${
                                         isCurrentUser 
                                             ? 'bg-primary/10 dark:bg-primary-dark/10 border-2 border-primary/30 dark:border-primary-dark/30' 
-                                            : isSampleUser
-                                            ? 'bg-accent/5 dark:bg-accent-dark/5'
                                             : 'bg-background dark:bg-background-dark hover:bg-accent/20 dark:hover:bg-accent-dark/20'
-                                    } ${(!isSampleUser && onViewProfile) ? 'cursor-pointer' : 'cursor-default'}`}
+                                    } ${onViewProfile ? 'cursor-pointer' : 'cursor-default'}`}
                                 >
                                     <div className="flex items-center space-x-3">
                                         <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
@@ -276,16 +268,11 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                             {index + 1}
                                         </span>
                                         <div>
-                                            <div className="font-semibold text-text-primary dark:text-text-primary-dark flex items-center gap-2">
+                                            <div className="font-semibold text-text-primary dark:text-text-primary-dark">
                                                 {player.username}
                                                 {isCurrentUser && (
-                                                    <span className="text-xs bg-primary dark:bg-primary-dark text-white px-2 py-1 rounded-full">
+                                                    <span className="ml-2 text-xs bg-primary dark:bg-primary-dark text-white px-2 py-1 rounded-full">
                                                         You
-                                                    </span>
-                                                )}
-                                                {isSampleUser && (
-                                                    <span className="text-xs bg-accent dark:bg-accent-dark text-white px-2 py-1 rounded-full">
-                                                        Sample
                                                     </span>
                                                 )}
                                             </div>
@@ -307,17 +294,6 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                         );
                     })}
                 </ol>
-            )}
-            
-            {/* Debug Info for Admin */}
-            {profile?.isAdmin && (
-                <div className="mt-6 pt-4 border-t border-accent dark:border-accent-dark text-xs text-text-secondary dark:text-text-secondary-dark">
-                    <div className="mb-2"><strong>Admin Debug:</strong></div>
-                    <div>Using Backend Query: {useBackendQuery ? 'Yes' : 'No'}</div>
-                    <div>Selected League: {selectedLeague?.name || 'Global'}</div>
-                    <div>Selected Class: {selectedCorpsClass}</div>
-                    <div>Results: {leaderboard.length}</div>
-                </div>
             )}
         </div>
     );
