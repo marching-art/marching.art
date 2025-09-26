@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
   const { 
     user, 
     loggedInProfile, 
-    isLoadingAuth, 
+    isLoadingAuth,
+    isLoadingProfile,
     connectionError,
     initAuthListener, 
     retryConnection, 
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loggedInProfile,
     isLoadingAuth,
+    isLoadingProfile,
     connectionError,
     retryConnection,
     clearError,

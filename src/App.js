@@ -1,4 +1,4 @@
-// src/App.js - Alternative version using userStore directly
+// src/App.js - Updated with debug component for profile troubleshooting
 import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
@@ -10,6 +10,7 @@ import Footer from './components/layout/Footer';
 import ConnectionStatus from './components/ui/ConnectionStatus';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import DebugAuth from './components/debug/DebugAuth';
+import ProfileDebugInfo from './components/debug/ProfileDebugInfo';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -36,27 +37,16 @@ function App() {
     
     // Initialize auth listener
     useEffect(() => {
+        console.log('App: Initializing auth listener');
         const unsubscribe = initAuthListener();
-        return () => {
-            if (unsubscribe) unsubscribe();
-        };
+        return unsubscribe;
     }, [initAuthListener]);
-
+    
+    // Theme management
     useEffect(() => {
-        if (!isLoadingAuth && !user) {
-            // Only redirect to home if we're on a protected page
-            if (['dashboard', 'settings', 'leagues', 'leaderboard'].includes(page)) {
-                setPage('home');
-            }
-        }
-    }, [user, isLoadingAuth, page]);
-
-    useEffect(() => {
-        if (themeMode === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(themeMode);
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
@@ -65,29 +55,33 @@ function App() {
             await signOut(auth);
             setPage('home');
         } catch (error) {
-            console.error("Error signing out:", error);
+            console.error('Logout error:', error);
         }
     };
 
     const navigate = (newPage, props = {}) => {
-        // Handle league detail navigation with proper routing
-        if (newPage.startsWith('/league/')) {
+        console.log('Navigating to:', newPage);
+        
+        // Handle profile navigation with user ID
+        if (typeof newPage === 'string' && newPage.startsWith('/profile/')) {
+            const userId = newPage.replace('/profile/', '');
+            setPage('profile');
+            setPageProps({ viewingUserId: userId });
+            return;
+        }
+        
+        // Handle league detail navigation
+        if (typeof newPage === 'string' && newPage.startsWith('/league/')) {
             const leagueId = newPage.replace('/league/', '');
             setPage('league-detail');
             setPageProps({ leagueId });
-        } else if (newPage.startsWith('/profile/')) {
-            const userId = newPage.replace('/profile/', '');
-            setPage('profile');
-            setPageProps({ userId });
-        } else {
-            // Convert route to page name and handle direct page names
-            let pageName = newPage;
-            if (newPage.startsWith('/')) {
-                pageName = newPage.replace('/', '') || 'home';
-            }
-            setPage(pageName);
-            setPageProps(props);
+            return;
         }
+        
+        // Remove leading slash if present
+        const cleanPage = typeof newPage === 'string' ? newPage.replace(/^\//, '') : newPage;
+        setPage(cleanPage);
+        setPageProps(props);
     };
 
     const renderCurrentPage = () => {
@@ -95,6 +89,7 @@ function App() {
             navigate,
             user,
             loggedInProfile,
+            loggedInUserId: user?.uid,
             isLoadingAuth
         };
 
@@ -171,6 +166,7 @@ function App() {
                 
                 <ConnectionStatus />
                 <DebugAuth />
+                <ProfileDebugInfo />
                 <Toaster position="bottom-right" />
             </div>
         </ErrorBoundary>
