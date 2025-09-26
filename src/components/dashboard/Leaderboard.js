@@ -1,8 +1,12 @@
-// src/components/dashboard/Leaderboard.js - Real data using collection group queries
+// src/components/dashboard/Leaderboard.js - Direct query approach without collection group
 import React, { useState, useEffect } from 'react';
-import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, where, getDoc, doc, getDocs } from 'firebase/firestore';
+import { db, dataNamespace } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
+import { httpsCallable, getFunctions } from 'firebase/functions';
+
+const functions = getFunctions();
+const getUserRankings = httpsCallable(functions, 'getUserRankings');
 
 const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -12,6 +16,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [selectedCorpsClass, setSelectedCorpsClass] = useState('worldClass');
     const [userLeagues, setUserLeagues] = useState([]);
     const [error, setError] = useState(null);
+    const [debugInfo, setDebugInfo] = useState('');
 
     useEffect(() => {
         const fetchLeagues = async () => {
@@ -36,6 +41,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
         const fetchLeaderboardData = async () => {
             setIsLoading(true);
             setError(null);
+            setDebugInfo('Starting leaderboard fetch...');
             
             try {
                 console.log('Loading season settings...');
@@ -53,105 +59,113 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 setSeasonName(seasonData.name || 'Current Season');
                 console.log('Season loaded:', seasonData.name);
 
-                // Use collection group query on 'data' to get all profile data documents
-                console.log('Starting collection group query on "data"...');
-                const profilesRef = collectionGroup(db, 'data');
+                // Try cloud function approach first
+                console.log('Attempting cloud function approach...');
+                setDebugInfo('Trying cloud function...');
                 
-                let leaderboardQuery;
-                if (selectedLeague) {
-                    console.log('Filtering by league:', selectedLeague.name);
-                    leaderboardQuery = query(
-                        profilesRef,
-                        where('leagueIds', 'array-contains', selectedLeague.id)
-                    );
-                } else {
-                    console.log('Global leaderboard query');
-                    leaderboardQuery = profilesRef;
-                }
-
-                console.log('Executing collection group query...');
-                const querySnapshot = await getDocs(leaderboardQuery);
-                console.log('Collection group query returned', querySnapshot.docs.length, 'documents');
-                
-                let allCorpsEntries = [];
-                let processedProfiles = 0;
-                
-                querySnapshot.docs.forEach(doc => {
-                    const docPath = doc.ref.path;
-                    console.log('Processing document path:', docPath);
-                    
-                    // Only process documents that are profile data
-                    // Path should be: artifacts/namespace/users/{userId}/profile/data
-                    if (!docPath.includes('/profile/data')) {
-                        console.log('Skipping non-profile document:', docPath);
-                        return;
-                    }
-                    
-                    const playerData = doc.data();
-                    
-                    // Skip if no username (invalid profile)
-                    if (!playerData.username) {
-                        console.log('Skipping profile without username');
-                        return;
-                    }
-                    
-                    // Extract userId from the document path
-                    const pathParts = docPath.split('/');
-                    const userIdIndex = pathParts.findIndex(part => part === 'users') + 1;
-                    const userId = pathParts[userIdIndex];
-                    
-                    console.log('Processing profile:', {
-                        userId,
-                        username: playerData.username,
-                        path: docPath
+                try {
+                    const result = await getUserRankings({
+                        corpsClass: selectedCorpsClass,
+                        leagueId: selectedLeague?.id || null
                     });
                     
-                    processedProfiles++;
-                    
-                    const userCorps = getAllUserCorps(playerData);
-                    console.log('User corps for', playerData.username, ':', Object.keys(userCorps));
+                    if (result.data.success && result.data.rankings) {
+                        console.log('Cloud function returned', result.data.rankings.length, 'rankings');
+                        setLeaderboard(result.data.rankings);
+                        setDebugInfo(`Cloud function returned ${result.data.rankings.length} entries`);
+                        setIsLoading(false);
+                        return;
+                    }
+                } catch (functionError) {
+                    console.log('Cloud function failed:', functionError);
+                    setDebugInfo('Cloud function failed, trying direct approach...');
+                }
+
+                // Fall back to direct profile fetching for known users
+                console.log('Using direct profile approach...');
+                const allCorpsEntries = [];
+
+                // Start with the current user if available
+                if (profile) {
+                    console.log('Processing current user profile...');
+                    const userCorps = getAllUserCorps(profile);
                     
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
                         if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
                             const score = corps.totalSeasonScore || 0;
                             
-                            console.log('Found corps:', {
-                                username: playerData.username,
+                            console.log('Found current user corps:', {
+                                username: profile.username,
                                 corpsName: corps.corpsName,
                                 corpsClass,
                                 score
                             });
                             
                             allCorpsEntries.push({
-                                id: `${userId}_${corpsClass}`,
-                                userId: userId,
-                                username: playerData.username,
+                                id: `${profile.userId}_${corpsClass}`,
+                                userId: profile.userId,
+                                username: profile.username,
                                 corpsName: corps.corpsName,
                                 corpsClass: corpsClass,
                                 totalSeasonScore: score
                             });
                         }
                     });
-                });
-                
-                console.log('Processed', processedProfiles, 'profiles');
-                console.log('Found', allCorpsEntries.length, 'corps entries for class', selectedCorpsClass);
-                
+                }
+
+                // Try to fetch league members if in a league
+                if (selectedLeague && selectedLeague.members) {
+                    console.log('Processing league members...');
+                    setDebugInfo(`Processing ${selectedLeague.members.length} league members...`);
+                    
+                    let processedMembers = 0;
+                    
+                    for (const memberId of selectedLeague.members) {
+                        if (memberId === profile?.userId) continue; // Already processed
+                        
+                        try {
+                            const memberProfileRef = doc(db, 'artifacts', dataNamespace, 'users', memberId, 'profile', 'data');
+                            const memberDoc = await getDoc(memberProfileRef);
+                            
+                            if (memberDoc.exists()) {
+                                const memberData = memberDoc.data();
+                                const userCorps = getAllUserCorps(memberData);
+                                
+                                Object.entries(userCorps).forEach(([corpsClass, corps]) => {
+                                    if (corps && corps.corpsName && (corpsClass === selectedCorpsClass)) {
+                                        const score = corps.totalSeasonScore || 0;
+                                        
+                                        allCorpsEntries.push({
+                                            id: `${memberId}_${corpsClass}`,
+                                            userId: memberId,
+                                            username: memberData.username || 'Unknown',
+                                            corpsName: corps.corpsName,
+                                            corpsClass: corpsClass,
+                                            totalSeasonScore: score
+                                        });
+                                    }
+                                });
+                                processedMembers++;
+                            }
+                        } catch (memberError) {
+                            console.log('Error fetching member', memberId, ':', memberError);
+                        }
+                    }
+                    
+                    console.log('Processed', processedMembers, 'league members');
+                }
+
                 // Sort by score descending
                 allCorpsEntries.sort((a, b) => (b.totalSeasonScore || 0) - (a.totalSeasonScore || 0));
                 
-                // Filter out entries with zero scores for cleaner leaderboard
-                const nonZeroEntries = allCorpsEntries.filter(entry => entry.totalSeasonScore > 0);
-                console.log('Entries with scores > 0:', nonZeroEntries.length);
-                
-                setLeaderboard(nonZeroEntries);
+                console.log('Final leaderboard entries:', allCorpsEntries.length);
+                setDebugInfo(`Found ${allCorpsEntries.length} total entries`);
+                setLeaderboard(allCorpsEntries);
                 
             } catch (error) {
-                console.error("Leaderboard query failed:", error);
-                console.error("Error code:", error.code);
-                console.error("Error message:", error.message);
-                
+                console.error("Leaderboard fetch failed:", error);
                 setError(`Failed to load leaderboard: ${error.message}`);
+                setDebugInfo(`Error: ${error.message}`);
                 setLeaderboard([]);
             } finally {
                 setIsLoading(false);
@@ -159,7 +173,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
         };
         
         fetchLeaderboardData();
-    }, [selectedLeague, selectedCorpsClass]);
+    }, [selectedLeague, selectedCorpsClass, profile, dataNamespace]);
 
     const leaderboardTitle = selectedLeague ? selectedLeague.name : 'Global Leaderboard';
     
@@ -168,11 +182,30 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
             <h2 className="text-xl sm:text-2xl font-bold text-primary dark:text-primary-dark mb-1">{seasonName}</h2>
             <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark mb-4">{leaderboardTitle}</h3>
 
+            {/* Debug Info for Admin */}
+            {profile?.isAdmin && debugInfo && (
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-theme">
+                    <div className="text-blue-800 dark:text-blue-200 text-sm">
+                        <strong>Debug:</strong> {debugInfo}
+                    </div>
+                </div>
+            )}
+
             {/* Error Display */}
             {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-theme">
                     <div className="text-red-800 dark:text-red-200 text-sm">
                         <strong>Error:</strong> {error}
+                    </div>
+                </div>
+            )}
+
+            {/* Notice about limited leaderboard */}
+            {!selectedLeague && (
+                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-theme">
+                    <div className="text-yellow-800 dark:text-yellow-200 text-sm">
+                        <strong>Note:</strong> Global leaderboard is currently limited due to database permissions. 
+                        Join a league to see full leaderboard data.
                     </div>
                 </div>
             )}
@@ -232,6 +265,9 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
                     <p className="text-text-secondary dark:text-text-secondary-dark">Loading leaderboard...</p>
+                    {profile?.isAdmin && debugInfo && (
+                        <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-2">{debugInfo}</p>
+                    )}
                 </div>
             ) : leaderboard.length === 0 ? (
                 <div className="text-center py-8">
@@ -239,9 +275,15 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                     <p className="text-text-secondary dark:text-text-secondary-dark">
                         No corps with scores found for {CORPS_CLASSES[selectedCorpsClass]?.name || selectedCorpsClass}.
                     </p>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
-                        Corps need to have scores recorded to appear on the leaderboard.
-                    </p>
+                    {selectedLeague ? (
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                            League members need to have active corps to appear on the leaderboard.
+                        </p>
+                    ) : (
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                            Join a league or create corps to see leaderboard data.
+                        </p>
+                    )}
                 </div>
             ) : (
                 <ol className="space-y-1">
@@ -283,7 +325,7 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                     </div>
                                     <div className="text-right">
                                         <div className="font-bold text-primary dark:text-primary-dark">
-                                            {player.totalSeasonScore.toFixed(1)}
+                                            {(player.totalSeasonScore || 0).toFixed(1)}
                                         </div>
                                         <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
                                             points
