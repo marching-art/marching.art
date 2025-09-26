@@ -59,43 +59,64 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                 setSeasonName(seasonData.name || 'Current Season');
                 console.log('Season loaded:', seasonData.name);
 
-                // Try cloud function approach first
-                console.log('Attempting cloud function approach...');
-                setDebugInfo('Trying cloud function...');
-                
-                try {
-                    const result = await getUserRankings({
-                        corpsClass: selectedCorpsClass,
-                        leagueId: selectedLeague?.id || null
-                    });
-                    
-                    if (result.data.success && result.data.rankings) {
-                        console.log('Cloud function returned', result.data.rankings.length, 'rankings');
-                        setLeaderboard(result.data.rankings);
-                        setDebugInfo(`Cloud function returned ${result.data.rankings.length} entries`);
-                        setIsLoading(false);
-                        return;
-                    }
-                } catch (functionError) {
-                    console.log('Cloud function failed:', functionError);
-                    setDebugInfo('Cloud function failed, trying direct approach...');
-                }
-
-                // Fall back to direct profile fetching for known users
+                // Skip cloud function for now - go directly to profile approach
                 console.log('Using direct profile approach...');
+                setDebugInfo('Processing user profiles...');
                 const allCorpsEntries = [];
 
                 // Start with the current user if available
                 if (profile) {
                     console.log('Processing current user profile...');
-                    console.log('Full profile data:', profile);
+                    console.log('Profile keys:', Object.keys(profile));
+                    console.log('Profile userId:', profile.userId);
+                    console.log('Profile username:', profile.username);
+                    console.log('Profile email:', profile.email);
+                    console.log('Profile isAdmin:', profile.isAdmin);
                     
-                    const userCorps = getAllUserCorps(profile);
-                    console.log('getAllUserCorps result:', userCorps);
-                    console.log('Profile structure check:');
+                    // Check for corps data in different possible locations
+                    console.log('Corps data locations:');
                     console.log('- profile.corps:', profile.corps);
                     console.log('- profile.corpsName:', profile.corpsName);
                     console.log('- profile.totalSeasonScore:', profile.totalSeasonScore);
+                    console.log('- profile.aClass:', profile.aClass);
+                    console.log('- profile.worldClass:', profile.worldClass);
+                    console.log('- profile.lineup:', profile.lineup);
+                    console.log('- profile.selectedShows:', profile.selectedShows);
+                    
+                    // Try to manually iterate through all properties to find corps data
+                    console.log('All profile properties:');
+                    for (const [key, value] of Object.entries(profile)) {
+                        if (typeof value === 'object' && value !== null) {
+                            console.log(`- ${key}:`, value);
+                        } else {
+                            console.log(`- ${key}:`, value);
+                        }
+                    }
+                    
+                    const userCorps = getAllUserCorps(profile);
+                    console.log('getAllUserCorps result:', userCorps);
+                    console.log('getAllUserCorps result keys:', Object.keys(userCorps));
+                    
+                    // Check if we have any corps data at all
+                    if (Object.keys(userCorps).length === 0) {
+                        console.log('No corps found by getAllUserCorps function');
+                        
+                        // Manual check for corps data patterns
+                        if (profile.corpsName || profile.totalSeasonScore || profile.lineup) {
+                            console.log('Found old-style corps data:');
+                            console.log('- corpsName:', profile.corpsName);
+                            console.log('- totalSeasonScore:', profile.totalSeasonScore);
+                            console.log('- lineup:', profile.lineup);
+                        }
+                        
+                        if (profile.corps && typeof profile.corps === 'object') {
+                            console.log('Found new-style corps data:', profile.corps);
+                        }
+                        
+                        setDebugInfo('No corps data found in profile');
+                    } else {
+                        setDebugInfo(`Found corps data: ${Object.keys(userCorps).join(', ')}`);
+                    }
                     
                     Object.entries(userCorps).forEach(([corpsClass, corps]) => {
                         console.log(`Checking corps class ${corpsClass}:`, corps);
