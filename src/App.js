@@ -11,6 +11,7 @@ import ConnectionStatus from './components/ui/ConnectionStatus';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import DebugAuth from './components/debug/DebugAuth';
 import ProfileDebugInfo from './components/debug/ProfileDebugInfo';
+import ProfileDataTest from './components/debug/ProfileDataTest';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -167,6 +168,7 @@ function App() {
                 <ConnectionStatus />
                 <DebugAuth />
                 <ProfileDebugInfo />
+                <ProfileDataTest />
                 <Toaster position="bottom-right" />
             </div>
         </ErrorBoundary>

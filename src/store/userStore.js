@@ -86,6 +86,13 @@ export const useUserStore = create((set, get) => ({
             email: profileData.email,
             isAdmin: profileData.isAdmin
           });
+          console.log('Full profile keys:', Object.keys(profileData));
+          console.log('Profile has aClass:', !!profileData.aClass);
+          console.log('Profile has corps:', !!profileData.corps);
+          console.log('Profile has corpsName:', !!profileData.corpsName);
+          console.log('Profile has lineup:', !!profileData.lineup);
+          console.log('Profile aClass data:', profileData.aClass);
+          
           set({ 
             loggedInProfile: profileData,
             connectionError: null
