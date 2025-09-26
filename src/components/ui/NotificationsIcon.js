@@ -5,22 +5,37 @@ import { db, dataNamespace } from '../../firebase';
 import Icon from './Icon';
 import NotificationsPanel from './NotificationsPanel';
 
+// src/components/ui/NotificationsIcon.js - Enhanced for direct userStore integration
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
+import { db, dataNamespace } from '../../firebase';
+import Icon from './Icon';
+import NotificationsPanel from './NotificationsPanel';
+
 const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Reset error state when user changes
+        // Reset states when user changes
         setHasError(false);
+        setIsLoading(true);
         
+        // Debug logging - only warn if we expect a user but don't have one
         if (!user?.uid) {
-            console.warn("NotificationsIcon: No user provided");
+            // This is normal when not logged in - no warning needed
+            console.log("NotificationsIcon: No user provided (normal when not logged in)");
             setNotifications([]);
             setUnreadCount(0);
+            setIsLoading(false);
             return;
         }
+
+        // Debug logging for successful user
+        console.log('NotificationsIcon: User authenticated:', user.uid);
 
         // Check if dataNamespace is available
         const namespace = dataNamespace || process.env.REACT_APP_DATA_NAMESPACE || 'marching-art';
@@ -28,6 +43,7 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
         if (!namespace) {
             console.error("NotificationsIcon: dataNamespace not configured. Please set REACT_APP_DATA_NAMESPACE in your environment variables.");
             setHasError(true);
+            setIsLoading(false);
             return;
         }
 
@@ -58,15 +74,18 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
                     setNotifications(fetchedNotifs);
                     setUnreadCount(count);
                     setHasError(false);
+                    setIsLoading(false);
                 } catch (error) {
                     console.error("Error processing notifications:", error);
                     setHasError(true);
+                    setIsLoading(false);
                 }
             }, (error) => {
                 console.error("Error loading notifications:", error);
                 setNotifications([]);
                 setUnreadCount(0);
                 setHasError(true);
+                setIsLoading(false);
             });
 
             return () => {
@@ -81,6 +100,7 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
             setNotifications([]);
             setUnreadCount(0);
             setHasError(true);
+            setIsLoading(false);
         }
     }, [user?.uid]);
 
@@ -109,8 +129,8 @@ const NotificationsIcon = ({ user, setPage, onViewLeague }) => {
         }
     };
 
-    // Don't render if there's an error or no user
-    if (hasError || !user?.uid) {
+    // Don't render if there's an error, no user, or still loading
+    if (hasError || !user?.uid || isLoading) {
         return null;
     }
 

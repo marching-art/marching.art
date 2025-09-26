@@ -1,17 +1,19 @@
-// src/components/ui/ConnectionStatus.js - Connection status and retry component
+// src/components/ui/ConnectionStatus.js - Updated to use userStore directly
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useUserStore } from '../../store/userStore';
 import Icon from './Icon';
 
 const ConnectionStatus = () => {
-    const { connectionError, retryConnection, clearError } = useAuth();
+    const { connectionError, retryConnection, clearError } = useUserStore();
     const [isRetrying, setIsRetrying] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
     const handleRetry = async () => {
         setIsRetrying(true);
         try {
-            await retryConnection();
+            if (retryConnection) {
+                await retryConnection();
+            }
             setTimeout(() => {
                 setIsRetrying(false);
             }, 1000);
@@ -22,7 +24,9 @@ const ConnectionStatus = () => {
     };
 
     const handleDismiss = () => {
-        clearError();
+        if (clearError) {
+            clearError();
+        }
     };
 
     useEffect(() => {
