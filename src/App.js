@@ -5,14 +5,15 @@ import { useUserStore } from './store/userStore';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
-const HomePage = () => <h1>Home Page</h1>;
-const DashboardPage = () => <h1>Dashboard</h1>;
-const LeaguesPage = () => <h1>Leagues</h1>;
-const ScoresPage = () => <h1>Scores</h1>;
-const SchedulePage = () => <h1>Schedule</h1>;
-const LeaderboardPage = () => <h1>Leaderboard</h1>;
-const ProfilePage = () => <h1>Profile</h1>;
-const SettingsPage = () => <h1>Settings</h1>;
+// --- REMOVE INLINE PLACEHOLDERS AND IMPORT THE REAL PAGES ---
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import LeaguesPage from './pages/LeaguesPage';
+import ScoresPage from './pages/ScoresPage';
+import SchedulePage from './pages/SchedulePage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 const AppLayout = () => (
   <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">

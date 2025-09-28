@@ -13,7 +13,7 @@ admin.initializeApp();
 exports.lineups = require('./src/callable/lineups');
 
 // -- To be created later --
-// exports.users = require('./src/callable/users');
+exports.users = require('./src/callable/users');
 // exports.leagues = require('./src/callable/leagues');
 // exports.comments = require('./src/callable/comments');
 // exports.staff = require('./src/callable/staff');
