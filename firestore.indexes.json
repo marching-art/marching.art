@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "profile",
+      "collectionGroup": "data",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
@@ -9,14 +9,39 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "leagueIds",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "corps.lastScore",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "staff_marketplace",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isActive",
+          "order": "ASCENDING"
         },
         {
-          "fieldPath": "totalSeasonScore",
+          "fieldPath": "price",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "corpscoin_transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
           "order": "DESCENDING"
         }
       ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }
