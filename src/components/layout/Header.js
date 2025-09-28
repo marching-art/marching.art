@@ -3,7 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useUserStore } from '../../store/userStore';
 import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { auth } from 'firebaseConfig';
 
 const Header = () => {
   const { currentUser } = useAuth();
