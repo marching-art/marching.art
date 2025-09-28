@@ -4,15 +4,12 @@ const { DATA_NAMESPACE } = require("../config");
 
 /**
  * Updates a user's corps name and alias.
+ * 
+ * IMPORTANT: This is a callable function, not an HTTP function.
+ * CORS is handled automatically by Firebase for callable functions.
+ * The issue is likely in how the function is being called from the frontend.
  */
 exports.updateCorpsInfo = functions.https.onCall(async (data, context) => {
-  // Set CORS headers for all responses
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
-
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
   }
