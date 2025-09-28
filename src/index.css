@@ -72,9 +72,17 @@
 @layer components {
   /* Gaming UI Button Styles */
   .btn-primary {
-    @apply bg-primary hover:bg-primary/90 text-on-primary dark:bg-primary-dark dark:hover:bg-primary-dark/90 
+    @apply bg-primary text-on-primary dark:bg-primary-dark
            px-6 py-3 rounded-xl font-semibold transition-all duration-200 
            shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+  }
+
+  .btn-primary:hover {
+    background-color: rgba(var(--color-primary), 0.9);
+  }
+
+  .dark .btn-primary:hover {
+    background-color: rgba(var(--color-primary-dark), 0.9);
   }
 
   .btn-primary-glow {
@@ -87,31 +95,71 @@
   }
 
   .btn-secondary {
-    @apply bg-secondary hover:bg-secondary/90 text-on-secondary dark:bg-secondary-dark dark:hover:bg-secondary-dark/90
+    @apply bg-secondary text-on-secondary dark:bg-secondary-dark
            px-6 py-3 rounded-xl font-semibold transition-all duration-200
            shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
   }
 
+  .btn-secondary:hover {
+    background-color: rgba(var(--color-secondary), 0.9);
+  }
+
+  .dark .btn-secondary:hover {
+    background-color: rgba(var(--color-secondary-dark), 0.9);
+  }
+
   .btn-ghost {
-    @apply bg-transparent hover:bg-accent/20 dark:hover:bg-accent-dark/20 text-text-primary dark:text-text-primary-dark
+    @apply bg-transparent text-text-primary dark:text-text-primary-dark
            px-6 py-3 rounded-xl font-semibold transition-all duration-200
            border border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark;
   }
 
+  .btn-ghost:hover {
+    background-color: rgba(var(--color-accent), 0.2);
+  }
+
+  .dark .btn-ghost:hover {
+    background-color: rgba(var(--color-accent-dark), 0.2);
+  }
+
   .btn-icon {
-    @apply bg-surface hover:bg-accent dark:bg-surface-dark dark:hover:bg-accent-dark
+    @apply bg-surface dark:bg-surface-dark
            p-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95
            shadow-lg hover:shadow-xl;
   }
 
+  .btn-icon:hover {
+    background-color: rgba(var(--color-accent), 1);
+  }
+
+  .dark .btn-icon:hover {
+    background-color: rgba(var(--color-accent-dark), 1);
+  }
+
   /* Gaming Card Styles */
   .card {
-    @apply bg-surface dark:bg-surface-dark rounded-2xl shadow-xl border border-accent/20 dark:border-accent-dark/20
+    @apply bg-surface dark:bg-surface-dark rounded-2xl shadow-xl border border-accent dark:border-accent-dark
            transition-all duration-300 hover:shadow-2xl hover:scale-102;
   }
 
+  .card:hover {
+    border-color: rgba(var(--color-accent), 0.2);
+  }
+
+  .dark .card:hover {
+    border-color: rgba(var(--color-accent-dark), 0.2);
+  }
+
   .card-interactive {
-    @apply card hover:border-primary/50 dark:hover:border-primary-dark/50 cursor-pointer;
+    @apply card cursor-pointer;
+  }
+
+  .card-interactive:hover {
+    border-color: rgba(var(--color-primary), 0.5);
+  }
+
+  .dark .card-interactive:hover {
+    border-color: rgba(var(--color-primary-dark), 0.5);
   }
 
   .card-glow {
@@ -125,25 +173,51 @@
 
   /* Gaming Input Styles */
   .input-field {
-    @apply bg-surface dark:bg-surface-dark border border-accent/30 dark:border-accent-dark/30
-           px-4 py-3 rounded-xl text-text-primary dark:text-text-primary-dark
-           focus:border-primary dark:focus:border-primary-dark focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary-dark/20
-           transition-all duration-200 shadow-inner;
+    @apply bg-surface dark:bg-surface-dark border text-text-primary dark:text-text-primary-dark
+           px-4 py-3 rounded-xl transition-all duration-200 shadow-inner
+           focus:ring-2 focus:outline-none;
+    border-color: rgba(var(--color-accent), 0.3);
+  }
+
+  .dark .input-field {
+    border-color: rgba(var(--color-accent-dark), 0.3);
   }
 
   .input-field:focus {
+    border-color: rgba(var(--color-primary), 1);
     box-shadow: 0 0 0 3px rgba(var(--glow-primary), 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .input-field:focus {
+    border-color: rgba(var(--color-primary-dark), 1);
+    --tw-ring-color: rgba(var(--color-primary-dark), 0.2);
   }
 
   /* Navigation Styles */
   .nav-link {
-    @apply text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark
-           px-4 py-2 rounded-lg transition-all duration-200 font-medium
-           hover:bg-accent/20 dark:hover:bg-accent-dark/20;
+    @apply text-text-secondary dark:text-text-secondary-dark
+           px-4 py-2 rounded-lg transition-all duration-200 font-medium;
+  }
+
+  .nav-link:hover {
+    color: rgba(var(--color-primary), 1);
+    background-color: rgba(var(--color-accent), 0.2);
+  }
+
+  .dark .nav-link:hover {
+    color: rgba(var(--color-primary-dark), 1);
+    background-color: rgba(var(--color-accent-dark), 0.2);
   }
 
   .nav-link-active {
-    @apply nav-link text-primary dark:text-primary-dark bg-primary/10 dark:bg-primary-dark/10;
+    @apply nav-link;
+    color: rgba(var(--color-primary), 1);
+    background-color: rgba(var(--color-primary), 0.1);
+  }
+
+  .dark .nav-link-active {
+    color: rgba(var(--color-primary-dark), 1);
+    background-color: rgba(var(--color-primary-dark), 0.1);
   }
 
   /* Status Indicators */
@@ -161,7 +235,12 @@
 
   /* Gaming Progress Bars */
   .progress-bar {
-    @apply w-full bg-accent/30 dark:bg-accent-dark/30 rounded-full h-3 overflow-hidden;
+    @apply w-full rounded-full h-3 overflow-hidden;
+    background-color: rgba(var(--color-accent), 0.3);
+  }
+
+  .dark .progress-bar {
+    background-color: rgba(var(--color-accent-dark), 0.3);
   }
 
   .progress-fill {
@@ -259,11 +338,17 @@
   }
 
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+    background: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .text-gradient-accent {
-    @apply bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent;
+    background: linear-gradient(to right, rgb(var(--color-accent)), rgb(var(--color-primary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .bg-gradient-gaming {
