@@ -65,7 +65,11 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="text-4xl">🎺</div>
+              <img 
+                src="/logo192.png" 
+                alt="marching.art logo" 
+                className="w-12 h-12 rounded-xl shadow-lg"
+              />
               <div>
                 <h3 className="text-2xl font-bold text-gradient-primary">marching.art</h3>
                 <p className="text-sm text-text-secondary-dark">The Ultimate Fantasy Drum Corps Game</p>

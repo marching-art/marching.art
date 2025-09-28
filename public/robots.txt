@@ -1,3 +1,46 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap location
+Sitemap: https://marching.art/sitemap.xml
+
+# Crawl delay for better server performance
+Crawl-delay: 1
+
+# Allow indexing of main pages
+Allow: /dashboard
+Allow: /leaderboard
+Allow: /scores
+Allow: /schedule
+Allow: /leagues
+Allow: /profile/*
+Allow: /how-to-play
+Allow: /about
+
+# Disallow private/sensitive areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /private/
+Disallow: /.firebase/
+Disallow: /build/
+Disallow: /node_modules/
+
+# Allow social media crawlers
+User-agent: facebookexternalhit/*
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Block specific crawlers that don't add value
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

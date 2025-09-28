@@ -87,7 +87,11 @@ const Header = () => {
               to="/" 
               className="text-2xl font-bold text-gradient-primary hover:scale-105 transition-transform duration-200 flex items-center gap-2"
             >
-              <span className="text-3xl">🎺</span>
+              <img 
+                src="/logo192.png" 
+                alt="marching.art logo" 
+                className="w-8 h-8 rounded-lg shadow-lg"
+              />
               marching.art
             </Link>
 

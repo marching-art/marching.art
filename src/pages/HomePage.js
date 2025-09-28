@@ -140,8 +140,12 @@ const HomePage = () => {
           <div className="max-w-6xl mx-auto">
             {/* Hero Content */}
             <div className={`text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="text-8xl mb-6 animate-pulse">
-                {heroSlides[currentSlide].accent}
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/logo192.png" 
+                  alt="marching.art logo" 
+                  className="w-24 h-24 rounded-2xl shadow-2xl animate-pulse"
+                />
               </div>
               
               <h1 className="text-5xl md:text-7xl font-bold text-gradient-primary mb-6 leading-tight">
@@ -395,7 +399,13 @@ const HomePage = () => {
       <section className="py-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <div className="text-6xl mb-6">🎺</div>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/logo192.png" 
+                alt="marching.art logo" 
+                className="w-20 h-20 rounded-2xl shadow-2xl"
+              />
+            </div>
             <h2 className="text-4xl md:text-6xl font-bold text-gradient-primary mb-6">
               Ready to March?
             </h2>
