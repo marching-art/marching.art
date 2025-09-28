@@ -2,21 +2,21 @@
   "name": "marching-art",
   "version": "0.1.0",
   "private": true,
-"dependencies": {
-  "@testing-library/jest-dom": "^5.17.0",
-  "@testing-library/react": "^13.4.0",
-  "@testing-library/user-event": "^13.5.0",
-  "firebase": "^12.3.0",
-  "lucide-react": "^0.544.0",
-  "react": "^18.3.1",
-  "react-dom": "^18.3.1",
-  "react-hot-toast": "^2.6.0",
-  "react-router-dom": "^6.25.1",
-  "react-scripts": "5.0.1",
-  "recharts": "^2.12.7",
-  "web-vitals": "^2.1.4",
-  "zustand": "^4.5.4"
-},
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "firebase": "^12.3.0",
+    "lucide-react": "^0.544.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^6.25.1",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.12.7",
+    "web-vitals": "^2.1.4",
+    "zustand": "^4.5.4"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -42,6 +42,7 @@
     ]
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13"
