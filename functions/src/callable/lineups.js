@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const { DATA_NAMESPACE } = require("../config"); // Import the namespace
 
 /**
  * Saves a user's lineup by updating the 'lineup' map in their main profile document.
@@ -16,14 +17,13 @@ exports.saveLineup = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Invalid data provided.");
   }
 
-  // Correct path to the user's main profile document
-  const profileRef = admin.firestore().doc(`artifacts/marching-art/users/${uid}/profile/data`);
+  // Use the namespace variable to build the correct path
+  const profileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
   
   try {
-    // Update the 'lineup' field and 'activeSeasonId' within the existing document
     await profileRef.update({
       lineup: lineup,
-      activeSeasonId: seasonId, // Set the active season when the lineup is saved
+      activeSeasonId: seasonId,
       "corps.lastEdit": admin.firestore.FieldValue.serverTimestamp(),
     });
 

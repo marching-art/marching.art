@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from 'firebaseConfig';
+import { db, dataNamespace } from 'firebaseConfig'; // Import dataNamespace
 
 export const useUserStore = create((set) => ({
   profile: null,
@@ -11,14 +11,13 @@ export const useUserStore = create((set) => ({
     }
     set({ isLoading: true });
     try {
-      // The path must match your Firestore structure for user profiles.
-      // From your rules file, it looks like: /artifacts/{namespace}/users/{userId}/profile/data
-      // We will use a placeholder namespace for now.
-      const userProfileRef = doc(db, `artifacts/v1/users/${uid}/profile/data`);
+      // Use the dataNamespace variable to build the correct path
+      const userProfileRef = doc(db, `artifacts/${dataNamespace}/users/${uid}/profile/data`);
       const docSnap = await getDoc(userProfileRef);
       if (docSnap.exists()) {
         set({ profile: { id: docSnap.id, ...docSnap.data() }, isLoading: false });
       } else {
+        console.warn(`Profile not found for user ${uid} at path: artifacts/${dataNamespace}/users/${uid}/profile/data`);
         set({ profile: null, isLoading: false });
       }
     } catch (error) {
