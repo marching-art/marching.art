@@ -15,11 +15,10 @@ const Footer = () => {
             <img 
               src="/logo192.png" 
               alt="marching.art logo" 
-              className="w-10 h-10 rounded-lg shadow-lg"
+              className="w-10 h-10"
             />
             <div>
               <h3 className="text-lg font-bold text-gradient-primary">marching.art</h3>
-              <p className="text-sm text-text-secondary-dark">The Ultimate Fantasy Drum Corps Game</p>
             </div>
           </div>
 

@@ -90,7 +90,7 @@ const Header = () => {
               <img 
                 src="/logo192.png" 
                 alt="marching.art logo" 
-                className="w-8 h-8 rounded-lg shadow-lg"
+                className="w-8 h-8"
               />
               marching.art
             </Link>

@@ -403,7 +403,7 @@ const HomePage = () => {
               <img 
                 src="/logo192.png" 
                 alt="marching.art logo" 
-                className="w-20 h-20 rounded-2xl shadow-2xl"
+                className="w-24 h-24"
               />
             </div>
             <h2 className="text-4xl md:text-6xl font-bold text-gradient-primary mb-6">
