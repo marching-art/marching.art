@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from 'firebase';
+import { db } from 'firebaseConfig';
 
 export const useUserStore = create((set) => ({
   profile: null,
