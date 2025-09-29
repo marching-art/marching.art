@@ -67,7 +67,12 @@ const AdminPage = () => {
       const result = await executeSeasonAction({ action, ...params });
       
       if (result.data.success) {
-        toast.success(result.data.message);
+        toast.success(result.data.message || `${action} completed successfully!`);
+        // Show season details if creating new season
+        if (action === 'createNewSeason' && result.data.seasonName) {
+          toast.success(`Season: ${result.data.seasonName}`, { duration: 5000 });
+          toast.success(`Status: ${result.data.status}, Day ${result.data.currentDay}/${result.data.totalDays || 49}`, { duration: 5000 });
+        }
         await fetchAdminData();
       } else {
         throw new Error(result.data.error || 'Action failed');
@@ -207,7 +212,55 @@ const AdminPage = () => {
 
         {/* Overview Tab */}
         {activeTab === 'overview' && adminStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <>
+            {/* Current Season Alert Box */}
+            {adminStats.currentSeason && (
+              <div className="mb-6 p-4 bg-primary/10 border border-primary/30 rounded-theme">
+                <div className="flex items-start gap-3">
+                  <Activity className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-text-primary dark:text-text-primary-dark mb-1">
+                      Current Season: {adminStats.currentSeason.seasonName || 'Unknown'}
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-2">
+                      <div>
+                        <span className="text-text-secondary dark:text-text-secondary-dark">Status:</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">
+                          {adminStats.currentSeason.status === 'active' ? (
+                            <span className="text-success">● Active</span>
+                          ) : adminStats.currentSeason.status === 'completed' ? (
+                            <span className="text-error">● Completed</span>
+                          ) : (
+                            <span className="text-warning">● Preparation</span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary dark:text-text-secondary-dark">Day:</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">
+                          {adminStats.currentSeason.currentDay} / {adminStats.currentSeason.totalDays}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary dark:text-text-secondary-dark">Week:</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">
+                          {adminStats.currentSeason.currentWeek} / {adminStats.currentSeason.totalWeeks}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary dark:text-text-secondary-dark">Type:</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">
+                          {adminStats.currentSeason.seasonType === 'live' ? 'Live Season' : 'Off-Season'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
               <div className="flex items-center justify-between mb-4">
                 <Users className="w-8 h-8 text-primary dark:text-primary-dark" />
@@ -268,6 +321,7 @@ const AdminPage = () => {
               </p>
             </div>
           </div>
+          </>
         )}
 
         {/* Seasons Tab */}
@@ -295,7 +349,12 @@ const AdminPage = () => {
                   </div>
                   
                   <button
-                    onClick={() => handleSeasonAction('createNewSeason')}
+                    onClick={async () => {
+                      const confirmed = window.confirm('Are you sure you want to create a new season? This will end the current season if one is active.');
+                      if (confirmed) {
+                        await handleSeasonAction('createNewSeason');
+                      }
+                    }}
                     disabled={isLoading}
                     className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
