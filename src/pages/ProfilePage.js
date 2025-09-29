@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { db } from 'firebaseConfig';
+import { db } from '../firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import LoadingScreen from '../components/common/LoadingScreen';
 import { 
   Trophy, 
   Award, 
@@ -83,11 +84,7 @@ const ProfilePage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!profile) {

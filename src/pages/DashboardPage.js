@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LineupEditor from '../components/dashboard/LineupEditor';
 import NewUserSetup from '../components/dashboard/NewUserSetup';
 import StaffManagement from '../components/dashboard/StaffManagement';
+import LoadingScreen from '../components/common/LoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { useUserStore } from '../store/userStore';
 import { httpsCallable } from 'firebase/functions';
@@ -181,11 +182,7 @@ const DashboardPage = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!currentUser || !profile) {
