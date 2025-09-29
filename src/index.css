@@ -1,7 +1,83 @@
-/* Critical CSS - Minimal blocking styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode Colors - Cream, Dark Brown, and Gold */
+    --color-primary: 218 165 32;        /* Gold */
+    --on-primary: 30 20 15;             /* Very dark brown text on gold */
+    --color-secondary: 139 69 19;       /* Saddle brown */
+    --on-secondary: 255 250 240;        /* Cream text on brown */
+    --color-accent: 205 175 149;        /* Tan/beige accent */
+    --color-background: 255 250 240;    /* Cream background */
+    --color-surface: 250 245 235;       /* Light cream surface */
+    --text-primary: 30 20 15;           /* Very dark brown */
+    --text-secondary: 90 60 40;         /* Medium brown */
+  }
+
+  .dark {
+    /* Dark Mode Colors - Dark Brown, Cream, and Gold */
+    --color-primary-dark: 218 165 32;   /* Gold (same as light) */
+    --on-primary-dark: 30 20 15;        /* Dark brown text on gold */
+    --color-secondary-dark: 139 69 19;  /* Saddle brown */
+    --on-secondary-dark: 255 250 240;   /* Cream text on brown */
+    --color-accent-dark: 101 67 33;     /* Dark brown accent */
+    --color-background-dark: 20 15 10;  /* Very dark brown background */
+    --color-surface-dark: 35 25 18;     /* Dark brown surface */
+    --text-primary-dark: 255 250 240;   /* Cream text */
+    --text-secondary-dark: 205 185 165; /* Light tan text */
+  }
+
+  body {
+    @apply bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark
+    px-6 py-3 rounded-xl font-semibold transition-all duration-200
+    shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary dark:bg-secondary-dark text-on-secondary dark:text-on-secondary-dark
+    px-6 py-3 rounded-xl font-semibold transition-all duration-200
+    shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
+  }
+
+  .card {
+    @apply bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Override transitions for animations and transforms */
+*:where([class*="animate-"], [class*="transition-transform"]) {
+  transition-property: transform, opacity;
+}
 
 /* Performance optimizations */
 * {
