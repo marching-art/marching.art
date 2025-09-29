@@ -13,10 +13,12 @@ import {
   RefreshCw,
   Star,
   Trophy,
-  DollarSign
+  DollarSign,
+  PlayCircle
 } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebaseConfig';
+import toast from 'react-hot-toast';
 import LoadingScreen from '../components/common/LoadingScreen';
 
 const AdminPage = () => {
@@ -26,8 +28,6 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
   const [systemStatus, setSystemStatus] = useState('loading');
-  const [notifications, setNotifications] = useState([]);
-  const [selectedSeasonType, setSelectedSeasonType] = useState('');
 
   // Check if user is admin
   const isAdmin = currentUser?.uid === 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
@@ -41,7 +41,6 @@ const AdminPage = () => {
   const fetchAdminData = async () => {
     try {
       setIsLoading(true);
-      // FIXED: Changed from 'adminPanel-getSystemStats' to 'getSystemStats'
       const getAdminStats = httpsCallable(functions, 'getSystemStats');
       const result = await getAdminStats();
       
@@ -51,6 +50,7 @@ const AdminPage = () => {
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
+      toast.error('Failed to load admin stats');
       setSystemStatus('error');
     } finally {
       setIsLoading(false);
@@ -60,59 +60,61 @@ const AdminPage = () => {
   const handleSeasonAction = async (action, params = {}) => {
     try {
       setIsLoading(true);
-      // FIXED: Changed from 'adminPanel-seasonAction' to 'seasonAction'
       const executeSeasonAction = httpsCallable(functions, 'seasonAction');
       const result = await executeSeasonAction({ action, ...params });
       
       if (result.data.success) {
-        setNotifications(prev => [...prev, {
-          id: Date.now(),
-          type: 'success',
-          message: result.data.message,
-          timestamp: new Date()
-        }]);
+        toast.success(result.data.message);
         await fetchAdminData();
       } else {
-        throw new Error(result.data.error);
+        throw new Error(result.data.error || 'Action failed');
       }
     } catch (error) {
       console.error(`Error executing ${action}:`, error);
-      setNotifications(prev => [...prev, {
-        id: Date.now(),
-        type: 'error',
-        message: `Failed to ${action}: ${error.message}`,
-        timestamp: new Date()
-      }]);
+      toast.error(`Failed to ${action}: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDatabaseAction = async (action, params = {}) => {
+  const handleManualScrape = async () => {
     try {
       setIsLoading(true);
-      // FIXED: Changed from 'adminPanel-databaseAction' to 'databaseAction'
-      const executeDatabaseAction = httpsCallable(functions, 'databaseAction');
-      const result = await executeDatabaseAction({ action, ...params });
+      toast.loading('Scraping DCI.org for latest scores...', { id: 'scrape' });
+      
+      const triggerScrape = httpsCallable(functions, 'triggerManualScrape');
+      const result = await triggerScrape({});
       
       if (result.data.success) {
-        setNotifications(prev => [...prev, {
-          id: Date.now(),
-          type: 'success',
-          message: result.data.message,
-          timestamp: new Date()
-        }]);
+        toast.success(result.data.message, { id: 'scrape' });
       } else {
-        throw new Error(result.data.error);
+        toast.error('Scrape failed', { id: 'scrape' });
       }
     } catch (error) {
-      console.error(`Error executing ${action}:`, error);
-      setNotifications(prev => [...prev, {
-        id: Date.now(),
-        type: 'error',
-        message: `Failed to ${action}: ${error.message}`,
-        timestamp: new Date()
-      }]);
+      console.error('Error triggering scrape:', error);
+      toast.error(`Scrape failed: ${error.message}`, { id: 'scrape' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleManualScoreProcess = async () => {
+    try {
+      setIsLoading(true);
+      toast.loading('Processing scores...', { id: 'process' });
+      
+      const processScores = httpsCallable(functions, 'processScoresManually');
+      const result = await processScores({});
+      
+      if (result.data.success) {
+        toast.success('Scores processed successfully!', { id: 'process' });
+        await fetchAdminData();
+      } else {
+        toast.error('Score processing failed', { id: 'process' });
+      }
+    } catch (error) {
+      console.error('Error processing scores:', error);
+      toast.error(`Processing failed: ${error.message}`, { id: 'process' });
     } finally {
       setIsLoading(false);
     }
@@ -121,9 +123,11 @@ const AdminPage = () => {
   if (!isAdmin) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-error mb-4">Access Denied</h1>
+        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+          Access Denied
+        </h1>
         <p className="text-text-secondary dark:text-text-secondary-dark">
-          You do not have permission to access this page.
+          This page is only accessible to administrators.
         </p>
       </div>
     );
@@ -133,214 +137,296 @@ const AdminPage = () => {
     return <LoadingScreen message="Loading admin panel..." />;
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: Settings },
-    { id: 'seasons', label: 'Season Management', icon: Calendar },
-    { id: 'database', label: 'Database Tools', icon: Database },
-    { id: 'users', label: 'User Management', icon: Users },
-    { id: 'staff', label: 'Staff Management', icon: Star },
-    { id: 'reports', label: 'Reports', icon: TrendingUp }
-  ];
-
-  const SystemStatusCard = () => (
-    <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
-      <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center">
-        <CheckCircle className={`w-5 h-5 mr-2 ${systemStatus === 'healthy' ? 'text-green-400' : 'text-red-400'}`} />
-        System Status
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-primary dark:text-primary-dark">{adminStats?.totalUsers || 0}</div>
-          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Total Users</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-primary dark:text-primary-dark">{adminStats?.activeSeasons || 0}</div>
-          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Active Seasons</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-primary dark:text-primary-dark">{adminStats?.totalCorps || 0}</div>
-          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">Total Corps</div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const NotificationPanel = () => (
-    <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 shadow-theme dark:shadow-theme-dark">
-      <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark mb-3">Recent Actions</h3>
-      <div className="space-y-2 max-h-64 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <div className="text-text-secondary dark:text-text-secondary-dark text-sm">No recent actions</div>
-        ) : (
-          notifications.slice(-5).reverse().map(notification => (
-            <div
-              key={notification.id}
-              className={`p-3 rounded-theme text-sm ${
-                notification.type === 'success' 
-                  ? 'bg-green-900 bg-opacity-30 text-green-400' 
-                  : 'bg-red-900 bg-opacity-30 text-red-400'
-              }`}
-            >
-              <div className="font-medium">{notification.message}</div>
-              <div className="text-xs opacity-75 mt-1">
-                {notification.timestamp.toLocaleTimeString()}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
-        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">Admin Panel</h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          System administration and management tools
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+            Admin Panel
+          </h1>
+          <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
+            System Management & Monitoring
+          </p>
+        </div>
+        
+        <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+          systemStatus === 'healthy' ? 'bg-green-900 text-green-200' :
+          systemStatus === 'error' ? 'bg-red-900 text-red-200' :
+          'bg-gray-700 text-gray-300'
+        }`}>
+          <div className={`w-2 h-2 rounded-full ${
+            systemStatus === 'healthy' ? 'bg-green-400' :
+            systemStatus === 'error' ? 'bg-red-400' :
+            'bg-gray-400'
+          }`} />
+          <span className="text-sm font-medium">
+            {systemStatus === 'healthy' ? 'System Healthy' :
+             systemStatus === 'error' ? 'System Error' :
+             'Loading...'}
+          </span>
+        </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme shadow-theme dark:shadow-theme-dark overflow-hidden">
-        <div className="flex overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-primary dark:bg-primary-dark text-white border-b-4 border-primary dark:border-primary-dark'
-                    : 'text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex gap-2 border-b border-accent dark:border-accent-dark">
+        {[
+          { id: 'overview', label: 'Overview', icon: TrendingUp },
+          { id: 'seasons', label: 'Seasons', icon: Calendar },
+          { id: 'users', label: 'Users', icon: Users },
+          { id: 'database', label: 'Database', icon: Database }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors ${
+              activeTab === tab.id
+                ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark'
+                : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+            }`}
+          >
+            <tab.icon className="w-5 h-5" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {activeTab === 'overview' && <SystemStatusCard />}
-          
-          {/* Season Management Actions */}
-          {activeTab === 'seasons' && (
-            <div className="space-y-6">
-              <div className="bg-surface-dark p-6 rounded-theme">
-                <h3 className="text-xl font-bold text-text-primary-dark mb-4">Season Actions</h3>
-                
-                {/* FIXED: Proper Season Type Selection */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary-dark mb-2">
-                      Create New Season
-                    </label>
-                    <select
-                      value={selectedSeasonType || ''}
-                      onChange={(e) => setSelectedSeasonType(e.target.value)}
-                      className="w-full px-4 py-2 bg-background-dark border border-accent-dark rounded text-text-primary-dark focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="">Select Season Type</option>
-                      <option value="overture">Overture (Off-Season 1)</option>
-                      <option value="allegro">Allegro (Off-Season 2)</option>
-                      <option value="adagio">Adagio (Off-Season 3)</option>
-                      <option value="scherzo">Scherzo (Off-Season 4)</option>
-                      <option value="crescendo">Crescendo (Off-Season 5)</option>
-                      <option value="finale">Finale (Off-Season 6)</option>
-                      <option value="live">Live Season (10 weeks)</option>
-                    </select>
+      <div className="space-y-6">
+        {/* Overview Tab */}
+        {activeTab === 'overview' && adminStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <div className="flex items-center justify-between mb-2">
+                <Users className="w-8 h-8 text-primary dark:text-primary-dark" />
+                <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                  {adminStats.users?.total || 0}
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
+                Total Users
+              </h3>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                {adminStats.users?.active || 0} active this week
+              </p>
+            </div>
+
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <div className="flex items-center justify-between mb-2">
+                <Trophy className="w-8 h-8 text-primary dark:text-primary-dark" />
+                <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                  {adminStats.corps?.total || 0}
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
+                Active Corps
+              </h3>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                Across all classes
+              </p>
+            </div>
+
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <div className="flex items-center justify-between mb-2">
+                <Calendar className="w-8 h-8 text-primary dark:text-primary-dark" />
+                <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                  {adminStats.currentSeason?.seasonNumber || 'N/A'}
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
+                Current Season
+              </h3>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                Day {adminStats.currentSeason?.currentDay || 0} of {adminStats.currentSeason?.totalDays || 0}
+              </p>
+            </div>
+
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <div className="flex items-center justify-between mb-2">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+                <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                  {systemStatus === 'healthy' ? '100%' : '—'}
+                </span>
+              </div>
+              <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
+                System Health
+              </h3>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                All services operational
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Seasons Tab */}
+        {activeTab === 'seasons' && (
+          <div className="space-y-6">
+            {/* FIXED: Automatic Season Creation */}
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                Season Management
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Automatic Season Creation */}
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
+                  <div className="flex items-start gap-3 mb-3">
+                    <PlayCircle className="w-6 h-6 text-primary dark:text-primary-dark flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-1">
+                        Create New Season (Automatic)
+                      </h4>
+                      <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                        The system will automatically detect which season should start based on today's date and DCI Finals schedule.
+                      </p>
+                    </div>
                   </div>
                   
                   <button
-                    onClick={() => handleSeasonAction('createNewSeason', { seasonType: selectedSeasonType })}
-                    disabled={!selectedSeasonType}
+                    onClick={() => handleSeasonAction('createNewSeason')}
+                    disabled={isLoading}
                     className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create {selectedSeasonType ? selectedSeasonType.charAt(0).toUpperCase() + selectedSeasonType.slice(1) : 'New'} Season
+                    {isLoading ? 'Creating...' : 'Initialize New Season'}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mt-6">
+                {/* Other Season Actions */}
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => handleSeasonAction('endCurrentSeason')}
-                    className="btn-secondary"
+                    disabled={isLoading}
+                    className="btn-secondary disabled:opacity-50"
                   >
                     End Current Season
                   </button>
                   
                   <button
                     onClick={() => handleSeasonAction('generateSchedule')}
-                    className="btn-secondary"
+                    disabled={isLoading}
+                    className="btn-secondary disabled:opacity-50"
                   >
                     Regenerate Schedule
                   </button>
                 </div>
               </div>
+            </div>
 
-              {/* Current Season Info */}
-              {adminStats?.currentSeason && (
-                <div className="bg-background-dark p-6 rounded-theme border border-accent-dark">
-                  <h3 className="text-lg font-bold text-text-primary-dark mb-3">Current Season</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Season:</span>
-                      <span className="text-text-primary-dark font-medium">
-                        {adminStats.currentSeason.seasonNumber || 'Unknown'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Type:</span>
-                      <span className="text-text-primary-dark font-medium">
-                        {adminStats.currentSeason.seasonType === 'live' ? 'Live Season' : 'Off-Season'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Current Day:</span>
-                      <span className="text-text-primary-dark font-medium">
-                        Day {adminStats.currentSeason.currentDay || 1}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Total Days:</span>
-                      <span className="text-text-primary-dark font-medium">
-                        {adminStats.currentSeason.totalDays || 49}
-                      </span>
-                    </div>
+            {/* Current Season Info */}
+            {adminStats?.currentSeason && (
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+                <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                  Current Season Details
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Season:</span>
+                    <p className="font-medium text-text-primary dark:text-text-primary-dark mt-1">
+                      {adminStats.currentSeason.seasonNumber || 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Type:</span>
+                    <p className="font-medium text-text-primary dark:text-text-primary-dark mt-1">
+                      {adminStats.currentSeason.seasonType === 'live' ? 'Live Season' : 'Off-Season'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Current Day:</span>
+                    <p className="font-medium text-text-primary dark:text-text-primary-dark mt-1">
+                      Day {adminStats.currentSeason.currentDay || 1}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Total Days:</span>
+                    <p className="font-medium text-text-primary dark:text-text-primary-dark mt-1">
+                      {adminStats.currentSeason.totalDays || 49}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Status:</span>
+                    <p className="font-medium text-text-primary dark:text-text-primary-dark mt-1">
+                      {adminStats.currentSeason.status || 'Active'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">ID:</span>
+                    <p className="font-mono text-xs text-text-primary dark:text-text-primary-dark mt-1">
+                      {adminStats.currentSeason.activeSeasonId || 'N/A'}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'database' && (
-            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
-              <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Database Tools</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              </div>
+            )}
+
+            {/* Live Season Tools */}
+            <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+              <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+                Live Season Tools
+              </h3>
+              
+              <div className="space-y-3">
                 <button
-                  onClick={() => handleDatabaseAction('backupDatabase')}
+                  onClick={handleManualScrape}
                   disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-theme transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-secondary text-white rounded-theme hover:bg-opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <Database className="w-5 h-5 mr-2 inline" />
-                  Backup Database
+                  <RefreshCw className="w-5 h-5" />
+                  Scrape Latest Scores from DCI.org
+                </button>
+                
+                <button
+                  onClick={handleManualScoreProcess}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-secondary text-white rounded-theme hover:bg-opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <PlayCircle className="w-5 h-5" />
+                  Process Today's Scores Manually
                 </button>
               </div>
+              
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-4">
+                Note: Scores are automatically scraped and processed daily at 1:00 AM and 2:00 AM ET respectively.
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Sidebar */}
-        <div>
-          <NotificationPanel />
-        </div>
+        {/* Users Tab */}
+        {activeTab === 'users' && adminStats && (
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+              User Statistics
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-4">
+                {adminStats.corps?.distribution && Object.entries(adminStats.corps.distribution).map(([className, count]) => (
+                  <div key={className} className="text-center p-4 bg-background dark:bg-background-dark rounded-theme">
+                    <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                      {count}
+                    </div>
+                    <div className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
+                      {className}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Database Tab */}
+        {activeTab === 'database' && (
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+              Database Tools
+            </h3>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              Database management tools coming soon...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
