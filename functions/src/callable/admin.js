@@ -345,139 +345,62 @@ exports.staffAction = functions.https.onCall(async (data, context) => {
 // ============================================================================
 
 /**
- * Create a new season with dynamic date calculations for any year
- * This will work for 2025, 2026, 2027, and beyond
- * 
- * @param {FirebaseFirestore.Firestore} db 
- * @param {string} seasonType - OPTIONAL: One of: overture, allegro, adagio, scherzo, crescendo, finale, live
- * @param {number} year - The Finals year for the season
+ * Create a new season - uses the SAME logic as automatic scheduler
+ * No duplication - just calls the scheduler's initialization
  */
 async function createNewSeason(db, seasonType, year) {
-  const now = new Date();
-  
-  // Determine which year's cycle we're in
-  const { cycleYear, seasonInfo } = determineCurrentCycle(now);
-  const finalsYear = year || cycleYear;
-  
-  // AUTO-DETECT season type if not provided
-  let seasonTypeLower;
-  
-  if (!seasonType) {
-    seasonTypeLower = seasonInfo.seasonType;
-    console.log(`Auto-detected season type: ${seasonTypeLower} for cycle year ${finalsYear}`);
-  } else {
-    // Manual season type provided - validate it
-    seasonTypeLower = seasonType.toLowerCase();
+  try {
+    // Import the scheduler's initialization function
+    const { initializeSeasonManually } = require('../../src/scheduled/seasonScheduler');
     
-    if (!SEASON_TYPES.includes(seasonTypeLower)) {
-      throw new Error(`Invalid season type. Must be one of: ${SEASON_TYPES.join(', ')}`);
+    // Call the existing manual initialization that's already exported
+    const result = await initializeSeasonManually({ 
+      startDate: new Date().toISOString() 
+    }, {
+      auth: { uid: ADMIN_USER_ID }  // Simulate admin context
+    });
+    
+    console.log('Season created using scheduler logic:', result);
+    
+    return result;
+    
+  } catch (error) {
+    // If we can't use the scheduler function directly, fall back to triggering it via callable
+    console.log('Using fallback method to create season');
+    
+    // The scheduler already exports initializeSeasonManually as a callable function
+    // We just need to invoke it properly
+    const functions = require('firebase-functions');
+    const httpsCallable = functions.httpsCallable;
+    
+    try {
+      // Since we're in the backend, we can directly call the scheduler's logic
+      const seasonScheduler = require('../../src/scheduled/seasonScheduler');
+      
+      // Determine what season should be created
+      const now = new Date();
+      const seasonInfo = determineCurrentCycle(now);
+      
+      // Use the scheduler's initialization function
+      const db = admin.firestore();
+      const result = await seasonScheduler.initializeNewSeason(db, now, seasonInfo);
+      
+      return {
+        success: true,
+        message: `Season ${result.seasonData.seasonName} created successfully!`,
+        seasonId: result.seasonId,
+        seasonName: result.seasonData.seasonName,
+        seasonType: result.seasonData.seasonType,
+        currentDay: result.seasonData.currentDay,
+        totalDays: result.seasonData.totalDays,
+        status: result.seasonData.status
+      };
+      
+    } catch (innerError) {
+      console.error('Failed to use scheduler directly:', innerError);
+      throw new Error(`Failed to create season: ${innerError.message}`);
     }
   }
-  
-  // Calculate the actual season start and end dates
-  const isLiveSeason = seasonTypeLower === 'live';
-  const totalWeeks = isLiveSeason ? 10 : 7;
-  const totalDays = isLiveSeason ? 70 : 49;
-  
-  // Get proper season dates
-  const seasonDates = calculateSeasonDates(seasonTypeLower, finalsYear);
-  const { seasonStartDate, seasonEndDate } = seasonDates;
-  
-  // Calculate current week and day based on actual date
-  let currentWeek = 0;
-  let currentDay = 0;
-  let status = 'preparation';
-  
-  if (now >= seasonStartDate && now <= seasonEndDate) {
-    // Season is active - calculate actual current day
-    const daysSinceStart = Math.floor((now - seasonStartDate) / (1000 * 60 * 60 * 24));
-    currentDay = daysSinceStart + 1;
-    currentWeek = Math.floor(daysSinceStart / 7) + 1;
-    status = 'active';
-  } else if (now > seasonEndDate) {
-    // Season has already ended
-    status = 'completed';
-    currentDay = totalDays;
-    currentWeek = totalWeeks;
-  }
-  
-  // Create proper season ID based on type
-  let seasonId, seasonName;
-  const seasonYear = isLiveSeason ? 
-    finalsYear : 
-    `${finalsYear - 1}-${finalsYear.toString().slice(-2)}`;
-  
-  if (isLiveSeason) {
-    seasonId = `live_${finalsYear}`;
-    seasonName = `DCI ${finalsYear} Live Season`;
-  } else {
-    seasonId = `${seasonTypeLower}_${seasonYear}`;
-    const themeIndex = SEASON_THEMES.findIndex(t => t.toLowerCase() === seasonTypeLower);
-    seasonName = `${SEASON_THEMES[themeIndex]} Season ${seasonYear}`;
-  }
-  
-  // Get next season number (incremental counter)
-  const seasonNumber = await getNextSeasonNumber(db);
-  
-  // Create season document
-  const seasonData = {
-    seasonId,
-    activeSeasonId: seasonId,
-    seasonName,
-    seasonNumber,
-    seasonType: isLiveSeason ? 'live' : 'off',
-    isLiveSeason,
-    finalsYear,
-    startDate: admin.firestore.Timestamp.fromDate(seasonStartDate),
-    endDate: admin.firestore.Timestamp.fromDate(seasonEndDate),
-    currentWeek,
-    currentDay,
-    totalWeeks,
-    totalDays,
-    status,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    lastProgressionCheck: admin.firestore.FieldValue.serverTimestamp()
-  };
-  
-  // Save to game-settings
-  await db.collection('game-settings').doc('current').set(seasonData);
-  
-  // Initialize other season collections
-  await db.collection('schedules').doc(seasonId).set({
-    seasonId,
-    competitions: [],
-    generatedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  await db.collection('leaderboards').doc(seasonId).set({
-    seasonId,
-    rankings: [],
-    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  // Assign corps and generate schedule
-  await assignCorpsForSeason(db, seasonId, seasonTypeLower, finalsYear);
-  
-  // Log admin action
-  await db.collection('admin-logs').add({
-    action: 'createNewSeason',
-    seasonId,
-    seasonType: seasonTypeLower,
-    adminId: 'manual',
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    details: `Created ${seasonName} - Status: ${status}, Current Day: ${currentDay}/${totalDays}`
-  });
-  
-  return {
-    success: true,
-    message: `Season ${seasonName} created successfully! Status: ${status}, Current Day: ${currentDay}/${totalDays}`,
-    seasonId,
-    seasonName,
-    seasonType: seasonTypeLower,
-    currentDay,
-    currentWeek,
-    status
-  };
 }
 
 /**

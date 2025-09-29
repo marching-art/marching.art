@@ -63,19 +63,30 @@ const AdminPage = () => {
   const handleSeasonAction = async (action, params = {}) => {
     try {
       setIsLoading(true);
-      const executeSeasonAction = httpsCallable(functions, 'seasonAction');
-      const result = await executeSeasonAction({ action, ...params });
       
-      if (result.data.success) {
-        toast.success(result.data.message || `${action} completed successfully!`);
-        // Show season details if creating new season
-        if (action === 'createNewSeason' && result.data.seasonName) {
-          toast.success(`Season: ${result.data.seasonName}`, { duration: 5000 });
-          toast.success(`Status: ${result.data.status}, Day ${result.data.currentDay}/${result.data.totalDays || 49}`, { duration: 5000 });
+      // For season creation, use the scheduler's manual initialization
+      if (action === 'createNewSeason') {
+        const initializeSeasonManually = httpsCallable(functions, 'initializeSeasonManually');
+        const result = await initializeSeasonManually({});
+        
+        if (result.data.success) {
+          toast.success(result.data.message || 'Season created successfully!');
+          toast.success(`${result.data.seasonName}`, { duration: 5000 });
+          await fetchAdminData();
+        } else {
+          throw new Error(result.data.error || 'Season creation failed');
         }
-        await fetchAdminData();
       } else {
-        throw new Error(result.data.error || 'Action failed');
+        // For other actions, use seasonAction
+        const executeSeasonAction = httpsCallable(functions, 'seasonAction');
+        const result = await executeSeasonAction({ action, ...params });
+        
+        if (result.data.success) {
+          toast.success(result.data.message || `${action} completed successfully!`);
+          await fetchAdminData();
+        } else {
+          throw new Error(result.data.error || 'Action failed');
+        }
       }
     } catch (error) {
       console.error(`Error executing ${action}:`, error);
