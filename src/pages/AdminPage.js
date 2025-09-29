@@ -43,9 +43,9 @@ const AdminPage = () => {
   const fetchAdminData = async () => {
     try {
       setIsLoading(true);
-      // FIXED: Use the correct function name from admin.js
-      const getAdminStats = httpsCallable(functions, 'getAdminStats');
-      const result = await getAdminStats();
+      // Use the function name that's exported in index.js
+      const getSystemStats = httpsCallable(functions, 'getSystemStats');
+      const result = await getSystemStats();
       
       if (result.data) {
         setAdminStats(result.data);
