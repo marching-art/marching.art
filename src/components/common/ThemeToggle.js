@@ -1,29 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 const ThemeToggle = () => {
+  // Read initial state from DOM (App.js already initialized it)
   const [isDark, setIsDark] = useState(() => {
-    // Initialize state from localStorage or system preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return document.documentElement.classList.contains('dark');
   });
 
+  // Sync with localStorage changes (from other tabs)
   useEffect(() => {
-    // Apply theme on mount and when isDark changes
-    if (isDark) {
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme') {
+        const newIsDark = e.newValue === 'dark';
+        setIsDark(newIsDark);
+        if (newIsDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    
+    if (newIsDark) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, [isDark]);
-
-  const toggleTheme = () => {
-    setIsDark(prev => !prev);
   };
 
   return (

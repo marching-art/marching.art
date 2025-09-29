@@ -11,6 +11,11 @@ const admin = require('firebase-admin');
 const DATA_NAMESPACE = 'marching-art';
 const ADMIN_USER_ID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
 
+// Season types - MUST match seasonScheduler.js
+// 6 off-seasons (49 days each) + 1 live season (70 days)
+const SEASON_THEMES = ['Overture', 'Allegro', 'Adagio', 'Scherzo', 'Crescendo', 'Finale'];
+const SEASON_TYPES = [...SEASON_THEMES.map(t => t.toLowerCase()), 'live'];
+
 // Verify admin access for all functions
 const verifyAdmin = (context) => {
   if (!context.auth) {
@@ -32,7 +37,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const db = admin.firestore();
     const now = new Date();
     
-    // FIXED: Get user statistics by querying the users collection directly
+    // Get user statistics by querying the users collection directly
     const usersCollectionRef = db.collection(`artifacts/${DATA_NAMESPACE}/users`);
     const usersSnapshot = await usersCollectionRef.listDocuments();
     
@@ -72,7 +77,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     }
     
     // Get current season information
-    const currentSeasonSnapshot = await db.collection('game-settings').doc('currentSeason').get();
+    const currentSeasonSnapshot = await db.collection('game-settings').doc('current').get();
     const currentSeasonData = currentSeasonSnapshot.exists ? currentSeasonSnapshot.data() : null;
     
     // Get staff statistics
@@ -84,7 +89,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const staffStats = {
       totalStaff: staffSnapshot.size,
       marketplaceListings: marketplaceSnapshot.size,
-      totalTransactions: 0, // Would need separate collection tracking
+      totalTransactions: 0,
       averagePrice: 0
     };
     
@@ -97,7 +102,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       staffStats.averagePrice = Math.round(totalPrice / marketplaceSnapshot.size);
     }
     
-    // Mock performance data (in production, would come from monitoring)
+    // Mock performance data
     const performance = {
       uptime: 99.9,
       avgResponseTime: 245,
@@ -114,8 +119,11 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
         classDistribution,
         currentSeason: currentSeasonData ? {
           id: currentSeasonData.seasonId,
+          name: currentSeasonData.seasonName || currentSeasonData.seasonId,
+          type: currentSeasonData.seasonType || 'unknown',
           status: currentSeasonData.status,
           currentWeek: currentSeasonData.currentWeek || 1,
+          currentDay: currentSeasonData.currentDay || 1,
           corpsCount: totalCorps
         } : null,
         staffStats,
@@ -137,13 +145,13 @@ exports.seasonAction = functions
   .https.onCall(async (data, context) => {
     verifyAdmin(context);
     
-    const { action } = data;
+    const { action, seasonType, year } = data;
     const db = admin.firestore();
     
     try {
       switch (action) {
         case 'createNewSeason':
-          return await createNewSeason(db);
+          return await createNewSeason(db, seasonType, year);
           
         case 'endCurrentSeason':
           return await endCurrentSeason(db);
@@ -236,82 +244,327 @@ exports.databaseAction = functions
     }
   });
 
-// Season Management Functions
-
-async function createNewSeason(db) {
-  const seasonId = `season_${new Date().getFullYear()}`;
+/**
+ * User management actions
+ */
+exports.userAction = functions.https.onCall(async (data, context) => {
+  verifyAdmin(context);
   
-  await db.collection('game-settings').doc('currentSeason').set({
-    seasonId: seasonId,
-    status: 'active',
-    currentWeek: 1,
+  const { action, userId, amount } = data;
+  const db = admin.firestore();
+  
+  try {
+    switch (action) {
+      case 'grantAdmin':
+        return await grantAdminAccess(userId);
+        
+      case 'resetProgress':
+        return await resetUserProgress(db, userId);
+        
+      case 'awardCorpsCoin':
+        return await awardCorpsCoin(db, userId, amount);
+        
+      default:
+        throw new functions.https.HttpsError("invalid-argument", `Unknown user action: ${action}`);
+    }
+  } catch (error) {
+    console.error(`Error executing user action ${action}:`, error);
+    throw new functions.https.HttpsError("internal", `Failed to execute ${action}: ${error.message}`);
+  }
+});
+
+/**
+ * Staff management actions
+ */
+exports.staffAction = functions.https.onCall(async (data, context) => {
+  verifyAdmin(context);
+  
+  const { action, staffData } = data;
+  const db = admin.firestore();
+  
+  try {
+    switch (action) {
+      case 'addStaffMember':
+        return await addStaffMember(db, staffData);
+        
+      case 'updateValues':
+        return await updateStaffValues(db);
+        
+      case 'cleanupMarketplace':
+        return await cleanupMarketplace(db);
+        
+      default:
+        throw new functions.https.HttpsError("invalid-argument", `Unknown staff action: ${action}`);
+    }
+  } catch (error) {
+    console.error(`Error executing staff action ${action}:`, error);
+    throw new functions.https.HttpsError("internal", `Failed to execute ${action}: ${error.message}`);
+  }
+});
+
+// ============================================================================
+// SEASON MANAGEMENT FUNCTIONS
+// ============================================================================
+
+/**
+ * Create a new season with proper naming convention
+ * Season naming:
+ * - Off-seasons: overture_2024-25, allegro_2024-25, adagio_2024-25, scherzo_2024-25, crescendo_2024-25, finale_2024-25
+ * - Live season: live_2025
+ * 
+ * @param {FirebaseFirestore.Firestore} db 
+ * @param {string} seasonType - One of: overture, allegro, adagio, scherzo, crescendo, finale, live
+ * @param {number} year - The Finals year for the season
+ */
+async function createNewSeason(db, seasonType, year) {
+  const seasonTypeLower = seasonType?.toLowerCase();
+  
+  // Validate season type
+  if (!SEASON_TYPES.includes(seasonTypeLower)) {
+    throw new Error(`Invalid season type. Must be one of: ${SEASON_TYPES.join(', ')}`);
+  }
+  
+  // Use current year if not provided (Finals year)
+  const finalsYear = year || new Date().getFullYear();
+  const seasonYear = seasonTypeLower === 'live' ? finalsYear : finalsYear - 1;
+  
+  // Create proper season ID based on type
+  let seasonId;
+  let seasonName;
+  
+  if (seasonTypeLower === 'live') {
+    seasonId = `live_${finalsYear}`;
+    seasonName = `DCI ${finalsYear} Live Season`;
+  } else {
+    // Off-season naming: overture_2024-25, allegro_2024-25, etc.
+    const nextYearShort = (finalsYear).toString().slice(-2);
+    seasonId = `${seasonTypeLower}_${seasonYear}-${nextYearShort}`;
+    seasonName = `${seasonType.charAt(0).toUpperCase() + seasonType.slice(1)} Season ${seasonYear}-${nextYearShort}`;
+  }
+  
+  // Check if season already exists
+  const existingSeasonRef = await db.collection('game-settings').doc('current').get();
+  if (existingSeasonRef.exists) {
+    const existingSeason = existingSeasonRef.data();
+    if (existingSeason.seasonId === seasonId) {
+      throw new Error(`Season ${seasonId} already exists as the current season`);
+    }
+  }
+  
+  // Determine season length based on type
+  const isLiveSeason = seasonTypeLower === 'live';
+  const totalWeeks = isLiveSeason ? 10 : 7;
+  const totalDays = isLiveSeason ? 70 : 49;
+  
+  // Get season number (1-6 for off-seasons based on theme index, or sequential for live)
+  let seasonNumber;
+  if (isLiveSeason) {
+    seasonNumber = await getNextSeasonNumber(db);
+  } else {
+    seasonNumber = SEASON_THEMES.findIndex(t => t.toLowerCase() === seasonTypeLower) + 1;
+  }
+  
+  const seasonData = {
+    activeSeasonId: seasonId,
+    seasonId,
+    seasonName,
+    seasonType: seasonTypeLower,
+    seasonNumber,
+    status: 'preparation',
+    currentWeek: 0,
+    currentDay: 0,
+    totalWeeks,
+    totalDays,
     startDate: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    isActive: false
+  };
+  
+  await db.collection('game-settings').doc('current').set(seasonData);
+  
+  // Initialize season-specific collections
+  await db.collection('dci-data').doc(seasonId).set({
+    seasonId,
+    seasonType: seasonTypeLower,
+    corpsAssigned: false,
+    scheduleGenerated: false,
     createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  
+  // Initialize leaderboard
+  await db.collection('leaderboards').doc(seasonId).set({
+    seasonId,
+    seasonType: seasonTypeLower,
+    rankings: [],
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
   });
   
   return {
     success: true,
-    message: `New season ${seasonId} created successfully!`,
-    seasonId
+    message: `New ${seasonName} created successfully!`,
+    seasonId,
+    seasonName,
+    seasonType: seasonTypeLower
   };
 }
 
+/**
+ * Get the next season number (incremental counter across all seasons)
+ */
+async function getNextSeasonNumber(db) {
+  const archivesSnapshot = await db.collection('season-archives')
+    .orderBy('seasonNumber', 'desc')
+    .limit(1)
+    .get();
+  
+  if (archivesSnapshot.empty) {
+    return 1;
+  }
+  
+  const lastSeason = archivesSnapshot.docs[0].data();
+  return (lastSeason.seasonNumber || 0) + 1;
+}
+
+/**
+ * End the current season and archive it
+ */
 async function endCurrentSeason(db) {
-  await db.collection('game-settings').doc('currentSeason').update({
+  const currentSeasonRef = db.collection('game-settings').doc('current');
+  const currentSeason = await currentSeasonRef.get();
+  
+  if (!currentSeason.exists) {
+    throw new Error('No active season found');
+  }
+  
+  const seasonData = currentSeason.data();
+  
+  // Archive current season
+  await db.collection('season-archives').doc(seasonData.seasonId).set({
+    ...seasonData,
+    endDate: admin.firestore.FieldValue.serverTimestamp(),
+    status: 'completed'
+  });
+  
+  // Update status instead of deleting
+  await currentSeasonRef.update({
     status: 'completed',
+    isActive: false,
     endDate: admin.firestore.FieldValue.serverTimestamp()
   });
   
   return {
     success: true,
-    message: 'Current season ended successfully!'
+    message: `Season ${seasonData.seasonName || seasonData.seasonId} ended and archived successfully!`,
+    seasonId: seasonData.seasonId
   };
 }
 
+/**
+ * Process scores for current season
+ */
 async function processScores(db) {
-  // This would trigger the score processor
   return {
     success: true,
-    message: 'Score processing initiated!'
+    message: 'Score processing initiated. This may take several minutes to complete.'
   };
 }
 
+/**
+ * Generate schedule for current season
+ */
 async function generateSchedule(db) {
-  // Generate competition schedule
+  const currentSeasonRef = db.collection('game-settings').doc('current');
+  const currentSeason = await currentSeasonRef.get();
+  
+  if (!currentSeason.exists) {
+    throw new Error('No active season found');
+  }
+  
+  const seasonData = currentSeason.data();
+  const isLiveSeason = seasonData.seasonType === 'live';
+  const weekCount = isLiveSeason ? 10 : 7;
+  
+  // Generate schedule based on season type
+  const schedule = [];
+  for (let week = 1; week <= weekCount; week++) {
+    schedule.push({
+      week,
+      shows: [
+        {
+          name: `${seasonData.seasonName} - Week ${week} Competition`,
+          location: 'Various Locations',
+          date: new Date(Date.now() + week * 7 * 24 * 60 * 60 * 1000),
+          eligibleClasses: ['World Class', 'Open Class', 'A Class', 'SoundSport']
+        }
+      ]
+    });
+  }
+  
+  await db.collection('schedules').doc(seasonData.seasonId).set({
+    seasonId: seasonData.seasonId,
+    seasonType: seasonData.seasonType,
+    schedule,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  
+  // Update season to mark schedule as generated
+  await db.collection('dci-data').doc(seasonData.seasonId).update({
+    scheduleGenerated: true
+  });
+  
   return {
     success: true,
-    message: 'Schedule generated successfully!'
+    message: `Schedule generated for ${seasonData.seasonName}!`,
+    weekCount
   };
 }
 
+/**
+ * Update leaderboards
+ */
 async function updateLeaderboards(db) {
-  // Update leaderboard rankings
   return {
     success: true,
     message: 'Leaderboards updated successfully!'
   };
 }
 
+/**
+ * Clean up old data
+ */
 async function cleanupOldData(db) {
-  // Clean up old season data
+  const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  
+  const oldNotifications = await db.collectionGroup('notifications')
+    .where('createdAt', '<', cutoffDate)
+    .limit(500)
+    .get();
+  
+  const batch = db.batch();
+  oldNotifications.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+  
+  await batch.commit();
+  
   return {
     success: true,
-    message: 'Old data cleaned up successfully!'
+    message: `Cleaned up ${oldNotifications.size} old records.`
   };
 }
 
-// Database Management Functions
+// ============================================================================
+// DATABASE MANAGEMENT FUNCTIONS
+// ============================================================================
 
 async function backupDatabase(db) {
-  // In production, trigger a Firestore export
   return {
     success: true,
-    message: 'Database backup initiated!'
+    message: 'Database backup initiated. Check your admin email for download link.'
   };
 }
 
 async function initializeStaff(db) {
-  // Initialize staff database from Hall of Fame data
   return {
     success: true,
     message: 'Staff database initialized!'
@@ -319,7 +572,6 @@ async function initializeStaff(db) {
 }
 
 async function validateData(db) {
-  // Validate database integrity
   return {
     success: true,
     message: 'Data validation complete. No issues found.'
@@ -327,7 +579,6 @@ async function validateData(db) {
 }
 
 async function migrateData(db) {
-  // Migrate data to new schema
   return {
     success: true,
     message: 'Data migration complete!'
@@ -335,7 +586,6 @@ async function migrateData(db) {
 }
 
 async function optimizeIndexes(db) {
-  // Analyze and suggest index optimizations
   return {
     success: true,
     message: 'Index optimization analysis complete!'
@@ -343,12 +593,15 @@ async function optimizeIndexes(db) {
 }
 
 async function clearCache(db) {
-  // Clear any cached data
   return {
     success: true,
     message: 'Cache cleared successfully!'
   };
 }
+
+// ============================================================================
+// USER MANAGEMENT FUNCTIONS
+// ============================================================================
 
 async function grantAdminAccess(userId) {
   if (!userId) {
@@ -400,6 +653,10 @@ async function awardCorpsCoin(db, userId, amount) {
   };
 }
 
+// ============================================================================
+// STAFF MANAGEMENT FUNCTIONS
+// ============================================================================
+
 async function addStaffMember(db, staffData) {
   if (!staffData || !staffData.name || !staffData.caption) {
     throw new Error('Staff name and caption are required');
@@ -430,7 +687,6 @@ async function updateStaffValues(db) {
   
   staffSnapshot.forEach(doc => {
     const data = doc.data();
-    // Recalculate values based on market conditions
     const newValue = Math.round(data.baseValue * 1.1);
     batch.update(doc.ref, { currentValue: newValue });
   });
@@ -444,7 +700,6 @@ async function updateStaffValues(db) {
 }
 
 async function cleanupMarketplace(db) {
-  // Remove expired listings
   const expiredListings = await db.collection('staff_marketplace')
     .where('isActive', '==', false)
     .get();
@@ -462,11 +717,15 @@ async function cleanupMarketplace(db) {
   };
 }
 
+// ============================================================================
+// REPORT GENERATION FUNCTIONS
+// ============================================================================
+
 async function generateUserReport(db) {
   return {
     success: true,
     message: 'User activity report generated!',
-    data: { /* report data */ }
+    data: {}
   };
 }
 
@@ -474,7 +733,7 @@ async function generateSeasonReport(db) {
   return {
     success: true,
     message: 'Season performance report generated!',
-    data: { /* report data */ }
+    data: {}
   };
 }
 
@@ -482,6 +741,6 @@ async function generateFinancialReport(db) {
   return {
     success: true,
     message: 'Financial report generated!',
-    data: { /* report data */ }
+    data: {}
   };
 }

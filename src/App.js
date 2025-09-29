@@ -62,8 +62,17 @@ const UserProfileFetcher = () => {
 };
 
 function App() {
-  // REMOVED: Theme initialization from App.js
-  // ThemeToggle component now handles all theme logic
+  // Initialize theme on app load - KEEP THIS IN APP.JS
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   return (
     <AuthProvider>
