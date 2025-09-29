@@ -30,6 +30,7 @@ const StaffManagement = ({ userProfile }) => {
   const [selectedCaption, setSelectedCaption] = useState('');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [expandedCaptions, setExpandedCaptions] = useState({});
 
   const captions = ["GE1", "GE2", "Visual Proficiency", "Visual Analysis", "Color Guard", "Brass", "Music Analysis", "Percussion"];
 
@@ -144,6 +145,13 @@ const StaffManagement = ({ userProfile }) => {
     );
   };
 
+  const toggleCaptionExpanded = (caption) => {
+    setExpandedCaptions(prev => ({
+      ...prev,
+      [caption]: !prev[caption]
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -223,7 +231,7 @@ const StaffManagement = ({ userProfile }) => {
             {captions.map(caption => {
               const assignedStaff = getStaffForCaption(caption);
               const availableForCaption = getAvailableStaffForCaption(caption);
-              const [showAvailable, setShowAvailable] = useState(false);
+              const showAvailable = expandedCaptions[caption] || false;
 
               return (
                 <div key={caption} className="bg-surface dark:bg-surface-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
@@ -271,7 +279,7 @@ const StaffManagement = ({ userProfile }) => {
                   {availableForCaption.length > 0 && (
                     <div className="mt-3">
                       <button
-                        onClick={() => setShowAvailable(!showAvailable)}
+                        onClick={() => toggleCaptionExpanded(caption)}
                         className="text-sm text-primary dark:text-primary-dark hover:underline"
                       >
                         {showAvailable ? 'Hide' : 'Show'} available staff ({availableForCaption.length})
