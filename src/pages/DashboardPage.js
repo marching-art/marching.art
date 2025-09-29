@@ -13,7 +13,8 @@ import {
   Coins,
   Star,
   Target,
-  Lock
+  Lock,
+  CheckCircle
 } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
 
@@ -24,7 +25,7 @@ const StaffManagement = lazy(() => import('../components/dashboard/StaffManageme
 const ShowSelection = lazy(() => import('../components/dashboard/ShowSelection'));
 const UniformBuilder = lazy(() => import('../components/dashboard/UniformBuilder'));
 
-// Lightweight placeholder for analysis (lazy load when ready)
+// Lightweight placeholder for analysis
 const AnalysisTools = ({ userProfile }) => (
   <div className="bg-surface dark:bg-surface-dark p-8 rounded-theme text-center border border-accent dark:border-accent-dark">
     <BarChart3 className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
@@ -84,31 +85,70 @@ const ClassRegistrationCard = ({ cls, profile, isRegistrationOpen }) => {
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const { profile, isLoading } = useUserStore((state) => ({
-    profile: state.profile,
-    isLoading: state.isLoading
-  }));
+  const profile = useUserStore((state) => state.profile);
+  const isLoading = useUserStore((state) => state.isLoading);
+  const fetchUserProfile = useUserStore((state) => state.fetchUserProfile);
   
   const [activeTab, setActiveTab] = useState('overview');
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
 
   useEffect(() => {
-    // Check if user needs setup
-    if (profile && !profile.corps) {
-      setIsNewUser(true);
+    // Check if we need to fetch profile
+    if (currentUser && !profile && !isLoading) {
+      fetchUserProfile(currentUser.uid);
+    }
+  }, [currentUser, profile, isLoading, fetchUserProfile]);
+
+  useEffect(() => {
+    // Once profile is loaded, stop checking setup
+    if (profile) {
+      setIsCheckingSetup(false);
     }
   }, [profile]);
 
   const handleSetupComplete = () => {
-    setIsNewUser(false);
-    setActiveTab('overview');
+    // Refresh profile after setup
+    if (currentUser) {
+      fetchUserProfile(currentUser.uid);
+    }
   };
 
-  if (isLoading) {
+  // Show loading screen only when initially loading
+  if (isLoading || isCheckingSetup) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
 
-  if (isNewUser) {
+  // If no user or profile after loading, show message
+  if (!currentUser) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+          Dashboard
+        </h1>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please log in to view your dashboard
+        </p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+          Setting up your profile...
+        </h1>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please wait while we prepare your dashboard
+        </p>
+      </div>
+    );
+  }
+
+  // Check if user needs setup (new user without corps)
+  const needsSetup = !profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps';
+
+  if (needsSetup) {
     return (
       <div className="max-w-4xl mx-auto space-y-8">
         <Suspense fallback={<LoadingScreen message="Loading setup..." />}>
@@ -286,7 +326,16 @@ const DashboardPage = () => {
             )}
           </div>
         ) : (
-          <Suspense fallback={<LoadingScreen message={`Loading ${dashboardTabs.find(t => t.id === activeTab)?.label}...`} />}>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
+                <p className="text-text-secondary dark:text-text-secondary-dark">
+                  Loading {dashboardTabs.find(t => t.id === activeTab)?.label}...
+                </p>
+              </div>
+            </div>
+          }>
             {ActiveComponent && <ActiveComponent userProfile={profile} />}
           </Suspense>
         )}
