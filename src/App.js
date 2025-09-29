@@ -34,15 +34,15 @@ const UserProfileFetcher = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // FIXED: Fetch profile only when user changes, not when profile/fetchUserProfile changes
+  // Fetch profile only when user changes
   useEffect(() => {
     if (currentUser && (!profile || profile.id !== currentUser.uid)) {
       console.log('App.js: Fetching profile for user', currentUser.uid);
       fetchUserProfile(currentUser.uid);
     }
-  }, [currentUser?.uid]); // ONLY depend on currentUser.uid
+  }, [currentUser?.uid]);
 
-  // FIXED: Handle navigation in a separate effect
+  // Handle navigation in a separate effect
   useEffect(() => {
     if (currentUser && profile) {
       // Redirect logged-in users from home to dashboard
@@ -62,17 +62,8 @@ const UserProfileFetcher = () => {
 };
 
 function App() {
-  useEffect(() => {
-    // Initialize theme on app load
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  // REMOVED: Theme initialization from App.js
+  // ThemeToggle component now handles all theme logic
 
   return (
     <AuthProvider>
