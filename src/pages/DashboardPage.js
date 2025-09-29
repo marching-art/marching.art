@@ -287,19 +287,35 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-        <div className="flex overflow-x-auto">
+      {/* Tab Navigation - Mobile Optimized */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark overflow-hidden">
+        {/* Mobile: Dropdown */}
+        <div className="md:hidden">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full p-4 bg-surface dark:bg-surface-dark text-text-primary dark:text-text-primary-dark border-none focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+          >
+            {dashboardTabs.map(tab => (
+              <option key={tab.id} value={tab.id}>
+                {tab.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Desktop: Horizontal Tabs */}
+        <div className="hidden md:flex overflow-x-auto">
           {dashboardTabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-primary dark:border-primary-dark text-primary dark:text-primary-dark bg-background dark:bg-background-dark'
-                    : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark'
+                    : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark hover:bg-background dark:hover:bg-background-dark'
                 }`}
               >
                 <Icon className="w-5 h-5" />
