@@ -4,20 +4,47 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- COLLECTION GROUP QUERIES FOR LEADERBOARDS ---
+    // CRITICAL: This must be at the top to allow collection group queries on 'data' documents
+    // But only for profile data within the artifacts namespace
+    match /artifacts/{namespace}/users/{userId}/profile/data {
+      allow read: if true; // Public profiles for leaderboards
+    }
+    
     // Allow collection group queries on 'data' collection but restrict to profile data
     match /{path=**}/data {
       allow read: if true; // This enables collectionGroup(db, 'data') queries
     }
 
+    // --- STAFF COLLECTION (HALL OF FAME DATABASE) ---
+    // Hall of Fame staff database - read-only for all authenticated users
+    match /staff/{staffId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
     // --- STAFF MARKETPLACE COLLECTION ---
     // Staff marketplace listings - users can create listings, all can read active ones
     match /staff_marketplace/{listingId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && resource.data.isActive == true;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.sellerId;
       allow update: if request.auth != null && 
         (request.auth.uid == resource.data.sellerId || request.auth.token.admin == true);
       allow delete: if request.auth != null && 
         (request.auth.uid == resource.data.sellerId || request.auth.token.admin == true);
+    }
+
+    // --- CORPS COIN TRANSACTIONS ---
+    // Transaction logs for CorpsCoin spending and earning
+    match /corps_coin_transactions/{userId}/transactions/{transactionId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // All transactions handled by cloud functions
+    }
+
+    // --- XP TRANSACTIONS ---
+    // XP earning and spending logs
+    match /xp_transactions/{userId}/transactions/{transactionId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // All transactions handled by cloud functions
     }
 
     // --- USER DATA ---
@@ -51,84 +78,29 @@ service cloud.firestore {
       }
       
       // Comments are public to read. Logged-in users can create.
-      // Deletion handled by cloud functions only
       match /comments/{commentId} {
-        allow read: if true;
+        allow read: if true; // Comments are public for profiles
         allow create: if request.auth != null;
-        allow update, delete: if false; // Handled by cloud functions only
+        allow update, delete: if request.auth != null && 
+          (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
       }
       
-      // Notifications are private to the user
+      // Notifications - only accessible to the owner
       match /notifications/{notificationId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, update: if request.auth != null && request.auth.uid == userId;
+        allow create, delete: if false; // Handled by cloud functions
       }
     }
 
-    // --- STAFF MANAGEMENT ---
-    // Hall of Fame Staff Database - public read access, admin write access
-    match /staff/{staffId} {
-      allow read: if true; // Public access for staff market
-      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // --- SEASON AND GAME DATA ---
-    match /game-settings/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
-    }
-    
-    match /seasons/{seasonId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
-      
-      // Season-specific data subcollections
-      match /{path=**} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.token.admin == true;
-      }
-    }
-    
-    match /dci-data/{seasonId} {
-      // Allow admins to write to the top-level season documents
-      allow write: if request.auth != null && request.auth.token.admin == true;
-
-      // Allow anyone to read any document within this season or its subcollections
-      match /{path=**} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.token.admin == true;
-      }
-    }
-    
-    match /dci-stats/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /fantasy_recaps/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-      
-      // Fantasy recap subcollections (results, details, etc.)
-      match /{path=**} {
-        allow read: if true;
-        allow write: if false; // Backend only
-      }
-    }
-    
-    match /final_rankings/{docId} {
-      allow read: if true;
+    // --- GAME DATA ---
+    match /dci-data/{seasonId}/{document=**} {
+      allow read: if true; // Season data is public
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
     
     match /historical_scores/{docId} {
       allow read: if true;
-      allow write: if false; // Backend only
-      
-      // Historical score subcollections
-      match /{path=**} {
-        allow read: if true;
-        allow write: if false; // Backend only
-      }
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
     
     match /live_scores/{seasonId}/scores/{docId} {
@@ -141,119 +113,73 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
 
-    // --- LEAGUES ---
+    // --- LEADERBOARDS ---
+    match /leaderboards/{seasonId}/rankings/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+
+    // --- FANTASY RECAPS ---
+    match /fantasy_recaps/{seasonId}/recaps/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+
+    // --- LEAGUES (Enhanced with proper permissions) ---
     match /leagues/{leagueId} {
       // League members and admins can read league data
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.members || 
+         request.auth.token.admin == true);
       // Only backend functions can write/update league data
       allow create, update, delete: if false; // Backend only
     }
 
-    // League matchups are readable by authenticated users
+    // League matchups are readable by authenticated users (for leaderboards and league pages)
     match /leagues/{leagueId}/matchups/{week} {
       allow read: if request.auth != null;
       allow write: if false; // Backend only
     }
 
-    // League chat messages - members can read/write
+    // League chat messages - members can read/write, enhanced permissions
     match /leagues/{leagueId}/chat/{messageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if request.auth != null && 
+        (request.auth.uid in get(/databases/$(database)/documents/leagues/$(leagueId)).data.members ||
+         request.auth.token.admin == true);
+      allow create: if request.auth != null && 
+        request.auth.uid in get(/databases/$(database)/documents/leagues/$(leagueId)).data.members;
       allow update, delete: if false; // Backend only
     }
 
     // League invitations
-    match /league_invitations/{inviteId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
-    }
-
-    // League join requests
-    match /league_join_requests/{requestId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if false; // Backend only
-    }
-
-    // League archives are public to read
-    match /league_archives/{archiveId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-
-    // League stats and summaries - public read access
-    match /league_stats/{leagueId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-
-    // League member data aggregation
-    match /league_members/{leagueId}/{memberId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Backend only
-    }
-
-    // --- ADDITIONAL GAME DATA COLLECTIONS ---
-    match /uniform_presets/{presetId} {
-      allow read: if true; // Public uniform presets
-      allow write: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // CorpsCoin transactions
-    match /corpscoin_transactions/{transactionId} {
+    match /league_invitations/{invitationId} {
       allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.userId || request.auth.token.admin == true);
+        (request.auth.uid == resource.data.inviteeId || 
+         request.auth.uid == resource.data.inviterId ||
+         request.auth.token.admin == true);
       allow write: if false; // Backend only
     }
 
-    // Performance tracking
-    match /performance_history/{userId} {
-      match /performances/{performanceId} {
-        allow read: if request.auth != null && 
-          (request.auth.uid == userId || request.auth.token.admin == true);
-        allow write: if false; // Backend only
-      }
-    }
-
-    // Hall of Champions
-    match /hall_of_champions/{championshipId} {
-      allow read: if true; // Public access to championship records
-      allow write: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // Scoring and calculations
-    match /scoring_data/{seasonId}/{week} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-
-    // Weekly lineup snapshots for scoring
-    match /lineup_snapshots/{seasonId}/{week}/{userId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == userId || request.auth.token.admin == true);
-      allow write: if false; // Backend only
-    }
-
-    // XP and progression
-    match /xp_transactions/{userId} {
-      match /transactions/{transactionId} {
-        allow read: if request.auth != null && 
-          (request.auth.uid == userId || request.auth.token.admin == true);
-        allow write: if false; // Backend only
-      }
-    }
-
-    // Class unlocking requirements
-    match /class_requirements/{requirementId} {
-      allow read: if true; // Public access to class requirements
-      allow write: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // --- ADMINISTRATIVE COLLECTIONS ---
-    // Admin can write to any collection for management purposes
-    match /{document=**} {
+    // --- ADMIN COLLECTIONS ---
+    match /admin/{document=**} {
       allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // System settings and configurations
+    match /system/{document=**} {
+      allow read: if true; // System settings can be read by all
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Error logs and analytics (admin only)
+    match /logs/{document=**} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // --- DEFAULT DENY ---
+    // Explicitly deny access to any collection not covered above
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

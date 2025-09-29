@@ -14,7 +14,6 @@ import {
   Coins,
   ChevronDown,
   Bell,
-  Search,
   Crown,
   Zap
 } from 'lucide-react';
@@ -25,7 +24,6 @@ const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -90,7 +88,7 @@ const Header = () => {
               <img 
                 src="/logo192.png" 
                 alt="marching.art logo" 
-                className="w-8 h-8"
+                className="w-8 h-8 rounded-lg shadow-lg"
               />
               marching.art
             </Link>
@@ -111,21 +109,6 @@ const Header = () => {
                   {item.label}
                 </NavLink>
               ))}
-            </div>
-
-            {/* Search Bar (Desktop) */}
-            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary-dark w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search players, corps, leagues..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input-field w-full pl-10 pr-4 py-2"
-                  onKeyPress={(e) => e.key === 'Enter' && console.log('Search:', searchQuery)}
-                />
-              </div>
             </div>
 
             {/* User Actions */}
@@ -287,20 +270,6 @@ const Header = () => {
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
-            </div>
-          </div>
-
-          {/* Mobile Search Bar */}
-          <div className="md:hidden mt-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary-dark w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-field w-full pl-10 pr-4 py-2"
-              />
             </div>
           </div>
 
