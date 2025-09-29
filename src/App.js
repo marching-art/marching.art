@@ -34,15 +34,21 @@ const UserProfileFetcher = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fetch profile only when user changes
+  // FIXED: Only fetch when UID changes AND profile doesn't match
   useEffect(() => {
-    if (currentUser && (!profile || profile.id !== currentUser.uid)) {
-      console.log('App.js: Fetching profile for user', currentUser.uid);
-      fetchUserProfile(currentUser.uid);
+    if (currentUser) {
+      // Only fetch if we don't have a profile OR the profile doesn't match the current user
+      if (!profile || profile.id !== currentUser.uid) {
+        console.log('App.js: Fetching profile for user', currentUser.uid);
+        fetchUserProfile(currentUser.uid);
+      }
+    } else if (profile) {
+      // Clear profile when user logs out
+      useUserStore.getState().clearProfile();
     }
-  }, [currentUser?.uid, profile, fetchUserProfile]);
+  }, [currentUser?.uid]); // CRITICAL: Only depend on UID, NOT profile or fetchUserProfile
 
-  // Handle navigation in a separate effect
+  // FIXED: Handle navigation separately with proper dependencies
   useEffect(() => {
     if (currentUser && profile) {
       // Redirect logged-in users from home to dashboard
@@ -56,35 +62,20 @@ const UserProfileFetcher = () => {
         navigate('/');
       }
     }
-  }, [currentUser, profile, location.pathname, navigate]);
+  }, [currentUser, profile, location.pathname]); // Safe because we're not calling fetchUserProfile here
 
   return null;
 };
 
 function App() {
-  // Initialize theme on app load - CRITICAL FOR THEME FUNCTIONALITY
+  // Initialize theme on app load
   useEffect(() => {
-    const initializeTheme = () => {
-      const savedTheme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      
-      // Apply dark mode if saved preference is dark OR if no preference and system prefers dark
-      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.documentElement.classList.add('dark');
-        // Ensure localStorage is set for consistency
-        if (!savedTheme) {
-          localStorage.setItem('theme', 'dark');
-        }
-      } else {
-        document.documentElement.classList.remove('dark');
-        // Ensure localStorage is set for consistency
-        if (!savedTheme) {
-          localStorage.setItem('theme', 'light');
-        }
-      }
-    };
-
-    initializeTheme();
+    const isDarkMode = localStorage.getItem('theme') === 'dark' ||
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
   }, []);
 
   return (

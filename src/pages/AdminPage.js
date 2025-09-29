@@ -27,6 +27,7 @@ const AdminPage = () => {
   const [adminStats, setAdminStats] = useState(null);
   const [systemStatus, setSystemStatus] = useState('loading');
   const [notifications, setNotifications] = useState([]);
+  const [selectedSeasonType, setSelectedSeasonType] = useState('');
 
   // Check if user is admin
   const isAdmin = currentUser?.uid === 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
@@ -230,28 +231,92 @@ const AdminPage = () => {
         <div className="lg:col-span-2 space-y-6">
           {activeTab === 'overview' && <SystemStatusCard />}
           
+          {/* Season Management Actions */}
           {activeTab === 'seasons' && (
-            <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
-              <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Season Controls</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => handleSeasonAction('createNewSeason')}
-                  disabled={isLoading}
-                  className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-theme transition-colors disabled:opacity-50"
-                >
-                  <Calendar className="w-5 h-5 mr-2 inline" />
-                  Create New Season
-                </button>
+            <div className="space-y-6">
+              <div className="bg-surface-dark p-6 rounded-theme">
+                <h3 className="text-xl font-bold text-text-primary-dark mb-4">Season Actions</h3>
                 
-                <button
-                  onClick={() => handleSeasonAction('processScores')}
-                  disabled={isLoading}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-theme transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw className="w-5 h-5 mr-2 inline" />
-                  Process Scores
-                </button>
+                {/* FIXED: Proper Season Type Selection */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary-dark mb-2">
+                      Create New Season
+                    </label>
+                    <select
+                      value={selectedSeasonType || ''}
+                      onChange={(e) => setSelectedSeasonType(e.target.value)}
+                      className="w-full px-4 py-2 bg-background-dark border border-accent-dark rounded text-text-primary-dark focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select Season Type</option>
+                      <option value="overture">Overture (Off-Season 1)</option>
+                      <option value="allegro">Allegro (Off-Season 2)</option>
+                      <option value="adagio">Adagio (Off-Season 3)</option>
+                      <option value="scherzo">Scherzo (Off-Season 4)</option>
+                      <option value="crescendo">Crescendo (Off-Season 5)</option>
+                      <option value="finale">Finale (Off-Season 6)</option>
+                      <option value="live">Live Season (10 weeks)</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleSeasonAction('createNewSeason', { seasonType: selectedSeasonType })}
+                    disabled={!selectedSeasonType}
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Create {selectedSeasonType ? selectedSeasonType.charAt(0).toUpperCase() + selectedSeasonType.slice(1) : 'New'} Season
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <button
+                    onClick={() => handleSeasonAction('endCurrentSeason')}
+                    className="btn-secondary"
+                  >
+                    End Current Season
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSeasonAction('generateSchedule')}
+                    className="btn-secondary"
+                  >
+                    Regenerate Schedule
+                  </button>
+                </div>
               </div>
+
+              {/* Current Season Info */}
+              {adminStats?.currentSeason && (
+                <div className="bg-background-dark p-6 rounded-theme border border-accent-dark">
+                  <h3 className="text-lg font-bold text-text-primary-dark mb-3">Current Season</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary-dark">Season:</span>
+                      <span className="text-text-primary-dark font-medium">
+                        {adminStats.currentSeason.seasonNumber || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary-dark">Type:</span>
+                      <span className="text-text-primary-dark font-medium">
+                        {adminStats.currentSeason.seasonType === 'live' ? 'Live Season' : 'Off-Season'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary-dark">Current Day:</span>
+                      <span className="text-text-primary-dark font-medium">
+                        Day {adminStats.currentSeason.currentDay || 1}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary-dark">Total Days:</span>
+                      <span className="text-text-primary-dark font-medium">
+                        {adminStats.currentSeason.totalDays || 49}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
