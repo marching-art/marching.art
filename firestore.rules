@@ -15,11 +15,11 @@ service cloud.firestore {
       allow read: if true; // This enables collectionGroup(db, 'data') queries
     }
 
-    // --- STAFF COLLECTION (HALL OF FAME DATABASE) ---
-    // Hall of Fame staff database - read-only for all authenticated users
-    match /staff/{staffId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+    // --- ADMIN ACCESS ---
+    // Admin user gets full read/write access to everything
+    match /{document=**} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2";
     }
 
     // --- STAFF MARKETPLACE COLLECTION ---
@@ -31,20 +31,6 @@ service cloud.firestore {
         (request.auth.uid == resource.data.sellerId || request.auth.token.admin == true);
       allow delete: if request.auth != null && 
         (request.auth.uid == resource.data.sellerId || request.auth.token.admin == true);
-    }
-
-    // --- CORPS COIN TRANSACTIONS ---
-    // Transaction logs for CorpsCoin spending and earning
-    match /corps_coin_transactions/{userId}/transactions/{transactionId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // All transactions handled by cloud functions
-    }
-
-    // --- XP TRANSACTIONS ---
-    // XP earning and spending logs
-    match /xp_transactions/{userId}/transactions/{transactionId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // All transactions handled by cloud functions
     }
 
     // --- USER DATA ---
@@ -78,29 +64,71 @@ service cloud.firestore {
       }
       
       // Comments are public to read. Logged-in users can create.
+      // Deletion handled by cloud functions only
       match /comments/{commentId} {
-        allow read: if true; // Comments are public for profiles
+        allow read: if true;
         allow create: if request.auth != null;
-        allow update, delete: if request.auth != null && 
-          (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+        allow update, delete: if false; // Handled by cloud functions only
       }
       
-      // Notifications - only accessible to the owner
+      // Notifications are private to the user
       match /notifications/{notificationId} {
-        allow read, update: if request.auth != null && request.auth.uid == userId;
-        allow create, delete: if false; // Handled by cloud functions
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // --- GAME DATA ---
-    match /dci-data/{seasonId}/{document=**} {
-      allow read: if true; // Season data is public
-      allow write: if request.auth != null && request.auth.token.admin == true;
+    // --- STAFF MANAGEMENT ---
+    // Hall of Fame Staff Database - public read access, admin write access
+    match /staff/{staffId} {
+      allow read: if true; // Public access for staff market
+      allow create, update, delete: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+    }
+
+    // --- GAME SETTINGS & ADMIN COLLECTIONS ---
+    match /game-settings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+    }
+    
+    match /season-archives/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+    }
+
+    // --- PUBLIC GAME DATA ---
+    match /dci-data/{seasonId} {
+      // Allow admins to write to the top-level season documents
+      allow write: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+
+      // Allow anyone to read any document within this season or its subcollections
+      match /{path=**} {
+        allow read: if true;
+      }
+    }
+    
+    match /dci-stats/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+    
+    match /fantasy_recaps/{docId} {
+      allow read: if true;
+      allow write: if false; // Backend only
+    }
+    
+    match /final_rankings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
     }
     
     match /historical_scores/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false; // Backend only
     }
     
     match /live_scores/{seasonId}/scores/{docId} {
@@ -110,19 +138,8 @@ service cloud.firestore {
     
     match /schedules/{docId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
-    }
-
-    // --- LEADERBOARDS ---
-    match /leaderboards/{seasonId}/rankings/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-
-    // --- FANTASY RECAPS ---
-    match /fantasy_recaps/{seasonId}/recaps/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
+      allow write: if request.auth != null && 
+        (request.auth.token.admin == true || request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
     }
 
     // --- LEAGUES (Enhanced with proper permissions) ---
@@ -130,7 +147,8 @@ service cloud.firestore {
       // League members and admins can read league data
       allow read: if request.auth != null && 
         (request.auth.uid in resource.data.members || 
-         request.auth.token.admin == true);
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
       // Only backend functions can write/update league data
       allow create, update, delete: if false; // Backend only
     }
@@ -145,41 +163,68 @@ service cloud.firestore {
     match /leagues/{leagueId}/chat/{messageId} {
       allow read: if request.auth != null && 
         (request.auth.uid in get(/databases/$(database)/documents/leagues/$(leagueId)).data.members ||
-         request.auth.token.admin == true);
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
       allow create: if request.auth != null && 
         request.auth.uid in get(/databases/$(database)/documents/leagues/$(leagueId)).data.members;
       allow update, delete: if false; // Backend only
     }
 
     // League invitations
-    match /league_invitations/{invitationId} {
+    match /league_invitations/{inviteId} {
       allow read: if request.auth != null && 
         (request.auth.uid == resource.data.inviteeId || 
          request.auth.uid == resource.data.inviterId ||
-         request.auth.token.admin == true);
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.inviteeId || 
+         request.auth.uid == resource.data.inviterId ||
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+    }
+
+    // League join requests
+    match /league_join_requests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if false; // Backend only
+    }
+
+    // League archives are public to read
+    match /league_archives/{archiveId} {
+      allow read: if true;
       allow write: if false; // Backend only
     }
 
-    // --- ADMIN COLLECTIONS ---
-    match /admin/{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    // League stats and summaries - public read access
+    match /league_stats/{leagueId} {
+      allow read: if true;
+      allow write: if false; // Backend only
     }
 
-    // System settings and configurations
-    match /system/{document=**} {
-      allow read: if true; // System settings can be read by all
-      allow write: if request.auth != null && request.auth.token.admin == true;
+    // League member data aggregation (for matchups and rankings)
+    match /league_members/{leagueId}/{memberId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Backend only
     }
 
-    // Error logs and analytics (admin only)
-    match /logs/{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    // --- TRANSACTION LOGS (Admin readable) ---
+    match /corps_coin_transactions/{userId}/transactions/{transactionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == userId || 
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+      allow write: if false; // Backend only
     }
 
-    // --- DEFAULT DENY ---
-    // Explicitly deny access to any collection not covered above
-    match /{document=**} {
-      allow read, write: if false;
+    match /xp_transactions/{userId}/transactions/{transactionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == userId || 
+         request.auth.token.admin == true ||
+         request.auth.uid == "o8vfRCOevjTKBY0k2dISlpiYiIH2");
+      allow write: if false; // Backend only
     }
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LineupEditor from '../components/dashboard/LineupEditor';
 import NewUserSetup from '../components/dashboard/NewUserSetup';
 import StaffManagement from '../components/dashboard/StaffManagement';
+import ShowSelection from '../components/dashboard/ShowSelection';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { useUserStore } from '../store/userStore';
@@ -39,6 +40,17 @@ const UniformBuilder = ({ userProfile }) => (
   </div>
 );
 
+const AnalysisTools = ({ userProfile }) => (
+  <div className="bg-surface-dark p-8 rounded-theme text-center">
+    <BarChart3 className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
+    <h3 className="text-xl font-medium text-text-primary-dark mb-2">Score Analysis Tools</h3>
+    <p className="text-text-secondary-dark mb-4">Comprehensive historical DCI data analysis</p>
+    <div className="text-sm text-text-secondary-dark bg-background-dark px-3 py-2 rounded-theme">
+      Premium Feature - Coming Soon
+    </div>
+  </div>
+);
+
 const CorpsRegistration = ({ userProfile }) => {
   const getUnlockRequirements = (className) => {
     const requirements = {
@@ -54,7 +66,6 @@ const CorpsRegistration = ({ userProfile }) => {
   };
 
   const getCurrentSeasonWeek = () => {
-    // Calculate current week based on season start (June 1st)
     const seasonStart = new Date('2025-06-01');
     const now = new Date();
     const weeksDiff = Math.ceil((now - seasonStart) / (7 * 24 * 60 * 60 * 1000));
@@ -64,102 +75,146 @@ const CorpsRegistration = ({ userProfile }) => {
   const getRegistrationStatus = (className) => {
     const week = getCurrentSeasonWeek();
     const cutoffs = {
-      'A Class': 6, // 4 weeks remaining
-      'Open Class': 5, // 5 weeks remaining  
-      'World Class': 4 // 6 weeks remaining
+      'A Class': 6,
+      'Open Class': 5,
+      'World Class': 4
     };
     
     return week <= cutoffs[className] ? 'open' : 'closed';
   };
 
-  const classes = ['SoundSport', 'A Class', 'Open Class', 'World Class'];
+  const classes = [
+    {
+      name: 'SoundSport',
+      description: 'Entry-level competition for all directors',
+      pointLimit: 90,
+      unlocked: true,
+      color: 'blue'
+    },
+    {
+      name: 'A Class',
+      description: 'Competitive division for developing corps',
+      pointLimit: 60,
+      unlocked: isClassUnlocked('A Class'),
+      color: 'green'
+    },
+    {
+      name: 'Open Class',
+      description: 'Advanced competition with elite scoring',
+      pointLimit: 120,
+      unlocked: isClassUnlocked('Open Class'),
+      color: 'purple'
+    },
+    {
+      name: 'World Class',
+      description: 'Premier division for championship corps',
+      pointLimit: 150,
+      unlocked: isClassUnlocked('World Class'),
+      color: 'gold'
+    }
+  ];
+
+  const colorClasses = {
+    blue: 'bg-blue-900 bg-opacity-20 border-blue-500',
+    green: 'bg-green-900 bg-opacity-20 border-green-500',
+    purple: 'bg-purple-900 bg-opacity-20 border-purple-500',
+    gold: 'bg-yellow-900 bg-opacity-20 border-yellow-500'
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="bg-surface-dark p-6 rounded-theme">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-medium text-text-primary-dark">Corps Registration</h3>
-          <div className="text-sm text-text-secondary-dark">
-            Season 2025 • Week {getCurrentSeasonWeek()}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {classes.map(className => {
-            const unlocked = isClassUnlocked(className);
-            const requirements = getUnlockRequirements(className);
-            const registrationOpen = getRegistrationStatus(className) === 'open';
-            const userXP = userProfile.xp || 0;
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-text-primary-dark mb-2">Corps Registration</h2>
+        <p className="text-text-secondary-dark">
+          Register your corps for different class levels as you unlock them
+        </p>
+      </div>
 
-            return (
-              <div key={className} className="bg-background-dark p-4 rounded-theme border border-accent-dark">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-text-primary-dark">{className}</h4>
-                  <div className="flex items-center space-x-2">
-                    {className === 'World Class' && <Crown className="w-4 h-4 text-purple-500" />}
-                    {className === 'Open Class' && <Zap className="w-4 h-4 text-blue-500" />}
-                    {className === 'A Class' && <Trophy className="w-4 h-4 text-green-500" />}
-                    {className === 'SoundSport' && <Star className="w-4 h-4 text-orange-500" />}
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {classes.map(cls => {
+          const requirements = getUnlockRequirements(cls.name);
+          const registrationStatus = getRegistrationStatus(cls.name);
+          
+          return (
+            <div
+              key={cls.name}
+              className={`p-6 rounded-theme border-2 ${colorClasses[cls.color]} ${
+                !cls.unlocked ? 'opacity-60' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-text-primary-dark mb-1">
+                    {cls.name}
+                  </h3>
+                  <p className="text-sm text-text-secondary-dark">
+                    {cls.description}
+                  </p>
+                </div>
+                {cls.unlocked ? (
+                  <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+                ) : (
+                  <Lock className="w-6 h-6 text-red-400 flex-shrink-0" />
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary-dark">Point Limit:</span>
+                  <span className="font-bold text-text-primary-dark">{cls.pointLimit}</span>
                 </div>
 
-                {unlocked ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-green-400">✓ Unlocked</span>
-                      <span className={registrationOpen ? 'text-green-400' : 'text-red-400'}>
-                        {registrationOpen ? 'Registration Open' : 'Registration Closed'}
+                {!cls.unlocked && requirements && (
+                  <div className="bg-background-dark rounded p-3">
+                    <p className="text-xs text-text-secondary-dark mb-2">
+                      Unlock Requirements:
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-primary-dark">
+                        {requirements.xp} XP
+                      </span>
+                      <span className="text-xs text-text-secondary-dark">
+                        Current: {userProfile.xp || 0} XP
                       </span>
                     </div>
-                    {registrationOpen && (
-                      <button className="w-full bg-primary hover:bg-primary-dark text-on-primary py-2 px-4 rounded text-sm font-medium transition-colors">
-                        Register for {className}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="text-sm text-text-secondary-dark">
-                      Requires {requirements?.xp.toLocaleString()} XP
-                    </div>
-                    <div className="w-full bg-accent-dark rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(100, (userXP / requirements?.xp) * 100)}%` }}
+                    <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, ((userProfile.xp || 0) / requirements.xp) * 100)}%`
+                        }}
                       />
-                    </div>
-                    <div className="text-xs text-text-secondary-dark">
-                      {userXP.toLocaleString()} / {requirements?.xp.toLocaleString()} XP
                     </div>
                   </div>
                 )}
+
+                {cls.unlocked && (
+                  <div className="pt-3 border-t border-accent-dark">
+                    {registrationStatus === 'open' ? (
+                      <button className="w-full bg-primary hover:bg-primary-dark text-on-primary py-2 px-4 rounded-theme font-medium transition-colors">
+                        Register for {cls.name}
+                      </button>
+                    ) : (
+                      <div className="text-center text-sm text-red-400">
+                        Registration closed for this season
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-const AnalysisTools = ({ userProfile }) => (
-  <div className="bg-surface-dark p-8 rounded-theme text-center">
-    <BarChart3 className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-    <h3 className="text-xl font-medium text-text-primary-dark mb-2">Score Analysis</h3>
-    <p className="text-text-secondary-dark mb-4">Analyze DCI scores and performance trends</p>
-    <div className="text-sm text-text-secondary-dark bg-background-dark px-3 py-2 rounded-theme">
-      Premium Feature - Coming Soon
-    </div>
-  </div>
-);
-
 const DashboardPage = () => {
   const { currentUser } = useAuth();
   const { profile, isLoading, fetchUserProfile } = useUserStore();
   const [activeTab, setActiveTab] = useState('overview');
-  const [notifications, setNotifications] = useState([]);
 
-  // Check for class unlocks when component mounts
   useEffect(() => {
     if (currentUser && profile) {
       checkForClassUnlocks();
@@ -173,7 +228,6 @@ const DashboardPage = () => {
       
       if (result.data.success && result.data.newUnlocks.length > 0) {
         toast.success(result.data.message);
-        // Refresh profile to get updated class unlocks
         fetchUserProfile(currentUser.uid);
       }
     } catch (error) {
@@ -193,11 +247,9 @@ const DashboardPage = () => {
     );
   }
   
-  // Check if the user's corps name is still the default value
   const isNewUser = profile.corps?.corpsName === 'New Corps';
 
   const handleSetupComplete = () => {
-    // Re-fetch the user profile to get the updated corps name
     fetchUserProfile(currentUser.uid);
   };
 
@@ -222,6 +274,13 @@ const DashboardPage = () => {
       icon: Users, 
       component: LineupEditor,
       description: 'Select corps for each caption'
+    },
+    { 
+      id: 'shows', 
+      label: 'Show Selection', 
+      icon: Calendar, 
+      component: ShowSelection,
+      description: 'Register for competitions'
     },
     { 
       id: 'staff', 
@@ -264,76 +323,28 @@ const DashboardPage = () => {
   const { currentSeason, weekNumber } = getCurrentSeasonInfo();
   const ActiveComponent = dashboardTabs.find(tab => tab.id === activeTab)?.component;
 
-  const getHighestClass = () => {
-    const classOrder = ['SoundSport', 'A Class', 'Open Class', 'World Class'];
-    const unlockedClasses = profile.unlockedClasses || ['SoundSport'];
-    return unlockedClasses.reduce((highest, current) => {
-      return classOrder.indexOf(current) > classOrder.indexOf(highest) ? current : highest;
-    });
-  };
-
-  const getSeasonProgress = () => {
-    // Calculate season progress based on week
-    const totalWeeks = 10;
-    const progress = Math.min(100, (weekNumber / totalWeeks) * 100);
-    return progress;
-  };
-
   return (
     <div className="space-y-6">
-      {/* Corps Header */}
-      <div className="bg-gradient-to-r from-surface-dark to-background-dark p-6 rounded-theme shadow-theme-dark">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
-          <div className="mb-4 lg:mb-0">
-            <h1 className="text-3xl font-bold text-text-primary-dark mb-2">
-              {profile.corps.corpsName}
-            </h1>
-            <p className="text-text-secondary-dark mb-2">
-              Directed by {profile.corps.alias} • Season {currentSeason}, Week {weekNumber}
-            </p>
-            <div className="flex items-center space-x-4 text-sm">
-              <div className="flex items-center space-x-1">
-                <Trophy className="w-4 h-4 text-primary-dark" />
-                <span className="text-text-primary-dark">{getHighestClass()}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-text-primary-dark">{profile.xp?.toLocaleString() || 0} XP</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-text-primary-dark">{profile.corpsCoin?.toLocaleString() || 0}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="text-right">
-              <div className="text-sm text-text-secondary-dark">Season Progress</div>
-              <div className="w-48 bg-accent-dark rounded-full h-2 mt-1">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${getSeasonProgress()}%` }}
-                />
-              </div>
-              <div className="text-xs text-text-secondary-dark mt-1">
-                Week {weekNumber} of 10
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-primary-dark to-accent-dark rounded-theme p-6 text-white">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {profile.displayName || 'Director'}!
+        </h1>
+        <p className="text-lg opacity-90">
+          {profile.corps?.corpsName} • {profile.corps?.corpsClass} • Week {weekNumber}
+        </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-surface-dark p-1 rounded-theme shadow-theme-dark">
-        <div className="flex overflow-x-auto space-x-1">
+      <div className="bg-surface-dark rounded-theme p-2 shadow-theme-dark">
+        <div className="flex flex-wrap gap-2">
           {dashboardTabs.map(tab => {
             const IconComponent = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-3 rounded-theme transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-theme transition-all ${
                   activeTab === tab.id
                     ? 'bg-primary text-on-primary shadow-lg'
                     : 'text-text-secondary-dark hover:text-text-primary-dark hover:bg-background-dark'
@@ -413,7 +424,21 @@ const DashboardPage = () => {
                   <Users className="w-6 h-6 text-primary-dark" />
                   <div className="text-left">
                     <p className="font-medium text-text-primary-dark">Edit Lineup</p>
-                    <p className="text-sm text-text-secondary-dark">Manage caption selections</p>
+                    <p className="text-sm text-text-secondary-dark">Select captions</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-secondary-dark" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('shows')}
+                className="flex items-center justify-between p-4 bg-background-dark rounded-theme hover:bg-accent-dark transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Calendar className="w-6 h-6 text-primary-dark" />
+                  <div className="text-left">
+                    <p className="font-medium text-text-primary-dark">Register for Shows</p>
+                    <p className="text-sm text-text-secondary-dark">Join competitions</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-text-secondary-dark" />
@@ -427,21 +452,7 @@ const DashboardPage = () => {
                   <Award className="w-6 h-6 text-primary-dark" />
                   <div className="text-left">
                     <p className="font-medium text-text-primary-dark">Manage Staff</p>
-                    <p className="text-sm text-text-secondary-dark">Hire legendary instructors</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-secondary-dark" />
-              </button>
-
-              <button
-                onClick={() => setActiveTab('registration')}
-                className="flex items-center justify-between p-4 bg-background-dark rounded-theme hover:bg-accent-dark transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <PlusCircle className="w-6 h-6 text-primary-dark" />
-                  <div className="text-left">
-                    <p className="font-medium text-text-primary-dark">Register Corps</p>
-                    <p className="text-sm text-text-secondary-dark">Join competitions</p>
+                    <p className="text-sm text-text-secondary-dark">Hire legends</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-text-secondary-dark" />
@@ -456,8 +467,8 @@ const DashboardPage = () => {
               <div className="flex items-center space-x-3 p-3 bg-background-dark rounded">
                 <Calendar className="w-5 h-5 text-blue-400" />
                 <div>
-                  <p className="text-text-primary-dark">Season 2025 started</p>
-                  <p className="text-sm text-text-secondary-dark">Welcome to the new competitive season!</p>
+                  <p className="text-text-primary-dark">Season {currentSeason} in progress</p>
+                  <p className="text-sm text-text-secondary-dark">Week {weekNumber} of 10</p>
                 </div>
               </div>
               {profile.corps?.lastEdit && (

@@ -5,7 +5,7 @@ import { useUserStore } from './store/userStore';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
-// --- REMOVE INLINE PLACEHOLDERS AND IMPORT THE REAL PAGES ---
+// --- IMPORT ALL EXISTING PAGES ---
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import LeaguesPage from './pages/LeaguesPage';
@@ -14,6 +14,9 @@ import SchedulePage from './pages/SchedulePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
+
+// --- IMPORT NEW ADMIN PAGE ---
+import AdminPage from './pages/AdminPage';
 
 const AppLayout = () => (
   <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
@@ -40,6 +43,7 @@ const UserProfileFetcher = () => {
       fetchUserProfile(currentUser.uid);
     }
     
+    // Redirect logged-in users from home to dashboard
     if (currentUser && location.pathname === '/') {
       navigate('/dashboard');
     }
@@ -63,6 +67,8 @@ function App() {
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            {/* NEW ADMIN ROUTE - Only accessible to admin user */}
+            <Route path="/admin" element={<AdminPage />} />
           </Route>
         </Routes>
       </Router>
