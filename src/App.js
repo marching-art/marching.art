@@ -30,24 +30,35 @@ const AppLayout = () => (
 
 const UserProfileFetcher = () => {
   const { currentUser } = useAuth();
-  const { profile, fetchUserProfile } = useUserStore((state) => ({
+  const { profile, fetchUserProfile, isLoading } = useUserStore((state) => ({
     profile: state.profile,
     fetchUserProfile: state.fetchUserProfile,
+    isLoading: state.isLoading
   }));
   
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (currentUser && !profile) {
-      fetchUserProfile(currentUser.uid);
+    if (currentUser) {
+      // Always fetch profile when we have a user
+      if (!profile || profile.id !== currentUser.uid) {
+        fetchUserProfile(currentUser.uid);
+      }
+      
+      // Redirect logged-in users from home to dashboard
+      // But only after profile is loaded to avoid race conditions
+      if (location.pathname === '/' && profile && !isLoading) {
+        navigate('/dashboard');
+      }
+    } else {
+      // No user logged in, redirect to home if they're trying to access protected pages
+      const publicPaths = ['/', '/leaderboard', '/scores', '/schedule'];
+      if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/profile/')) {
+        navigate('/');
+      }
     }
-    
-    // Redirect logged-in users from home to dashboard
-    if (currentUser && location.pathname === '/') {
-      navigate('/dashboard');
-    }
-  }, [currentUser, profile, fetchUserProfile, navigate, location.pathname]);
+  }, [currentUser, profile, fetchUserProfile, navigate, location.pathname, isLoading]);
 
   return null;
 };
