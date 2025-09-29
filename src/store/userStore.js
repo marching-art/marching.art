@@ -4,18 +4,32 @@ import { db, dataNamespace } from '../firebaseConfig';
 
 export const useUserStore = create((set, get) => ({
   profile: null,
-  isLoading: false, // Changed from true to false - only loading when actively fetching
+  isLoading: false,
   error: null,
+  lastFetchedUid: null, // Track which user we last fetched
   
   fetchUserProfile: async (uid) => {
     if (!uid) {
-      return set({ profile: null, isLoading: false, error: null });
+      set({ profile: null, isLoading: false, error: null, lastFetchedUid: null });
+      return;
     }
     
-    set({ isLoading: true, error: null });
+    // Prevent duplicate fetches
+    const state = get();
+    if (state.isLoading && state.lastFetchedUid === uid) {
+      console.log('Already fetching profile for', uid);
+      return;
+    }
+    
+    // If we already have this user's profile, don't refetch
+    if (state.profile && state.profile.id === uid && !state.error) {
+      console.log('Profile already loaded for', uid);
+      return;
+    }
+    
+    set({ isLoading: true, error: null, lastFetchedUid: uid });
     
     try {
-      // Use the dataNamespace variable to build the correct path
       const userProfileRef = doc(db, `artifacts/${dataNamespace}/users/${uid}/profile/data`);
       const docSnap = await getDoc(userProfileRef);
       
@@ -26,8 +40,9 @@ export const useUserStore = create((set, get) => ({
           isLoading: false, 
           error: null 
         });
+        console.log('Profile loaded successfully for', uid);
       } else {
-        console.warn(`Profile not found for user ${uid} at path: artifacts/${dataNamespace}/users/${uid}/profile/data`);
+        console.warn(`Profile not found for user ${uid}`);
         set({ 
           profile: null, 
           isLoading: false, 
@@ -45,6 +60,15 @@ export const useUserStore = create((set, get) => ({
   },
   
   clearProfile: () => {
-    set({ profile: null, isLoading: false, error: null });
+    set({ profile: null, isLoading: false, error: null, lastFetchedUid: null });
+  },
+  
+  updateProfile: (updates) => {
+    const state = get();
+    if (state.profile) {
+      set({ 
+        profile: { ...state.profile, ...updates } 
+      });
+    }
   }
 }));

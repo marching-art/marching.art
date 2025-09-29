@@ -1,9 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useUserStore } from '../store/userStore';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../firebaseConfig';
-import toast from 'react-hot-toast';
 import { 
   Users, 
   Palette, 
@@ -13,8 +10,7 @@ import {
   Coins,
   Star,
   Target,
-  Lock,
-  CheckCircle
+  Lock
 } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
 
@@ -26,7 +22,7 @@ const ShowSelection = lazy(() => import('../components/dashboard/ShowSelection')
 const UniformBuilder = lazy(() => import('../components/dashboard/UniformBuilder'));
 
 // Lightweight placeholder for analysis
-const AnalysisTools = ({ userProfile }) => (
+const AnalysisTools = () => (
   <div className="bg-surface dark:bg-surface-dark p-8 rounded-theme text-center border border-accent dark:border-accent-dark">
     <BarChart3 className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
     <h3 className="text-xl font-medium text-text-primary dark:text-text-primary-dark mb-2">Score Analysis Tools</h3>
@@ -72,12 +68,6 @@ const ClassRegistrationCard = ({ cls, profile, isRegistrationOpen }) => {
             <span className="font-medium text-error">{xpNeeded} more XP needed</span>
           </div>
         )}
-        {isCurrentClass && !isRegistrationOpen && (
-          <div className="text-xs text-error mt-2 flex items-center gap-1">
-            <Lock className="w-3 h-3" />
-            Registration closed for this season
-          </div>
-        )}
       </div>
     </div>
   );
@@ -85,40 +75,32 @@ const ClassRegistrationCard = ({ cls, profile, isRegistrationOpen }) => {
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const profile = useUserStore((state) => state.profile);
-  const isLoading = useUserStore((state) => state.isLoading);
-  const fetchUserProfile = useUserStore((state) => state.fetchUserProfile);
-  
+  const { profile, isLoading, fetchUserProfile } = useUserStore();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
+  // Only fetch once when component mounts and user exists
   useEffect(() => {
-    // Check if we need to fetch profile
-    if (currentUser && !profile && !isLoading) {
+    if (currentUser && !hasFetched) {
+      console.log('Fetching profile for', currentUser.uid);
       fetchUserProfile(currentUser.uid);
+      setHasFetched(true);
     }
-  }, [currentUser, profile, isLoading, fetchUserProfile]);
-
-  useEffect(() => {
-    // Once profile is loaded, stop checking setup
-    if (profile) {
-      setIsCheckingSetup(false);
-    }
-  }, [profile]);
+  }, [currentUser]); // Only depend on currentUser
 
   const handleSetupComplete = () => {
-    // Refresh profile after setup
     if (currentUser) {
+      setHasFetched(false); // Allow refetch
       fetchUserProfile(currentUser.uid);
     }
   };
 
-  // Show loading screen only when initially loading
-  if (isLoading || isCheckingSetup) {
+  // Show loading only when actively loading and no profile yet
+  if (isLoading && !profile) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
 
-  // If no user or profile after loading, show message
+  // If no user, show login message
   if (!currentUser) {
     return (
       <div className="text-center py-12">
@@ -132,21 +114,31 @@ const DashboardPage = () => {
     );
   }
 
-  if (!profile) {
+  // If no profile after fetch attempt, show error
+  if (!profile && hasFetched) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Setting up your profile...
+          Profile Not Found
         </h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please wait while we prepare your dashboard
+        <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
+          We couldn't load your profile. This might be because your account is new.
         </p>
+        <button 
+          onClick={() => {
+            setHasFetched(false);
+            fetchUserProfile(currentUser.uid);
+          }}
+          className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-theme"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
-  // Check if user needs setup (new user without corps)
-  const needsSetup = !profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps';
+  // Check if user needs setup
+  const needsSetup = profile && (!profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps');
 
   if (needsSetup) {
     return (
@@ -222,21 +214,21 @@ const DashboardPage = () => {
       icon: Award, 
       pointLimit: 60, 
       xpRequired: 500, 
-      description: 'Intermediate competition with registration locked at 4 weeks remaining'
+      description: 'Intermediate competition'
     },
     { 
       name: 'Open Class', 
       icon: Coins, 
       pointLimit: 120, 
       xpRequired: 2000, 
-      description: 'Advanced competition with registration locked at 5 weeks remaining'
+      description: 'Advanced competition'
     },
     { 
       name: 'World Class', 
       icon: Star, 
       pointLimit: 150, 
       xpRequired: 5000, 
-      description: 'Elite competition with registration locked at 6 weeks remaining'
+      description: 'Elite competition'
     }
   ];
 
