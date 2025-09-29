@@ -307,10 +307,8 @@ exports.staffAction = functions.https.onCall(async (data, context) => {
 // ============================================================================
 
 /**
- * Create a new season with proper naming convention
- * Season naming:
- * - Off-seasons: overture_2024-25, allegro_2024-25, adagio_2024-25, scherzo_2024-25, crescendo_2024-25, finale_2024-25
- * - Live season: live_2025
+ * Create a new season with proper naming convention and correct current day calculation
+ * Handles mid-season starts by calculating actual current day
  * 
  * @param {FirebaseFirestore.Firestore} db 
  * @param {string} seasonType - One of: overture, allegro, adagio, scherzo, crescendo, finale, live
@@ -326,18 +324,73 @@ async function createNewSeason(db, seasonType, year) {
   
   // Use current year if not provided (Finals year)
   const finalsYear = year || new Date().getFullYear();
-  const seasonYear = seasonTypeLower === 'live' ? finalsYear : finalsYear - 1;
+  
+  // Calculate the actual season start and end dates
+  const isLiveSeason = seasonTypeLower === 'live';
+  const totalWeeks = isLiveSeason ? 10 : 7;
+  const totalDays = isLiveSeason ? 70 : 49;
+  
+  // Calculate DCI Finals date (second Saturday of August)
+  const finalsDate = getSecondSaturdayOfAugust(finalsYear);
+  
+  // Calculate season dates
+  let seasonStartDate, seasonEndDate;
+  
+  if (isLiveSeason) {
+    // Live season: 70 days ending on Finals
+    seasonEndDate = new Date(finalsDate);
+    seasonEndDate.setHours(23, 59, 59, 999);
+    
+    seasonStartDate = new Date(finalsDate);
+    seasonStartDate.setDate(seasonStartDate.getDate() - 69); // 70 days total
+    seasonStartDate.setHours(3, 0, 0, 0); // 3:00 AM UTC
+  } else {
+    // Off-season: Calculate based on season number
+    const seasonNumber = SEASON_THEMES.findIndex(t => t.toLowerCase() === seasonTypeLower) + 1;
+    const liveSeasonStart = new Date(finalsDate);
+    liveSeasonStart.setDate(liveSeasonStart.getDate() - 69);
+    liveSeasonStart.setHours(3, 0, 0, 0);
+    
+    // Calculate off-season dates working backward from live season
+    const offSeasonIndex = 6 - seasonNumber; // Reverse order
+    seasonEndDate = new Date(liveSeasonStart);
+    seasonEndDate.setDate(seasonEndDate.getDate() - (offSeasonIndex * 49) - 1);
+    seasonEndDate.setHours(23, 59, 59, 999);
+    
+    seasonStartDate = new Date(seasonEndDate);
+    seasonStartDate.setDate(seasonStartDate.getDate() - 48); // 49 days total
+    seasonStartDate.setHours(3, 0, 0, 0);
+  }
+  
+  // Calculate current week and day based on actual date
+  const now = new Date();
+  let currentWeek = 0;
+  let currentDay = 0;
+  let status = 'preparation';
+  
+  if (now >= seasonStartDate && now <= seasonEndDate) {
+    // Season has started - calculate actual current day
+    const daysSinceStart = Math.floor((now - seasonStartDate) / (1000 * 60 * 60 * 24));
+    currentDay = daysSinceStart + 1;
+    currentWeek = Math.floor(daysSinceStart / 7) + 1;
+    status = 'active';
+  } else if (now > seasonEndDate) {
+    // Season has already ended
+    status = 'completed';
+    currentDay = totalDays;
+    currentWeek = totalWeeks;
+  }
+  // else: status = 'preparation', currentWeek = 0, currentDay = 0 (default)
   
   // Create proper season ID based on type
-  let seasonId;
-  let seasonName;
+  let seasonId, seasonName;
+  const seasonYear = isLiveSeason ? finalsYear : finalsYear - 1;
   
-  if (seasonTypeLower === 'live') {
+  if (isLiveSeason) {
     seasonId = `live_${finalsYear}`;
     seasonName = `DCI ${finalsYear} Live Season`;
   } else {
-    // Off-season naming: overture_2024-25, allegro_2024-25, etc.
-    const nextYearShort = (finalsYear).toString().slice(-2);
+    const nextYearShort = finalsYear.toString().slice(-2);
     seasonId = `${seasonTypeLower}_${seasonYear}-${nextYearShort}`;
     seasonName = `${seasonType.charAt(0).toUpperCase() + seasonType.slice(1)} Season ${seasonYear}-${nextYearShort}`;
   }
@@ -351,12 +404,7 @@ async function createNewSeason(db, seasonType, year) {
     }
   }
   
-  // Determine season length based on type
-  const isLiveSeason = seasonTypeLower === 'live';
-  const totalWeeks = isLiveSeason ? 10 : 7;
-  const totalDays = isLiveSeason ? 70 : 49;
-  
-  // Get season number (1-6 for off-seasons based on theme index, or sequential for live)
+  // Get season number
   let seasonNumber;
   if (isLiveSeason) {
     seasonNumber = await getNextSeasonNumber(db);
@@ -370,14 +418,15 @@ async function createNewSeason(db, seasonType, year) {
     seasonName,
     seasonType: seasonTypeLower,
     seasonNumber,
-    status: 'preparation',
-    currentWeek: 0,
-    currentDay: 0,
+    status,
+    currentWeek,
+    currentDay,
     totalWeeks,
     totalDays,
-    startDate: admin.firestore.FieldValue.serverTimestamp(),
+    startDate: admin.firestore.Timestamp.fromDate(seasonStartDate),
+    endDate: admin.firestore.Timestamp.fromDate(seasonEndDate),
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    isActive: false
+    isActive: status === 'active'
   };
   
   await db.collection('game-settings').doc('current').set(seasonData);
@@ -401,11 +450,32 @@ async function createNewSeason(db, seasonType, year) {
   
   return {
     success: true,
-    message: `New ${seasonName} created successfully!`,
+    message: `New ${seasonName} created successfully! Status: ${status}, Current Day: ${currentDay}/${totalDays}`,
     seasonId,
     seasonName,
-    seasonType: seasonTypeLower
+    seasonType: seasonTypeLower,
+    currentDay,
+    currentWeek,
+    status
   };
+}
+
+/**
+ * Helper: Get the second Saturday of August for a given year
+ */
+function getSecondSaturdayOfAugust(year) {
+  const august = new Date(year, 7, 1); // Month 7 = August
+  
+  // Find first Saturday
+  let firstSaturday = 1;
+  while (new Date(year, 7, firstSaturday).getDay() !== 6) {
+    firstSaturday++;
+  }
+  
+  // Second Saturday is 7 days later
+  const secondSaturday = firstSaturday + 7;
+  
+  return new Date(year, 7, secondSaturday, 3, 0, 0); // 3:00 AM UTC
 }
 
 /**
