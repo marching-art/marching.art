@@ -1,26 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useUserStore } from './store/userStore';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import LoadingScreen from './components/common/LoadingScreen';
 
-// --- IMPORT ALL EXISTING PAGES ---
-import HomePage from './pages/HomePage';
-import DashboardPage from './pages/DashboardPage';
-import LeaguesPage from './pages/LeaguesPage';
-import ScoresPage from './pages/ScoresPage';
-import SchedulePage from './pages/SchedulePage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
-import AdminPage from './pages/AdminPage';
+// Lazy load pages for better performance
+const HomePage = lazy(() => import('./pages/HomePage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LeaguesPage = lazy(() => import('./pages/LeaguesPage'));
+const ScoresPage = lazy(() => import('./pages/ScoresPage'));
+const SchedulePage = lazy(() => import('./pages/SchedulePage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const AppLayout = () => (
   <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark transition-colors duration-200">
     <Header />
-    <main className="flex-grow container mx-auto p-4">
-      <Outlet />
+    <main className="flex-grow container mx-auto p-4 max-w-7xl">
+      <Suspense fallback={<LoadingScreen message="Loading page..." />}>
+        <Outlet />
+      </Suspense>
     </main>
     <Footer />
   </div>

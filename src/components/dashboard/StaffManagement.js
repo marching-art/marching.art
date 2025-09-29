@@ -12,21 +12,20 @@ import {
   Award, 
   Coins,
   Calendar,
-  Crown,
   User,
   Plus,
   Minus,
-  Eye,
-  DollarSign
+  DollarSign,
+  Info,
+  CheckCircle,
+  Lock
 } from 'lucide-react';
-import LoadingScreen from '../common/LoadingScreen';
 
 const StaffManagement = ({ userProfile }) => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('roster');
   const [ownedStaff, setOwnedStaff] = useState([]);
   const [availableStaff, setAvailableStaff] = useState([]);
-  const [marketplaceListings, setMarketplaceListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCaption, setSelectedCaption] = useState('');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -40,11 +39,12 @@ const StaffManagement = ({ userProfile }) => {
   const purchaseStaffMember = httpsCallable(functions, 'staff-purchaseStaffMember');
   const assignStaffToCaption = httpsCallable(functions, 'staff-assignStaffToCaption');
   const unassignStaffFromCaption = httpsCallable(functions, 'staff-unassignStaffFromCaption');
-  const sellStaffMember = httpsCallable(functions, 'staff-sellStaffMember');
 
   // Load data on component mount
   useEffect(() => {
-    loadData();
+    if (currentUser) {
+      loadData();
+    }
   }, [currentUser]);
 
   const loadData = async () => {
@@ -52,8 +52,7 @@ const StaffManagement = ({ userProfile }) => {
     try {
       await Promise.all([
         loadOwnedStaff(),
-        loadAvailableStaff(),
-        // loadMarketplaceListings() // TODO: Implement marketplace
+        loadAvailableStaff()
       ]);
     } catch (error) {
       console.error('Error loading staff data:', error);
@@ -67,7 +66,7 @@ const StaffManagement = ({ userProfile }) => {
     try {
       const result = await getUserStaff();
       if (result.data.success) {
-        setOwnedStaff(result.data.staff);
+        setOwnedStaff(result.data.staff || []);
       }
     } catch (error) {
       console.error('Error loading owned staff:', error);
@@ -78,7 +77,7 @@ const StaffManagement = ({ userProfile }) => {
     try {
       const result = await getAvailableStaff({ caption: selectedCaption });
       if (result.data.success) {
-        setAvailableStaff(result.data.staff);
+        setAvailableStaff(result.data.staff || []);
       }
     } catch (error) {
       console.error('Error loading available staff:', error);
@@ -98,6 +97,8 @@ const StaffManagement = ({ userProfile }) => {
         ]);
         // Refresh user profile to update CorpsCoin balance
         useUserStore.getState().fetchUserProfile(currentUser.uid);
+      } else {
+        toast.error(result.data.message || 'Purchase failed');
       }
     } catch (error) {
       console.error('Error purchasing staff:', error);
@@ -144,118 +145,146 @@ const StaffManagement = ({ userProfile }) => {
   };
 
   if (isLoading) {
-    return <LoadingScreen message="Loading staff management..." />;
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
+          <p className="text-text-secondary dark:text-text-secondary-dark">Loading staff management...</p>
+        </div>
+      </div>
+    );
   }
+
+  const userCorpsCoin = userProfile?.corpsCoin || 0;
 
   return (
     <div className="space-y-6">
-      {/* Header with tabs */}
-      <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary-dark mb-2">Staff Management</h2>
-            <p className="text-text-secondary-dark">Hire legendary DCI staff to boost your corps performance</p>
-          </div>
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <div className="flex items-center space-x-2 bg-background-dark px-4 py-2 rounded-theme">
-              <Coins className="w-5 h-5 text-yellow-500" />
-              <span className="text-text-primary-dark font-semibold">
-                {userProfile.corpsCoin?.toLocaleString() || 0}
-              </span>
-            </div>
-            <div className="text-sm text-text-secondary-dark">
-              Owned: {ownedStaff.length} | Active: {ownedStaff.filter(s => s.isActive).length}
-            </div>
-          </div>
+      {/* Header with balance */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-1">Staff Management</h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark">
+            Hire legendary DCI Hall of Fame members to enhance your corps
+          </p>
         </div>
+        <div className="flex items-center gap-2 bg-secondary dark:bg-secondary-dark px-4 py-2 rounded-theme">
+          <Coins className="w-5 h-5 text-white" />
+          <span className="text-lg font-bold text-white">{userCorpsCoin.toLocaleString()}</span>
+        </div>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-background-dark p-1 rounded-theme">
-          {[
-            { id: 'roster', label: 'Active Roster', icon: Users },
-            { id: 'hire', label: 'Hire Staff', icon: ShoppingCart },
-            { id: 'collection', label: 'My Collection', icon: Award },
-            // { id: 'marketplace', label: 'Marketplace', icon: DollarSign }
-          ].map(tab => {
-            const IconComponent = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-theme transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-on-primary'
-                    : 'text-text-secondary-dark hover:text-text-primary-dark hover:bg-surface-dark'
-                }`}
-              >
-                <IconComponent className="w-4 h-4" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            );
-          })}
+      {/* Info Banner */}
+      <div className="bg-blue-900 bg-opacity-30 border border-blue-400 rounded-theme p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-semibold mb-1 text-text-primary dark:text-text-primary-dark">Staff Management Tips:</p>
+            <ul className="space-y-1 text-text-secondary dark:text-text-secondary-dark">
+              <li>• Assign one staff member per caption to gain performance bonuses</li>
+              <li>• More experienced staff (newer Hall of Fame inductees) cost more</li>
+              <li>• Staff gain value as they complete seasons with your corps</li>
+              <li>• You can sell experienced staff on the marketplace for profit</li>
+            </ul>
+          </div>
         </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-accent dark:border-accent-dark">
+        {[
+          { id: 'roster', label: 'Active Roster', icon: Award },
+          { id: 'hire', label: 'Hire Staff', icon: ShoppingCart },
+          { id: 'collection', label: 'My Collection', icon: Users }
+        ].map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark'
+                  : 'text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Active Roster Tab */}
       {activeTab === 'roster' && (
-        <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-          <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Active Staff Assignments</h3>
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Current Season Assignments</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {captions.map(caption => {
               const assignedStaff = getStaffForCaption(caption);
               const availableForCaption = getAvailableStaffForCaption(caption);
-              
+              const [showAvailable, setShowAvailable] = useState(false);
+
               return (
-                <div key={caption} className="bg-background-dark p-4 rounded-theme border border-accent-dark">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-semibold text-text-primary-dark">{caption}</h4>
-                    {assignedStaff && (
-                      <button
-                        onClick={() => handleUnassignStaff(assignedStaff.id)}
-                        className="text-red-400 hover:text-red-300 p-1"
-                        title="Remove from assignment"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  
-                  {assignedStaff ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-on-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-text-primary-dark">{assignedStaff.name}</p>
-                          <p className="text-sm text-text-secondary-dark">
-                            Inducted {assignedStaff.yearInducted}
-                            {assignedStaff.seasonsCompleted > 0 && (
-                              <span className="ml-2">• {assignedStaff.seasonsCompleted} seasons</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      {assignedStaff.performanceBonus > 0 && (
-                        <div className="flex items-center space-x-2 text-green-400">
-                          <TrendingUp className="w-4 h-4" />
-                          <span className="text-sm">+{assignedStaff.performanceBonus} performance bonus</span>
-                        </div>
+                <div key={caption} className="bg-surface dark:bg-surface-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="font-bold text-text-primary dark:text-text-primary-dark">{caption}</h4>
+                      {assignedStaff && (
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                          +{assignedStaff.performanceBonus || 0}% bonus
+                        </p>
                       )}
                     </div>
+                    {assignedStaff ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <div className="text-xs text-error">Not assigned</div>
+                    )}
+                  </div>
+
+                  {assignedStaff ? (
+                    <div className="bg-background dark:bg-background-dark p-3 rounded">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-text-primary dark:text-text-primary-dark">{assignedStaff.name}</p>
+                          <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                            Inducted {assignedStaff.yearInducted} • {assignedStaff.seasonsCompleted || 0} seasons
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleUnassignStaff(assignedStaff.id)}
+                          className="text-error hover:text-red-400 p-1"
+                          title="Unassign staff"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="space-y-3">
-                      <p className="text-text-secondary-dark text-sm">No staff assigned</p>
-                      {availableForCaption.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-text-primary-dark">Available to assign:</p>
-                          {availableForCaption.slice(0, 3).map(staff => (
-                            <div key={staff.id} className="flex items-center justify-between bg-surface-dark p-2 rounded">
-                              <span className="text-sm text-text-primary-dark">{staff.name}</span>
+                    <div className="text-center py-4 text-text-secondary dark:text-text-secondary-dark text-sm">
+                      No staff assigned
+                    </div>
+                  )}
+
+                  {/* Show available staff to assign */}
+                  {availableForCaption.length > 0 && (
+                    <div className="mt-3">
+                      <button
+                        onClick={() => setShowAvailable(!showAvailable)}
+                        className="text-sm text-primary dark:text-primary-dark hover:underline"
+                      >
+                        {showAvailable ? 'Hide' : 'Show'} available staff ({availableForCaption.length})
+                      </button>
+                      
+                      {showAvailable && (
+                        <div className="mt-2 space-y-2">
+                          {availableForCaption.map(staff => (
+                            <div key={staff.id} className="flex items-center justify-between p-2 bg-background dark:bg-background-dark rounded">
+                              <span className="text-sm text-text-primary dark:text-text-primary-dark">{staff.name}</span>
                               <button
                                 onClick={() => handleAssignStaff(staff.id, caption)}
-                                className="text-primary-dark hover:text-primary p-1"
+                                className="text-primary dark:text-primary-dark hover:text-primary p-1"
                                 title="Assign to this caption"
                               >
                                 <Plus className="w-4 h-4" />
@@ -277,70 +306,80 @@ const StaffManagement = ({ userProfile }) => {
       {activeTab === 'hire' && (
         <div className="space-y-4">
           {/* Caption Filter */}
-          <div className="bg-surface-dark p-4 rounded-theme shadow-theme-dark">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <label className="text-sm font-medium text-text-secondary-dark">Filter by Caption:</label>
-              <select
-                value={selectedCaption}
-                onChange={(e) => {
-                  setSelectedCaption(e.target.value);
-                  loadAvailableStaff();
-                }}
-                className="bg-background-dark border border-accent-dark rounded px-3 py-2 text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark"
-              >
-                <option value="">All Captions</option>
-                {captions.map(caption => (
-                  <option key={caption} value={caption}>{caption}</option>
-                ))}
-              </select>
-            </div>
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium text-text-primary dark:text-text-primary-dark">Filter by Caption:</label>
+            <select
+              value={selectedCaption}
+              onChange={(e) => {
+                setSelectedCaption(e.target.value);
+                loadAvailableStaff();
+              }}
+              className="bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded px-3 py-2 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+            >
+              <option value="">All Captions</option>
+              {captions.map(caption => (
+                <option key={caption} value={caption}>{caption}</option>
+              ))}
+            </select>
           </div>
 
           {/* Available Staff Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableStaff.map(staff => (
-              <div key={staff.id} className="bg-surface-dark p-4 rounded-theme shadow-theme-dark border border-accent-dark">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-text-primary-dark">{staff.name}</h4>
-                    <p className="text-sm text-primary-dark">{staff.caption}</p>
-                  </div>
-                  <div className="flex items-center space-x-1 text-yellow-500">
-                    <Crown className="w-4 h-4" />
-                    <span className="text-sm">{staff.yearInducted}</span>
-                  </div>
-                </div>
+            {availableStaff.map(staff => {
+              const canAfford = userCorpsCoin >= staff.baseValue;
+              const alreadyOwned = ownedStaff.some(owned => owned.id === staff.id);
 
-                <p className="text-sm text-text-secondary-dark mb-4 line-clamp-3">
-                  {staff.biography}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Coins className="w-4 h-4 text-yellow-500" />
-                    <span className="font-semibold text-text-primary-dark">
-                      {staff.currentMarketValue.toLocaleString()}
-                    </span>
+              return (
+                <div key={staff.id} className="bg-surface dark:bg-surface-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-1">{staff.name}</h4>
+                      <p className="text-sm text-primary dark:text-primary-dark">{staff.caption}</p>
+                      <p className="text-xs text-text-secondary dark:text-text-secondary-dark">Inducted {staff.yearInducted}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Coins className="w-4 h-4 text-secondary dark:text-secondary-dark" />
+                      <span className="font-bold text-text-primary dark:text-text-primary-dark">{staff.baseValue}</span>
+                    </div>
                   </div>
+
+                  {staff.biography && (
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-3 line-clamp-2">
+                      {staff.biography}
+                    </p>
+                  )}
+
                   <button
                     onClick={() => {
-                      setSelectedStaff(staff);
-                      setShowPurchaseModal(true);
+                      if (alreadyOwned) {
+                        toast.info('You already own this staff member');
+                      } else {
+                        setSelectedStaff(staff);
+                        setShowPurchaseModal(true);
+                      }
                     }}
-                    disabled={userProfile.corpsCoin < staff.currentMarketValue}
-                    className="bg-primary hover:bg-primary-dark text-on-primary px-3 py-1 rounded text-sm font-medium disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                    disabled={!canAfford && !alreadyOwned}
+                    className={`w-full py-2 px-4 rounded-theme font-medium transition-colors ${
+                      alreadyOwned
+                        ? 'bg-gray-600 cursor-not-allowed text-white'
+                        : canAfford
+                          ? 'bg-primary hover:bg-primary-dark dark:bg-primary-dark dark:hover:bg-primary text-white'
+                          : 'bg-gray-700 cursor-not-allowed text-gray-400'
+                    }`}
                   >
-                    {userProfile.corpsCoin < staff.currentMarketValue ? 'Insufficient Funds' : 'Hire'}
+                    {alreadyOwned ? 'Already Owned' : canAfford ? 'Hire' : 'Insufficient Funds'}
                   </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {availableStaff.length === 0 && (
-            <div className="bg-surface-dark p-8 rounded-theme text-center">
-              <Users className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-              <p className="text-text-secondary-dark">No staff members available for the selected criteria.</p>
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+              <p className="text-text-secondary dark:text-text-secondary-dark">
+                No staff members available for the selected criteria.
+              </p>
             </div>
           )}
         </div>
@@ -348,16 +387,16 @@ const StaffManagement = ({ userProfile }) => {
 
       {/* My Collection Tab */}
       {activeTab === 'collection' && (
-        <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-          <h3 className="text-xl font-semibold text-text-primary-dark mb-4">My Staff Collection</h3>
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark">My Staff Collection</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {ownedStaff.map(staff => (
-              <div key={staff.id} className="bg-background-dark p-4 rounded-theme border border-accent-dark">
+              <div key={staff.id} className="bg-background dark:bg-background-dark p-4 rounded-theme border border-accent dark:border-accent-dark">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold text-text-primary-dark">{staff.name}</h4>
-                    <p className="text-sm text-primary-dark">{staff.caption}</p>
+                    <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">{staff.name}</h4>
+                    <p className="text-sm text-primary dark:text-primary-dark">{staff.caption}</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     {staff.isActive && (
@@ -371,27 +410,27 @@ const StaffManagement = ({ userProfile }) => {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-text-secondary-dark">Inducted:</span>
-                    <span className="text-text-primary-dark">{staff.yearInducted}</span>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Inducted:</span>
+                    <span className="text-text-primary dark:text-text-primary-dark">{staff.yearInducted}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-text-secondary-dark">Purchase Price:</span>
-                    <span className="text-text-primary-dark">{staff.purchasePrice?.toLocaleString()}</span>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Purchase Price:</span>
+                    <span className="text-text-primary dark:text-text-primary-dark">{staff.purchasePrice?.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-text-secondary-dark">Current Value:</span>
-                    <span className="text-text-primary-dark">{staff.currentMarketValue?.toLocaleString()}</span>
+                    <span className="text-text-secondary dark:text-text-secondary-dark">Current Value:</span>
+                    <span className="text-text-primary dark:text-text-primary-dark">{staff.currentMarketValue?.toLocaleString() || staff.purchasePrice?.toLocaleString()}</span>
                   </div>
                   {staff.seasonsCompleted > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Seasons:</span>
-                      <span className="text-text-primary-dark">{staff.seasonsCompleted}</span>
+                      <span className="text-text-secondary dark:text-text-secondary-dark">Seasons:</span>
+                      <span className="text-text-primary dark:text-text-primary-dark">{staff.seasonsCompleted}</span>
                     </div>
                   )}
                   {staff.assignedCaption && (
                     <div className="flex justify-between">
-                      <span className="text-text-secondary-dark">Assigned:</span>
-                      <span className="text-green-400">{staff.assignedCaption}</span>
+                      <span className="text-text-secondary dark:text-text-secondary-dark">Assigned:</span>
+                      <span className="text-success">{staff.assignedCaption}</span>
                     </div>
                   )}
                 </div>
@@ -400,12 +439,14 @@ const StaffManagement = ({ userProfile }) => {
           </div>
 
           {ownedStaff.length === 0 && (
-            <div className="text-center py-8">
-              <Award className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-              <p className="text-text-secondary-dark">You don't own any staff members yet.</p>
+            <div className="text-center py-12">
+              <Award className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+              <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
+                You don't own any staff members yet.
+              </p>
               <button
                 onClick={() => setActiveTab('hire')}
-                className="mt-4 bg-primary hover:bg-primary-dark text-on-primary px-4 py-2 rounded-theme font-medium transition-colors"
+                className="bg-primary hover:bg-primary-dark dark:bg-primary-dark dark:hover:bg-primary text-white px-6 py-2 rounded-theme font-medium transition-colors"
               >
                 Browse Available Staff
               </button>
@@ -417,47 +458,52 @@ const StaffManagement = ({ userProfile }) => {
       {/* Purchase Confirmation Modal */}
       {showPurchaseModal && selectedStaff && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface-dark p-6 rounded-theme max-w-md w-full">
-            <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Confirm Purchase</h3>
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme max-w-md w-full">
+            <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4">Confirm Purchase</h3>
             
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-text-primary-dark font-medium">{selectedStaff.name}</p>
-                <p className="text-sm text-text-secondary-dark">{selectedStaff.caption} • Inducted {selectedStaff.yearInducted}</p>
+                <p className="text-text-primary dark:text-text-primary-dark font-medium">{selectedStaff.name}</p>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                  {selectedStaff.caption} • Inducted {selectedStaff.yearInducted}
+                </p>
               </div>
               
-              <div className="bg-background-dark p-3 rounded">
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary-dark">Cost:</span>
-                  <div className="flex items-center space-x-2">
-                    <Coins className="w-4 h-4 text-yellow-500" />
-                    <span className="font-semibold text-text-primary-dark">
-                      {selectedStaff.currentMarketValue.toLocaleString()}
-                    </span>
+              <div className="bg-background dark:bg-background-dark p-3 rounded">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-text-secondary dark:text-text-secondary-dark">Cost:</span>
+                  <div className="flex items-center gap-1">
+                    <Coins className="w-4 h-4 text-secondary dark:text-secondary-dark" />
+                    <span className="font-bold text-text-primary dark:text-text-primary-dark">{selectedStaff.baseValue}</span>
                   </div>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-text-secondary-dark">Remaining:</span>
-                  <span className="text-text-primary-dark">
-                    {(userProfile.corpsCoin - selectedStaff.currentMarketValue).toLocaleString()}
+                <div className="flex justify-between items-center">
+                  <span className="text-text-secondary dark:text-text-secondary-dark">Your Balance:</span>
+                  <span className={`font-bold ${userCorpsCoin >= selectedStaff.baseValue ? 'text-success' : 'text-error'}`}>
+                    {userCorpsCoin.toLocaleString()}
                   </span>
                 </div>
               </div>
+              
+              {selectedStaff.biography && (
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{selectedStaff.biography}</p>
+              )}
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex gap-3">
               <button
                 onClick={() => {
                   setShowPurchaseModal(false);
                   setSelectedStaff(null);
                 }}
-                className="flex-1 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-theme font-medium transition-colors"
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-theme font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handlePurchaseStaff(selectedStaff.id)}
-                className="flex-1 bg-primary hover:bg-primary-dark text-on-primary px-4 py-2 rounded-theme font-medium transition-colors"
+                disabled={userCorpsCoin < selectedStaff.baseValue}
+                className="flex-1 bg-primary hover:bg-primary-dark dark:bg-primary-dark dark:hover:bg-primary text-white py-2 px-4 rounded-theme font-medium transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
               >
                 Confirm Purchase
               </button>
