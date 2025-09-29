@@ -138,7 +138,7 @@ const NewUserSetup = ({ profile, onComplete }) => {
             </div>
 
             <div className="max-w-2xl mx-auto">
-              <div className="bg-blue-900 bg-opacity-30 border border-blue-400 rounded-theme p-6 text-left">
+              <div className="bg-accent dark:bg-accent-dark bg-opacity-30 border border-secondary dark:border-secondary-dark rounded-theme p-6 text-left">
                 <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
                   <Sparkles className="w-6 h-6 text-primary dark:text-primary-dark" />
                   What is marching.art?
@@ -304,7 +304,7 @@ const NewUserSetup = ({ profile, onComplete }) => {
             </div>
 
             <div className="max-w-2xl mx-auto">
-              <div className="bg-blue-900 bg-opacity-20 border border-blue-400 rounded-theme p-4 mb-6">
+              <div className="bg-accent dark:bg-accent-dark bg-opacity-30 border border-secondary dark:border-secondary-dark rounded-theme p-6 text-left">
                 <p className="text-sm text-text-primary dark:text-text-primary-dark">
                   <strong>💡 Tip:</strong> Choose a memorable name that represents your vision. 
                   You can customize everything later!
@@ -493,14 +493,14 @@ const NewUserSetup = ({ profile, onComplete }) => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-between mt-6 relative z-10">
         <button
           onClick={prevStep}
           disabled={step === 1 || isSaving}
-          className={`flex items-center gap-2 px-6 py-3 rounded-theme font-medium transition-all ${
+          className={`flex items-center gap-2 px-6 py-3 rounded-theme font-semibold transition-colors relative ${
             step === 1 || isSaving
-              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-              : 'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-opacity-80'
+              ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+              : 'bg-secondary text-on-secondary dark:bg-secondary-dark hover:bg-opacity-90'
           }`}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -511,10 +511,10 @@ const NewUserSetup = ({ profile, onComplete }) => {
           <button
             onClick={nextStep}
             disabled={!canProceed() || isSaving}
-            className={`flex items-center gap-2 px-6 py-3 rounded-theme font-medium transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-theme font-semibold transition-colors relative ${
               !canProceed() || isSaving
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                : 'bg-primary hover:bg-primary-dark dark:bg-primary-dark dark:hover:bg-primary text-white'
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-primary text-white dark:bg-primary-dark hover:bg-opacity-90'
             }`}
           >
             Next
@@ -524,9 +524,9 @@ const NewUserSetup = ({ profile, onComplete }) => {
           <button
             onClick={handleSubmit}
             disabled={isSaving || !corpsName || !alias}
-            className={`flex items-center gap-2 px-8 py-3 rounded-theme font-bold transition-all ${
+            className={`flex items-center gap-2 px-8 py-3 rounded-theme font-bold transition-colors relative ${
               isSaving || !corpsName || !alias
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
