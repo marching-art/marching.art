@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebaseConfig';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 const AdminPage = () => {
   const { currentUser } = useAuth();
@@ -119,14 +120,17 @@ const AdminPage = () => {
 
   if (!isAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-text-primary-dark mb-2">Access Denied</h1>
-          <p className="text-text-secondary-dark">You don't have permission to access the admin panel.</p>
-        </div>
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-error mb-4">Access Denied</h1>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          You do not have permission to access this page.
+        </p>
       </div>
     );
+  }
+
+  if (isLoading && !adminStats) {
+    return <LoadingScreen message="Loading admin panel..." />;
   }
 
   const tabs = [

@@ -4,7 +4,7 @@ import { db, dataNamespace } from '../firebaseConfig';
 
 export const useUserStore = create((set, get) => ({
   profile: null,
-  isLoading: false,
+  isLoading: false, // Changed from true to false - only loading when actively fetching
   error: null,
   
   fetchUserProfile: async (uid) => {

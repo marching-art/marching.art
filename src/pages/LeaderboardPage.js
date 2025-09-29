@@ -3,6 +3,7 @@ import { db } from 'firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { Trophy, Medal, Award, TrendingUp, Users, Clock } from 'lucide-react';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 const LeaderboardPage = () => {
   const [leaderboardData, setLeaderboardData] = useState({});
@@ -217,11 +218,7 @@ const LeaderboardPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading leaderboard..." />;
   }
 
   if (error) {

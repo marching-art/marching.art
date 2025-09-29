@@ -19,6 +19,7 @@ import {
   Eye,
   DollarSign
 } from 'lucide-react';
+import LoadingScreen from '../common/LoadingScreen';
 
 const StaffManagement = ({ userProfile }) => {
   const { currentUser } = useAuth();
@@ -143,12 +144,7 @@ const StaffManagement = ({ userProfile }) => {
   };
 
   if (isLoading) {
-    return (
-      <div className="bg-surface-dark p-8 rounded-theme text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark mx-auto mb-4"></div>
-        <p className="text-text-secondary-dark">Loading staff management...</p>
-      </div>
-    );
+    return <LoadingScreen message="Loading staff management..." />;
   }
 
   return (

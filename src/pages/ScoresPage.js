@@ -17,6 +17,7 @@ import {
   Medal
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 const ScoresPage = () => {
   const [loading, setLoading] = useState(true);
@@ -182,11 +183,7 @@ const ScoresPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading scores..." />;
   }
 
   if (error) {

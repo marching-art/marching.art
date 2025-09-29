@@ -3,6 +3,7 @@ import { db } from '../firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { Calendar, MapPin, Users, Trophy, Info, CheckCircle, Clock } from 'lucide-react';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 const SchedulePage = () => {
   const [loading, setLoading] = useState(true);
@@ -216,11 +217,7 @@ const SchedulePage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading schedule..." />;
   }
 
   if (error) {
