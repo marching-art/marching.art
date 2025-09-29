@@ -5,36 +5,36 @@ module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: 'class', // Use class-based dark mode for manual toggle
   theme: {
     extend: {
       colors: {
-        // Primary brand color - gold from CSS variables
+        // Primary brand color - gold (consistent in both modes)
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
-        // Secondary brand color - brown from CSS variables
+        // Secondary brand color - brown
         secondary: {
           DEFAULT: 'rgb(var(--color-secondary) / <alpha-value>)',
           dark: 'rgb(var(--color-secondary-dark) / <alpha-value>)',
         },
-        // Accent color - tan from CSS variables
+        // Accent color - tan/beige
         accent: {
           DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
           dark: 'rgb(var(--color-accent-dark) / <alpha-value>)',
         },
-        // Background colors from CSS variables
+        // Background colors - cream/dark brown
         background: {
           DEFAULT: 'rgb(var(--color-background) / <alpha-value>)',
           dark: 'rgb(var(--color-background-dark) / <alpha-value>)',
         },
-        // Surface colors from CSS variables
+        // Surface colors - lighter cream/brown
         surface: {
           DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
           dark: 'rgb(var(--color-surface-dark) / <alpha-value>)',
         },
-        // Text colors from CSS variables
+        // Text colors
         'text-primary': {
           DEFAULT: 'rgb(var(--text-primary) / <alpha-value>)',
           dark: 'rgb(var(--text-primary-dark) / <alpha-value>)',
@@ -44,8 +44,14 @@ module.exports = {
           dark: 'rgb(var(--text-secondary-dark) / <alpha-value>)',
         },
         // On-color classes for text on colored backgrounds
-        'on-primary': 'rgb(var(--on-primary) / <alpha-value>)',
-        'on-secondary': 'rgb(var(--on-secondary) / <alpha-value>)',
+        'on-primary': {
+          DEFAULT: 'rgb(var(--on-primary) / <alpha-value>)',
+          dark: 'rgb(var(--on-primary-dark) / <alpha-value>)',
+        },
+        'on-secondary': {
+          DEFAULT: 'rgb(var(--on-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--on-secondary-dark) / <alpha-value>)',
+        },
         
         // Class-specific colors for compatibility
         'class-world': '#8B5CF6', // Purple
@@ -75,15 +81,15 @@ module.exports = {
       },
       
       boxShadow: {
-        'theme': '0 4px 10px rgba(0, 0, 0, 0.05)',
-        'theme-dark': '0 4px 10px rgba(0, 0, 0, 0.4)',
-        'glow': '0 0 20px rgba(255, 107, 53, 0.3)'
+        'theme': '0 4px 10px rgba(101, 67, 33, 0.08)',
+        'theme-dark': '0 4px 10px rgba(0, 0, 0, 0.5)',
+        'glow': '0 0 20px rgba(218, 165, 32, 0.4)'
       },
       
       textShadow: {
-        'sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
-        'DEFAULT': '0 2px 4px rgba(0, 0, 0, 0.10)',
-        'lg': '0 8px 16px rgba(0, 0, 0, 0.15)'
+        'sm': '0 1px 2px rgba(30, 20, 15, 0.1)',
+        'DEFAULT': '0 2px 4px rgba(30, 20, 15, 0.15)',
+        'lg': '0 8px 16px rgba(30, 20, 15, 0.2)'
       },
       
       animation: {
@@ -143,10 +149,10 @@ module.exports = {
           '-webkit-line-clamp': '3'
         },
         '.gradient-primary': {
-          background: 'linear-gradient(135deg, rgb(var(--color-primary)) 0%, rgb(var(--color-primary-dark)) 100%)'
+          background: 'linear-gradient(135deg, rgb(218, 165, 32) 0%, rgb(184, 134, 11) 100%)'
         },
         '.gradient-surface': {
-          background: 'linear-gradient(135deg, rgb(var(--color-surface-dark)) 0%, rgb(var(--color-background-dark)) 100%)'
+          background: 'linear-gradient(135deg, rgb(var(--color-surface)) 0%, rgb(var(--color-background)) 100%)'
         }
       };
       addUtilities(newUtilities);
