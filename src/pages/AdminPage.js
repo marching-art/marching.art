@@ -14,7 +14,9 @@ import {
   Star,
   Trophy,
   DollarSign,
-  PlayCircle
+  PlayCircle,
+  AlertTriangle,
+  Activity
 } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebaseConfig';
@@ -41,11 +43,12 @@ const AdminPage = () => {
   const fetchAdminData = async () => {
     try {
       setIsLoading(true);
-      const getAdminStats = httpsCallable(functions, 'getSystemStats');
+      // FIXED: Use the correct function name from admin.js
+      const getAdminStats = httpsCallable(functions, 'getAdminStats');
       const result = await getAdminStats();
       
-      if (result.data.success) {
-        setAdminStats(result.data.stats);
+      if (result.data) {
+        setAdminStats(result.data);
         setSystemStatus('healthy');
       }
     } catch (error) {
@@ -77,22 +80,59 @@ const AdminPage = () => {
     }
   };
 
+  const handleUserAction = async (action, userId, amount = null) => {
+    try {
+      setIsLoading(true);
+      const executeUserAction = httpsCallable(functions, 'userAction');
+      const params = { action, userId };
+      if (amount !== null) params.amount = amount;
+      
+      const result = await executeUserAction(params);
+      
+      if (result.data.success) {
+        toast.success(result.data.message);
+        await fetchAdminData();
+      }
+    } catch (error) {
+      console.error(`Error executing ${action}:`, error);
+      toast.error(`Failed to ${action}: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStaffAction = async (action, staffData = null) => {
+    try {
+      setIsLoading(true);
+      const executeStaffAction = httpsCallable(functions, 'staffAction');
+      const params = { action };
+      if (staffData) params.staffData = staffData;
+      
+      const result = await executeStaffAction(params);
+      
+      if (result.data.success) {
+        toast.success(result.data.message);
+      }
+    } catch (error) {
+      console.error(`Error executing ${action}:`, error);
+      toast.error(`Failed to ${action}: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleManualScrape = async () => {
     try {
       setIsLoading(true);
-      toast.loading('Scraping DCI.org for latest scores...', { id: 'scrape' });
-      
       const triggerScrape = httpsCallable(functions, 'triggerManualScrape');
-      const result = await triggerScrape({});
+      const result = await triggerScrape();
       
       if (result.data.success) {
-        toast.success(result.data.message, { id: 'scrape' });
-      } else {
-        toast.error('Scrape failed', { id: 'scrape' });
+        toast.success('Manual scrape initiated successfully');
       }
     } catch (error) {
-      console.error('Error triggering scrape:', error);
-      toast.error(`Scrape failed: ${error.message}`, { id: 'scrape' });
+      console.error('Error triggering manual scrape:', error);
+      toast.error('Failed to trigger manual scrape');
     } finally {
       setIsLoading(false);
     }
@@ -101,20 +141,15 @@ const AdminPage = () => {
   const handleManualScoreProcess = async () => {
     try {
       setIsLoading(true);
-      toast.loading('Processing scores...', { id: 'process' });
-      
       const processScores = httpsCallable(functions, 'processScoresManually');
-      const result = await processScores({});
+      const result = await processScores();
       
       if (result.data.success) {
-        toast.success('Scores processed successfully!', { id: 'process' });
-        await fetchAdminData();
-      } else {
-        toast.error('Score processing failed', { id: 'process' });
+        toast.success('Score processing initiated');
       }
     } catch (error) {
       console.error('Error processing scores:', error);
-      toast.error(`Processing failed: ${error.message}`, { id: 'process' });
+      toast.error('Failed to process scores');
     } finally {
       setIsLoading(false);
     }
@@ -122,128 +157,105 @@ const AdminPage = () => {
 
   if (!isAdmin) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Access Denied
-        </h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          This page is only accessible to administrators.
-        </p>
+      <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-error mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            Access Denied
+          </h1>
+          <p className="text-text-secondary dark:text-text-secondary-dark">
+            You do not have permission to access this page.
+          </p>
+        </div>
       </div>
     );
   }
 
   if (isLoading && !adminStats) {
-    return <LoadingScreen message="Loading admin panel..." />;
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-            Admin Panel
+    <div className="min-h-screen bg-background dark:bg-background-dark p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            Admin Dashboard
           </h1>
-          <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
-            System Management & Monitoring
+          <p className="text-text-secondary dark:text-text-secondary-dark">
+            System administration and management tools
           </p>
         </div>
-        
-        <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${
-          systemStatus === 'healthy' ? 'bg-green-900 text-green-200' :
-          systemStatus === 'error' ? 'bg-red-900 text-red-200' :
-          'bg-gray-700 text-gray-300'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            systemStatus === 'healthy' ? 'bg-green-400' :
-            systemStatus === 'error' ? 'bg-red-400' :
-            'bg-gray-400'
-          }`} />
-          <span className="text-sm font-medium">
-            {systemStatus === 'healthy' ? 'System Healthy' :
-             systemStatus === 'error' ? 'System Error' :
-             'Loading...'}
-          </span>
+
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {['overview', 'seasons', 'users', 'database', 'staff'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-theme font-medium capitalize whitespace-nowrap ${
+                activeTab === tab
+                  ? 'bg-primary text-white'
+                  : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-accent dark:border-accent-dark">
-        {[
-          { id: 'overview', label: 'Overview', icon: TrendingUp },
-          { id: 'seasons', label: 'Seasons', icon: Calendar },
-          { id: 'users', label: 'Users', icon: Users },
-          { id: 'database', label: 'Database', icon: Database }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'text-primary dark:text-primary-dark border-b-2 border-primary dark:border-primary-dark'
-                : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-            }`}
-          >
-            <tab.icon className="w-5 h-5" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="space-y-6">
         {/* Overview Tab */}
         {activeTab === 'overview' && adminStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-4">
                 <Users className="w-8 h-8 text-primary dark:text-primary-dark" />
                 <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                  {adminStats.users?.total || 0}
+                  {adminStats.totalUsers || 0}
                 </span>
               </div>
               <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
                 Total Users
               </h3>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
-                {adminStats.users?.active || 0} active this week
+                {adminStats.activeUsers || 0} active this week
               </p>
             </div>
 
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-              <div className="flex items-center justify-between mb-2">
-                <Trophy className="w-8 h-8 text-primary dark:text-primary-dark" />
+              <div className="flex items-center justify-between mb-4">
+                <Trophy className="w-8 h-8 text-secondary dark:text-secondary-dark" />
                 <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                  {adminStats.corps?.total || 0}
+                  {adminStats.totalCorps || 0}
                 </span>
               </div>
               <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
                 Active Corps
               </h3>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
-                Across all classes
+                Across all divisions
               </p>
             </div>
 
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-              <div className="flex items-center justify-between mb-2">
-                <Calendar className="w-8 h-8 text-primary dark:text-primary-dark" />
+              <div className="flex items-center justify-between mb-4">
+                <Calendar className="w-8 h-8 text-accent dark:text-accent-dark" />
                 <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                  {adminStats.currentSeason?.seasonNumber || 'N/A'}
+                  {adminStats.currentSeason?.currentDay || 0}
                 </span>
               </div>
               <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
-                Current Season
+                Season Day
               </h3>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
-                Day {adminStats.currentSeason?.currentDay || 0} of {adminStats.currentSeason?.totalDays || 0}
+                {adminStats.currentSeason?.seasonName || 'No active season'}
               </p>
             </div>
 
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
-              <div className="flex items-center justify-between mb-2">
-                <CheckCircle className="w-8 h-8 text-green-500" />
+              <div className="flex items-center justify-between mb-4">
+                <Activity className="w-8 h-8 text-success" />
                 <span className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                   {systemStatus === 'healthy' ? '100%' : '—'}
                 </span>
@@ -261,7 +273,7 @@ const AdminPage = () => {
         {/* Seasons Tab */}
         {activeTab === 'seasons' && (
           <div className="space-y-6">
-            {/* FIXED: Automatic Season Creation */}
+            {/* Season Management */}
             <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
               <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
                 Season Management
@@ -401,7 +413,7 @@ const AdminPage = () => {
             
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-4">
-                {adminStats.corps?.distribution && Object.entries(adminStats.corps.distribution).map(([className, count]) => (
+                {adminStats.classDistribution && Object.entries(adminStats.classDistribution).map(([className, count]) => (
                   <div key={className} className="text-center p-4 bg-background dark:bg-background-dark rounded-theme">
                     <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                       {count}
@@ -411,6 +423,43 @@ const AdminPage = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+              
+              {/* User Management Actions */}
+              <div className="mt-6 space-y-3">
+                <h4 className="font-bold text-text-primary dark:text-text-primary-dark">
+                  Quick Actions
+                </h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => {
+                      const userId = prompt('Enter User ID:');
+                      if (userId) handleUserAction('grantAdmin', userId);
+                    }}
+                    className="btn-secondary text-sm"
+                  >
+                    Grant Admin
+                  </button>
+                  <button
+                    onClick={() => {
+                      const userId = prompt('Enter User ID:');
+                      if (userId) handleUserAction('resetProgress', userId);
+                    }}
+                    className="btn-secondary text-sm"
+                  >
+                    Reset Progress
+                  </button>
+                  <button
+                    onClick={() => {
+                      const userId = prompt('Enter User ID:');
+                      const amount = prompt('Enter CorpsCoin amount:');
+                      if (userId && amount) handleUserAction('awardCorpsCoin', userId, parseInt(amount));
+                    }}
+                    className="btn-secondary text-sm"
+                  >
+                    Award CorpsCoin
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -422,9 +471,64 @@ const AdminPage = () => {
             <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
               Database Tools
             </h3>
-            <p className="text-text-secondary dark:text-text-secondary-dark">
-              Database management tools coming soon...
-            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleSeasonAction('processScores')}
+                disabled={isLoading}
+                className="w-full btn-secondary"
+              >
+                Process Scores
+              </button>
+              <p className="text-text-secondary dark:text-text-secondary-dark">
+                More database management tools coming soon...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Tab */}
+        {activeTab === 'staff' && (
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border border-accent dark:border-accent-dark">
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+              Staff Management
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleStaffAction('updateValues')}
+                disabled={isLoading}
+                className="w-full btn-secondary"
+              >
+                Update Staff Values
+              </button>
+              <button
+                onClick={() => handleStaffAction('cleanupMarketplace')}
+                disabled={isLoading}
+                className="w-full btn-secondary"
+              >
+                Cleanup Marketplace
+              </button>
+              <button
+                onClick={() => {
+                  const name = prompt('Staff member name:');
+                  const caption = prompt('Caption (GE1, GE2, etc):');
+                  const yearInducted = prompt('Year inducted:');
+                  const biography = prompt('Biography:');
+                  
+                  if (name && caption && yearInducted && biography) {
+                    handleStaffAction('addStaffMember', {
+                      name,
+                      caption,
+                      yearInducted: parseInt(yearInducted),
+                      biography
+                    });
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full btn-primary"
+              >
+                Add Staff Member
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 marching.art development guidelines
 this game, marching.art, is intended to be the “ultimate” fantasy drum corps game. Every fantasy drum corps players dream.
 The most recent, award-winning, eye-catching design and user engagement retention strategies must be used in development of this game.s
-code edited in visual code studio, backend and database is firebase with google cloud, project compiled in github, and published in vercel. All code must be written to the pinnacle standard of design and architecture, and in a way that efficiently scales to 10,000 users. Utilize the latest version when you write code.
+code edited in visual code studio, backend and database is firebase with google cloud, project compiled in github, and published in vercel. All code must be written to the pinnacle standard of design and architecture, and in a way that efficiently scales to 10,000 users. Assume the game will run season cycles with dedicated users for at least ten years. Utilize the latest version when you write code.
 Terminal is Windows Powershell. Always use node 20.
 ALWAYS START WITH EXISTING FILES. Request the files you need if they have not yet been provided to you. Don’t be lazy. Prosvide complete, feature-rich, verified, cross-checked files every time you update.
 const firebaseConfig = {
