@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * marching.art Configuration
  * Centralized configuration for optimal cost efficiency and scalability to 10,000+ users
@@ -153,22 +155,19 @@ const SECURITY_CONFIG = {
 
 // === SCHEDULE CONFIGURATION ===
 const SCHEDULE_CONFIG = {
-  // Automated function timing (UTC)
-  SCORE_PROCESSING_TIME: '0 2 * * *',    // 2:00 AM daily
-  SEASON_CHECK_TIME: '0 3 * * *',        // 3:00 AM daily
-  WEEKLY_CLEANUP_TIME: '0 4 * * 0',      // 4:00 AM Sundays
+  // Automated function timing - ALL IN EASTERN TIME (America/New_York)
+  LIVE_SCORE_SCRAPE_TIME: '0 1 * * *',   // 1:00 AM ET daily (during live seasons)
+  SCORE_PROCESSING_TIME: '0 2 * * *',     // 2:00 AM ET daily
+  SEASON_CHECK_TIME: '0 3 * * *',         // 3:00 AM ET daily
+  WEEKLY_CLEANUP_TIME: '0 4 * * 0',       // 4:00 AM ET Sundays
+  WEEKLY_MATCHUPS_TIME: '0 4 * * 1',      // 4:00 AM ET Mondays
   
-  // Competition schedule
-  COMPETITION_SCHEDULE: [
-    { week: 1, shows: ['Regional Kickoff', 'Southern Classic', 'Northern Opener'] },
-    { week: 2, shows: ['Midwest Championships', 'East Coast Challenge', 'West Coast Showdown'] },
-    { week: 3, shows: ['Memorial Day Classic', 'Patriot Games', 'Liberty Bell'] },
-    { week: 4, shows: ['Southwestern Championship', 'Season Reset Selection', 'Eastern Classic'] },
-    { week: 5, shows: ['Regional Prelims', 'State Championships', 'District Finals'] },
-    { week: 6, shows: ['Open & A Class Prelims', 'World Championships Prelims'] },
-    { week: 7, shows: ['World Championships Semifinals', 'SoundSport International'] },
-    { week: 8, shows: ['World Championships Finals'] }
-  ]
+  // Time zone for all scheduled functions
+  TIME_ZONE: 'America/New_York'
+  
+  // NOTE: Competition schedules are generated dynamically from historical_scores
+  // for off-seasons and generated programmatically for live seasons.
+  // No static COMPETITION_SCHEDULE array needed here.
 };
 
 // === LOGGING & MONITORING ===
@@ -251,6 +250,20 @@ const validateConfig = () => {
   return true;
 };
 
+/**
+ * Check if user is admin
+ */
+const isAdmin = (uid) => {
+  return uid === ADMIN_USER_ID;
+};
+
+/**
+ * Get environment info
+ */
+const getEnvironment = () => {
+  return ENVIRONMENT;
+};
+
 // Run validation on import
 validateConfig();
 
@@ -278,6 +291,8 @@ module.exports = {
   getFunctionConfig,
   calculateDCITotalScore,
   validateConfig,
+  isAdmin,
+  getEnvironment,
   
   // Convenience getters
   isProduction: () => IS_PRODUCTION,

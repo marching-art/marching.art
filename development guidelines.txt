@@ -84,7 +84,7 @@ Hall of Champions
 Season management
 •	Seasons are automated and begin automatically in accordance with the gameplay.
 Gameplay
-•	There are six 7-week off-seasons that wrap a single 10-week live season. Seasons are automatically started by the backend and are anchored with the 10-week live season that always with finals on the second Saturday of August. Seasons reset at 0300 after finals scores are posted.
+•	There are six 7-week off-seasons that wrap a single 10-week live season. Seasons are automatically started by the backend and are anchored with the 10-week live season that always with finals on the second Saturday of August. Seasons reset at 3:00 AM Eastern Time after finals scores are posted.
 •	Choosing captions and scoring
 o	DCI Corps from past seasons are assigned to a season randomly from the historical_scores database upon season generation. This is a list of 25 corps, one corps from each assigned value, of 25 down to 1. 
 o	When a user creates their ensemble, they will be required to select 8 captions. General Effect 1, General Effect 2, Visual Ensemble, Visual Analysis, Color Guard, Brass, Music Analysis, and Percussion. These will be selected from drop down menus that include the 25 available corps for the season.

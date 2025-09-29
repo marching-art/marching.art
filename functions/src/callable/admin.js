@@ -343,13 +343,13 @@ async function createNewSeason(db, seasonType, year) {
     
     seasonStartDate = new Date(finalsDate);
     seasonStartDate.setDate(seasonStartDate.getDate() - 69); // 70 days total
-    seasonStartDate.setHours(3, 0, 0, 0); // 3:00 AM UTC
+    seasonStartDate.setHours(3, 0, 0, 0); // 3:00 AM ET (was UTC, now ET)
   } else {
     // Off-season: Calculate based on season number
     const seasonNumber = SEASON_THEMES.findIndex(t => t.toLowerCase() === seasonTypeLower) + 1;
     const liveSeasonStart = new Date(finalsDate);
     liveSeasonStart.setDate(liveSeasonStart.getDate() - 69);
-    liveSeasonStart.setHours(3, 0, 0, 0);
+    liveSeasonStart.setHours(3, 0, 0, 0); // 3:00 AM ET
     
     // Calculate off-season dates working backward from live season
     const offSeasonIndex = 6 - seasonNumber; // Reverse order
@@ -359,7 +359,7 @@ async function createNewSeason(db, seasonType, year) {
     
     seasonStartDate = new Date(seasonEndDate);
     seasonStartDate.setDate(seasonStartDate.getDate() - 48); // 49 days total
-    seasonStartDate.setHours(3, 0, 0, 0);
+    seasonStartDate.setHours(3, 0, 0, 0); // 3:00 AM ET
   }
   
   // Calculate current week and day based on actual date
@@ -475,7 +475,7 @@ function getSecondSaturdayOfAugust(year) {
   // Second Saturday is 7 days later
   const secondSaturday = firstSaturday + 7;
   
-  return new Date(year, 7, secondSaturday, 3, 0, 0); // 3:00 AM UTC
+  return new Date(year, 7, secondSaturday, 3, 0, 0); // 3:00 AM ET (America/New_York)
 }
 
 /**

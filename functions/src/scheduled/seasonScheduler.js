@@ -20,7 +20,7 @@ const SEASON_CONFIG = {
   LIVE_SEASON_DAYS: 70,      // 10 weeks
   OFF_SEASON_DAYS: 49,        // 7 weeks
   FINALS_DATE: { month: 7, weekOfMonth: 2, dayOfWeek: 6 }, // Second Saturday of August
-  SEASON_START_HOUR: 3,       // 3:00 AM UTC
+  SEASON_START_HOUR: 3,       // 3:00 AM EASTERN TIME
   
   // Themed off-season names (musical terms)
   SEASON_THEMES: ['Overture', 'Allegro', 'Adagio', 'Scherzo', 'Crescendo', 'Finale'],
@@ -44,12 +44,12 @@ const SEASON_CONFIG = {
 };
 
 /**
- * Daily season check - runs at 3:00 AM UTC
+ * Daily season check - runs at 3:00 AM
  */
 exports.checkSeasonStatus = functions
   .runWith(getFunctionConfig('standard'))
   .pubsub.schedule(SCHEDULE_CONFIG.SEASON_CHECK_TIME)
-  .timeZone('UTC')
+  .timeZone('America/New_York')
   .onRun(async (context) => {
     const logger = functions.logger;
     
