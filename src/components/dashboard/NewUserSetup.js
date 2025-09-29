@@ -14,7 +14,11 @@ import {
   Check,
   Star,
   Target,
-  Flag
+  Flag,
+  Music,
+  Palette as PaletteIcon,
+  Crown,
+  Sparkles
 } from 'lucide-react';
 
 const NewUserSetup = ({ profile, onComplete }) => {
@@ -57,7 +61,8 @@ const NewUserSetup = ({ profile, onComplete }) => {
     setIsSaving(true);
     
     try {
-      const updateCorpsInfo = httpsCallable(functions, 'users-updateCorpsInfo');
+      // FIXED: Changed from 'users-updateCorpsInfo' to 'updateCorpsInfo'
+      const updateCorpsInfo = httpsCallable(functions, 'updateCorpsInfo');
       const result = await updateCorpsInfo({ 
         corpsName: corpsName.trim(), 
         alias: alias.trim(),
@@ -96,80 +101,84 @@ const NewUserSetup = ({ profile, onComplete }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-text-primary-dark">
+          <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
             Step {step} of {totalSteps}
           </span>
-          <span className="text-sm text-text-secondary-dark">
+          <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
             {Math.round((step / totalSteps) * 100)}% Complete
           </span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-accent dark:bg-accent-dark rounded-full h-2">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
+            className="bg-primary dark:bg-primary-dark h-2 rounded-full transition-all duration-300"
             style={{ width: `${(step / totalSteps) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Step Content */}
-      <div className="bg-surface-dark rounded-theme p-8 shadow-theme-dark">
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-8 shadow-theme dark:shadow-theme-dark min-h-[500px]">
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div className="text-center space-y-6">
-            <div className="w-20 h-20 mx-auto bg-primary rounded-full flex items-center justify-center">
-              <Trophy className="w-10 h-10 text-on-primary" />
+            <div className="w-24 h-24 mx-auto bg-primary dark:bg-primary-dark rounded-full flex items-center justify-center shadow-lg">
+              <Trophy className="w-12 h-12 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-text-primary-dark mb-2">
+              <h2 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-3">
                 Welcome to marching.art!
               </h2>
-              <p className="text-lg text-text-secondary-dark">
+              <p className="text-xl text-text-secondary dark:text-text-secondary-dark">
                 The ultimate fantasy drum corps game
               </p>
             </div>
-            <div className="bg-blue-900 bg-opacity-30 border border-blue-400 rounded-theme p-6 text-left">
-              <h3 className="text-xl font-bold text-text-primary-dark mb-4">
-                What is marching.art?
-              </h3>
-              <div className="space-y-3 text-text-secondary-dark">
-                <p>
-                  marching.art is a competitive fantasy game where you build and manage your own drum corps. 
-                  Select legendary DCI performances for each caption, compete in weekly shows, and climb the leaderboards!
-                </p>
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="bg-background-dark rounded p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="w-4 h-4 text-primary-dark" />
-                      <span className="font-semibold text-text-primary-dark">Build Your Corps</span>
-                    </div>
-                    <p className="text-sm">Select from 25 legendary DCI performances</p>
-                  </div>
-                  <div className="bg-background-dark rounded p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-4 h-4 text-primary-dark" />
-                      <span className="font-semibold text-text-primary-dark">Weekly Shows</span>
-                    </div>
-                    <p className="text-sm">Compete up to 4 times per week</p>
-                  </div>
-                  <div className="bg-background-dark rounded p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Award className="w-4 h-4 text-primary-dark" />
-                      <span className="font-semibold text-text-primary-dark">Hire Staff</span>
-                    </div>
-                    <p className="text-sm">Legendary Hall of Fame instructors</p>
-                  </div>
-                  <div className="bg-background-dark rounded p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="w-4 h-4 text-primary-dark" />
-                      <span className="font-semibold text-text-primary-dark">Climb Ranks</span>
-                    </div>
-                    <p className="text-sm">Unlock higher class divisions</p>
-                  </div>
+
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-blue-900 bg-opacity-30 border border-blue-400 rounded-theme p-6 text-left">
+                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-primary dark:text-primary-dark" />
+                  What is marching.art?
+                </h3>
+                <div className="space-y-3 text-text-secondary dark:text-text-secondary-dark">
+                  <p>
+                    marching.art is a competitive fantasy game where you build and manage your own drum corps. 
+                    Select legendary DCI performances for each caption, compete in weekly shows, and climb the leaderboards!
+                  </p>
+                  <p>
+                    Create your unique corps identity, hire Hall of Fame staff, and compete against other directors 
+                    from around the world. Every decision matters as you strive for the championship!
+                  </p>
                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8">
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme text-center">
+                <Users className="w-10 h-10 mx-auto text-primary dark:text-primary-dark mb-3" />
+                <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2">Build Your Corps</h4>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                  Select DCI corps for each caption and create winning combinations
+                </p>
+              </div>
+
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme text-center">
+                <TrendingUp className="w-10 h-10 mx-auto text-primary dark:text-primary-dark mb-3" />
+                <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2">Compete & Score</h4>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                  Earn points based on real DCI performances throughout the season
+                </p>
+              </div>
+
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme text-center">
+                <Award className="w-10 h-10 mx-auto text-primary dark:text-primary-dark mb-3" />
+                <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2">Win Rewards</h4>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                  Climb leaderboards, unlock new classes, and earn CorpsCoin
+                </p>
               </div>
             </div>
           </div>
@@ -178,87 +187,102 @@ const NewUserSetup = ({ profile, onComplete }) => {
         {/* Step 2: How It Works */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-text-primary-dark mb-2">
-                How to Play
+            <div className="text-center mb-8">
+              <Target className="w-20 h-20 mx-auto text-primary dark:text-primary-dark mb-4" />
+              <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                How It Works
               </h2>
-              <p className="text-text-secondary-dark">
-                Here's everything you need to know to get started
+              <p className="text-lg text-text-secondary dark:text-text-secondary-dark">
+                Understanding the game mechanics
               </p>
             </div>
 
-            <div className="space-y-4">
-              {/* Caption Selection */}
-              <div className="bg-background-dark rounded-theme p-6 border border-accent-dark">
+            <div className="space-y-4 max-w-3xl mx-auto">
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl font-bold text-on-primary">1</span>
+                  <div className="bg-primary dark:bg-primary-dark rounded-full p-3 flex-shrink-0">
+                    <Music className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-text-primary-dark mb-2">
-                      Select Your Captions
+                  <div>
+                    <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">
+                      Caption Selection
                     </h3>
-                    <p className="text-text-secondary-dark mb-3">
-                      Choose 8 legendary DCI performances for each caption: General Effect (2), Visual (3), and Music (3).
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                      Choose real DCI corps for 8 captions: <strong>GE1, GE2, Visual Proficiency, Visual Analysis, 
+                      Color Guard, Brass, Music Analysis, and Percussion</strong>. Each corps has a point value 
+                      that reflects their strength.
                     </p>
-                    <div className="bg-surface-dark rounded p-3 text-sm">
-                      <div className="font-semibold text-text-primary-dark mb-1">Point Limits:</div>
-                      <div className="grid grid-cols-2 gap-2 text-text-secondary-dark">
-                        <div>• SoundSport: 90 points</div>
-                        <div>• A Class: 60 points</div>
-                        <div>• Open Class: 120 points</div>
-                        <div>• World Class: 150 points</div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Competition */}
-              <div className="bg-background-dark rounded-theme p-6 border border-accent-dark">
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl font-bold text-on-primary">2</span>
+                  <div className="bg-secondary dark:bg-secondary-dark rounded-full p-3 flex-shrink-0">
+                    <Target className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-text-primary-dark mb-2">
-                      Register for Shows
+                  <div>
+                    <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">
+                      Point Limits & Strategy
                     </h3>
-                    <p className="text-text-secondary-dark mb-3">
-                      Register for up to 4 competitions per week. Scores are calculated nightly based on historical DCI data.
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                      Each class has a maximum point allocation. <strong>SoundSport: 90 points, A Class: 60 points, 
+                      Open Class: 120 points, World Class: 150 points</strong>. Build your lineup strategically - 
+                      do you go top-heavy or balanced?
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-text-secondary-dark">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                      <span>Earn CorpsCoin and XP with every performance!</span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Progression */}
-              <div className="bg-background-dark rounded-theme p-6 border border-accent-dark">
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl font-bold text-on-primary">3</span>
+                  <div className="bg-primary dark:bg-primary-dark rounded-full p-3 flex-shrink-0">
+                    <Trophy className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-text-primary-dark mb-2">
-                      Progress Through Classes
+                  <div>
+                    <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">
+                      Live Scoring System
                     </h3>
-                    <p className="text-text-secondary-dark mb-3">
-                      Start in SoundSport, then unlock A Class (500 XP), Open Class (2,000 XP), and World Class (5,000 XP).
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                      As real DCI corps compete throughout the season, your fantasy corps earns points based on 
+                      their actual performances. <strong>GE = 40 points max, Visual Total = 30 points, Music Total = 30 points</strong>, 
+                      just like real DCI scoring.
                     </p>
-                    <div className="bg-surface-dark rounded p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Zap className="w-4 h-4 text-yellow-400" />
-                        <span className="font-semibold text-text-primary-dark text-sm">
-                          You start with 1,000 CorpsCoin!
-                        </span>
-                      </div>
-                      <p className="text-xs text-text-secondary-dark">
-                        Use CorpsCoin to hire Hall of Fame staff members and boost your scores
-                      </p>
-                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme">
+                <div className="flex items-start gap-4">
+                  <div className="bg-secondary dark:bg-secondary-dark rounded-full p-3 flex-shrink-0">
+                    <Zap className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">
+                      Caption Changes
+                    </h3>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                      <strong>Unlimited changes until 5 weeks remaining</strong>, then 3 changes per week until 
+                      1 week out. Final week: 2 changes between quarters/semis and 2 between semis/finals. 
+                      Choose wisely!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-background dark:bg-background-dark p-6 rounded-theme">
+                <div className="flex items-start gap-4">
+                  <div className="bg-primary dark:bg-primary-dark rounded-full p-3 flex-shrink-0">
+                    <Crown className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">
+                      Compete & Advance
+                    </h3>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">
+                      Climb the leaderboards, earn XP to unlock higher classes, collect CorpsCoin to hire legendary 
+                      staff, and compete for the championship. No two corps can have the same lineup!
+                    </p>
                   </div>
                 </div>
               </div>
@@ -269,92 +293,108 @@ const NewUserSetup = ({ profile, onComplete }) => {
         {/* Step 3: Create Your Corps */}
         {step === 3 && (
           <div className="space-y-6">
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 mx-auto bg-primary rounded-full flex items-center justify-center mb-4">
-                <Flag className="w-10 h-10 text-on-primary" />
-              </div>
-              <h2 className="text-3xl font-bold text-text-primary-dark mb-2">
-                Create Your SoundSport Corps
+            <div className="text-center mb-8">
+              <Flag className="w-20 h-20 mx-auto text-primary dark:text-primary-dark mb-4" />
+              <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                Create Your Corps
               </h2>
-              <p className="text-text-secondary-dark">
-                Let's set up your first corps. You can customize everything later!
+              <p className="text-lg text-text-secondary dark:text-text-secondary-dark">
+                Choose a unique identity for your fantasy drum corps
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary-dark mb-2">
-                  Corps Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={corpsName}
-                  onChange={(e) => setCorpsName(e.target.value)}
-                  placeholder="e.g., Thunder Regiment, Blue Stars, Phantom Knights"
-                  className="w-full p-3 bg-background-dark border border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary-dark text-text-primary-dark"
-                  maxLength="50"
-                  disabled={isSaving}
-                />
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-xs text-text-secondary-dark">
-                    Choose a unique and memorable name for your corps
-                  </p>
-                  <p className="text-xs text-text-secondary-dark">
-                    {corpsName.length}/50
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary-dark mb-2">
-                  Your Title/Alias <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={alias}
-                  onChange={(e) => setAlias(e.target.value)}
-                  placeholder="e.g., Director, Conductor, Captain, Maestro"
-                  className="w-full p-3 bg-background-dark border border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary-dark text-text-primary-dark"
-                  maxLength="20"
-                  disabled={isSaving}
-                />
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-xs text-text-secondary-dark">
-                    How should we address you?
-                  </p>
-                  <p className="text-xs text-text-secondary-dark">
-                    {alias.length}/20
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary-dark mb-2">
-                  Location <span className="text-text-secondary-dark text-xs">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Indianapolis, IN or California"
-                  className="w-full p-3 bg-background-dark border border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary-dark text-text-primary-dark"
-                  maxLength="50"
-                  disabled={isSaving}
-                />
-                <p className="text-xs text-text-secondary-dark mt-1">
-                  Where is your corps based?
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-blue-900 bg-opacity-20 border border-blue-400 rounded-theme p-4 mb-6">
+                <p className="text-sm text-text-primary dark:text-text-primary-dark">
+                  <strong>💡 Tip:</strong> Choose a memorable name that represents your vision. 
+                  You can customize everything later!
                 </p>
               </div>
-            </div>
 
-            <div className="bg-blue-900 bg-opacity-20 border border-blue-400 rounded-theme p-4">
-              <div className="flex items-start gap-3">
-                <Star className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-text-primary-dark">
-                  <p className="font-semibold mb-1">Starting as SoundSport</p>
-                  <p className="text-text-secondary-dark">
-                    You'll begin in the SoundSport division with a 90-point caption budget. 
-                    Compete, earn XP, and unlock higher divisions as you progress!
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                    Corps Name <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={corpsName}
+                    onChange={(e) => setCorpsName(e.target.value)}
+                    placeholder="e.g., Thunder Regiment, Blue Stars Elite, Phantom Knights"
+                    className="w-full p-4 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark text-text-primary dark:text-text-primary-dark text-lg"
+                    maxLength="50"
+                    disabled={isSaving}
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      Choose a unique and memorable name for your corps
+                    </p>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark font-mono">
+                      {corpsName.length}/50
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                    Your Title/Alias <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={alias}
+                    onChange={(e) => setAlias(e.target.value)}
+                    placeholder="e.g., Director, Conductor, Captain, Maestro"
+                    className="w-full p-4 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark text-text-primary dark:text-text-primary-dark text-lg"
+                    maxLength="20"
+                    disabled={isSaving}
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      How should we address you?
+                    </p>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark font-mono">
+                      {alias.length}/20
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                    Location <span className="text-text-secondary dark:text-text-secondary-dark text-xs">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g., California, USA"
+                    className="w-full p-4 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark text-text-primary dark:text-text-primary-dark text-lg"
+                    maxLength="50"
+                    disabled={isSaving}
+                  />
+                  <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-2">
+                    Share where your corps calls home
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
+                  <Star className="w-8 h-8 mx-auto text-primary dark:text-primary-dark mb-2" />
+                  <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-1">
+                    Starting Class
+                  </p>
+                  <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                    SoundSport (90 points)
+                  </p>
+                </div>
+
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
+                  <Trophy className="w-8 h-8 mx-auto text-secondary dark:text-secondary-dark mb-2" />
+                  <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-1">
+                    Starting Balance
+                  </p>
+                  <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                    1,000 CorpsCoin
                   </p>
                 </div>
               </div>
@@ -365,131 +405,144 @@ const NewUserSetup = ({ profile, onComplete }) => {
         {/* Step 4: Ready to Go */}
         {step === 4 && (
           <div className="text-center space-y-6">
-            <div className="w-20 h-20 mx-auto bg-green-600 rounded-full flex items-center justify-center">
-              <Check className="w-10 h-10 text-white" />
+            <div className="w-24 h-24 mx-auto bg-green-600 rounded-full flex items-center justify-center shadow-lg">
+              <Check className="w-12 h-12 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-text-primary-dark mb-2">
+              <h2 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-3">
                 You're All Set!
               </h2>
-              <p className="text-lg text-text-secondary-dark">
+              <p className="text-xl text-text-secondary dark:text-text-secondary-dark">
                 Ready to start your drum corps journey
               </p>
             </div>
 
-            <div className="bg-background-dark rounded-theme p-6 text-left space-y-4">
-              <h3 className="text-xl font-bold text-text-primary-dark mb-4">
-                Your Corps Summary
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-accent-dark">
-                  <span className="text-text-secondary-dark">Corps Name:</span>
-                  <span className="font-bold text-text-primary-dark">{corpsName}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-accent-dark">
-                  <span className="text-text-secondary-dark">Your Title:</span>
-                  <span className="font-bold text-text-primary-dark">{alias}</span>
-                </div>
-                {location && (
-                  <div className="flex justify-between items-center py-2 border-b border-accent-dark">
-                    <span className="text-text-secondary-dark">Location:</span>
-                    <span className="font-bold text-text-primary-dark">{location}</span>
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-background dark:bg-background-dark rounded-theme p-6 text-left space-y-4">
+                <h3 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4 text-center">
+                  Your Corps Summary
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-3 border-b border-accent dark:border-accent-dark">
+                    <span className="text-text-secondary dark:text-text-secondary-dark font-medium">Corps Name:</span>
+                    <span className="font-bold text-text-primary dark:text-text-primary-dark text-lg">{corpsName}</span>
                   </div>
-                )}
-                <div className="flex justify-between items-center py-2 border-b border-accent-dark">
-                  <span className="text-text-secondary-dark">Division:</span>
-                  <span className="font-bold text-primary-dark">SoundSport</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-text-secondary-dark">Starting CorpsCoin:</span>
-                  <span className="font-bold text-yellow-400">1,000</span>
+                  <div className="flex justify-between items-center py-3 border-b border-accent dark:border-accent-dark">
+                    <span className="text-text-secondary dark:text-text-secondary-dark font-medium">Your Title:</span>
+                    <span className="font-bold text-text-primary dark:text-text-primary-dark text-lg">{alias}</span>
+                  </div>
+                  {location && (
+                    <div className="flex justify-between items-center py-3 border-b border-accent dark:border-accent-dark">
+                      <span className="text-text-secondary dark:text-text-secondary-dark font-medium">Location:</span>
+                      <span className="font-bold text-text-primary dark:text-text-primary-dark text-lg">{location}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center py-3 border-b border-accent dark:border-accent-dark">
+                    <span className="text-text-secondary dark:text-text-secondary-dark font-medium">Division:</span>
+                    <span className="font-bold text-primary dark:text-primary-dark text-lg">SoundSport</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3">
+                    <span className="text-text-secondary dark:text-text-secondary-dark font-medium">Starting CorpsCoin:</span>
+                    <span className="font-bold text-secondary dark:text-secondary-dark text-lg">1,000</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-green-900 bg-opacity-20 border border-green-400 rounded-theme p-6">
-              <h3 className="text-lg font-bold text-text-primary-dark mb-3">
-                Next Steps:
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div className="bg-background-dark rounded p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Target className="w-4 h-4 text-primary-dark" />
-                    <span className="font-semibold text-text-primary-dark">1. Select Captions</span>
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-green-900 bg-opacity-20 border border-green-400 rounded-theme p-6">
+                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center justify-center gap-2">
+                  <Sparkles className="w-6 h-6 text-green-400" />
+                  Next Steps
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-background dark:bg-background-dark rounded-theme p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Target className="w-5 h-5 text-primary dark:text-primary-dark" />
+                      <span className="font-semibold text-text-primary dark:text-text-primary-dark">1. Build Lineup</span>
+                    </div>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      Select your 8 caption corps
+                    </p>
                   </div>
-                  <p className="text-text-secondary-dark">Choose your 8 DCI performances</p>
-                </div>
-                <div className="bg-background-dark rounded p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-primary-dark" />
-                    <span className="font-semibold text-text-primary-dark">2. Register for Shows</span>
+
+                  <div className="bg-background dark:bg-background-dark rounded-theme p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Calendar className="w-5 h-5 text-primary dark:text-primary-dark" />
+                      <span className="font-semibold text-text-primary dark:text-text-primary-dark">2. Register</span>
+                    </div>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      Sign up for competitions
+                    </p>
                   </div>
-                  <p className="text-text-secondary-dark">Pick your competitions</p>
-                </div>
-                <div className="bg-background-dark rounded p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Trophy className="w-4 h-4 text-primary-dark" />
-                    <span className="font-semibold text-text-primary-dark">3. Compete & Win</span>
+
+                  <div className="bg-background dark:bg-background-dark rounded-theme p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Trophy className="w-5 h-5 text-primary dark:text-primary-dark" />
+                      <span className="font-semibold text-text-primary dark:text-text-primary-dark">3. Compete</span>
+                    </div>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      Earn points and climb ranks
+                    </p>
                   </div>
-                  <p className="text-text-secondary-dark">Earn XP and climb ranks</p>
                 </div>
               </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-accent-dark">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6">
+        <button
+          onClick={prevStep}
+          disabled={step === 1 || isSaving}
+          className={`flex items-center gap-2 px-6 py-3 rounded-theme font-medium transition-all ${
+            step === 1 || isSaving
+              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : 'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-opacity-80'
+          }`}
+        >
+          <ChevronLeft className="w-5 h-5" />
+          Back
+        </button>
+
+        {step < totalSteps ? (
           <button
-            onClick={prevStep}
-            disabled={step === 1 || isSaving}
-            className={`flex items-center gap-2 px-6 py-2 rounded-theme font-medium transition-colors ${
-              step === 1 || isSaving
-                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                : 'bg-surface-dark text-text-primary-dark hover:bg-accent-dark border border-accent-dark'
+            onClick={nextStep}
+            disabled={!canProceed() || isSaving}
+            className={`flex items-center gap-2 px-6 py-3 rounded-theme font-medium transition-all ${
+              !canProceed() || isSaving
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                : 'bg-primary hover:bg-primary-dark dark:bg-primary-dark dark:hover:bg-primary text-white'
             }`}
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back
+            Next
+            <ChevronRight className="w-5 h-5" />
           </button>
-
-          {step < totalSteps ? (
-            <button
-              onClick={nextStep}
-              disabled={!canProceed() || isSaving}
-              className={`flex items-center gap-2 px-6 py-2 rounded-theme font-medium transition-colors ${
-                !canProceed() || isSaving
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-primary text-on-primary hover:bg-primary-dark'
-              }`}
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!canProceed() || isSaving}
-              className={`flex items-center gap-2 px-8 py-3 rounded-theme font-bold text-lg transition-colors ${
-                !canProceed() || isSaving
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {isSaving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Check className="w-5 h-5" />
-                  Create My Corps
-                </>
-              )}
-            </button>
-          )}
-        </div>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={isSaving || !corpsName || !alias}
+            className={`flex items-center gap-2 px-8 py-3 rounded-theme font-bold transition-all ${
+              isSaving || !corpsName || !alias
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <Check className="w-5 h-5" />
+                Create My Corps
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Step Indicators */}
@@ -497,12 +550,12 @@ const NewUserSetup = ({ profile, onComplete }) => {
         {[1, 2, 3, 4].map(stepNum => (
           <div
             key={stepNum}
-            className={`w-3 h-3 rounded-full transition-all ${
+            className={`h-2 rounded-full transition-all ${
               stepNum === step
-                ? 'bg-primary w-8'
+                ? 'bg-primary dark:bg-primary-dark w-8'
                 : stepNum < step
-                ? 'bg-green-500'
-                : 'bg-gray-600'
+                ? 'bg-green-500 w-2'
+                : 'bg-accent dark:bg-accent-dark w-2'
             }`}
           />
         ))}
