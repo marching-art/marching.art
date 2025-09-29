@@ -108,52 +108,6 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Updates user uniform configuration
- */
-exports.updateUniform = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const { uniform } = data;
-  const uid = context.auth.uid;
-
-  // Validation
-  if (!uniform || typeof uniform !== 'object') {
-    throw new functions.https.HttpsError("invalid-argument", "Valid uniform configuration required.");
-  }
-
-  // Validate uniform structure
-  const validStyles = ['solid', 'gradient', 'pattern'];
-  if (!uniform.style || !validStyles.includes(uniform.style)) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid uniform style.");
-  }
-
-  // Validate colors
-  if (!uniform.colors || !uniform.colors.primary) {
-    throw new functions.https.HttpsError("invalid-argument", "Primary color is required.");
-  }
-
-  try {
-    const profileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
-    
-    await profileRef.update({
-      uniform: uniform,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    return { 
-      success: true, 
-      message: "Uniform updated successfully!"
-    };
-
-  } catch (error) {
-    console.error("Error updating uniform for user:", uid, error);
-    throw new functions.https.HttpsError("internal", "An error occurred while updating uniform.");
-  }
-});
-
-/**
  * Awards XP to a user for various activities
  */
 exports.awardXP = functions.https.onCall(async (data, context) => {

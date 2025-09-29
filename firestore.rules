@@ -77,6 +77,24 @@ service cloud.firestore {
       }
     }
 
+    match /artifacts/{namespace}/users/{userId}/profile/data {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Specific validation for uniform updates
+      allow update: if request.auth != null && 
+                      request.auth.uid == userId && 
+                      request.resource.data.keys().hasAny(['uniforms', 'purchasedUniformFeatures']);
+    }
+
+    // CorpsCoin transaction logs
+    match /corps_coin_transactions/{transactionId} {
+      allow read: if request.auth != null && 
+                    request.auth.uid == resource.data.userId;
+      allow write: if false; // Only cloud functions can write
+    }
+
     // --- STAFF MANAGEMENT ---
     // Hall of Fame Staff Database - public read access, admin write access
     match /staff/{staffId} {

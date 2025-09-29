@@ -149,6 +149,16 @@ exports.getMarketplaceListings = staff.getMarketplaceListings;
 exports.getUserMarketplaceListings = staff.getUserMarketplaceListings;
 
 // ============================================================================
+// CALLABLE FUNCTIONS - UNIFORMS
+// ============================================================================
+
+const uniforms = require('./src/callable/uniforms');
+exports.updateUniform = uniforms.updateUniform;
+exports.purchaseUniformFeature = uniforms.purchaseFeature;
+exports.getUniformUnlockStatus = uniforms.getUnlockStatus;
+exports.getUniformFeatureList = uniforms.getFeatureList;
+
+// ============================================================================
 // CALLABLE FUNCTIONS - ADMIN
 // ============================================================================
 
