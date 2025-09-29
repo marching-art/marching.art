@@ -79,15 +79,6 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Only fetch once when component mounts and user exists
-  useEffect(() => {
-    if (currentUser && !hasFetched) {
-      console.log('Fetching profile for', currentUser.uid);
-      fetchUserProfile(currentUser.uid);
-      setHasFetched(true);
-    }
-  }, [currentUser]); // Only depend on currentUser
-
   const handleSetupComplete = () => {
     if (currentUser) {
       setHasFetched(false); // Allow refetch
