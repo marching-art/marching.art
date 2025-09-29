@@ -1,201 +1,184 @@
 import React, { useState, useEffect } from 'react';
-import { db } from 'firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Calendar, MapPin, Trophy, BarChart3, TrendingUp, Award, Users } from 'lucide-react';
+import { db } from '../firebaseConfig';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { 
+  Calendar, 
+  MapPin, 
+  Trophy, 
+  BarChart3, 
+  TrendingUp, 
+  Award, 
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Star,
+  Medal
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ScoresPage = () => {
-  const [shows, setShows] = useState([]);
-  const [selectedShow, setSelectedShow] = useState(null);
-  const [showResults, setShowResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [detailModal, setDetailModal] = useState(false);
-  const [selectedCorps, setSelectedCorps] = useState(null);
-  const [chartView, setChartView] = useState('scores');
   const [error, setError] = useState('');
-
-  const currentSeason = '2025';
-  const captions = ['GE1', 'GE2', 'Visual Proficiency', 'Visual Analysis', 'Color Guard', 'Brass', 'Music Analysis', 'Percussion'];
+  const [currentSeason, setCurrentSeason] = useState(null);
+  const [recaps, setRecaps] = useState([]);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedShow, setSelectedShow] = useState(null);
+  const [classFilter, setClassFilter] = useState('all');
+  const [detailModal, setDetailModal] = useState(false);
+  const [chartModal, setChartModal] = useState(false);
+  const [selectedCorps, setSelectedCorps] = useState(null);
 
   useEffect(() => {
-    fetchShows();
-  }, [currentSeason]);
+    fetchScores();
+  }, []);
 
-  useEffect(() => {
-    if (selectedShow) {
-      fetchShowResults(selectedShow.id);
-    }
-  }, [selectedShow]);
-
-  const fetchShows = async () => {
+  const fetchScores = async () => {
     try {
+      setLoading(true);
       setError('');
+
+      // Get current season
+      const seasonDoc = await getDoc(doc(db, 'game-settings', 'current'));
       
-      // Use simple query without complex where/orderBy to avoid index requirements
-      const showsRef = collection(db, 'schedules');
-      const snapshot = await getDocs(showsRef);
-      
-      const showsData = [];
-      snapshot.docs.forEach(doc => {
-        const data = { id: doc.id, ...doc.data() };
-        
-        // Filter on client side to avoid index requirements
-        if (data.season === currentSeason) {
-          showsData.push(data);
-        }
-      });
-      
-      // Sort on client side by date
-      showsData.sort((a, b) => {
-        const dateA = a.date ? new Date(a.date) : new Date();
-        const dateB = b.date ? new Date(b.date) : new Date();
-        return dateB - dateA; // Most recent first
-      });
-      
-      setShows(showsData);
-      
-      // Set most recent show as default
-      if (showsData.length > 0) {
-        setSelectedShow(showsData[0]);
+      if (!seasonDoc.exists()) {
+        setError('No active season found');
+        return;
       }
+
+      const seasonData = seasonDoc.data();
+      setCurrentSeason(seasonData);
+
+      // Get recaps for current season
+      const recapsDoc = await getDoc(doc(db, 'fantasy_recaps', seasonData.activeSeasonId));
+      
+      if (!recapsDoc.exists()) {
+        setError('No scores available yet');
+        return;
+      }
+
+      const recapsData = recapsDoc.data().recaps || [];
+      
+      // Sort by day (most recent first)
+      recapsData.sort((a, b) => b.offSeasonDay - a.offSeasonDay);
+      
+      setRecaps(recapsData);
+      
+      // Set most recent day as default
+      if (recapsData.length > 0) {
+        setSelectedDay(recapsData[0]);
+      }
+
     } catch (error) {
-      console.error('Error fetching shows:', error);
-      setError('Failed to load competition data. Please try again.');
-      toast.error('Failed to load competition data');
+      console.error('Error fetching scores:', error);
+      setError('Failed to load scores');
+      toast.error('Failed to load scores');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchShowResults = async (showId) => {
-    try {
-      // Create mock results for now since fantasy_recaps may not exist
-      const mockResults = [
-        {
-          id: '1',
-          corpsName: 'Blue Devils',
-          directorName: 'Director A',
-          class: 'World Class',
-          generalEffect: 28.5,
-          visualTotal: 28.2,
-          musicTotal: 27.8,
-          totalScore: 84.5,
-          uniforms: { primaryColor: '#0000FF', secondaryColor: '#FFD700' },
-          userId: 'user1'
-        },
-        {
-          id: '2',
-          corpsName: 'Santa Clara Vanguard',
-          directorName: 'Director B', 
-          class: 'World Class',
-          generalEffect: 28.1,
-          visualTotal: 27.9,
-          musicTotal: 27.5,
-          totalScore: 83.5,
-          uniforms: { primaryColor: '#FF0000', secondaryColor: '#000000' },
-          userId: 'user2'
-        },
-        {
-          id: '3',
-          corpsName: 'Carolina Crown',
-          directorName: 'Director C',
-          class: 'World Class', 
-          generalEffect: 27.8,
-          visualTotal: 27.6,
-          musicTotal: 27.2,
-          totalScore: 82.6,
-          uniforms: { primaryColor: '#FFD700', secondaryColor: '#000000' },
-          userId: 'user3'
-        }
-      ];
-      
-      setShowResults(mockResults);
-    } catch (error) {
-      console.error('Error fetching show results:', error);
-      setShowResults([]);
-    }
-  };
-
-  const openCorpsDetail = (corps) => {
-    setSelectedCorps({
-      ...corps,
-      details: {
-        captions: {
-          'GE1': 14.2,
-          'GE2': 14.3,
-          'Visual Proficiency': 13.9,
-          'Visual Analysis': 14.3,
-          'Color Guard': 13.7,
-          'Brass': 14.1,
-          'Music Analysis': 13.4,
-          'Percussion': 13.8
-        },
-        captionCorps: {
-          'GE1': 'Blue Devils 2019',
-          'GE2': 'Santa Clara Vanguard 2018',
-          'Visual Proficiency': 'Carolina Crown 2020',
-          'Visual Analysis': 'Bluecoats 2019',
-          'Color Guard': 'Blue Devils 2021',
-          'Brass': 'Carolina Crown 2019',
-          'Music Analysis': 'Santa Clara Vanguard 2020',
-          'Percussion': 'Blue Devils 2020'
-        }
-      }
-    });
-    setDetailModal(true);
-  };
-
-  const formatScore = (score) => {
-    return typeof score === 'number' ? score.toFixed(3) : '0.000';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'TBD';
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'TBD';
     
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'TBD';
-      
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        year: 'numeric'
       });
     } catch (error) {
       return 'TBD';
     }
   };
 
-  const getRankBadge = (rank) => {
-    let badgeClass = 'bg-surface-dark border-accent-dark text-text-primary-dark';
-    if (rank === 1) badgeClass = 'bg-yellow-500 border-yellow-600 text-black';
-    else if (rank === 2) badgeClass = 'bg-gray-400 border-gray-500 text-black';
-    else if (rank === 3) badgeClass = 'bg-amber-600 border-amber-700 text-white';
-    
-    return `${badgeClass} border rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm`;
+  const formatScore = (score) => {
+    return typeof score === 'number' ? score.toFixed(3) : '0.000';
   };
 
-  const getClassBadge = (className) => {
-    const colors = {
-      'World Class': 'bg-red-500 text-white',
-      'Open Class': 'bg-blue-500 text-white',
-      'A Class': 'bg-green-500 text-white',
-      'SoundSport': 'bg-purple-500 text-white'
-    };
-    
-    return `${colors[className] || 'bg-gray-500 text-white'} px-2 py-1 rounded text-xs font-medium`;
+  const getFilteredResults = (results) => {
+    if (classFilter === 'all') return results;
+    return results.filter(corps => corps.corpsClass === classFilter);
   };
 
-  const getChartData = () => {
-    return showResults.slice(0, 12).map(corps => ({
-      name: corps.corpsName.length > 12 ? corps.corpsName.substring(0, 12) + '...' : corps.corpsName,
-      score: corps.totalScore,
-      ge: corps.generalEffect || 0,
-      visual: corps.visualTotal || 0,
-      music: corps.musicTotal || 0
+  const openCorpsDetail = (corps) => {
+    setSelectedCorps(corps);
+    setDetailModal(true);
+  };
+
+  const openChartModal = (show) => {
+    setSelectedShow(show);
+    setChartModal(true);
+  };
+
+  const getChartData = (results) => {
+    return results.slice(0, 12).map(corps => ({
+      name: corps.corpsName.length > 15 ? corps.corpsName.substring(0, 15) + '...' : corps.corpsName,
+      'Total': parseFloat(corps.totalScore.toFixed(2)),
+      'GE': parseFloat(corps.geScore.toFixed(2)),
+      'Visual': parseFloat(corps.visualScore.toFixed(2)),
+      'Music': parseFloat(corps.musicScore.toFixed(2))
     }));
+  };
+
+  const getCaptionAwards = (results) => {
+    const captions = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+    const awards = {};
+
+    captions.forEach(caption => {
+      let topCorps = null;
+      let topScore = 0;
+
+      results.forEach(corps => {
+        if (corps.captionScores && corps.captionScores[caption]) {
+          if (corps.captionScores[caption] > topScore) {
+            topScore = corps.captionScores[caption];
+            topCorps = corps;
+          }
+        }
+      });
+
+      if (topCorps) {
+        awards[caption] = {
+          corpsName: topCorps.corpsName,
+          score: topScore,
+          userId: topCorps.uid
+        };
+      }
+    });
+
+    return awards;
+  };
+
+  const getCaptionName = (abbr) => {
+    const names = {
+      'GE1': 'General Effect 1',
+      'GE2': 'General Effect 2',
+      'VP': 'Visual Proficiency',
+      'VA': 'Visual Analysis',
+      'CG': 'Color Guard',
+      'B': 'Brass',
+      'MA': 'Music Analysis',
+      'P': 'Percussion'
+    };
+    return names[abbr] || abbr;
+  };
+
+  const navigateDay = (direction) => {
+    const currentIndex = recaps.findIndex(r => r.offSeasonDay === selectedDay.offSeasonDay);
+    let newIndex;
+    
+    if (direction === 'prev') {
+      newIndex = currentIndex - 1;
+    } else {
+      newIndex = currentIndex + 1;
+    }
+    
+    if (newIndex >= 0 && newIndex < recaps.length) {
+      setSelectedDay(recaps[newIndex]);
+    }
   };
 
   if (loading) {
@@ -213,7 +196,7 @@ const ScoresPage = () => {
         <h3 className="text-xl font-medium text-text-primary-dark mb-2">Error Loading Scores</h3>
         <p className="text-text-secondary-dark mb-4">{error}</p>
         <button
-          onClick={fetchShows}
+          onClick={fetchScores}
           className="bg-primary hover:bg-primary-dark text-on-primary px-6 py-2 rounded-theme font-medium transition-colors"
         >
           Try Again
@@ -222,293 +205,387 @@ const ScoresPage = () => {
     );
   }
 
+  if (recaps.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Trophy className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-medium text-text-primary-dark mb-2">No Scores Available</h3>
+        <p className="text-text-secondary-dark">
+          Scores will appear after the first competition day
+        </p>
+      </div>
+    );
+  }
+
+  const currentIndex = recaps.findIndex(r => r.offSeasonDay === selectedDay?.offSeasonDay);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < recaps.length - 1;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-text-primary-dark mb-2">Competition Results</h1>
         <p className="text-text-secondary-dark text-lg">
-          {currentSeason} Season • {shows.length} Shows Available
+          {currentSeason?.seasonName || 'Season 2025'} • {recaps.length} Competition Days
         </p>
       </div>
 
-      {/* Show Selection */}
-      <div className="bg-surface-dark rounded-theme p-6 shadow-theme-dark">
-        <h3 className="text-lg font-semibold text-text-primary-dark mb-4">Select Competition</h3>
-        {shows.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {shows.map(show => (
-              <button
-                key={show.id}
-                onClick={() => setSelectedShow(show)}
-                className={`p-4 rounded-theme border-2 transition-colors text-left ${
-                  selectedShow?.id === show.id
-                    ? 'border-primary bg-primary/10'
-                    : 'border-accent-dark hover:border-primary-dark'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-text-primary-dark">{show.showName || 'Competition Show'}</h4>
-                  <Trophy className="w-5 h-5 text-primary-dark" />
-                </div>
-                <div className="space-y-1 text-sm text-text-secondary-dark">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(show.date)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{show.location || 'Location TBD'}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>{show.participatingCorps?.length || 0} Corps</span>
-                  </div>
-                </div>
-              </button>
-            ))}
+      {/* Day Navigation */}
+      <div className="bg-surface-dark rounded-theme p-4 shadow-theme-dark">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigateDay('prev')}
+            disabled={!hasPrev}
+            className={`flex items-center gap-2 px-4 py-2 rounded-theme font-medium transition-colors ${
+              hasPrev
+                ? 'bg-primary hover:bg-primary-dark text-on-primary'
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Previous Day
+          </button>
+
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-text-primary-dark">
+              Day {selectedDay?.offSeasonDay}
+            </h3>
+            <p className="text-sm text-text-secondary-dark">
+              {formatDate(selectedDay?.date)}
+            </p>
           </div>
-        ) : (
-          <div className="text-center py-8">
-            <Trophy className="w-12 h-12 mx-auto text-text-secondary-dark mb-3" />
-            <p className="text-text-secondary-dark">No competition data available yet</p>
-          </div>
-        )}
+
+          <button
+            onClick={() => navigateDay('next')}
+            disabled={!hasNext}
+            className={`flex items-center gap-2 px-4 py-2 rounded-theme font-medium transition-colors ${
+              hasNext
+                ? 'bg-primary hover:bg-primary-dark text-on-primary'
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Next Day
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Results Display */}
-      {selectedShow && (
+      {/* Class Filter Tabs */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {['all', 'World Class', 'Open Class', 'A Class', 'SoundSport'].map(cls => (
+          <button
+            key={cls}
+            onClick={() => setClassFilter(cls)}
+            className={`px-6 py-2 rounded-theme font-medium transition-colors ${
+              classFilter === cls
+                ? 'bg-primary text-on-primary'
+                : 'bg-surface-dark text-text-secondary-dark hover:bg-accent-dark hover:text-text-primary-dark'
+            }`}
+          >
+            {cls === 'all' ? 'All Classes' : cls}
+          </button>
+        ))}
+      </div>
+
+      {/* Shows */}
+      {selectedDay && selectedDay.shows && selectedDay.shows.length > 0 ? (
         <div className="space-y-6">
-          {/* Show Header */}
-          <div className="bg-surface-dark rounded-theme p-6 shadow-theme-dark">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary-dark">{selectedShow.showName || 'Competition Show'}</h2>
-                <p className="text-text-secondary-dark">{formatDate(selectedShow.date)} • {selectedShow.location || 'Location TBD'}</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setChartView('scores')}
-                  className={`px-4 py-2 rounded-theme flex items-center gap-2 ${
-                    chartView === 'scores' ? 'bg-primary text-on-primary' : 'bg-accent-dark text-text-primary-dark'
-                  }`}
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Scores
-                </button>
-                <button
-                  onClick={() => setChartView('breakdown')}
-                  className={`px-4 py-2 rounded-theme flex items-center gap-2 ${
-                    chartView === 'breakdown' ? 'bg-primary text-on-primary' : 'bg-accent-dark text-text-primary-dark'
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  Breakdown
-                </button>
-              </div>
-            </div>
+          {selectedDay.shows.map((show, showIndex) => {
+            const filteredResults = getFilteredResults(show.results || []);
+            
+            if (filteredResults.length === 0) return null;
 
-            {/* Chart Display */}
-            {showResults.length > 0 && (
-              <div className="h-64 mb-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  {chartView === 'scores' ? (
-                    <BarChart data={getChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'rgb(40 28 20)', 
-                          border: '1px solid rgb(101 67 33)',
-                          borderRadius: '0.75rem'
-                        }}
-                      />
-                      <Bar dataKey="score" fill="#F7941D" />
-                    </BarChart>
-                  ) : (
-                    <LineChart data={getChartData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'rgb(40 28 20)', 
-                          border: '1px solid rgb(101 67 33)',
-                          borderRadius: '0.75rem'
-                        }}
-                      />
-                      <Line type="monotone" dataKey="ge" stroke="#F7941D" name="General Effect" />
-                      <Line type="monotone" dataKey="visual" stroke="#8B4513" name="Visual" />
-                      <Line type="monotone" dataKey="music" stroke="#DCD7C5" name="Music" />
-                    </LineChart>
-                  )}
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
+            // Sort by total score
+            filteredResults.sort((a, b) => b.totalScore - a.totalScore);
 
-          {/* Results Table */}
-          {showResults.length > 0 ? (
-            <div className="bg-surface-dark rounded-theme shadow-theme-dark overflow-hidden">
-              <div className="bg-accent-dark p-4">
-                <div className="grid grid-cols-12 gap-4 font-semibold text-text-primary-dark">
-                  <div className="col-span-1 text-center">Rank</div>
-                  <div className="col-span-4">Corps</div>
-                  <div className="col-span-2 text-center">Class</div>
-                  <div className="col-span-2 text-center">General Effect</div>
-                  <div className="col-span-2 text-center">Total Score</div>
-                  <div className="col-span-1 text-center">Details</div>
-                </div>
-              </div>
+            // Get caption awards
+            const captionAwards = getCaptionAwards(show.results || []);
 
-              <div className="divide-y divide-accent-dark">
-                {showResults.map((corps, index) => (
-                  <div
-                    key={corps.id}
-                    className={`grid grid-cols-12 gap-4 p-4 hover:bg-background-dark transition-colors ${
-                      index < 3 ? 'bg-gradient-to-r from-accent-dark/20 to-transparent' : ''
-                    }`}
-                  >
-                    <div className="col-span-1 flex justify-center items-center">
-                      <div className={getRankBadge(index + 1)}>
-                        {index + 1}
-                      </div>
-                    </div>
-
-                    <div className="col-span-4">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded border border-accent-dark flex-shrink-0"
-                          style={{ 
-                            backgroundColor: corps.uniforms?.primaryColor || '#8B4513',
-                            borderColor: corps.uniforms?.secondaryColor || '#F7941D'
-                          }}
-                        />
-                        <div>
-                          <button
-                            onClick={() => window.location.href = `/profile/${corps.userId}`}
-                            className="font-semibold text-text-primary-dark hover:text-primary-dark transition-colors"
-                          >
-                            {corps.corpsName}
-                          </button>
-                          <p className="text-sm text-text-secondary-dark">{corps.directorName}</p>
+            return (
+              <div key={showIndex} className="bg-surface-dark rounded-theme shadow-theme-dark border border-accent-dark overflow-hidden">
+                {/* Show Header */}
+                <div className="bg-gradient-to-r from-primary-dark to-accent-dark p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {show.eventName}
+                      </h3>
+                      <div className="flex items-center gap-4 text-white text-opacity-90">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{show.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          <span>{filteredResults.length} Corps</span>
                         </div>
                       </div>
                     </div>
+                    <button
+                      onClick={() => openChartModal(show)}
+                      className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-theme font-medium transition-colors"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      View Charts
+                    </button>
+                  </div>
+                </div>
 
-                    <div className="col-span-2 text-center">
-                      <span className={getClassBadge(corps.class)}>
-                        {corps.class}
-                      </span>
+                {/* Caption Awards */}
+                {Object.keys(captionAwards).length > 0 && (
+                  <div className="bg-yellow-900 bg-opacity-20 border-b border-yellow-600 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="w-5 h-5 text-yellow-400" />
+                      <h4 className="font-bold text-text-primary-dark">Caption Awards</h4>
                     </div>
-
-                    <div className="col-span-2 text-center">
-                      <p className="text-lg font-semibold text-text-primary-dark">
-                        {formatScore(corps.generalEffect)}
-                      </p>
-                      <div className="flex justify-center gap-2 text-sm text-text-secondary-dark">
-                        <span>V: {formatScore(corps.visualTotal)}</span>
-                        <span>M: {formatScore(corps.musicTotal)}</span>
-                      </div>
-                    </div>
-
-                    <div className="col-span-2 text-center">
-                      <p className="text-xl font-bold text-primary-dark">
-                        {formatScore(corps.totalScore)}
-                      </p>
-                    </div>
-
-                    <div className="col-span-1 text-center">
-                      <button
-                        onClick={() => openCorpsDetail(corps)}
-                        className="text-primary-dark hover:text-primary transition-colors"
-                      >
-                        <Award className="w-5 h-5" />
-                      </button>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {Object.entries(captionAwards).map(([caption, award]) => (
+                        <div key={caption} className="bg-background-dark rounded p-2 text-sm">
+                          <div className="font-semibold text-yellow-400 mb-1">
+                            {getCaptionName(caption)}
+                          </div>
+                          <div className="text-text-primary-dark truncate">
+                            {award.corpsName}
+                          </div>
+                          <div className="text-text-secondary-dark text-xs">
+                            {formatScore(award.score)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* Results Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-background-dark border-b border-accent-dark">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-text-primary-dark">
+                          Rank
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-text-primary-dark">
+                          Corps
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-text-primary-dark">
+                          Class
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-text-primary-dark">
+                          GE
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-text-primary-dark">
+                          Visual
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-text-primary-dark">
+                          Music
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-text-primary-dark">
+                          Total
+                        </th>
+                        <th className="px-4 py-3 text-center text-sm font-semibold text-text-primary-dark">
+                          Details
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-accent-dark">
+                      {filteredResults.map((corps, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-background-dark transition-colors"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {index < 3 && (
+                                <Medal className={`w-4 h-4 ${
+                                  index === 0 ? 'text-yellow-400' :
+                                  index === 1 ? 'text-gray-400' :
+                                  'text-orange-600'
+                                }`} />
+                              )}
+                              <span className="font-bold text-text-primary-dark">
+                                {index + 1}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <div className="font-semibold text-text-primary-dark">
+                                {corps.corpsName}
+                              </div>
+                              {corps.directorName && (
+                                <div className="text-xs text-text-secondary-dark">
+                                  Dir: {corps.directorName}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 bg-accent-dark text-text-primary-dark rounded text-xs font-medium">
+                              {corps.corpsClass}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-text-primary-dark">
+                            {formatScore(corps.geScore)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-text-primary-dark">
+                            {formatScore(corps.visualScore)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-text-primary-dark">
+                            {formatScore(corps.musicScore)}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-bold text-lg text-primary-dark">
+                              {formatScore(corps.totalScore)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => openCorpsDetail(corps)}
+                              className="text-primary-dark hover:text-primary font-medium text-sm"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Trophy className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-              <h3 className="text-xl font-medium text-text-primary-dark mb-2">
-                No results available
-              </h3>
-              <p className="text-text-secondary-dark">
-                Results will appear here after the competition.
-              </p>
-            </div>
-          )}
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <Info className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
+          <h3 className="text-xl font-medium text-text-primary-dark mb-2">
+            No Results for Day {selectedDay?.offSeasonDay}
+          </h3>
+          <p className="text-text-secondary-dark">
+            Scores will appear after this competition day completes
+          </p>
         </div>
       )}
 
       {/* Corps Detail Modal */}
       {detailModal && selectedCorps && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface-dark rounded-theme p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+          <div className="bg-surface-dark rounded-theme p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-text-primary-dark">{selectedCorps.corpsName}</h2>
-                <p className="text-text-secondary-dark">{selectedShow.showName || 'Competition Show'} • {formatDate(selectedShow.date)}</p>
+                <h2 className="text-2xl font-bold text-text-primary-dark mb-1">
+                  {selectedCorps.corpsName}
+                </h2>
+                <p className="text-text-secondary-dark">
+                  {selectedCorps.corpsClass} • Total Score: {formatScore(selectedCorps.totalScore)}
+                </p>
               </div>
               <button
                 onClick={() => setDetailModal(false)}
-                className="text-text-secondary-dark hover:text-text-primary-dark text-2xl"
+                className="text-text-secondary-dark hover:text-text-primary-dark text-3xl leading-none"
               >
                 ×
               </button>
             </div>
 
-            {selectedCorps.details && (
-              <div className="space-y-6">
-                {/* Score Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-background-dark p-4 rounded-theme text-center">
-                    <h4 className="font-semibold text-text-primary-dark mb-2">General Effect</h4>
-                    <p className="text-2xl font-bold text-primary-dark">
-                      {formatScore(selectedCorps.generalEffect)}
-                    </p>
-                  </div>
-                  <div className="bg-background-dark p-4 rounded-theme text-center">
-                    <h4 className="font-semibold text-text-primary-dark mb-2">Visual Total</h4>
-                    <p className="text-2xl font-bold text-primary-dark">
-                      {formatScore(selectedCorps.visualTotal)}
-                    </p>
-                  </div>
-                  <div className="bg-background-dark p-4 rounded-theme text-center">
-                    <h4 className="font-semibold text-text-primary-dark mb-2">Music Total</h4>
-                    <p className="text-2xl font-bold text-primary-dark">
-                      {formatScore(selectedCorps.musicTotal)}
-                    </p>
+            {/* Score Breakdown */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-background-dark rounded-theme p-4 text-center">
+                  <div className="text-sm text-text-secondary-dark mb-1">General Effect</div>
+                  <div className="text-2xl font-bold text-text-primary-dark">
+                    {formatScore(selectedCorps.geScore)}
                   </div>
                 </div>
+                <div className="bg-background-dark rounded-theme p-4 text-center">
+                  <div className="text-sm text-text-secondary-dark mb-1">Visual Total</div>
+                  <div className="text-2xl font-bold text-text-primary-dark">
+                    {formatScore(selectedCorps.visualScore)}
+                  </div>
+                </div>
+                <div className="bg-background-dark rounded-theme p-4 text-center">
+                  <div className="text-sm text-text-secondary-dark mb-1">Music Total</div>
+                  <div className="text-2xl font-bold text-text-primary-dark">
+                    {formatScore(selectedCorps.musicScore)}
+                  </div>
+                </div>
+              </div>
 
-                {/* Caption Breakdown */}
+              {/* Caption Scores */}
+              {selectedCorps.captionScores && (
                 <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-4">Caption Breakdown</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {captions.map(caption => (
-                      <div key={caption} className="bg-background-dark p-3 rounded border border-accent-dark">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-text-primary-dark">{caption}</span>
-                          <span className="font-bold text-primary-dark">
-                            {formatScore(selectedCorps.details.captions?.[caption] || 0)}
-                          </span>
+                  <h3 className="text-lg font-semibold text-text-primary-dark mb-3">
+                    Caption Breakdown
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(selectedCorps.captionScores).map(([caption, score]) => (
+                      <div key={caption} className="bg-background-dark rounded p-3">
+                        <div className="text-xs text-text-secondary-dark mb-1">
+                          {getCaptionName(caption)}
                         </div>
-                        {selectedCorps.details.captionCorps?.[caption] && (
-                          <p className="text-sm text-text-secondary-dark mt-1">
-                            {selectedCorps.details.captionCorps[caption]}
-                          </p>
-                        )}
+                        <div className="text-lg font-bold text-text-primary-dark font-mono">
+                          {formatScore(score)}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chart Modal */}
+      {chartModal && selectedShow && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface-dark rounded-theme p-6 w-full max-w-6xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-text-primary-dark mb-1">
+                  Score Visualization
+                </h2>
+                <p className="text-text-secondary-dark">
+                  {selectedShow.eventName}
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => setChartModal(false)}
+                className="text-text-secondary-dark hover:text-text-primary-dark text-3xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="bg-background-dark rounded-theme p-4">
+              <ResponsiveContainer width="100%" height={500}>
+                <BarChart data={getChartData(selectedShow.results || [])}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#9CA3AF"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                  />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="Total" fill="#F59E0B" />
+                  <Bar dataKey="GE" fill="#3B82F6" />
+                  <Bar dataKey="Visual" fill="#10B981" />
+                  <Bar dataKey="Music" fill="#8B5CF6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
