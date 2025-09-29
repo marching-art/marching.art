@@ -98,7 +98,7 @@ const LineupEditor = ({ userProfile }) => {
    */
   const loadAvailableCorps = async () => {
     try {
-      const getAvailableCorps = httpsCallable(functions, 'lineupValidation-getAvailableCorps');
+      const getAvailableCorps = httpsCallable(functions, 'getAvailableCorps');
       const result = await getAvailableCorps();
       
       if (result.data.success) {
@@ -132,7 +132,7 @@ const LineupEditor = ({ userProfile }) => {
    */
   const validateLineupRealTime = async () => {
     try {
-      const checkValidity = httpsCallable(functions, 'lineupValidation-checkLineupValidity');
+      const checkValidity = httpsCallable(functions, 'checkLineupValidity');
       const result = await checkValidity({ lineup, corpsClass });
       
       setValidation(result.data);
@@ -179,7 +179,7 @@ const LineupEditor = ({ userProfile }) => {
 
     setSaving(true);
     try {
-      const validateAndSave = httpsCallable(functions, 'lineupValidation-validateAndSaveLineup');
+      const validateAndSave = httpsCallable(functions, 'validateAndSaveLineup');
       const result = await validateAndSave({ 
         lineup, 
         corpsClass 

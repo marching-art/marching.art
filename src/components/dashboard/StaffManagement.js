@@ -35,11 +35,11 @@ const StaffManagement = ({ userProfile }) => {
   const captions = ["GE1", "GE2", "Visual Proficiency", "Visual Analysis", "Color Guard", "Brass", "Music Analysis", "Percussion"];
 
   // Firebase function references
-  const getUserStaff = httpsCallable(functions, 'staff-getUserStaff');
-  const getAvailableStaff = httpsCallable(functions, 'staff-getAvailableStaff');
-  const purchaseStaffMember = httpsCallable(functions, 'staff-purchaseStaffMember');
-  const assignStaffToCaption = httpsCallable(functions, 'staff-assignStaffToCaption');
-  const unassignStaffFromCaption = httpsCallable(functions, 'staff-unassignStaffFromCaption');
+  const getUserStaff = httpsCallable(functions, 'getUserStaff');
+  const getAvailableStaff = httpsCallable(functions, 'getAvailableStaff');
+  const purchaseStaffMember = httpsCallable(functions, 'purchaseStaffMember');
+  const assignStaffToCaption = httpsCallable(functions, 'assignStaffToCaption');
+  const unassignStaffFromCaption = httpsCallable(functions, 'unassignStaffFromCaption');
 
   // Load data on component mount
   useEffect(() => {
