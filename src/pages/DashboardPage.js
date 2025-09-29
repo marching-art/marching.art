@@ -25,7 +25,9 @@ import {
   Star,
   Target,
   Clock,
-  ChevronRight
+  ChevronRight,
+  CheckCircle,
+  Lock
 } from 'lucide-react';
 
 // Placeholder components for future features
