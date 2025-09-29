@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require('tailwindcss/plugin');
+
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
@@ -7,47 +9,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Primary brand colors
+        // Primary brand color - gold from CSS variables
         primary: {
-          DEFAULT: '#FF6B35', // Vibrant orange
-          dark: '#E85A2B',
-          light: '#FF8A5C'
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
-        
-        // Background colors
-        background: {
-          DEFAULT: '#FFFFFF',
-          dark: '#0F0F23'
+        // Secondary brand color - brown from CSS variables
+        secondary: {
+          DEFAULT: 'rgb(var(--color-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--color-secondary-dark) / <alpha-value>)',
         },
-        
-        // Surface colors (cards, panels)
-        surface: {
-          DEFAULT: '#F8F9FA',
-          dark: '#1A1A2E'
-        },
-        
-        // Text colors
-        text: {
-          primary: {
-            DEFAULT: '#1A1A1A',
-            dark: '#FFFFFF'
-          },
-          secondary: {
-            DEFAULT: '#6B7280',
-            dark: '#9CA3AF'
-          }
-        },
-        
-        // Accent colors
+        // Accent color - tan from CSS variables
         accent: {
-          DEFAULT: '#E5E7EB',
-          dark: '#374151'
+          DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
+          dark: 'rgb(var(--color-accent-dark) / <alpha-value>)',
         },
+        // Background colors from CSS variables
+        background: {
+          DEFAULT: 'rgb(var(--color-background) / <alpha-value>)',
+          dark: 'rgb(var(--color-background-dark) / <alpha-value>)',
+        },
+        // Surface colors from CSS variables
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          dark: 'rgb(var(--color-surface-dark) / <alpha-value>)',
+        },
+        // Text colors from CSS variables
+        'text-primary': {
+          DEFAULT: 'rgb(var(--text-primary) / <alpha-value>)',
+          dark: 'rgb(var(--text-primary-dark) / <alpha-value>)',
+        },
+        'text-secondary': {
+          DEFAULT: 'rgb(var(--text-secondary) / <alpha-value>)',
+          dark: 'rgb(var(--text-secondary-dark) / <alpha-value>)',
+        },
+        // On-color classes for text on colored backgrounds
+        'on-primary': 'rgb(var(--on-primary) / <alpha-value>)',
+        'on-secondary': 'rgb(var(--on-secondary) / <alpha-value>)',
         
-        // On-primary text color
-        'on-primary': '#FFFFFF',
-        
-        // Class-specific colors
+        // Class-specific colors for compatibility
         'class-world': '#8B5CF6', // Purple
         'class-open': '#3B82F6',  // Blue
         'class-a': '#10B981',     // Green
@@ -75,8 +75,8 @@ module.exports = {
       },
       
       boxShadow: {
-        'theme': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'theme-dark': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+        'theme': '0 4px 10px rgba(0, 0, 0, 0.05)',
+        'theme-dark': '0 4px 10px rgba(0, 0, 0, 0.4)',
         'glow': '0 0 20px rgba(255, 107, 53, 0.3)'
       },
       
@@ -116,14 +116,20 @@ module.exports = {
     }
   },
   plugins: [
+    // Text shadow plugin
+    plugin(function ({ matchUtilities, theme }) {
+      matchUtilities(
+        {
+          'text-shadow': (value) => ({
+            textShadow: value,
+          }),
+        },
+        { values: theme('textShadow') }
+      )
+    }),
+    // Custom utilities
     function({ addUtilities }) {
       const newUtilities = {
-        '.text-shadow': {
-          textShadow: '0 2px 4px rgba(0, 0, 0, 0.10)'
-        },
-        '.text-shadow-lg': {
-          textShadow: '0 8px 16px rgba(0, 0, 0, 0.15)'
-        },
         '.line-clamp-2': {
           overflow: 'hidden',
           display: '-webkit-box',
@@ -137,10 +143,10 @@ module.exports = {
           '-webkit-line-clamp': '3'
         },
         '.gradient-primary': {
-          background: 'linear-gradient(135deg, #FF6B35 0%, #E85A2B 100%)'
+          background: 'linear-gradient(135deg, rgb(var(--color-primary)) 0%, rgb(var(--color-primary-dark)) 100%)'
         },
         '.gradient-surface': {
-          background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)'
+          background: 'linear-gradient(135deg, rgb(var(--color-surface-dark)) 0%, rgb(var(--color-background-dark)) 100%)'
         }
       };
       addUtilities(newUtilities);
