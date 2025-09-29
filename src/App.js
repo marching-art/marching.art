@@ -40,7 +40,7 @@ const UserProfileFetcher = () => {
       console.log('App.js: Fetching profile for user', currentUser.uid);
       fetchUserProfile(currentUser.uid);
     }
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, profile, fetchUserProfile]);
 
   // Handle navigation in a separate effect
   useEffect(() => {
@@ -62,16 +62,29 @@ const UserProfileFetcher = () => {
 };
 
 function App() {
-  // Initialize theme on app load - KEEP THIS IN APP.JS
+  // Initialize theme on app load - CRITICAL FOR THEME FUNCTIONALITY
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const initializeTheme = () => {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Apply dark mode if saved preference is dark OR if no preference and system prefers dark
+      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+        // Ensure localStorage is set for consistency
+        if (!savedTheme) {
+          localStorage.setItem('theme', 'dark');
+        }
+      } else {
+        document.documentElement.classList.remove('dark');
+        // Ensure localStorage is set for consistency
+        if (!savedTheme) {
+          localStorage.setItem('theme', 'light');
+        }
+      }
+    };
+
+    initializeTheme();
   }, []);
 
   return (
