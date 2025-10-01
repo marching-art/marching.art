@@ -66,11 +66,11 @@ const LineupEditor = ({ userProfile }) => {
       console.log('Raw result:', result); // Debug log
       console.log('Result data:', result.data); // Debug log
       console.log('Corps array:', result.data?.corps); // Debug log
-      console.log('First corps item:', sortedCorps[0]); // Add this line
       
       if (result.data.success && result.data.corps) {
         const sortedCorps = result.data.corps.sort((a, b) => b.value - a.value);
         console.log('Sorted corps:', sortedCorps); // Debug log
+        console.log('First corps item:', sortedCorps[0]); // Add this line
         setSeasonCorps(sortedCorps);
         setSeasonId(result.data.seasonId);
       } else {
