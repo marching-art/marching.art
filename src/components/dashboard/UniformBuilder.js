@@ -14,125 +14,171 @@ import {
   Package,
   Award,
   Star,
-  Info
+  Info,
+  Unlock,
+  ChevronRight,
+  Coins
 } from 'lucide-react';
+
+// Default uniform configuration
+const DEFAULT_UNIFORM = {
+  jacket: {
+    baseColor: '#000080',
+    trim1Color: '#FFD700',
+    trim2Color: '#FFFFFF',
+    buttonColor: '#FFD700',
+    frontStyle: 'doubleBreasted',
+    shoulderStyle: 'classic',
+    collarStyle: 'standard',
+    epaulets: false,
+    gauntlets: false,
+    overlay: false,
+    piping: false,
+    sash: false,
+    braiding: false,
+    capelets: false
+  },
+  pants: {
+    baseColor: '#000000',
+    stripeColor: '#FFD700',
+    stripeWidth: 'medium',
+    stripeStyle: 'single',
+    style: 'straight'
+  },
+  shako: {
+    baseColor: '#000080',
+    plumeColor: '#FFFFFF',
+    plumeStyle: 'standard',
+    chinStrap: '#FFD700',
+    badgeColor: '#FFD700',
+    badgeStyle: 'shield',
+    chinStrapColor: '#000000'
+  },
+  accessories: {
+    gloves: '#FFFFFF',
+    shoes: '#000000',
+    plume: 'standard',
+    gauntlets: { enabled: false, color: '#FFFFFF' },
+    epaulets: { enabled: false, color: '#FFD700', fringe: true },
+    sash: { enabled: false, color: '#DC143C', style: 'diagonal' },
+    capelets: { enabled: false, color: '#000080' },
+    overlay: { enabled: false, color: '#FFD700', style: 'classic' }
+  },
+  lighting: {
+    enabled: false,
+    color: '#FFFFFF',
+    mode: 'static',
+    pattern: 'pulse'
+  }
+};
+
+// Feature unlock requirements
+const FEATURE_REQUIREMENTS = {
+  gauntlets: { xp: 500, corpsCoin: 50, name: 'Gauntlets', description: 'Add ornamental gauntlets to jacket sleeves' },
+  epaulets: { xp: 750, corpsCoin: 100, name: 'Epaulets', description: 'Shoulder decorations with fringe options' },
+  overlay: { xp: 1000, corpsCoin: 150, name: 'Jacket Overlay', description: 'Add decorative overlay to jacket front' },
+  piping: { xp: 1200, corpsCoin: 180, name: 'Piping Details', description: 'Decorative piping along seams' },
+  sash: { xp: 1500, corpsCoin: 220, name: 'Ceremonial Sash', description: 'Diagonal or horizontal ceremonial sash' },
+  braiding: { xp: 1800, corpsCoin: 250, name: 'Braiding', description: 'Ornamental braided cord details' },
+  capelets: { xp: 2500, corpsCoin: 400, name: 'Capelets', description: 'Short decorative shoulder capes' },
+  premiumFabric: { xp: 3000, corpsCoin: 500, name: 'Premium Fabrics', description: 'Metallic and specialty fabric options' },
+  metallic: { xp: 2000, corpsCoin: 300, name: 'Metallic Accents', description: 'Add metallic finishes to trim' },
+  textureRibbed: { xp: 2500, corpsCoin: 400, name: 'Ribbed Texture', description: 'Textured fabric patterns' },
+  embroidery: { xp: 3500, corpsCoin: 600, name: 'Custom Embroidery', description: 'Add embroidered designs' },
+  appliques: { xp: 4000, corpsCoin: 750, name: 'Appliqués', description: 'Decorative fabric applications' },
+  ledLighting: { xp: 5000, corpsCoin: 1000, name: 'LED Lighting', description: 'Programmable LED accent lighting' }
+};
 
 const UniformBuilder = ({ userProfile }) => {
   const { currentUser } = useAuth();
+  const [uniformConfig, setUniformConfig] = useState(DEFAULT_UNIFORM);
+  const [unlockStatus, setUnlockStatus] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('jacket');
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+  const [activeTab, setActiveTab] = useState('jacket');
   const [viewMode, setViewMode] = useState('3d');
+  const [previewRotation, setPreviewRotation] = useState(0);
 
   // User stats
   const userXP = userProfile?.xp || 0;
   const userCorpsCoin = userProfile?.corpsCoin || 0;
 
-  // Unlock requirements for premium features
-  const unlockRequirements = {
-    gauntlets: { xp: 500, corpsCoin: 50 },
-    epaulets: { xp: 750, corpsCoin: 100 },
-    overlay: { xp: 1000, corpsCoin: 150 },
-    sash: { xp: 1500, corpsCoin: 220 },
-    capelets: { xp: 2500, corpsCoin: 400 },
-    ledLighting: { xp: 5000, corpsCoin: 1000 }
-  };
-
-  // Comprehensive uniform state
-  const [uniform, setUniform] = useState({
-    jacket: {
-      baseColor: '#8B4513',
-      trim1Color: '#F7941D',
-      trim2Color: '#FFD700',
-      buttonColor: '#C0C0C0',
-      shoulderStyle: 'classic',
-      collarStyle: 'standard',
-      frontStyle: 'doubleBreasted',
-    },
-    pants: {
-      baseColor: '#000000',
-      stripeColor: '#F7941D',
-      stripeWidth: 'medium',
-      stripeStyle: 'single',
-    },
-    shako: {
-      baseColor: '#8B4513',
-      plumeColor: '#FFFFFF',
-      plumeStyle: 'standard',
-      badgeColor: '#F7941D',
-      chinStrapColor: '#000000',
-    },
-    accessories: {
-      gauntlets: { enabled: false, color: '#FFFFFF' },
-      epaulets: { enabled: false, color: '#F7941D', fringe: true },
-      sash: { enabled: false, color: '#DC143C', style: 'diagonal' },
-      capelets: { enabled: false, color: '#8B4513' },
-    },
-    lighting: {
-      enabled: false,
-      color: '#FFFFFF',
-      mode: 'static',
-    },
-  });
-
-  // Load user's saved uniform
+  // Initialize uniform from user profile or defaults
   useEffect(() => {
     if (userProfile?.uniform) {
-      setUniform(userProfile.uniform);
+      // Deep merge with defaults to ensure all properties exist
+      const mergedUniform = {
+        jacket: { ...DEFAULT_UNIFORM.jacket, ...(userProfile.uniform.jacket || {}) },
+        pants: { ...DEFAULT_UNIFORM.pants, ...(userProfile.uniform.pants || {}) },
+        shako: { ...DEFAULT_UNIFORM.shako, ...(userProfile.uniform.shako || {}) },
+        accessories: { 
+          ...DEFAULT_UNIFORM.accessories, 
+          ...(userProfile.uniform.accessories || {}),
+          gauntlets: { ...DEFAULT_UNIFORM.accessories.gauntlets, ...(userProfile.uniform.accessories?.gauntlets || {}) },
+          epaulets: { ...DEFAULT_UNIFORM.accessories.epaulets, ...(userProfile.uniform.accessories?.epaulets || {}) },
+          sash: { ...DEFAULT_UNIFORM.accessories.sash, ...(userProfile.uniform.accessories?.sash || {}) },
+          capelets: { ...DEFAULT_UNIFORM.accessories.capelets, ...(userProfile.uniform.accessories?.capelets || {}) },
+          overlay: { ...DEFAULT_UNIFORM.accessories.overlay, ...(userProfile.uniform.accessories?.overlay || {}) }
+        },
+        lighting: { ...DEFAULT_UNIFORM.lighting, ...(userProfile.uniform.lighting || {}) }
+      };
+      setUniformConfig(mergedUniform);
+    } else {
+      setUniformConfig(DEFAULT_UNIFORM);
     }
   }, [userProfile]);
 
-  // Check if feature is unlocked
-  const isUnlocked = (featureKey) => {
-    if (!unlockRequirements[featureKey]) return true; // Base features always unlocked
-    const req = unlockRequirements[featureKey];
-    return userXP >= req.xp;
-  };
+  // Fetch unlock status for premium features
+  useEffect(() => {
+    fetchUnlockStatus();
+  }, [userProfile?.xp, userProfile?.corpsCoin]);
 
-  const canPurchaseWithCoin = (featureKey) => {
-    if (!unlockRequirements[featureKey]) return false;
-    const req = unlockRequirements[featureKey];
-    return userCorpsCoin >= req.corpsCoin;
-  };
-
-  const purchaseFeature = async (featureKey) => {
+  const fetchUnlockStatus = async () => {
     try {
-      const req = unlockRequirements[featureKey];
-      const purchaseUniformFeature = httpsCallable(functions, 'uniforms-purchaseFeature');
-      const result = await purchaseUniformFeature({ 
-        feature: featureKey,
-        cost: req.corpsCoin 
-      });
+      setIsLoadingStatus(true);
+      const getUnlockStatus = httpsCallable(functions, 'getUnlockStatus');
+      const result = await getUnlockStatus();
       
       if (result.data.success) {
-        toast.success(`Unlocked ${featureKey}! 🎨`);
-        // Refresh user profile
-      } else {
-        toast.error(result.data.message || 'Purchase failed');
+        setUnlockStatus(result.data.unlockStatus || {});
       }
     } catch (error) {
-      console.error('Purchase error:', error);
-      toast.error('Failed to purchase feature');
+      console.error('Error fetching unlock status:', error);
+      // Set default unlock status on error
+      const defaultStatus = {};
+      Object.keys(FEATURE_REQUIREMENTS).forEach(key => {
+        defaultStatus[key] = {
+          unlocked: false,
+          canPurchase: false,
+          requirement: FEATURE_REQUIREMENTS[key]
+        };
+      });
+      setUnlockStatus(defaultStatus);
+    } finally {
+      setIsLoadingStatus(false);
     }
   };
 
-  const updateUniformSection = (section, key, value) => {
-    setUniform(prev => ({
+  const isUnlocked = (feature) => {
+    return unlockStatus[feature]?.unlocked || false;
+  };
+
+  const canPurchaseWithCoin = (feature) => {
+    return unlockStatus[feature]?.canPurchase || false;
+  };
+
+  const handleColorChange = (section, property, color) => {
+    setUniformConfig(prev => ({
       ...prev,
       [section]: {
         ...prev[section],
-        [key]: value
+        [property]: color
       }
     }));
   };
 
-  const toggleAccessory = (accessory) => {
-    if (!isUnlocked(accessory) && !canPurchaseWithCoin(accessory)) {
-      const req = unlockRequirements[accessory];
-      toast.error(`Requires ${req.xp} XP or ${req.corpsCoin} CorpsCoin`);
-      return;
-    }
-
-    setUniform(prev => ({
+  const handleAccessoryToggle = (accessory) => {
+    setUniformConfig(prev => ({
       ...prev,
       accessories: {
         ...prev.accessories,
@@ -144,12 +190,80 @@ const UniformBuilder = ({ userProfile }) => {
     }));
   };
 
-  const saveUniform = async () => {
-    setIsSaving(true);
+  const handleAccessoryColorChange = (accessory, color) => {
+    setUniformConfig(prev => ({
+      ...prev,
+      accessories: {
+        ...prev.accessories,
+        [accessory]: {
+          ...prev.accessories[accessory],
+          color: color
+        }
+      }
+    }));
+  };
+
+  const handleFeatureToggle = async (section, feature) => {
+    const status = unlockStatus[feature];
     
+    if (!status?.unlocked && status?.canPurchase) {
+      // Show purchase confirmation
+      const confirmPurchase = window.confirm(
+        `Purchase ${FEATURE_REQUIREMENTS[feature].name} for ${FEATURE_REQUIREMENTS[feature].corpsCoin} CorpsCoins?`
+      );
+      
+      if (!confirmPurchase) return;
+      
+      try {
+        const purchaseFeature = httpsCallable(functions, 'purchaseFeature');
+        const result = await purchaseFeature({ feature });
+        
+        if (result.data.success) {
+          toast.success(`${FEATURE_REQUIREMENTS[feature].name} unlocked!`);
+          await fetchUnlockStatus();
+          // Enable the feature after purchase
+          if (section === 'accessories') {
+            handleAccessoryToggle(feature);
+          } else {
+            setUniformConfig(prev => ({
+              ...prev,
+              [section]: {
+                ...prev[section],
+                [feature]: true
+              }
+            }));
+          }
+        }
+      } catch (error) {
+        toast.error('Failed to purchase feature');
+      }
+      return;
+    }
+    
+    if (!status?.unlocked) {
+      toast.error(`${FEATURE_REQUIREMENTS[feature].name} is locked. Earn ${FEATURE_REQUIREMENTS[feature].xp} XP to unlock!`);
+      return;
+    }
+    
+    // Toggle the feature
+    if (section === 'accessories') {
+      handleAccessoryToggle(feature);
+    } else {
+      setUniformConfig(prev => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [feature]: !prev[section][feature]
+        }
+      }));
+    }
+  };
+
+  const saveUniform = async () => {
     try {
-      const updateUniform = httpsCallable(functions, 'uniforms-updateUniform');
-      const result = await updateUniform({ uniform });
+      setIsSaving(true);
+      const updateUniform = httpsCallable(functions, 'updateUniform');
+      const result = await updateUniform({ uniform: uniformConfig });
       
       if (result.data.success) {
         toast.success('Uniform saved successfully! 🎨');
@@ -166,943 +280,765 @@ const UniformBuilder = ({ userProfile }) => {
 
   const resetToDefault = () => {
     if (window.confirm('Reset uniform to default? This cannot be undone.')) {
-      setUniform({
-        jacket: {
-          baseColor: '#8B4513',
-          trim1Color: '#F7941D',
-          trim2Color: '#FFD700',
-          buttonColor: '#C0C0C0',
-          shoulderStyle: 'classic',
-          collarStyle: 'standard',
-          frontStyle: 'doubleBreasted',
-        },
-        pants: {
-          baseColor: '#000000',
-          stripeColor: '#F7941D',
-          stripeWidth: 'medium',
-          stripeStyle: 'single',
-        },
-        shako: {
-          baseColor: '#8B4513',
-          plumeColor: '#FFFFFF',
-          plumeStyle: 'standard',
-          badgeColor: '#F7941D',
-          chinStrapColor: '#000000',
-        },
-        accessories: {
-          gauntlets: { enabled: false, color: '#FFFFFF' },
-          epaulets: { enabled: false, color: '#F7941D', fringe: true },
-          sash: { enabled: false, color: '#DC143C', style: 'diagonal' },
-          capelets: { enabled: false, color: '#8B4513' },
-        },
-        lighting: {
-          enabled: false,
-          color: '#FFFFFF',
-          mode: 'static',
-        },
-      });
+      setUniformConfig(DEFAULT_UNIFORM);
       toast.success('Uniform reset to default');
     }
   };
 
-  // Feature card component for premium features
-  const FeatureCard = ({ featureKey, title, description, premium = false, children }) => {
-    const locked = premium && !isUnlocked(featureKey);
-    const canPurchase = premium && canPurchaseWithCoin(featureKey);
-    const req = unlockRequirements[featureKey];
-
+  const renderColorPicker = (label, section, property, disabled = false) => {
+    const value = uniformConfig[section]?.[property] || '#000000';
+    
     return (
-      <div className={`bg-background dark:bg-background-dark p-4 rounded-theme border ${
-        locked ? 'border-yellow-600 opacity-75' : 'border-accent dark:border-accent-dark'
-      }`}>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">{title}</h4>
-              {premium && locked && <Lock className="w-4 h-4 text-yellow-500" />}
-              {premium && !locked && <Sparkles className="w-4 h-4 text-yellow-500" />}
-            </div>
-            <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{description}</p>
-          </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
+          {label}
+        </span>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => handleColorChange(section, property, e.target.value)}
+            disabled={disabled}
+            className="w-10 h-10 rounded cursor-pointer disabled:opacity-50"
+          />
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleColorChange(section, property, e.target.value)}
+            disabled={disabled}
+            className="w-20 px-2 py-1 text-xs bg-background dark:bg-background-dark rounded border border-accent dark:border-accent-dark disabled:opacity-50"
+          />
         </div>
+      </div>
+    );
+  };
 
-        {locked ? (
-          <div className="space-y-2">
-            <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
-              Unlock at {req.xp} XP (currently {userXP})
-            </div>
-            {canPurchase && (
-              <button
-                onClick={() => purchaseFeature(featureKey)}
-                className="w-full bg-secondary hover:bg-opacity-80 dark:bg-secondary-dark text-white py-2 px-3 rounded text-sm font-medium transition-colors"
-              >
-                Unlock with {req.corpsCoin} CorpsCoin
-              </button>
+  const renderFeatureToggle = (label, section, feature) => {
+    const isEnabled = section === 'accessories' 
+      ? uniformConfig.accessories?.[feature]?.enabled 
+      : uniformConfig[section]?.[feature];
+    const status = unlockStatus[feature] || { unlocked: false };
+    const requirement = FEATURE_REQUIREMENTS[feature];
+    
+    return (
+      <div className="flex items-center justify-between p-3 bg-background dark:bg-background-dark rounded-theme">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleFeatureToggle(section, feature)}
+            className={`relative w-12 h-6 rounded-full transition-colors ${
+              isEnabled 
+                ? 'bg-primary dark:bg-primary-dark' 
+                : 'bg-accent dark:bg-accent-dark'
+            } ${!status.unlocked && 'opacity-50'}`}
+          >
+            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+              isEnabled ? 'translate-x-6' : 'translate-x-1'
+            }`} />
+          </button>
+          
+          <div>
+            <span className={`text-sm font-medium ${
+              !status.unlocked && 'text-text-secondary dark:text-text-secondary-dark'
+            }`}>
+              {label}
+            </span>
+            <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+              {requirement.description}
+            </p>
+            
+            {!status.unlocked && (
+              <div className="flex items-center gap-2 mt-1">
+                {status.canPurchase ? (
+                  <span className="text-xs text-primary dark:text-primary-dark flex items-center gap-1">
+                    <Coins className="w-3 h-3" />
+                    {requirement.corpsCoin} CorpsCoins
+                  </span>
+                ) : (
+                  <span className="text-xs text-text-secondary dark:text-text-secondary-dark flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    {requirement.xp} XP Required
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        ) : (
-          children
+        </div>
+        
+        {status.unlocked && (
+          <Unlock className="w-4 h-4 text-green-500" />
         )}
       </div>
     );
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-1">Uniform Designer</h2>
-          <p className="text-text-secondary dark:text-text-secondary-dark">
-            Create a unique look for your corps
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-right text-sm">
-            <div className="text-text-secondary dark:text-text-secondary-dark">XP: {userXP}</div>
-            <div className="text-text-secondary dark:text-text-secondary-dark">CorpsCoin: {userCorpsCoin}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Info Banner */}
-      <div className="bg-purple-900 bg-opacity-30 border border-purple-400 rounded-theme p-4">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-semibold mb-1 text-text-primary dark:text-text-primary-dark">Premium Features:</p>
-            <p className="text-text-secondary dark:text-text-secondary-dark">
-              Unlock advanced customization options by earning XP through gameplay or purchasing with CorpsCoin. 
-              Your uniform design is displayed on leaderboards and in competitions!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel - Preview */}
-        <div className="space-y-4">
-          <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 aspect-square flex items-center justify-center border border-accent dark:border-accent-dark">
-            {/* SVG Uniform Preview */}
-            <svg viewBox="0 0 300 500" className="w-full h-full">
-              <defs>
-                <linearGradient id="jacketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor={uniform.jacket.baseColor} stopOpacity="1" />
-                  <stop offset="50%" stopColor={uniform.jacket.baseColor} stopOpacity="0.9" />
-                  <stop offset="100%" stopColor={uniform.jacket.baseColor} stopOpacity="0.7" />
-                </linearGradient>
-                <filter id="shadow">
-                  <feDropShadow dx="2" dy="4" stdDeviation="3" floodOpacity="0.3"/>
-                </filter>
-              </defs>
-
-              {/* Pants */}
-              <g id="pants">
-                <path
-                  d="M100 280 L100 480 L130 480 L130 280 Z"
-                  fill={uniform.pants.baseColor}
-                  filter="url(#shadow)"
-                />
-                <path
-                  d="M170 280 L170 480 L200 480 L200 280 Z"
-                  fill={uniform.pants.baseColor}
-                  filter="url(#shadow)"
-                />
-                {/* Stripe */}
-                {uniform.pants.stripeStyle !== 'none' && (
-                  <>
-                    <rect x="125" y="280" width="5" height="200" fill={uniform.pants.stripeColor} />
-                    <rect x="170" y="280" width="5" height="200" fill={uniform.pants.stripeColor} />
-                  </>
-                )}
-              </g>
-
-              {/* Jacket Body */}
-              <g id="jacket">
-                <path
-                  d="M80 100 L80 280 Q80 290 90 290 L210 290 Q220 290 220 280 L220 100 Q220 80 210 80 L90 80 Q80 80 80 100"
-                  fill="url(#jacketGradient)"
-                  stroke={uniform.jacket.trim1Color}
-                  strokeWidth="3"
-                  filter="url(#shadow)"
-                />
-                
-                {/* Front Closure */}
-                <line x1="150" y1="100" x2="150" y2="280" stroke={uniform.jacket.trim2Color} strokeWidth="4" />
-                
-                {/* Buttons */}
-                {[120, 150, 180, 210, 240].map((y, i) => (
-                  <circle key={i} cx="150" cy={y} r="5" fill={uniform.jacket.buttonColor} />
-                ))}
-                
-                {/* Collar */}
-                <path
-                  d="M120 80 L120 60 Q120 40 140 40 L160 40 Q180 40 180 60 L180 80"
-                  fill={uniform.jacket.trim1Color}
-                  stroke={uniform.jacket.trim2Color}
-                  strokeWidth="2"
-                />
-              </g>
-
-              {/* Epaulets (if enabled) */}
-              {uniform.accessories.epaulets?.enabled && (
-                <g id="epaulets">
-                  <rect x="80" y="80" width="40" height="25" rx="3" 
-                    fill={uniform.accessories.epaulets.color} 
-                    stroke={uniform.jacket.trim2Color} strokeWidth="1"
-                  />
-                  <rect x="180" y="80" width="40" height="25" rx="3" 
-                    fill={uniform.accessories.epaulets.color} 
-                    stroke={uniform.jacket.trim2Color} strokeWidth="1"
-                  />
-                  {uniform.accessories.epaulets.fringe && (
-                    <>
-                      {[...Array(8)].map((_, i) => (
-                        <line key={i} x1={85 + i * 5} y1="105" x2={85 + i * 5} y2="115" 
-                          stroke={uniform.jacket.trim2Color} strokeWidth="1" />
-                      ))}
-                      {[...Array(8)].map((_, i) => (
-                        <line key={i} x1={185 + i * 5} y1="105" x2={185 + i * 5} y2="115" 
-                          stroke={uniform.jacket.trim2Color} strokeWidth="1" />
-                      ))}
-                    </>
-                  )}
-                </g>
-              )}
-
-              {/* Sash (if enabled) */}
-              {uniform.accessories.sash?.enabled && (
-                <path
-                  d="M80 150 L220 220"
-                  stroke={uniform.accessories.sash.color}
-                  strokeWidth="15"
-                  opacity="0.8"
-                />
-              )}
-
-              {/* Gauntlets (if enabled) */}
-              {uniform.accessories.gauntlets?.enabled && (
-                <g id="gauntlets">
-                  <rect x="70" y="270" width="30" height="15" rx="2" 
-                    fill={uniform.accessories.gauntlets.color} 
-                    stroke={uniform.jacket.trim1Color} strokeWidth="1"
-                  />
-                  <rect x="200" y="270" width="30" height="15" rx="2" 
-                    fill={uniform.accessories.gauntlets.color} 
-                    stroke={uniform.jacket.trim1Color} strokeWidth="1"
-                  />
-                </g>
-              )}
-
-              {/* Capelets (if enabled) */}
-              {uniform.accessories.capelets?.enabled && (
-                <g id="capelets">
-                  <path
-                    d="M80 100 Q70 120 80 140 L80 100"
-                    fill={uniform.accessories.capelets.color}
-                    opacity="0.7"
-                  />
-                  <path
-                    d="M220 100 Q230 120 220 140 L220 100"
-                    fill={uniform.accessories.capelets.color}
-                    opacity="0.7"
-                  />
-                </g>
-              )}
-
-              {/* Shako */}
-              <g id="shako">
-                <ellipse cx="150" cy="35" rx="30" ry="10" 
-                  fill={uniform.shako.baseColor}
-                  stroke={uniform.shako.badgeColor} strokeWidth="2"
-                />
-                <rect x="120" y="20" width="60" height="20" rx="5"
-                  fill={uniform.shako.baseColor}
-                  stroke={uniform.shako.badgeColor} strokeWidth="2"
-                />
-                {/* Plume */}
-                <path
-                  d="M150 20 Q145 5 150 0 Q155 5 150 20"
-                  fill={uniform.shako.plumeColor}
-                  opacity="0.8"
-                />
-                {/* Badge */}
-                <circle cx="150" cy="30" r="8" fill={uniform.shako.badgeColor} />
-              </g>
-
-              {/* LED Indicators (if enabled) */}
-              {uniform.lighting?.enabled && (
-                <g id="led-lights">
-                  {[100, 140, 180, 220, 260].map((y, i) => (
-                    <circle key={i} cx="85" cy={y} r="3" fill={uniform.lighting.color} opacity="0.8">
-                      <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                  ))}
-                  {[100, 140, 180, 220, 260].map((y, i) => (
-                    <circle key={i} cx="215" cy={y} r="3" fill={uniform.lighting.color} opacity="0.8">
-                      <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="1s" />
-                    </circle>
-                  ))}
-                </g>
-              )}
-
-              {/* Corps Name */}
-              <text x="150" y="310" textAnchor="middle" fill="#FFFFFF" fontSize="16" fontWeight="bold">
-                {userProfile?.corps?.corpsName || 'Corps Name'}
-              </text>
-            </svg>
-          </div>
-
-          {/* View Mode Selector */}
-          <div className="grid grid-cols-3 gap-2">
+  const renderUniformPreview = () => {
+    return (
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 h-full">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium text-text-primary dark:text-text-primary-dark">
+            Uniform Preview
+          </h3>
+          <div className="flex gap-2">
             {['3d', 'flat', 'technical'].map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3 py-2 rounded text-sm font-medium capitalize transition-colors ${
-                  viewMode === mode
-                    ? 'bg-primary dark:bg-primary-dark text-white'
-                    : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
+                className={`px-3 py-1 rounded text-sm capitalize ${
+                  viewMode === mode 
+                    ? 'bg-primary dark:bg-primary-dark text-white' 
+                    : 'bg-background dark:bg-background-dark'
                 }`}
               >
                 {mode}
               </button>
             ))}
           </div>
+        </div>
+        
+        {/* SVG Uniform Preview */}
+        <div className="relative bg-gradient-to-b from-blue-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-theme p-4">
+          <svg viewBox="0 0 300 500" className="w-full h-full max-h-[400px]">
+            <defs>
+              <linearGradient id="jacketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={uniformConfig.jacket.baseColor} stopOpacity="1" />
+                <stop offset="50%" stopColor={uniformConfig.jacket.baseColor} stopOpacity="0.9" />
+                <stop offset="100%" stopColor={uniformConfig.jacket.baseColor} stopOpacity="0.8" />
+              </linearGradient>
+              <filter id="shadow">
+                <feDropShadow dx="2" dy="4" stdDeviation="3" floodOpacity="0.3"/>
+              </filter>
+            </defs>
 
-          {/* Quick Actions */}
-          <div className="space-y-2">
-            <button
-              onClick={saveUniform}
-              disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-theme font-bold transition-colors disabled:opacity-50"
-            >
-              {isSaving ? (
+            {/* Pants */}
+            <g id="pants">
+              <path
+                d="M100 280 L100 480 L130 480 L130 380 L150 380 L170 380 L170 480 L200 480 L200 280 Z"
+                fill={uniformConfig.pants.baseColor}
+                filter="url(#shadow)"
+              />
+              {/* Stripes */}
+              {uniformConfig.pants.stripeStyle !== 'none' && (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  Save Uniform
+                  <rect x="108" y="280" width={uniformConfig.pants.stripeWidth === 'wide' ? '8' : '4'} height="200" fill={uniformConfig.pants.stripeColor} />
+                  <rect x="184" y="280" width={uniformConfig.pants.stripeWidth === 'wide' ? '8' : '4'} height="200" fill={uniformConfig.pants.stripeColor} />
+                  {uniformConfig.pants.stripeStyle === 'double' && (
+                    <>
+                      <rect x="118" y="280" width="2" height="200" fill={uniformConfig.pants.stripeColor} />
+                      <rect x="180" y="280" width="2" height="200" fill={uniformConfig.pants.stripeColor} />
+                    </>
+                  )}
                 </>
               )}
+            </g>
+
+            {/* Jacket Body */}
+            <g id="jacket">
+              <path
+                d="M80 100 L80 280 Q80 290 90 290 L210 290 Q220 290 220 280 L220 100 Q220 90 210 90 L90 90 Q80 90 80 100"
+                fill="url(#jacketGradient)"
+                filter="url(#shadow)"
+              />
+              
+              {/* Trim Lines */}
+              <path
+                d="M80 100 L80 280 M220 100 L220 280"
+                stroke={uniformConfig.jacket.trim1Color}
+                strokeWidth="4"
+                fill="none"
+              />
+              
+              {/* Collar */}
+              <path
+                d="M90 90 Q150 80 210 90"
+                fill={uniformConfig.jacket.trim2Color}
+                stroke={uniformConfig.jacket.trim1Color}
+                strokeWidth="2"
+              />
+              
+              {/* Buttons */}
+              {uniformConfig.jacket.frontStyle === 'doubleBreasted' && (
+                <>
+                  <circle cx="110" cy="140" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="110" cy="170" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="110" cy="200" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="110" cy="230" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="190" cy="140" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="190" cy="170" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="190" cy="200" r="4" fill={uniformConfig.jacket.buttonColor} />
+                  <circle cx="190" cy="230" r="4" fill={uniformConfig.jacket.buttonColor} />
+                </>
+              )}
+              
+              {/* Epaulets */}
+              {uniformConfig.accessories?.epaulets?.enabled && (
+                <>
+                  <rect x="75" y="85" width="30" height="15" fill={uniformConfig.accessories.epaulets.color} rx="2" />
+                  <rect x="195" y="85" width="30" height="15" fill={uniformConfig.accessories.epaulets.color} rx="2" />
+                  {uniformConfig.accessories.epaulets.fringe && (
+                    <>
+                      <path d="M75 100 L75 110 M80 100 L80 110 M85 100 L85 110 M90 100 L90 110 M95 100 L95 110 M100 100 L100 110 M105 100 L105 110" stroke={uniformConfig.accessories.epaulets.color} strokeWidth="1" />
+                      <path d="M195 100 L195 110 M200 100 L200 110 M205 100 L205 110 M210 100 L210 110 M215 100 L215 110 M220 100 L220 110 M225 100 L225 110" stroke={uniformConfig.accessories.epaulets.color} strokeWidth="1" />
+                    </>
+                  )}
+                </>
+              )}
+              
+              {/* Gauntlets */}
+              {uniformConfig.accessories?.gauntlets?.enabled && (
+                <>
+                  <rect x="70" y="250" width="40" height="20" fill={uniformConfig.accessories.gauntlets.color} rx="3" />
+                  <rect x="190" y="250" width="40" height="20" fill={uniformConfig.accessories.gauntlets.color} rx="3" />
+                </>
+              )}
+              
+              {/* Sash */}
+              {uniformConfig.accessories?.sash?.enabled && (
+                <path
+                  d={uniformConfig.accessories.sash.style === 'diagonal' 
+                    ? "M80 120 L220 240 L220 260 L80 140 Z"
+                    : "M80 180 L220 180 L220 200 L80 200 Z"
+                  }
+                  fill={uniformConfig.accessories.sash.color}
+                  opacity="0.9"
+                />
+              )}
+              
+              {/* Overlay */}
+              {uniformConfig.accessories?.overlay?.enabled && (
+                <path
+                  d="M100 110 L100 250 L130 250 L130 110 Z M170 110 L170 250 L200 250 L200 110 Z"
+                  fill={uniformConfig.accessories.overlay.color}
+                  opacity="0.5"
+                />
+              )}
+              
+              {/* Capelets */}
+              {uniformConfig.accessories?.capelets?.enabled && (
+                <>
+                  <path
+                    d="M60 90 Q60 130 80 140 L80 90 Z"
+                    fill={uniformConfig.accessories.capelets.color}
+                    opacity="0.8"
+                  />
+                  <path
+                    d="M220 90 L220 140 Q240 130 240 90 Z"
+                    fill={uniformConfig.accessories.capelets.color}
+                    opacity="0.8"
+                  />
+                </>
+              )}
+            </g>
+
+            {/* Shako */}
+            <g id="shako">
+              <ellipse cx="150" cy="45" rx="40" ry="15" fill={uniformConfig.shako.baseColor} />
+              <rect x="110" y="20" width="80" height="30" fill={uniformConfig.shako.baseColor} rx="5" />
+              
+              {/* Chin Strap */}
+              <path
+                d="M110 45 Q100 60 110 75 M190 45 Q200 60 190 75"
+                stroke={uniformConfig.shako.chinStrapColor}
+                strokeWidth="2"
+                fill="none"
+              />
+              
+              {/* Badge */}
+              {uniformConfig.shako.badgeStyle === 'shield' && (
+                <path
+                  d="M140 25 L160 25 L160 35 L150 40 L140 35 Z"
+                  fill={uniformConfig.shako.badgeColor}
+                  stroke={uniformConfig.shako.trim1Color || '#000'}
+                  strokeWidth="1"
+                />
+              )}
+              {uniformConfig.shako.badgeStyle === 'star' && (
+                <path
+                  d="M150 20 L153 30 L163 30 L155 35 L158 45 L150 38 L142 45 L145 35 L137 30 L147 30 Z"
+                  fill={uniformConfig.shako.badgeColor}
+                />
+              )}
+              {uniformConfig.shako.badgeStyle === 'eagle' && (
+                <g transform="translate(140, 25)">
+                  <path d="M10 0 Q5 5 0 5 Q5 10 10 15 Q15 10 20 5 Q15 5 10 0" fill={uniformConfig.shako.badgeColor} />
+                </g>
+              )}
+              
+              {/* Plume */}
+              <g transform={`translate(150, 10) ${uniformConfig.shako.plumeStyle === 'tall' ? 'scale(1, 1.5)' : ''}`}>
+                <ellipse cx="0" cy="0" rx="8" ry="20" fill={uniformConfig.shako.plumeColor} opacity="0.9" />
+                {uniformConfig.shako.plumeStyle === 'double' && (
+                  <>
+                    <ellipse cx="-5" cy="0" rx="6" ry="18" fill={uniformConfig.shako.plumeColor} opacity="0.7" />
+                    <ellipse cx="5" cy="0" rx="6" ry="18" fill={uniformConfig.shako.plumeColor} opacity="0.7" />
+                  </>
+                )}
+              </g>
+            </g>
+
+            {/* LED Lights */}
+            {uniformConfig.lighting?.enabled && (
+              <g id="led-lights">
+                {[100, 140, 180, 220, 260].map((y, i) => (
+                  <circle key={`left-${i}`} cx="85" cy={y} r="3" fill={uniformConfig.lighting.color}>
+                    <animate 
+                      attributeName="opacity" 
+                      values={uniformConfig.lighting.mode === 'pulse' ? "0.3;1;0.3" : "1"} 
+                      dur="2s" 
+                      repeatCount="indefinite" 
+                    />
+                  </circle>
+                ))}
+                {[100, 140, 180, 220, 260].map((y, i) => (
+                  <circle key={`right-${i}`} cx="215" cy={y} r="3" fill={uniformConfig.lighting.color}>
+                    <animate 
+                      attributeName="opacity" 
+                      values={uniformConfig.lighting.mode === 'pulse' ? "0.3;1;0.3" : "1"} 
+                      dur="2s" 
+                      begin="1s"
+                      repeatCount="indefinite" 
+                    />
+                  </circle>
+                ))}
+              </g>
+            )}
+
+            {/* Corps Name */}
+            <text x="150" y="320" textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="bold">
+              {userProfile?.corps?.corpsName || 'Your Corps Name'}
+            </text>
+            <text x="150" y="340" textAnchor="middle" fill="#CCCCCC" fontSize="10">
+              {userProfile?.corps?.corpsClass || 'Class'} • {userProfile?.corps?.location || 'Location'}
+            </text>
+          </svg>
+          
+          {/* Rotation Controls */}
+          <div className="flex justify-center gap-2 mt-4">
+            <button
+              onClick={() => setPreviewRotation(prev => prev - 45)}
+              className="px-3 py-1 bg-background dark:bg-background-dark rounded text-sm"
+            >
+              ← Rotate
             </button>
             <button
-              onClick={resetToDefault}
-              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-theme font-medium transition-colors"
+              onClick={() => setPreviewRotation(0)}
+              className="px-3 py-1 bg-background dark:bg-background-dark rounded text-sm"
             >
-              <RefreshCw className="w-4 h-4" />
-              Reset to Default
+              Front
+            </button>
+            <button
+              onClick={() => setPreviewRotation(prev => prev + 45)}
+              className="px-3 py-1 bg-background dark:bg-background-dark rounded text-sm"
+            >
+              Rotate →
             </button>
           </div>
         </div>
+        
+        <div className="mt-4 p-3 bg-background dark:bg-background-dark rounded-theme">
+          <div className="flex items-center gap-2 text-xs text-text-secondary dark:text-text-secondary-dark">
+            <Info className="w-3 h-3" />
+            <span>Your uniform design is displayed on leaderboards and in competitions!</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-        {/* Right Panel - Design Controls */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Section Tabs */}
-          <div className="bg-surface dark:bg-surface-dark rounded-theme p-2">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {[
-                { id: 'jacket', label: 'Jacket', icon: Shirt },
-                { id: 'pants', label: 'Pants', icon: Package },
-                { id: 'shako', label: 'Shako', icon: Award },
-                { id: 'accessories', label: 'Accessories', icon: Star },
-              ].map(section => {
-                const Icon = section.icon;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-theme font-medium transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-primary dark:bg-primary-dark text-white'
-                        : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{section.label}</span>
-                  </button>
-                );
-              })}
+  const renderJacketTab = () => (
+    <div className="space-y-4">
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3">
+        Base Colors
+      </h3>
+      <div className="space-y-3">
+        {renderColorPicker('Base Color', 'jacket', 'baseColor')}
+        {renderColorPicker('Primary Trim', 'jacket', 'trim1Color')}
+        {renderColorPicker('Secondary Trim', 'jacket', 'trim2Color')}
+        {renderColorPicker('Buttons', 'jacket', 'buttonColor')}
+      </div>
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        Style Options
+      </h3>
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Front Style</label>
+          <select
+            value={uniformConfig.jacket?.frontStyle || 'doubleBreasted'}
+            onChange={(e) => handleColorChange('jacket', 'frontStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="doubleBreasted">Double Breasted</option>
+            <option value="singleBreasted">Single Breasted</option>
+            <option value="asymmetric">Asymmetric</option>
+            <option value="zippered">Zippered</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Collar Style</label>
+          <select
+            value={uniformConfig.jacket?.collarStyle || 'standard'}
+            onChange={(e) => handleColorChange('jacket', 'collarStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="standard">Standard</option>
+            <option value="high">High Collar</option>
+            <option value="napoleon">Napoleon</option>
+            <option value="mandarin">Mandarin</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Shoulder Style</label>
+          <select
+            value={uniformConfig.jacket?.shoulderStyle || 'classic'}
+            onChange={(e) => handleColorChange('jacket', 'shoulderStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="classic">Classic</option>
+            <option value="padded">Padded</option>
+            <option value="structured">Structured</option>
+            <option value="natural">Natural</option>
+          </select>
+        </div>
+      </div>
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        Premium Features
+      </h3>
+      <div className="space-y-2">
+        {renderFeatureToggle('Epaulets', 'accessories', 'epaulets')}
+        {uniformConfig.accessories?.epaulets?.enabled && (
+          <div className="ml-14 space-y-2">
+            {renderColorPicker('Epaulet Color', 'accessories.epaulets', 'color')}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={uniformConfig.accessories?.epaulets?.fringe || false}
+                onChange={(e) => setUniformConfig(prev => ({
+                  ...prev,
+                  accessories: {
+                    ...prev.accessories,
+                    epaulets: {
+                      ...prev.accessories.epaulets,
+                      fringe: e.target.checked
+                    }
+                  }
+                }))}
+                className="w-4 h-4"
+              />
+              <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Add Fringe</label>
             </div>
           </div>
-
-          {/* Section Content */}
-          <div className="bg-surface dark:bg-surface-dark rounded-theme p-6">
-            {activeSection === 'jacket' && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Jacket Design</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Base Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.jacket.baseColor}
-                        onChange={(e) => updateUniformSection('jacket', 'baseColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.jacket.baseColor}
-                        onChange={(e) => updateUniformSection('jacket', 'baseColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#8B4513"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Trim 1 Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.jacket.trim1Color}
-                        onChange={(e) => updateUniformSection('jacket', 'trim1Color', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.jacket.trim1Color}
-                        onChange={(e) => updateUniformSection('jacket', 'trim1Color', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#F7941D"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Trim 2 Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.jacket.trim2Color}
-                        onChange={(e) => updateUniformSection('jacket', 'trim2Color', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.jacket.trim2Color}
-                        onChange={(e) => updateUniformSection('jacket', 'trim2Color', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#FFD700"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Button Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.jacket.buttonColor}
-                        onChange={(e) => updateUniformSection('jacket', 'buttonColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.jacket.buttonColor}
-                        onChange={(e) => updateUniformSection('jacket', 'buttonColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#C0C0C0"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                    Front Style
-                  </label>
-                  <select
-                    value={uniform.jacket.frontStyle}
-                    onChange={(e) => updateUniformSection('jacket', 'frontStyle', e.target.value)}
-                    className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                  >
-                    <option value="doubleBreasted">Double Breasted</option>
-                    <option value="singleBreasted">Single Breasted</option>
-                    <option value="asymmetric">Asymmetric</option>
-                    <option value="zippered">Zippered</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Collar Style
-                    </label>
-                    <select
-                      value={uniform.jacket.collarStyle}
-                      onChange={(e) => updateUniformSection('jacket', 'collarStyle', e.target.value)}
-                      className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                    >
-                      <option value="standard">Standard</option>
-                      <option value="military">Military</option>
-                      <option value="mandarin">Mandarin</option>
-                      <option value="notched">Notched</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Shoulder Style
-                    </label>
-                    <select
-                      value={uniform.jacket.shoulderStyle}
-                      onChange={(e) => updateUniformSection('jacket', 'shoulderStyle', e.target.value)}
-                      className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                    >
-                      <option value="classic">Classic</option>
-                      <option value="padded">Padded</option>
-                      <option value="raglan">Raglan</option>
-                      <option value="dropped">Dropped</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'pants' && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Pants Design</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Base Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.pants.baseColor}
-                        onChange={(e) => updateUniformSection('pants', 'baseColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.pants.baseColor}
-                        onChange={(e) => updateUniformSection('pants', 'baseColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#000000"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Stripe Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.pants.stripeColor}
-                        onChange={(e) => updateUniformSection('pants', 'stripeColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.pants.stripeColor}
-                        onChange={(e) => updateUniformSection('pants', 'stripeColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        placeholder="#F7941D"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Stripe Style
-                    </label>
-                    <select
-                      value={uniform.pants.stripeStyle}
-                      onChange={(e) => updateUniformSection('pants', 'stripeStyle', e.target.value)}
-                      className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                    >
-                      <option value="single">Single Stripe</option>
-                      <option value="double">Double Stripe</option>
-                      <option value="none">No Stripe</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Stripe Width
-                    </label>
-                    <select
-                      value={uniform.pants.stripeWidth}
-                      onChange={(e) => updateUniformSection('pants', 'stripeWidth', e.target.value)}
-                      className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                    >
-                      <option value="thin">Thin</option>
-                      <option value="medium">Medium</option>
-                      <option value="wide">Wide</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'shako' && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Shako Design</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Base Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.shako.baseColor}
-                        onChange={(e) => updateUniformSection('shako', 'baseColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.shako.baseColor}
-                        onChange={(e) => updateUniformSection('shako', 'baseColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Plume Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.shako.plumeColor}
-                        onChange={(e) => updateUniformSection('shako', 'plumeColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.shako.plumeColor}
-                        onChange={(e) => updateUniformSection('shako', 'plumeColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Badge Color
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={uniform.shako.badgeColor}
-                        onChange={(e) => updateUniformSection('shako', 'badgeColor', e.target.value)}
-                        className="w-16 h-10 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={uniform.shako.badgeColor}
-                        onChange={(e) => updateUniformSection('shako', 'badgeColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                      Plume Style
-                    </label>
-                    <select
-                      value={uniform.shako.plumeStyle}
-                      onChange={(e) => updateUniformSection('shako', 'plumeStyle', e.target.value)}
-                      className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                    >
-                      <option value="standard">Standard</option>
-                      <option value="tall">Tall</option>
-                      <option value="short">Short</option>
-                      <option value="none">None</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'accessories' && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Accessories & Embellishments</h3>
-                
-                <FeatureCard
-                  featureKey="gauntlets"
-                  title="Gauntlets"
-                  description="Classic white glove extensions"
-                  premium={true}
-                >
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => toggleAccessory('gauntlets')}
-                      className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        uniform.accessories.gauntlets?.enabled
-                          ? 'bg-green-600 text-white'
-                          : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark'
-                      }`}
-                    >
-                      {uniform.accessories.gauntlets?.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    {uniform.accessories.gauntlets?.enabled && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Color:</label>
-                        <input
-                          type="color"
-                          value={uniform.accessories.gauntlets?.color || '#FFFFFF'}
-                          onChange={(e) => setUniform(prev => ({
-                            ...prev,
-                            accessories: {
-                              ...prev.accessories,
-                              gauntlets: {
-                                ...prev.accessories.gauntlets,
-                                color: e.target.value
-                              }
-                            }
-                          }))}
-                          className="w-12 h-12 rounded cursor-pointer"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </FeatureCard>
-
-                <FeatureCard
-                  featureKey="epaulets"
-                  title="Epaulets"
-                  description="Shoulder decorations with optional fringe"
-                  premium={true}
-                >
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => toggleAccessory('epaulets')}
-                      className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        uniform.accessories.epaulets?.enabled
-                          ? 'bg-green-600 text-white'
-                          : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark'
-                      }`}
-                    >
-                      {uniform.accessories.epaulets?.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    {uniform.accessories.epaulets?.enabled && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Color:</label>
-                          <input
-                            type="color"
-                            value={uniform.accessories.epaulets?.color || '#F7941D'}
-                            onChange={(e) => setUniform(prev => ({
-                              ...prev,
-                              accessories: {
-                                ...prev.accessories,
-                                epaulets: {
-                                  ...prev.accessories.epaulets,
-                                  color: e.target.value
-                                }
-                              }
-                            }))}
-                            className="w-12 h-12 rounded cursor-pointer"
-                          />
-                        </div>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={uniform.accessories.epaulets?.fringe}
-                            onChange={(e) => setUniform(prev => ({
-                              ...prev,
-                              accessories: {
-                                ...prev.accessories,
-                                epaulets: {
-                                  ...prev.accessories.epaulets,
-                                  fringe: e.target.checked
-                                }
-                              }
-                            }))}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm text-text-primary dark:text-text-primary-dark">Add fringe</span>
-                        </label>
-                      </>
-                    )}
-                  </div>
-                </FeatureCard>
-
-                <FeatureCard
-                  featureKey="sash"
-                  title="Sash"
-                  description="Diagonal or horizontal sash accent"
-                  premium={true}
-                >
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => toggleAccessory('sash')}
-                      className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        uniform.accessories.sash?.enabled
-                          ? 'bg-green-600 text-white'
-                          : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark'
-                      }`}
-                    >
-                      {uniform.accessories.sash?.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    {uniform.accessories.sash?.enabled && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Color:</label>
-                          <input
-                            type="color"
-                            value={uniform.accessories.sash?.color || '#DC143C'}
-                            onChange={(e) => setUniform(prev => ({
-                              ...prev,
-                              accessories: {
-                                ...prev.accessories,
-                                sash: {
-                                  ...prev.accessories.sash,
-                                  color: e.target.value
-                                }
-                              }
-                            }))}
-                            className="w-12 h-12 rounded cursor-pointer"
-                          />
-                        </div>
-                        <select
-                          value={uniform.accessories.sash?.style || 'diagonal'}
-                          onChange={(e) => setUniform(prev => ({
-                            ...prev,
-                            accessories: {
-                              ...prev.accessories,
-                              sash: {
-                                ...prev.accessories.sash,
-                                style: e.target.value
-                              }
-                            }
-                          }))}
-                          className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        >
-                          <option value="diagonal">Diagonal</option>
-                          <option value="horizontal">Horizontal</option>
-                          <option value="vertical">Vertical</option>
-                        </select>
-                      </>
-                    )}
-                  </div>
-                </FeatureCard>
-
-                <FeatureCard
-                  featureKey="capelets"
-                  title="Shoulder Capelets"
-                  description="Dramatic flowing shoulder pieces"
-                  premium={true}
-                >
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => toggleAccessory('capelets')}
-                      className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        uniform.accessories.capelets?.enabled
-                          ? 'bg-green-600 text-white'
-                          : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark'
-                      }`}
-                    >
-                      {uniform.accessories.capelets?.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    {uniform.accessories.capelets?.enabled && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Color:</label>
-                        <input
-                          type="color"
-                          value={uniform.accessories.capelets?.color || '#8B4513'}
-                          onChange={(e) => setUniform(prev => ({
-                            ...prev,
-                            accessories: {
-                              ...prev.accessories,
-                              capelets: {
-                                ...prev.accessories.capelets,
-                                color: e.target.value
-                              }
-                            }
-                          }))}
-                          className="w-12 h-12 rounded cursor-pointer"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </FeatureCard>
-
-                <FeatureCard
-                  featureKey="ledLighting"
-                  title="LED Lighting"
-                  description="Advanced LED accent lighting system"
-                  premium={true}
-                >
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setUniform(prev => ({
-                        ...prev,
-                        lighting: {
-                          ...prev.lighting,
-                          enabled: !prev.lighting?.enabled
-                        }
-                      }))}
-                      className={`w-full py-2 px-4 rounded font-medium transition-colors ${
-                        uniform.lighting?.enabled
-                          ? 'bg-green-600 text-white'
-                          : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark'
-                      }`}
-                    >
-                      {uniform.lighting?.enabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    {uniform.lighting?.enabled && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Color:</label>
-                          <input
-                            type="color"
-                            value={uniform.lighting?.color || '#FFFFFF'}
-                            onChange={(e) => setUniform(prev => ({
-                              ...prev,
-                              lighting: {
-                                ...prev.lighting,
-                                color: e.target.value
-                              }
-                            }))}
-                            className="w-12 h-12 rounded cursor-pointer"
-                          />
-                        </div>
-                        <select
-                          value={uniform.lighting?.mode || 'static'}
-                          onChange={(e) => setUniform(prev => ({
-                            ...prev,
-                            lighting: {
-                              ...prev.lighting,
-                              mode: e.target.value
-                            }
-                          }))}
-                          className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded text-text-primary dark:text-text-primary-dark"
-                        >
-                          <option value="static">Static</option>
-                          <option value="pulse">Pulse</option>
-                          <option value="fade">Fade</option>
-                        </select>
-                      </>
-                    )}
-                  </div>
-                </FeatureCard>
-              </div>
-            )}
+        )}
+        
+        {renderFeatureToggle('Gauntlets', 'accessories', 'gauntlets')}
+        {uniformConfig.accessories?.gauntlets?.enabled && (
+          <div className="ml-14">
+            {renderColorPicker('Gauntlet Color', 'accessories.gauntlets', 'color')}
           </div>
+        )}
+        
+        {renderFeatureToggle('Overlay', 'accessories', 'overlay')}
+        {uniformConfig.accessories?.overlay?.enabled && (
+          <div className="ml-14">
+            {renderColorPicker('Overlay Color', 'accessories.overlay', 'color')}
+          </div>
+        )}
+        
+        {renderFeatureToggle('Piping', 'jacket', 'piping')}
+        {renderFeatureToggle('Braiding', 'jacket', 'braiding')}
+        
+        {renderFeatureToggle('Sash', 'accessories', 'sash')}
+        {uniformConfig.accessories?.sash?.enabled && (
+          <div className="ml-14 space-y-2">
+            {renderColorPicker('Sash Color', 'accessories.sash', 'color')}
+            <select
+              value={uniformConfig.accessories?.sash?.style || 'diagonal'}
+              onChange={(e) => setUniformConfig(prev => ({
+                ...prev,
+                accessories: {
+                  ...prev.accessories,
+                  sash: {
+                    ...prev.accessories.sash,
+                    style: e.target.value
+                  }
+                }
+              }))}
+              className="w-full px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+            >
+              <option value="diagonal">Diagonal</option>
+              <option value="horizontal">Horizontal</option>
+            </select>
+          </div>
+        )}
+        
+        {renderFeatureToggle('Capelets', 'accessories', 'capelets')}
+        {uniformConfig.accessories?.capelets?.enabled && (
+          <div className="ml-14">
+            {renderColorPicker('Capelet Color', 'accessories.capelets', 'color')}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderPantsTab = () => (
+    <div className="space-y-4">
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3">
+        Colors
+      </h3>
+      <div className="space-y-3">
+        {renderColorPicker('Base Color', 'pants', 'baseColor')}
+        {renderColorPicker('Stripe Color', 'pants', 'stripeColor')}
+      </div>
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        Style
+      </h3>
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Pant Style</label>
+          <select
+            value={uniformConfig.pants?.style || 'straight'}
+            onChange={(e) => handleColorChange('pants', 'style', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="straight">Straight</option>
+            <option value="tapered">Tapered</option>
+            <option value="boot-cut">Boot Cut</option>
+            <option value="bibbers">Bibbers</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Stripe Style</label>
+          <select
+            value={uniformConfig.pants?.stripeStyle || 'single'}
+            onChange={(e) => handleColorChange('pants', 'stripeStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="none">No Stripe</option>
+            <option value="single">Single Stripe</option>
+            <option value="double">Double Stripe</option>
+            <option value="triple">Triple Stripe</option>
+          </select>
+        </div>
+        
+        {uniformConfig.pants?.stripeStyle !== 'none' && (
+          <div>
+            <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Stripe Width</label>
+            <select
+              value={uniformConfig.pants?.stripeWidth || 'medium'}
+              onChange={(e) => handleColorChange('pants', 'stripeWidth', e.target.value)}
+              className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+            >
+              <option value="thin">Thin</option>
+              <option value="medium">Medium</option>
+              <option value="wide">Wide</option>
+              <option value="extra-wide">Extra Wide</option>
+            </select>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderShakoTab = () => (
+    <div className="space-y-4">
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3">
+        Colors
+      </h3>
+      <div className="space-y-3">
+        {renderColorPicker('Base Color', 'shako', 'baseColor')}
+        {renderColorPicker('Plume Color', 'shako', 'plumeColor')}
+        {renderColorPicker('Chin Strap', 'shako', 'chinStrapColor')}
+        {renderColorPicker('Badge Color', 'shako', 'badgeColor')}
+      </div>
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        Style Options
+      </h3>
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Badge Style</label>
+          <select
+            value={uniformConfig.shako?.badgeStyle || 'shield'}
+            onChange={(e) => handleColorChange('shako', 'badgeStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="shield">Shield</option>
+            <option value="star">Star</option>
+            <option value="eagle">Eagle</option>
+            <option value="crest">Corps Crest</option>
+            <option value="custom">Custom Design</option>
+            <option value="none">No Badge</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Plume Style</label>
+          <select
+            value={uniformConfig.shako?.plumeStyle || 'standard'}
+            onChange={(e) => handleColorChange('shako', 'plumeStyle', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+          >
+            <option value="standard">Standard</option>
+            <option value="tall">Tall Plume</option>
+            <option value="double">Double Plume</option>
+            <option value="feathered">Feathered</option>
+            <option value="cascade">Cascade</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAccessoriesTab = () => (
+    <div className="space-y-4">
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3">
+        Basic Accessories
+      </h3>
+      <div className="space-y-3">
+        {renderColorPicker('Gloves', 'accessories', 'gloves')}
+        {renderColorPicker('Shoes', 'accessories', 'shoes')}
+      </div>
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        LED Lighting System
+      </h3>
+      {renderFeatureToggle('LED Lighting', 'lighting', 'ledLighting')}
+      {uniformConfig.lighting?.enabled && (
+        <div className="space-y-3 ml-14">
+          {renderColorPicker('LED Color', 'lighting', 'color')}
+          <div>
+            <label className="text-sm text-text-secondary dark:text-text-secondary-dark">Light Mode</label>
+            <select
+              value={uniformConfig.lighting?.mode || 'static'}
+              onChange={(e) => handleColorChange('lighting', 'mode', e.target.value)}
+              className="w-full mt-1 px-3 py-2 bg-background dark:bg-background-dark rounded-theme border border-accent dark:border-accent-dark"
+            >
+              <option value="static">Static</option>
+              <option value="pulse">Pulse</option>
+              <option value="chase">Chase</option>
+              <option value="rainbow">Rainbow</option>
+              <option value="music-sync">Music Sync</option>
+            </select>
+          </div>
+        </div>
+      )}
+      
+      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-3 mt-6">
+        Special Effects
+      </h3>
+      <div className="space-y-2">
+        {renderFeatureToggle('Premium Fabrics', 'accessories', 'premiumFabric')}
+        {renderFeatureToggle('Metallic Accents', 'accessories', 'metallic')}
+        {renderFeatureToggle('Ribbed Texture', 'accessories', 'textureRibbed')}
+        {renderFeatureToggle('Custom Embroidery', 'accessories', 'embroidery')}
+        {renderFeatureToggle('Appliqués', 'accessories', 'appliques')}
+      </div>
+    </div>
+  );
+
+  if (isLoadingStatus) {
+    return (
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-8 text-center">
+        <Sparkles className="w-8 h-8 animate-spin mx-auto mb-4 text-primary dark:text-primary-dark" />
+        <p className="text-text-secondary dark:text-text-secondary-dark">Loading uniform builder...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-surface dark:bg-surface-dark rounded-theme p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-1">
+            Uniform Designer
+          </h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
+            Create your corps' unique visual identity
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={resetToDefault}
+            className="btn btn-secondary flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Reset
+          </button>
+          <button
+            onClick={saveUniform}
+            disabled={isSaving}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? 'Saving...' : 'Save Uniform'}
+          </button>
+        </div>
+      </div>
+      
+      {/* User Stats Bar */}
+      <div className="bg-background dark:bg-background-dark rounded-theme p-3 mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm">
+              <span className="font-medium">{userXP.toLocaleString()}</span> XP
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Coins className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm">
+              <span className="font-medium">{userCorpsCoin.toLocaleString()}</span> CorpsCoins
+            </span>
+          </div>
+        </div>
+        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+          {Object.values(unlockStatus).filter(s => s.unlocked).length} / {Object.keys(FEATURE_REQUIREMENTS).length} Features Unlocked
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Editor Panel */}
+        <div>
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-4 overflow-x-auto">
+            {[
+              { id: 'jacket', label: 'Jacket', icon: Shirt },
+              { id: 'pants', label: 'Pants', icon: ChevronRight },
+              { id: 'shako', label: 'Shako', icon: Star },
+              { id: 'accessories', label: 'Accessories', icon: Sparkles }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-theme whitespace-nowrap transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-primary dark:bg-primary-dark text-white'
+                    : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          
+          {/* Tab Content */}
+          <div className="bg-background dark:bg-background-dark rounded-theme p-4 max-h-[600px] overflow-y-auto">
+            {activeTab === 'jacket' && renderJacketTab()}
+            {activeTab === 'pants' && renderPantsTab()}
+            {activeTab === 'shako' && renderShakoTab()}
+            {activeTab === 'accessories' && renderAccessoriesTab()}
+          </div>
+        </div>
+        
+        {/* Preview Panel */}
+        <div>
+          {renderUniformPreview()}
         </div>
       </div>
     </div>

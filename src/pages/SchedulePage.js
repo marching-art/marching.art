@@ -29,191 +29,150 @@ const SchedulePage = () => {
       
       if (!seasonDoc.exists()) {
         setError('No active season found');
+        setLoading(false);
         return;
       }
 
       const seasonData = seasonDoc.data();
+      
+      // Check if activeSeasonId exists
+      if (!seasonData.activeSeasonId) {
+        setError('Season ID not configured');
+        setLoading(false);
+        return;
+      }
+      
       setCurrentSeason(seasonData);
 
       // Get schedule
       const scheduleDoc = await getDoc(doc(db, 'schedules', seasonData.activeSeasonId));
       
       if (!scheduleDoc.exists()) {
-        setError('Schedule not found');
+        setError('Schedule not found for current season');
+        setLoading(false);
         return;
       }
 
-      const schedule = scheduleDoc.data();
-      const competitions = schedule.competitions || [];
-
-      // Organize by week and day
-      const scheduleByWeek = {};
+      setScheduleData(scheduleDoc.data() || {});
       
-      competitions.forEach(comp => {
-        const week = comp.week || Math.ceil(comp.day / 7);
-        const day = comp.day;
-        
-        if (!scheduleByWeek[week]) {
-          scheduleByWeek[week] = [];
-        }
-
-        // Group by day within week
-        let dayGroup = scheduleByWeek[week].find(d => d.day === day);
-        
-        if (!dayGroup) {
-          dayGroup = {
-            day: day,
-            date: comp.date,
-            shows: []
-          };
-          scheduleByWeek[week].push(dayGroup);
-        }
-
-        dayGroup.shows.push(comp);
-      });
-
-      // Sort days within each week
-      Object.keys(scheduleByWeek).forEach(week => {
-        scheduleByWeek[week].sort((a, b) => a.day - b.day);
-      });
-
-      setScheduleData(scheduleByWeek);
-
-      // Fetch participants for all shows
-      await fetchAllParticipants(competitions);
-
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
+      // Fetch all participants for the season
+      await fetchParticipants(seasonData.activeSeasonId);
+      
+    } catch (err) {
+      console.error('Error fetching schedule:', err);
       setError('Failed to load schedule');
-      toast.error('Failed to load schedule');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAllParticipants = async (competitions) => {
+  const fetchParticipants = async (seasonId) => {
     try {
-      // Get all users with active season ID
-      const usersSnapshot = await getDocs(
-        query(
-          collection(db, 'artifacts/marching-art/users'),
-          where('profile.data.activeSeasonId', '==', currentSeason?.activeSeasonId)
-        )
+      // Only proceed if we have a valid seasonId
+      if (!seasonId) {
+        console.warn('No season ID provided for fetching participants');
+        return;
+      }
+
+      // Query for participants in this season
+      const participantsQuery = query(
+        collection(db, 'participants'),
+        where('seasonId', '==', seasonId)
       );
-
-      const participantsData = {};
-
-      // For each show, find registered users
-      competitions.forEach(show => {
-        participantsData[show.id] = [];
-      });
-
-      usersSnapshot.forEach(userDoc => {
-        const profileData = userDoc.data()?.profile?.data;
-        if (!profileData) return;
-
-        const registrations = profileData.competitionRegistrations || {};
-        const corpsName = profileData.corps?.corpsName || 'Unknown Corps';
-        const corpsClass = profileData.corps?.corpsClass || 'SoundSport';
-
-        Object.keys(registrations).forEach(showId => {
-          if (participantsData[showId]) {
-            participantsData[showId].push({
-              userId: userDoc.id,
-              corpsName,
-              corpsClass,
-              displayName: profileData.displayName
-            });
-          }
-        });
-      });
-
-      setParticipantsMap(participantsData);
-
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-    }
-  };
-
-  const openShowModal = async (show) => {
-    setSelectedShow({
-      ...show,
-      participants: participantsMap[show.id] || []
-    });
-    setShowModal(true);
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'TBD';
-    
-    try {
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      if (isNaN(date.getTime())) return 'TBD';
       
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return 'TBD';
-    }
-  };
-
-  const formatShortDate = (timestamp) => {
-    if (!timestamp) return 'TBD';
-    
-    try {
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      if (isNaN(date.getTime())) return 'TBD';
+      const participantsSnapshot = await getDocs(participantsQuery);
+      const participants = {};
       
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
+      participantsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.userId) {
+          participants[data.userId] = {
+            id: doc.id,
+            ...data
+          };
+        }
       });
-    } catch (error) {
-      return 'TBD';
+      
+      setParticipantsMap(participants);
+      
+    } catch (err) {
+      console.error('Error fetching participants:', err);
+      // Don't set error here, just log it - participants are optional data
     }
   };
 
-  const getShowStatusBadge = (show) => {
-    if (!show.date) {
+  const getShowDetails = (showId) => {
+    if (!scheduleData.shows) return null;
+    return scheduleData.shows[showId];
+  };
+
+  const renderWeekSchedule = () => {
+    const weekKey = `week${selectedWeek}`;
+    const weekData = scheduleData[weekKey];
+    
+    if (!weekData || !weekData.shows) {
       return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
-          <Calendar className="w-3 h-3 mr-1" />
-          Scheduled
-        </span>
+        <div className="text-center py-8 text-text-secondary dark:text-text-secondary-dark">
+          <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No shows scheduled for Week {selectedWeek}</p>
+        </div>
       );
     }
 
-    const currentDate = new Date();
-    const showDate = show.date.toDate ? show.date.toDate() : new Date(show.date);
-    
-    if (isNaN(showDate.getTime())) {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
-          <Calendar className="w-3 h-3 mr-1" />
-          Scheduled
-        </span>
-      );
-    }
-    
-    if (showDate < currentDate) {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300">
-          <Trophy className="w-3 h-3 mr-1" />
-          Results Available
-        </span>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900 text-blue-300">
-          <Clock className="w-3 h-3 mr-1" />
-          Upcoming
-        </span>
-      );
-    }
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {weekData.shows.map((showId, index) => {
+          const show = getShowDetails(showId);
+          if (!show) return null;
+          
+          return (
+            <div
+              key={`${showId}-${index}`}
+              className="bg-surface dark:bg-surface-dark rounded-theme p-4 cursor-pointer hover:shadow-md transition-shadow border border-accent dark:border-accent-dark"
+              onClick={() => {
+                setSelectedShow(show);
+                setShowModal(true);
+              }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                  {show.name}
+                </h3>
+                {show.isChampionship && (
+                  <Trophy className="w-5 h-5 text-primary dark:text-primary-dark" />
+                )}
+              </div>
+              
+              <div className="space-y-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(show.date).toLocaleDateString()}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span>{show.location}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>{show.participants?.length || 0} Corps</span>
+                </div>
+              </div>
+              
+              {show.status === 'completed' && (
+                <div className="mt-3 pt-3 border-t border-accent dark:border-accent-dark">
+                  <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Results Available</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   if (loading) {
@@ -222,254 +181,151 @@ const SchedulePage = () => {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <Calendar className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-medium text-text-primary-dark mb-2">Error Loading Schedule</h3>
-        <p className="text-text-secondary-dark mb-4">{error}</p>
-        <button
-          onClick={fetchSchedule}
-          className="bg-primary hover:bg-primary-dark text-on-primary px-6 py-2 rounded-theme font-medium transition-colors"
-        >
-          Try Again
-        </button>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <Info className="w-16 h-16 text-text-secondary dark:text-text-secondary-dark mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            Schedule Unavailable
+          </h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
+            {error}
+          </p>
+          <button
+            onClick={fetchSchedule}
+            className="btn btn-primary"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
-  const weeks = Object.keys(scheduleData).sort((a, b) => parseInt(a) - parseInt(b));
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-text-primary-dark mb-2">Competition Schedule</h1>
-        <p className="text-text-secondary-dark text-lg">
-          {currentSeason?.seasonName || 'Season 2025'} • {currentSeason?.seasonType === 'live' ? 'Live Season' : 'Off-Season'}
-        </p>
-      </div>
+    <div className="min-h-screen bg-background dark:bg-background-dark py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            Season Schedule
+          </h1>
+          <p className="text-text-secondary dark:text-text-secondary-dark">
+            {currentSeason?.name || 'Current Season'} • {currentSeason?.year}
+          </p>
+        </div>
 
-      {/* Info Banner */}
-      <div className="bg-blue-900 bg-opacity-20 border border-blue-400 rounded-theme p-4">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-text-primary-dark">
-            <p>View all scheduled competitions and register for shows in your Dashboard. Click on any show to see participating corps and details.</p>
+        {/* Week Selector */}
+        <div className="mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {[...Array(12)].map((_, i) => {
+              const weekNum = i + 1;
+              const hasShows = scheduleData[`week${weekNum}`]?.shows?.length > 0;
+              
+              return (
+                <button
+                  key={weekNum}
+                  onClick={() => setSelectedWeek(weekNum)}
+                  disabled={!hasShows}
+                  className={`px-4 py-2 rounded-theme whitespace-nowrap transition-all ${
+                    selectedWeek === weekNum
+                      ? 'bg-primary dark:bg-primary-dark text-white'
+                      : hasShows
+                        ? 'bg-surface dark:bg-surface-dark text-text-primary dark:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark'
+                        : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  Week {weekNum}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      {/* Week Selector */}
-      <div className="flex flex-wrap gap-2">
-        {weeks.map(week => (
-          <button
-            key={week}
-            onClick={() => setSelectedWeek(parseInt(week))}
-            className={`px-6 py-2 rounded-theme font-medium transition-colors ${
-              selectedWeek === parseInt(week)
-                ? 'bg-primary text-on-primary'
-                : 'bg-surface-dark text-text-secondary-dark hover:bg-accent-dark hover:text-text-primary-dark'
-            }`}
-          >
-            Week {week}
-          </button>
-        ))}
-      </div>
+        {/* Week Schedule Display */}
+        {renderWeekSchedule()}
 
-      {/* Schedule Content */}
-      <div className="space-y-6">
-        {scheduleData[selectedWeek] && scheduleData[selectedWeek].length > 0 ? (
-          scheduleData[selectedWeek].map(dayGroup => (
-            <div key={dayGroup.day} className="bg-surface-dark rounded-theme p-6 shadow-theme-dark border border-accent-dark">
-              {/* Day Header */}
-              <div className="mb-4 pb-4 border-b border-accent-dark">
-                <h3 className="text-xl font-bold text-text-primary-dark">
-                  Day {dayGroup.day}
-                </h3>
-                <p className="text-text-secondary-dark">
-                  {formatDate(dayGroup.date)}
-                </p>
-              </div>
-
-              {/* Shows for this day */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {dayGroup.shows.map(show => {
-                  const participants = participantsMap[show.id] || [];
-                  
-                  return (
-                    <div
-                      key={show.id}
-                      className="bg-background-dark rounded-theme p-4 border border-accent-dark hover:border-primary-dark transition-colors cursor-pointer"
-                      onClick={() => openShowModal(show)}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-text-primary-dark mb-1 truncate">
-                            {show.name}
-                          </h4>
-                          <div className="flex items-center gap-2 text-sm text-text-secondary-dark">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{show.location || 'Location TBD'}</span>
-                          </div>
-                        </div>
-                        {getShowStatusBadge(show)}
+        {/* Show Details Modal */}
+        {showModal && selectedShow && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-surface dark:bg-surface-dark rounded-theme max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                      {selectedShow.name}
+                    </h2>
+                    {selectedShow.isChampionship && (
+                      <div className="flex items-center gap-2 mt-2 text-primary dark:text-primary-dark">
+                        <Trophy className="w-5 h-5" />
+                        <span className="font-medium">Championship Event</span>
                       </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-                      {/* Show info */}
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-text-secondary-dark">
-                          <Users className="w-4 h-4" />
-                          <span>{participants.length} Corps Registered</span>
-                        </div>
-                        {show.isChampionship && (
-                          <span className="text-yellow-400 font-medium">★ Championship</span>
-                        )}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                      Event Details
+                    </h3>
+                    <div className="space-y-2 text-text-secondary dark:text-text-secondary-dark">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(selectedShow.date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        <span>{selectedShow.time || 'Time TBA'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{selectedShow.location}</span>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+
+                  {selectedShow.participants && selectedShow.participants.length > 0 && (
+                    <div>
+                      <h3 className="font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                        Participating Corps ({selectedShow.participants.length})
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {selectedShow.participants.map((corpId, index) => (
+                          <div
+                            key={`${corpId}-${index}`}
+                            className="bg-background dark:bg-background-dark px-3 py-2 rounded text-sm text-text-secondary dark:text-text-secondary-dark"
+                          >
+                            {participantsMap[corpId]?.name || corpId}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedShow.status === 'completed' && (
+                    <div className="pt-4 border-t border-accent dark:border-accent-dark">
+                      <button className="btn btn-primary w-full">
+                        View Results
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-            <h3 className="text-xl font-medium text-text-primary-dark mb-2">
-              No shows scheduled for Week {selectedWeek}
-            </h3>
-            <p className="text-text-secondary-dark">
-              Check back later or select a different week.
-            </p>
           </div>
         )}
       </div>
-
-      {/* Show Details Modal */}
-      {showModal && selectedShow && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface-dark rounded-theme p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary-dark mb-2">
-                  {selectedShow.name}
-                </h2>
-                {selectedShow.isChampionship && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-900 bg-opacity-30 text-yellow-400 border border-yellow-600">
-                    <Trophy className="w-4 h-4 mr-1" />
-                    Championship Event
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-text-secondary-dark hover:text-text-primary-dark text-3xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Event Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-accent-dark">
-                <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-2">Date & Time</h4>
-                  <p className="text-text-secondary-dark">{formatDate(selectedShow.date)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-2">Location</h4>
-                  <p className="text-text-secondary-dark">{selectedShow.location || 'Location TBD'}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-2">Day</h4>
-                  <p className="text-text-secondary-dark">Day {selectedShow.day} • Week {selectedShow.week}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-2">Eligible Classes</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedShow.allowedClasses && selectedShow.allowedClasses.length > 0 ? (
-                      selectedShow.allowedClasses.map(cls => (
-                        <span key={cls} className="px-2 py-1 bg-accent-dark text-text-primary-dark rounded text-sm">
-                          {cls}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-text-secondary-dark text-sm">All Classes</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Participating Corps */}
-              {selectedShow.participants && selectedShow.participants.length > 0 ? (
-                <div>
-                  <h4 className="font-semibold text-text-primary-dark mb-3">
-                    Participating Corps ({selectedShow.participants.length})
-                  </h4>
-                  
-                  {/* Organize by class */}
-                  {['World Class', 'Open Class', 'A Class', 'SoundSport'].map(className => {
-                    const corpsInClass = selectedShow.participants.filter(p => p.corpsClass === className);
-                    
-                    if (corpsInClass.length === 0) return null;
-                    
-                    return (
-                      <div key={className} className="mb-4">
-                        <h5 className="text-sm font-semibold text-primary-dark mb-2">{className}</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {corpsInClass.map((corps, index) => (
-                            <div 
-                              key={index} 
-                              className="flex justify-between items-center p-3 bg-background-dark rounded border border-accent-dark"
-                            >
-                              <span className="font-medium text-text-primary-dark truncate">
-                                {corps.corpsName}
-                              </span>
-                              <span className="text-xs text-text-secondary-dark ml-2">
-                                {corps.displayName}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 mx-auto text-text-secondary-dark mb-3" />
-                  <p className="text-text-secondary-dark">No corps registered yet</p>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-accent-dark flex gap-3">
-                {selectedShow.date && new Date(selectedShow.date.toDate ? selectedShow.date.toDate() : selectedShow.date) < new Date() ? (
-                  <button
-                    onClick={() => {
-                      setShowModal(false);
-                      window.location.href = `/scores?day=${selectedShow.day}`;
-                    }}
-                    className="flex-1 bg-primary hover:bg-primary-dark text-on-primary py-3 px-4 rounded-theme font-medium transition-colors"
-                  >
-                    <Trophy className="w-4 h-4 inline mr-2" />
-                    View Results
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setShowModal(false);
-                      window.location.href = '/dashboard?tab=shows';
-                    }}
-                    className="flex-1 bg-primary hover:bg-primary-dark text-on-primary py-3 px-4 rounded-theme font-medium transition-colors"
-                  >
-                    <CheckCircle className="w-4 h-4 inline mr-2" />
-                    Register for This Show
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

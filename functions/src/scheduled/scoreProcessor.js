@@ -1,18 +1,12 @@
 /**
- * marching.art Score Processing System - PRODUCTION INTEGRATED VERSION
- * Combines proven scoring algorithms with new season scheduler
+ * marching.art Score Processing System - COMPLETE INTEGRATED VERSION
+ * Combines proven scoring algorithms with seasonal score grid optimization
  * Runs daily at 2:00 AM ET (America/New_York)
  * Optimized for 10,000+ users with minimal cost
  */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { 
-  DATA_NAMESPACE, 
-  GAME_CONFIG,
-  getFunctionConfig,
-  calculateDCITotalScore 
-} = require('../../config');
 
 // === DCI SCORING CONSTANTS ===
 const CAPTION_MAX_SCORES = {
@@ -41,11 +35,14 @@ const TROPHY_METALS = ['gold', 'silver', 'bronze'];
 const OFF_SEASON_REGIONAL_DAYS = [28, 35, 41, 42];
 const LIVE_SEASON_REGIONAL_DAYS = [49, 56, 62, 63];
 
+// Data namespace for user profiles
+const DATA_NAMESPACE = 'marching-art';
+
 /**
  * MAIN FUNCTION: Daily score processing at 2:00 AM ET
  */
 exports.processNightlyScores = functions
-  .runWith(getFunctionConfig('standard'))
+  .runWith({ timeoutSeconds: 540, memory: '1GB', maxInstances: 10 })
   .pubsub.schedule('0 2 * * *')
   .timeZone('America/New_York')
   .onRun(async (context) => {
@@ -66,7 +63,7 @@ exports.processNightlyScores = functions
       
       const seasonData = seasonDoc.data();
       const seasonType = seasonData.seasonType; // 'live' or 'off'
-      const seasonId = seasonData.activeSeasonId;
+      const seasonId = seasonData.activeSeasonId || seasonData.currentSeasonId;
       
       // Calculate scored day
       const seasonStartDate = seasonData.startDate.toDate();
@@ -106,14 +103,77 @@ exports.processNightlyScores = functions
   });
 
 /**
+ * NEW: Get score from seasonal grid (pre-computed scores)
+ */
+async function getScoreFromSeasonalGrid(db, seasonId, corpsName, day) {
+  try {
+    // Get from seasonal_scores collection
+    const seasonalScoreDoc = await db.doc(`seasonal_scores/${seasonId}`).get();
+    
+    if (seasonalScoreDoc.exists) {
+      const grid = seasonalScoreDoc.data().grid || {};
+      const corpsScores = grid[corpsName];
+      
+      if (corpsScores && corpsScores[day]) {
+        return corpsScores[day];
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    functions.logger.error(`Error fetching score from seasonal grid: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * UPDATED: Fetch historical score data with seasonal grid support
+ */
+async function fetchHistoricalData(db, seasonId) {
+  // First try to get from seasonal score grid
+  const seasonalScoreDoc = await db.doc(`seasonal_scores/${seasonId}`).get();
+  
+  if (seasonalScoreDoc.exists && seasonalScoreDoc.data().grid) {
+    functions.logger.info('Using pre-computed seasonal score grid');
+    return { useGrid: true, grid: seasonalScoreDoc.data().grid };
+  }
+  
+  // Fallback to original historical data fetching
+  functions.logger.info('Falling back to historical scores fetching');
+  const corpsDataRef = db.collection('dci-data').doc(seasonId);
+  const corpsDataSnap = await corpsDataRef.get();
+  
+  if (!corpsDataSnap.exists) {
+    functions.logger.error(`dci-data document ${seasonId} not found.`);
+    return { useGrid: false, historicalData: {} };
+  }
+  
+  const seasonCorpsList = corpsDataSnap.data().corps || corpsDataSnap.data().corpsValues || [];
+  const yearsToFetch = [...new Set(seasonCorpsList.map(c => c.sourceYear))];
+  
+  const historicalDocs = await Promise.all(
+    yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
+  );
+  
+  const historicalData = {};
+  historicalDocs.forEach(doc => {
+    if (doc.exists) {
+      historicalData[doc.id] = doc.data().data;
+    }
+  });
+  
+  return { useGrid: false, historicalData: historicalData };
+}
+
+/**
  * Process OFF-SEASON day
  */
 async function processOffSeasonDay(db, seasonData, seasonId, scoredDay) {
   const logger = functions.logger;
   logger.info(`Processing OFF-SEASON Day ${scoredDay}...`);
   
-  // Get historical data
-  const historicalData = await fetchHistoricalData(db, seasonId);
+  // Get data source (seasonal grid or historical data)
+  const dataSource = await fetchHistoricalData(db, seasonId);
   
   // Get profiles registered for this season
   const profilesSnapshot = await db.collectionGroup('data')
@@ -128,56 +188,45 @@ async function processOffSeasonDay(db, seasonData, seasonId, scoredDay) {
   
   const week = Math.ceil(scoredDay / 7);
   
-  // Get competitions for this day
-  const scheduleRef = db.collection('schedules').doc(seasonId);
-  const scheduleDoc = await scheduleRef.get();
-  
+  // Get competitions for today
+  const scheduleDoc = await db.doc(`schedules/${seasonId}`).get();
   if (!scheduleDoc.exists) {
-    logger.warn(`No schedule found for season ${seasonId}`);
+    logger.warn('Schedule not found for season');
     return;
   }
   
-  const schedule = scheduleDoc.data();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const targetDateStr = yesterday.toISOString().split('T')[0];
-  
-  const competitionsForDay = schedule.competitions.filter(comp => {
-    const compDate = comp.date.toDate().toISOString().split('T')[0];
-    return compDate === targetDateStr && comp.status === 'scheduled';
-  });
-  
-  if (competitionsForDay.length === 0) {
+  const competitions = scheduleDoc.data().competitions.filter(c => c.day === scoredDay);
+  if (competitions.length === 0) {
     logger.info(`No competitions scheduled for day ${scoredDay}`);
     return;
   }
   
-  logger.info(`Processing ${competitionsForDay.length} competitions`);
+  logger.info(`Found ${competitions.length} competitions for day ${scoredDay}`);
   
-  // Championship progression filter
+  // Championship filter setup (days 48-49 in off-season)
   let championshipParticipants = null;
   if ([48, 49].includes(scoredDay)) {
-    championshipParticipants = await getChampionshipParticipants(db, seasonId, scoredDay);
+    championshipParticipants = await getChampionshipParticipants(db, seasonId, scoredDay, false);
   }
   
+  const batch = db.batch();
   const dailyRecap = {
     offSeasonDay: scoredDay,
     date: admin.firestore.Timestamp.now(),
     shows: []
   };
   
-  const batch = db.batch();
-  const dailyScores = new Map();
+  const dailyScores = new Map(); // Track daily totals per user
   
   // Process each competition
-  for (const competition of competitionsForDay) {
+  for (const competition of competitions) {
     const showResult = {
       eventName: competition.name,
       location: competition.location,
       results: []
     };
     
-    // Eastern Classic split (days 41-42)
+    // Eastern Classic special handling (days 41-42)
     let easternClassicParticipants = null;
     if ([41, 42].includes(scoredDay) && competition.name.includes('Eastern Classic')) {
       easternClassicParticipants = await getEasternClassicParticipants(
@@ -218,7 +267,7 @@ async function processOffSeasonDay(db, seasonData, seasonId, scoredDay) {
         continue;
       }
       
-      // Generate score
+      // Generate score with data source
       const corpsScore = await generateOffSeasonScore(
         db,
         userData,
@@ -226,7 +275,7 @@ async function processOffSeasonDay(db, seasonData, seasonId, scoredDay) {
         competition,
         seasonId,
         scoredDay,
-        historicalData
+        dataSource  // Pass data source instead of historicalData
       );
       
       if (corpsScore) {
@@ -271,7 +320,7 @@ async function processOffSeasonDay(db, seasonData, seasonId, scoredDay) {
   await saveRecap(db, batch, seasonId, seasonData, dailyRecap, scoredDay);
   
   // Mark competitions as completed
-  await markCompetitionsCompleted(db, batch, seasonId, competitionsForDay);
+  await markCompetitionsCompleted(db, batch, seasonId, competitions);
   
   // Commit all updates
   await batch.commit();
@@ -286,7 +335,7 @@ async function processLiveSeasonDay(db, seasonData, seasonId, scoredDay) {
   const logger = functions.logger;
   logger.info(`Processing LIVE SEASON Day ${scoredDay}...`);
   
-  const historicalData = await fetchHistoricalData(db, seasonId);
+  const dataSource = await fetchHistoricalData(db, seasonId);
   
   const profilesSnapshot = await db.collectionGroup('data')
     .where('activeSeasonId', '==', seasonId)
@@ -353,12 +402,12 @@ async function processLiveSeasonDay(db, seasonData, seasonId, scoredDay) {
       userId,
       seasonId,
       scoredDay,
-      historicalData,
+      dataSource,
       realScoresMap
     );
     
     if (corpsScore) {
-      const showKey = realScoresMap.size > 0 ? 
+      const showKey = realScoresMap.size > 0 ?
         `DCI World Championships Day ${scoredDay}` : 
         predictedShowKey;
       
@@ -404,9 +453,9 @@ async function processLiveSeasonDay(db, seasonData, seasonId, scoredDay) {
 }
 
 /**
- * Generate score for OFF-SEASON competition
+ * UPDATED: Generate score for OFF-SEASON competition
  */
-async function generateOffSeasonScore(db, userData, userId, competition, seasonId, scoredDay, historicalData) {
+async function generateOffSeasonScore(db, userData, userId, competition, seasonId, scoredDay, dataSource) {
   const lineup = userData.lineup;
   const staff = userData.staff || [];
   const corpsClass = userData.corps?.corpsClass || 'SoundSport';
@@ -420,7 +469,7 @@ async function generateOffSeasonScore(db, userData, userId, competition, seasonI
     return null;
   }
   
-  const seasonCorps = seasonCorpsDoc.data().corps;
+  const seasonCorps = seasonCorpsDoc.data().corps || seasonCorpsDoc.data().corpsValues || [];
   
   let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
   const captionScores = {};
@@ -431,17 +480,17 @@ async function generateOffSeasonScore(db, userData, userId, competition, seasonI
     if (!selectedCorpsName) continue;
     
     // Find corps info
-    const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName);
+    const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName || c.corpsName === selectedCorpsName);
     const corpsValue = corpsInfo ? corpsInfo.value : 15;
-    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear();
+    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear().toString();
     
-    // Get realistic caption score using logarithmic regression
+    // Get realistic caption score using data source
     let captionScore = getRealisticCaptionScore(
       selectedCorpsName,
       sourceYear,
       caption,
       scoredDay,
-      historicalData
+      dataSource  // Pass data source
     );
     
     // Apply staff bonus
@@ -488,9 +537,9 @@ async function generateOffSeasonScore(db, userData, userId, competition, seasonI
 }
 
 /**
- * Generate score for LIVE SEASON (uses real scores + prediction)
+ * UPDATED: Generate score for LIVE SEASON
  */
-async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay, historicalData, realScoresMap) {
+async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay, dataSource, realScoresMap) {
   const lineup = userData.lineup;
   const staff = userData.staff || [];
   const corpsClass = userData.corps?.corpsClass || 'SoundSport';
@@ -503,7 +552,7 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
     return null;
   }
   
-  const seasonCorps = seasonCorpsDoc.data().corps;
+  const seasonCorps = seasonCorpsDoc.data().corps || seasonCorpsDoc.data().corpsValues || [];
   
   let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
   const captionScores = {};
@@ -512,8 +561,8 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
     const selectedCorpsName = lineup[caption];
     if (!selectedCorpsName) continue;
     
-    const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName);
-    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear();
+    const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName || c.corpsName === selectedCorpsName);
+    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear().toString();
     
     let captionScore = 0;
     
@@ -521,15 +570,14 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
     if (realScoresMap.has(selectedCorpsName) && realScoresMap.get(selectedCorpsName)[caption] > 0) {
       captionScore = realScoresMap.get(selectedCorpsName)[caption];
     } else {
-      // Predict using logarithmic regression on season data
-      captionScore = await getLiveCaptionScore(
-        db,
+      // Map to off-season day for prediction
+      const equivalentDay = mapLiveDayToOffSeasonDay(scoredDay);
+      captionScore = getRealisticCaptionScore(
         selectedCorpsName,
         sourceYear,
         caption,
-        scoredDay,
-        seasonId,
-        historicalData
+        equivalentDay,
+        dataSource
       );
     }
     
@@ -566,14 +614,32 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
 }
 
 /**
- * Get realistic caption score using LOGARITHMIC REGRESSION
- * This is the proven algorithm from the existing system
+ * UPDATED: Get realistic caption score using data source
  */
-function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, historicalData) {
+function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, dataSource) {
+  // Check if we're using the seasonal grid
+  if (dataSource.useGrid && dataSource.grid) {
+    const gridData = dataSource.grid[corpsName];
+    if (gridData && gridData[currentDay]) {
+      const dayScore = gridData[currentDay];
+      if (dayScore.captions && dayScore.captions[caption]) {
+        return dayScore.captions[caption];
+      }
+      // Fallback: distribute total score across captions
+      if (dayScore.totalScore) {
+        const captionWeight = caption.startsWith('GE') ? 0.2 : 0.1;
+        return dayScore.totalScore * captionWeight;
+      }
+    }
+  }
+  
+  // Fallback to historical data logic
+  const historicalData = dataSource.historicalData || dataSource;
+  
   // Try to get actual score for this day
   const actualScore = getScoreForDay(currentDay, corpsName, sourceYear, caption, historicalData);
   if (actualScore !== null) {
-    return actualScore; // Always use real score if available
+    return actualScore;
   }
   
   // Collect all available data points for this corps/caption
@@ -583,7 +649,6 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   for (const event of yearData) {
     const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
     if (score !== null) {
-      // Avoid duplicates
       if (!allDataPoints.some(p => p[0] === event.offSeasonDay)) {
         allDataPoints.push([event.offSeasonDay, score]);
       }
@@ -603,48 +668,15 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   } else if (allDataPoints.length === 1) {
     return allDataPoints[0][1];
   } else {
-    // No historical data - return 0 (will use fallback in calling function)
+    // No historical data - return 0
     return 0;
   }
 }
 
 /**
- * Get live caption score using current season progression
- */
-async function getLiveCaptionScore(db, corpsName, sourceYear, caption, currentDay, seasonId, historicalData) {
-  // Get all scores for this corps in the current season
-  const liveScoresRef = db.collection(`live_scores/${seasonId}/scores`)
-    .where('corpsName', '==', corpsName);
-  const liveScoresSnap = await liveScoresRef.get();
-  
-  const currentSeasonScores = [];
-  liveScoresSnap.forEach(doc => {
-    const data = doc.data();
-    if (data.captions && data.captions[caption]) {
-      currentSeasonScores.push([data.day, data.captions[caption]]);
-    }
-  });
-  
-  // If we have 3+ data points, use logarithmic regression on current season
-  if (currentSeasonScores.length >= 3) {
-    const regression = logarithmicRegression(currentSeasonScores);
-    const predictedScore = regression.predict(currentDay);
-    const jitter = (Math.random() - 0.5) * 0.5;
-    const finalScore = predictedScore + jitter;
-    return Math.max(0, Math.min(20, parseFloat(finalScore.toFixed(3))));
-  } else {
-    // Fall back to historical data
-    const equivalentOffSeasonDay = mapLiveDayToOffSeasonDay(currentDay);
-    return getRealisticCaptionScore(corpsName, sourceYear, caption, equivalentOffSeasonDay, historicalData);
-  }
-}
-
-/**
- * LOGARITHMIC REGRESSION - The secret sauce
- * Creates realistic DCI-style score curves
+ * LOGARITHMIC REGRESSION - Creates realistic DCI-style score curves
  */
 function logarithmicRegression(data) {
-  // Transform data: y = e^(mx + c)
   const transformedData = data.map(([x, y]) => [x, y > 0 ? Math.log(y) : 0]);
   
   const { m, c } = simpleLinearRegression(transformedData);
@@ -652,7 +684,7 @@ function logarithmicRegression(data) {
   return {
     predict: (x) => {
       const logPrediction = m * x + c;
-      return Math.exp(logPrediction); // Reverse the log transformation
+      return Math.exp(logPrediction);
     }
   };
 }
@@ -688,8 +720,8 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
   if (!events || events.length === 0) return null;
   
   for (const event of events) {
-    const scoreData = event.scores.find(s => s.corps === corps);
-    if (scoreData && scoreData.captions[caption] > 0) {
+    const scoreData = event.scores?.find(s => s.corps === corps);
+    if (scoreData && scoreData.captions && scoreData.captions[caption] > 0) {
       return scoreData.captions[caption];
     }
   }
@@ -700,14 +732,11 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
  * Map live season day to equivalent off-season day
  */
 function mapLiveDayToOffSeasonDay(liveDay) {
-  const liveSeasonStartDay = 22;
-  const dayOffset = 21;
-  
-  if (liveDay < liveSeasonStartDay) {
-    return 1;
-  } else {
-    return liveDay - dayOffset;
+  // Live season championships align with off-season
+  if (liveDay >= 68) {
+    return liveDay - 21;  // Maps 68->47, 69->48, 70->49
   }
+  return Math.min(liveDay, 46);
 }
 
 /**
@@ -730,35 +759,6 @@ function calculateStaffBonus(staffMembers, caption) {
 }
 
 /**
- * Fetch historical score data
- */
-async function fetchHistoricalData(db, seasonId) {
-  const corpsDataRef = db.collection('dci-data').doc(seasonId);
-  const corpsDataSnap = await corpsDataRef.get();
-  
-  if (!corpsDataSnap.exists) {
-    functions.logger.error(`dci-data document ${seasonId} not found.`);
-    return {};
-  }
-  
-  const seasonCorpsList = corpsDataSnap.data().corps || [];
-  const yearsToFetch = [...new Set(seasonCorpsList.map(c => c.sourceYear))];
-  
-  const historicalDocs = await Promise.all(
-    yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
-  );
-  
-  const historicalData = {};
-  historicalDocs.forEach(doc => {
-    if (doc.exists) {
-      historicalData[doc.id] = doc.data().data;
-    }
-  });
-  
-  return historicalData;
-}
-
-/**
  * Get championship participants (top 25 for semis, top 12 for finals)
  */
 async function getChampionshipParticipants(db, seasonId, scoredDay, isLiveSeason = false) {
@@ -767,33 +767,24 @@ async function getChampionshipParticipants(db, seasonId, scoredDay, isLiveSeason
   
   const allRecaps = recapDoc.data().recaps || [];
   
-  // Live season: days 69-70 (semis/finals)
-  // Off season: days 48-49 (semis/finals)
   const prelimsDay = isLiveSeason ? 68 : 47;
   const semisDay = isLiveSeason ? 69 : 48;
   
-  if (scoredDay === semisDay + 1) {
-    // Finals - get top 12 from semifinals
-    const semisRecap = allRecaps.find(r => r.offSeasonDay === semisDay);
-    if (semisRecap) {
-      const allResults = semisRecap.shows.flatMap(s => s.results);
-      allResults.sort((a, b) => b.totalScore - a.totalScore);
-      
-      if (allResults.length >= 12) {
-        const twelfthPlaceScore = allResults[11].totalScore;
-        // Include ties
-        return allResults.filter(r => r.totalScore >= twelfthPlaceScore).map(r => r.uid);
-      } else {
-        return allResults.map(r => r.uid);
-      }
-    }
-  } else if (scoredDay === semisDay) {
-    // Semifinals - get top 25 from prelims
+  if (scoredDay === semisDay) {
+    // Get top 25 from prelims
     const prelimsRecap = allRecaps.find(r => r.offSeasonDay === prelimsDay);
-    if (prelimsRecap) {
+    if (prelimsRecap && prelimsRecap.shows.length > 0) {
       const allResults = prelimsRecap.shows.flatMap(s => s.results);
       allResults.sort((a, b) => b.totalScore - a.totalScore);
       return allResults.slice(0, 25).map(r => r.uid);
+    }
+  } else if (scoredDay === (isLiveSeason ? 70 : 49)) {
+    // Get top 12 from semis
+    const semisRecap = allRecaps.find(r => r.offSeasonDay === semisDay);
+    if (semisRecap && semisRecap.shows.length > 0) {
+      const allResults = semisRecap.shows.flatMap(s => s.results);
+      allResults.sort((a, b) => b.totalScore - a.totalScore);
+      return allResults.slice(0, 12).map(r => r.uid);
     }
   }
   
@@ -801,107 +792,147 @@ async function getChampionshipParticipants(db, seasonId, scoredDay, isLiveSeason
 }
 
 /**
- * Get Eastern Classic participants (50/50 split across days 41-42)
+ * Get Eastern Classic participants (50% split across days 41-42)
  */
 async function getEasternClassicParticipants(db, profilesSnapshot, competition, week, scoredDay) {
-  const allEnrollees = [];
+  const registeredUsers = [];
   
-  for (const userDoc of profilesSnapshot.docs) {
-    const userProfile = userDoc.data();
-    const registrations = userProfile.competitionRegistrations || {};
+  profilesSnapshot.forEach(doc => {
+    const userData = doc.data();
+    const registrations = userData.competitionRegistrations || {};
     
     if (registrations[competition.id]) {
-      allEnrollees.push(userDoc.ref.parent.parent.id);
+      registeredUsers.push(doc.ref.parent.parent.id);
     }
-  }
+  });
   
-  // Deterministic sort
-  allEnrollees.sort();
-  
-  const splitIndex = Math.ceil(allEnrollees.length / 2);
+  // Split 50/50 across two days
+  const halfPoint = Math.floor(registeredUsers.length / 2);
   
   if (scoredDay === 41) {
-    return allEnrollees.slice(0, splitIndex); // First half
-  } else {
-    return allEnrollees.slice(splitIndex); // Second half
+    return registeredUsers.slice(0, halfPoint);
+  } else if (scoredDay === 42) {
+    return registeredUsers.slice(halfPoint);
   }
+  
+  return null;
 }
 
 /**
- * Award regional trophies (top 3)
+ * Award regional trophies
  */
 function awardRegionalTrophies(batch, dailyRecap, seasonData, db) {
   dailyRecap.shows.forEach(show => {
-    if (show.eventName.includes('Predicted')) return;
+    if (show.results.length === 0) return;
     
+    // Sort by score
     show.results.sort((a, b) => b.totalScore - a.totalScore);
-    const top3 = show.results.slice(0, 3);
     
-    top3.forEach((winner, index) => {
+    // Award top 3
+    for (let i = 0; i < Math.min(3, show.results.length); i++) {
+      const winner = show.results[i];
       const userRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${winner.uid}/profile/data`);
-      const trophy = {
-        type: 'regional',
-        metal: TROPHY_METALS[index],
-        seasonName: seasonData.seasonNumber || seasonData.seasonId,
-        eventName: show.eventName,
-        score: winner.totalScore,
-        rank: index + 1,
-        awardedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
       
       batch.update(userRef, {
-        'trophies.regionals': admin.firestore.FieldValue.arrayUnion(trophy)
+        trophies: admin.firestore.FieldValue.arrayUnion({
+          seasonId: seasonData.seasonId || seasonData.activeSeasonId,
+          eventName: show.eventName,
+          placement: i + 1,
+          metal: TROPHY_METALS[i],
+          date: admin.firestore.Timestamp.now()
+        })
+      });
+    }
+  });
+}
+
+/**
+ * Award championship honors
+ */
+function awardChampionshipHonors(batch, dailyRecap, seasonData, db) {
+  const allResults = dailyRecap.shows.flatMap(s => s.results);
+  allResults.sort((a, b) => b.totalScore - a.totalScore);
+  
+  // Award champion trophy and medals
+  for (let i = 0; i < Math.min(12, allResults.length); i++) {
+    const winner = allResults[i];
+    const userRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${winner.uid}/profile/data`);
+    
+    const award = i < 3 ? {
+      seasonId: seasonData.seasonId || seasonData.activeSeasonId,
+      eventName: 'DCI World Championship',
+      placement: i + 1,
+      metal: TROPHY_METALS[i],
+      date: admin.firestore.Timestamp.now()
+    } : {
+      seasonId: seasonData.seasonId || seasonData.activeSeasonId,
+      eventName: 'DCI World Championship Finalist',
+      placement: i + 1,
+      date: admin.firestore.Timestamp.now()
+    };
+    
+    batch.update(userRef, {
+      trophies: admin.firestore.FieldValue.arrayUnion(award)
+    });
+  }
+}
+
+/**
+ * Update leaderboards
+ */
+async function updateLeaderboards(db, seasonId) {
+  const logger = functions.logger;
+  
+  // Get all recaps for the season
+  const recapDoc = await db.doc(`fantasy_recaps/${seasonId}`).get();
+  if (!recapDoc.exists) return;
+  
+  const allRecaps = recapDoc.data().recaps || [];
+  const userScores = new Map();
+  
+  // Aggregate scores
+  allRecaps.forEach(recap => {
+    recap.shows.forEach(show => {
+      show.results.forEach(result => {
+        const current = userScores.get(result.uid) || {
+          uid: result.uid,
+          corpsName: result.corpsName,
+          corpsClass: result.corpsClass,
+          totalScore: 0,
+          competitionCount: 0,
+          bestScore: 0
+        };
+        
+        current.totalScore += result.totalScore;
+        current.competitionCount++;
+        current.bestScore = Math.max(current.bestScore, result.totalScore);
+        
+        userScores.set(result.uid, current);
       });
     });
   });
+  
+  // Calculate rankings
+  const rankings = Array.from(userScores.values())
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .map((user, index) => ({
+      ...user,
+      rank: index + 1,
+      averageScore: user.totalScore / user.competitionCount
+    }));
+  
+  // Save leaderboard
+  await db.collection('leaderboards').doc(seasonId).set({
+    seasonId: seasonId,
+    rankings: rankings.slice(0, 100),
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  
+  logger.info(`Updated leaderboard with ${rankings.length} users`);
 }
 
 /**
- * Award championship trophies (top 3) and finalist medals (all participants)
- */
-function awardChampionshipHonors(batch, dailyRecap, seasonData, db) {
-  const finalsShow = dailyRecap.shows[0];
-  if (!finalsShow || finalsShow.eventName.includes('Predicted')) return;
-  
-  finalsShow.results.sort((a, b) => b.totalScore - a.totalScore);
-  
-  // Top 3 get trophies
-  const top3 = finalsShow.results.slice(0, 3);
-  top3.forEach((winner, index) => {
-    const userRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${winner.uid}/profile/data`);
-    const trophy = {
-      type: 'championship',
-      metal: TROPHY_METALS[index],
-      seasonName: seasonData.seasonNumber || seasonData.seasonId,
-      eventName: finalsShow.eventName,
-      score: winner.totalScore,
-      rank: index + 1,
-      awardedAt: admin.firestore.FieldValue.serverTimestamp()
-    };
-    
-    batch.update(userRef, {
-      'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy)
-    });
-  });
-  
-  // All finalists get medals
-  finalsShow.results.forEach((finalist, index) => {
-    const userRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${finalist.uid}/profile/data`);
-    const medal = {
-      type: 'finalist',
-      seasonName: seasonData.seasonNumber || seasonData.seasonId,
-      rank: index + 1,
-      awardedAt: admin.firestore.FieldValue.serverTimestamp()
-    };
-    
-    batch.update(userRef, {
-      'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
-    });
-  });
-}
-
-/**
- * Save daily recap to database
+ * Save recap to database
  */
 async function saveRecap(db, batch, seasonId, seasonData, dailyRecap, scoredDay) {
   const recapDocRef = db.doc(`fantasy_recaps/${seasonId}`);
@@ -969,131 +1000,76 @@ async function resolveWeeklyMatchups(db, seasonData, seasonId, scoredDay) {
         const updatedMatchups = [];
         
         for (const matchup of matchups) {
-          if (matchup.winner) {
-            updatedMatchups.push(matchup);
-            continue;
-          }
+          const team1Score = await getWeeklyScore(db, matchup.team1.uid, week, seasonId);
+          const team2Score = await getWeeklyScore(db, matchup.team2.uid, week, seasonId);
           
-          const [p1_uid, p2_uid] = matchup.pair;
-          
-          const p1_doc = await db.doc(`artifacts/${DATA_NAMESPACE}/users/${p1_uid}/profile/data`).get();
-          const p2_doc = await db.doc(`artifacts/${DATA_NAMESPACE}/users/${p2_uid}/profile/data`).get();
-          
-          const p1_score = p1_doc.data()?.totalSeasonScore || 0;
-          const p2_score = p2_doc.data()?.totalSeasonScore || 0;
-          
-          let winnerUid = null;
-          if (p1_score > p2_score) winnerUid = p1_uid;
-          if (p2_score > p1_score) winnerUid = p2_uid;
-          
-          const seasonRecordPath = `seasons.${seasonId}.records.${corpsClass}`;
-          const increment = admin.firestore.FieldValue.increment(1);
-          
-          if (winnerUid === p1_uid) {
-            winnerBatch.set(p1_doc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-            winnerBatch.set(p2_doc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-          } else if (winnerUid === p2_uid) {
-            winnerBatch.set(p1_doc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-            winnerBatch.set(p2_doc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-          } else {
-            winnerBatch.set(p1_doc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-            winnerBatch.set(p2_doc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-          }
+          const winner = team1Score > team2Score ? matchup.team1 : 
+                        team2Score > team1Score ? matchup.team2 : null;
           
           updatedMatchups.push({
             ...matchup,
-            scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
-            winner: winnerUid
+            team1Score: team1Score,
+            team2Score: team2Score,
+            winner: winner,
+            completed: true
           });
+          
+          hasUpdates = true;
         }
         
-        matchupData[matchupArrayKey] = updatedMatchups;
-        hasUpdates = true;
-      }
-      
-      if (hasUpdates) {
-        winnerBatch.update(matchupDocRef, matchupData);
+        if (hasUpdates) {
+          winnerBatch.update(matchupDocRef, {
+            [matchupArrayKey]: updatedMatchups
+          });
+        }
       }
     }
   }
   
   await winnerBatch.commit();
-  logger.info(`Matchup resolution for week ${week} complete.`);
+  logger.info('Weekly matchups resolved');
 }
 
 /**
- * Update global leaderboards
+ * Get weekly score for a user
  */
-async function updateLeaderboards(db, seasonId) {
-  const logger = functions.logger;
+async function getWeeklyScore(db, userId, week, seasonId) {
+  const recapDoc = await db.doc(`fantasy_recaps/${seasonId}`).get();
+  if (!recapDoc.exists) return 0;
   
-  try {
-    const usersSnapshot = await db.collectionGroup('data')
-      .where('activeSeasonId', '==', seasonId)
-      .where('totalSeasonScore', '>', 0)
-      .orderBy('totalSeasonScore', 'desc')
-      .limit(1000)
-      .get();
-    
-    const leaderboardData = [];
-    
-    usersSnapshot.forEach((userDoc, index) => {
-      const userData = userDoc.data();
-      const userId = userDoc.ref.parent.parent.id;
-      
-      leaderboardData.push({
-        userId: userId,
-        displayName: userData.displayName || userData.email?.split('@')[0] || 'Anonymous',
-        corpsName: userData.corps?.corpsName || 'Unknown Corps',
-        corpsClass: userData.corps?.corpsClass || 'SoundSport',
-        totalScore: userData.totalSeasonScore || 0,
-        rank: index + 1
+  const recaps = recapDoc.data().recaps || [];
+  const startDay = (week - 1) * 7 + 1;
+  const endDay = week * 7;
+  
+  let totalScore = 0;
+  recaps.forEach(recap => {
+    if (recap.offSeasonDay >= startDay && recap.offSeasonDay <= endDay) {
+      recap.shows.forEach(show => {
+        const userResult = show.results.find(r => r.uid === userId);
+        if (userResult) {
+          totalScore += userResult.totalScore;
+        }
       });
-    });
-    
-    await db.collection('leaderboards').doc(seasonId).set({
-      seasonId: seasonId,
-      rankings: leaderboardData,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    
-    const batch = db.batch();
-    let batchCount = 0;
-    
-    for (const entry of leaderboardData) {
-      const userRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${entry.userId}/profile/data`);
-      batch.update(userRef, { seasonRank: entry.rank });
-      batchCount++;
-      
-      if (batchCount % 500 === 0) {
-        await batch.commit();
-      }
     }
-    
-    if (batchCount % 500 !== 0) {
-      await batch.commit();
-    }
-    
-    logger.info(`Updated leaderboard with ${leaderboardData.length} entries`);
-    
-  } catch (error) {
-    logger.error('Error updating leaderboards:', error);
-  }
+  });
+  
+  return totalScore;
 }
 
 /**
- * ADMIN FUNCTION: Manual score processing
+ * Manual score processing (admin only)
  */
 exports.processScoresManually = functions
-  .runWith(getFunctionConfig('standard'))
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .https.onCall(async (data, context) => {
     if (!context.auth || context.auth.uid !== 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
-      throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+      throw new functions.https.HttpsError('permission-denied', 'Admin access required.');
     }
     
+    const db = admin.firestore();
+    
     try {
-      const db = admin.firestore();
-      const targetDate = data.date ? new Date(data.date) : new Date();
+      const targetDate = data?.date ? new Date(data.date) : new Date();
       
       const seasonDoc = await db.doc('game-settings/current').get();
       if (!seasonDoc.exists) {
@@ -1101,7 +1077,7 @@ exports.processScoresManually = functions
       }
       
       const seasonData = seasonDoc.data();
-      const seasonId = seasonData.activeSeasonId;
+      const seasonId = seasonData.activeSeasonId || seasonData.currentSeasonId;
       
       // Calculate day
       const seasonStartDate = seasonData.startDate.toDate();

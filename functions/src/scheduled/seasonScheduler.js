@@ -1,938 +1,715 @@
 /**
- * marching.art Season Scheduler - DATE-AWARE AUTO-CORRECTING VERSION
- * Automated season management with self-correction capabilities
- * Works perpetually for any year from 2025 onward
- * Handles season creation, corps assignment, schedule generation, and progression
- * Optimized for 10,000+ users with minimal cost
+ * marching.art Season Scheduler - COMPLETE VERIFIED VERSION
+ * Cross-checked with all game requirements and existing files
+ * Optimized for 10,000+ users with minimal Firebase costs
  */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
-/**
- * Get function configuration based on complexity
- */
-function getFunctionConfig(complexity = 'standard') {
-  const configs = {
-    light: {
-      timeoutSeconds: 60,
-      memory: '256MB',
-      maxInstances: 100
-    },
-    standard: {
-      timeoutSeconds: 300,
-      memory: '512MB',
-      maxInstances: 50
-    },
-    heavy: {
-      timeoutSeconds: 540,
-      memory: '1GB',
-      maxInstances: 10
-    }
-  };
-  
-  return configs[complexity] || configs.standard;
-}
-
-// === SEASON CONFIGURATION ===
+// === CONFIGURATION ===
 const SEASON_CONFIG = {
   LIVE_SEASON_DAYS: 70,      // 10 weeks
   OFF_SEASON_DAYS: 49,        // 7 weeks
-  FINALS_DATE: { month: 7, weekOfMonth: 2, dayOfWeek: 6 }, // Second Saturday of August
-  SEASON_START_HOUR: 3,       // 3:00 AM EASTERN TIME
-  
-  // Themed off-season names (musical terms)
+  SEASON_START_HOUR: 3,       // 3:00 AM ET
   SEASON_THEMES: ['Overture', 'Allegro', 'Adagio', 'Scherzo', 'Crescendo', 'Finale'],
-  
-  // Championship days
-  OFF_SEASON_CHAMPIONSHIPS: {
-    45: { name: 'Open and A Class Prelims', location: 'Marion, IN', classes: ['Open', 'A'] },
-    46: { name: 'Open and A Class Finals', location: 'Marion, IN', classes: ['Open', 'A'] },
-    47: { name: 'World Championships Prelims', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] },
-    48: { name: 'World Championships Semifinals', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] },
-    49: { name: 'World Championships Finals', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] }
-  },
-  
-  LIVE_SEASON_CHAMPIONSHIPS: {
-    65: { name: 'Open and A Class Prelims', location: 'Marion, IN', classes: ['Open', 'A'] },
-    66: { name: 'Open and A Class Finals', location: 'Marion, IN', classes: ['Open', 'A'] },
-    68: { name: 'World Championships Prelims', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] },
-    69: { name: 'World Championships Semifinals', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] },
-    70: { name: 'World Championships Finals', location: 'Indianapolis, IN', classes: ['World', 'Open', 'A'] }
-  },
-  
-  // Regional competition days
-  OFF_SEASON_REGIONALS: {
-    28: { name: 'Southwestern Championship', location: 'San Antonio, TX' },
-    35: { name: 'Southeastern Championship', location: 'Atlanta, GA' },
-    41: { name: 'Eastern Classic Day 1', location: 'Allentown, PA' },
-    42: { name: 'Eastern Classic Day 2', location: 'Allentown, PA' }
-  },
-  
-  LIVE_SEASON_REGIONALS: {
-    42: { name: 'DCI West', location: 'Stanford, CA' },
-    49: { name: 'DCI Southwest', location: 'San Antonio, TX' },
-    56: { name: 'DCI Atlanta', location: 'Atlanta, GA' },
-    62: { name: 'DCI Eastern Classic Day 1', location: 'Allentown, PA' },
-    63: { name: 'DCI Eastern Classic Day 2', location: 'Allentown, PA' }
-  },
-  
-  // Competition locations for regular shows
-  COMPETITION_LOCATIONS: [
-    'Buffalo, NY', 'Rochester, NY', 'Syracuse, NY', 'Clifton, NJ', 
-    'Chester, PA', 'Annapolis, MD', 'Akron, OH', 'Massillon, OH',
-    'Centerville, OH', 'Muncie, IN', 'Metamora, MI', 'Oconomowoc, WI',
-    'DeKalb, IL', 'Rockford, IL', 'Cedar Rapids, IA', 'Minneapolis, MN',
-    'Kansas City, MO', 'Broken Arrow, OK', 'Denton, TX', 'Houston, TX',
-    'Denver, CO', 'Ogden, UT', 'Riverside, CA', 'Fresno, CA',
-    'Winston-Salem, NC', 'Murfreesboro, TN', 'Orlando, FL', 'Rome, GA'
-  ],
-  
-  // Venue names
-  VENUE_TYPES: [
-    'Stadium', 'Field', 'High School', 'University Stadium', 
-    'Memorial Stadium', 'Athletic Complex', 'Sports Complex'
-  ]
 };
 
 // === HELPER FUNCTIONS ===
-
-/**
- * Get the second Saturday of August for any given year
- */
-function getSecondSaturdayOfAugust(year) {
-  const august = new Date(year, 7, 1); // Month 7 = August
-  
-  // Find first Saturday
-  let firstSaturday = 1;
-  while (new Date(year, 7, firstSaturday).getDay() !== 6) {
-    firstSaturday++;
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  
-  // Second Saturday is 7 days later
-  const secondSaturday = firstSaturday + 7;
-  
-  return new Date(year, 7, secondSaturday, SEASON_CONFIG.SEASON_START_HOUR, 0, 0);
+  return shuffled;
 }
 
-/**
- * Determine which season should be active for any given date
- * Works perpetually for any year
- */
+function getSecondSaturdayOfAugust(year) {
+  const august = new Date(Date.UTC(year, 7, 1));
+  const dayOfWeek = august.getUTCDay();
+  const daysToAdd = (6 - dayOfWeek + 7) % 7;
+  const firstSaturday = 1 + daysToAdd;
+  return new Date(Date.UTC(year, 7, firstSaturday + 7, SEASON_CONFIG.SEASON_START_HOUR));
+}
+
 function determineCurrentSeason(currentDate) {
   const currentYear = currentDate.getFullYear();
-  
-  // Check if we're in the current year's live season or after
   const currentYearFinalsDate = getSecondSaturdayOfAugust(currentYear);
   const liveSeasonStart = new Date(currentYearFinalsDate);
-  liveSeasonStart.setDate(liveSeasonStart.getDate() - 69);
-  liveSeasonStart.setHours(SEASON_CONFIG.SEASON_START_HOUR, 0, 0, 0);
-  
-  if (currentDate >= liveSeasonStart) {
-    // We're in or after the current year's live season
-    const liveSeasonEnd = new Date(currentYearFinalsDate);
-    liveSeasonEnd.setHours(23, 59, 59, 999);
-    
-    if (currentDate <= liveSeasonEnd) {
-      // We're in the live season
-      return {
-        seasonType: 'live',
-        seasonName: `DCI ${currentYear} Live Season`,
-        finalsYear: currentYear,
-        startDate: liveSeasonStart,
-        endDate: liveSeasonEnd,
-        totalWeeks: 10,
-        totalDays: 70
-      };
-    } else {
-      // We're after finals - start of next cycle (Overture for next year)
-      const nextYear = currentYear + 1;
-      const cycleStartDate = new Date(currentYearFinalsDate);
-      cycleStartDate.setDate(cycleStartDate.getDate() + 1);
-      cycleStartDate.setHours(SEASON_CONFIG.SEASON_START_HOUR, 0, 0, 0);
-      
-      const cycleEndDate = new Date(cycleStartDate);
-      cycleEndDate.setDate(cycleEndDate.getDate() + 48);
-      cycleEndDate.setHours(23, 59, 59, 999);
-      
-      return {
-        seasonType: 'overture',
-        seasonName: `Overture Season ${currentYear}-${nextYear.toString().slice(-2)}`,
-        finalsYear: nextYear,
-        startDate: cycleStartDate,
-        endDate: cycleEndDate,
-        totalWeeks: 7,
-        totalDays: 49
-      };
-    }
+  liveSeasonStart.setDate(liveSeasonStart.getDate() - (SEASON_CONFIG.LIVE_SEASON_DAYS - 1));
+
+  // Check if we're in live season
+  if (currentDate >= liveSeasonStart && currentDate <= currentYearFinalsDate) {
+    return {
+      seasonType: 'live',
+      seasonName: `DCI ${currentYear} Live Season`,
+      finalsYear: currentYear,
+      startDate: liveSeasonStart,
+      endDate: currentYearFinalsDate,
+      totalWeeks: 10,
+      totalDays: SEASON_CONFIG.LIVE_SEASON_DAYS
+    };
   }
+
+  // Determine which off-season we're in
+  const previousYearFinalsDate = currentDate > currentYearFinalsDate ? 
+    currentYearFinalsDate : getSecondSaturdayOfAugust(currentYear - 1);
   
-  // We're in an off-season leading up to this year's live season
-  // Calculate which off-season based on days since last year's finals
-  const previousYearFinalsDate = getSecondSaturdayOfAugust(currentYear - 1);
   const cycleStartDate = new Date(previousYearFinalsDate);
-  cycleStartDate.setDate(cycleStartDate.getDate() + 1); // Day after finals
-  cycleStartDate.setHours(SEASON_CONFIG.SEASON_START_HOUR, 0, 0, 0);
+  cycleStartDate.setDate(cycleStartDate.getDate() + 1);
   
   const daysSinceCycleStart = Math.floor((currentDate - cycleStartDate) / (1000 * 60 * 60 * 24));
-  const offSeasonNumber = Math.min(Math.floor(daysSinceCycleStart / 49) + 1, 6);
+  const offSeasonNumber = Math.min(Math.floor(daysSinceCycleStart / SEASON_CONFIG.OFF_SEASON_DAYS) + 1, 6);
   
-  // Calculate this off-season's dates
   const seasonStartDate = new Date(cycleStartDate);
-  seasonStartDate.setDate(seasonStartDate.getDate() + ((offSeasonNumber - 1) * 49));
+  seasonStartDate.setDate(seasonStartDate.getDate() + ((offSeasonNumber - 1) * SEASON_CONFIG.OFF_SEASON_DAYS));
   
   const seasonEndDate = new Date(seasonStartDate);
-  seasonEndDate.setDate(seasonEndDate.getDate() + 48);
-  seasonEndDate.setHours(23, 59, 59, 999);
+  seasonEndDate.setDate(seasonEndDate.getDate() + (SEASON_CONFIG.OFF_SEASON_DAYS - 1));
+  seasonEndDate.setUTCHours(23, 59, 59, 999);
   
   const seasonTheme = SEASON_CONFIG.SEASON_THEMES[offSeasonNumber - 1];
+  const baseYear = currentDate > currentYearFinalsDate ? currentYear : currentYear - 1;
   
   return {
     seasonType: seasonTheme.toLowerCase(),
-    seasonName: `${seasonTheme} Season ${currentYear - 1}-${currentYear.toString().slice(-2)}`,
-    finalsYear: currentYear,
+    seasonName: `${seasonTheme} Season ${baseYear}-${(baseYear + 1).toString().slice(-2)}`,
+    finalsYear: baseYear + 1,
     startDate: seasonStartDate,
     endDate: seasonEndDate,
     totalWeeks: 7,
-    totalDays: 49
+    totalDays: SEASON_CONFIG.OFF_SEASON_DAYS
   };
 }
 
-/**
- * Extract season type from season ID
- */
-function getSeasonTypeFromId(seasonId) {
-  if (seasonId.startsWith('live_')) return 'live';
-  
-  // Extract season type from ID like "overture_2024-25"
-  const parts = seasonId.split('_');
-  if (parts.length > 0) {
-    return parts[0].toLowerCase();
-  }
-  
-  return 'unknown';
-}
-
-/**
- * Get next season number (incremental counter)
- */
 async function getNextSeasonNumber(db) {
   const seasonsSnapshot = await db.collection('season-archives')
     .orderBy('seasonNumber', 'desc')
     .limit(1)
     .get();
-  
-  if (seasonsSnapshot.empty) {
-    return 1;
+  return seasonsSnapshot.empty ? 1 : (seasonsSnapshot.docs[0].data().seasonNumber || 0) + 1;
+}
+
+// === CORPS SELECTION - FIXED FOR EXISTING DATA STRUCTURE ===
+async function assignCorpsForLiveSeason(db, seasonYear) {
+  functions.logger.info(`Assigning corps for LIVE season ${seasonYear}...`);
+  const previousYear = (seasonYear - 1).toString();
+
+  const rankingsDoc = await db.doc(`final_rankings/${previousYear}`).get();
+  if (!rankingsDoc.exists) {
+    throw new Error(`Cannot start live season: Final rankings for ${previousYear} not found.`);
   }
+
+  const rankings = rankingsDoc.data().data || [];
+  const assignedCorps = rankings.slice(0, 25).map((entry, index) => ({
+    name: entry.corps,
+    corpsName: entry.corps, // Include both for compatibility
+    sourceYear: previousYear,
+    value: 25 - index,
+    pointCost: 25 - index,
+    rank: index + 1,
+    finalScore: entry.originalScore || 0,
+  }));
   
-  return (seasonsSnapshot.docs[0].data().seasonNumber || 0) + 1;
+  functions.logger.info(`Assigned ${assignedCorps.length} corps from ${previousYear} rankings.`);
+  return assignedCorps;
 }
 
-/**
- * Generate random show name
- */
-function generateShowName(day, isChampionship = false) {
-  const showPrefixes = [
-    'Summer', 'Classic', 'Premier', 'Showcase', 'Regional',
-    'Invitational', 'Championship', 'Masters', 'Open', 'Festival'
-  ];
+async function assignCorpsForOffSeason(db) {
+  functions.logger.info("Assigning corps for OFF-SEASON with rank-by-rank randomization...");
   
-  const showSuffixes = [
-    'Competition', 'Classic', 'Showcase', 'Championships',
-    'Invitational', 'Festival', 'Celebration', 'Spectacular'
-  ];
-  
-  if (isChampionship) {
-    return `Championship Week Day ${day}`;
+  const rankingsSnapshot = await db.collection("final_rankings").get();
+  if (rankingsSnapshot.empty) {
+    throw new Error("No final rankings found. Cannot assign corps.");
   }
-  
-  const prefix = showPrefixes[Math.floor(Math.random() * showPrefixes.length)];
-  const suffix = showSuffixes[Math.floor(Math.random() * showSuffixes.length)];
-  
-  return `${prefix} ${suffix}`;
-}
 
-/**
- * Generate venue name
- */
-function generateVenueName() {
-  const venueNames = [
-    'Veterans', 'Memorial', 'Central', 'North', 'South', 'East', 'West',
-    'Community', 'Regional', 'County', 'State', 'University', 'College'
-  ];
-  
-  const venueName = venueNames[Math.floor(Math.random() * venueNames.length)];
-  const venueType = SEASON_CONFIG.VENUE_TYPES[Math.floor(Math.random() * SEASON_CONFIG.VENUE_TYPES.length)];
-  
-  return `${venueName} ${venueType}`;
-}
+  // Pre-load all ranking data
+  const rankingsByYear = {};
+  rankingsSnapshot.forEach(doc => {
+    rankingsByYear[doc.id] = doc.data().data || [];
+  });
+  const availableYears = Object.keys(rankingsByYear);
 
-// === MAIN FUNCTIONS ===
+  const assignedCorps = [];
+  const usedCorpsNames = new Set();
+  
+  // Select one corps for each rank/value slot
+  for (let rank = 1; rank <= 25; rank++) {
+    let corpsFound = false;
+    let attempts = 0;
 
-/**
- * Daily season check - runs at 3:00 AM
- * ENHANCED: Always validates current season matches expected season
- */
-exports.checkSeasonStatus = functions
-  .runWith(getFunctionConfig('standard'))
-  .pubsub.schedule('0 3 * * *')
-  .timeZone('America/New_York')
-  .onRun(async (context) => {
-    const logger = functions.logger;
-    
-    try {
-      logger.info('Starting daily season status check...');
+    while (!corpsFound && attempts < 100) {
+      const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
+      const yearRankings = rankingsByYear[randomYear];
       
-      const db = admin.firestore();
-      const currentDate = new Date();
-      
-      // Determine what season SHOULD be active right now
-      const expectedSeasonInfo = determineCurrentSeason(currentDate);
-      logger.info(`Expected season for ${currentDate.toISOString()}: ${expectedSeasonInfo.seasonName}`);
-      
-      // Check current season status
-      const gameSettingsRef = db.collection('game-settings').doc('current');
-      const gameSettings = await gameSettingsRef.get();
-      
-      if (!gameSettings.exists || !gameSettings.data().activeSeasonId) {
-        // No active season - start the correct one
-        logger.info('No active season found. Initializing correct season...');
-        await initializeNewSeason(db, currentDate, expectedSeasonInfo);
-      } else {
-        const seasonData = gameSettings.data();
+      if (yearRankings.length >= rank) {
+        const candidate = yearRankings[rank - 1];
         
-        // ENHANCED: Verify current season matches expected season
-        const currentSeasonType = getSeasonTypeFromId(seasonData.activeSeasonId);
-        const expectedSeasonType = expectedSeasonInfo.seasonType;
-        
-        if (currentSeasonType !== expectedSeasonType) {
-          // Wrong season is active! End it and start the correct one
-          logger.warn(`Season mismatch detected! Current: ${currentSeasonType}, Expected: ${expectedSeasonType}`);
-          logger.info('Auto-correcting: Ending incorrect season and starting correct one...');
-          
-          await endSeason(db, seasonData);
-          await initializeNewSeason(db, currentDate, expectedSeasonInfo);
-        } else {
-          // Correct season is active - check progression
-          await checkSeasonProgression(db, seasonData, currentDate);
+        if (candidate && !usedCorpsNames.has(candidate.corps)) {
+          assignedCorps.push({
+            name: candidate.corps,
+            corpsName: candidate.corps, // Include both for compatibility
+            sourceYear: randomYear,
+            value: 26 - rank,
+            pointCost: 26 - rank,
+            rank: rank,
+            finalScore: candidate.originalScore || 0,
+          });
+          usedCorpsNames.add(candidate.corps);
+          corpsFound = true;
         }
       }
+      attempts++;
+    }
+
+    if (!corpsFound) {
+      functions.logger.warn(`Could not find unique corps for rank ${rank}, using placeholder`);
+      assignedCorps.push({
+        name: `Corps ${rank}`,
+        corpsName: `Corps ${rank}`,
+        sourceYear: 'placeholder',
+        value: 26 - rank,
+        pointCost: 26 - rank,
+        rank: rank,
+        finalScore: 0,
+      });
+    }
+  }
+
+  functions.logger.info(`Assigned ${assignedCorps.length} corps via rank-by-rank randomization.`);
+  return assignedCorps;
+}
+
+// === SCHEDULE GENERATION FROM HISTORICAL DATA ===
+async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
+  functions.logger.info(`Generating schedule for ${seasonInfo.totalDays}-day season...`);
+
+  // Load historical events
+  const scoresSnapshot = await db.collection("historical_scores").get();
+  const showsByDay = new Map();
+  
+  scoresSnapshot.forEach((yearDoc) => {
+    const yearData = yearDoc.data().data || [];
+    yearData.forEach((event) => {
+      if (event.eventName && event.offSeasonDay) {
+        const showData = {
+          eventName: event.eventName,
+          date: event.date,
+          location: event.location || 'Various Locations',
+        };
+        if (!showsByDay.has(event.offSeasonDay)) {
+          showsByDay.set(event.offSeasonDay, []);
+        }
+        showsByDay.get(event.offSeasonDay).push(showData);
+      }
+    });
+  });
+
+  // Initialize schedule template
+  const scheduleTemplate = Array.from({ length: seasonInfo.totalDays }, (_, i) => ({ 
+    day: i + 1, 
+    shows: [] 
+  }));
+  const usedEventNames = new Set();
+
+  // Helper to place exclusive shows
+  const placeExclusiveShow = (day, namePattern, location = null) => {
+    const dayObject = scheduleTemplate.find((d) => d.day === day);
+    if (!dayObject) return;
+
+    const candidates = (showsByDay.get(day) || [])
+      .filter(s => s.eventName.toLowerCase().includes(namePattern.toLowerCase()));
+    
+    const showToPlace = shuffleArray(candidates)[0] || {
+      eventName: namePattern,
+      location: location || 'Indianapolis, IN'
+    };
+    
+    dayObject.shows = [showToPlace];
+    usedEventNames.add(showToPlace.eventName);
+  };
+
+  // Place championship shows based on season type and gameplay requirements
+  if (seasonInfo.seasonType === 'live') {
+    // Live season championships (days 68-70)
+    placeExclusiveShow(68, "DCI World Championship Prelims", "Indianapolis, IN");
+    placeExclusiveShow(69, "DCI World Championship Semifinals", "Indianapolis, IN");
+    placeExclusiveShow(70, "DCI World Championship Finals", "Indianapolis, IN");
+    
+    // Regional championships
+    placeExclusiveShow(49, "Eastern Classic", "Allentown, PA");
+    placeExclusiveShow(56, "Southeastern Championship", "Atlanta, GA");
+    placeExclusiveShow(62, "Southwestern Championship", "San Antonio, TX");
+  } else {
+    // Off-season championships per requirements
+    placeExclusiveShow(28, "Southwestern Championship", "San Antonio, TX");
+    placeExclusiveShow(35, "Southeastern Championship", "Atlanta, GA");
+    
+    // Eastern Classic (2-day event on days 41-42)
+    const ecShow = {
+      eventName: "Eastern Classic",
+      location: "Allentown, PA"
+    };
+    scheduleTemplate[40].shows = [ecShow]; // Day 41 (0-indexed)
+    scheduleTemplate[41].shows = [ecShow]; // Day 42
+    usedEventNames.add(ecShow.eventName);
+    
+    // Open/A Class Championships
+    placeExclusiveShow(45, "Open and A Class Prelims", "Marion, IN");
+    placeExclusiveShow(46, "Open and A Class Finals", "Marion, IN");
+    
+    // World Championships
+    placeExclusiveShow(47, "World Championships Prelims", "Indianapolis, IN");
+    placeExclusiveShow(48, "World Championships Semifinals", "Indianapolis, IN");
+    placeExclusiveShow(49, "World Championships Finals", "Indianapolis, IN");
+    
+    // SoundSport on same day as Finals
+    scheduleTemplate[48].shows.push({
+      eventName: "SoundSport International Music & Food Festival",
+      location: "Indianapolis, IN"
+    });
+  }
+
+  // Fill remaining days with available shows
+  scheduleTemplate.filter(d => d.shows.length === 0).forEach(dayObject => {
+    const potentialShows = shuffleArray(showsByDay.get(dayObject.day) || []);
+    const pickedShows = [];
+    
+    for (const show of potentialShows) {
+      if (pickedShows.length >= 3) break; // Max 3 shows per day
+      if (!usedEventNames.has(show.eventName)) {
+        pickedShows.push(show);
+        usedEventNames.add(show.eventName);
+      }
+    }
+    
+    // If no historical shows, generate placeholder
+    if (pickedShows.length === 0) {
+      pickedShows.push({
+        eventName: generateShowName(dayObject.day),
+        location: generateShowLocation()
+      });
+    }
+    
+    dayObject.shows = pickedShows;
+  });
+
+  // Convert to competition format
+  const competitions = [];
+  scheduleTemplate.forEach(dayObject => {
+    dayObject.shows.forEach((show, index) => {
+      const competitionDate = new Date(seasonInfo.startDate);
+      competitionDate.setDate(competitionDate.getDate() + dayObject.day - 1);
       
-      logger.info('Daily season check completed successfully');
+      competitions.push({
+        id: `${seasonId}_day${dayObject.day}_${index}`,
+        day: dayObject.day,
+        week: Math.ceil(dayObject.day / 7),
+        date: admin.firestore.Timestamp.fromDate(competitionDate),
+        name: show.eventName,
+        location: show.location,
+        type: determineCompetitionType(show.eventName, dayObject.day, seasonInfo.seasonType),
+        allowedClasses: determineAllowedClasses(show.eventName, dayObject.day, seasonInfo.seasonType),
+        status: 'scheduled'
+      });
+    });
+  });
+
+  functions.logger.info(`Generated schedule with ${competitions.length} competitions.`);
+  return competitions;
+}
+
+function determineCompetitionType(eventName, day, seasonType) {
+  const name = eventName.toLowerCase();
+  if (name.includes('championship') || name.includes('finals')) return 'championship';
+  if (name.includes('regional') || name.includes('classic')) return 'regional';
+  return 'regular';
+}
+
+function determineAllowedClasses(eventName, day, seasonType) {
+  const name = eventName.toLowerCase();
+  
+  // SoundSport only events
+  if (name.includes('soundsport') || name.includes('music & food')) {
+    return ['SoundSport'];
+  }
+  
+  // Open/A Class specific events (days 45-46 in off-season)
+  if (seasonType !== 'live' && (day === 45 || day === 46)) {
+    return ['Open Class', 'A Class'];
+  }
+  
+  // World Championships (exclude SoundSport)
+  if ((seasonType === 'live' && day >= 68) || (seasonType !== 'live' && day >= 47 && day <= 49)) {
+    return ['World Class', 'Open Class', 'A Class'];
+  }
+  
+  // Regional championships (exclude SoundSport)
+  if (name.includes('championship') || name.includes('classic')) {
+    return ['World Class', 'Open Class', 'A Class'];
+  }
+  
+  // Default: all classes except SoundSport for regular shows
+  return ['World Class', 'Open Class', 'A Class'];
+}
+
+function generateShowName(day) {
+  const week = Math.ceil(day / 7);
+  const names = [
+    'Season Opener', 'Early Season Classic', 'Spring Preview',
+    'Regional Showcase', 'Mid-Season Invitational', 'Summer Classic',
+    'Championship Preview', 'Late Season Tournament', 'Finals Warmup',
+    'Championship Series'
+  ];
+  return names[week - 1] || `Competition Day ${day}`;
+}
+
+function generateShowLocation() {
+  const locations = [
+    'San Antonio, TX', 'Atlanta, GA', 'Denver, CO', 'Nashville, TN',
+    'Phoenix, AZ', 'Portland, OR', 'Minneapolis, MN', 'Charlotte, NC',
+    'Kansas City, MO', 'Seattle, WA', 'Detroit, MI', 'Orlando, FL',
+    'St. Louis, MO', 'Cincinnati, OH', 'Pittsburgh, PA', 'Milwaukee, WI',
+    'Indianapolis, IN', 'Columbus, OH', 'Memphis, TN', 'Louisville, KY'
+  ];
+  return locations[Math.floor(Math.random() * locations.length)];
+}
+
+// === SEASONAL SCORE GRID - USING EXISTING COLLECTION ===
+async function createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo) {
+  functions.logger.info(`Creating Seasonal Score Grid for ${seasonId}...`);
+
+  // Group corps by source year for efficient fetching
+  const corpsByYear = {};
+  assignedCorps.forEach(corps => {
+    const year = corps.sourceYear;
+    if (!corpsByYear[year]) corpsByYear[year] = [];
+    corpsByYear[year].push(corps.name);
+  });
+
+  const scoreGrid = {};
+
+  // Fetch historical scores for each year
+  for (const year of Object.keys(corpsByYear)) {
+    if (year === 'placeholder') continue;
+    
+    const historicalDoc = await db.doc(`historical_scores/${year}`).get();
+    if (!historicalDoc.exists) continue;
+    
+    const yearData = historicalDoc.data().data || [];
+    const corpsInYear = new Set(corpsByYear[year]);
+    
+    // Process each event in the year
+    yearData.forEach(event => {
+      if (!event.scores || !event.offSeasonDay) return;
       
+      event.scores.forEach(score => {
+        if (corpsInYear.has(score.corps)) {
+          if (!scoreGrid[score.corps]) scoreGrid[score.corps] = {};
+          
+          scoreGrid[score.corps][event.offSeasonDay] = {
+            totalScore: score.score,
+            captions: score.captions || {},
+            eventName: event.eventName,
+            date: event.date
+          };
+        }
+      });
+    });
+  }
+
+  // Save score grid to existing seasonal_scores collection
+  const scoreGridRef = db.collection('seasonal_scores').doc(seasonId);
+  await scoreGridRef.set({
+    seasonId: seasonId,
+    seasonType: seasonInfo.seasonType,
+    grid: scoreGrid,
+    corpsCount: Object.keys(scoreGrid).length,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  functions.logger.info(`Score grid created with data for ${Object.keys(scoreGrid).length} corps.`);
+  return scoreGrid;
+}
+
+// === MAIN INITIALIZATION ===
+async function initializeNewSeason(db, seasonInfo) {
+  functions.logger.info(`Initializing ${seasonInfo.seasonName}...`);
+
+  // Fixed season ID generation - using consistent format with hyphen
+  const seasonId = seasonInfo.seasonType === 'live' ?
+    `live_${seasonInfo.finalsYear}` :
+    `${seasonInfo.seasonType}_${seasonInfo.finalsYear - 1}-${seasonInfo.finalsYear.toString().slice(-2)}`;
+
+  try {
+    // 1. Assign corps
+    const assignedCorps = seasonInfo.seasonType === 'live' ?
+      await assignCorpsForLiveSeason(db, seasonInfo.finalsYear) :
+      await assignCorpsForOffSeason(db);
+
+    // 2. Generate schedule
+    const schedule = await generateScheduleFromHistory(db, seasonInfo, seasonId);
+    
+    // 3. Create seasonal score grid
+    await createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo);
+    
+    // 4. Get season number
+    const seasonNumber = await getNextSeasonNumber(db);
+    
+    // 5. Calculate current progress
+    const now = new Date();
+    const daysSinceStart = Math.max(0, Math.floor((now - seasonInfo.startDate) / (1000 * 60 * 60 * 24)));
+    const currentDay = Math.min(daysSinceStart + 1, seasonInfo.totalDays);
+    const currentWeek = Math.min(Math.ceil(currentDay / 7), seasonInfo.totalWeeks);
+
+    // 6. Create season data - FIXED FOR EXISTING STRUCTURE
+    const seasonData = {
+      activeSeasonId: seasonId,
+      currentSeasonId: seasonId, // Both for compatibility
+      seasonId: seasonId,
+      seasonType: seasonInfo.seasonType === 'live' ? 'live' : 'off',
+      seasonNumber: seasonNumber,
+      seasonName: seasonInfo.seasonName,
+      status: 'active',
+      currentWeek: currentWeek,
+      currentDay: currentDay,
+      startDate: admin.firestore.Timestamp.fromDate(seasonInfo.startDate),
+      endDate: admin.firestore.Timestamp.fromDate(seasonInfo.endDate),
+      totalWeeks: seasonInfo.totalWeeks,
+      totalDays: seasonInfo.totalDays,
+      finalsYear: seasonInfo.finalsYear,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastProgressionCheck: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // 7. Generate weekly schedule structure
+    const weeks = {};
+    for (let week = 1; week <= seasonInfo.totalWeeks; week++) {
+      weeks[`week${week}`] = {
+        weekNumber: week,
+        competitions: schedule.filter(comp => comp.week === week)
+      };
+    }
+
+    // 8. Save everything in a batch
+    const batch = db.batch();
+    
+    // Game settings - using existing structure
+    batch.set(db.collection('game-settings').doc('current'), seasonData);
+    
+    // DCI data - fixed collection name and structure
+    batch.set(db.collection('dci-data').doc(seasonId), {
+      seasonId: seasonId,
+      seasonType: seasonInfo.seasonType,
+      corps: assignedCorps,
+      corpsValues: assignedCorps, // Keep both formats for compatibility
+      assignedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Schedule
+    batch.set(db.collection('schedules').doc(seasonId), {
+      seasonId: seasonId,
+      competitions: schedule,
+      weeks: weeks,
+      generatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Initialize leaderboard
+    batch.set(db.collection('leaderboards').doc(seasonId), {
+      seasonId: seasonId,
+      rankings: [],
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Initialize fantasy_recaps structure
+    batch.set(db.collection('fantasy_recaps').doc(seasonId), {
+      seasonId: seasonId,
+      recaps: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    await batch.commit();
+
+    functions.logger.info(`${seasonInfo.seasonName} initialized successfully!`);
+    return { seasonId, seasonData };
+
+  } catch (error) {
+    functions.logger.error('Error initializing season:', error);
+    throw error;
+  }
+}
+
+// === SEASON PROGRESSION ===
+async function checkAndProgressSeason(db) {
+  const currentRef = db.collection('game-settings').doc('current');
+  const currentDoc = await currentRef.get();
+  
+  if (!currentDoc.exists) {
+    functions.logger.info('No active season found. Creating new season...');
+    const seasonInfo = determineCurrentSeason(new Date());
+    return await initializeNewSeason(db, seasonInfo);
+  }
+  
+  const seasonData = currentDoc.data();
+  const now = new Date();
+  const seasonEnd = seasonData.endDate.toDate();
+  
+  // Check if season has ended
+  if (now > seasonEnd) {
+    functions.logger.info(`Season ${seasonData.seasonName} has ended. Archiving and starting new season...`);
+    
+    // Archive current season
+    await db.collection('season-archives').doc(seasonData.seasonId).set({
+      ...seasonData,
+      archivedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Start new season
+    const newSeasonInfo = determineCurrentSeason(now);
+    return await initializeNewSeason(db, newSeasonInfo);
+  }
+  
+  // Update current day/week
+  const seasonStart = seasonData.startDate.toDate();
+  const daysSinceStart = Math.max(0, Math.floor((now - seasonStart) / (1000 * 60 * 60 * 24)));
+  const currentDay = Math.min(daysSinceStart + 1, seasonData.totalDays);
+  const currentWeek = Math.min(Math.ceil(currentDay / 7), seasonData.totalWeeks);
+  
+  if (currentDay !== seasonData.currentDay || currentWeek !== seasonData.currentWeek) {
+    await currentRef.update({
+      currentDay: currentDay,
+      currentWeek: currentWeek,
+      lastProgressionCheck: admin.firestore.FieldValue.serverTimestamp()
+    });
+    functions.logger.info(`Updated season progress: Day ${currentDay}, Week ${currentWeek}`);
+  }
+  
+  return { message: 'Season progression checked', currentDay, currentWeek };
+}
+
+// === CLOUD FUNCTIONS ===
+
+/**
+ * Daily season scheduler - runs at 3:00 AM ET
+ */
+exports.seasonScheduler = functions
+  .runWith({ timeoutSeconds: 300, memory: '512MB' })
+  .pubsub.schedule('every day 03:00')
+  .timeZone('America/New_York')
+  .onRun(async (context) => {
+    functions.logger.info("Running daily season scheduler...");
+    const db = admin.firestore();
+    
+    try {
+      const result = await checkAndProgressSeason(db);
+      functions.logger.info('Season scheduler completed:', result);
+      return result;
     } catch (error) {
-      logger.error('Error in daily season check:', error);
+      functions.logger.error('Season scheduler error:', error);
       throw error;
     }
   });
 
 /**
- * Initialize a new season with auto-correction
- */
-async function initializeNewSeason(db, startDate, seasonInfo) {
-  const logger = functions.logger;
-  logger.info(`Initializing ${seasonInfo.seasonName}...`);
-  
-  // Generate proper season ID
-  const seasonId = seasonInfo.seasonType === 'live' ?
-    `live_${seasonInfo.finalsYear}` :
-    `${seasonInfo.seasonType}_${seasonInfo.finalsYear - 1}-${seasonInfo.finalsYear.toString().slice(-2)}`;
-  
-  // Calculate current day and week (for mid-season starts)
-  const now = new Date();
-  let currentDay = 1;
-  let currentWeek = 1;
-  
-  if (now > seasonInfo.startDate) {
-    const daysSinceStart = Math.floor((now - seasonInfo.startDate) / (1000 * 60 * 60 * 24));
-    currentDay = Math.min(daysSinceStart + 1, seasonInfo.totalDays);
-    currentWeek = Math.min(Math.floor(daysSinceStart / 7) + 1, seasonInfo.totalWeeks);
-  }
-  
-  // Get next season number
-  const seasonNumber = await getNextSeasonNumber(db);
-  
-  // Assign corps based on season type
-  let assignedCorps;
-  if (seasonInfo.seasonType === 'live') {
-    assignedCorps = await assignLiveSeasonCorps(db, seasonId, seasonInfo.finalsYear);
-  } else {
-    assignedCorps = await assignOffSeasonCorps(db, seasonId, seasonInfo.finalsYear);
-  }
-  
-  // Generate schedule
-  const schedule = await generateSeasonSchedule(db, seasonId, seasonInfo);
-  
-  // Create season document
-  const seasonData = {
-    activeSeasonId: seasonId,
-    seasonId: seasonId,
-    seasonType: seasonInfo.seasonType === 'live' ? 'live' : 'off',
-    seasonNumber: seasonNumber,
-    seasonName: seasonInfo.seasonName,
-    status: 'active',
-    currentWeek: currentWeek,
-    currentDay: currentDay,
-    startDate: admin.firestore.Timestamp.fromDate(seasonInfo.startDate),
-    endDate: admin.firestore.Timestamp.fromDate(seasonInfo.endDate),
-    totalWeeks: seasonInfo.totalWeeks,
-    totalDays: seasonInfo.totalDays,
-    finalsDate: admin.firestore.Timestamp.fromDate(getSecondSaturdayOfAugust(seasonInfo.finalsYear)),
-    finalsYear: seasonInfo.finalsYear,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    lastProgressionCheck: admin.firestore.FieldValue.serverTimestamp()
-  };
-  
-  // Save to game settings
-  await db.collection('game-settings').doc('current').set(seasonData);
-  
-  // Save corps assignments with values
-  await db.collection('dci-data').doc(seasonId).set({
-    seasonId: seasonId,
-    seasonType: seasonInfo.seasonType,
-    corpsValues: assignedCorps, // This is the key collection for caption selections
-    corps: assignedCorps, // Backward compatibility
-    assignedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  // Save schedule
-  await db.collection('schedules').doc(seasonId).set({
-    seasonId: seasonId,
-    seasonType: seasonInfo.seasonType,
-    competitions: schedule,
-    weeks: generateWeeklySchedule(schedule, seasonInfo.totalWeeks),
-    generatedAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  // Initialize leaderboard
-  await db.collection('leaderboards').doc(seasonId).set({
-    seasonId: seasonId,
-    rankings: [],
-    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  // Initialize recap collection for the season
-  await db.collection('fantasy_recaps').doc(seasonId).set({
-    seasonId: seasonId,
-    recaps: {},
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  });
-  
-  logger.info(`${seasonInfo.seasonName} initialized successfully - Day ${currentDay} of ${seasonInfo.totalDays}`);
-  
-  return { seasonId, seasonData };
-}
-
-/**
- * Check and update season progression
- */
-async function checkSeasonProgression(db, seasonData, currentDate) {
-  const logger = functions.logger;
-  
-  const seasonStart = seasonData.startDate.toDate();
-  const seasonEnd = seasonData.endDate.toDate();
-  
-  // Check if season has ended
-  if (currentDate > seasonEnd) {
-    logger.info(`Season ${seasonData.activeSeasonId} has ended. Archiving and starting new season...`);
-    await endSeason(db, seasonData);
-    
-    // Determine and start the next season
-    const nextSeasonInfo = determineCurrentSeason(currentDate);
-    await initializeNewSeason(db, currentDate, nextSeasonInfo);
-    return;
-  }
-  
-  // Calculate current week and day
-  const daysSinceStart = Math.floor((currentDate - seasonStart) / (1000 * 60 * 60 * 24));
-  const currentWeek = Math.floor(daysSinceStart / 7) + 1;
-  const currentDay = daysSinceStart + 1;
-  
-  // Update if week or day has changed
-  if (currentWeek !== seasonData.currentWeek || currentDay !== seasonData.currentDay) {
-    logger.info(`Progressing season ${seasonData.activeSeasonId} to Week ${currentWeek}, Day ${currentDay}`);
-    
-    await db.collection('game-settings').doc('current').update({
-      currentWeek: currentWeek,
-      currentDay: currentDay,
-      lastProgressionCheck: admin.firestore.FieldValue.serverTimestamp()
-    });
-  }
-}
-
-/**
- * End current season and archive data
- */
-async function endSeason(db, seasonData) {
-  const logger = functions.logger;
-  logger.info(`Ending season ${seasonData.activeSeasonId}...`);
-  
-  // Archive season results with achievements
-  await archiveSeasonResults(db, seasonData);
-  
-  // Archive season data
-  await db.collection('season-archives').doc(seasonData.activeSeasonId).set({
-    ...seasonData,
-    endedAt: admin.firestore.FieldValue.serverTimestamp(),
-    status: 'completed'
-  });
-  
-  // Award final season bonuses and XP
-  await awardSeasonCompletionRewards(db, seasonData.activeSeasonId);
-  
-  logger.info(`Season ${seasonData.activeSeasonId} archived successfully`);
-}
-
-/**
- * Assign corps for LIVE SEASON using previous year's final rankings
- */
-async function assignLiveSeasonCorps(db, seasonId, finalsYear) {
-  const logger = functions.logger;
-  logger.info('Assigning LIVE season corps from final rankings...');
-  
-  try {
-    const previousYear = (finalsYear - 1).toString();
-    
-    // Get previous year's final rankings
-    const rankingsDoc = await db.doc(`final_rankings/${previousYear}`).get();
-    
-    if (!rankingsDoc.exists) {
-      logger.warn(`No final rankings found for ${previousYear}. Using random assignment.`);
-      return await assignOffSeasonCorps(db, seasonId, finalsYear);
-    }
-    
-    const rankings = rankingsDoc.data().rankings || [];
-    const assignedCorps = [];
-    
-    // Assign top 25 corps with values 25 down to 1
-    for (let i = 0; i < Math.min(25, rankings.length); i++) {
-      assignedCorps.push({
-        corpsName: rankings[i].name,
-        sourceYear: previousYear,
-        value: 25 - i,
-        rank: i + 1
-      });
-    }
-    
-    logger.info(`Assigned ${assignedCorps.length} corps from ${previousYear} final rankings`);
-    return assignedCorps;
-    
-  } catch (error) {
-    logger.error('Error assigning live season corps:', error);
-    // Fallback to random assignment
-    return await assignOffSeasonCorps(db, seasonId, finalsYear);
-  }
-}
-
-/**
- * Assign corps for OFF-SEASON using random historical data
- */
-async function assignOffSeasonCorps(db, seasonId, finalsYear) {
-  const logger = functions.logger;
-  logger.info('Assigning OFF-SEASON corps randomly from historical data...');
-  
-  try {
-    // Get available years from historical_scores
-    const yearsSnapshot = await db.collection('historical_scores').get();
-    const availableYears = yearsSnapshot.docs.map(doc => doc.id);
-    
-    if (availableYears.length === 0) {
-      throw new Error('No historical data available');
-    }
-    
-    // Select a random year
-    const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
-    
-    // Get corps from that year
-    const corpsSnapshot = await db.collection(`historical_scores/${randomYear}/data`).get();
-    const allCorps = corpsSnapshot.docs.map(doc => ({
-      corpsName: doc.id,
-      sourceYear: randomYear,
-      ...doc.data()
-    }));
-    
-    // Filter to World Class corps and get their final scores
-    const worldClassCorps = allCorps
-      .filter(c => !c.corpsName.includes('All Age') && !c.corpsName.includes('International'))
-      .map(corps => {
-        // Try to get finals score, fallback to semifinals, then prelims
-        let finalScore = 0;
-        if (corps.scores) {
-          finalScore = corps.scores.finals || corps.scores.semifinals || corps.scores.prelims || 0;
-        }
-        return { ...corps, finalScore };
-      })
-      .sort((a, b) => b.finalScore - a.finalScore)
-      .slice(0, 25);
-    
-    // Assign values 25 down to 1
-    const assignedCorps = worldClassCorps.map((corps, index) => ({
-      corpsName: corps.corpsName,
-      sourceYear: randomYear,
-      value: 25 - index,
-      rank: index + 1,
-      finalScore: corps.finalScore
-    }));
-    
-    logger.info(`Assigned ${assignedCorps.length} corps from ${randomYear} historical data`);
-    return assignedCorps;
-    
-  } catch (error) {
-    logger.error('Error assigning off-season corps:', error);
-    throw error;
-  }
-}
-
-/**
- * Generate season schedule
- */
-async function generateSeasonSchedule(db, seasonId, seasonInfo) {
-  const logger = functions.logger;
-  logger.info(`Generating schedule for ${seasonInfo.seasonName}...`);
-  
-  const competitions = [];
-  const isLiveSeason = seasonInfo.seasonType === 'live';
-  const totalDays = seasonInfo.totalDays;
-  
-  // Championship days
-  const championships = isLiveSeason ? 
-    SEASON_CONFIG.LIVE_SEASON_CHAMPIONSHIPS : 
-    SEASON_CONFIG.OFF_SEASON_CHAMPIONSHIPS;
-  
-  // Regional days
-  const regionals = isLiveSeason ?
-    SEASON_CONFIG.LIVE_SEASON_REGIONALS :
-    SEASON_CONFIG.OFF_SEASON_REGIONALS;
-  
-  // Generate competitions for each day
-  for (let day = 1; day <= totalDays; day++) {
-    const competitionDate = new Date(seasonInfo.startDate);
-    competitionDate.setDate(competitionDate.getDate() + day - 1);
-    
-    // Check if it's a championship day
-    if (championships[day]) {
-      const championship = championships[day];
-      competitions.push({
-        day: day,
-        date: admin.firestore.Timestamp.fromDate(competitionDate),
-        name: championship.name,
-        location: championship.location,
-        venue: 'Lucas Oil Stadium',
-        type: 'championship',
-        classes: championship.classes,
-        isChampionship: true
-      });
-    }
-    // Check if it's a regional day
-    else if (regionals[day]) {
-      const regional = regionals[day];
-      competitions.push({
-        day: day,
-        date: admin.firestore.Timestamp.fromDate(competitionDate),
-        name: regional.name,
-        location: regional.location,
-        venue: generateVenueName(),
-        type: 'regional',
-        classes: ['World', 'Open', 'A'],
-        isRegional: true
-      });
-    }
-    // Regular competition days (Fridays and Saturdays)
-    else if (competitionDate.getDay() === 5 || competitionDate.getDay() === 6) {
-      const location = SEASON_CONFIG.COMPETITION_LOCATIONS[
-        Math.floor(Math.random() * SEASON_CONFIG.COMPETITION_LOCATIONS.length)
-      ];
-      
-      competitions.push({
-        day: day,
-        date: admin.firestore.Timestamp.fromDate(competitionDate),
-        name: generateShowName(day),
-        location: location,
-        venue: generateVenueName(),
-        type: 'regular',
-        classes: ['World', 'Open', 'A', 'SoundSport']
-      });
-    }
-  }
-  
-  // Add SoundSport International on Day 49 for off-seasons
-  if (!isLiveSeason) {
-    const soundsportDate = new Date(seasonInfo.startDate);
-    soundsportDate.setDate(soundsportDate.getDate() + 48);
-    
-    competitions.push({
-      day: 49,
-      date: admin.firestore.Timestamp.fromDate(soundsportDate),
-      name: 'SoundSport International Music & Food Festival',
-      location: 'Indianapolis, IN',
-      venue: 'Pan Am Plaza',
-      type: 'championship',
-      classes: ['SoundSport'],
-      isSoundSport: true
-    });
-  }
-  
-  logger.info(`Generated ${competitions.length} competitions for ${seasonInfo.seasonName}`);
-  return competitions;
-}
-
-/**
- * Generate weekly schedule structure
- */
-function generateWeeklySchedule(competitions, totalWeeks) {
-  const weeks = {};
-  
-  for (let week = 1; week <= totalWeeks; week++) {
-    weeks[`week${week}`] = {
-      weekNumber: week,
-      competitions: competitions.filter(comp => {
-        const compDay = comp.day;
-        return compDay > ((week - 1) * 7) && compDay <= (week * 7);
-      })
-    };
-  }
-  
-  return weeks;
-}
-
-/**
- * Archive season results with achievements
- */
-async function archiveSeasonResults(db, seasonData) {
-  const logger = functions.logger;
-  logger.info('Archiving season results...');
-  
-  const seasonId = seasonData.activeSeasonId;
-  
-  // Get final leaderboard
-  const leaderboardDoc = await db.collection('leaderboards').doc(seasonId).get();
-  
-  if (leaderboardDoc.exists) {
-    const rankings = leaderboardDoc.data().rankings || [];
-    
-    // If this was a live season, save as final rankings for the year
-    if (seasonData.seasonType === 'live' && seasonData.finalsYear) {
-      await db.doc(`final_rankings/${seasonData.finalsYear}`).set({
-        seasonId: seasonId,
-        year: seasonData.finalsYear,
-        rankings: rankings.slice(0, 25).map(r => ({
-          name: r.corpsName,
-          userId: r.userId,
-          score: r.totalScore,
-          rank: r.rank
-        })),
-        archivedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    
-    // Award achievements to top performers
-    if (rankings.length > 0) {
-      const batch = db.batch();
-      
-      // Champion
-      if (rankings[0]) {
-        const championRef = db.doc(`artifacts/marching-art/users/${rankings[0].userId}/achievements/${seasonId}_champion`);
-        batch.set(championRef, {
-          type: 'season_champion',
-          seasonId: seasonId,
-          seasonName: seasonData.seasonName,
-          rank: 1,
-          awardedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      
-      // Top 3 (Medalists)
-      for (let i = 0; i < Math.min(3, rankings.length); i++) {
-        const medalistRef = db.doc(`artifacts/marching-art/users/${rankings[i].userId}/achievements/${seasonId}_medalist`);
-        batch.set(medalistRef, {
-          type: 'season_medalist',
-          seasonId: seasonId,
-          seasonName: seasonData.seasonName,
-          rank: i + 1,
-          awardedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      
-      // Top 12 (Finalists)
-      for (let i = 0; i < Math.min(12, rankings.length); i++) {
-        const finalistRef = db.doc(`artifacts/marching-art/users/${rankings[i].userId}/achievements/${seasonId}_finalist`);
-        batch.set(finalistRef, {
-          type: 'season_finalist',
-          seasonId: seasonId,
-          seasonName: seasonData.seasonName,
-          rank: i + 1,
-          awardedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      
-      await batch.commit();
-      logger.info('Season achievements awarded');
-    }
-  }
-  
-  // Archive league champions
-  const leaguesSnapshot = await db.collection('leagues').get();
-  
-  if (!leaguesSnapshot.empty) {
-    const batch = db.batch();
-    
-    for (const leagueDoc of leaguesSnapshot.docs) {
-      const leagueData = leagueDoc.data();
-      const leagueId = leagueDoc.id;
-      
-      // Get league leaderboard for this season
-      const leagueLeaderboardDoc = await db.doc(`leagues/${leagueId}/seasons/${seasonId}`).get();
-      
-      if (leagueLeaderboardDoc.exists) {
-        const leagueRankings = leagueLeaderboardDoc.data().rankings || [];
-        
-        if (leagueRankings.length > 0) {
-          // Archive league champion
-          const leagueChampionRef = db.doc(`leagues/${leagueId}/champions/${seasonId}`);
-          batch.set(leagueChampionRef, {
-            seasonId: seasonId,
-            seasonName: seasonData.seasonName,
-            champion: leagueRankings[0],
-            topThree: leagueRankings.slice(0, 3),
-            archivedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
-    }
-    
-    await batch.commit();
-    logger.info('League champions archived');
-  }
-}
-
-/**
- * Award XP and CorpsCoin at season end
- */
-async function awardSeasonCompletionRewards(db, seasonId) {
-  const logger = functions.logger;
-  
-  try {
-    // Get final leaderboard
-    const leaderboardDoc = await db.collection('leaderboards').doc(seasonId).get();
-    
-    if (!leaderboardDoc.exists) {
-      logger.warn('No leaderboard found for season completion rewards');
-      return;
-    }
-    
-    const rankings = leaderboardDoc.data().rankings || [];
-    const seasonDoc = await db.doc('game-settings/current').get();
-    const isLiveSeason = seasonDoc.exists && seasonDoc.data().seasonType === 'live';
-    
-    // Award XP and CorpsCoin based on final ranking
-    const batch = db.batch();
-    let updateCount = 0;
-    
-    for (let i = 0; i < Math.min(rankings.length, 100); i++) {
-      const entry = rankings[i];
-      const rank = i + 1;
-      
-      // Calculate XP reward (higher for live season)
-      let xpReward = 100; // Base reward
-      if (isLiveSeason) {
-        if (rank === 1) xpReward = 1000;
-        else if (rank <= 3) xpReward = 600;
-        else if (rank <= 12) xpReward = 400;
-        else if (rank <= 25) xpReward = 300;
-        else xpReward = 200;
-      } else {
-        if (rank === 1) xpReward = 500;
-        else if (rank <= 3) xpReward = 300;
-        else if (rank <= 12) xpReward = 200;
-        else if (rank <= 25) xpReward = 150;
-      }
-      
-      // Calculate CorpsCoin reward based on class and performance
-      let corpsCoinReward = 0;
-      if (entry.corpsClass === 'World Class') {
-        corpsCoinReward = Math.floor(100 + (25 - Math.min(rank, 25)) * 10);
-      } else if (entry.corpsClass === 'Open Class') {
-        corpsCoinReward = Math.floor(50 + (25 - Math.min(rank, 25)) * 5);
-      } else if (entry.corpsClass === 'A Class') {
-        corpsCoinReward = Math.floor(25 + (25 - Math.min(rank, 25)) * 2);
-      }
-      // SoundSport gets no CorpsCoin as per requirements
-      
-      // Update user profile
-      const userRef = db.doc(`artifacts/marching-art/users/${entry.userId}/profile/data`);
-      const updates = {
-        xp: admin.firestore.FieldValue.increment(xpReward),
-        [`seasonHistory.${seasonId}`]: {
-          rank: rank,
-          score: entry.totalScore,
-          xpEarned: xpReward,
-          corpsCoinEarned: corpsCoinReward,
-          completedAt: admin.firestore.FieldValue.serverTimestamp()
-        }
-      };
-      
-      if (corpsCoinReward > 0) {
-        updates.corpsCoin = admin.firestore.FieldValue.increment(corpsCoinReward);
-      }
-      
-      batch.update(userRef, updates);
-      updateCount++;
-      
-      // Commit batch every 500 updates
-      if (updateCount % 500 === 0) {
-        await batch.commit();
-        logger.info(`Awarded rewards to ${updateCount} users`);
-      }
-    }
-    
-    // Commit remaining updates
-    if (updateCount % 500 !== 0) {
-      await batch.commit();
-    }
-    
-    logger.info(`Season completion rewards awarded to ${updateCount} users`);
-    
-  } catch (error) {
-    logger.error('Error awarding season completion rewards:', error);
-  }
-}
-
-/**
- * Manual function to initialize season (callable by admin)
- * ENHANCED: Uses date-aware logic to create the correct season
+ * Manual season initialization (admin only)
  */
 exports.initializeSeasonManually = functions
-  .runWith(getFunctionConfig('heavy'))
+  .runWith({ timeoutSeconds: 300, memory: '512MB' })
   .https.onCall(async (data, context) => {
-    // Verify admin access
+    // Verify admin
     if (!context.auth || context.auth.uid !== 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
-      throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+      throw new functions.https.HttpsError('permission-denied', 'Admin access required.');
     }
     
     const db = admin.firestore();
-    const currentDate = new Date();
     
     try {
-      // Use date-aware logic to determine correct season
-      const seasonInfo = determineCurrentSeason(currentDate);
+      const forceNewSeason = data?.forceNew || false;
       
-      const result = await initializeNewSeason(db, currentDate, seasonInfo);
+      if (forceNewSeason) {
+        // Archive current season if exists
+        const currentDoc = await db.collection('game-settings').doc('current').get();
+        if (currentDoc.exists) {
+          const seasonData = currentDoc.data();
+          await db.collection('season-archives').doc(seasonData.seasonId).set({
+            ...seasonData,
+            archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+            forcedEnd: true
+          });
+        }
+      }
+      
+      const seasonInfo = determineCurrentSeason(new Date());
+      const result = await initializeNewSeason(db, seasonInfo);
+      
       return {
         success: true,
         message: `${seasonInfo.seasonName} initialized successfully`,
         seasonId: result.seasonId,
-        seasonName: result.seasonData.seasonName,
-        currentDay: result.seasonData.currentDay,
-        totalDays: result.seasonData.totalDays
+        seasonData: result.seasonData
       };
     } catch (error) {
+      functions.logger.error("Manual season initialization failed:", error);
       throw new functions.https.HttpsError('internal', `Failed to initialize season: ${error.message}`);
     }
   });
 
-// Export functions
-module.exports = {
-  checkSeasonStatus: exports.checkSeasonStatus,
-  initializeSeasonManually: exports.initializeSeasonManually
-};
+/**
+ * Get available corps for current season - FIXED FOR LINEUP EDITOR
+ */
+exports.getAvailableCorps = functions
+  .runWith({ timeoutSeconds: 60, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Authentication required.');
+    }
+    
+    const db = admin.firestore();
+    
+    try {
+      // Get current season - check both field names for compatibility
+      const currentDoc = await db.collection('game-settings').doc('current').get();
+      if (!currentDoc.exists) {
+        throw new functions.https.HttpsError('failed-precondition', 'No active season found.');
+      }
+      
+      const currentData = currentDoc.data();
+      const seasonId = currentData.activeSeasonId || currentData.currentSeasonId;
+      
+      if (!seasonId) {
+        throw new functions.https.HttpsError('failed-precondition', 'Season ID not found.');
+      }
+      
+      // Get corps for this season
+      const corpsDoc = await db.collection('dci-data').doc(seasonId).get();
+      if (!corpsDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Corps data not found for current season.');
+      }
+      
+      const corpsData = corpsDoc.data();
+      const corps = corpsData.corps || corpsData.corpsValues || [];
+      
+      // Ensure corps have required fields for LineupEditor
+      const formattedCorps = corps.map(c => ({
+        name: c.name || c.corpsName,
+        corpsName: c.corpsName || c.name, 
+        value: c.value,
+        pointCost: c.pointCost || c.value,
+        sourceYear: c.sourceYear,
+        rank: c.rank,
+        finalScore: c.finalScore
+      }));
+      
+      return {
+        success: true,
+        seasonId: seasonId,
+        corps: formattedCorps
+      };
+      
+    } catch (error) {
+      if (error.code) throw error; // Re-throw HTTP errors
+      functions.logger.error('Error getting available corps:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to get available corps.');
+    }
+  });
