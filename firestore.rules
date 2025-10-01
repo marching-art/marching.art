@@ -154,6 +154,18 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    
+    // Seasonal Scores - pre-computed scores for efficiency
+    match /seasonal_scores/{seasonId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    // Season Archives - historical season data
+    match /season-archives/{seasonId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
 
     // --- PARTICIPANTS ---
     match /participants/{participantId} {
@@ -350,12 +362,6 @@ service cloud.firestore {
     match /backups/{backupId}/{document=**} {
       allow read: if isAdmin();
       allow write: if false; // Only automated backups
-    }
-
-    // --- DEFAULT DENY ---
-    // Any path not explicitly defined above is denied
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }

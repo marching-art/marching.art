@@ -63,9 +63,13 @@ const LineupEditor = ({ userProfile }) => {
       const getAvailableCorps = httpsCallable(functions, 'getAvailableCorps');
       const result = await getAvailableCorps();
       
+      console.log('Raw result:', result); // Debug log
+      console.log('Result data:', result.data); // Debug log
+      console.log('Corps array:', result.data?.corps); // Debug log
+      
       if (result.data.success && result.data.corps) {
-        // Sort corps by value descending for easier selection
         const sortedCorps = result.data.corps.sort((a, b) => b.value - a.value);
+        console.log('Sorted corps:', sortedCorps); // Debug log
         setSeasonCorps(sortedCorps);
         setSeasonId(result.data.seasonId);
       } else {
