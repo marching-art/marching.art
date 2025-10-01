@@ -70,7 +70,7 @@ const LineupEditor = ({ userProfile }) => {
       if (result.data.success && result.data.corps) {
         const sortedCorps = result.data.corps.sort((a, b) => b.value - a.value);
         console.log('Sorted corps:', sortedCorps); // Debug log
-        console.log('First corps item:', sortedCorps[0]); // Add this line
+        console.log('First corps item full details:', JSON.stringify(sortedCorps[0], null, 2));
         setSeasonCorps(sortedCorps);
         setSeasonId(result.data.seasonId);
       } else {
