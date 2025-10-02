@@ -45,6 +45,25 @@ exports.saveLineup = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("invalid-argument", "Invalid data provided.");
   }
 
+  // START: ADDED DUPLICATE CORPS VALIDATION
+  const usedCorps = new Set();
+  for (const corpsName of Object.values(lineup)) {
+    // This check assumes lineup values are corps names.
+    // If a corps is selected (not null/empty), check if it's already in the set.
+    if (corpsName) {
+      if (usedCorps.has(corpsName)) {
+        // If it is, throw an error immediately.
+        throw new functions.https.HttpsError(
+          "invalid-argument", 
+          `Duplicate corps selected: ${corpsName}. Each corps can only be used once.`
+        );
+      }
+      // If it's not a duplicate, add it to the set for future checks.
+      usedCorps.add(corpsName);
+    }
+  }
+  // END: ADDED DUPLICATE CORPS VALIDATION
+
   const profileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
   
   try {
@@ -143,7 +162,8 @@ exports.getAvailableCorps = functions.https.onCall(async (data, context) => {
       name: corps.name || 'Unknown Corps',
       value: corps.value || corps.points || 10,
       class: corps.class || 'Open Class',
-      location: corps.location || 'USA'
+      location: corps.location || 'USA',
+      sourceYear: corps.sourceYear || 'N/A' // <-- ADD THIS LINE
     }));
 
     return {
@@ -168,43 +188,6 @@ exports.getAvailableCorps = functions.https.onCall(async (data, context) => {
     };
   }
 });
-
-/**
- * Generate sample corps data for development/fallback
- */
-function generateSampleCorps() {
-  return [
-    // World Class
-    { name: "Blue Devils", value: 50, class: "World Class", location: "Concord, CA" },
-    { name: "Carolina Crown", value: 48, class: "World Class", location: "Fort Mill, SC" },
-    { name: "The Cadets", value: 46, class: "World Class", location: "Allentown, PA" },
-    { name: "Bluecoats", value: 47, class: "World Class", location: "Canton, OH" },
-    { name: "Santa Clara Vanguard", value: 49, class: "World Class", location: "Santa Clara, CA" },
-    { name: "Boston Crusaders", value: 45, class: "World Class", location: "Boston, MA" },
-    { name: "The Cavaliers", value: 44, class: "World Class", location: "Rosemont, IL" },
-    { name: "Blue Knights", value: 42, class: "World Class", location: "Denver, CO" },
-    { name: "Phantom Regiment", value: 43, class: "World Class", location: "Rockford, IL" },
-    { name: "Madison Scouts", value: 40, class: "World Class", location: "Madison, WI" },
-    
-    // Open Class
-    { name: "Spartans", value: 35, class: "Open Class", location: "Nashua, NH" },
-    { name: "Vanguard Cadets", value: 34, class: "Open Class", location: "Santa Clara, CA" },
-    { name: "Blue Devils B", value: 36, class: "Open Class", location: "Concord, CA" },
-    { name: "Gold", value: 32, class: "Open Class", location: "San Diego, CA" },
-    { name: "Louisiana Stars", value: 30, class: "Open Class", location: "Lafayette, LA" },
-    { name: "Legends", value: 28, class: "Open Class", location: "Kalamazoo, MI" },
-    
-    // A Class
-    { name: "Cincinnati Tradition", value: 20, class: "A Class", location: "Cincinnati, OH" },
-    { name: "Colt Cadets", value: 18, class: "A Class", location: "Dubuque, IA" },
-    { name: "Raiders", value: 15, class: "A Class", location: "Wayne, NJ" },
-    
-    // SoundSport
-    { name: "Hometown Heroes", value: 10, class: "SoundSport", location: "Anytown, USA" },
-    { name: "Street Beat", value: 8, class: "SoundSport", location: "Urban, USA" },
-    { name: "Community Pride", value: 12, class: "SoundSport", location: "Smallville, USA" }
-  ];
-}
 
 /**
  * Enhanced lineup save with validation

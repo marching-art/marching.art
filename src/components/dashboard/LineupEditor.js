@@ -39,17 +39,19 @@ const LineupEditor = ({ userProfile }) => {
 
   // Initialize lineup from user profile or empty
   useEffect(() => {
-    if (userProfile?.lineup) {
-      setLineup(userProfile.lineup);
-    } else {
-      // Initialize empty lineup
-      const emptyLineup = {};
-      CAPTIONS.forEach(caption => {
-        emptyLineup[caption.id] = '';
-      });
-      setLineup(emptyLineup);
+  if (!seasonCorps || seasonCorps.length === 0) return;
+
+  let points = 0;
+  // Create a quick lookup map for efficiency
+  const corpsValueMap = new Map(seasonCorps.map(c => [c.name, c.value]));
+
+  Object.values(lineup).forEach(corpsName => {
+    if (corpsName && corpsValueMap.has(corpsName)) {
+      points += corpsValueMap.get(corpsName);
     }
-  }, [userProfile]);
+  });
+  setTotalPoints(points);
+}, [lineup, seasonCorps]);
 
   // Fetch available corps for the current season
   useEffect(() => {
@@ -259,38 +261,20 @@ const LineupEditor = ({ userProfile }) => {
 
       {/* Main Selection Grid - Compact 2-column layout */}
       <div className="bg-surface dark:bg-surface-dark rounded-lg p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-4 gap-2 text-sm">
           {CAPTIONS.map((caption) => {
-            const selectedValue = lineup[caption.id] || '';
-            const selectedCorps = seasonCorps.find(c => c.value === parseInt(selectedValue));
+            const corpsName = lineup[caption.id];
+            const corpsData = corpsName ? seasonCorps.find(c => c.name === corpsName) : null;
             
             return (
-              <div key={caption.id} className="flex items-center gap-2">
-                <label className="w-28 text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                  {caption.shortName}:
-                </label>
-                
-                <select
-                  value={selectedValue}
-                  onChange={(e) => handleCaptionChange(caption.id, e.target.value)}
-                  className="flex-1 px-3 py-1.5 rounded-md border border-accent dark:border-accent-dark 
-                           bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark
-                           focus:ring-2 focus:ring-primary focus:border-transparent"
-                  disabled={isSaving || seasonCorps.length === 0}
-                >
-                  <option value="">Select corps...</option>
-                  {seasonCorps.map((corps) => (
-                    <option key={`${caption.id}-${corps.value}`} value={corps.value}>
-                      ({corps.value}) {corps.sourceYear} {corps.name}
-                    </option>
-                  ))}
-                </select>
-                
-                {selectedCorps && (
-                  <span className="text-xs font-bold text-primary dark:text-primary-dark w-10 text-right">
-                    {selectedCorps.value}
-                  </span>
-                )}
+              <div key={caption.id} className={`${!corpsName ? 'opacity-50' : ''}`}>
+                <span className="font-medium">{caption.shortName}:</span>
+                <span className="ml-1">
+                  {corpsData 
+                    ? `${corpsData.sourceYear} ${corpsData.name} (${corpsData.value})`
+                    : 'Not selected'
+                  }
+                </span>
               </div>
             );
           })}

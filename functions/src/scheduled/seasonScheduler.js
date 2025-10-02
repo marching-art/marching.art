@@ -104,10 +104,10 @@ async function assignCorpsForLiveSeason(db, seasonYear) {
   const rankings = rankingsDoc.data().data || [];
   const assignedCorps = rankings.slice(0, 25).map((entry, index) => ({
     name: entry.corps,
-    corpsName: entry.corps, // Include both for compatibility
+    corpsName: entry.corps,
     sourceYear: previousYear,
-    value: 25 - index,
-    pointCost: 25 - index,
+    value: Math.round(entry.originalScore || 0),   // <-- CHANGE HERE
+    pointCost: Math.round(entry.originalScore || 0), // <-- CHANGE HERE
     rank: index + 1,
     finalScore: entry.originalScore || 0,
   }));
@@ -149,10 +149,10 @@ async function assignCorpsForOffSeason(db) {
         if (candidate && !usedCorpsNames.has(candidate.corps)) {
           assignedCorps.push({
             name: candidate.corps,
-            corpsName: candidate.corps, // Include both for compatibility
+            corpsName: candidate.corps,
             sourceYear: randomYear,
-            value: 26 - rank,
-            pointCost: 26 - rank,
+            value: Math.round(candidate.originalScore || 0),
+            pointCost: Math.round(candidate.originalScore || 0),
             rank: rank,
             finalScore: candidate.originalScore || 0,
           });
@@ -351,7 +351,7 @@ function determineAllowedClasses(eventName, day, seasonType) {
   }
   
   // Default: all classes except SoundSport for regular shows
-  return ['World Class', 'Open Class', 'A Class'];
+  return ['World Class', 'Open Class', 'A Class', 'SoundSport'];
 }
 
 function generateShowName(day) {
