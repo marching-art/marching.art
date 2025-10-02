@@ -668,7 +668,6 @@ exports.getAvailableCorps = functions
     const db = admin.firestore();
     
     try {
-      // Get current season - check both field names for compatibility
       const currentDoc = await db.collection('game-settings').doc('current').get();
       if (!currentDoc.exists) {
         throw new functions.https.HttpsError('failed-precondition', 'No active season found.');
@@ -677,11 +676,6 @@ exports.getAvailableCorps = functions
       const currentData = currentDoc.data();
       const seasonId = currentData.activeSeasonId || currentData.currentSeasonId;
       
-      if (!seasonId) {
-        throw new functions.https.HttpsError('failed-precondition', 'Season ID not found.');
-      }
-      
-      // Get corps for this season
       const corpsDoc = await db.collection('dci-data').doc(seasonId).get();
       if (!corpsDoc.exists) {
         throw new functions.https.HttpsError('not-found', 'Corps data not found for current season.');
@@ -689,32 +683,19 @@ exports.getAvailableCorps = functions
       
       const corpsData = corpsDoc.data();
       const corps = corpsData.corps || corpsData.corpsValues || [];
-
-      // Add this debug log
-      functions.logger.info(`Raw corps data sample:`, JSON.stringify(corps[0]));
-
-      // Ensure corps have required fields for LineupEditor
-      const formattedCorps = corps.map(c => ({
-        name: c.name || c.corpsName,
-        corpsName: c.corpsName || c.name, 
-        value: c.value,
-        pointCost: c.pointCost || c.value,
-        sourceYear: c.sourceYear,  // This should be picking it up
-        rank: c.rank,
-        finalScore: c.finalScore
-      }));
-
-      // Add this debug log too
-      functions.logger.info(`Formatted corps sample:`, JSON.stringify(formattedCorps[0]));
       
+      // Log the first corps to see what we're getting
+      functions.logger.info('First corps from database:', JSON.stringify(corps[0]));
+      
+      // Just return the corps as-is without any mapping
       return {
         success: true,
         seasonId: seasonId,
-        corps: formattedCorps
+        corps: corps  // Return directly without formatting
       };
       
     } catch (error) {
-      if (error.code) throw error; // Re-throw HTTP errors
+      if (error.code) throw error;
       functions.logger.error('Error getting available corps:', error);
       throw new functions.https.HttpsError('internal', 'Failed to get available corps.');
     }

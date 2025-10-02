@@ -281,7 +281,7 @@ const LineupEditor = ({ userProfile }) => {
                   <option value="">Select corps...</option>
                   {seasonCorps.map((corps) => (
                     <option key={`${caption.id}-${corps.value}`} value={corps.value}>
-                      ({corps.value}) {corps.sourceYear ? `(${corps.sourceYear})` : ''} {corps.name}
+                      ({corps.value}) {sourceYear} {corps.name}
                     </option>
                   ))}
                 </select>
