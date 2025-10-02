@@ -689,17 +689,23 @@ exports.getAvailableCorps = functions
       
       const corpsData = corpsDoc.data();
       const corps = corpsData.corps || corpsData.corpsValues || [];
-      
+
+      // Add this debug log
+      functions.logger.info(`Raw corps data sample:`, JSON.stringify(corps[0]));
+
       // Ensure corps have required fields for LineupEditor
       const formattedCorps = corps.map(c => ({
         name: c.name || c.corpsName,
         corpsName: c.corpsName || c.name, 
         value: c.value,
         pointCost: c.pointCost || c.value,
-        sourceYear: c.sourceYear,
+        sourceYear: c.sourceYear,  // This should be picking it up
         rank: c.rank,
         finalScore: c.finalScore
       }));
+
+      // Add this debug log too
+      functions.logger.info(`Formatted corps sample:`, JSON.stringify(formattedCorps[0]));
       
       return {
         success: true,
