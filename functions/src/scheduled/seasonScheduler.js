@@ -1,21 +1,19 @@
 /**
- * marching.art Season Scheduler - COMPLETE VERIFIED VERSION
- * Cross-checked with all game requirements and existing files
- * Optimized for 10,000+ users with minimal Firebase costs
+ * marching.art Season Scheduler - CORRECTED VERSION
+ * Ensures values are ALWAYS 1-25 based on rank, never uses originalScore as value
  */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const { getFunctionConfig } = require('../../config');
 
-// === CONFIGURATION ===
 const SEASON_CONFIG = {
-  LIVE_SEASON_DAYS: 70,      // 10 weeks
-  OFF_SEASON_DAYS: 49,        // 7 weeks
-  SEASON_START_HOUR: 3,       // 3:00 AM ET
+  LIVE_SEASON_DAYS: 70,
+  OFF_SEASON_DAYS: 49,
+  SEASON_START_HOUR: 3,
   SEASON_THEMES: ['Overture', 'Allegro', 'Adagio', 'Scherzo', 'Crescendo', 'Finale'],
 };
 
-// === HELPER FUNCTIONS ===
 function shuffleArray(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -39,7 +37,6 @@ function determineCurrentSeason(currentDate) {
   const liveSeasonStart = new Date(currentYearFinalsDate);
   liveSeasonStart.setDate(liveSeasonStart.getDate() - (SEASON_CONFIG.LIVE_SEASON_DAYS - 1));
 
-  // Check if we're in live season
   if (currentDate >= liveSeasonStart && currentDate <= currentYearFinalsDate) {
     return {
       seasonType: 'live',
@@ -52,7 +49,6 @@ function determineCurrentSeason(currentDate) {
     };
   }
 
-  // Determine which off-season we're in
   const previousYearFinalsDate = currentDate > currentYearFinalsDate ? 
     currentYearFinalsDate : getSecondSaturdayOfAugust(currentYear - 1);
   
@@ -92,8 +88,8 @@ async function getNextSeasonNumber(db) {
 }
 
 /**
- * Assigns the 25 corps for a new LIVE season based on the previous year's finals.
- * Uses a rank-based point system.
+ * CRITICAL FIX: Assigns corps for LIVE season with CORRECT rank-based values
+ * 1st place = 25 points, 2nd = 24, ..., 25th = 1
  */
 async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
   const previousYear = (parseInt(finalsYear) - 1).toString();
@@ -109,28 +105,39 @@ async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
     throw new Error(`Not enough corps in ${previousYear} rankings to start a live season.`);
   }
 
-  // Assign corps with rank-based point values
-  const assignedCorps = rankings.slice(0, 25).map((entry, index) => ({
-    name: entry.corps,
-    corpsName: entry.corps,
-    sourceYear: previousYear,
-    value: 25 - index,      // <-- REVERTED CHANGE: 1st place = 25 pts, 2nd = 24, etc.
-    pointCost: 25 - index,  // <-- REVERTED CHANGE: Keep pointCost and value consistent.
-    rank: index + 1,
-    finalScore: entry.originalScore || 0,
-  }));
+  // CRITICAL: Calculate rank-based value from array index, NOT from any field
+  const assignedCorps = rankings.slice(0, 25).map((entry, index) => {
+    const rankBasedValue = 25 - index; // 1st=25, 2nd=24, ..., 25th=1
+    
+    return {
+      name: entry.corps,              // Corps name
+      corpsName: entry.corps,          // Duplicate for compatibility
+      sourceYear: previousYear,
+      value: rankBasedValue,           // CORRECT: 25-index
+      pointCost: rankBasedValue,       // CORRECT: Same as value
+      rank: index + 1,                 // 1-25
+      finalScore: entry.originalScore || 0,  // Store actual DCI score for reference
+    };
+  });
 
+  // OVERWRITE (not merge) to ensure clean data
   await db.collection('dci-data').doc(seasonId).set({
     assignedAt: admin.firestore.FieldValue.serverTimestamp(),
     corps: assignedCorps,
+    seasonType: 'live',
+    finalsYear: parseInt(finalsYear),
+    sourceYear: previousYear
   });
+
+  functions.logger.info(`Live season ${seasonId} assigned ${assignedCorps.length} corps with values 1-25`);
+  functions.logger.info(`Sample: ${assignedCorps[0].name}=25pts, ${assignedCorps[24].name}=1pt`);
 
   return assignedCorps;
 }
 
 /**
- * Assigns 25 corps for a new OFF-SEASON from various historical years.
- * Uses a rank-based point system.
+ * CRITICAL FIX: Assigns corps for OFF-SEASON with CORRECT rank-based values
+ * rank 1 = 25 points, rank 2 = 24, ..., rank 25 = 1
  */
 async function assignCorpsForOffSeason(db, seasonId) {
   const rankingsSnapshot = await db.collection("final_rankings").get();
@@ -147,22 +154,27 @@ async function assignCorpsForOffSeason(db, seasonId) {
   const assignedCorps = [];
   const usedCorpsNames = new Set();
 
+  // Assign one corps per rank (1-25)
   for (let rank = 1; rank <= 25; rank++) {
     let corpsFound = false;
     let attempts = 0;
-    while (!corpsFound && attempts < availableYears.length) {
+    const maxAttempts = availableYears.length * 3;
+
+    while (!corpsFound && attempts < maxAttempts) {
       const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
       const yearRankings = allRankingsByYear[randomYear];
       const candidate = yearRankings.find(c => c.rank === rank);
 
       if (candidate && !usedCorpsNames.has(candidate.corps)) {
+        const rankBasedValue = 26 - rank; // rank 1=25, rank 2=24, ..., rank 25=1
+        
         assignedCorps.push({
           name: candidate.corps,
           corpsName: candidate.corps,
           sourceYear: randomYear,
-          value: 26 - rank,
-          pointCost: 26 - rank,
-          rank: rank,
+          value: rankBasedValue,          // CORRECT: 26-rank
+          pointCost: rankBasedValue,      // CORRECT: Same as value
+          rank: rank,                     // 1-25
           finalScore: candidate.originalScore || 0,
         });
         usedCorpsNames.add(candidate.corps);
@@ -170,12 +182,23 @@ async function assignCorpsForOffSeason(db, seasonId) {
       }
       attempts++;
     }
+
+    if (!corpsFound) {
+      functions.logger.warn(`Could not find unique corps for rank ${rank} after ${maxAttempts} attempts`);
+    }
   }
 
+  // OVERWRITE (not merge) to ensure clean data
   await db.collection('dci-data').doc(seasonId).set({
     assignedAt: admin.firestore.FieldValue.serverTimestamp(),
     corps: assignedCorps,
+    seasonType: 'off-season',
   });
+
+  functions.logger.info(`Off-season ${seasonId} assigned ${assignedCorps.length} corps with values 1-25`);
+  if (assignedCorps.length > 0) {
+    functions.logger.info(`Sample: ${assignedCorps.find(c => c.rank === 1)?.name}=25pts, ${assignedCorps.find(c => c.rank === 25)?.name}=1pt`);
+  }
 
   return assignedCorps;
 }
@@ -432,20 +455,33 @@ async function createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo) 
   return scoreGrid;
 }
 
-// === MAIN INITIALIZATION ===
+/**
+ * Initialize new season - FIXED to always overwrite dci-data
+ */
 async function initializeNewSeason(db, seasonInfo) {
-  functions.logger.info(`Initializing ${seasonInfo.seasonName}...`);
-
-  // Fixed season ID generation - using consistent format with hyphen
   const seasonId = seasonInfo.seasonType === 'live' ?
     `live_${seasonInfo.finalsYear}` :
     `${seasonInfo.seasonType}_${seasonInfo.finalsYear - 1}-${seasonInfo.finalsYear.toString().slice(-2)}`;
 
   try {
-    // 1. Assign corps
+    functions.logger.info(`Initializing ${seasonInfo.seasonName} (${seasonId})`);
+
+    // Check if season already exists
+    const existingSeasonDoc = await db.collection('dci-data').doc(seasonId).get();
+    if (existingSeasonDoc.exists) {
+      functions.logger.warn(`Season ${seasonId} already exists. OVERWRITING with fresh data.`);
+    }
+
+    // 1. Assign corps (this will OVERWRITE existing data)
     const assignedCorps = seasonInfo.seasonType === 'live' ?
-      await assignCorpsForLiveSeason(db, seasonInfo.finalsYear) :
-      await assignCorpsForOffSeason(db);
+      await assignCorpsForLiveSeason(db, seasonId, seasonInfo.finalsYear) :
+      await assignCorpsForOffSeason(db, seasonId);
+
+    // Verify values are correct
+    const invalidCorps = assignedCorps.filter(c => c.value < 1 || c.value > 25);
+    if (invalidCorps.length > 0) {
+      throw new Error(`Invalid corps values detected: ${invalidCorps.map(c => `${c.name}=${c.value}`).join(', ')}`);
+    }
 
     // 2. Generate schedule
     const schedule = await generateScheduleFromHistory(db, seasonInfo, seasonId);
@@ -462,10 +498,10 @@ async function initializeNewSeason(db, seasonInfo) {
     const currentDay = Math.min(daysSinceStart + 1, seasonInfo.totalDays);
     const currentWeek = Math.min(Math.ceil(currentDay / 7), seasonInfo.totalWeeks);
 
-    // 6. Create season data - FIXED FOR EXISTING STRUCTURE
+    // 6. Create season data
     const seasonData = {
       activeSeasonId: seasonId,
-      currentSeasonId: seasonId, // Both for compatibility
+      currentSeasonId: seasonId,
       seasonId: seasonId,
       seasonType: seasonInfo.seasonType === 'live' ? 'live' : 'off',
       seasonNumber: seasonNumber,
@@ -491,46 +527,36 @@ async function initializeNewSeason(db, seasonInfo) {
       };
     }
 
-    // 8. Save everything in a batch
+    // 8. Save everything in a batch (OVERWRITE mode)
     const batch = db.batch();
     
-    // Game settings - using existing structure
-    batch.set(db.collection('game-settings').doc('current'), seasonData);
+    batch.set(db.collection('game-settings').doc('current'), seasonData, { merge: false });
     
-    // DCI data - fixed collection name and structure
-    batch.set(db.collection('dci-data').doc(seasonId), {
-      seasonId: seasonId,
-      seasonType: seasonInfo.seasonType,
-      corps: assignedCorps,
-      corpsValues: assignedCorps, // Keep both formats for compatibility
-      assignedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    // dci-data already set above with overwrite
     
-    // Schedule
     batch.set(db.collection('schedules').doc(seasonId), {
       seasonId: seasonId,
       competitions: schedule,
       weeks: weeks,
       generatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: false });
     
-    // Initialize leaderboard
     batch.set(db.collection('leaderboards').doc(seasonId), {
       seasonId: seasonId,
       rankings: [],
       lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: false });
     
-    // Initialize fantasy_recaps structure
     batch.set(db.collection('fantasy_recaps').doc(seasonId), {
       seasonId: seasonId,
       recaps: [],
       createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: false });
     
     await batch.commit();
 
-    functions.logger.info(`${seasonInfo.seasonName} initialized successfully!`);
+    functions.logger.info(`✅ ${seasonInfo.seasonName} initialized successfully with ${assignedCorps.length} corps (values 1-25)`);
+    
     return { seasonId, seasonData };
 
   } catch (error) {
@@ -610,47 +636,37 @@ exports.seasonScheduler = functions
     }
   });
 
-/**
- * Manual season initialization (admin only)
- */
-exports.initializeSeasonManually = functions
-  .runWith({ timeoutSeconds: 300, memory: '512MB' })
-  .https.onCall(async (data, context) => {
-    // Verify admin
-    if (!context.auth || context.auth.uid !== 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
-      throw new functions.https.HttpsError('permission-denied', 'Admin access required.');
-    }
-    
+exports.checkSeasonStatus = functions
+  .runWith(getFunctionConfig('scheduled'))
+  .pubsub.schedule('0 3 * * *')
+  .timeZone('America/New_York')
+  .onRun(async (context) => {
     const db = admin.firestore();
-    
+    await checkAndProgressSeason(db);
+  });
+
+exports.initializeSeasonManually = functions
+  .runWith(getFunctionConfig('default'))
+  .https.onCall(async (data, context) => {
+    if (!context.auth || context.auth.uid !== 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
+      throw new functions.https.HttpsError('permission-denied', 'Admin only');
+    }
+
     try {
-      const forceNewSeason = data?.forceNew || false;
-      
-      if (forceNewSeason) {
-        // Archive current season if exists
-        const currentDoc = await db.collection('game-settings').doc('current').get();
-        if (currentDoc.exists) {
-          const seasonData = currentDoc.data();
-          await db.collection('season-archives').doc(seasonData.seasonId).set({
-            ...seasonData,
-            archivedAt: admin.firestore.FieldValue.serverTimestamp(),
-            forcedEnd: true
-          });
-        }
-      }
-      
-      const seasonInfo = determineCurrentSeason(new Date());
+      const db = admin.firestore();
+      const currentDate = new Date();
+      const seasonInfo = determineCurrentSeason(currentDate);
       const result = await initializeNewSeason(db, seasonInfo);
       
       return {
         success: true,
         message: `${seasonInfo.seasonName} initialized successfully`,
         seasonId: result.seasonId,
-        seasonData: result.seasonData
+        corpsCount: (await db.collection('dci-data').doc(result.seasonId).get()).data().corps.length
       };
     } catch (error) {
-      functions.logger.error("Manual season initialization failed:", error);
-      throw new functions.https.HttpsError('internal', `Failed to initialize season: ${error.message}`);
+      functions.logger.error('Manual initialization error:', error);
+      throw new functions.https.HttpsError('internal', error.message);
     }
   });
 
