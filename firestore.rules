@@ -167,12 +167,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // --- PARTICIPANTS ---
+    // --- PARTICIPANTS (SHOW REGISTRATION) ---
     match /participants/{participantId} {
+      // Anyone can read to see who's registered for shows
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isOwner(resource.data.userId) || isAdmin();
-      allow delete: if isAdmin();
+      // Only cloud functions can create/update participants
+      allow create: if false; // Backend only via cloud functions
+      allow update: if false; // Backend only
+      allow delete: if false; // Backend only
     }
 
     // --- LEADERBOARDS ---

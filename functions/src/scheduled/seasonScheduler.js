@@ -91,93 +91,92 @@ async function getNextSeasonNumber(db) {
   return seasonsSnapshot.empty ? 1 : (seasonsSnapshot.docs[0].data().seasonNumber || 0) + 1;
 }
 
-// === CORPS SELECTION - FIXED FOR EXISTING DATA STRUCTURE ===
-async function assignCorpsForLiveSeason(db, seasonYear) {
-  functions.logger.info(`Assigning corps for LIVE season ${seasonYear}...`);
-  const previousYear = (seasonYear - 1).toString();
+/**
+ * Assigns the 25 corps for a new LIVE season based on the previous year's finals.
+ * Uses a rank-based point system.
+ */
+async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
+  const previousYear = (parseInt(finalsYear) - 1).toString();
+  const rankingsRef = db.collection('final_rankings').doc(previousYear);
+  const rankingsDoc = await rankingsRef.get();
 
-  const rankingsDoc = await db.doc(`final_rankings/${previousYear}`).get();
   if (!rankingsDoc.exists) {
-    throw new Error(`Cannot start live season: Final rankings for ${previousYear} not found.`);
+    throw new Error(`Cannot create live season. Final rankings for ${previousYear} not found.`);
   }
 
-  const rankings = rankingsDoc.data().data || [];
+  const rankings = rankingsDoc.data().rankings || [];
+  if (rankings.length < 25) {
+    throw new Error(`Not enough corps in ${previousYear} rankings to start a live season.`);
+  }
+
+  // Assign corps with rank-based point values
   const assignedCorps = rankings.slice(0, 25).map((entry, index) => ({
     name: entry.corps,
     corpsName: entry.corps,
     sourceYear: previousYear,
-    value: Math.round(entry.originalScore || 0),   // <-- CHANGE HERE
-    pointCost: Math.round(entry.originalScore || 0), // <-- CHANGE HERE
+    value: 25 - index,      // <-- REVERTED CHANGE: 1st place = 25 pts, 2nd = 24, etc.
+    pointCost: 25 - index,  // <-- REVERTED CHANGE: Keep pointCost and value consistent.
     rank: index + 1,
     finalScore: entry.originalScore || 0,
   }));
-  
-  functions.logger.info(`Assigned ${assignedCorps.length} corps from ${previousYear} rankings.`);
+
+  await db.collection('dci-data').doc(seasonId).set({
+    assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    corps: assignedCorps,
+  });
+
   return assignedCorps;
 }
 
-async function assignCorpsForOffSeason(db) {
-  functions.logger.info("Assigning corps for OFF-SEASON with rank-by-rank randomization...");
-  
+/**
+ * Assigns 25 corps for a new OFF-SEASON from various historical years.
+ * Uses a rank-based point system.
+ */
+async function assignCorpsForOffSeason(db, seasonId) {
   const rankingsSnapshot = await db.collection("final_rankings").get();
   if (rankingsSnapshot.empty) {
     throw new Error("No final rankings found. Cannot assign corps.");
   }
 
-  // Pre-load all ranking data
-  const rankingsByYear = {};
+  const allRankingsByYear = {};
   rankingsSnapshot.forEach(doc => {
-    rankingsByYear[doc.id] = doc.data().data || [];
+    allRankingsByYear[doc.id] = doc.data().rankings;
   });
-  const availableYears = Object.keys(rankingsByYear);
+  const availableYears = Object.keys(allRankingsByYear);
 
   const assignedCorps = [];
   const usedCorpsNames = new Set();
-  
-  // Select one corps for each rank/value slot
+
   for (let rank = 1; rank <= 25; rank++) {
     let corpsFound = false;
     let attempts = 0;
-
-    while (!corpsFound && attempts < 100) {
+    while (!corpsFound && attempts < availableYears.length) {
       const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
-      const yearRankings = rankingsByYear[randomYear];
-      
-      if (yearRankings.length >= rank) {
-        const candidate = yearRankings[rank - 1];
-        
-        if (candidate && !usedCorpsNames.has(candidate.corps)) {
-          assignedCorps.push({
-            name: candidate.corps,
-            corpsName: candidate.corps,
-            sourceYear: randomYear,
-            value: Math.round(candidate.originalScore || 0),
-            pointCost: Math.round(candidate.originalScore || 0),
-            rank: rank,
-            finalScore: candidate.originalScore || 0,
-          });
-          usedCorpsNames.add(candidate.corps);
-          corpsFound = true;
-        }
+      const yearRankings = allRankingsByYear[randomYear];
+      const candidate = yearRankings.find(c => c.rank === rank);
+
+      if (candidate && !usedCorpsNames.has(candidate.corps)) {
+        assignedCorps.push({
+          name: candidate.corps,
+          corpsName: candidate.corps,
+          sourceYear: randomYear,
+          value: 26 - rank,
+          pointCost: 26 - rank,
+          rank: rank,
+          finalScore: candidate.originalScore || 0,
+        });
+        usedCorpsNames.add(candidate.corps);
+        corpsFound = true;
       }
       attempts++;
     }
-
-    if (!corpsFound) {
-      functions.logger.warn(`Could not find unique corps for rank ${rank}, using placeholder`);
-      assignedCorps.push({
-        name: `Corps ${rank}`,
-        corpsName: `Corps ${rank}`,
-        sourceYear: 'placeholder',
-        value: 26 - rank,
-        pointCost: 26 - rank,
-        rank: rank,
-        finalScore: 0,
-      });
-    }
   }
 
-  functions.logger.info(`Assigned ${assignedCorps.length} corps via rank-by-rank randomization.`);
+  await db.collection('dci-data').doc(seasonId).set({
+    assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    corps: assignedCorps,
+  });
+
   return assignedCorps;
 }
 
