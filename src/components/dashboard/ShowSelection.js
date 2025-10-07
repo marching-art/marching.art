@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { db, functions } from '../firebaseConfig';
+import { db, functions } from '../../firebaseConfig';
 import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { useAuth } from '../context/AuthContext';
-import { useUserStore } from '../store/userStore';
+import { useAuth } from '../../context/AuthContext';
+import { useUserStore } from '../../store/userStore';
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
