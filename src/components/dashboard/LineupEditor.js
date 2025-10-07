@@ -68,49 +68,60 @@ const LineupEditor = () => {
   }, [lineup, availableCorps]);
 
   const fetchLineupData = async () => {
-    setLoading(true);
+  setLoading(true);
+  
+  try {
+    // Get current season from game-settings/current
+    const gameSettingsRef = doc(db, 'game-settings/current');
+    const gameSettingsSnap = await getDoc(gameSettingsRef);
     
-    try {
-      // Get current season
-      const gameSettingsRef = doc(db, 'game-settings/current');
-      const gameSettingsSnap = await getDoc(gameSettingsRef);
-      
-      if (!gameSettingsSnap.exists()) {
-        toast.error('Season data not available. Please try again later.');
-        setLoading(false);
-        return;
-      }
-      
-      const currentSeasonId = gameSettingsSnap.data().currentSeasonId;
-      setSeasonId(currentSeasonId);
-
-      // Fetch available corps for this season
-      const getAvailableCorpsFunc = httpsCallable(functions, 'getAvailableCorps');
-      const corpsResult = await getAvailableCorpsFunc({ seasonId: currentSeasonId });
-      
-      if (corpsResult.data.success) {
-        setAvailableCorps(corpsResult.data.corps);
-      }
-
-      // Load existing lineup from profile
-      const existingLineup = profile.lineup || {};
-      const initialLineup = {};
-      
-      // Initialize all captions (empty or with existing values)
-      REQUIRED_CAPTIONS.forEach(caption => {
-        initialLineup[caption] = existingLineup[caption] || '';
-      });
-      
-      setLineup(initialLineup);
-      setOriginalLineup({ ...initialLineup });
-
-    } catch (error) {
-      console.error('Error fetching lineup data:', error);
-      toast.error('Failed to load lineup editor. Please refresh the page.');
-    } finally {
+    if (!gameSettingsSnap.exists()) {
+      toast.error('No active season found. Please contact admin.');
       setLoading(false);
+      return;
     }
-  };
+    
+    const gameData = gameSettingsSnap.data();
+    const currentSeasonId = gameData.seasonId || gameData.currentSeasonId;
+    
+    if (!currentSeasonId) {
+      toast.error('Season ID not configured. Please contact admin.');
+      setLoading(false);
+      return;
+    }
+    
+    setSeasonId(currentSeasonId);
+
+    // Fetch available corps using backend function
+    const getAvailableCorpsFunc = httpsCallable(functions, 'getAvailableCorps');
+    const corpsResult = await getAvailableCorpsFunc({ seasonId: currentSeasonId });
+    
+    if (!corpsResult.data.success) {
+      throw new Error('Failed to fetch corps data');
+    }
+    
+    setAvailableCorps(corpsResult.data.corps);
+
+    // Load existing lineup from profile
+    const existingLineup = profile?.lineup || {};
+    const initialLineup = {};
+    
+    // Initialize all captions (empty or with existing values)
+    REQUIRED_CAPTIONS.forEach(caption => {
+      initialLineup[caption] = existingLineup[caption] || '';
+    });
+    
+    setLineup(initialLineup);
+    setOriginalLineup({ ...initialLineup });
+
+  } catch (error) {
+    console.error('Error loading corps:', error);
+    const errorMessage = error.message || 'Failed to load lineup editor';
+    toast.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const validateLineupRealtime = async () => {
     if (!seasonId || !profile) return;

@@ -236,13 +236,12 @@ const DB_PATHS = {
   userStaff: (uid, staffId) => `artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`,
   userNotifications: (uid) => `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
   
-  // Game data
-  seasonData: (seasonId) => `dci_data/${seasonId}`,
-  corpsValues: (seasonId) => `dci_data/${seasonId}/corpsValues`,
-  historicalScores: (year) => `historical_scores/${year}/data`,
+  // Game data - FIXED: Use correct collection names from existing code
+  seasonData: (seasonId) => `dci-data/${seasonId}`,  // Changed from dci_data
+  historicalScores: (year) => `historical_scores/${year}`,  // Correct with underscore
   
   // Leaderboards
-  leaderboard: (seasonId) => `leaderboards/${seasonId}/rankings`,
+  leaderboard: (seasonId) => `leaderboards/${seasonId}`,
   
   // Staff
   staffDatabase: (staffId) => `staff/${staffId}`,
@@ -253,12 +252,24 @@ const DB_PATHS = {
   leagueMatchups: (leagueId, week) => `leagues/${leagueId}/matchups/${week}`,
   
   // Transactions
-  corpscoins: (uid, txId) => `corps_coin_transactions/${uid}/transactions/${txId}`,
-  xp: (uid, txId) => `xp_transactions/${uid}/transactions/${txId}`,
+  corpscoinTx: (uid, txId) => `corps_coin_transactions/${uid}/transactions/${txId}`,
+  xpTx: (uid, txId) => `xp_transactions/${uid}/transactions/${txId}`,
   
   // Game settings
   gameSettings: () => `game-settings/current`,
   seasonConfig: (seasonId) => `season-config/${seasonId}`,
+  
+  // Schedules
+  schedule: (seasonId) => `schedules/${seasonId}`,
+  
+  // Finals rankings (used by seasonScheduler)
+  finalRankings: (year) => `final_rankings/${year}`,
+  
+  // Seasonal scores (pre-computed grids)
+  seasonalScores: (seasonId) => `seasonal_scores/${seasonId}`,
+  
+  // Fantasy recaps
+  fantasyRecaps: (seasonId) => `fantasy_recaps/${seasonId}`,
 };
 
 // === EXPORTS ===

@@ -41,6 +41,7 @@ const CAPTION_ABBREVIATIONS = {
 
 /**
  * Validates lineup against all game rules
+ * FIXED: Uses correct database structure
  */
 async function validateLineup(lineup, corpsClass, seasonId, db) {
   const errors = [];
@@ -73,34 +74,47 @@ async function validateLineup(lineup, corpsClass, seasonId, db) {
     return { valid: false, errors };
   }
   
-  // 3. Get corps values for the season
-  const corpsValuesRef = db.doc(`dci_data/${seasonId}/corpsValues`);
-  const corpsValuesSnap = await corpsValuesRef.get();
+  // 3. Get corps data for the season from dci-data collection
+  const dciDataRef = db.collection('dci-data').doc(seasonId);
+  const dciDataSnap = await dciDataRef.get();
   
-  if (!corpsValuesSnap.exists()) {
+  if (!dciDataSnap.exists()) {
     return { 
       valid: false, 
       errors: [`Season data not found for ${seasonId}. Please contact support.`] 
     };
   }
   
-  const corpsValues = corpsValuesSnap.data();
+  const dciData = dciDataSnap.data();
+  const corpsArray = dciData.corps || [];
+  
+  // Create a lookup map: corps name -> corps data
+  const corpsLookup = {};
+  corpsArray.forEach(corps => {
+    const name = corps.name || corps.corpsName;
+    corpsLookup[name] = corps;
+  });
   
   // 4. Calculate total points and validate corps existence
   let totalPoints = 0;
   const lineupDetails = {};
   
   for (const [caption, corpsName] of Object.entries(lineup)) {
-    if (!corpsValues[corpsName]) {
+    const corps = corpsLookup[corpsName];
+    
+    if (!corps) {
       errors.push(`Corps "${corpsName}" not found in season ${seasonId}.`);
       continue;
     }
     
-    const corpsValue = corpsValues[corpsName];
+    const corpsValue = corps.value || corps.pointCost || 0;
     totalPoints += corpsValue;
+    
     lineupDetails[caption] = {
       corps: corpsName,
-      value: corpsValue
+      value: corpsValue,
+      rank: corps.rank,
+      sourceYear: corps.sourceYear
     };
   }
   
@@ -253,6 +267,7 @@ exports.saveLineup = functions
 
 /**
  * Get available corps for current season with their values
+ * FIXED: Uses correct database collection structure from existing code
  */
 exports.getAvailableCorps = functions
   .runWith(getFunctionConfig('light'))
@@ -269,24 +284,51 @@ exports.getAvailableCorps = functions
 
     try {
       const db = admin.firestore();
-      const corpsValuesRef = db.doc(`dci_data/${seasonId}/corpsValues`);
-      const corpsValuesSnap = await corpsValuesRef.get();
+      
+      // CRITICAL: Use dci-data collection (with hyphen, not underscore)
+      const dciDataRef = db.collection('dci-data').doc(seasonId);
+      const dciDataSnap = await dciDataRef.get();
 
-      if (!corpsValuesSnap.exists()) {
-        throw new functions.https.HttpsError('not-found', 'Season data not found.');
+      if (!dciDataSnap.exists()) {
+        functions.logger.error(`dci-data document not found for season: ${seasonId}`);
+        
+        throw new functions.https.HttpsError(
+          'not-found', 
+          `Season data not found. Season may not be initialized yet.`
+        );
       }
 
-      const corpsValues = corpsValuesSnap.data();
+      const dciData = dciDataSnap.data();
+      
+      // CRITICAL: Corps data is in the 'corps' field as an array of objects
+      const corpsArray = dciData.corps || [];
 
-      // Return sorted by value (descending)
-      const sortedCorps = Object.entries(corpsValues)
-        .map(([name, value]) => ({ name, value }))
+      // Validate that we have corps data
+      if (!corpsArray || corpsArray.length === 0) {
+        throw new functions.https.HttpsError(
+          'not-found',
+          'No corps data available for this season.'
+        );
+      }
+
+      // Transform to expected format: array of { name, value }
+      // Corps objects have structure: { name, corpsName, value, pointCost, rank, sourceYear }
+      const sortedCorps = corpsArray
+        .map(corps => ({
+          name: corps.name || corps.corpsName,
+          value: corps.value || corps.pointCost || 0,
+          rank: corps.rank,
+          sourceYear: corps.sourceYear
+        }))
         .sort((a, b) => b.value - a.value);
+
+      functions.logger.info(`Retrieved ${sortedCorps.length} corps for season ${seasonId}`);
 
       return {
         success: true,
         corps: sortedCorps,
-        seasonId
+        seasonId,
+        count: sortedCorps.length
       };
 
     } catch (error) {
@@ -296,7 +338,10 @@ exports.getAvailableCorps = functions
         throw error;
       }
       
-      throw new functions.https.HttpsError('internal', 'Failed to fetch corps data.');
+      throw new functions.https.HttpsError(
+        'internal', 
+        'Failed to fetch corps data: ' + error.message
+      );
     }
   });
 
