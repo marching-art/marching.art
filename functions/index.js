@@ -71,8 +71,10 @@ exports.generateWeeklyMatchups = functions
 // ============================================================================
 
 const lineups = require('./src/callable/lineups');
-exports.saveLineup = lineups.saveLineup;
 exports.validateAndSaveLineup = lineups.validateAndSaveLineup;
+exports.saveLineup = lineups.saveLineup; // Legacy support
+exports.getAvailableCorps = lineups.getAvailableCorps;
+exports.validateLineupPreview = lineups.validateLineupPreview;
 exports.checkLineupValidity = lineups.checkLineupValidity;
 exports.getAvailableCorps = lineups.getAvailableCorps;
 
