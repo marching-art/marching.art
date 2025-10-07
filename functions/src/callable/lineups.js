@@ -1,12 +1,8 @@
 /**
- * marching.art Lineup Management System - COMPLETE VALIDATED VERSION
+ * marching.art Lineup Management System - CORRECTED ADMIN SDK VERSION
  * Location: functions/src/callable/lineups.js
  * 
- * Handles all lineup validation and saving with full DCI compliance:
- * - All 8 captions must be filled
- * - No duplicate corps allowed
- * - Class-based point limits enforced
- * - Real-time corps value calculation
+ * CRITICAL FIX: Uses correct Firebase Admin SDK syntax (.exists property, not method)
  */
 
 const functions = require('firebase-functions');
@@ -27,21 +23,9 @@ const CLASS_POINT_LIMITS = {
   "World Class": 150,
 };
 
-// Caption abbreviations for scoring
-const CAPTION_ABBREVIATIONS = {
-  "GE1": "GE1",
-  "GE2": "GE2",
-  "Visual Proficiency": "VP",
-  "Visual Analysis": "VA",
-  "Color Guard": "CG",
-  "Brass": "B",
-  "Music Analysis": "MA",
-  "Percussion": "P"
-};
-
 /**
  * Validates lineup against all game rules
- * FIXED: Uses correct database structure
+ * FIXED: Correct Admin SDK syntax
  */
 async function validateLineup(lineup, corpsClass, seasonId, db) {
   const errors = [];
@@ -75,10 +59,12 @@ async function validateLineup(lineup, corpsClass, seasonId, db) {
   }
   
   // 3. Get corps data for the season from dci-data collection
+  // CRITICAL FIX: Use .doc().get() and check .exists (property, not method)
   const dciDataRef = db.collection('dci-data').doc(seasonId);
   const dciDataSnap = await dciDataRef.get();
   
-  if (!dciDataSnap.exists()) {
+  // CRITICAL: In Admin SDK, .exists is a PROPERTY not a method
+  if (!dciDataSnap.exists) {
     return { 
       valid: false, 
       errors: [`Season data not found for ${seasonId}. Please contact support.`] 
@@ -87,6 +73,14 @@ async function validateLineup(lineup, corpsClass, seasonId, db) {
   
   const dciData = dciDataSnap.data();
   const corpsArray = dciData.corps || [];
+  
+  // Validate we have corps
+  if (corpsArray.length === 0) {
+    return {
+      valid: false,
+      errors: [`No corps assigned for season ${seasonId}. Please contact admin.`]
+    };
+  }
   
   // Create a lookup map: corps name -> corps data
   const corpsLookup = {};
@@ -155,6 +149,7 @@ async function validateLineup(lineup, corpsClass, seasonId, db) {
 
 /**
  * MAIN FUNCTION: Validate and Save Lineup
+ * FIXED: Correct Admin SDK syntax throughout
  */
 exports.validateAndSaveLineup = functions
   .runWith(getFunctionConfig('light'))
@@ -189,10 +184,10 @@ exports.validateAndSaveLineup = functions
     const profileRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
 
     try {
-      // Get user profile
+      // Get user profile - FIXED: .exists is property not method
       const profileSnap = await profileRef.get();
       
-      if (!profileSnap.exists()) {
+      if (!profileSnap.exists) {
         throw new functions.https.HttpsError(
           'not-found', 
           'User profile not found.'
@@ -255,19 +250,8 @@ exports.validateAndSaveLineup = functions
   });
 
 /**
- * LEGACY FUNCTION: Basic lineup save (maintained for backward compatibility)
- * @deprecated Use validateAndSaveLineup instead
- */
-exports.saveLineup = functions
-  .runWith(getFunctionConfig('light'))
-  .https.onCall(async (data, context) => {
-    functions.logger.warn('saveLineup called - deprecated, redirecting to validateAndSaveLineup');
-    return exports.validateAndSaveLineup.run(data, context);
-  });
-
-/**
  * Get available corps for current season with their values
- * FIXED: Uses correct database collection structure from existing code
+ * FIXED: Correct Admin SDK syntax
  */
 exports.getAvailableCorps = functions
   .runWith(getFunctionConfig('light'))
@@ -285,44 +269,54 @@ exports.getAvailableCorps = functions
     try {
       const db = admin.firestore();
       
-      // CRITICAL: Use dci-data collection (with hyphen, not underscore)
+      functions.logger.info(`Fetching corps for season: ${seasonId}`);
+      
+      // Get from dci-data collection
       const dciDataRef = db.collection('dci-data').doc(seasonId);
       const dciDataSnap = await dciDataRef.get();
 
-      if (!dciDataSnap.exists()) {
+      // CRITICAL FIX: .exists is a PROPERTY in Admin SDK, not a method
+      if (!dciDataSnap.exists) {
         functions.logger.error(`dci-data document not found for season: ${seasonId}`);
+        
+        // List available seasons for debugging
+        const dciDataCollection = await db.collection('dci-data').listDocuments();
+        const availableSeasons = dciDataCollection.map(doc => doc.id);
+        functions.logger.error(`Available seasons: ${availableSeasons.join(', ')}`);
         
         throw new functions.https.HttpsError(
           'not-found', 
-          `Season data not found. Season may not be initialized yet.`
+          `Season data not found for ${seasonId}. Available seasons: ${availableSeasons.join(', ')}`
         );
       }
 
       const dciData = dciDataSnap.data();
       
-      // CRITICAL: Corps data is in the 'corps' field as an array of objects
+      functions.logger.info(`DCI data keys: ${Object.keys(dciData).join(', ')}`);
+      
+      // Corps data is in the 'corps' field as an array of objects
       const corpsArray = dciData.corps || [];
 
       // Validate that we have corps data
       if (!corpsArray || corpsArray.length === 0) {
+        functions.logger.error(`No corps found in season ${seasonId}`);
         throw new functions.https.HttpsError(
           'not-found',
-          'No corps data available for this season.'
+          `No corps data available for season ${seasonId}. Please contact admin to initialize the season.`
         );
       }
 
       // Transform to expected format: array of { name, value }
-      // Corps objects have structure: { name, corpsName, value, pointCost, rank, sourceYear }
       const sortedCorps = corpsArray
         .map(corps => ({
           name: corps.name || corps.corpsName,
           value: corps.value || corps.pointCost || 0,
-          rank: corps.rank,
-          sourceYear: corps.sourceYear
+          rank: corps.rank || 0,
+          sourceYear: corps.sourceYear || 'unknown'
         }))
         .sort((a, b) => b.value - a.value);
 
-      functions.logger.info(`Retrieved ${sortedCorps.length} corps for season ${seasonId}`);
+      functions.logger.info(`Successfully retrieved ${sortedCorps.length} corps for season ${seasonId}`);
 
       return {
         success: true,
@@ -334,19 +328,22 @@ exports.getAvailableCorps = functions
     } catch (error) {
       functions.logger.error('Error fetching available corps:', error);
       
+      // Re-throw HttpsErrors
       if (error.code && error.code.startsWith('functions/')) {
         throw error;
       }
       
+      // Generic error with detailed message
       throw new functions.https.HttpsError(
         'internal', 
-        'Failed to fetch corps data: ' + error.message
+        `Failed to fetch corps data: ${error.message}`
       );
     }
   });
 
 /**
  * Validate lineup without saving (for preview)
+ * FIXED: Correct Admin SDK syntax
  */
 exports.validateLineupPreview = functions
   .runWith(getFunctionConfig('light'))
@@ -375,6 +372,19 @@ exports.validateLineupPreview = functions
 
     } catch (error) {
       functions.logger.error('Error validating lineup preview:', error);
-      throw new functions.https.HttpsError('internal', 'Validation failed.');
+      throw new functions.https.HttpsError('internal', 'Validation failed: ' + error.message);
     }
+  });
+
+/**
+ * LEGACY FUNCTION: Basic lineup save (redirects to new function)
+ * @deprecated Use validateAndSaveLineup instead
+ */
+exports.saveLineup = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
+    functions.logger.warn('saveLineup (legacy) called - redirecting to validateAndSaveLineup');
+    
+    // Call the new function
+    return exports.validateAndSaveLineup.run(data, context);
   });
