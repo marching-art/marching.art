@@ -4,16 +4,16 @@
 
 /* === CSS CUSTOM PROPERTIES FOR THEMING === */
 :root {
-  /* Light mode colors */
-  --color-background: #FFFFFF;
-  --color-surface: #F5F5F5;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #666666;
-  --color-accent: #E0E0E0;
-  --color-primary: #F7941D;
+  /* Light mode colors - RESTORED CREAM THEME */
+  --color-background: #FFF8F0;  /* Warm cream background */
+  --color-surface: #FFFFFF;     /* White for cards */
+  --color-text-primary: #2C1810; /* Dark brown text */
+  --color-text-secondary: #8B6F47; /* Medium brown */
+  --color-accent: #F5E6D3;      /* Light cream accent */
+  --color-primary: #F7941D;     /* Orange primary */
   --color-primary-dark: #D17A15;
-  --color-secondary: #4A90E2;
-  --color-secondary-dark: #3A7BC8;
+  --color-secondary: #8B4513;   /* Brown secondary */
+  --color-secondary-dark: #6B3410;
   --color-error: #E63946;
   --color-error-dark: #C62E39;
 }
@@ -99,7 +99,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(139, 111, 71, 0.3); /* Brown tint for light mode */
   border-radius: 4px;
 }
 
@@ -108,7 +108,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(139, 111, 71, 0.5);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
@@ -177,7 +177,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 0px, #e0e0e0 40px, #f0f0f0 80px);
+  background: linear-gradient(90deg, #F5E6D3 0px, #F0DCC0 40px, #F5E6D3 80px);
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s infinite;
 }
@@ -216,14 +216,6 @@ body {
   select,
   textarea {
     font-size: 16px !important;
-  }
-
-  /* Full width modals on mobile */
-  .modal {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
   }
 }
 
@@ -292,7 +284,7 @@ body {
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.2);
 }
 
 .dark .card-hover:hover {
@@ -304,9 +296,4 @@ body {
   transition-property: background-color, border-color, color, fill, stroke;
   transition-duration: 200ms;
   transition-timing-function: ease-in-out;
-}
-
-/* Disable transitions during theme changes for instant switching */
-.theme-transitioning * {
-  transition: none !important;
 }
