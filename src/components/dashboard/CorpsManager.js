@@ -129,7 +129,7 @@ const CorpsManager = () => {
   };
 
   const handleRetireCorps = async (corpsId) => {
-    if (!confirm('Are you sure you want to retire this corps? This action cannot be undone.')) {
+    if (!window.confirm(`Are you sure you want to retire ${corps.corpsName}?`)) {
       return;
     }
 

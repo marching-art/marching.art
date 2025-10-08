@@ -18,6 +18,7 @@ import {
   Music,
   AlertCircle,
   Info,
+  Loader2,
   X,
   Target
 } from 'lucide-react';

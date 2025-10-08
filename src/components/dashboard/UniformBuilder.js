@@ -9,6 +9,7 @@ import {
   Coins,
   Star,
   Save,
+  Loader2,
   Info,
   Target,
   Check,

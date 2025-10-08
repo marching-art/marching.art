@@ -41,33 +41,14 @@ const StaffManagement = ({ userProfile, activeCorps }) => {
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
+  // ALL HOOKS BEFORE ANY EARLY RETURNS
   useEffect(() => {
     if (currentUser && activeCorps) {
       loadStaffData();
     }
   }, [currentUser, activeCorps?.id, selectedCaption]);
 
-  // Early return AFTER all hooks
-  if (!activeCorps) {
-    return (
-      <div className="text-center py-12">
-        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-          No Corps Selected
-        </h3>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please create or select a corps to manage staff.
-        </p>
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    if (currentUser && activeCorps) {
-      loadStaffData();
-    }
-  }, [currentUser, activeCorps?.id, selectedCaption]);
-
+  // Function definitions
   const loadStaffData = async () => {
     setIsLoading(true);
     try {
@@ -311,8 +292,27 @@ const StaffManagement = ({ userProfile, activeCorps }) => {
   };
 
   // Filter owned staff for this corps
-  const assignedStaff = ownedStaff.filter(s => s.assignedTo?.corpsId === activeCorps.id);
-  const unassignedStaff = ownedStaff.filter(s => !s.assignedTo || s.assignedTo.corpsId !== activeCorps.id);
+  const assignedStaff = ownedStaff.filter(s => s.assignedTo?.corpsId === activeCorps?.id);
+  const unassignedStaff = ownedStaff.filter(s => !s.assignedTo || s.assignedTo.corpsId !== activeCorps?.id);
+
+  // EARLY RETURN AFTER ALL HOOKS
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to manage staff.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <LoadingScreen fullScreen={false} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -411,97 +411,93 @@ const StaffManagement = ({ userProfile, activeCorps }) => {
       </div>
 
       {/* Content */}
-      {isLoadingStatus ? (
-        <LoadingScreen fullScreen={false} />
-      ) : (
-        <>
-          {activeTab === 'owned' && (
-            <div className="space-y-6">
-              {/* Assigned Staff */}
-              {assignedStaff.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3 flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-500" />
-                    Assigned to {activeCorps.corpsName}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {assignedStaff.map(staff => (
-                      <StaffCard key={staff.id} staff={staff} type="owned" />
-                    ))}
-                  </div>
+      <>
+        {activeTab === 'owned' && (
+          <div className="space-y-6">
+            {/* Assigned Staff */}
+            {assignedStaff.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3 flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  Assigned to {activeCorps.corpsName}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {assignedStaff.map(staff => (
+                    <StaffCard key={staff.id} staff={staff} type="owned" />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Unassigned Staff */}
-              {unassignedStaff.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3">
-                    Available to Assign
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {unassignedStaff.map(staff => (
-                      <StaffCard key={staff.id} staff={staff} type="owned" />
-                    ))}
-                  </div>
+            {/* Unassigned Staff */}
+            {unassignedStaff.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3">
+                  Available to Assign
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {unassignedStaff.map(staff => (
+                    <StaffCard key={staff.id} staff={staff} type="owned" />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {ownedStaff.length === 0 && (
-                <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-theme border-2 border-dashed border-accent dark:border-accent-dark">
-                  <Users className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-                  <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-                    No Staff Yet
-                  </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
-                    Purchase staff members to boost your performance!
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('available')}
-                    className="bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white px-6 py-3 rounded-theme font-semibold inline-flex items-center gap-2"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Browse Available Staff
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            {ownedStaff.length === 0 && (
+              <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-theme border-2 border-dashed border-accent dark:border-accent-dark">
+                <Users className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+                <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                  No Staff Yet
+                </h3>
+                <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
+                  Purchase staff members to boost your performance!
+                </p>
+                <button
+                  onClick={() => setActiveTab('available')}
+                  className="bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white px-6 py-3 rounded-theme font-semibold inline-flex items-center gap-2"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  Browse Available Staff
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-          {activeTab === 'available' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableStaff.length > 0 ? (
-                availableStaff.map(staff => (
-                  <StaffCard key={staff.id} staff={staff} type="available" />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <Award className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    No staff available in this category
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+        {activeTab === 'available' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availableStaff.length > 0 ? (
+              availableStaff.map(staff => (
+                <StaffCard key={staff.id} staff={staff} type="available" />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <Award className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+                <p className="text-text-secondary dark:text-text-secondary-dark">
+                  No staff available in this category
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
-          {activeTab === 'marketplace' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {marketplaceListings.length > 0 ? (
-                marketplaceListings.map(listing => (
-                  <StaffCard key={listing.id} staff={listing} type="marketplace" />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <Trophy className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    No listings in the marketplace
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+        {activeTab === 'marketplace' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {marketplaceListings.length > 0 ? (
+              marketplaceListings.map(listing => (
+                <StaffCard key={listing.id} staff={listing} type="marketplace" />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <Trophy className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+                <p className="text-text-secondary dark:text-text-secondary-dark">
+                  No listings in the marketplace
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </>
 
       {/* Purchase Modal */}
       {showPurchaseModal && selectedStaff && (
