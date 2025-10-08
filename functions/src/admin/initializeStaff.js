@@ -1,12 +1,18 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const { dciHallOfFameStaff } = require("../data/dci_hall_of_fame");
-
 /**
  * Admin function to initialize the staff database with DCI Hall of Fame members
  * This should only be run once during setup or when adding new staff
+ * 
+ * Location: functions/src/admin/initializeStaff.js
  */
-exports.initializeStaffDatabase = functions.https.onCall(async (data, context) => {
+
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const { getFunctionConfig } = require("../../config");
+const { dciHallOfFameStaff } = require("../data/dci_hall_of_fame");
+
+exports.initializeStaffDatabase = functions
+  .runWith(getFunctionConfig('standard'))
+  .https.onCall(async (data, context) => {
   // Verify admin access
   if (!context.auth || !context.auth.token.admin) {
     throw new functions.https.HttpsError(
@@ -63,7 +69,9 @@ exports.initializeStaffDatabase = functions.https.onCall(async (data, context) =
 /**
  * Admin function to add a single staff member
  */
-exports.addStaffMember = functions.https.onCall(async (data, context) => {
+exports.addStaffMember = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
   // Verify admin access
   if (!context.auth || !context.auth.token.admin) {
     throw new functions.https.HttpsError(
@@ -130,7 +138,9 @@ exports.addStaffMember = functions.https.onCall(async (data, context) => {
 /**
  * Admin function to get staff statistics
  */
-exports.getStaffStatistics = functions.https.onCall(async (data, context) => {
+exports.getStaffStatistics = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
   // Verify admin access
   if (!context.auth || !context.auth.token.admin) {
     throw new functions.https.HttpsError(

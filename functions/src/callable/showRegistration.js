@@ -7,7 +7,7 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { DATA_NAMESPACE, getFunctionConfig } = require('../../config');
+const { DATA_NAMESPACE, getFunctionConfig } = require('../../config'); // FIXED: Changed from ../config
 
 /**
  * Register user's corps for a competition show

@@ -1,15 +1,14 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-
 /**
  * marching.art Admin Functions - COMPLETE VERSION
  * Comprehensive season administration tools for ultimate efficiency
  * Designed for scalability to 10,000+ users with minimal cost
+ * 
+ * Location: functions/src/callable/admin.js
  */
 
-// Configuration constants
-const DATA_NAMESPACE = 'marching-art';
-const ADMIN_USER_ID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const { DATA_NAMESPACE, ADMIN_USER_ID, getFunctionConfig } = require('../../config');
 
 // Season types - MUST match seasonScheduler.js
 // 6 off-seasons (49 days each) + 1 live season (70 days)
@@ -24,16 +23,13 @@ const SEASON_TYPES = [...SEASON_THEMES.map(t => t.toLowerCase()), 'live'];
  * Get comprehensive system statistics
  * FIXED: Inline admin verification to ensure CORS headers are set properly
  */
-exports.getSystemStats = functions.https.onCall(async (data, context) => {
-  // Inline admin verification for better error handling
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required.');
-  }
-  
-  if (context.auth.uid !== ADMIN_USER_ID) {
-    console.log(`Access denied for user: ${context.auth.uid}`);
-    throw new functions.https.HttpsError('permission-denied', 'Admin access required.');
-  }
+exports.getSystemStats = functions
+  .runWith(getFunctionConfig('standard'))
+  .https.onCall(async (data, context) => {
+    // Inline admin verification for better error handling
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Authentication required.');
+    }
   
   try {
     const db = admin.firestore();
@@ -273,7 +269,9 @@ exports.databaseAction = functions
 /**
  * User management actions
  */
-exports.userAction = functions.https.onCall(async (data, context) => {
+exports.userAction = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
   // Inline admin verification
   if (!context.auth || context.auth.uid !== ADMIN_USER_ID) {
     throw new functions.https.HttpsError('permission-denied', 'Admin access required');
@@ -308,7 +306,9 @@ exports.userAction = functions.https.onCall(async (data, context) => {
 /**
  * Staff management actions
  */
-exports.staffAction = functions.https.onCall(async (data, context) => {
+exports.staffAction = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
   // Inline admin verification
   if (!context.auth || context.auth.uid !== ADMIN_USER_ID) {
     throw new functions.https.HttpsError('permission-denied', 'Admin access required');

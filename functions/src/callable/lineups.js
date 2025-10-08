@@ -7,7 +7,7 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { DATA_NAMESPACE, getFunctionConfig } = require('../../config');
+const { DATA_NAMESPACE, getFunctionConfig } = require('../../config'); // FIXED: Changed from ../config
 
 // DCI Caption requirements - all 8 captions must be filled
 const REQUIRED_CAPTIONS = [

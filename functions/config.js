@@ -1,158 +1,117 @@
+'use strict';
+
 /**
- * marching.art Configuration - COMPLETE VERSION
- * Location: functions/config.js
+ * marching.art Configuration
+ * Centralized configuration for optimal cost efficiency and scalability to 10,000+ users
  * 
- * Centralized configuration for all backend functions
- * Optimized for 10,000+ users with minimal Firebase costs
+ * Location: functions/config.js
  */
 
-const functions = require('firebase-functions');
-
-// === CORE CONFIGURATION ===
+// === CORE CONSTANTS ===
 const DATA_NAMESPACE = 'marching-art';
 const ADMIN_USER_ID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
 
-// === GAME CONFIGURATION ===
+// === ENVIRONMENT DETECTION ===
+const ENVIRONMENT = process.env.NODE_ENV || 'development';
+const IS_PRODUCTION = ENVIRONMENT === 'production';
+const IS_DEVELOPMENT = ENVIRONMENT === 'development';
+
+// === PERFORMANCE OPTIMIZATION ===
+const PERFORMANCE_CONFIG = {
+  // Function timeout settings (cost vs reliability balance)
+  TIMEOUT_LIGHT: 60,        // 1 min - auth, simple queries
+  TIMEOUT_STANDARD: 180,    // 3 min - lineup validation, updates
+  TIMEOUT_HEAVY: 540,       // 9 min - bulk processing, season setup
+  
+  // Memory allocation (critical for cost control)
+  MEMORY_LIGHT: '256MB',     // Light operations
+  MEMORY_STANDARD: '512MB',  // Standard operations
+  MEMORY_HEAVY: '1GB',       // Heavy operations
+  
+  // Concurrency limits (prevent cost overruns)
+  MAX_INSTANCES: IS_PRODUCTION ? 100 : 10,
+  MIN_INSTANCES: IS_PRODUCTION ? 2 : 0,
+  
+  // Rate limiting
+  RATE_LIMIT_PER_USER: 100,
+  RATE_LIMIT_GLOBAL: 10000
+};
+
+// === GAME MECHANICS ===
 const GAME_CONFIG = {
-  // Required DCI Captions (all 8 must be filled)
-  REQUIRED_CAPTIONS: [
-    "GE1", "GE2", "Visual Proficiency", "Visual Analysis",
-    "Color Guard", "Brass", "Music Analysis", "Percussion"
-  ],
+  // Season structure
+  LIVE_SEASON_WEEKS: 10,
+  OFF_SEASON_WEEKS: 7,
+  TOTAL_ANNUAL_CYCLES: 6,
   
-  // Class-based point limits
+  // Corps and competition settings
+  MAX_CORPS_PER_SEASON: 25,
+  MAX_COMPETITIONS_PER_WEEK: 4,
+  REQUIRED_CAPTIONS: ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'],
+  
+  // Class point limits
   CLASS_POINT_LIMITS: {
-    "SoundSport": 90,
-    "A Class": 60,
-    "Open Class": 120,
-    "World Class": 150,
+    'SoundSport': 90,
+    'A Class': 60,
+    'Open Class': 120,
+    'World Class': 150
   },
   
-  // XP requirements to unlock classes
-  CLASS_XP_REQUIREMENTS: {
-    "SoundSport": 0,
-    "A Class": 500,
-    "Open Class": 2000,
-    "World Class": 5000,
+  // XP thresholds
+  XP_THRESHOLDS: {
+    'A Class': 500,
+    'Open Class': 2000,
+    'World Class': 5000
   },
   
-  // Initial resources for new users
-  STARTING_CORPSCOIN: 1000,
-  STARTING_XP: 0,
-  STARTING_LEVEL: 1,
+  // Currency rewards
+  CORPS_COIN_REWARDS: {
+    'SoundSport': 0,
+    'A Class': 25,
+    'Open Class': 50,
+    'World Class': 100
+  },
   
-  // Corps naming limits
-  MAX_CORPS_NAME_LENGTH: 50,
-  MAX_ALIAS_LENGTH: 20,
-  MAX_BIO_LENGTH: 500,
+  // Scoring parameters
+  MIN_SCORE: 60.0,
+  MAX_SCORE: 100.0,
+  SCORE_VARIANCE: 0.04,
   
-  // Staff limits
-  MAX_STAFF_PER_USER: 20,
-  STAFF_MARKETPLACE_FEE: 0.05, // 5% transaction fee
+  // Staff system
+  STAFF_BONUS_CAP: 0.3,
+  STAFF_EXPERIENCE_MULTIPLIER: 0.025
 };
 
 // === DCI SCORING SYSTEM ===
 const DCI_SCORING_SYSTEM = {
-  // Caption weights (total = 100 points)
-  CAPTION_WEIGHTS: {
-    "GE1": 20,  // General Effect 1
-    "GE2": 20,  // General Effect 2
-    "VP": 10,   // Visual Proficiency
-    "VA": 10,   // Visual Analysis
-    "CG": 10,   // Color Guard
-    "B": 10,    // Brass
-    "MA": 10,   // Music Analysis
-    "P": 10,    // Percussion
+  CAPTIONS: {
+    GE1: { maxScore: 20, weight: 1.0 },
+    GE2: { maxScore: 20, weight: 1.0 },
+    VP: { maxScore: 20, weight: 0.5 },
+    VA: { maxScore: 20, weight: 0.5 },
+    CG: { maxScore: 20, weight: 0.5 },
+    B: { maxScore: 20, weight: 0.5 },
+    MA: { maxScore: 20, weight: 0.5 },
+    P: { maxScore: 20, weight: 0.5 }
   },
-  
-  // Category totals
-  GE_TOTAL: 40,      // GE1 + GE2
-  VISUAL_TOTAL: 30,  // (VP + VA + CG) / 2
-  MUSIC_TOTAL: 30,   // (B + MA + P) / 2
-  TOTAL_POSSIBLE: 100,
-  
-  // Caption abbreviations for database storage
-  CAPTION_MAP: {
-    "GE1": "GE1",
-    "GE2": "GE2",
-    "Visual Proficiency": "VP",
-    "Visual Analysis": "VA",
-    "Color Guard": "CG",
-    "Brass": "B",
-    "Music Analysis": "MA",
-    "Percussion": "P"
-  }
+  MAX_TOTAL: 100
 };
 
-// === XP SYSTEM ===
+// === XP & CORPSCOIN CONFIGURATION ===
 const XP_CONFIG = {
-  // XP earned for various actions
-  ACTIONS: {
-    FIRST_LOGIN: 50,
-    COMPLETE_CORPS_SETUP: 100,
-    COMPLETE_FIRST_LINEUP: 150,
-    REGISTER_FOR_SHOW: 25,
-    COMPLETE_SHOW: 50,
-    WIN_SHOW: 100,
-    REACH_FINALS: 500,
-    WIN_FINALS: 1000,
-    JOIN_LEAGUE: 50,
-    WIN_LEAGUE_WEEK: 75,
-    WIN_LEAGUE_SEASON: 300,
-    HIRE_STAFF: 25,
-    TRADE_STAFF: 10,
-    CUSTOMIZE_UNIFORM: 20,
-    INVITE_FRIEND: 100,
-    DAILY_LOGIN: 10,
-  },
-  
-  // Level progression (XP needed for each level)
-  LEVEL_THRESHOLDS: [
-    0, 100, 250, 450, 700, 1000, 1400, 1850, 2350, 2900,
-    3500, 4150, 4850, 5600, 6400, 7250, 8150, 9100, 10100, 11150
-  ],
+  LINEUP_SAVE: 10,
+  SHOW_PARTICIPATION: 25,
+  WEEKLY_COMPLETION: 50,
+  SEASON_COMPLETION: 200,
+  STAFF_PURCHASE: 5,
+  MARKETPLACE_SALE: 15
 };
 
-// === CORPSCOIN ECONOMY ===
 const CORPSCOIN_CONFIG = {
-  // CorpsCoin earned for placements
-  SHOW_REWARDS: {
-    1: 500,   // 1st place
-    2: 350,   // 2nd place
-    3: 250,   // 3rd place
-    4: 200,
-    5: 175,
-    6: 150,
-    7: 125,
-    8: 100,
-    9: 75,
-    10: 50,
-  },
-  
-  // Finals rewards (additional)
-  FINALS_BONUS: {
-    1: 2000,
-    2: 1500,
-    3: 1200,
-    4: 1000,
-    5: 800,
-    6: 700,
-    7: 600,
-    8: 500,
-    9: 400,
-    10: 300,
-    11: 250,
-    12: 200,
-  },
-  
-  // Daily login rewards
-  DAILY_LOGIN_REWARD: 25,
-  WEEKLY_LOGIN_BONUS: 100,
-  
-  // Costs
-  STAFF_BASE_COST: 500,
-  UNIFORM_CUSTOMIZATION_COST: 200,
-  LEAGUE_CREATION_COST: 1000,
+  STARTING_AMOUNT: 1000,
+  WEEKLY_BONUS: 50,
+  SEASON_COMPLETION_BONUS: 500,
+  STAFF_RESALE_FEE: 0.1 // 10% marketplace fee
 };
 
 // === SEASON CONFIGURATION ===
@@ -164,11 +123,11 @@ const SEASON_CONFIG = {
   
   // Off-season themes
   SEASON_THEMES: [
-    'Overture', 
+    'Overture',
     'Allegro', 
-    'Adagio', 
-    'Scherzo', 
-    'Crescendo', 
+    'Adagio',
+    'Scherzo',
+    'Crescendo',
     'Finale'
   ],
   
@@ -176,8 +135,8 @@ const SEASON_CONFIG = {
   SHOW_TYPES: {
     REGIONAL: 'regional',
     PREMIER: 'premier',
-    FINALS: 'finals',
-  },
+    FINALS: 'finals'
+  }
 };
 
 // === SECURITY CONFIGURATION ===
@@ -187,7 +146,7 @@ const SECURITY_CONFIG = {
     LINEUP_SAVE: 10,
     STAFF_TRADE: 5,
     PROFILE_UPDATE: 10,
-    SHOW_REGISTRATION: 20,
+    SHOW_REGISTRATION: 20
   },
   
   // Anti-cheat thresholds
@@ -195,39 +154,8 @@ const SECURITY_CONFIG = {
   MAX_DAILY_CORPSCOIN: 10000,
   
   // Session management
-  MAX_SESSION_DURATION_HOURS: 24,
+  MAX_SESSION_DURATION_HOURS: 24
 };
-
-// === FIREBASE FUNCTION OPTIMIZATION ===
-function getFunctionConfig(type = 'default') {
-  const configs = {
-    // Light operations (< 1 second, < 128MB RAM)
-    light: {
-      timeoutSeconds: 30,
-      memory: '128MB',
-    },
-    
-    // Standard operations (1-5 seconds, 256MB RAM)
-    default: {
-      timeoutSeconds: 60,
-      memory: '256MB',
-    },
-    
-    // Heavy operations (5-30 seconds, 512MB RAM)
-    heavy: {
-      timeoutSeconds: 120,
-      memory: '512MB',
-    },
-    
-    // Scheduled jobs (up to 9 minutes, 1GB RAM)
-    scheduled: {
-      timeoutSeconds: 540,
-      memory: '1GB',
-    },
-  };
-  
-  return configs[type] || configs.default;
-}
 
 // === DATABASE PATHS ===
 const DB_PATHS = {
@@ -235,10 +163,11 @@ const DB_PATHS = {
   userProfile: (uid) => `artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`,
   userStaff: (uid, staffId) => `artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`,
   userNotifications: (uid) => `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
+  userCorps: (uid, corpsId) => `artifacts/${DATA_NAMESPACE}/users/${uid}/corps/${corpsId}`,
   
-  // Game data - FIXED: Use correct collection names from existing code
-  seasonData: (seasonId) => `dci-data/${seasonId}`,  // Changed from dci_data
-  historicalScores: (year) => `historical_scores/${year}`,  // Correct with underscore
+  // Game data
+  seasonData: (seasonId) => `dci-data/${seasonId}`,
+  historicalScores: (year) => `historical_scores/${year}`,
   
   // Leaderboards
   leaderboard: (seasonId) => `leaderboards/${seasonId}`,
@@ -262,38 +191,135 @@ const DB_PATHS = {
   // Schedules
   schedule: (seasonId) => `schedules/${seasonId}`,
   
-  // Finals rankings (used by seasonScheduler)
+  // Finals rankings
   finalRankings: (year) => `final_rankings/${year}`,
   
-  // Seasonal scores (pre-computed grids)
+  // Seasonal scores
   seasonalScores: (seasonId) => `seasonal_scores/${seasonId}`,
   
   // Fantasy recaps
-  fantasyRecaps: (seasonId) => `fantasy_recaps/${seasonId}`,
+  fantasyRecaps: (seasonId) => `fantasy_recaps/${seasonId}`
 };
+
+// === UTILITY FUNCTIONS ===
+
+/**
+ * Get function configuration based on operation type
+ */
+const getFunctionConfig = (type = 'standard') => {
+  const configs = {
+    light: {
+      timeoutSeconds: PERFORMANCE_CONFIG.TIMEOUT_LIGHT,
+      memory: PERFORMANCE_CONFIG.MEMORY_LIGHT,
+      maxInstances: Math.floor(PERFORMANCE_CONFIG.MAX_INSTANCES * 0.3)
+    },
+    standard: {
+      timeoutSeconds: PERFORMANCE_CONFIG.TIMEOUT_STANDARD,
+      memory: PERFORMANCE_CONFIG.MEMORY_STANDARD,
+      maxInstances: PERFORMANCE_CONFIG.MAX_INSTANCES
+    },
+    heavy: {
+      timeoutSeconds: PERFORMANCE_CONFIG.TIMEOUT_HEAVY,
+      memory: PERFORMANCE_CONFIG.MEMORY_HEAVY,
+      maxInstances: Math.floor(PERFORMANCE_CONFIG.MAX_INSTANCES * 0.2)
+    }
+  };
+  
+  return configs[type] || configs.standard;
+};
+
+/**
+ * Calculate DCI total score using official methodology
+ */
+const calculateDCITotalScore = (captionScores) => {
+  // General Effect: GE1 + GE2 (direct sum = 40 points max)
+  const generalEffect = (captionScores.GE1 || 0) + (captionScores.GE2 || 0);
+  
+  // Visual Total: (VP + VA + CG) / 2 (30 points max)
+  const visualTotal = ((captionScores.VP || 0) + (captionScores.VA || 0) + (captionScores.CG || 0)) / 2;
+  
+  // Music Total: (B + MA + P) / 2 (30 points max)
+  const musicTotal = ((captionScores.B || 0) + (captionScores.MA || 0) + (captionScores.P || 0)) / 2;
+  
+  // Total DCI score (100 points max)
+  return generalEffect + visualTotal + musicTotal;
+};
+
+/**
+ * Validate environment configuration
+ */
+const validateConfig = () => {
+  const requiredEnvVars = ['NODE_ENV'];
+  const missing = requiredEnvVars.filter(envVar => !process.env[envVar]);
+  
+  if (missing.length > 0) {
+    console.warn(`Missing environment variables: ${missing.join(', ')}`);
+  }
+  
+  // Validate configuration consistency
+  if (PERFORMANCE_CONFIG.MAX_INSTANCES < PERFORMANCE_CONFIG.MIN_INSTANCES) {
+    throw new Error('MAX_INSTANCES must be greater than MIN_INSTANCES');
+  }
+  
+  return true;
+};
+
+/**
+ * Check if user is admin
+ */
+const isAdmin = (uid) => {
+  return uid === ADMIN_USER_ID;
+};
+
+/**
+ * Get environment info
+ */
+const getEnvironment = () => {
+  return ENVIRONMENT;
+};
+
+// Run validation on import
+try {
+  validateConfig();
+} catch (error) {
+  console.error('Configuration validation failed:', error);
+}
 
 // === EXPORTS ===
 module.exports = {
-  // Core
+  // Core constants
   DATA_NAMESPACE,
   ADMIN_USER_ID,
   
-  // Game configuration
+  // Environment flags
+  ENVIRONMENT,
+  IS_PRODUCTION,
+  IS_DEVELOPMENT,
+  
+  // Configuration objects
+  PERFORMANCE_CONFIG,
   GAME_CONFIG,
   DCI_SCORING_SYSTEM,
   XP_CONFIG,
   CORPSCOIN_CONFIG,
   SEASON_CONFIG,
   SECURITY_CONFIG,
-  
-  // Utilities
-  getFunctionConfig,
   DB_PATHS,
   
-  // Helper functions
-  isAdmin: (uid) => uid === ADMIN_USER_ID,
+  // Utility functions
+  getFunctionConfig,
+  calculateDCITotalScore,
+  validateConfig,
+  isAdmin,
+  getEnvironment,
+  
+  // Convenience getters
+  isProduction: () => IS_PRODUCTION,
+  isDevelopment: () => IS_DEVELOPMENT,
+  getNamespace: () => DATA_NAMESPACE,
+  getAdminUserId: () => ADMIN_USER_ID,
   
   // Version info
   CONFIG_VERSION: '1.0.0',
-  LAST_UPDATED: '2025-01-07',
+  LAST_UPDATED: '2025-01-08'
 };

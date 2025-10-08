@@ -66,7 +66,8 @@ const NewUserSetup = ({ profile, onComplete }) => {
       const result = await updateCorpsInfo({ 
         corpsName: corpsName.trim(), 
         alias: alias.trim(),
-        location: location.trim() || null
+        location: location.trim() || null,
+        corpsClass: 'SoundSport'
       });
       
       if (result.data.success) {

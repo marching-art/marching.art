@@ -10,6 +10,11 @@
 
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
+const corps = require('./src/callable/corps');
+exports.createCorps = corps.createCorps;
+exports.updateCorps = corps.updateCorps;
+exports.getUserCorps = corps.getUserCorps;
+exports.retireCorps = corps.retireCorps;
 
 // Initialize Firebase Admin
 admin.initializeApp();
