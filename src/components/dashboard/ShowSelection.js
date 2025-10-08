@@ -218,8 +218,11 @@ const ShowSelection = () => {
   const canRegisterForShow = (show) => {
     if (!profile || !profile.corps) return false;
     
+    // FIX: Check both 'allowedClasses' (from backend) and 'classes' (legacy)
+    const showClasses = show.allowedClasses || show.classes;
+    
     // Check if corps class matches show requirements
-    if (show.allowedClasses && !show.allowedClasses.includes(profile.corps.corpsClass)) {
+    if (showClasses && !showClasses.includes(profile.corps.corpsClass)) {
       return false;
     }
     
@@ -397,11 +400,16 @@ const ShowSelection = () => {
                         <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
                           {showName}
                         </h3>
-                        {isRegistered && (
-                          <span className="flex items-center gap-1 text-sm bg-green-500 bg-opacity-20 text-green-400 px-2 py-1 rounded-full">
-                            <CheckCircle className="w-3 h-3" />
-                            Registered
-                          </span>
+                        {!canRegister && !isRegistered && (
+                          <div className="flex items-center gap-2 text-orange-500 text-sm">
+                            <AlertCircle className="w-4 h-4" />
+                            <span>
+                              {(show.allowedClasses || show.classes) && 
+                              !(show.allowedClasses || show.classes).includes(profile?.corps?.corpsClass)
+                                ? 'Your class cannot participate in this show'
+                                : 'Registration closed for this show'}
+                            </span>
+                          </div>
                         )}
                       </div>
                       
@@ -414,12 +422,25 @@ const ShowSelection = () => {
                           <MapPin className="w-4 h-4" />
                           <span>{show.location || 'Location TBA'}</span>
                         </div>
-                        {show.allowedClasses && (
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            <span>Classes: {show.allowedClasses.join(', ')}</span>
-                          </div>
-                        )}
+                        {(show.allowedClasses || show.classes) && (
+                        <div className="flex gap-2 mb-3">
+                          {(show.allowedClasses || show.classes).map(cls => {
+                            const isMyClass = profile?.corps?.corpsClass === cls;
+                            return (
+                              <span 
+                                key={cls}
+                                className={`text-xs px-2 py-1 rounded-full ${
+                                  isMyClass
+                                    ? 'bg-primary dark:bg-primary-dark bg-opacity-20 text-primary dark:text-primary-dark font-semibold'
+                                    : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
+                                }`}
+                              >
+                                {cls}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                       </div>
                     </div>
                   </div>
@@ -542,7 +563,9 @@ const ShowSelection = () => {
                     <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Eligible Classes</h3>
                   </div>
                   <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {selectedShow.allowedClasses ? selectedShow.allowedClasses.join(', ') : 'All Classes'}
+                    {(selectedShow.allowedClasses || selectedShow.classes) 
+                      ? (selectedShow.allowedClasses || selectedShow.classes).join(', ') 
+                      : 'All Classes'}
                   </p>
                 </div>
               </div>
