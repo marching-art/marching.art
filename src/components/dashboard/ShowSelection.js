@@ -4,6 +4,7 @@ import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firesto
 import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '../../context/AuthContext';
 import { useUserStore } from '../../store/userStore';
+import { useDataStore } from '../../store/dataStore'; // ADD THIS
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
@@ -25,6 +26,13 @@ import {
 const ShowSelection = () => {
   const { currentUser } = useAuth();
   const profile = useUserStore((state) => state.profile);
+  
+  // RENAMED: Use destructured functions from data store with aliases to avoid conflicts
+  const { 
+    fetchCurrentSeason: getCachedSeason, 
+    fetchSchedule: getCachedSchedule 
+  } = useDataStore();
+  
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -35,39 +43,36 @@ const ShowSelection = () => {
   const [selectedShow, setSelectedShow] = useState(null);
 
   useEffect(() => {
-    fetchScheduleData();
+    loadScheduleData();
   }, []);
 
-  const fetchScheduleData = async () => {
+  // RENAMED: Changed function name to avoid conflicts
+  const loadScheduleData = async () => {
     try {
       setLoading(true);
 
-      // Get current season
-      const seasonDoc = await getDoc(doc(db, 'game-settings/current'));
-      if (!seasonDoc.exists()) {
+      // OPTIMIZED: Use cached season data
+      const seasonData = await getCachedSeason();
+      if (!seasonData) {
         toast.error('No active season found');
         setLoading(false);
         return;
       }
 
-      const seasonData = seasonDoc.data();
       const seasonId = seasonData.seasonId || seasonData.currentSeasonId;
       setCurrentSeason(seasonData);
 
       console.log('Season ID:', seasonId);
 
-      // Get schedule for this season
-      const scheduleDoc = await getDoc(doc(db, 'schedules', seasonId));
+      // OPTIMIZED: Use cached schedule data
+      const scheduleData = await getCachedSchedule(seasonId);
       
-      if (!scheduleDoc.exists()) {
+      if (!scheduleData) {
         console.error('No schedule found for season:', seasonId);
         toast.error('Schedule not available for this season');
         setLoading(false);
         return;
       }
-
-      const scheduleData = scheduleDoc.data();
-      console.log('Schedule data:', scheduleData);
 
       // CRITICAL FIX: The database has "competitions" not "shows"
       // Transform the data structure to match what the component expects
@@ -120,56 +125,58 @@ const ShowSelection = () => {
     }
 
     if (!profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps') {
-      toast.error('Please set up your corps before registering for shows');
+      toast.error('Please complete your corps setup first');
       return;
     }
 
     try {
       setRegistering(true);
 
-      // Call cloud function to register for show
-      const registerFunction = httpsCallable(functions, 'registerForShow');
-      const result = await registerFunction({
+      const registerForShow = httpsCallable(functions, 'registerForShow');
+      const result = await registerForShow({
         showId: show.id,
-        seasonId: currentSeason.activeSeasonId
+        seasonId: currentSeason.seasonId || currentSeason.currentSeasonId
       });
 
       if (result.data.success) {
-        toast.success(`Successfully registered for ${show.eventName}!`);
+        toast.success(result.data.message);
         setRegisteredShows([...registeredShows, show.id]);
-        setShowDetailModal(false);
-      } else {
-        toast.error(result.data.message || 'Registration failed');
+        
+        // Award XP notification
+        if (result.data.xpAwarded) {
+          toast.success(`+${result.data.xpAwarded} XP!`, { icon: '⭐' });
+        }
       }
     } catch (error) {
       console.error('Error registering for show:', error);
-      toast.error('Failed to register for show');
+      toast.error(error.message || 'Failed to register for show');
     } finally {
       setRegistering(false);
     }
   };
 
   const handleUnregisterFromShow = async (show) => {
+    if (!currentUser) {
+      toast.error('Please log in first');
+      return;
+    }
+
     try {
       setRegistering(true);
 
-      // Call cloud function to unregister from show
-      const unregisterFunction = httpsCallable(functions, 'unregisterFromShow');
-      const result = await unregisterFunction({
+      const unregisterFromShow = httpsCallable(functions, 'unregisterFromShow');
+      const result = await unregisterFromShow({
         showId: show.id,
-        seasonId: currentSeason.activeSeasonId
+        seasonId: currentSeason.seasonId || currentSeason.currentSeasonId
       });
 
       if (result.data.success) {
-        toast.success(`Unregistered from ${show.eventName}`);
+        toast.success(result.data.message);
         setRegisteredShows(registeredShows.filter(id => id !== show.id));
-        setShowDetailModal(false);
-      } else {
-        toast.error(result.data.message || 'Failed to unregister');
       }
     } catch (error) {
       console.error('Error unregistering from show:', error);
-      toast.error('Failed to unregister from show');
+      toast.error(error.message || 'Failed to unregister from show');
     } finally {
       setRegistering(false);
     }
@@ -212,7 +219,7 @@ const ShowSelection = () => {
     if (!profile || !profile.corps) return false;
     
     // Check if corps class matches show requirements
-    if (show.classes && !show.classes.includes(profile.corps.corpsClass)) {
+    if (show.allowedClasses && !show.allowedClasses.includes(profile.corps.corpsClass)) {
       return false;
     }
     
@@ -345,16 +352,15 @@ const ShowSelection = () => {
                 onClick={() => setSelectedWeek(weekNum)}
                 className={`flex-shrink-0 px-4 py-3 rounded-theme font-medium transition-all ${
                   selectedWeek === weekNum
-                    ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg scale-105'
-                    : 'bg-background dark:bg-background-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
+                    ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
+                    : 'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-primary hover:bg-opacity-20 dark:hover:bg-primary-dark dark:hover:bg-opacity-20'
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-lg font-bold">Week {weekNum}</div>
+                  <div className="text-lg">Week {weekNum}</div>
                   {registeredCount > 0 && (
-                    <div className="text-xs mt-1 flex items-center justify-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      {registeredCount}
+                    <div className="text-xs mt-1 opacity-80">
+                      {registeredCount} registered
                     </div>
                   )}
                 </div>
@@ -364,7 +370,7 @@ const ShowSelection = () => {
         </div>
       </div>
 
-      {/* Shows for Selected Week */}
+      {/* Shows List */}
       {currentWeekShows && currentWeekShows.length > 0 ? (
         <div className="space-y-4">
           {currentWeekShows.map((show, index) => {
@@ -425,9 +431,10 @@ const ShowSelection = () => {
                           e.stopPropagation();
                           handleUnregisterFromShow(show);
                         }}
-                        className="bg-red-500 bg-opacity-20 text-red-400 px-4 py-2 rounded-theme font-medium hover:bg-opacity-30 transition-colors"
+                        disabled={registering}
+                        className="bg-red-500 bg-opacity-20 text-red-400 px-4 py-2 rounded-theme font-medium hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Unregister
+                        {registering ? 'Processing...' : 'Unregister'}
                       </button>
                     ) : (
                       <button
@@ -437,14 +444,14 @@ const ShowSelection = () => {
                             handleRegisterForShow(show);
                           }
                         }}
-                        disabled={!canRegister}
-                        className={`px-4 py-2 rounded-theme font-medium transition-colors ${
+                        disabled={!canRegister || registering}
+                        className={`px-4 py-2 rounded-theme font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           canRegister
                             ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90'
-                            : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark opacity-50 cursor-not-allowed'
+                            : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
                         }`}
                       >
-                        {canRegister ? 'Register' : 'Not Available'}
+                        {registering ? 'Processing...' : (canRegister ? 'Register' : 'Not Available')}
                       </button>
                     )}
                   </div>
@@ -564,9 +571,10 @@ const ShowSelection = () => {
                       handleRegisterForShow(selectedShow);
                       setShowDetailModal(false);
                     }}
-                    className="px-6 py-2 rounded-theme bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90 transition-opacity"
+                    disabled={registering}
+                    className="px-6 py-2 rounded-theme bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Register for Show
+                    {registering ? 'Processing...' : 'Register for Show'}
                   </button>
                 )}
                 {isShowRegistered(selectedShow.id) && (
@@ -575,9 +583,10 @@ const ShowSelection = () => {
                       handleUnregisterFromShow(selectedShow);
                       setShowDetailModal(false);
                     }}
-                    className="px-6 py-2 rounded-theme bg-red-500 bg-opacity-20 text-red-400 hover:bg-opacity-30 transition-colors"
+                    disabled={registering}
+                    className="px-6 py-2 rounded-theme bg-red-500 bg-opacity-20 text-red-400 hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Unregister from Show
+                    {registering ? 'Processing...' : 'Unregister from Show'}
                   </button>
                 )}
               </div>

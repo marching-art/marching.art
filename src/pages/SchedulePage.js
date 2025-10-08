@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { useDataStore } from '../store/dataStore'; // ADD THIS
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
@@ -24,6 +25,13 @@ import LoadingScreen from '../components/common/LoadingScreen';
 
 const SchedulePage = () => {
   const { currentUser } = useAuth();
+  
+  // RENAMED: Use destructured functions with aliases
+  const { 
+    fetchCurrentSeason: getCachedSeason, 
+    fetchSchedule: getCachedSchedule 
+  } = useDataStore();
+  
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState({});
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -35,6 +43,99 @@ const SchedulePage = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'myCorps', 'upcoming', 'completed'
   const [userCorps, setUserCorps] = useState([]);
 
+  useEffect(() => {
+    loadScheduleAndParticipants();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserCorpsData();
+    }
+  }, [currentUser]);
+
+  const fetchUserCorpsData = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
+      const profileSnap = await getDoc(profileRef);
+      
+      if (profileSnap.exists()) {
+        const profile = profileSnap.data();
+        setUserCorps(profile.corps ? [profile.corps] : []);
+      }
+    } catch (error) {
+      console.error('Error fetching user corps:', error);
+    }
+  };
+
+  // RENAMED: Changed function name to avoid conflicts
+  const loadScheduleAndParticipants = async () => {
+    try {
+      setLoading(true);
+      
+      // OPTIMIZED: Use cached data
+      const seasonData = await getCachedSeason();
+      if (!seasonData) {
+        setError('No active season found');
+        setLoading(false);
+        return;
+      }
+      
+      setCurrentSeason(seasonData);
+      const seasonId = seasonData.activeSeasonId || seasonData.seasonId;
+      
+      const schedule = await getCachedSchedule(seasonId);
+      if (!schedule) {
+        setError('Schedule not available');
+        setLoading(false);
+        return;
+      }
+      
+      setScheduleData(schedule);
+      
+      // Set current week
+      const currentWeek = getCurrentWeek(schedule);
+      setSelectedWeek(currentWeek);
+      
+      // Fetch participants with LIMIT to prevent excessive reads
+      await loadParticipantsData(seasonId);
+      
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      setError('Failed to load schedule');
+      toast.error('Failed to load schedule');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadParticipantsData = async (seasonId) => {
+    try {
+      // CRITICAL: Add limit to participants query
+      const participantsQuery = query(
+        collection(db, 'participants'),
+        where('seasonId', '==', seasonId),
+        limit(500) // Limit to prevent excessive reads
+      );
+      
+      const participantsSnap = await getDocs(participantsQuery);
+      const participantsData = {};
+      
+      participantsSnap.forEach(doc => {
+        const data = doc.data();
+        if (!participantsData[data.showId]) {
+          participantsData[data.showId] = [];
+        }
+        participantsData[data.showId].push(data);
+      });
+      
+      setParticipantsMap(participantsData);
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+    }
+  };
+  
   useEffect(() => {
     fetchSchedule();
   }, []);

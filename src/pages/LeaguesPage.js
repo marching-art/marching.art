@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit 
-} from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useDataStore } from '../store/dataStore'; // ADD THIS
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -38,45 +30,37 @@ import LoadingScreen from '../components/common/LoadingScreen';
 const LeaguesPage = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  
+  // RENAMED: Use destructured function with alias
+  const { fetchLeagues: getCachedLeagues } = useDataStore();
+  
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('browse'); // 'browse', 'myLeagues', 'create'
+  const [activeTab, setActiveTab] = useState('browse');
   const [leagues, setLeagues] = useState([]);
   const [myLeagues, setMyLeagues] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // 'all', 'public', 'private', 'competitive'
-  const [sortBy, setSortBy] = useState('members'); // 'members', 'rating', 'recent'
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedLeague, setSelectedLeague] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  // ... other state
 
   useEffect(() => {
-    fetchLeagues();
+    loadLeaguesData();
   }, [currentUser]);
 
-  const fetchLeagues = async () => {
+  // RENAMED: Changed function name
+  const loadLeaguesData = async () => {
     try {
       setLoading(true);
 
-      // Fetch all public leagues
-      const leaguesRef = collection(db, 'leagues');
-      const leaguesSnap = await getDocs(leaguesRef);
-      
-      const allLeagues = [];
-      const userLeagues = [];
+      // OPTIMIZED: Use cached leagues with pagination
+      const cachedLeagues = await getCachedLeagues(50, false);
 
-      leaguesSnap.forEach(doc => {
-        const leagueData = { id: doc.id, ...doc.data() };
-        allLeagues.push(leagueData);
-        
-        if (currentUser && leagueData.members && leagueData.members.includes(currentUser.uid)) {
-          userLeagues.push(leagueData);
-        }
-      });
+      // Filter user's leagues from the cached data
+      const userLeagues = currentUser 
+        ? cachedLeagues.filter(league => league.members && league.members.includes(currentUser.uid))
+        : [];
 
       // Sort leagues by member count (default)
-      allLeagues.sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0));
+      cachedLeagues.sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0));
 
-      setLeagues(allLeagues);
+      setLeagues(cachedLeagues);
       setMyLeagues(userLeagues);
     } catch (error) {
       console.error('Error fetching leagues:', error);

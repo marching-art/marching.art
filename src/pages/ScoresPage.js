@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useDataStore } from '../store/dataStore'; // ADD THIS
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { 
   Calendar, 
@@ -20,6 +21,12 @@ import toast from 'react-hot-toast';
 import LoadingScreen from '../components/common/LoadingScreen';
 
 const ScoresPage = () => {
+  // RENAMED: Use destructured functions with aliases
+  const { 
+    fetchCurrentSeason: getCachedSeason, 
+    fetchRecaps: getCachedRecaps 
+  } = useDataStore();
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -32,35 +39,33 @@ const ScoresPage = () => {
   const [selectedCorps, setSelectedCorps] = useState(null);
 
   useEffect(() => {
-    fetchScores();
+    loadScoresData();
   }, []);
 
-  const fetchScores = async () => {
+  // RENAMED: Changed function name
+  const loadScoresData = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Get current season
-      const seasonDoc = await getDoc(doc(db, 'game-settings', 'current'));
+      // OPTIMIZED: Use cached season data
+      const seasonData = await getCachedSeason();
       
-      if (!seasonDoc.exists()) {
+      if (!seasonData) {
         setError('No active season found');
         return;
       }
 
-      const seasonData = seasonDoc.data();
       setCurrentSeason(seasonData);
 
-      // Get recaps for current season
-      const recapsDoc = await getDoc(doc(db, 'fantasy_recaps', seasonData.activeSeasonId));
+      // OPTIMIZED: Use cached recaps data
+      const recapsData = await getCachedRecaps(seasonData.activeSeasonId);
       
-      if (!recapsDoc.exists()) {
+      if (!recapsData || recapsData.length === 0) {
         setError('No scores available yet');
         return;
       }
 
-      const recapsData = recapsDoc.data().recaps || [];
-      
       // Sort by day (most recent first)
       recapsData.sort((a, b) => b.offSeasonDay - a.offSeasonDay);
       
