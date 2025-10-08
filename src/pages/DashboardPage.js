@@ -170,45 +170,7 @@ const DashboardPage = () => {
 
   const activeCorps = getActiveCorps();
 
-  useEffect(() => {
-    if (currentUser && !hasFetched) {
-      fetchUserProfile(currentUser.uid);
-      setHasFetched(true);
-    }
-  }, [currentUser, hasFetched, fetchUserProfile]);
-
-  const handleSetupComplete = async () => {
-    if (currentUser) {
-      setHasFetched(false);
-      await fetchUserProfile(currentUser.uid);
-    }
-  };
-
-  if (!currentUser) {
-    return <LoadingScreen fullScreen={false} />;
-  }
-
-  if (!profile && !hasFetched) {
-    return <LoadingScreen fullScreen={false} />;
-  }
-
-  // Show skeleton while loading
-  if (!profile) {
-    return <DashboardSkeleton />;
-  }
-
-  const needsSetup = !profile.hasCompletedSetup || corpsList.length === 0;
-
-  if (needsSetup) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Suspense fallback={<LoadingScreen fullScreen={false} />}>
-          <NewUserSetup profile={profile} onComplete={handleSetupComplete} />
-        </Suspense>
-      </div>
-    );
-  }
-
+  // Define tabs before any logic that uses them
   const dashboardTabs = [
     { 
       id: 'corps', 
@@ -264,11 +226,50 @@ const DashboardPage = () => {
     tab.showAlways || !tab.requiresCorps || (tab.requiresCorps && activeCorps)
   );
 
+  // ALL HOOKS MUST BE BEFORE ANY EARLY RETURNS
+  useEffect(() => {
+    if (currentUser && !hasFetched) {
+      fetchUserProfile(currentUser.uid);
+      setHasFetched(true);
+    }
+  }, [currentUser, hasFetched, fetchUserProfile]);
+
   useEffect(() => {
     if (!availableTabs.find(t => t.id === activeTab)) {
       setActiveTab('corps');
     }
   }, [activeCorps, activeTab, availableTabs]);
+
+  // NOW we can do early returns after all hooks
+  if (!currentUser) {
+    return <LoadingScreen fullScreen={false} />;
+  }
+
+  if (!profile && !hasFetched) {
+    return <LoadingScreen fullScreen={false} />;
+  }
+
+  // Show skeleton while loading
+  if (!profile) {
+    return <DashboardSkeleton />;
+  }
+
+  const needsSetup = !profile.hasCompletedSetup || corpsList.length === 0;
+
+  if (needsSetup) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <Suspense fallback={<LoadingScreen fullScreen={false} />}>
+          <NewUserSetup profile={profile} onComplete={async () => {
+            if (currentUser) {
+              setHasFetched(false);
+              await fetchUserProfile(currentUser.uid);
+            }
+          }} />
+        </Suspense>
+      </div>
+    );
+  }
 
   const ActiveComponent = availableTabs.find(tab => tab.id === activeTab)?.component;
 

@@ -4,6 +4,7 @@ import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firesto
 import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../common/LoadingScreen';
 import { 
   Calendar, 
   MapPin, 
@@ -17,7 +18,6 @@ import {
   Music,
   AlertCircle,
   Info,
-  Loader2,
   X,
   Target
 } from 'lucide-react';
@@ -34,20 +34,11 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedShow, setSelectedShow] = useState(null);
 
-  // Check if we have an active corps
-  if (!activeCorps) {
-    return (
-      <div className="text-center py-12">
-        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-          No Corps Selected
-        </h3>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please create or select a corps to register for shows.
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (activeCorps?.id) {
+      loadScheduleData();
+    }
+  }, [activeCorps?.id]);
 
   useEffect(() => {
     loadScheduleData();
@@ -137,7 +128,7 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
 
     const seasonId = currentSeason.activeSeasonId || currentSeason.currentSeasonId || '2025';
 
-    if (!confirm(`Are you sure you want to unregister from ${show.eventName}?`)) {
+    if (!window.confirm(`Are you sure you want to unregister from ${show.eventName}?`)) {
       return;
     }
 
@@ -203,6 +194,20 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
     
     return true;
   };
+
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to register for shows.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <LoadingScreen fullScreen={false} />;

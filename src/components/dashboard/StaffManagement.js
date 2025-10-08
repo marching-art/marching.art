@@ -3,6 +3,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../common/LoadingScreen';
 import { 
   Award,
   Users,
@@ -10,7 +11,6 @@ import {
   Star,
   ShoppingBag,
   X,
-  Loader2,
   Trophy,
   Info,
   Target,
@@ -37,11 +37,17 @@ const StaffManagement = ({ userProfile, activeCorps }) => {
   const [marketplaceListings, setMarketplaceListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCaption, setSelectedCaption] = useState('all');
-  const [activeTab, setActiveTab] = useState('owned'); // owned, available, marketplace
+  const [activeTab, setActiveTab] = useState('owned');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
-  // Check if we have an active corps
+  useEffect(() => {
+    if (currentUser && activeCorps) {
+      loadStaffData();
+    }
+  }, [currentUser, activeCorps?.id, selectedCaption]);
+
+  // Early return AFTER all hooks
   if (!activeCorps) {
     return (
       <div className="text-center py-12">

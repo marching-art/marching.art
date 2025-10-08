@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../common/LoadingScreen';
 import { 
   Save, 
   RotateCcw, 
@@ -11,7 +12,6 @@ import {
   Shield,
   AlertCircle,
   CheckCircle2,
-  Loader2,
   Target,
   ChevronDown,
   ChevronUp
@@ -53,21 +53,7 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
     pointsRemaining: 0
   });
 
-  if (!activeCorps) {
-    return (
-      <div className="text-center py-12">
-        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-          No Corps Selected
-        </h3>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please create or select a corps to manage captions.
-        </p>
-      </div>
-    );
-  }
-
-  const corpsClass = activeCorps.corpsClass;
+  const corpsClass = activeCorps?.corpsClass;
   const pointLimit = CLASS_POINT_LIMITS[corpsClass] || 90;
 
   useEffect(() => {
@@ -217,11 +203,25 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
   };
 
   const handleResetLineup = () => {
-    if (confirm('Reset lineup to last saved version?')) {
+    if (window.confirm('Reset lineup to last saved version?')) {
       setLineup(originalLineup);
       toast.success('Lineup reset');
     }
   };
+
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to manage captions.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <LoadingScreen fullScreen={false} />;
@@ -258,7 +258,12 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <img 
+                    src="/favicon-32x32.png" 
+                    alt="Saving" 
+                    className="w-4 h-4 animate-spin"
+                    style={{ animationDuration: '1s' }}
+                  />
                   Saving
                 </>
               ) : (

@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebaseConfig';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../common/LoadingScreen';
 import { 
   Palette, 
   Lock, 
   Coins,
   Star,
   Save,
-  Loader2,
   Info,
   Target,
   Check,
@@ -73,20 +73,6 @@ const UniformBuilder = ({ userProfile, activeCorps }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('jacket');
 
-  if (!activeCorps) {
-    return (
-      <div className="text-center py-12">
-        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-          No Corps Selected
-        </h3>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please create or select a corps to design uniforms.
-        </p>
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (activeCorps?.uniforms) {
       const mergedUniform = {
@@ -150,7 +136,7 @@ const UniformBuilder = ({ userProfile, activeCorps }) => {
   const handlePurchaseFeature = async (feature) => {
     const requirement = FEATURE_REQUIREMENTS[feature];
     
-    if (!confirm(`Purchase ${feature} for ${requirement.corpsCoin} CorpsCoin?`)) {
+    if (!window.confirm(`Purchase ${feature} for ${requirement.corpsCoin} CorpsCoin?`)) {
       return;
     }
 
@@ -262,6 +248,20 @@ const UniformBuilder = ({ userProfile, activeCorps }) => {
     { id: 'accessories', label: 'Extras', icon: Sparkles }
   ];
 
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to design uniforms.
+        </p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       {/* Compact Header */}
