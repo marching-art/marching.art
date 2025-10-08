@@ -1,96 +1,140 @@
 import React, { useState } from 'react';
 import { Trophy, Users, Star, Award } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
-import LoadingScreen from '../components/common/LoadingScreen';
 
 const HomePage = () => {
-  const { currentUser } = useAuth();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('signup');
-
-  // If user is already logged in, show loading while redirecting
-  if (currentUser) {
-    return <LoadingScreen message="Loading your dashboard..." />;
-  }
-
-  const openSignUpModal = () => {
-    setAuthModalMode('signup');
-    setIsAuthModalOpen(true);
-  };
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   return (
     <>
-      <div className="space-y-12">
+      <div className="max-w-6xl mx-auto space-y-16 py-8">
         {/* Hero Section */}
-        <div className="text-center py-16">
-          <h1 className="text-6xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
-            Welcome to <span className="text-primary dark:text-primary-dark">marching.art</span>
+        <div className="text-center space-y-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary dark:text-text-primary-dark">
+            Welcome to marching.art
           </h1>
-          <p className="text-xl text-text-secondary dark:text-text-secondary-dark mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-text-secondary dark:text-text-secondary-dark max-w-3xl mx-auto">
             The ultimate fantasy drum corps game where legends are made and championships are won.
           </p>
-          <button 
-            onClick={openSignUpModal}
-            className="inline-block bg-primary dark:bg-primary-dark hover:bg-secondary dark:hover:bg-secondary-dark text-on-primary dark:text-on-primary-dark font-bold py-4 px-8 rounded-theme text-lg transition-all shadow-theme hover:shadow-glow"
-          >
-            Start Your Journey
-          </button>
-        </div>
-
-        {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme text-center shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-            <Trophy className="w-12 h-12 mx-auto text-primary dark:text-primary-dark mb-4" />
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">Compete</h3>
-            <p className="text-text-secondary dark:text-text-secondary-dark">Build your dream corps and compete in seasons</p>
-          </div>
-          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme text-center shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-            <Users className="w-12 h-12 mx-auto text-primary dark:text-primary-dark mb-4" />
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">Manage</h3>
-            <p className="text-text-secondary dark:text-text-secondary-dark">Hire legendary staff and optimize your lineup</p>
-          </div>
-          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme text-center shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-            <Star className="w-12 h-12 mx-auto text-primary dark:text-primary-dark mb-4" />
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">Progress</h3>
-            <p className="text-text-secondary dark:text-text-secondary-dark">Unlock classes from SoundSport to World Class</p>
-          </div>
-          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme text-center shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-            <Award className="w-12 h-12 mx-auto text-primary dark:text-primary-dark mb-4" />
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">Achieve</h3>
-            <p className="text-text-secondary dark:text-text-secondary-dark">Climb leaderboards and become a legend</p>
+          
+          {/* Call to Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="w-full sm:w-auto px-8 py-4 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+            >
+              Start Your Journey
+            </button>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="w-full sm:w-auto px-8 py-4 bg-surface dark:bg-surface-dark border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 rounded-theme font-bold text-lg transition-all"
+            >
+              Sign In
+            </button>
           </div>
         </div>
 
-        {/* Call to Action */}
-        <div className="bg-surface dark:bg-surface-dark p-8 rounded-theme text-center shadow-theme dark:shadow-theme-dark border border-accent dark:border-accent-dark">
-          <h2 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-2 border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-all shadow-theme dark:shadow-theme-dark">
+            <Trophy className="w-12 h-12 text-primary dark:text-primary-dark mb-4 mx-auto" />
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2 text-center">
+              Compete
+            </h3>
+            <p className="text-text-secondary dark:text-text-secondary-dark text-center">
+              Build your dream corps and compete in seasons
+            </p>
+          </div>
+
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-2 border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-all shadow-theme dark:shadow-theme-dark">
+            <Users className="w-12 h-12 text-primary dark:text-primary-dark mb-4 mx-auto" />
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2 text-center">
+              Manage
+            </h3>
+            <p className="text-text-secondary dark:text-text-secondary-dark text-center">
+              Hire legendary staff and optimize your lineup
+            </p>
+          </div>
+
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-2 border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-all shadow-theme dark:shadow-theme-dark">
+            <Star className="w-12 h-12 text-primary dark:text-primary-dark mb-4 mx-auto" />
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2 text-center">
+              Progress
+            </h3>
+            <p className="text-text-secondary dark:text-text-secondary-dark text-center">
+              Unlock classes from SoundSport to World Class
+            </p>
+          </div>
+
+          <div className="bg-surface dark:bg-surface-dark p-6 rounded-theme border-2 border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark transition-all shadow-theme dark:shadow-theme-dark">
+            <Award className="w-12 h-12 text-primary dark:text-primary-dark mb-4 mx-auto" />
+            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2 text-center">
+              Achieve
+            </h3>
+            <p className="text-text-secondary dark:text-text-secondary-dark text-center">
+              Climb leaderboards and become a legend
+            </p>
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="bg-surface dark:bg-surface-dark p-8 sm:p-12 rounded-theme border-2 border-accent dark:border-accent-dark shadow-theme dark:shadow-theme-dark text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
             Ready to Create Your Legacy?
           </h2>
-          <p className="text-text-secondary dark:text-text-secondary-dark mb-6 max-w-lg mx-auto">
+          <p className="text-lg text-text-secondary dark:text-text-secondary-dark mb-8 max-w-2xl mx-auto">
             Join thousands of directors competing in the most realistic fantasy drum corps experience.
           </p>
-          <div className="text-text-secondary dark:text-text-secondary-dark text-sm">
+          
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="px-10 py-4 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-bold text-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+          >
+            Get Started Free
+          </button>
+          
+          <p className="mt-6 text-text-secondary dark:text-text-secondary-dark">
             Already have an account?{' '}
-            <button 
-              onClick={() => {
-                setAuthModalMode('login');
-                setIsAuthModalOpen(true);
-              }}
-              className="text-primary dark:text-primary-dark hover:text-secondary dark:hover:text-secondary-dark font-semibold hover:underline"
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="text-primary dark:text-primary-dark hover:underline font-bold"
             >
-              Log in from the header
+              Sign in here
             </button>
+          </p>
+        </div>
+
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary dark:text-primary-dark mb-2">
+              100+
+            </div>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              DCI Hall of Fame Staff
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary dark:text-primary-dark mb-2">
+              Real
+            </div>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              DCI Data & Performances
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary dark:text-primary-dark mb-2">
+              24/7
+            </div>
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              Compete Anytime
+            </p>
           </div>
         </div>
       </div>
 
       {/* Auth Modal */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)}
-        defaultMode={authModalMode}
-      />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 };
