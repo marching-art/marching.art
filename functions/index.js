@@ -105,6 +105,13 @@ exports.awardXP = users.awardXP;
 exports.checkClassUnlocks = users.checkClassUnlocks;
 
 // ============================================================================
+// CALLABLE FUNCTIONS - SETUP
+// ============================================================================
+
+const setup = require('./src/callable/setup');
+exports.completeUserSetup = setup.completeUserSetup;
+
+// ============================================================================
 // CALLABLE FUNCTIONS - STAFF
 // ============================================================================
 
