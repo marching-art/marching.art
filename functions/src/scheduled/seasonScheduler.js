@@ -458,7 +458,7 @@ function determineCompetitionType(eventName, day, seasonType) {
 function determineAllowedClasses(eventName, day, seasonType) {
   const name = eventName.toLowerCase();
   
-  // SoundSport only events
+  // SoundSport ONLY events
   if (name.includes('soundsport') || name.includes('music & food')) {
     return ['SoundSport'];
   }
@@ -468,17 +468,19 @@ function determineAllowedClasses(eventName, day, seasonType) {
     return ['Open Class', 'A Class'];
   }
   
-  // World Championships (exclude SoundSport)
+  // World Championships (exclude SoundSport) - Days 47-49
   if ((seasonType === 'live' && day >= 68) || (seasonType !== 'live' && day >= 47 && day <= 49)) {
     return ['World Class', 'Open Class', 'A Class'];
   }
   
   // Regional championships (exclude SoundSport)
+  // Off-season: Days 28, 35, 41, 42
+  // Live season: Days 49, 56, 62
   if (name.includes('championship') || name.includes('classic')) {
     return ['World Class', 'Open Class', 'A Class'];
   }
   
-  // Default: all classes except SoundSport for regular shows
+  // FIXED: Default regular shows - ALL CLASSES INCLUDING SOUNDSPORT
   return ['World Class', 'Open Class', 'A Class', 'SoundSport'];
 }
 
