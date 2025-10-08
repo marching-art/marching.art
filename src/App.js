@@ -67,7 +67,7 @@ const UserProfileFetcher = () => {
     } else if (profile) {
       useUserStore.getState().clearProfile();
     }
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, profile, fetchUserProfile]);
 
   useEffect(() => {
     if (currentUser && profile) {

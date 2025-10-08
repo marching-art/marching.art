@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useUserStore } from '../store/userStore';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, collection, query, where, getDocs } from 'firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import LoadingScreen from '../components/common/LoadingScreen';
 import { 
   User, 
   MapPin, 
@@ -18,7 +19,6 @@ import {
   Shield,
   Music
 } from 'lucide-react';
-import LoadingScreen from '../components/common/LoadingScreen';
 
 const ProfilePage = () => {
   const { userId } = useParams();
