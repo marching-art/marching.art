@@ -200,7 +200,7 @@ const ShowSelection = () => {
     if (lower.includes('finals')) return Trophy;
     if (lower.includes('semi')) return Award;
     if (lower.includes('quarter')) return Star;
-    if (lower.includes('regional')) return Flag;
+    if (lower.includes('regional') || lower.includes('championship') || lower.includes('classic')) return Flag;
     return Music;
   };
 
@@ -365,38 +365,31 @@ const ShowSelection = () => {
       </div>
 
       {/* Shows for Selected Week */}
-      {currentWeekShows.length > 0 ? (
-        <div className="grid gap-4">
+      {currentWeekShows && currentWeekShows.length > 0 ? (
+        <div className="space-y-4">
           {currentWeekShows.map((show, index) => {
-            const ShowIcon = getShowIcon(show.eventName);
+            // FIX: Use show.name as primary, fallback to eventName for backward compatibility
+            const showName = show.name || show.eventName || 'Competition Event';
+            const ShowIcon = getShowIcon(showName);
             const isRegistered = isShowRegistered(show.id);
-            const canRegister = canRegisterForShow(show);
+            const canRegister = canRegisterForShow(show) && !isRegistered;
             
             return (
               <div
-                key={index}
-                className={`bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark transition-all ${
-                  isRegistered 
-                    ? 'border-2 border-green-500' 
-                    : 'border-2 border-transparent hover:border-primary dark:hover:border-primary-dark'
-                }`}
+                key={show.id || index}
+                className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark hover:shadow-lg dark:hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-primary dark:hover:border-primary-dark"
+                onClick={() => openShowDetails(show)}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`p-3 rounded-theme ${
-                      isRegistered 
-                        ? 'bg-green-500 bg-opacity-10' 
-                        : 'bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20'
-                    }`}>
-                      <ShowIcon className={`w-8 h-8 ${
-                        isRegistered ? 'text-green-500' : 'text-primary dark:text-primary-dark'
-                      }`} />
+                    <div className="bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20 p-3 rounded-theme">
+                      <ShowIcon className="w-8 h-8 text-primary dark:text-primary-dark" />
                     </div>
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-                          {show.eventName || 'Competition Event'}
+                          {showName}
                         </h3>
                         {isRegistered && (
                           <span className="flex items-center gap-1 text-sm bg-green-500 bg-opacity-20 text-green-400 px-2 py-1 rounded-full">
@@ -406,82 +399,46 @@ const ShowSelection = () => {
                         )}
                       </div>
                       
-                      <div className="space-y-2 mb-3">
-                        <div className="flex items-center gap-2 text-text-secondary dark:text-text-secondary-dark">
+                      <div className="flex flex-col gap-1 text-sm text-text-secondary dark:text-text-secondary-dark">
+                        <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
                           <span>{formatDate(show.date)}</span>
-                          {show.time && (
-                            <>
-                              <span className="mx-2">•</span>
-                              <Clock className="w-4 h-4" />
-                              <span>{formatTime(show.time)}</span>
-                            </>
-                          )}
                         </div>
-                        
-                        {show.location && (
-                          <div className="flex items-center gap-2 text-text-secondary dark:text-text-secondary-dark">
-                            <MapPin className="w-4 h-4" />
-                            <span>{show.location}</span>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>{show.location || 'Location TBA'}</span>
+                        </div>
+                        {show.allowedClasses && (
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>Classes: {show.allowedClasses.join(', ')}</span>
                           </div>
                         )}
                       </div>
-                      
-                      {show.classes && (
-                        <div className="flex gap-2 mb-3">
-                          {show.classes.map(cls => {
-                            const isMyClass = profile?.corps?.corpsClass === cls;
-                            return (
-                              <span 
-                                key={cls}
-                                className={`text-xs px-2 py-1 rounded-full ${
-                                  isMyClass
-                                    ? 'bg-primary dark:bg-primary-dark bg-opacity-20 text-primary dark:text-primary-dark font-semibold'
-                                    : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
-                                }`}
-                              >
-                                {cls}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                      
-                      {!canRegister && !isRegistered && (
-                        <div className="flex items-center gap-2 text-orange-500 text-sm">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>
-                            {show.classes && !show.classes.includes(profile?.corps?.corpsClass)
-                              ? 'Your class cannot participate in this show'
-                              : 'Registration closed for this show'}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
                   
-                  <div className="flex flex-col gap-2">
+                  <div className="ml-4">
                     {isRegistered ? (
-                      <>
-                        <button
-                          onClick={() => openShowDetails(show)}
-                          className="px-4 py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark rounded-theme font-medium hover:opacity-90 transition-opacity"
-                        >
-                          View Details
-                        </button>
-                        <button
-                          onClick={() => handleUnregisterFromShow(show)}
-                          disabled={registering}
-                          className="px-4 py-2 bg-red-500 text-white rounded-theme font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                        >
-                          {registering ? 'Processing...' : 'Unregister'}
-                        </button>
-                      </>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUnregisterFromShow(show);
+                        }}
+                        className="bg-red-500 bg-opacity-20 text-red-400 px-4 py-2 rounded-theme font-medium hover:bg-opacity-30 transition-colors"
+                      >
+                        Unregister
+                      </button>
                     ) : (
                       <button
-                        onClick={() => openShowDetails(show)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (canRegister) {
+                            handleRegisterForShow(show);
+                          }
+                        }}
                         disabled={!canRegister}
-                        className={`px-4 py-2 rounded-theme font-medium transition-opacity ${
+                        className={`px-4 py-2 rounded-theme font-medium transition-colors ${
                           canRegister
                             ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90'
                             : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark opacity-50 cursor-not-allowed'
@@ -515,13 +472,13 @@ const ShowSelection = () => {
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-4">
                 <div className="bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20 p-4 rounded-theme">
-                  {React.createElement(getShowIcon(selectedShow.eventName), {
+                  {React.createElement(getShowIcon(selectedShow.name || selectedShow.eventName), {
                     className: "w-10 h-10 text-primary dark:text-primary-dark"
                   })}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-1">
-                    {selectedShow.eventName || 'Competition Event'}
+                    {selectedShow.name || selectedShow.eventName || 'Competition Event'}
                   </h2>
                   <p className="text-text-secondary dark:text-text-secondary-dark">
                     {formatDate(selectedShow.date)}
@@ -552,91 +509,76 @@ const ShowSelection = () => {
                 <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-5 h-5 text-primary dark:text-primary-dark" />
-                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Time</h3>
+                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Date & Time</h3>
                   </div>
                   <p className="text-text-secondary dark:text-text-secondary-dark">
+                    {formatDate(selectedShow.date)}
+                  </p>
+                  <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
                     {formatTime(selectedShow.time)}
+                  </p>
+                </div>
+                
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="w-5 h-5 text-primary dark:text-primary-dark" />
+                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Competition Type</h3>
+                  </div>
+                  <p className="text-text-secondary dark:text-text-secondary-dark capitalize">
+                    {selectedShow.type || 'Regular Competition'}
+                  </p>
+                </div>
+                
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-primary dark:text-primary-dark" />
+                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Eligible Classes</h3>
+                  </div>
+                  <p className="text-text-secondary dark:text-text-secondary-dark">
+                    {selectedShow.allowedClasses ? selectedShow.allowedClasses.join(', ') : 'All Classes'}
                   </p>
                 </div>
               </div>
 
-              {selectedShow.classes && (
-                <div>
-                  <h3 className="font-semibold text-text-primary dark:text-text-primary-dark mb-3">
-                    Eligible Classes
-                  </h3>
-                  <div className="flex gap-2">
-                    {selectedShow.classes.map(cls => (
-                      <span 
-                        key={cls}
-                        className="bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20 text-primary dark:text-primary-dark px-3 py-2 rounded-theme font-medium"
-                      >
-                        {cls}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              {/* Show Description */}
               {selectedShow.description && (
-                <div>
-                  <h3 className="font-semibold text-text-primary dark:text-text-primary-dark mb-3">
-                    Event Details
-                  </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark bg-background dark:bg-background-dark p-4 rounded-theme">
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
+                  <h3 className="font-semibold text-text-primary dark:text-text-primary-dark mb-2">About This Show</h3>
+                  <p className="text-text-secondary dark:text-text-secondary-dark">
                     {selectedShow.description}
                   </p>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                {isShowRegistered(selectedShow.id) ? (
-                  <>
-                    <button
-                      onClick={() => handleUnregisterFromShow(selectedShow)}
-                      disabled={registering}
-                      className="flex-1 bg-red-500 text-white px-6 py-3 rounded-theme font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                      {registering ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader className="w-5 h-5 animate-spin" />
-                          Processing...
-                        </span>
-                      ) : (
-                        'Unregister from Show'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowDetailModal(false)}
-                      className="px-6 py-3 bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark rounded-theme font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Close
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleRegisterForShow(selectedShow)}
-                      disabled={registering || !canRegisterForShow(selectedShow)}
-                      className="flex-1 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark px-6 py-3 rounded-theme font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {registering ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader className="w-5 h-5 animate-spin" />
-                          Registering...
-                        </span>
-                      ) : (
-                        'Register for Show'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowDetailModal(false)}
-                      className="px-6 py-3 bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark rounded-theme font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Cancel
-                    </button>
-                  </>
+              {/* Registration Button */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="px-6 py-2 rounded-theme border-2 border-accent dark:border-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark hover:bg-opacity-10 dark:hover:bg-opacity-10 transition-colors"
+                >
+                  Close
+                </button>
+                {!isShowRegistered(selectedShow.id) && canRegisterForShow(selectedShow) && (
+                  <button
+                    onClick={() => {
+                      handleRegisterForShow(selectedShow);
+                      setShowDetailModal(false);
+                    }}
+                    className="px-6 py-2 rounded-theme bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90 transition-opacity"
+                  >
+                    Register for Show
+                  </button>
+                )}
+                {isShowRegistered(selectedShow.id) && (
+                  <button
+                    onClick={() => {
+                      handleUnregisterFromShow(selectedShow);
+                      setShowDetailModal(false);
+                    }}
+                    className="px-6 py-2 rounded-theme bg-red-500 bg-opacity-20 text-red-400 hover:bg-opacity-30 transition-colors"
+                  >
+                    Unregister from Show
+                  </button>
                 )}
               </div>
             </div>

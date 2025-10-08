@@ -289,35 +289,22 @@ const ScoresPage = () => {
       {selectedDay && selectedDay.shows && selectedDay.shows.length > 0 ? (
         <div className="space-y-6">
           {selectedDay.shows.map((show, showIndex) => {
-            const filteredResults = getFilteredResults(show.results || []);
+            // FIX: Use show.name || show.eventName
+            const showName = show.name || show.eventName || 'Competition Event';
             
-            if (filteredResults.length === 0) return null;
-
-            // Sort by total score
-            filteredResults.sort((a, b) => b.totalScore - a.totalScore);
-
-            // Get caption awards
-            const captionAwards = getCaptionAwards(show.results || []);
-
             return (
-              <div key={showIndex} className="bg-surface-dark rounded-theme shadow-theme-dark border border-accent-dark overflow-hidden">
+              <div key={showIndex} className="bg-surface-dark rounded-theme p-6 shadow-theme-dark">
                 {/* Show Header */}
-                <div className="bg-gradient-to-r from-primary-dark to-accent-dark p-6">
-                  <div className="flex items-start justify-between">
+                <div className="border-b border-accent-dark pb-4 mb-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">
-                        {show.eventName}
+                      <h3 className="text-2xl font-bold text-text-primary-dark mb-1">
+                        {showName}
                       </h3>
-                      <div className="flex items-center gap-4 text-white text-opacity-90">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{show.location}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{filteredResults.length} Corps</span>
-                        </div>
-                      </div>
+                      <p className="text-text-secondary-dark flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {show.location || 'Location TBA'}
+                      </p>
                     </div>
                     <button
                       onClick={() => openChartModal(show)}

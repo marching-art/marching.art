@@ -395,7 +395,9 @@ const SchedulePage = () => {
       {currentWeekShows.length > 0 ? (
         <div className="grid gap-4">
           {currentWeekShows.map((show, index) => {
-            const ShowIcon = getShowIcon(show.eventName);
+            // FIX: Use show.name as primary, fallback to eventName
+            const showName = show.name || show.eventName || 'Competition Event';
+            const ShowIcon = getShowIcon(showName);
             const participants = participantsMap[show.id] || [];
             const isCompleted = show.date && new Date(show.date.toDate ? show.date.toDate() : show.date) < new Date();
             
@@ -414,7 +416,7 @@ const SchedulePage = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-                          {show.eventName || 'Competition Event'}
+                          {showName}
                         </h3>
                         {isCompleted && (
                           <span className="flex items-center gap-1 text-sm bg-green-500 bg-opacity-20 text-green-400 px-2 py-1 rounded-full">
