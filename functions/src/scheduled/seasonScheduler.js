@@ -88,7 +88,8 @@ async function getNextSeasonNumber(db) {
 }
 
 /**
- * BULLETPROOF: Assigns corps for LIVE season with proper validation
+ * CORRECT: Assigns corps for LIVE season using points field from final_rankings
+ * Uses the pre-assigned points value, NOT index calculation
  */
 async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
   const previousYear = (parseInt(finalsYear) - 1).toString();
@@ -121,20 +122,37 @@ async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
 
   functions.logger.info(`Found ${rankings.length} corps in ${previousYear} finals`);
 
-  // Assign with rank-based values: 1st=25pts, 2nd=24pts, ..., 25th=1pt
-  const assignedCorps = rankings.slice(0, 25).map((entry, index) => {
-    const rankBasedValue = 25 - index;
-    
-    return {
-      name: entry.corps,
-      corpsName: entry.corps,
-      sourceYear: previousYear,
-      value: rankBasedValue,           // CORRECT: 25-index
-      pointCost: rankBasedValue,       // Same as value
-      rank: index + 1,                 // 1-25
-      finalScore: entry.originalScore || entry.score || 0,
-    };
-  });
+  // Validate all have points field
+  const validRankings = rankings.filter(entry =>
+    entry &&
+    entry.corps &&
+    entry.points &&
+    typeof entry.points === 'number' &&
+    entry.points >= 1 && entry.points <= 25
+  );
+
+  if (validRankings.length < 25) {
+    throw new Error(
+      `Insufficient corps with valid points in ${previousYear}: ` +
+      `${validRankings.length}/25 required`
+    );
+  }
+
+  // Sort by points descending, then take top 25
+  const sortedRankings = validRankings
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 25);
+
+  // Assign using POINTS field from database
+  const assignedCorps = sortedRankings.map(entry => ({
+    name: entry.corps,
+    corpsName: entry.corps,
+    sourceYear: previousYear,
+    value: entry.points,                    // USE points field directly
+    pointCost: entry.points,                // Same as value
+    rank: entry.rank || 0,                  // Store rank for reference
+    finalScore: entry.originalScore || entry.score || 0,
+  }));
 
   // Verify values
   const invalidCorps = assignedCorps.filter(c => c.value < 1 || c.value > 25);
@@ -142,8 +160,8 @@ async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
     throw new Error(`Invalid values: ${invalidCorps.map(c => `${c.name}=${c.value}`).join(', ')}`);
   }
 
-  functions.logger.info(`✅ Assigned 25 corps from ${previousYear} with values 1-25`);
-  functions.logger.info(`Top 3: ${assignedCorps.slice(0, 3).map(c => `${c.name}=${c.value}pts`).join(', ')}`);
+  functions.logger.info(`✅ Assigned 25 corps from ${previousYear} using points field`);
+  functions.logger.info(`Top 3: ${assignedCorps.slice(0, 3).map(c => `${c.name}=${c.value}pts (rank ${c.rank})`).join(', ')}`);
 
   // Save (OVERWRITE mode)
   await db.collection('dci-data').doc(seasonId).set({
@@ -159,8 +177,8 @@ async function assignCorpsForLiveSeason(db, seasonId, finalsYear) {
 }
 
 /**
- * BULLETPROOF: Assigns 25 corps for OFF-SEASON from various historical years
- * Handles missing/malformed data gracefully
+ * CORRECT: Assigns corps for OFF-SEASON using points field from final_rankings
+ * Uses the pre-assigned points value, NOT rank calculation
  */
 async function assignCorpsForOffSeason(db, seasonId) {
   functions.logger.info('Starting off-season corps assignment...');
@@ -179,27 +197,24 @@ async function assignCorpsForOffSeason(db, seasonId) {
     const data = doc.data();
     const year = doc.id;
     
-    // CRITICAL: Handle different data structures
+    // Handle different data structures
     let rankings = null;
-    
-    // Try rankings field first
     if (data.rankings && Array.isArray(data.rankings)) {
       rankings = data.rankings;
-    }
-    // Try data field (alternate structure)
-    else if (data.data && Array.isArray(data.data)) {
+    } else if (data.data && Array.isArray(data.data)) {
       rankings = data.data;
     }
     
     // Validate rankings array
     if (rankings && rankings.length >= 25) {
-      // Ensure each entry has required fields
+      // Ensure each entry has required fields including POINTS
       const validRankings = rankings.filter(entry => 
         entry && 
         entry.corps && 
         typeof entry.corps === 'string' &&
-        entry.rank && 
-        typeof entry.rank === 'number'
+        entry.points &&  // CRITICAL: Must have points field
+        typeof entry.points === 'number' &&
+        entry.points >= 1 && entry.points <= 25
       );
       
       if (validRankings.length >= 25) {
@@ -224,48 +239,46 @@ async function assignCorpsForOffSeason(db, seasonId) {
   const assignedCorps = [];
   const usedCorpsNames = new Set();
 
-  // Assign one corps per rank (1-25)
-  for (let rank = 1; rank <= 25; rank++) {
+  // Assign one corps per POINT VALUE (25 down to 1)
+  for (let pointValue = 25; pointValue >= 1; pointValue--) {
     let corpsFound = false;
     let attempts = 0;
-    const maxAttempts = availableYears.length * 5; // More attempts for flexibility
+    const maxAttempts = availableYears.length * 5;
 
     while (!corpsFound && attempts < maxAttempts) {
       const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
       const yearRankings = allRankingsByYear[randomYear];
       
-      // Safety check (should never be undefined due to validation above)
       if (!yearRankings) {
         attempts++;
         continue;
       }
       
-      const candidate = yearRankings.find(c => c.rank === rank);
+      // CRITICAL FIX: Find corps by POINTS field, not rank
+      const candidate = yearRankings.find(c => c.points === pointValue);
 
       if (candidate && !usedCorpsNames.has(candidate.corps)) {
-        const rankBasedValue = 26 - rank; // rank 1=25, rank 2=24, ..., rank 25=1
-        
         assignedCorps.push({
           name: candidate.corps,
           corpsName: candidate.corps,
           sourceYear: randomYear,
-          value: rankBasedValue,          // CORRECT: 26-rank gives values 1-25
-          pointCost: rankBasedValue,      // Same as value
-          rank: rank,                     // 1-25
+          value: candidate.points,              // USE points field directly
+          pointCost: candidate.points,          // Same as value
+          rank: candidate.rank || 0,            // Store rank for reference
           finalScore: candidate.originalScore || candidate.score || 0,
         });
         
         usedCorpsNames.add(candidate.corps);
         corpsFound = true;
         
-        functions.logger.info(`Rank ${rank}: ${candidate.corps} (${randomYear}) = ${rankBasedValue}pts`);
+        functions.logger.info(`Points ${pointValue}: ${candidate.corps} (${randomYear}, rank ${candidate.rank})`);
       }
       attempts++;
     }
 
     if (!corpsFound) {
-      functions.logger.error(`FAILED to find unique corps for rank ${rank} after ${maxAttempts} attempts`);
-      throw new Error(`Could not assign corps for rank ${rank}. Insufficient unique corps in rankings data.`);
+      functions.logger.error(`FAILED to find unique corps with ${pointValue} points after ${maxAttempts} attempts`);
+      throw new Error(`Could not assign corps for ${pointValue} points. Insufficient unique corps in rankings data.`);
     }
   }
 
@@ -279,8 +292,11 @@ async function assignCorpsForOffSeason(db, seasonId) {
     throw new Error(`Invalid values detected: ${invalidCorps.map(c => `${c.name}=${c.value}`).join(', ')}`);
   }
 
+  // Sort by value descending for display
+  assignedCorps.sort((a, b) => b.value - a.value);
+
   functions.logger.info(`✅ Successfully assigned 25 corps with values 1-25`);
-  functions.logger.info(`Sample: ${assignedCorps[0].name}=${assignedCorps[0].value}pts (rank ${assignedCorps[0].rank})`);
+  functions.logger.info(`Top 3: ${assignedCorps.slice(0, 3).map(c => `${c.name}=${c.value}pts`).join(', ')}`);
 
   // Save to database (OVERWRITE mode)
   await db.collection('dci-data').doc(seasonId).set({

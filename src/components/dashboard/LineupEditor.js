@@ -9,7 +9,6 @@ import {
   Save, 
   RotateCcw, 
   Info, 
-  TrendingUp, 
   Shield,
   AlertCircle,
   CheckCircle2,
@@ -43,10 +42,9 @@ const LineupEditor = () => {
   const [availableCorps, setAvailableCorps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [validating, setValidating] = useState(false);
   const [seasonId, setSeasonId] = useState(null);
   const [validation, setValidation] = useState({
-    valid: true,
+    valid: false,
     errors: [],
     totalPoints: 0,
     pointLimit: 0,
@@ -63,94 +61,105 @@ const LineupEditor = () => {
   // Real-time validation whenever lineup changes
   useEffect(() => {
     if (Object.keys(lineup).length > 0 && availableCorps.length > 0) {
-      validateLineupRealtime();
+      validateLineupLocally();
     }
   }, [lineup, availableCorps]);
 
   const fetchLineupData = async () => {
-  setLoading(true);
-  
-  try {
-    // Get current season from game-settings/current
-    const gameSettingsRef = doc(db, 'game-settings/current');
-    const gameSettingsSnap = await getDoc(gameSettingsRef);
-    
-    if (!gameSettingsSnap.exists()) {
-      toast.error('No active season found. Please contact admin.');
-      setLoading(false);
-      return;
-    }
-    
-    const gameData = gameSettingsSnap.data();
-    const currentSeasonId = gameData.seasonId || gameData.currentSeasonId;
-    
-    if (!currentSeasonId) {
-      toast.error('Season ID not configured. Please contact admin.');
-      setLoading(false);
-      return;
-    }
-    
-    setSeasonId(currentSeasonId);
-
-    // Fetch available corps using backend function
-    const getAvailableCorpsFunc = httpsCallable(functions, 'getAvailableCorps');
-    const corpsResult = await getAvailableCorpsFunc({ seasonId: currentSeasonId });
-    
-    if (!corpsResult.data.success) {
-      throw new Error('Failed to fetch corps data');
-    }
-    
-    setAvailableCorps(corpsResult.data.corps);
-
-    // Load existing lineup from profile
-    const existingLineup = profile?.lineup || {};
-    const initialLineup = {};
-    
-    // Initialize all captions (empty or with existing values)
-    REQUIRED_CAPTIONS.forEach(caption => {
-      initialLineup[caption] = existingLineup[caption] || '';
-    });
-    
-    setLineup(initialLineup);
-    setOriginalLineup({ ...initialLineup });
-
-  } catch (error) {
-    console.error('Error loading corps:', error);
-    const errorMessage = error.message || 'Failed to load lineup editor';
-    toast.error(errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const validateLineupRealtime = async () => {
-    if (!seasonId || !profile) return;
-    
-    setValidating(true);
+    setLoading(true);
     
     try {
-      const validateFunc = httpsCallable(functions, 'validateLineupPreview');
-      const result = await validateFunc({
-        seasonId,
-        lineup,
-        corpsClass: profile.corps?.corpsClass || 'SoundSport'
+      // Get current season
+      const gameSettingsRef = doc(db, 'game-settings/current');
+      const gameSettingsSnap = await getDoc(gameSettingsRef);
+      
+      if (!gameSettingsSnap.exists()) {
+        toast.error('Season data not available. Please try again later.');
+        setLoading(false);
+        return;
+      }
+      
+      const currentSeasonId = gameSettingsSnap.data().seasonId || gameSettingsSnap.data().currentSeasonId;
+      setSeasonId(currentSeasonId);
+
+      // Fetch available corps for this season
+      const getAvailableCorpsFunc = httpsCallable(functions, 'getAvailableCorps');
+      const corpsResult = await getAvailableCorpsFunc({ seasonId: currentSeasonId });
+      
+      if (corpsResult.data.success) {
+        setAvailableCorps(corpsResult.data.corps);
+      }
+
+      // Load existing lineup from profile
+      const existingLineup = profile.lineup || {};
+      const initialLineup = {};
+      
+      // Initialize all captions (empty or with existing values)
+      REQUIRED_CAPTIONS.forEach(caption => {
+        initialLineup[caption] = existingLineup[caption] || '';
       });
       
-      setValidation({
-        valid: result.data.valid,
-        errors: result.data.errors || [],
-        totalPoints: result.data.totalPoints || 0,
-        pointLimit: result.data.pointLimit || CLASS_POINT_LIMITS[profile.corps?.corpsClass] || 90,
-        pointsRemaining: result.data.pointsRemaining || 0,
-        lineupDetails: result.data.lineupDetails || {}
-      });
-      
+      setLineup(initialLineup);
+      setOriginalLineup({ ...initialLineup });
+
     } catch (error) {
-      console.error('Validation error:', error);
-      // Don't show error toast for real-time validation
+      console.error('Error fetching lineup data:', error);
+      toast.error('Failed to load lineup editor. Please refresh the page.');
     } finally {
-      setValidating(false);
+      setLoading(false);
     }
+  };
+
+  /**
+   * LOCAL VALIDATION - runs immediately when lineup changes
+   * Checks for duplicates and calculates points
+   */
+  const validateLineupLocally = () => {
+    const errors = [];
+    let totalPoints = 0;
+    const usedCorps = new Set();
+    const corpsClass = profile?.corps?.corpsClass || 'SoundSport';
+    const pointLimit = CLASS_POINT_LIMITS[corpsClass];
+
+    // Check each caption
+    REQUIRED_CAPTIONS.forEach(caption => {
+      const selectedCorps = lineup[caption];
+      
+      // Check if caption is filled
+      if (!selectedCorps || selectedCorps === '') {
+        errors.push(`Caption "${caption}" must be filled.`);
+        return;
+      }
+
+      // Check for duplicates
+      if (usedCorps.has(selectedCorps)) {
+        errors.push(`"${selectedCorps}" is already used in another caption.`);
+      } else {
+        usedCorps.add(selectedCorps);
+      }
+
+      // Calculate points
+      const corps = availableCorps.find(c => c.name === selectedCorps);
+      if (corps) {
+        totalPoints += corps.value;
+      }
+    });
+
+    // Check point limit
+    if (totalPoints > pointLimit) {
+      errors.push(
+        `Total lineup value (${totalPoints} points) exceeds ${corpsClass} limit of ${pointLimit} points. ` +
+        `Please remove ${totalPoints - pointLimit} points.`
+      );
+    }
+
+    setValidation({
+      valid: errors.length === 0,
+      errors: errors,
+      totalPoints: totalPoints,
+      pointLimit: pointLimit,
+      pointsRemaining: pointLimit - totalPoints
+    });
   };
 
   const handleCorpsChange = (caption, corpsName) => {
@@ -162,7 +171,7 @@ const LineupEditor = () => {
 
   const handleSave = async () => {
     if (!validation.valid) {
-      toast.error(validation.errors.join(' '));
+      toast.error('Please fix all lineup errors before saving.');
       return;
     }
     
@@ -216,7 +225,12 @@ const LineupEditor = () => {
     return corps ? corps.value : 0;
   };
 
+  /**
+   * CRITICAL FIX: Check if corps is used in ANY other caption
+   */
   const isCorpsUsed = (corpsName, currentCaption) => {
+    if (!corpsName) return false;
+    
     return Object.entries(lineup).some(
       ([caption, selectedCorps]) => 
         caption !== currentCaption && selectedCorps === corpsName
@@ -258,7 +272,7 @@ const LineupEditor = () => {
               {validation.totalPoints} / {pointLimit}
             </div>
             <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-              Points Used {validating && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+              Points Used
             </div>
           </div>
         </div>
@@ -323,41 +337,51 @@ const LineupEditor = () => {
 
       {/* Caption Selections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {REQUIRED_CAPTIONS.map(caption => (
-          <div 
-            key={caption}
-            className="bg-surface dark:bg-surface-dark rounded-theme p-4 border border-accent dark:border-accent-dark"
-          >
-            <label className="block mb-2">
-              <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-                {caption}
-              </span>
-              {lineup[caption] && (
-                <span className="ml-2 text-sm text-text-secondary dark:text-text-secondary-dark">
-                  ({getCorpsValue(lineup[caption])} pts)
-                </span>
-              )}
-            </label>
-            
-            <select
-              value={lineup[caption] || ''}
-              onChange={(e) => handleCorpsChange(caption, e.target.value)}
-              className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+        {REQUIRED_CAPTIONS.map(caption => {
+          const selectedCorps = lineup[caption];
+          const corpsValue = selectedCorps ? getCorpsValue(selectedCorps) : 0;
+          
+          return (
+            <div 
+              key={caption}
+              className="bg-surface dark:bg-surface-dark rounded-theme p-4 border border-accent dark:border-accent-dark"
             >
-              <option value="">-- Select Corps --</option>
-              {availableCorps.map(corps => (
-                <option 
-                  key={corps.name} 
-                  value={corps.name}
-                  disabled={isCorpsUsed(corps.name, caption)}
-                  className={isCorpsUsed(corps.name, caption) ? 'text-gray-400' : ''}
-                >
-                  {corps.name} ({corps.value} pts) {isCorpsUsed(corps.name, caption) ? '✓ Used' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
+              <label className="block mb-2">
+                <span className="font-semibold text-text-primary dark:text-text-primary-dark">
+                  {caption}
+                </span>
+                {selectedCorps && (
+                  <span className="ml-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+                    ({corpsValue} pts)
+                  </span>
+                )}
+              </label>
+              
+              <select
+                value={selectedCorps || ''}
+                onChange={(e) => handleCorpsChange(caption, e.target.value)}
+                className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+              >
+                <option value="">-- Select Corps --</option>
+                {availableCorps.map(corps => {
+                  const isUsedElsewhere = isCorpsUsed(corps.name, caption);
+                  const isCurrentSelection = selectedCorps === corps.name;
+                  
+                  return (
+                    <option 
+                      key={corps.name} 
+                      value={corps.name}
+                      disabled={isUsedElsewhere && !isCurrentSelection}
+                      className={isUsedElsewhere && !isCurrentSelection ? 'text-gray-400' : ''}
+                    >
+                      {corps.name} ({corps.value} pts) {isUsedElsewhere && !isCurrentSelection ? '✓ Used' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          );
+        })}
       </div>
 
       {/* Action Buttons */}
