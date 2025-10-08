@@ -128,24 +128,26 @@ const CorpsManager = () => {
     }
   };
 
-  const handleRetireCorps = async (corpsId) => {
-    if (!window.confirm(`Are you sure you want to retire ${corps.corpsName}?`)) {
-      return;
+  const handleRetireCorps = async (selectedCorps) => {  // Make sure parameter is here
+    if (!window.confirm(`Are you sure you want to retire ${selectedCorps.corpsName}?`)) {
+        return;
     }
 
     try {
-      const retireCorpsFunction = httpsCallable(functions, 'retireCorps');
-      const result = await retireCorpsFunction({ corpsId });
+        const retireCorpsFunction = httpsCallable(functions, 'retireCorps');
+        const result = await retireCorpsFunction({
+        corpsId: selectedCorps.id
+        });
 
-      if (result.data.success) {
-        toast.success('Corps retired successfully');
-        removeCorps(corpsId);
-      } else {
+        if (result.data.success) {
+        toast.success(result.data.message);
+        await fetchUserProfile(currentUser.uid);
+        } else {
         toast.error(result.data.message || 'Failed to retire corps');
-      }
+        }
     } catch (error) {
-      console.error('Error retiring corps:', error);
-      toast.error(error.message || 'Failed to retire corps');
+        console.error('Error retiring corps:', error);
+        toast.error(error.message || 'Failed to retire corps');
     }
   };
 
@@ -243,76 +245,75 @@ const CorpsManager = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {corpsList.map((corps) => {
-              const classInfo = CLASS_INFO[corps.corpsClass];
-              const Icon = classInfo.icon;
-              const isActive = corps.id === activeCorpsId;
+                const classInfo = CLASS_INFO[corps.corpsClass];
+                const Icon = classInfo.icon;
+                const isActive = corps.id === activeCorpsId;
 
-              return (
-                <div
-                  key={corps.id}
-                  className={`p-4 rounded-theme border-2 transition-all cursor-pointer ${
-                    isActive
-                      ? `${classInfo.borderColor} ${classInfo.bgColor} shadow-lg`
-                      : 'border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark'
-                  }`}
-                  onClick={() => setActiveCorps(corps.id)}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-6 h-6 ${classInfo.color}`} />
-                      <div>
-                        <h4 className="font-bold text-text-primary dark:text-text-primary-dark">
-                          {corps.corpsName}
-                        </h4>
-                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                          {corps.corpsClass}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRetireCorps(corps.id);
-                      }}
-                      className="text-error hover:text-error-dark p-1 rounded transition-colors"
-                      title="Retire Corps"
+                return (
+                    <div
+                    key={corps.id}
+                    className={`p-4 rounded-theme border-2 transition-all cursor-pointer ${
+                        isActive
+                        ? `${classInfo.borderColor} ${classInfo.bgColor} shadow-lg`
+                        : 'border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark'
+                    }`}
+                    onClick={() => setActiveCorps(corps.id)}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {corps.alias && (
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-2">
-                      <span className="font-semibold">Director:</span> {corps.alias}
-                    </p>
-                  )}
-
-                  {corps.location && (
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-2">
-                      <span className="font-semibold">Location:</span> {corps.location}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-accent dark:border-accent-dark">
-                    <span className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                      {corps.stats?.totalShows || 0} Shows
-                    </span>
-                    {corps.stats?.bestScore > 0 && (
-                      <span className="text-sm font-bold text-primary dark:text-primary-dark">
-                        Best: {corps.stats.bestScore.toFixed(3)}
-                      </span>
-                    )}
-                  </div>
-
-                  {isActive && (
-                    <div className="mt-2 px-2 py-1 bg-primary/20 border border-primary dark:border-primary-dark rounded text-primary dark:text-primary-dark text-center text-xs font-semibold">
-                      Currently Active
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                        <Icon className={`w-6 h-6 ${classInfo.color}`} />
+                        <div>
+                            <h4 className="font-bold text-text-primary dark:text-text-primary-dark">
+                            {corps.corpsName}
+                            </h4>
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                            {corps.corpsClass}
+                            </p>
+                        </div>
+                        </div>
+                        
+                        <button
+                        onClick={(e) => {
+                            e.stopPropagation(); // ADD THIS LINE
+                            handleRetireCorps(corps);
+                        }}
+                        className="px-3 py-2 bg-error hover:bg-error-dark text-white rounded-theme text-sm font-semibold transition-colors"
+                        >
+                        Retire Corps
+                        </button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+
+                    {corps.alias && (
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-2">
+                        <span className="font-semibold">Director:</span> {corps.alias}
+                        </p>
+                    )}
+
+                    {corps.location && (
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-2">
+                        <span className="font-semibold">Location:</span> {corps.location}
+                        </p>
+                    )}
+
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-accent dark:border-accent-dark">
+                        <span className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                        {corps.stats?.totalShows || 0} Shows
+                        </span>
+                        {corps.stats?.bestScore > 0 && (
+                        <span className="text-sm font-bold text-primary dark:text-primary-dark">
+                            Best: {corps.stats.bestScore.toFixed(3)}
+                        </span>
+                        )}
+                    </div>
+
+                    {isActive && (
+                        <div className="mt-2 px-2 py-1 bg-primary/20 border border-primary dark:border-primary-dark rounded text-primary dark:text-primary-dark text-center text-xs font-semibold">
+                        Currently Active
+                        </div>
+                    )}
+                    </div>
+                );
+                })}
           </div>
         </div>
       )}
