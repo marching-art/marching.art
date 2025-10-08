@@ -43,35 +43,71 @@ const ShowSelection = () => {
       setLoading(true);
 
       // Get current season
-      const seasonDoc = await getDoc(doc(db, 'game-settings', 'current'));
+      const seasonDoc = await getDoc(doc(db, 'game-settings/current'));
       if (!seasonDoc.exists()) {
         toast.error('No active season found');
+        setLoading(false);
         return;
       }
 
       const seasonData = seasonDoc.data();
+      const seasonId = seasonData.seasonId || seasonData.currentSeasonId;
       setCurrentSeason(seasonData);
 
-      // Get schedule
-      const scheduleDoc = await getDoc(doc(db, 'schedules', seasonData.activeSeasonId));
-      if (scheduleDoc.exists()) {
-        setSchedule(scheduleDoc.data());
+      console.log('Season ID:', seasonId);
+
+      // Get schedule for this season
+      const scheduleDoc = await getDoc(doc(db, 'schedules', seasonId));
+      
+      if (!scheduleDoc.exists()) {
+        console.error('No schedule found for season:', seasonId);
+        toast.error('Schedule not available for this season');
+        setLoading(false);
+        return;
       }
 
-      // Get user's registered shows
-      if (currentUser) {
-        const participantsQuery = query(
-          collection(db, 'participants'),
-          where('userId', '==', currentUser.uid),
-          where('seasonId', '==', seasonData.activeSeasonId)
-        );
-        const participantsSnap = await getDocs(participantsQuery);
-        const registered = participantsSnap.docs.map(doc => doc.data().showId);
-        setRegisteredShows(registered);
+      const scheduleData = scheduleDoc.data();
+      console.log('Schedule data:', scheduleData);
+
+      // CRITICAL FIX: The database has "competitions" not "shows"
+      // Transform the data structure to match what the component expects
+      const transformedSchedule = {};
+      
+      if (scheduleData.weeks) {
+        // If weeks structure exists, use it
+        Object.keys(scheduleData.weeks).forEach(weekKey => {
+          const weekData = scheduleData.weeks[weekKey];
+          transformedSchedule[weekKey] = {
+            weekNumber: weekData.weekNumber,
+            shows: weekData.competitions || weekData.shows || []  // Support both field names
+          };
+        });
+      } else if (scheduleData.competitions) {
+        // If only competitions array exists, group by week
+        const competitions = scheduleData.competitions;
+        
+        competitions.forEach(comp => {
+          const weekKey = `week${comp.week}`;
+          if (!transformedSchedule[weekKey]) {
+            transformedSchedule[weekKey] = {
+              weekNumber: comp.week,
+              shows: []
+            };
+          }
+          transformedSchedule[weekKey].shows.push(comp);
+        });
       }
+
+      console.log('Transformed schedule:', transformedSchedule);
+      setSchedule(transformedSchedule);
+
+      // TODO: Fetch user's registered shows from their profile or a registrations collection
+      // For now, using empty array
+      setRegisteredShows([]);
+
     } catch (error) {
       console.error('Error fetching schedule:', error);
-      toast.error('Failed to load schedule');
+      toast.error('Failed to load schedule data');
     } finally {
       setLoading(false);
     }
