@@ -188,9 +188,7 @@ const LineupEditor = () => {
         toast.success(result.data.message);
         setOriginalLineup({ ...lineup });
         
-        // Update profile in store
-        const updatedProfile = {
-          ...profile,
+        useUserStore.getState().updateProfile({
           lineup,
           lineupDetails: result.data.lineupDetails,
           corps: {
@@ -198,8 +196,7 @@ const LineupEditor = () => {
             totalPoints: result.data.totalPoints,
             pointsRemaining: result.data.pointsRemaining
           }
-        };
-        useUserStore.getState().setProfile(updatedProfile);
+        });
       }
       
     } catch (error) {
