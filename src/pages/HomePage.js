@@ -21,13 +21,20 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-full sm:w-auto px-8 py-4 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+              style={{ backgroundColor: '#F7941D', color: '#FFFFFF' }}
+              className="w-full sm:w-auto px-8 py-4 hover:opacity-90 rounded-theme font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
             >
               Start Your Journey
             </button>
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-full sm:w-auto px-8 py-4 bg-surface dark:bg-surface-dark border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 rounded-theme font-bold text-lg transition-all"
+              style={{ 
+                backgroundColor: '#FFFFFF',
+                color: '#2C1810',
+                borderColor: '#F7941D',
+                borderWidth: '2px'
+              }}
+              className="w-full sm:w-auto px-8 py-4 hover:bg-accent dark:hover:bg-accent-dark rounded-theme font-bold text-lg transition-all"
             >
               Sign In
             </button>
@@ -88,7 +95,8 @@ const HomePage = () => {
           
           <button
             onClick={() => setShowAuthModal(true)}
-            className="px-10 py-4 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-bold text-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+            style={{ backgroundColor: '#F7941D', color: '#FFFFFF' }}
+            className="px-10 py-4 hover:opacity-90 rounded-theme font-bold text-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
             Get Started Free
           </button>

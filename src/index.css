@@ -2,35 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === CSS CUSTOM PROPERTIES FOR THEMING === */
+/* === CSS CUSTOM PROPERTIES FOR THEMING (RGB FORMAT) === */
 :root {
-  /* Light mode colors - RESTORED CREAM THEME */
-  --color-background: #FFF8F0;  /* Warm cream background */
-  --color-surface: #FFFFFF;     /* White for cards */
-  --color-text-primary: #2C1810; /* Dark brown text */
-  --color-text-secondary: #8B6F47; /* Medium brown */
-  --color-accent: #F5E6D3;      /* Light cream accent */
-  --color-primary: #F7941D;     /* Orange primary */
-  --color-primary-dark: #D17A15;
-  --color-secondary: #8B4513;   /* Brown secondary */
-  --color-secondary-dark: #6B3410;
-  --color-error: #E63946;
-  --color-error-dark: #C62E39;
+  /* Light mode colors - RGB VALUES */
+  --color-primary: 247 148 29;        /* #F7941D - Orange */
+  --color-primary-dark: 209 122 21;   /* #D17A15 - Darker orange */
+  --color-secondary: 139 69 19;       /* #8B4513 - Brown */
+  --color-secondary-dark: 107 52 16;  /* #6B3410 - Darker brown */
+  --color-accent: 245 230 211;        /* #F5E6D3 - Light cream */
+  --color-accent-dark: 224 204 176;   /* #E0CCB0 - Darker cream */
+  --color-background: 255 248 240;    /* #FFF8F0 - Warm cream */
+  --color-background-dark: 245 238 230; /* #F5EEE6 - Slightly darker cream */
+  --color-surface: 255 255 255;       /* #FFFFFF - White */
+  --color-surface-dark: 250 245 235;  /* #FAF5EB - Off-white */
+  --text-primary: 44 24 16;           /* #2C1810 - Dark brown */
+  --text-primary-dark: 34 20 13;      /* #22140D - Very dark brown */
+  --text-secondary: 139 111 71;       /* #8B6F47 - Medium brown */
+  --text-secondary-dark: 115 92 59;   /* #735C3B - Darker medium brown */
+  --on-primary: 255 255 255;          /* #FFFFFF - White text on primary */
+  --on-primary-dark: 255 255 255;     /* #FFFFFF - White text on primary-dark */
+  --on-secondary: 255 255 255;        /* #FFFFFF - White text on secondary */
+  --on-secondary-dark: 255 255 255;   /* #FFFFFF - White text on secondary-dark */
 }
 
 .dark {
-  /* Dark mode colors */
-  --color-background: #1A1A1A;
-  --color-surface: #2A2A2A;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B0B0B0;
-  --color-accent: #3A3A3A;
-  --color-primary: #F7941D;
-  --color-primary-dark: #FFA940;
-  --color-secondary: #4A90E2;
-  --color-secondary-dark: #6BA3E8;
-  --color-error: #E63946;
-  --color-error-dark: #FF4D5A;
+  /* Dark mode colors - RGB VALUES */
+  --color-primary: 247 148 29;        /* #F7941D - Orange (same) */
+  --color-primary-dark: 255 169 64;   /* #FFA940 - Lighter orange */
+  --color-secondary: 74 144 226;      /* #4A90E2 - Blue */
+  --color-secondary-dark: 107 163 232; /* #6BA3E8 - Lighter blue */
+  --color-accent: 58 58 58;           /* #3A3A3A - Dark gray */
+  --color-accent-dark: 74 74 74;      /* #4A4A4A - Lighter dark gray */
+  --color-background: 26 26 26;       /* #1A1A1A - Very dark */
+  --color-background-dark: 18 18 18;  /* #121212 - Even darker */
+  --color-surface: 42 42 42;          /* #2A2A2A - Dark gray */
+  --color-surface-dark: 50 50 50;     /* #323232 - Lighter dark gray */
+  --text-primary: 255 255 255;        /* #FFFFFF - White */
+  --text-primary-dark: 245 245 245;   /* #F5F5F5 - Off-white */
+  --text-secondary: 176 176 176;      /* #B0B0B0 - Light gray */
+  --text-secondary-dark: 160 160 160; /* #A0A0A0 - Darker light gray */
+  --on-primary: 255 255 255;          /* #FFFFFF - White text on primary */
+  --on-primary-dark: 44 24 16;        /* #2C1810 - Dark text on light primary */
+  --on-secondary: 255 255 255;        /* #FFFFFF - White text on secondary */
+  --on-secondary-dark: 44 24 16;      /* #2C1810 - Dark text on light secondary */
 }
 
 /* === BASE STYLES === */
@@ -46,9 +60,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {
@@ -58,7 +69,7 @@ code {
 
 /* === ACCESSIBILITY - FOCUS STYLES === */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 
@@ -67,7 +78,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 
@@ -99,7 +110,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 111, 71, 0.3); /* Brown tint for light mode */
+  background: rgba(139, 111, 71, 0.3);
   border-radius: 4px;
 }
 
@@ -154,7 +165,7 @@ body {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--color-primary);
+  background: rgb(var(--color-primary));
   color: white;
   padding: 8px;
   text-decoration: none;
@@ -177,13 +188,13 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #F5E6D3 0px, #F0DCC0 40px, #F5E6D3 80px);
+  background: linear-gradient(90deg, rgb(245, 230, 211) 0px, rgb(240, 220, 192) 40px, rgb(245, 230, 211) 80px);
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s infinite;
 }
 
 .dark .skeleton {
-  background: linear-gradient(90deg, #2a2a2a 0px, #3a3a3a 40px, #2a2a2a 80px);
+  background: linear-gradient(90deg, rgb(42, 42, 42) 0px, rgb(58, 58, 58) 40px, rgb(42, 42, 42) 80px);
 }
 
 /* === CUSTOM UTILITIES === */
@@ -201,14 +212,12 @@ body {
 
 /* === MOBILE-SPECIFIC === */
 @media (max-width: 768px) {
-  /* Larger touch targets on mobile */
   button,
   .btn {
     min-height: 44px;
     padding: 12px 16px;
   }
 
-  /* Prevent zoom on input focus */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -289,11 +298,4 @@ body {
 
 .dark .card-hover:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-/* === THEME TRANSITION === */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 200ms;
-  transition-timing-function: ease-in-out;
 }
