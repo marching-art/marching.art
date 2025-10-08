@@ -1,279 +1,219 @@
 /**
  * Staff Management Functions
- * Handles staff purchases, assignments, and marketplace transactions
+ * Handles staff purchases, assignments, and marketplace
  * 
  * Location: functions/src/callable/staff.js
  */
 
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const { DATA_NAMESPACE, getFunctionConfig } = require("../../config");
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const { 
+  DATA_NAMESPACE, 
+  getFunctionConfig,
+  STAFF_CONFIG,
+  XP_CONFIG,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES
+} = require('../../config');
 
 /**
- * Calculate base value for staff members based on induction year
+ * Purchase a staff member from the Hall of Fame
  */
-function calculateBaseValue(yearInducted) {
-  const currentYear = new Date().getFullYear();
-  const yearsElapsed = currentYear - yearInducted;
-  
-  // More recent inductees are more valuable
-  // Base value: 1000 for current year, decreasing by 50 per year
-  const baseValue = Math.max(200, 1000 - (yearsElapsed * 50));
-  return baseValue;
-}
-
-/**
- * Calculate current market value with experience bonus
- */
-function calculateMarketValue(baseValue, seasonsCompleted = 0, performanceBonus = 0) {
-  const experienceMultiplier = 1 + (seasonsCompleted * 0.1); // 10% increase per season
-  const marketValue = Math.floor((baseValue * experienceMultiplier) + performanceBonus);
-  return marketValue;
-}
-
-// ========================================
-// CORE STAFF MANAGEMENT FUNCTIONS
-// ========================================
-
-/**
- * Get all available staff members from the hall of fame
- */
-exports.getAvailableStaff = functions
+exports.purchaseStaffMember = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
-    }
-
-    const { caption } = data;
-
-    try {
-      let staffQuery = admin.firestore().collection('staff');
-      
-      // Filter by caption if provided
-      if (caption) {
-        staffQuery = staffQuery.where('caption', '==', caption);
-      }
-
-      const staffSnapshot = await staffQuery.orderBy('yearInducted', 'desc').get();
-      
-      const staffList = staffSnapshot.docs.map(doc => {
-        const staffData = doc.data();
-        const baseValue = calculateBaseValue(staffData.yearInducted);
-        
-        return {
-          id: doc.id,
-          name: staffData.name,
-          caption: staffData.caption,
-          yearInducted: staffData.yearInducted,
-          biography: staffData.biography,
-          baseValue: baseValue,
-          currentMarketValue: calculateMarketValue(baseValue, 0, 0),
-          achievements: staffData.achievements || []
-        };
-      });
-
-      return {
-        success: true,
-        staff: staffList,
-        totalCount: staffList.length
-      };
-
-    } catch (error) {
-      console.error("Error fetching available staff:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while fetching staff.");
-    }
-  });
-
-/**
- * Purchase a staff member from the hall of fame database
- */
-exports.purchaseStaffMember = functions
-  .runWith(getFunctionConfig('standard'))
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
     const { staffId } = data;
     const uid = context.auth.uid;
 
     if (!staffId) {
-      throw new functions.https.HttpsError("invalid-argument", "Staff ID is required.");
+      throw new functions.https.HttpsError('invalid-argument', 'Staff ID is required');
     }
 
     try {
-      // Get the staff member details
-      const staffRef = admin.firestore().doc(`staff/${staffId}`);
-      const staffSnap = await staffRef.get();
+      const db = admin.firestore();
       
+      // Get staff details from Hall of Fame
+      const staffRef = db.doc(`hall-of-fame/${staffId}`);
+      const staffSnap = await staffRef.get();
+
       if (!staffSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Staff member not found.");
+        throw new functions.https.HttpsError('not-found', 'Staff member not found');
       }
 
       const staffData = staffSnap.data();
-      const baseValue = calculateBaseValue(staffData.yearInducted);
+      const profileRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
 
-      // Get user profile to check CorpsCoin balance
-      const userProfileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
-      const userSnap = await userProfileRef.get();
-      
-      if (!userSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "User profile not found.");
-      }
+      // Use transaction to ensure atomicity
+      const result = await db.runTransaction(async (transaction) => {
+        const profileSnap = await transaction.get(profileRef);
+        
+        if (!profileSnap.exists) {
+          throw new functions.https.HttpsError('not-found', ERROR_MESSAGES.NOT_FOUND);
+        }
 
-      const userData = userSnap.data();
-      const currentCorpsCoin = userData.corpsCoin || 0;
+        const profile = profileSnap.data();
+        const currentCorpsCoin = profile.corpsCoin || 0;
 
-      if (currentCorpsCoin < baseValue) {
-        throw new functions.https.HttpsError("failed-precondition", `Insufficient CorpsCoin. Need ${baseValue}, have ${currentCorpsCoin}.`);
-      }
+        // Check if user can afford
+        if (currentCorpsCoin < staffData.price) {
+          throw new functions.https.HttpsError(
+            'failed-precondition',
+            `${ERROR_MESSAGES.INSUFFICIENT_FUNDS}. Need ${staffData.price}, have ${currentCorpsCoin}`
+          );
+        }
 
-      // Check if user already owns this staff member
-      const userStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
-      const existingStaff = await userStaffRef.get();
-      
-      if (existingStaff.exists) {
-        throw new functions.https.HttpsError("already-exists", "You already own this staff member.");
-      }
+        // Check if user already owns this staff member
+        const userStaffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
+        const userStaffSnap = await transaction.get(userStaffRef);
 
-      // Execute the purchase transaction
-      const batch = admin.firestore().batch();
+        if (userStaffSnap.exists) {
+          throw new functions.https.HttpsError('already-exists', 'You already own this staff member');
+        }
 
-      // Deduct CorpsCoin from user
-      batch.update(userProfileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-baseValue),
-        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-      });
+        // Deduct CorpsCoin
+        transaction.update(profileRef, {
+          corpsCoin: admin.firestore.FieldValue.increment(-staffData.price),
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+        });
 
-      // Add staff member to user's collection
-      batch.set(userStaffRef, {
-        ...staffData,
-        purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
-        purchasePrice: baseValue,
-        seasonsCompleted: 0,
-        performanceBonus: 0,
-        currentValue: baseValue,
-        isActive: false,
-        assignedCaption: null,
-        isListedForSale: false,
-        marketplaceListingId: null
-      });
-
-      // Log the transaction
-      const transactionRef = admin.firestore().collection(`corps_coin_transactions/${uid}/transactions`).doc();
-      batch.set(transactionRef, {
-        type: 'staff_purchase',
-        amount: -baseValue,
-        staffId: staffId,
-        staffName: staffData.name,
-        description: `Purchased ${staffData.name} (${staffData.caption}) from Hall of Fame`,
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      await batch.commit();
-
-      return {
-        success: true,
-        message: `Successfully purchased ${staffData.name} for ${baseValue} CorpsCoin!`,
-        staff: {
+        // Add staff to user's collection
+        transaction.set(userStaffRef, {
           id: staffId,
           name: staffData.name,
           caption: staffData.caption,
-          purchasePrice: baseValue
-        },
-        remainingCorpsCoin: currentCorpsCoin - baseValue
-      };
+          yearInducted: staffData.yearInducted,
+          biography: staffData.biography,
+          price: staffData.price,
+          purchasedAt: admin.firestore.FieldValue.serverTimestamp(),
+          experience: 0,
+          assignedTo: null // Not assigned to any corps initially
+        });
 
-    } catch (error) {
-      console.error("Error purchasing staff member:", error);
-      if (error.code && error.code.startsWith('functions/')) {
-        throw error;
-      }
-      throw new functions.https.HttpsError("internal", "An error occurred while purchasing staff member.");
-    }
-  });
+        // Log transaction
+        const transactionRef = db.collection(`corps_coin_transactions/${uid}/transactions`).doc();
+        transaction.set(transactionRef, {
+          type: 'staff_purchase',
+          amount: -staffData.price,
+          staffId: staffId,
+          staffName: staffData.name,
+          balanceBefore: currentCorpsCoin,
+          balanceAfter: currentCorpsCoin - staffData.price,
+          timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
 
-/**
- * Get user's owned staff members
- */
-exports.getUserStaff = functions
-  .runWith(getFunctionConfig('light'))
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
-    }
+        return {
+          newBalance: currentCorpsCoin - staffData.price,
+          staffName: staffData.name
+        };
+      });
 
-    const uid = context.auth.uid;
+      // Award XP outside transaction
+      await db.collection(`xp_transactions/${uid}/transactions`).add({
+        type: 'staff_purchase',
+        amount: XP_CONFIG.STAFF_PURCHASE,
+        description: `Purchased ${result.staffName}`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
 
-    try {
-      const staffSnapshot = await admin.firestore()
-        .collection(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff`)
-        .get();
+      await profileRef.update({
+        xp: admin.firestore.FieldValue.increment(XP_CONFIG.STAFF_PURCHASE)
+      });
 
-      const staffList = staffSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      functions.logger.info(`User ${uid} purchased staff ${staffId}`);
 
       return {
         success: true,
-        staff: staffList,
-        totalCount: staffList.length
+        message: `${SUCCESS_MESSAGES.STAFF_PURCHASED} (+${XP_CONFIG.STAFF_PURCHASE} XP)`,
+        newBalance: result.newBalance,
+        xpAwarded: XP_CONFIG.STAFF_PURCHASE
       };
 
     } catch (error) {
-      console.error("Error fetching user staff:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while fetching your staff.");
+      functions.logger.error('Error purchasing staff:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      
+      throw new functions.https.HttpsError('internal', 'Failed to purchase staff member');
     }
   });
 
 /**
- * Assign staff member to a caption
+ * Assign staff member to a caption for a specific corps
  */
 exports.assignStaffToCaption = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
-    const { staffId, caption } = data;
+    const { staffId, caption, corpsId } = data;
     const uid = context.auth.uid;
 
-    if (!staffId || !caption) {
-      throw new functions.https.HttpsError("invalid-argument", "Staff ID and caption are required.");
-    }
-
-    const validCaptions = ['GE1', 'GE2', 'Visual Proficiency', 'Visual Analysis', 'Color Guard', 'Brass', 'Music Analysis', 'Percussion'];
-    if (!validCaptions.includes(caption)) {
-      throw new functions.https.HttpsError("invalid-argument", "Invalid caption.");
+    if (!staffId || !caption || !corpsId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Staff ID, caption, and corps ID are required');
     }
 
     try {
-      const userStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
-      const staffSnap = await userStaffRef.get();
+      const db = admin.firestore();
       
+      // Verify user owns this corps
+      const corpsRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/corps/${corpsId}`);
+      const corpsSnap = await corpsRef.get();
+
+      if (!corpsSnap.exists) {
+        throw new functions.https.HttpsError('not-found', 'Corps not found');
+      }
+
+      const staffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
+      const staffSnap = await staffRef.get();
+
       if (!staffSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Staff member not found in your collection.");
+        throw new functions.https.HttpsError('not-found', 'Staff member not found in your collection');
       }
 
       const staffData = staffSnap.data();
 
-      await userStaffRef.update({
-        isActive: true,
-        assignedCaption: caption,
-        assignedDate: admin.firestore.FieldValue.serverTimestamp()
+      // Verify caption matches staff specialty
+      if (staffData.caption !== caption) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          `This staff member specializes in ${staffData.caption}, not ${caption}`
+        );
+      }
+
+      // Update staff assignment
+      await staffRef.update({
+        assignedTo: {
+          corpsId: corpsId,
+          corpsName: corpsSnap.data().corpsName,
+          caption: caption,
+          assignedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       });
+
+      functions.logger.info(`User ${uid} assigned staff ${staffId} to ${caption} for corps ${corpsId}`);
 
       return {
         success: true,
-        message: `${staffData.name} has been assigned to ${caption}.`
+        message: `${SUCCESS_MESSAGES.STAFF_ASSIGNED}: ${caption}`
       };
 
     } catch (error) {
-      console.error("Error assigning staff to caption:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while assigning staff member.");
+      functions.logger.error('Error assigning staff:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      
+      throw new functions.https.HttpsError('internal', 'Failed to assign staff member');
     }
   });
 
@@ -284,127 +224,139 @@ exports.unassignStaffFromCaption = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
-    const { staffId } = data;
+    const { staffId, corpsId } = data;
     const uid = context.auth.uid;
 
-    if (!staffId) {
-      throw new functions.https.HttpsError("invalid-argument", "Staff ID is required.");
+    if (!staffId || !corpsId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Staff ID and corps ID are required');
     }
 
     try {
-      const userStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
-      const staffSnap = await userStaffRef.get();
+      const db = admin.firestore();
       
+      const staffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
+      const staffSnap = await staffRef.get();
+
       if (!staffSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Staff member not found in your collection.");
+        throw new functions.https.HttpsError('not-found', 'Staff member not found');
       }
 
       const staffData = staffSnap.data();
 
-      await userStaffRef.update({
-        isActive: false,
-        assignedCaption: null,
-        unassignedDate: admin.firestore.FieldValue.serverTimestamp()
+      // Verify staff is assigned to this corps
+      if (!staffData.assignedTo || staffData.assignedTo.corpsId !== corpsId) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Staff member is not assigned to this corps'
+        );
+      }
+
+      // Unassign staff
+      await staffRef.update({
+        assignedTo: null,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       });
+
+      functions.logger.info(`User ${uid} unassigned staff ${staffId} from corps ${corpsId}`);
 
       return {
         success: true,
-        message: `${staffData.name} has been removed from ${staffData.assignedCaption}.`
+        message: SUCCESS_MESSAGES.STAFF_UNASSIGNED
       };
 
     } catch (error) {
-      console.error("Error unassigning staff from caption:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while unassigning staff member.");
+      functions.logger.error('Error unassigning staff:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      
+      throw new functions.https.HttpsError('internal', 'Failed to unassign staff member');
     }
   });
 
-// ========================================
-// MARKETPLACE FUNCTIONS
-// ========================================
-
 /**
- * List staff member for sale on the marketplace
+ * Sell staff member to marketplace
  */
 exports.sellStaffMember = functions
-  .runWith(getFunctionConfig('standard'))
+  .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
-    const { staffId, askingPrice } = data;
+    const { staffId, price } = data;
     const uid = context.auth.uid;
 
-    if (!staffId || !askingPrice || askingPrice < 1) {
-      throw new functions.https.HttpsError("invalid-argument", "Staff ID and valid asking price are required.");
+    if (!staffId || !price || price < 1) {
+      throw new functions.https.HttpsError('invalid-argument', 'Valid staff ID and price are required');
     }
 
     try {
-      const userStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
-      const staffSnap = await userStaffRef.get();
+      const db = admin.firestore();
       
+      const staffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${staffId}`);
+      const staffSnap = await staffRef.get();
+
       if (!staffSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Staff member not found in your collection.");
+        throw new functions.https.HttpsError('not-found', 'Staff member not found');
       }
 
       const staffData = staffSnap.data();
 
-      if (staffData.isActive) {
-        throw new functions.https.HttpsError("failed-precondition", "Cannot sell an active staff member. Remove them from caption assignment first.");
+      // Check if staff is assigned to a corps
+      if (staffData.assignedTo) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Cannot sell staff that is assigned to a corps. Unassign first.'
+        );
       }
-
-      if (staffData.isListedForSale) {
-        throw new functions.https.HttpsError("failed-precondition", "Staff member is already listed for sale.");
-      }
-
-      // Get seller's display name
-      const userProfileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
-      const userProfileSnap = await userProfileRef.get();
-      const sellerName = userProfileSnap.exists ? (userProfileSnap.data().displayName || 'Anonymous') : 'Anonymous';
 
       // Create marketplace listing
-      const listingRef = admin.firestore().collection('staff_marketplace').doc();
-      const listingId = listingRef.id;
-
-      const batch = admin.firestore().batch();
-
-      batch.set(listingRef, {
+      const listingRef = db.collection('staff_marketplace').doc();
+      await listingRef.set({
+        id: listingRef.id,
         staffId: staffId,
-        staffName: staffData.name,
+        name: staffData.name,
         caption: staffData.caption,
         yearInducted: staffData.yearInducted,
+        biography: staffData.biography,
+        experience: staffData.experience,
+        originalPrice: staffData.price,
+        price: price,
         sellerId: uid,
-        sellerName: sellerName,
-        askingPrice: askingPrice,
-        purchasePrice: staffData.purchasePrice || 0,
-        seasonsCompleted: staffData.seasonsCompleted || 0,
-        currentValue: staffData.currentValue || calculateBaseValue(staffData.yearInducted),
+        sellerName: (await db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`).get()).data()?.alias || 'Anonymous',
         isActive: true,
-        listedAt: admin.firestore.FieldValue.serverTimestamp()
+        listedAt: admin.firestore.FieldValue.serverTimestamp(),
+        expiresAt: null // No expiration
       });
 
-      batch.update(userStaffRef, {
-        isListedForSale: true,
-        marketplaceListingId: listingId
+      // Mark staff as listed
+      await staffRef.update({
+        listedForSale: true,
+        listingId: listingRef.id,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      await batch.commit();
+      functions.logger.info(`User ${uid} listed staff ${staffId} for ${price}`);
 
       return {
         success: true,
-        message: `${staffData.name} has been listed for sale at ${askingPrice} CorpsCoin.`,
-        listingId: listingId
+        message: 'Staff member listed on marketplace!',
+        listingId: listingRef.id
       };
 
     } catch (error) {
-      console.error("Error listing staff for sale:", error);
-      if (error.code && error.code.startsWith('functions/')) {
+      functions.logger.error('Error selling staff:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
         throw error;
       }
-      throw new functions.https.HttpsError("internal", "An error occurred while listing staff member.");
+      
+      throw new functions.https.HttpsError('internal', 'Failed to list staff member');
     }
   });
 
@@ -412,112 +364,158 @@ exports.sellStaffMember = functions
  * Purchase staff from marketplace
  */
 exports.purchaseFromMarketplace = functions
-  .runWith(getFunctionConfig('standard'))
+  .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
     const { listingId } = data;
-    const buyerId = context.auth.uid;
+    const uid = context.auth.uid;
 
     if (!listingId) {
-      throw new functions.https.HttpsError("invalid-argument", "Listing ID is required.");
+      throw new functions.https.HttpsError('invalid-argument', 'Listing ID is required');
     }
 
     try {
-      const listingRef = admin.firestore().doc(`staff_marketplace/${listingId}`);
+      const db = admin.firestore();
+      
+      const listingRef = db.doc(`staff_marketplace/${listingId}`);
       const listingSnap = await listingRef.get();
 
       if (!listingSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Listing not found.");
+        throw new functions.https.HttpsError('not-found', 'Listing not found');
       }
 
       const listing = listingSnap.data();
 
       if (!listing.isActive) {
-        throw new functions.https.HttpsError("failed-precondition", "This listing is no longer active.");
+        throw new functions.https.HttpsError('failed-precondition', 'This listing is no longer active');
       }
 
-      if (listing.sellerId === buyerId) {
-        throw new functions.https.HttpsError("failed-precondition", "You cannot purchase your own listing.");
+      if (listing.sellerId === uid) {
+        throw new functions.https.HttpsError('invalid-argument', 'Cannot buy your own listing');
       }
 
-      // Get buyer's profile
-      const buyerProfileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${buyerId}/profile/data`);
-      const buyerSnap = await buyerProfileRef.get();
+      const profileRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/profile/data`);
+      const sellerProfileRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${listing.sellerId}/profile/data`);
 
-      if (!buyerSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Buyer profile not found.");
-      }
+      // Use transaction for atomicity
+      const result = await db.runTransaction(async (transaction) => {
+        const profileSnap = await transaction.get(profileRef);
+        const sellerProfileSnap = await transaction.get(sellerProfileRef);
 
-      const buyerCorpsCoin = buyerSnap.data().corpsCoin || 0;
+        if (!profileSnap.exists || !sellerProfileSnap.exists) {
+          throw new functions.https.HttpsError('not-found', 'User profile not found');
+        }
 
-      if (buyerCorpsCoin < listing.askingPrice) {
-        throw new functions.https.HttpsError("failed-precondition", `Insufficient CorpsCoin. Need ${listing.askingPrice}, have ${buyerCorpsCoin}.`);
-      }
+        const buyerCorpsCoin = profileSnap.data().corpsCoin || 0;
+        const sellerCorpsCoin = sellerProfileSnap.data().corpsCoin || 0;
 
-      // Execute transaction
-      const batch = admin.firestore().batch();
-      const marketplaceFee = Math.floor(listing.askingPrice * 0.1);
-      const sellerProceeds = listing.askingPrice - marketplaceFee;
+        // Check buyer can afford
+        if (buyerCorpsCoin < listing.price) {
+          throw new functions.https.HttpsError(
+            'failed-precondition',
+            `${ERROR_MESSAGES.INSUFFICIENT_FUNDS}. Need ${listing.price}, have ${buyerCorpsCoin}`
+          );
+        }
 
-      // Transfer staff from seller to buyer
-      const sellerStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${listing.sellerId}/staff/${listing.staffId}`);
-      const buyerStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${buyerId}/staff/${listing.staffId}`);
-      
-      const staffSnap = await sellerStaffRef.get();
-      if (!staffSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Staff member no longer available.");
-      }
+        // Calculate marketplace fee (10%)
+        const fee = Math.floor(listing.price * STAFF_CONFIG.MARKETPLACE_FEE || 0.1);
+        const sellerProceeds = listing.price - fee;
 
-      const staffData = staffSnap.data();
+        // Update buyer CorpsCoin
+        transaction.update(profileRef, {
+          corpsCoin: admin.firestore.FieldValue.increment(-listing.price)
+        });
 
-      // Remove from seller
-      batch.delete(sellerStaffRef);
+        // Update seller CorpsCoin
+        transaction.update(sellerProfileRef, {
+          corpsCoin: admin.firestore.FieldValue.increment(sellerProceeds)
+        });
 
-      // Add to buyer
-      batch.set(buyerStaffRef, {
-        ...staffData,
-        purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
-        purchasePrice: listing.askingPrice,
-        isListedForSale: false,
-        marketplaceListingId: null,
-        isActive: false,
-        assignedCaption: null
+        // Transfer staff to buyer
+        const sellerStaffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${listing.sellerId}/staff/${listing.staffId}`);
+        const buyerStaffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${listing.staffId}`);
+
+        const sellerStaffSnap = await transaction.get(sellerStaffRef);
+        if (sellerStaffSnap.exists) {
+          const staffData = sellerStaffSnap.data();
+          
+          // Add to buyer
+          transaction.set(buyerStaffRef, {
+            ...staffData,
+            listedForSale: false,
+            listingId: null,
+            assignedTo: null,
+            purchasedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Remove from seller
+          transaction.delete(sellerStaffRef);
+        }
+
+        // Mark listing as sold
+        transaction.update(listingRef, {
+          isActive: false,
+          soldAt: admin.firestore.FieldValue.serverTimestamp(),
+          buyerId: uid
+        });
+
+        // Log transactions
+        const buyerTransactionRef = db.collection(`corps_coin_transactions/${uid}/transactions`).doc();
+        transaction.set(buyerTransactionRef, {
+          type: 'marketplace_purchase',
+          amount: -listing.price,
+          staffName: listing.name,
+          listingId: listingId,
+          timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const sellerTransactionRef = db.collection(`corps_coin_transactions/${listing.sellerId}/transactions`).doc();
+        transaction.set(sellerTransactionRef, {
+          type: 'marketplace_sale',
+          amount: sellerProceeds,
+          staffName: listing.name,
+          listingId: listingId,
+          fee: fee,
+          timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+          buyerNewBalance: buyerCorpsCoin - listing.price,
+          staffName: listing.name
+        };
       });
 
-      // Update buyer's CorpsCoin
-      batch.update(buyerProfileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(-listing.askingPrice)
+      // Award XP to seller outside transaction
+      await db.collection(`xp_transactions/${listing.sellerId}/transactions`).add({
+        type: 'marketplace_sale',
+        amount: XP_CONFIG.MARKETPLACE_SALE,
+        description: `Sold ${result.staffName}`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update seller's CorpsCoin
-      const sellerProfileRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${listing.sellerId}/profile/data`);
-      batch.update(sellerProfileRef, {
-        corpsCoin: admin.firestore.FieldValue.increment(sellerProceeds)
+      await sellerProfileRef.update({
+        xp: admin.firestore.FieldValue.increment(XP_CONFIG.MARKETPLACE_SALE)
       });
 
-      // Mark listing as sold
-      batch.update(listingRef, {
-        isActive: false,
-        soldAt: admin.firestore.FieldValue.serverTimestamp(),
-        buyerId: buyerId
-      });
-
-      await batch.commit();
+      functions.logger.info(`User ${uid} purchased staff from marketplace: ${listingId}`);
 
       return {
         success: true,
-        message: `Successfully purchased ${listing.staffName} from marketplace!`
+        message: `Successfully purchased ${result.staffName}!`,
+        newBalance: result.buyerNewBalance
       };
 
     } catch (error) {
-      console.error("Error purchasing from marketplace:", error);
-      if (error.code && error.code.startsWith('functions/')) {
+      functions.logger.error('Error purchasing from marketplace:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
         throw error;
       }
-      throw new functions.https.HttpsError("internal", "An error occurred during marketplace purchase.");
+      
+      throw new functions.https.HttpsError('internal', 'Failed to purchase from marketplace');
     }
   });
 
@@ -528,58 +526,61 @@ exports.cancelMarketplaceListing = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
     const { listingId } = data;
     const uid = context.auth.uid;
 
     if (!listingId) {
-      throw new functions.https.HttpsError("invalid-argument", "Listing ID is required.");
+      throw new functions.https.HttpsError('invalid-argument', 'Listing ID is required');
     }
 
     try {
-      const listingRef = admin.firestore().doc(`staff_marketplace/${listingId}`);
+      const db = admin.firestore();
+      
+      const listingRef = db.doc(`staff_marketplace/${listingId}`);
       const listingSnap = await listingRef.get();
 
       if (!listingSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Listing not found.");
+        throw new functions.https.HttpsError('not-found', 'Listing not found');
       }
 
       const listing = listingSnap.data();
 
       if (listing.sellerId !== uid) {
-        throw new functions.https.HttpsError("permission-denied", "You can only cancel your own listings.");
+        throw new functions.https.HttpsError('permission-denied', 'You can only cancel your own listings');
       }
 
-      const batch = admin.firestore().batch();
-
       // Mark listing as inactive
-      batch.update(listingRef, {
+      await listingRef.update({
         isActive: false,
         cancelledAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update staff member
-      const userStaffRef = admin.firestore().doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${listing.staffId}`);
-      batch.update(userStaffRef, {
-        isListedForSale: false,
-        marketplaceListingId: null
+      // Update staff
+      const staffRef = db.doc(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff/${listing.staffId}`);
+      await staffRef.update({
+        listedForSale: false,
+        listingId: null,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      await batch.commit();
+      functions.logger.info(`User ${uid} cancelled listing ${listingId}`);
 
       return {
         success: true,
-        message: `Listing cancelled for ${listing.staffName}.`
+        message: 'Listing cancelled successfully'
       };
 
     } catch (error) {
-      console.error("Error cancelling listing:", error);
-      if (error.code && error.code.startsWith('functions/')) {
+      functions.logger.error('Error cancelling listing:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
         throw error;
       }
-      throw new functions.https.HttpsError("internal", "An error occurred while cancelling listing.");
+      
+      throw new functions.https.HttpsError('internal', 'Failed to cancel listing');
     }
   });
 
@@ -590,85 +591,197 @@ exports.updateListingPrice = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
     const { listingId, newPrice } = data;
     const uid = context.auth.uid;
 
     if (!listingId || !newPrice || newPrice < 1) {
-      throw new functions.https.HttpsError("invalid-argument", "Listing ID and valid new price are required.");
+      throw new functions.https.HttpsError('invalid-argument', 'Valid listing ID and price are required');
     }
 
     try {
-      const listingRef = admin.firestore().doc(`staff_marketplace/${listingId}`);
+      const db = admin.firestore();
+      
+      const listingRef = db.doc(`staff_marketplace/${listingId}`);
       const listingSnap = await listingRef.get();
 
       if (!listingSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "Listing not found.");
+        throw new functions.https.HttpsError('not-found', 'Listing not found');
       }
 
       const listing = listingSnap.data();
 
       if (listing.sellerId !== uid) {
-        throw new functions.https.HttpsError("permission-denied", "You can only update your own listings.");
+        throw new functions.https.HttpsError('permission-denied', 'You can only update your own listings');
       }
 
       if (!listing.isActive) {
-        throw new functions.https.HttpsError("failed-precondition", "Cannot update an inactive listing.");
+        throw new functions.https.HttpsError('failed-precondition', 'Cannot update inactive listing');
       }
 
       await listingRef.update({
-        askingPrice: newPrice,
+        price: newPrice,
         priceUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
+      functions.logger.info(`User ${uid} updated listing ${listingId} price to ${newPrice}`);
+
       return {
         success: true,
-        message: `Price updated to ${newPrice} CorpsCoin.`
+        message: 'Price updated successfully'
       };
 
     } catch (error) {
-      console.error("Error updating listing price:", error);
-      if (error.code && error.code.startsWith('functions/')) {
+      functions.logger.error('Error updating listing price:', error);
+      
+      if (error instanceof functions.https.HttpsError) {
         throw error;
       }
-      throw new functions.https.HttpsError("internal", "An error occurred while updating price.");
+      
+      throw new functions.https.HttpsError('internal', 'Failed to update listing price');
     }
   });
 
 /**
- * Get all active marketplace listings
+ * Get user's staff collection
+ */
+exports.getUserStaff = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
+    }
+
+    const uid = context.auth.uid;
+
+    try {
+      const db = admin.firestore();
+      
+      const staffSnapshot = await db.collection(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff`).get();
+
+      const staff = [];
+      staffSnapshot.forEach(doc => {
+        staff.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      // Sort by caption and name
+      staff.sort((a, b) => {
+        if (a.caption !== b.caption) {
+          return a.caption.localeCompare(b.caption);
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      return {
+        success: true,
+        staff: staff
+      };
+
+    } catch (error) {
+      functions.logger.error('Error getting user staff:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to retrieve staff collection');
+    }
+  });
+
+/**
+ * Get available staff from Hall of Fame
+ */
+exports.getAvailableStaff = functions
+  .runWith(getFunctionConfig('light'))
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
+    }
+
+    const { caption } = data;
+    const uid = context.auth.uid;
+
+    try {
+      const db = admin.firestore();
+      
+      // Get staff user already owns
+      const ownedStaffSnapshot = await db.collection(`artifacts/${DATA_NAMESPACE}/users/${uid}/staff`).get();
+      const ownedStaffIds = new Set();
+      ownedStaffSnapshot.forEach(doc => {
+        ownedStaffIds.add(doc.id);
+      });
+
+      // Get all Hall of Fame staff
+      let query = db.collection('hall-of-fame');
+      if (caption) {
+        query = query.where('caption', '==', caption);
+      }
+
+      const staffSnapshot = await query.get();
+
+      const availableStaff = [];
+      staffSnapshot.forEach(doc => {
+        // Only include staff user doesn't own
+        if (!ownedStaffIds.has(doc.id)) {
+          availableStaff.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        }
+      });
+
+      // Sort by price (ascending)
+      availableStaff.sort((a, b) => (a.price || 0) - (b.price || 0));
+
+      return {
+        success: true,
+        staff: availableStaff
+      };
+
+    } catch (error) {
+      functions.logger.error('Error getting available staff:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to retrieve available staff');
+    }
+  });
+
+/**
+ * Get marketplace listings
  */
 exports.getMarketplaceListings = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
-    try {
-      const listingsSnapshot = await admin.firestore()
-        .collection('staff_marketplace')
-        .where('isActive', '==', true)
-        .orderBy('listedAt', 'desc')
-        .limit(50)
-        .get();
+    const { caption } = data;
 
-      const listings = listingsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    try {
+      const db = admin.firestore();
+      
+      let query = db.collection('staff_marketplace').where('isActive', '==', true);
+      if (caption) {
+        query = query.where('caption', '==', caption);
+      }
+
+      const listingsSnapshot = await query.orderBy('listedAt', 'desc').get();
+
+      const listings = [];
+      listingsSnapshot.forEach(doc => {
+        listings.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
 
       return {
         success: true,
-        listings: listings,
-        totalCount: listings.length
+        listings: listings
       };
 
     } catch (error) {
-      console.error("Error fetching marketplace listings:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while fetching listings.");
+      functions.logger.error('Error getting marketplace listings:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to retrieve marketplace listings');
     }
   });
 
@@ -679,32 +792,35 @@ exports.getUserMarketplaceListings = functions
   .runWith(getFunctionConfig('light'))
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
+      throw new functions.https.HttpsError('unauthenticated', ERROR_MESSAGES.UNAUTHENTICATED);
     }
 
     const uid = context.auth.uid;
 
     try {
-      const listingsSnapshot = await admin.firestore()
-        .collection('staff_marketplace')
+      const db = admin.firestore();
+      
+      const listingsSnapshot = await db.collection('staff_marketplace')
         .where('sellerId', '==', uid)
         .where('isActive', '==', true)
         .orderBy('listedAt', 'desc')
         .get();
 
-      const listings = listingsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const listings = [];
+      listingsSnapshot.forEach(doc => {
+        listings.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
 
       return {
         success: true,
-        listings: listings,
-        totalCount: listings.length
+        listings: listings
       };
 
     } catch (error) {
-      console.error("Error fetching user marketplace listings:", error);
-      throw new functions.https.HttpsError("internal", "An error occurred while fetching your listings.");
+      functions.logger.error('Error getting user marketplace listings:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to retrieve your listings');
     }
   });

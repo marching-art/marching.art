@@ -1,364 +1,309 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useUserStore } from '../store/userStore';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import LoadingScreen from '../components/common/LoadingScreen';
+import { doc, getDoc, collection, query, where, getDocs } from 'firestore';
 import { 
-  Trophy, 
-  Award, 
+  User, 
   MapPin, 
   Calendar, 
-  Users, 
-  TrendingUp, 
+  Award,
+  Coins,
   Star,
-  MessageCircle,
-  BarChart3,
-  Clock,
+  TrendingUp,
+  Settings,
+  Trophy,
   Target,
-  Crown,
-  Coins
+  Shield,
+  Music
 } from 'lucide-react';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 const ProfilePage = () => {
   const { userId } = useParams();
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [performanceHistory, setPerformanceHistory] = useState([]);
-  const [seasonStats, setSeasonStats] = useState([]);
+  const [corpsList, setCorpsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const isOwnProfile = currentUser && currentUser.uid === userId;
 
   useEffect(() => {
     if (userId) {
-      fetchProfileData();
+      loadProfile();
     }
   }, [userId]);
 
-  const fetchProfileData = async () => {
+  const loadProfile = async () => {
+    setLoading(true);
     try {
-      // Fetch user profile
+      // Load profile
       const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
       const profileSnap = await getDoc(profileRef);
-      
+
       if (profileSnap.exists()) {
-        const profileData = { id: profileSnap.id, ...profileSnap.data() };
-        setProfile(profileData);
-        
-        // For now, use mock data since performance history collections don't exist yet
-        setPerformanceHistory([]);
-        setSeasonStats([]);
-      } else {
-        console.error('Profile not found');
+        setProfile({ id: profileSnap.id, ...profileSnap.data() });
       }
+
+      // Load all user's corps
+      const corpsRef = collection(db, `artifacts/marching-art/users/${userId}/corps`);
+      const corpsQuery = query(corpsRef, where('isActive', '==', true));
+      const corpsSnap = await getDocs(corpsQuery);
+
+      const corps = [];
+      corpsSnap.forEach(doc => {
+        corps.push({ id: doc.id, ...doc.data() });
+      });
+
+      // Sort by class
+      const classOrder = ['World Class', 'Open Class', 'A Class', 'SoundSport'];
+      corps.sort((a, b) => classOrder.indexOf(a.corpsClass) - classOrder.indexOf(b.corpsClass));
+
+      setCorpsList(corps);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (date) => {
-    if (!date) return 'Unknown';
-    return new Date(date).toLocaleDateString();
+  const getClassIcon = (corpsClass) => {
+    const icons = {
+      'SoundSport': Music,
+      'A Class': Award,
+      'Open Class': Trophy,
+      'World Class': Star
+    };
+    const Icon = icons[corpsClass] || Star;
+    return <Icon className="w-5 h-5" />;
   };
 
-  const formatScore = (score) => {
-    if (!score) return '0.000';
-    return parseFloat(score).toFixed(3);
-  };
-
-  const getClassIcon = (className) => {
-    switch(className) {
-      case 'World Class': return <Crown className="w-5 h-5 text-purple-500" />;
-      case 'Open Class': return <Trophy className="w-5 h-5 text-blue-500" />;
-      case 'A Class': return <Award className="w-5 h-5 text-green-500" />;
-      default: return <Star className="w-5 h-5 text-orange-500" />;
-    }
-  };
-
-  const getHighestClass = () => {
-    if (!profile?.unlockedClasses) return 'SoundSport';
-    const classOrder = ['SoundSport', 'A Class', 'Open Class', 'World Class'];
-    return profile.unlockedClasses.reduce((highest, current) => {
-      return classOrder.indexOf(current) > classOrder.indexOf(highest) ? current : highest;
-    });
+  const getClassColor = (corpsClass) => {
+    const colors = {
+      'SoundSport': 'text-blue-500 border-blue-500 bg-blue-500/10',
+      'A Class': 'text-green-500 border-green-500 bg-green-500/10',
+      'Open Class': 'text-purple-500 border-purple-500 bg-purple-500/10',
+      'World Class': 'text-yellow-500 border-yellow-500 bg-yellow-500/10'
+    };
+    return colors[corpsClass] || 'text-primary border-primary bg-primary/10';
   };
 
   if (loading) {
-    return <LoadingScreen />;
+    return <LoadingScreen fullScreen={false} />;
   }
 
   if (!profile) {
     return (
-      <div className="text-center py-12">
-        <div className="text-text-primary-dark text-xl">Profile not found.</div>
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <User className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+          Profile Not Found
+        </h2>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          This user profile could not be found.
+        </p>
       </div>
     );
   }
 
-  const currentClass = getHighestClass();
-
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-surface-dark to-background-dark p-6 rounded-theme shadow-theme-dark">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between">
-          <div className="mb-4 lg:mb-0">
-            <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-text-primary-dark">
-                {profile.displayName || 'Anonymous Director'}
-              </h1>
-              {profile.isPublic && (
-                <div className="flex items-center space-x-1 text-green-400">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">Public</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-4 text-text-secondary-dark">
-              {profile.location && (
-                <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{profile.location}</span>
-                </div>
-              )}
-              <div className="flex items-center space-x-1">
-                <Calendar className="w-4 h-4" />
-                <span>Joined {formatDate(profile.createdAt?.toDate?.() || profile.createdAt)}</span>
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-16 h-16 bg-primary dark:bg-primary-dark rounded-full flex items-center justify-center">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+                  {profile.displayName || profile.alias || 'Anonymous'}
+                </h1>
+                {profile.location && (
+                  <div className="flex items-center gap-2 text-text-secondary dark:text-text-secondary-dark">
+                    <MapPin className="w-4 h-4" />
+                    <span>{profile.location}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {profile.bio && (
-              <p className="text-text-primary-dark mt-3 max-w-2xl">{profile.bio}</p>
+              <p className="text-text-secondary dark:text-text-secondary-dark mt-3 max-w-2xl">
+                {profile.bio}
+              </p>
             )}
           </div>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-end space-x-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-text-primary-dark">{profile.xp || 0}</div>
-                <div className="text-sm text-text-secondary-dark">XP</div>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-1">
-                  <Coins className="w-5 h-5 text-yellow-500" />
-                  <span className="text-2xl font-bold text-text-primary-dark">
-                    {profile.corpsCoin?.toLocaleString() || 0}
-                  </span>
-                </div>
-                <div className="text-sm text-text-secondary-dark">CorpsCoin</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-end space-x-2">
-              {getClassIcon(currentClass)}
-              <span className="font-semibold text-text-primary-dark">{currentClass}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Corps Information */}
-      {profile.corps && (
-        <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-          <h2 className="text-2xl font-bold text-text-primary-dark mb-4">Current Corps</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-xl font-semibold text-text-primary-dark mb-2">
-                {profile.corps.corpsName}
-              </h3>
-              <p className="text-text-secondary-dark mb-4">
-                Directed by {profile.corps.alias}
-              </p>
-              {profile.showConcept && (
-                <div>
-                  <h4 className="font-medium text-text-primary-dark mb-2">Show Concept</h4>
-                  <p className="text-text-secondary-dark">{profile.showConcept}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              <div className="bg-background-dark p-4 rounded-theme">
-                <h4 className="font-medium text-text-primary-dark mb-2">Season Stats</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-text-primary-dark">
-                      {formatScore(profile.totalSeasonScore)}
-                    </div>
-                    <div className="text-sm text-text-secondary-dark">Current Score</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-text-primary-dark">
-                      {profile.seasonRank || '-'}
-                    </div>
-                    <div className="text-sm text-text-secondary-dark">Season Rank</div>
-                  </div>
-                </div>
-              </div>
-              
-              {profile.uniform && (
-                <div className="bg-background-dark p-4 rounded-theme">
-                  <h4 className="font-medium text-text-primary-dark mb-2">Uniform Colors</h4>
-                  <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 border-gray-300"
-                      style={{ backgroundColor: profile.uniform.colors?.primary || '#000000' }}
-                      title="Primary Color"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 border-gray-300"
-                      style={{ backgroundColor: profile.uniform.colors?.secondary || '#cccccc' }}
-                      title="Secondary Color"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 border-gray-300"
-                      style={{ backgroundColor: profile.uniform.colors?.accent || '#ff0000' }}
-                      title="Accent Color"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div className="bg-surface-dark p-1 rounded-theme shadow-theme-dark">
-        <div className="flex space-x-1">
-          {[
-            { id: 'overview', label: 'Overview', icon: Target },
-            { id: 'history', label: 'Performance History', icon: BarChart3 },
-            { id: 'achievements', label: 'Achievements', icon: Trophy }
-          ].map(tab => {
-            const IconComponent = tab.icon;
-            return (
+          <div className="flex flex-col gap-3">
+            {isOwnProfile && (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-theme transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-on-primary'
-                    : 'text-text-secondary-dark hover:text-text-primary-dark hover:bg-background-dark'
-                }`}
+                onClick={() => navigate('/settings')}
+                className="px-4 py-2 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-semibold flex items-center gap-2 transition-all"
               >
-                <IconComponent className="w-4 h-4" />
-                <span className="font-medium">{tab.label}</span>
+                <Settings className="w-4 h-4" />
+                Edit Profile
               </button>
-            );
-          })}
-        </div>
-      </div>
+            )}
 
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Quick Stats */}
-          <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-            <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Quick Stats</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-text-secondary-dark">Experience Points</span>
-                <span className="font-semibold text-text-primary-dark">{profile.xp || 0}</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <TrendingUp className="w-4 h-4 text-primary dark:text-primary-dark" />
+                  <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                    {profile.xp || 0}
+                  </div>
+                </div>
+                <div className="text-xs text-text-secondary dark:text-text-secondary-dark">XP</div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-text-secondary-dark">Current Class</span>
-                <span className="font-semibold text-text-primary-dark">{currentClass}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-text-secondary-dark">CorpsCoin Balance</span>
-                <span className="font-semibold text-text-primary-dark">
-                  {profile.corpsCoin?.toLocaleString() || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-text-secondary-dark">Unlocked Classes</span>
-                <span className="font-semibold text-text-primary-dark">
-                  {profile.unlockedClasses?.length || 1}
-                </span>
+              <div className="text-center p-3 bg-background dark:bg-background-dark rounded-theme">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                  <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                    {profile.corpsCoin?.toLocaleString() || 0}
+                  </div>
+                </div>
+                <div className="text-xs text-text-secondary dark:text-text-secondary-dark">CorpsCoin</div>
               </div>
             </div>
           </div>
-          
-          {/* Class Progress */}
-          <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-            <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Class Progress</h3>
-            <div className="space-y-4">
-              {['SoundSport', 'A Class', 'Open Class', 'World Class'].map((className, index) => {
-                const isUnlocked = profile.unlockedClasses?.includes(className);
-                const requirements = {
-                  'SoundSport': 0,
-                  'A Class': 500,
-                  'Open Class': 2000,
-                  'World Class': 5000
-                };
-                const required = requirements[className];
-                const current = profile.xp || 0;
-                const progress = required === 0 ? 100 : Math.min(100, (current / required) * 100);
-                
-                return (
-                  <div key={className} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        {getClassIcon(className)}
-                        <span className={`font-medium ${
-                          isUnlocked ? 'text-text-primary-dark' : 'text-text-secondary-dark'
-                        }`}>
-                          {className}
-                        </span>
+        </div>
+      </div>
+
+      {/* Corps Grid */}
+      <div>
+        <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
+          <Target className="w-6 h-6" />
+          Corps ({corpsList.length})
+        </h2>
+
+        {corpsList.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {corpsList.map(corps => {
+              const classColor = getClassColor(corps.corpsClass);
+
+              return (
+                <div
+                  key={corps.id}
+                  className={`bg-surface dark:bg-surface-dark rounded-theme p-6 border-2 ${classColor} shadow-theme dark:shadow-theme-dark`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {getClassIcon(corps.corpsClass)}
+                      <div>
+                        <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+                          {corps.corpsName}
+                        </h3>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                          {corps.corpsClass}
+                        </p>
                       </div>
-                      <span className={`text-sm ${
-                        isUnlocked ? 'text-green-400' : 'text-text-secondary-dark'
-                      }`}>
-                        {isUnlocked ? 'Unlocked' : `${required} XP`}
+                    </div>
+                  </div>
+
+                  {corps.alias && (
+                    <div className="mb-3 text-sm">
+                      <span className="text-text-secondary dark:text-text-secondary-dark">Director: </span>
+                      <span className="font-semibold text-text-primary dark:text-text-primary-dark">
+                        {corps.alias}
                       </span>
                     </div>
-                    <div className="w-full bg-accent-dark rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          isUnlocked ? 'bg-green-500' : 'bg-primary'
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      />
+                  )}
+
+                  {corps.location && (
+                    <div className="mb-3 flex items-center gap-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+                      <MapPin className="w-4 h-4" />
+                      <span>{corps.location}</span>
+                    </div>
+                  )}
+
+                  {corps.showConcept && (
+                    <div className="mb-4 p-3 bg-background dark:bg-background-dark rounded-theme">
+                      <div className="text-xs font-semibold text-text-secondary dark:text-text-secondary-dark mb-1">
+                        Show Concept:
+                      </div>
+                      <p className="text-sm text-text-primary dark:text-text-primary-dark">
+                        {corps.showConcept}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-3 pt-4 border-t border-accent dark:border-accent-dark">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
+                        {corps.stats?.totalShows || 0}
+                      </div>
+                      <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                        Shows
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary dark:text-primary-dark">
+                        {corps.stats?.bestScore?.toFixed(3) || 'N/A'}
+                      </div>
+                      <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                        Best Score
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-secondary dark:text-secondary-dark">
+                        #{corps.stats?.seasonRank || '--'}
+                      </div>
+                      <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                        Rank
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {activeTab === 'history' && (
-        <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-          <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Performance History</h3>
-          <div className="text-center py-8">
-            <BarChart3 className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-            <p className="text-text-secondary-dark">Performance history will be available once the season starts.</p>
+                  {/* Uniform Preview */}
+                  {corps.uniforms && (
+                    <div className="mt-4 pt-4 border-t border-accent dark:border-accent-dark">
+                      <div className="text-xs font-semibold text-text-secondary dark:text-text-secondary-dark mb-2">
+                        Uniform Colors:
+                      </div>
+                      <div className="flex gap-2">
+                        <div 
+                          className="w-8 h-8 rounded border-2 border-accent dark:border-accent-dark"
+                          style={{ backgroundColor: corps.uniforms.jacket?.baseColor || '#8B4513' }}
+                          title="Jacket"
+                        />
+                        <div 
+                          className="w-8 h-8 rounded border-2 border-accent dark:border-accent-dark"
+                          style={{ backgroundColor: corps.uniforms.pants?.baseColor || '#000000' }}
+                          title="Pants"
+                        />
+                        <div 
+                          className="w-8 h-8 rounded border-2 border-accent dark:border-accent-dark"
+                          style={{ backgroundColor: corps.uniforms.shako?.baseColor || '#8B4513' }}
+                          title="Shako"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
-
-      {activeTab === 'achievements' && (
-        <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-          <h3 className="text-xl font-semibold text-text-primary-dark mb-4">Achievements</h3>
-          <div className="text-center py-8">
-            <Trophy className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-            <p className="text-text-secondary-dark">Achievement system coming soon!</p>
+        ) : (
+          <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-theme border-2 border-dashed border-accent dark:border-accent-dark">
+            <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              No active corps yet
+            </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Comments Section */}
-      <div className="bg-surface-dark p-6 rounded-theme shadow-theme-dark">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-text-primary-dark">Comments</h3>
-          <MessageCircle className="w-5 h-5 text-text-secondary-dark" />
-        </div>
-        <div className="text-center py-8">
-          <MessageCircle className="w-16 h-16 mx-auto text-text-secondary-dark mb-4" />
-          <p className="text-text-secondary-dark">Comments system coming soon!</p>
+      {/* Member Since */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-text-secondary dark:text-text-secondary-dark">
+          <Calendar className="w-4 h-4" />
+          <span className="text-sm">
+            Member since {profile.createdAt ? new Date(profile.createdAt.seconds * 1000).toLocaleDateString() : 'Recently'}
+          </span>
         </div>
       </div>
     </div>

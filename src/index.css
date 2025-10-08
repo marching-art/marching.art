@@ -2,144 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* Light Mode Colors - Cream, Dark Brown, and Gold */
-    --color-primary: 218 165 32;        /* Gold */
-    --on-primary: 30 20 15;             /* Very dark brown text on gold */
-    --color-secondary: 139 69 19;       /* Saddle brown */
-    --on-secondary: 255 250 240;        /* Cream text on brown */
-    --color-accent: 205 175 149;        /* Tan/beige accent */
-    --color-background: 255 250 240;    /* Cream background */
-    --color-surface: 250 245 235;       /* Light cream surface */
-    --text-primary: 30 20 15;           /* Very dark brown */
-    --text-secondary: 90 60 40;         /* Medium brown */
-  }
-
-  .dark {
-    /* Dark Mode Colors - Dark Brown, Cream, and Gold */
-    --color-primary-dark: 218 165 32;   /* Gold (same as light) */
-    --on-primary-dark: 30 20 15;        /* Dark brown text on gold */
-    --color-secondary-dark: 139 69 19;  /* Saddle brown */
-    --on-secondary-dark: 255 250 240;   /* Cream text on brown */
-    --color-accent-dark: 101 67 33;     /* Dark brown accent */
-    --color-background-dark: 20 15 10;  /* Very dark brown background */
-    --color-surface-dark: 35 25 18;     /* Dark brown surface */
-    --text-primary-dark: 255 250 240;   /* Cream text */
-    --text-secondary-dark: 205 185 165; /* Light tan text */
-  }
-
-  body {
-    @apply bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark transition-colors duration-200;
-  }
-}
-
-@layer components {
-  .btn-primary {
-    @apply bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark
-    px-6 py-3 rounded-xl font-semibold transition-all duration-200
-    shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
-  }
-
-  .btn-secondary {
-    @apply bg-secondary dark:bg-secondary-dark text-on-secondary dark:text-on-secondary-dark
-    px-6 py-3 rounded-xl font-semibold transition-all duration-200
-    shadow-lg hover:shadow-xl hover:scale-105 active:scale-95;
-  }
-
-  .card {
-    @apply bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Smooth transitions for theme switching */
+/* Base Styles */
 * {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 200ms;
-  transition-timing-function: ease-in-out;
-}
-
-/* Override transitions for animations and transforms */
-*:where([class*="animate-"], [class*="transition-transform"]) {
-  transition-property: transform, opacity;
-}
-
-/* Performance optimizations */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Reduce repaints with will-change for animated elements */
-.animate-spin,
-.animate-pulse {
-  will-change: transform, opacity;
-}
-
-/* Optimize transitions */
-.transition-colors {
-  transition-property: color, background-color, border-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* Smooth scrolling with contain */
-html {
-  scroll-behavior: smooth;
-  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Optimize rendering for layout stability */
-img, video {
-  max-width: 100%;
-  height: auto;
-  display: block;
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
 
-/* Reduce layout shift */
-.container {
-  contain: layout style;
+/* Accessibility - Focus Styles */
+:focus-visible {
+  outline: 2px solid #F7941D;
+  outline-offset: 2px;
 }
 
-/* Optimize dark mode transitions */
-:root {
-  color-scheme: light dark;
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #F7941D;
+  outline-offset: 2px;
 }
 
-/* Prevent FOUC (Flash of Unstyled Content) */
-#root {
-  min-height: 100vh;
+/* Touch Target Minimum Size */
+@media (pointer: coarse) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
-/* Optimize form elements */
-input, select, textarea, button {
-  font: inherit;
+/* Improved Scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Reduce motion for accessibility */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Prevent horizontal scroll on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Safe Area Insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -151,63 +105,161 @@ input, select, textarea, button {
   }
 }
 
-/* Custom scrollbar for better UX */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  button,
+  a,
+  input,
+  select {
+    border: 2px solid currentColor;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Skip to Main Content Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #F7941D;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(139, 69, 19, 0.3);
-  border-radius: 4px;
+.skip-link:focus {
+  top: 0;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 69, 19, 0.5);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(247, 148, 29, 0.3);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(247, 148, 29, 0.5);
-}
-
-/* Loading states - prevent layout shift */
-.loading-skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.05) 25%,
-    rgba(0, 0, 0, 0.1) 50%,
-    rgba(0, 0, 0, 0.05) 75%
-  );
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-}
-
-@keyframes loading {
+/* Loading Skeleton Animation */
+@keyframes skeleton-loading {
   0% {
-    background-position: 200% 0;
+    background-position: -200px 0;
   }
   100% {
-    background-position: -200% 0;
+    background-position: calc(200px + 100%) 0;
   }
 }
 
-/* Optimize tab content rendering */
-[role="tabpanel"] {
-  contain: layout style paint;
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 0px, #e0e0e0 40px, #f0f0f0 80px);
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s infinite;
 }
 
-/* GPU acceleration for smooth transitions */
-.shadow-theme,
-.shadow-theme-dark,
-.rounded-theme {
-  transform: translateZ(0);
-  backface-visibility: hidden;
+.dark .skeleton {
+  background: linear-gradient(90deg, #2a2a2a 0px, #3a3a3a 40px, #2a2a2a 80px);
+}
+
+/* Custom Utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.grid-auto-fill {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+/* Mobile-Specific */
+@media (max-width: 768px) {
+  /* Larger touch targets on mobile */
+  button,
+  .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Full width modals on mobile */
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
+
+/* Utility Classes for Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }

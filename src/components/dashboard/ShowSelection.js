@@ -3,8 +3,6 @@ import { db, functions } from '../../firebaseConfig';
 import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '../../context/AuthContext';
-import { useUserStore } from '../../store/userStore';
-import { useDataStore } from '../../store/dataStore'; // ADD THIS
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
@@ -19,19 +17,13 @@ import {
   Music,
   AlertCircle,
   Info,
-  Loader,
-  X
+  Loader2,
+  X,
+  Target
 } from 'lucide-react';
 
-const ShowSelection = () => {
+const ShowSelection = ({ userProfile, activeCorps }) => {
   const { currentUser } = useAuth();
-  const profile = useUserStore((state) => state.profile);
-  
-  // RENAMED: Use destructured functions from data store with aliases to avoid conflicts
-  const { 
-    fetchCurrentSeason: getCachedSeason, 
-    fetchSchedule: getCachedSchedule 
-  } = useDataStore();
   
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -42,76 +34,64 @@ const ShowSelection = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedShow, setSelectedShow] = useState(null);
 
+  // Check if we have an active corps
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to register for shows.
+        </p>
+      </div>
+    );
+  }
+
   useEffect(() => {
     loadScheduleData();
-  }, []);
+  }, [activeCorps?.id]);
 
-  // RENAMED: Changed function name to avoid conflicts
   const loadScheduleData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // OPTIMIZED: Use cached season data
-      const seasonData = await getCachedSeason();
-      if (!seasonData) {
-        toast.error('No active season found');
-        setLoading(false);
-        return;
-      }
-
-      const seasonId = seasonData.seasonId || seasonData.currentSeasonId;
-      setCurrentSeason(seasonData);
-
-      console.log('Season ID:', seasonId);
-
-      // OPTIMIZED: Use cached schedule data
-      const scheduleData = await getCachedSchedule(seasonId);
+      // Get current season
+      const gameSettingsRef = doc(db, 'game-settings/current');
+      const gameSettingsSnap = await getDoc(gameSettingsRef);
       
-      if (!scheduleData) {
-        console.error('No schedule found for season:', seasonId);
-        toast.error('Schedule not available for this season');
-        setLoading(false);
-        return;
-      }
-
-      // CRITICAL FIX: The database has "competitions" not "shows"
-      // Transform the data structure to match what the component expects
-      const transformedSchedule = {};
-      
-      if (scheduleData.weeks) {
-        // If weeks structure exists, use it
-        Object.keys(scheduleData.weeks).forEach(weekKey => {
-          const weekData = scheduleData.weeks[weekKey];
-          transformedSchedule[weekKey] = {
-            weekNumber: weekData.weekNumber,
-            shows: weekData.competitions || weekData.shows || []  // Support both field names
-          };
-        });
-      } else if (scheduleData.competitions) {
-        // If only competitions array exists, group by week
-        const competitions = scheduleData.competitions;
+      if (gameSettingsSnap.exists()) {
+        const seasonData = gameSettingsSnap.data();
+        setCurrentSeason(seasonData);
         
-        competitions.forEach(comp => {
-          const weekKey = `week${comp.week}`;
-          if (!transformedSchedule[weekKey]) {
-            transformedSchedule[weekKey] = {
-              weekNumber: comp.week,
-              shows: []
-            };
-          }
-          transformedSchedule[weekKey].shows.push(comp);
+        const currentSeasonId = seasonData.activeSeasonId || seasonData.currentSeasonId || '2025';
+        
+        // Load schedule
+        const scheduleRef = doc(db, `dci-data/${currentSeasonId}/schedule/data`);
+        const scheduleSnap = await getDoc(scheduleRef);
+        
+        if (scheduleSnap.exists()) {
+          setSchedule(scheduleSnap.data().weeks || {});
+        }
+        
+        // Load registered shows for THIS specific corps
+        const participantsRef = collection(db, 'participants');
+        const participantsQuery = query(
+          participantsRef,
+          where('userId', '==', currentUser.uid),
+          where('corpsId', '==', activeCorps.id),
+          where('seasonId', '==', currentSeasonId)
+        );
+        const participantsSnap = await getDocs(participantsQuery);
+        
+        const registered = [];
+        participantsSnap.forEach(doc => {
+          registered.push(doc.data().showId);
         });
+        setRegisteredShows(registered);
       }
-
-      console.log('Transformed schedule:', transformedSchedule);
-      setSchedule(transformedSchedule);
-
-      // TODO: Fetch user's registered shows from their profile or a registrations collection
-      // For now, using empty array
-      setRegisteredShows([]);
-
     } catch (error) {
-      console.error('Error fetching schedule:', error);
+      console.error('Error loading schedule:', error);
       toast.error('Failed to load schedule data');
     } finally {
       setLoading(false);
@@ -119,33 +99,27 @@ const ShowSelection = () => {
   };
 
   const handleRegisterForShow = async (show) => {
-    if (!currentUser || !profile) {
-      toast.error('Please complete your profile first');
+    if (!currentSeason) {
+      toast.error('Season data not available');
       return;
     }
 
-    if (!profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps') {
-      toast.error('Please complete your corps setup first');
-      return;
-    }
+    const seasonId = currentSeason.activeSeasonId || currentSeason.currentSeasonId || '2025';
 
+    setRegistering(true);
     try {
-      setRegistering(true);
-
       const registerForShow = httpsCallable(functions, 'registerForShow');
       const result = await registerForShow({
         showId: show.id,
-        seasonId: currentSeason.seasonId || currentSeason.currentSeasonId
+        seasonId: seasonId
       });
 
       if (result.data.success) {
         toast.success(result.data.message);
         setRegisteredShows([...registeredShows, show.id]);
-        
-        // Award XP notification
-        if (result.data.xpAwarded) {
-          toast.success(`+${result.data.xpAwarded} XP!`, { icon: '⭐' });
-        }
+        setShowDetailModal(false);
+      } else {
+        toast.error(result.data.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Error registering for show:', error);
@@ -156,23 +130,31 @@ const ShowSelection = () => {
   };
 
   const handleUnregisterFromShow = async (show) => {
-    if (!currentUser) {
-      toast.error('Please log in first');
+    if (!currentSeason) {
+      toast.error('Season data not available');
       return;
     }
 
-    try {
-      setRegistering(true);
+    const seasonId = currentSeason.activeSeasonId || currentSeason.currentSeasonId || '2025';
 
+    if (!confirm(`Are you sure you want to unregister from ${show.eventName}?`)) {
+      return;
+    }
+
+    setRegistering(true);
+    try {
       const unregisterFromShow = httpsCallable(functions, 'unregisterFromShow');
       const result = await unregisterFromShow({
         showId: show.id,
-        seasonId: currentSeason.seasonId || currentSeason.currentSeasonId
+        seasonId: seasonId
       });
 
       if (result.data.success) {
         toast.success(result.data.message);
         setRegisteredShows(registeredShows.filter(id => id !== show.id));
+        setShowDetailModal(false);
+      } else {
+        toast.error(result.data.message || 'Unregistration failed');
       }
     } catch (error) {
       console.error('Error unregistering from show:', error);
@@ -182,436 +164,347 @@ const ShowSelection = () => {
     }
   };
 
-  const formatDate = (date) => {
-    if (!date) return 'TBD';
-    try {
-      const dateObj = date.toDate ? date.toDate() : new Date(date);
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return 'TBD';
-    }
+  const getShowIcon = (showType) => {
+    const icons = {
+      'Regional': MapPin,
+      'Championship': Trophy,
+      'Finals': Award,
+      'SoundSport': Music,
+      'Special': Star
+    };
+    return icons[showType] || Calendar;
   };
 
-  const formatTime = (time) => {
-    if (!time) return 'TBA';
-    return time;
+  const getShowColor = (showType) => {
+    const colors = {
+      'Regional': 'text-blue-500 border-blue-500',
+      'Championship': 'text-purple-500 border-purple-500',
+      'Finals': 'text-yellow-500 border-yellow-500',
+      'SoundSport': 'text-green-500 border-green-500',
+      'Special': 'text-pink-500 border-pink-500'
+    };
+    return colors[showType] || 'text-accent dark:text-accent-dark border-accent dark:border-accent-dark';
   };
 
-  const getShowIcon = (showName) => {
-    if (!showName) return Music;
-    const lower = showName.toLowerCase();
-    if (lower.includes('finals')) return Trophy;
-    if (lower.includes('semi')) return Award;
-    if (lower.includes('quarter')) return Star;
-    if (lower.includes('regional') || lower.includes('championship') || lower.includes('classic')) return Flag;
-    return Music;
-  };
-
-  const isShowRegistered = (showId) => {
-    return registeredShows.includes(showId);
+  const isShowPast = (show) => {
+    if (!show.date) return false;
+    const showDate = new Date(show.date);
+    return showDate < new Date();
   };
 
   const canRegisterForShow = (show) => {
-    if (!profile || !profile.corps) return false;
+    if (isShowPast(show)) return false;
+    if (registeredShows.includes(show.id)) return false;
     
-    // FIX: Check both 'allowedClasses' (from backend) and 'classes' (legacy)
-    const showClasses = show.allowedClasses || show.classes;
-    
-    // Check if corps class matches show requirements
-    if (showClasses && !showClasses.includes(profile.corps.corpsClass)) {
-      return false;
-    }
-    
-    // Check if show is in the future or current week
-    const now = new Date();
-    const showDate = show.date ? (show.date.toDate ? show.date.toDate() : new Date(show.date)) : null;
-    
-    if (showDate && showDate < now) {
-      return false; // Can't register for past shows
+    // Check class restrictions
+    if (show.classRestrictions) {
+      return show.classRestrictions.includes(activeCorps.corpsClass);
     }
     
     return true;
   };
 
-  const getWeekKeys = () => {
-    return Object.keys(schedule)
-      .filter(key => key.startsWith('week'))
-      .sort((a, b) => {
-        const weekA = parseInt(a.replace('week', ''));
-        const weekB = parseInt(b.replace('week', ''));
-        return weekA - weekB;
-      });
-  };
-
-  const openShowDetails = (show) => {
-    setSelectedShow(show);
-    setShowDetailModal(true);
-  };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
-        <span className="ml-2 text-text-secondary dark:text-text-secondary-dark">Loading schedule...</span>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} />;
   }
 
-  if (!currentSeason) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-        <h3 className="text-xl font-medium text-text-primary dark:text-text-primary-dark mb-2">
-          No Active Season
-        </h3>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Show registration will be available once a season is active
-        </p>
-      </div>
-    );
-  }
+  const weeks = Object.keys(schedule).sort((a, b) => 
+    parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))
+  );
 
-  const weekKeys = getWeekKeys();
-  const currentWeekData = schedule[`week${selectedWeek}`];
-  const currentWeekShows = currentWeekData ? currentWeekData.shows || [] : [];
+  const selectedWeekData = schedule[`week${selectedWeek}`] || { days: {} };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary dark:from-primary-dark to-secondary dark:to-secondary-dark p-6 rounded-theme">
-        <h2 className="text-2xl font-bold text-white mb-2">Show Selection</h2>
-        <p className="text-white text-opacity-90">
-          Register your corps for competitions • {registeredShows.length} shows registered
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+            Show Registration
+          </h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark">
+            {activeCorps.corpsName} • {registeredShows.length} Shows Registered
+          </p>
+        </div>
       </div>
 
-      {/* Important Info */}
-      {profile && (!profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps') && (
-        <div className="bg-orange-500 bg-opacity-10 border-2 border-orange-500 rounded-theme p-4 flex items-start gap-3">
-          <AlertCircle className="w-6 h-6 text-orange-500 flex-shrink-0 mt-1" />
-          <div>
-            <h4 className="font-semibold text-text-primary dark:text-text-primary-dark mb-1">
-              Complete Your Corps Setup
-            </h4>
-            <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
-              You need to set up your corps name and select your class before you can register for shows.
-              Go to the Overview tab to complete your setup.
+      {/* Info Box */}
+      <div className="bg-primary/5 dark:bg-primary-dark/5 border border-primary dark:border-primary-dark rounded-theme p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-primary dark:text-primary-dark flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+            <p className="mb-2">
+              Register your corps for competition shows! Your scores will be calculated based on your caption selections.
+            </p>
+            <p>
+              <strong>Note:</strong> Some shows have class restrictions. Make sure your {activeCorps.corpsClass} corps is eligible before registering.
             </p>
           </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 shadow-theme dark:shadow-theme-dark text-center">
-          <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
-          <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-            {registeredShows.length}
-          </div>
-          <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Shows Registered</p>
-        </div>
-        
-        <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 shadow-theme dark:shadow-theme-dark text-center">
-          <Calendar className="w-8 h-8 mx-auto mb-2 text-primary dark:text-primary-dark" />
-          <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-            {weekKeys.length}
-          </div>
-          <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Weeks of Competition</p>
-        </div>
-        
-        <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 shadow-theme dark:shadow-theme-dark text-center">
-          <Trophy className="w-8 h-8 mx-auto mb-2 text-primary dark:text-primary-dark" />
-          <div className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-            {profile?.corps?.corpsClass || 'N/A'}
-          </div>
-          <p className="text-sm text-text-secondary dark:text-text-secondary-dark">Your Class</p>
         </div>
       </div>
 
       {/* Week Selector */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 shadow-theme dark:shadow-theme-dark">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">
-            Select Week
-          </h3>
-          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-            Week {selectedWeek} of {weekKeys.length}
-          </div>
-        </div>
-        
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {weekKeys.map((weekKey) => {
-            const weekNum = schedule[weekKey].weekNumber;
-            const weekShows = schedule[weekKey].shows || [];
-            const registeredCount = weekShows.filter(show => isShowRegistered(show.id)).length;
-            
-            return (
-              <button
-                key={weekKey}
-                onClick={() => setSelectedWeek(weekNum)}
-                className={`flex-shrink-0 px-4 py-3 rounded-theme font-medium transition-all ${
-                  selectedWeek === weekNum
-                    ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
-                    : 'bg-accent dark:bg-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-primary hover:bg-opacity-20 dark:hover:bg-primary-dark dark:hover:bg-opacity-20'
-                }`}
-              >
-                <div className="text-center">
-                  <div className="text-lg">Week {weekNum}</div>
-                  {registeredCount > 0 && (
-                    <div className="text-xs mt-1 opacity-80">
-                      {registeredCount} registered
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        {weeks.map((week) => {
+          const weekNum = parseInt(week.replace('week', ''));
+          return (
+            <button
+              key={week}
+              onClick={() => setSelectedWeek(weekNum)}
+              className={`px-4 py-2 rounded-theme font-semibold whitespace-nowrap transition-all ${
+                selectedWeek === weekNum
+                  ? 'bg-primary dark:bg-primary-dark text-white'
+                  : 'bg-surface dark:bg-surface-dark text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark border border-accent dark:border-accent-dark'
+              }`}
+            >
+              Week {weekNum}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Shows List */}
-      {currentWeekShows && currentWeekShows.length > 0 ? (
-        <div className="space-y-4">
-          {currentWeekShows.map((show, index) => {
-            // FIX: Use show.name as primary, fallback to eventName for backward compatibility
-            const showName = show.name || show.eventName || 'Competition Event';
-            const ShowIcon = getShowIcon(showName);
-            const isRegistered = isShowRegistered(show.id);
-            const canRegister = canRegisterForShow(show) && !isRegistered;
-            
-            return (
-              <div
-                key={show.id || index}
-                className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark hover:shadow-lg dark:hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-primary dark:hover:border-primary-dark"
-                onClick={() => openShowDetails(show)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20 p-3 rounded-theme">
-                      <ShowIcon className="w-8 h-8 text-primary dark:text-primary-dark" />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-                          {showName}
-                        </h3>
-                        {!canRegister && !isRegistered && (
-                          <div className="flex items-center gap-2 text-orange-500 text-sm">
-                            <AlertCircle className="w-4 h-4" />
-                            <span>
-                              {(show.allowedClasses || show.classes) && 
-                              !(show.allowedClasses || show.classes).includes(profile?.corps?.corpsClass)
-                                ? 'Your class cannot participate in this show'
-                                : 'Registration closed for this show'}
-                            </span>
-                          </div>
-                        )}
+      {/* Shows Grid */}
+      <div className="space-y-6">
+        {Object.entries(selectedWeekData.days || {}).map(([day, dayData]) => (
+          <div key={day}>
+            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              {dayData.date ? new Date(dayData.date).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }) : `Day ${day}`}
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(dayData.shows || []).map((show) => {
+                const ShowIcon = getShowIcon(show.type);
+                const showColor = getShowColor(show.type);
+                const isRegistered = registeredShows.includes(show.id);
+                const isPast = isShowPast(show);
+                const canRegister = canRegisterForShow(show);
+
+                return (
+                  <div
+                    key={show.id}
+                    className={`bg-surface dark:bg-surface-dark p-4 rounded-theme border-2 transition-all cursor-pointer ${
+                      isRegistered
+                        ? 'border-green-500 bg-green-500/5'
+                        : isPast
+                        ? 'border-accent dark:border-accent-dark opacity-50'
+                        : showColor
+                    } hover:shadow-lg`}
+                    onClick={() => {
+                      setSelectedShow(show);
+                      setShowDetailModal(true);
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <ShowIcon className={`w-5 h-5 ${showColor.split(' ')[0]}`} />
+                        <span className="text-xs font-semibold text-text-secondary dark:text-text-secondary-dark uppercase">
+                          {show.type}
+                        </span>
                       </div>
-                      
-                      <div className="flex flex-col gap-1 text-sm text-text-secondary dark:text-text-secondary-dark">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>{formatDate(show.date)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span>{show.location || 'Location TBA'}</span>
-                        </div>
-                        {(show.allowedClasses || show.classes) && (
-                        <div className="flex gap-2 mb-3">
-                          {(show.allowedClasses || show.classes).map(cls => {
-                            const isMyClass = profile?.corps?.corpsClass === cls;
-                            return (
-                              <span 
-                                key={cls}
-                                className={`text-xs px-2 py-1 rounded-full ${
-                                  isMyClass
-                                    ? 'bg-primary dark:bg-primary-dark bg-opacity-20 text-primary dark:text-primary-dark font-semibold'
-                                    : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
-                                }`}
-                              >
-                                {cls}
-                              </span>
-                            );
-                          })}
-                        </div>
+                      {isRegistered && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
                       )}
+                      {isPast && !isRegistered && (
+                        <Clock className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
+                      )}
+                    </div>
+
+                    <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2 line-clamp-2">
+                      {show.eventName}
+                    </h4>
+
+                    <div className="flex items-center gap-2 text-sm text-text-secondary dark:text-text-secondary-dark mb-3">
+                      <MapPin className="w-4 h-4" />
+                      <span className="truncate">{show.location}</span>
+                    </div>
+
+                    {show.classRestrictions && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {show.classRestrictions.map(cls => (
+                          <span
+                            key={cls}
+                            className={`text-xs px-2 py-1 rounded ${
+                              cls === activeCorps.corpsClass
+                                ? 'bg-primary/20 text-primary dark:text-primary-dark font-semibold'
+                                : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
+                            }`}
+                          >
+                            {cls}
+                          </span>
+                        ))}
                       </div>
+                    )}
+
+                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      {show.participantCount || 0} corps registered
                     </div>
                   </div>
-                  
-                  <div className="ml-4">
-                    {isRegistered ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUnregisterFromShow(show);
-                        }}
-                        disabled={registering}
-                        className="bg-red-500 bg-opacity-20 text-red-400 px-4 py-2 rounded-theme font-medium hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {registering ? 'Processing...' : 'Unregister'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (canRegister) {
-                            handleRegisterForShow(show);
-                          }
-                        }}
-                        disabled={!canRegister || registering}
-                        className={`px-4 py-2 rounded-theme font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                          canRegister
-                            ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90'
-                            : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
-                        }`}
-                      >
-                        {registering ? 'Processing...' : (canRegister ? 'Register' : 'Not Available')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-surface dark:bg-surface-dark rounded-theme p-12 text-center shadow-theme dark:shadow-theme-dark">
-          <Info className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-          <h3 className="text-xl font-medium text-text-primary dark:text-text-primary-dark mb-2">
-            No Shows This Week
-          </h3>
-          <p className="text-text-secondary dark:text-text-secondary-dark">
-            Check other weeks for available competitions
-          </p>
-        </div>
-      )}
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {Object.keys(selectedWeekData.days || {}).length === 0 && (
+          <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-theme border-2 border-dashed border-accent dark:border-accent-dark">
+            <Calendar className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+            <p className="text-text-secondary dark:text-text-secondary-dark">
+              No shows scheduled for this week
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Show Detail Modal */}
       {showDetailModal && selectedShow && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-primary dark:bg-primary-dark bg-opacity-10 dark:bg-opacity-20 p-4 rounded-theme">
-                  {React.createElement(getShowIcon(selectedShow.name || selectedShow.eventName), {
-                    className: "w-10 h-10 text-primary dark:text-primary-dark"
-                  })}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-1">
-                    {selectedShow.name || selectedShow.eventName || 'Competition Event'}
-                  </h2>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {formatDate(selectedShow.date)}
-                  </p>
-                </div>
-              </div>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 max-w-2xl w-full my-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+                {selectedShow.eventName}
+              </h3>
               <button
-                onClick={() => setShowDetailModal(false)}
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedShow(null);
+                }}
                 className="text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Show Details */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-primary dark:text-primary-dark" />
-                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Location</h3>
-                  </div>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {selectedShow.location || 'To be announced'}
-                  </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  {React.createElement(getShowIcon(selectedShow.type), { 
+                    className: `w-5 h-5 ${getShowColor(selectedShow.type).split(' ')[0]}` 
+                  })}
+                  <span className="font-semibold">{selectedShow.type}</span>
                 </div>
-                
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-5 h-5 text-primary dark:text-primary-dark" />
-                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Date & Time</h3>
-                  </div>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {formatDate(selectedShow.date)}
-                  </p>
-                  <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
-                    {formatTime(selectedShow.time)}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
+                  <span>{selectedShow.location}</span>
                 </div>
-                
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-5 h-5 text-primary dark:text-primary-dark" />
-                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Competition Type</h3>
-                  </div>
-                  <p className="text-text-secondary dark:text-text-secondary-dark capitalize">
-                    {selectedShow.type || 'Regular Competition'}
-                  </p>
-                </div>
-                
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-primary dark:text-primary-dark" />
-                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">Eligible Classes</h3>
-                  </div>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {(selectedShow.allowedClasses || selectedShow.classes) 
-                      ? (selectedShow.allowedClasses || selectedShow.classes).join(', ') 
-                      : 'All Classes'}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
+                  <span>
+                    {selectedShow.date ? new Date(selectedShow.date).toLocaleDateString() : 'TBD'}
+                  </span>
                 </div>
               </div>
 
-              {/* Show Description */}
               {selectedShow.description && (
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <h3 className="font-semibold text-text-primary dark:text-text-primary-dark mb-2">About This Show</h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark">
-                    {selectedShow.description}
-                  </p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">
+                  {selectedShow.description}
+                </p>
+              )}
+
+              {selectedShow.classRestrictions && (
+                <div>
+                  <h4 className="font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                    Eligible Classes:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedShow.classRestrictions.map(cls => (
+                      <span
+                        key={cls}
+                        className={`px-3 py-1 rounded ${
+                          cls === activeCorps.corpsClass
+                            ? 'bg-primary/20 text-primary dark:text-primary-dark font-semibold border-2 border-primary dark:border-primary-dark'
+                            : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
+                        }`}
+                      >
+                        {cls}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Registration Button */}
-              <div className="flex justify-end gap-3">
+              {registeredShows.includes(selectedShow.id) && (
+                <div className="p-4 bg-green-500/10 border border-green-500 rounded-theme">
+                  <div className="flex items-center gap-2 text-green-500 font-semibold">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>You are registered for this show</span>
+                  </div>
+                </div>
+              )}
+
+              {isShowPast(selectedShow) && !registeredShows.includes(selectedShow.id) && (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500 rounded-theme">
+                  <div className="flex items-center gap-2 text-yellow-500 font-semibold">
+                    <Clock className="w-5 h-5" />
+                    <span>This show has already occurred</span>
+                  </div>
+                </div>
+              )}
+
+              {!canRegisterForShow(selectedShow) && 
+               !isShowPast(selectedShow) && 
+               !registeredShows.includes(selectedShow.id) && (
+                <div className="p-4 bg-error/10 border border-error rounded-theme">
+                  <div className="flex items-center gap-2 text-error font-semibold">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Your {activeCorps.corpsClass} corps is not eligible for this show</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t border-accent dark:border-accent-dark">
                 <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-6 py-2 rounded-theme border-2 border-accent dark:border-accent-dark text-text-primary dark:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark hover:bg-opacity-10 dark:hover:bg-opacity-10 transition-colors"
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedShow(null);
+                  }}
+                  className="flex-1 px-4 py-3 border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark hover:bg-accent dark:hover:bg-accent-dark transition-colors"
                 >
                   Close
                 </button>
-                {!isShowRegistered(selectedShow.id) && canRegisterForShow(selectedShow) && (
+                
+                {registeredShows.includes(selectedShow.id) ? (
                   <button
-                    onClick={() => {
-                      handleRegisterForShow(selectedShow);
-                      setShowDetailModal(false);
-                    }}
+                    onClick={() => handleUnregisterFromShow(selectedShow)}
                     disabled={registering}
-                    className="px-6 py-2 rounded-theme bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-error hover:bg-error-dark text-white rounded-theme font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {registering ? 'Processing...' : 'Register for Show'}
+                    {registering ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Unregistering...
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-5 h-5" />
+                        Unregister
+                      </>
+                    )}
                   </button>
-                )}
-                {isShowRegistered(selectedShow.id) && (
+                ) : canRegisterForShow(selectedShow) ? (
                   <button
-                    onClick={() => {
-                      handleUnregisterFromShow(selectedShow);
-                      setShowDetailModal(false);
-                    }}
+                    onClick={() => handleRegisterForShow(selectedShow)}
                     disabled={registering}
-                    className="px-6 py-2 rounded-theme bg-red-500 bg-opacity-20 text-red-400 hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {registering ? 'Processing...' : 'Unregister from Show'}
+                    {registering ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Register
+                      </>
+                    )}
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db, functions } from '../../firebaseConfig';
 import { httpsCallable } from 'firebase/functions';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
-import { useUserStore } from '../../store/userStore';
 import toast from 'react-hot-toast';
 import { 
   Save, 
@@ -12,18 +11,21 @@ import {
   Shield,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Target,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const REQUIRED_CAPTIONS = [
-  "GE1", 
-  "GE2", 
-  "Visual Proficiency", 
-  "Visual Analysis",
-  "Color Guard", 
-  "Brass", 
-  "Music Analysis", 
-  "Percussion"
+  { short: "GE1", full: "General Effect 1" },
+  { short: "GE2", full: "General Effect 2" },
+  { short: "VP", full: "Visual Proficiency" },
+  { short: "VA", full: "Visual Analysis" },
+  { short: "CG", full: "Color Guard" },
+  { short: "B", full: "Brass" },
+  { short: "MA", full: "Music Analysis" },
+  { short: "P", full: "Percussion" }
 ];
 
 const CLASS_POINT_LIMITS = {
@@ -33,9 +35,8 @@ const CLASS_POINT_LIMITS = {
   "World Class": 150,
 };
 
-const LineupEditor = () => {
+const LineupEditor = ({ userProfile, activeCorps }) => {
   const { currentUser } = useAuth();
-  const profile = useUserStore((state) => state.profile);
   
   const [lineup, setLineup] = useState({});
   const [originalLineup, setOriginalLineup] = useState({});
@@ -43,6 +44,7 @@ const LineupEditor = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [seasonId, setSeasonId] = useState(null);
+  const [expandedCaption, setExpandedCaption] = useState(null);
   const [validation, setValidation] = useState({
     valid: false,
     errors: [],
@@ -51,14 +53,29 @@ const LineupEditor = () => {
     pointsRemaining: 0
   });
 
-  // Fetch available corps and current lineup
+  if (!activeCorps) {
+    return (
+      <div className="text-center py-12">
+        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Selected
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          Please create or select a corps to manage captions.
+        </p>
+      </div>
+    );
+  }
+
+  const corpsClass = activeCorps.corpsClass;
+  const pointLimit = CLASS_POINT_LIMITS[corpsClass] || 90;
+
   useEffect(() => {
-    if (profile && currentUser) {
+    if (activeCorps && currentUser) {
       fetchLineupData();
     }
-  }, [profile, currentUser]);
+  }, [activeCorps?.id, currentUser]);
 
-  // Real-time validation whenever lineup changes
   useEffect(() => {
     if (Object.keys(lineup).length > 0 && availableCorps.length > 0) {
       validateLineupLocally();
@@ -69,361 +86,296 @@ const LineupEditor = () => {
     setLoading(true);
     
     try {
-      // Get current season
       const gameSettingsRef = doc(db, 'game-settings/current');
       const gameSettingsSnap = await getDoc(gameSettingsRef);
       
       if (!gameSettingsSnap.exists()) {
-        toast.error('Season data not available. Please try again later.');
+        toast.error('Season data not available.');
         setLoading(false);
         return;
       }
-      
-      const currentSeasonId = gameSettingsSnap.data().seasonId || gameSettingsSnap.data().currentSeasonId;
+
+      const currentSeasonId = gameSettingsSnap.data().activeSeasonId || 
+                              gameSettingsSnap.data().currentSeasonId || 
+                              '2025';
       setSeasonId(currentSeasonId);
 
-      // Fetch available corps for this season
-      const getAvailableCorpsFunc = httpsCallable(functions, 'getAvailableCorps');
-      const corpsResult = await getAvailableCorpsFunc({ seasonId: currentSeasonId });
-      
-      if (corpsResult.data.success) {
-        setAvailableCorps(corpsResult.data.corps);
+      const dciDataRef = doc(db, `dci-data/${currentSeasonId}`);
+      const dciDataSnap = await getDoc(dciDataRef);
+
+      if (dciDataSnap.exists()) {
+        const corpsValues = dciDataSnap.data().corpsValues || [];
+        setAvailableCorps(corpsValues);
+      } else {
+        toast.error('No corps data available');
+        setAvailableCorps([]);
       }
 
-      // Load existing lineup from profile
-      const existingLineup = profile.lineup || {};
-      const initialLineup = {};
-      
-      // Initialize all captions (empty or with existing values)
-      REQUIRED_CAPTIONS.forEach(caption => {
-        initialLineup[caption] = existingLineup[caption] || '';
-      });
-      
-      setLineup(initialLineup);
-      setOriginalLineup({ ...initialLineup });
+      const lineupRef = doc(db, `activeLineups/${currentSeasonId}/${currentUser.uid}/${activeCorps.id}`);
+      const lineupSnap = await getDoc(lineupRef);
+
+      if (lineupSnap.exists()) {
+        const lineupData = lineupSnap.data().lineup || {};
+        setLineup(lineupData);
+        setOriginalLineup(lineupData);
+      } else {
+        const emptyLineup = {};
+        REQUIRED_CAPTIONS.forEach(caption => {
+          emptyLineup[caption.full] = null;
+        });
+        setLineup(emptyLineup);
+        setOriginalLineup(emptyLineup);
+      }
 
     } catch (error) {
       console.error('Error fetching lineup data:', error);
-      toast.error('Failed to load lineup editor. Please refresh the page.');
+      toast.error('Failed to load lineup data');
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * LOCAL VALIDATION - runs immediately when lineup changes
-   * Checks for duplicates and calculates points
-   */
   const validateLineupLocally = () => {
     const errors = [];
     let totalPoints = 0;
-    const usedCorps = new Set();
-    const corpsClass = profile?.corps?.corpsClass || 'SoundSport';
-    const pointLimit = CLASS_POINT_LIMITS[corpsClass];
 
-    // Check each caption
-    REQUIRED_CAPTIONS.forEach(caption => {
-      const selectedCorps = lineup[caption];
-      
-      // Check if caption is filled
-      if (!selectedCorps || selectedCorps === '') {
-        errors.push(`Caption "${caption}" must be filled.`);
-        return;
-      }
+    const missingCaptions = REQUIRED_CAPTIONS.filter(caption => !lineup[caption.full]);
+    if (missingCaptions.length > 0) {
+      errors.push(`Missing ${missingCaptions.length} caption(s)`);
+    }
 
-      // Check for duplicates
-      if (usedCorps.has(selectedCorps)) {
-        errors.push(`"${selectedCorps}" is already used in another caption.`);
-      } else {
-        usedCorps.add(selectedCorps);
-      }
-
-      // Calculate points
-      const corps = availableCorps.find(c => c.name === selectedCorps);
-      if (corps) {
-        totalPoints += corps.value;
+    Object.values(lineup).forEach(corpsId => {
+      if (corpsId) {
+        const selectedCorps = availableCorps.find(c => c.id === corpsId);
+        if (selectedCorps) {
+          totalPoints += selectedCorps.value;
+        }
       }
     });
 
-    // Check point limit
     if (totalPoints > pointLimit) {
-      errors.push(
-        `Total lineup value (${totalPoints} points) exceeds ${corpsClass} limit of ${pointLimit} points. ` +
-        `Please remove ${totalPoints - pointLimit} points.`
-      );
+      errors.push(`${totalPoints - pointLimit} points over limit`);
     }
 
+    const pointsRemaining = pointLimit - totalPoints;
+
     setValidation({
-      valid: errors.length === 0,
-      errors: errors,
-      totalPoints: totalPoints,
-      pointLimit: pointLimit,
-      pointsRemaining: pointLimit - totalPoints
+      valid: errors.length === 0 && missingCaptions.length === 0,
+      errors,
+      totalPoints,
+      pointLimit,
+      pointsRemaining
     });
   };
 
-  const handleCorpsChange = (caption, corpsName) => {
+  const handleCorpsChange = (caption, corpsId) => {
     setLineup(prev => ({
       ...prev,
-      [caption]: corpsName
+      [caption]: corpsId
     }));
   };
 
-  const handleSave = async () => {
+  const handleSaveLineup = async () => {
     if (!validation.valid) {
-      toast.error('Please fix all lineup errors before saving.');
+      toast.error('Please fix validation errors before saving');
       return;
     }
-    
+
     setSaving(true);
-    
+
     try {
-      const saveLineupFunc = httpsCallable(functions, 'validateAndSaveLineup');
-      const result = await saveLineupFunc({
-        seasonId,
-        lineup
+      const lineupRef = doc(db, `activeLineups/${seasonId}/${currentUser.uid}/${activeCorps.id}`);
+      
+      await setDoc(lineupRef, {
+        userId: currentUser.uid,
+        corpsId: activeCorps.id,
+        corpsName: activeCorps.corpsName,
+        corpsClass: activeCorps.corpsClass,
+        seasonId: seasonId,
+        lineup: lineup,
+        totalPoints: validation.totalPoints,
+        lastUpdated: new Date(),
+        updatedAt: new Date()
       });
-      
-      if (result.data.success) {
-        toast.success(result.data.message);
-        setOriginalLineup({ ...lineup });
-        
-        useUserStore.getState().updateProfile({
-          lineup,
-          lineupDetails: result.data.lineupDetails,
-          corps: {
-            ...profile.corps,
-            totalPoints: result.data.totalPoints,
-            pointsRemaining: result.data.pointsRemaining
-          }
-        });
-      }
-      
+
+      setOriginalLineup(lineup);
+      toast.success('Lineup saved successfully! (+10 XP)');
+
+      const awardXPFunction = httpsCallable(functions, 'awardXP');
+      await awardXPFunction({
+        amount: 10,
+        reason: 'Lineup saved',
+        seasonId: seasonId
+      });
+
     } catch (error) {
       console.error('Error saving lineup:', error);
-      const errorMessage = error.message || 'Failed to save lineup. Please try again.';
-      toast.error(errorMessage);
+      toast.error('Failed to save lineup');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReset = () => {
-    setLineup({ ...originalLineup });
-    toast.info('Lineup reset to last saved version');
-  };
-
-  const hasUnsavedChanges = () => {
-    return JSON.stringify(lineup) !== JSON.stringify(originalLineup);
-  };
-
-  const getCorpsValue = (corpsName) => {
-    const corps = availableCorps.find(c => c.name === corpsName);
-    return corps ? corps.value : 0;
-  };
-
-  /**
-   * CRITICAL FIX: Check if corps is used in ANY other caption
-   */
-  const isCorpsUsed = (corpsName, currentCaption) => {
-    if (!corpsName) return false;
-    
-    return Object.entries(lineup).some(
-      ([caption, selectedCorps]) => 
-        caption !== currentCaption && selectedCorps === corpsName
-    );
+  const handleResetLineup = () => {
+    if (confirm('Reset lineup to last saved version?')) {
+      setLineup(originalLineup);
+      toast.success('Lineup reset');
+    }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
-        <span className="ml-3 text-text-secondary dark:text-text-secondary-dark">
-          Loading lineup editor...
-        </span>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} />;
   }
 
-  const corpsClass = profile?.corps?.corpsClass || 'SoundSport';
-  const pointLimit = CLASS_POINT_LIMITS[corpsClass];
-  const percentUsed = (validation.totalPoints / pointLimit) * 100;
+  const hasChanges = JSON.stringify(lineup) !== JSON.stringify(originalLineup);
 
   return (
-    <div className="space-y-6">
-      {/* Header with Point Summary */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 border-2 border-accent dark:border-accent-dark">
-        <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark flex items-center gap-2">
-              <Shield className="w-6 h-6" />
-              Lineup Editor
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+              Caption Selection
             </h2>
-            <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
-              Select 8 corps for each caption • {corpsClass} Class
+            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+              {activeCorps.corpsName}
             </p>
           </div>
-          
-          <div className="text-right">
-            <div className="text-3xl font-bold text-primary dark:text-primary-dark">
-              {validation.totalPoints} / {pointLimit}
-            </div>
-            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-              Points Used
-            </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleResetLineup}
+              disabled={!hasChanges || saving}
+              className="p-2 border border-accent dark:border-accent-dark rounded-theme hover:bg-accent dark:hover:bg-accent-dark transition-colors disabled:opacity-50"
+              title="Reset"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleSaveLineup}
+              disabled={!validation.valid || !hasChanges || saving}
+              className="px-4 py-2 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-semibold transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-300 ${
-              percentUsed > 100 
-                ? 'bg-red-500' 
-                : percentUsed > 90 
-                  ? 'bg-yellow-500' 
-                  : 'bg-green-500'
-            }`}
-            style={{ width: `${Math.min(percentUsed, 100)}%` }}
-          />
-        </div>
-        
-        <div className="flex items-center justify-between mt-2 text-sm">
-          <span className={`font-medium ${
-            validation.pointsRemaining < 0 
-              ? 'text-red-600 dark:text-red-400' 
-              : 'text-text-secondary dark:text-text-secondary-dark'
-          }`}>
-            {validation.pointsRemaining >= 0 
-              ? `${validation.pointsRemaining} points remaining` 
-              : `${Math.abs(validation.pointsRemaining)} points over limit`}
-          </span>
-          
-          {validation.valid ? (
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-              <CheckCircle2 className="w-4 h-4" />
-              Valid Lineup
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-              <AlertCircle className="w-4 h-4" />
-              Invalid Lineup
-            </span>
-          )}
-        </div>
-
-        {/* Validation Errors */}
-        {validation.errors.length > 0 && (
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-theme">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-red-800 dark:text-red-300 mb-1">
-                  Please fix the following issues:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-sm text-red-700 dark:text-red-400">
-                  {validation.errors.map((error, idx) => (
-                    <li key={idx}>{error}</li>
-                  ))}
-                </ul>
-              </div>
+        {/* Compact Validation */}
+        <div className={`p-3 rounded-theme border-2 ${
+          validation.valid 
+            ? 'border-green-500 bg-green-500/10' 
+            : 'border-yellow-500 bg-yellow-500/10'
+        }`}>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              {validation.valid ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-yellow-500" />
+              )}
+              <span className="font-semibold">
+                {validation.valid ? 'Valid' : validation.errors.join(' • ')}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-text-secondary dark:text-text-secondary-dark">
+                <span className="font-bold text-text-primary dark:text-text-primary-dark">
+                  {validation.totalPoints}
+                </span>/{validation.pointLimit}
+              </span>
+              <span className={`font-bold ${
+                validation.pointsRemaining >= 0 ? 'text-green-500' : 'text-error'
+              }`}>
+                {validation.pointsRemaining >= 0 ? `${validation.pointsRemaining} left` : `${Math.abs(validation.pointsRemaining)} over!`}
+              </span>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Caption Selections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Compact Caption List */}
+      <div className="space-y-2">
         {REQUIRED_CAPTIONS.map(caption => {
-          const selectedCorps = lineup[caption];
-          const corpsValue = selectedCorps ? getCorpsValue(selectedCorps) : 0;
-          
+          const selectedCorpsId = lineup[caption.full];
+          const selectedCorps = availableCorps.find(c => c.id === selectedCorpsId);
+          const isExpanded = expandedCaption === caption.short;
+
           return (
             <div 
-              key={caption}
-              className="bg-surface dark:bg-surface-dark rounded-theme p-4 border border-accent dark:border-accent-dark"
+              key={caption.short}
+              className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark overflow-hidden"
             >
-              <label className="block mb-2">
-                <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-                  {caption}
-                </span>
-                {selectedCorps && (
-                  <span className="ml-2 text-sm text-text-secondary dark:text-text-secondary-dark">
-                    ({corpsValue} pts)
-                  </span>
-                )}
-              </label>
-              
-              <select
-                value={selectedCorps || ''}
-                onChange={(e) => handleCorpsChange(caption, e.target.value)}
-                className="w-full px-3 py-2 bg-background dark:bg-background-dark border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+              {/* Caption Header - Always Visible */}
+              <button
+                onClick={() => setExpandedCaption(isExpanded ? null : caption.short)}
+                className="w-full p-3 flex items-center justify-between hover:bg-accent dark:hover:bg-accent-dark transition-colors"
               >
-                <option value="">-- Select Corps --</option>
-                {availableCorps.map(corps => {
-                  const isUsedElsewhere = isCorpsUsed(corps.name, caption);
-                  const isCurrentSelection = selectedCorps === corps.name;
-                  
-                  return (
-                    <option 
-                      key={corps.name} 
-                      value={corps.name}
-                      disabled={isUsedElsewhere && !isCurrentSelection}
-                      className={isUsedElsewhere && !isCurrentSelection ? 'text-gray-400' : ''}
-                    >
-                      {corps.name} ({corps.value} pts) {isUsedElsewhere && !isCurrentSelection ? '✓ Used' : ''}
-                    </option>
-                  );
-                })}
-              </select>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Shield className="w-5 h-5 text-primary dark:text-primary-dark flex-shrink-0" />
+                  <div className="text-left min-w-0 flex-1">
+                    <div className="font-bold text-text-primary dark:text-text-primary-dark">
+                      {caption.short}
+                    </div>
+                    {selectedCorps && (
+                      <div className="text-sm text-text-secondary dark:text-text-secondary-dark truncate">
+                        {selectedCorps.name} ({selectedCorps.value}pts)
+                      </div>
+                    )}
+                    {!selectedCorps && (
+                      <div className="text-sm text-error">Not selected</div>
+                    )}
+                  </div>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark flex-shrink-0" />
+                )}
+              </button>
+
+              {/* Dropdown - Shown when expanded */}
+              {isExpanded && (
+                <div className="border-t border-accent dark:border-accent-dark p-3 bg-background dark:bg-background-dark">
+                  <select
+                    value={selectedCorpsId || ''}
+                    onChange={(e) => {
+                      handleCorpsChange(caption.full, e.target.value);
+                      setExpandedCaption(null);
+                    }}
+                    className="w-full p-3 bg-surface dark:bg-surface-dark border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+                  >
+                    <option value="">Select Corps...</option>
+                    {availableCorps.map(corps => (
+                      <option key={corps.id} value={corps.id}>
+                        {corps.name} ({corps.value} pts)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between gap-4 pt-4">
-        <button
-          onClick={handleReset}
-          disabled={!hasUnsavedChanges() || saving}
-          className="flex items-center gap-2 px-6 py-3 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-theme transition-colors disabled:cursor-not-allowed"
-        >
-          <RotateCcw className="w-5 h-5" />
-          Reset Changes
-        </button>
-
-        <button
-          onClick={handleSave}
-          disabled={!validation.valid || !hasUnsavedChanges() || saving}
-          className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary-dark disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-theme transition-colors disabled:cursor-not-allowed font-semibold"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-5 h-5" />
-              Save Lineup
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Help Text */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-theme p-4">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-            <p><strong>Rules:</strong></p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>All 8 captions must be filled</li>
-              <li>Each corps can only be used once</li>
-              <li>Total points cannot exceed {pointLimit} for {corpsClass} class</li>
-              <li>Higher value corps = stronger in that caption</li>
-            </ul>
-          </div>
+      {/* Info Box */}
+      <div className="bg-primary/5 dark:bg-primary-dark/5 border border-primary dark:border-primary-dark rounded-theme p-3">
+        <div className="flex items-start gap-2">
+          <Info className="w-4 h-4 text-primary dark:text-primary-dark flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+            Tap each caption to select a DCI corps. Stay within your {pointLimit}-point budget for {corpsClass}.
+          </p>
         </div>
       </div>
     </div>

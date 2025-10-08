@@ -10,16 +10,19 @@ import {
   Coins,
   Star,
   Target,
-  Lock
+  ChevronDown,
+  TrendingUp
 } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
+import toast from 'react-hot-toast';
 
-// Lazy load heavy dashboard components
+// Lazy load dashboard components
 const LineupEditor = lazy(() => import('../components/dashboard/LineupEditor'));
 const NewUserSetup = lazy(() => import('../components/dashboard/NewUserSetup'));
 const StaffManagement = lazy(() => import('../components/dashboard/StaffManagement'));
 const ShowSelection = lazy(() => import('../components/dashboard/ShowSelection'));
 const UniformBuilder = lazy(() => import('../components/dashboard/UniformBuilder'));
+const CorpsManager = lazy(() => import('../components/dashboard/CorpsManager'));
 
 // Lightweight placeholder for analysis
 const AnalysisTools = () => (
@@ -33,108 +36,173 @@ const AnalysisTools = () => (
   </div>
 );
 
-// Component to handle class registration cards
-const ClassRegistrationCard = ({ cls, profile, isRegistrationOpen }) => {
-  const isUnlocked = profile?.unlockedClasses?.includes(cls.name) || cls.xpRequired === 0;
-  const isCurrentClass = profile?.corps?.corpsClass === cls.name;
-  const currentXP = profile?.xp || 0;
-  const xpNeeded = Math.max(0, cls.xpRequired - currentXP);
+// Skeleton Loader Component
+const DashboardSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 space-y-4">
+      <div className="h-8 bg-accent dark:bg-accent-dark rounded w-1/3"></div>
+      <div className="h-4 bg-accent dark:bg-accent-dark rounded w-1/2"></div>
+    </div>
+    <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 space-y-3">
+      <div className="h-6 bg-accent dark:bg-accent-dark rounded w-1/4"></div>
+      <div className="h-32 bg-accent dark:bg-accent-dark rounded"></div>
+    </div>
+  </div>
+);
+
+// Get class icon helper
+const getClassIcon = (corpsClass) => {
+  const icons = {
+    'SoundSport': Star,
+    'A Class': Award,
+    'Open Class': Coins,
+    'World Class': Star
+  };
+  const Icon = icons[corpsClass] || Star;
+  return <Icon className="w-5 h-5" />;
+};
+
+// Get class color helper
+const getClassColor = (corpsClass) => {
+  const colors = {
+    'SoundSport': 'text-blue-500',
+    'A Class': 'text-green-500',
+    'Open Class': 'text-purple-500',
+    'World Class': 'text-yellow-500'
+  };
+  return colors[corpsClass] || 'text-primary dark:text-primary-dark';
+};
+
+// Corps Selector Dropdown Component
+const CorpsSelector = () => {
+  const { corpsList, activeCorpsId, setActiveCorps } = useUserStore();
+  const [showDropdown, setShowDropdown] = useState(false);
   
+  const activeCorps = corpsList.find(c => c.id === activeCorpsId);
+  
+  if (corpsList.length === 0) {
+    return null;
+  }
+
+  if (corpsList.length === 1) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 dark:bg-primary-dark/10 border border-primary dark:border-primary-dark rounded-theme">
+        {getClassIcon(activeCorps?.corpsClass)}
+        <span className="font-semibold text-text-primary dark:text-text-primary-dark">
+          {activeCorps?.corpsName}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`bg-surface dark:bg-surface-dark rounded-theme p-6 border-2 transition-all ${
-      isCurrentClass 
-        ? 'border-primary dark:border-primary-dark shadow-lg' 
-        : isUnlocked 
-          ? 'border-accent dark:border-accent-dark hover:border-primary dark:hover:border-primary-dark cursor-pointer' 
-          : 'border-accent dark:border-accent-dark opacity-60'
-    }`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <cls.icon className={`w-6 h-6 ${isCurrentClass ? 'text-primary dark:text-primary-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`} />
-          <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{cls.name}</h3>
-        </div>
-        {isCurrentClass && <span className="text-xs bg-primary dark:bg-primary-dark text-white px-2 py-1 rounded">Active</span>}
-        {!isUnlocked && <Lock className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />}
-      </div>
-      <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-3">{cls.description}</p>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-text-secondary dark:text-text-secondary-dark">Point Limit:</span>
-          <span className="font-medium text-text-primary dark:text-text-primary-dark">{cls.pointLimit}</span>
-        </div>
-        {!isUnlocked && (
-          <div className="flex justify-between text-sm">
-            <span className="text-text-secondary dark:text-text-secondary-dark">XP Required:</span>
-            <span className="font-medium text-error">{xpNeeded} more XP needed</span>
+    <div className="relative">
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="flex items-center gap-2 px-4 py-2 bg-surface dark:bg-surface-dark border-2 border-accent dark:border-accent-dark rounded-theme hover:border-primary dark:hover:border-primary-dark transition-all min-w-[200px] sm:min-w-[250px]"
+      >
+        <div className="flex items-center gap-2 flex-1">
+          {getClassIcon(activeCorps?.corpsClass)}
+          <div className="text-left flex-1">
+            <div className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {activeCorps?.corpsName || 'Select Corps'}
+            </div>
+            <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+              {activeCorps?.corpsClass}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+        <ChevronDown className={`w-5 h-5 text-text-secondary dark:text-text-secondary-dark transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+      </button>
+
+      {showDropdown && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setShowDropdown(false)}
+          />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-surface dark:bg-surface-dark border-2 border-accent dark:border-accent-dark rounded-theme shadow-xl z-20 max-h-80 overflow-y-auto">
+            {corpsList.map(corps => (
+              <button
+                key={corps.id}
+                onClick={() => {
+                  setActiveCorps(corps.id);
+                  setShowDropdown(false);
+                  toast.success(`Switched to ${corps.corpsName}`);
+                }}
+                className={`w-full p-3 flex items-center gap-3 hover:bg-accent dark:hover:bg-accent-dark transition-colors text-left ${
+                  corps.id === activeCorpsId ? 'bg-primary/10 dark:bg-primary-dark/10' : ''
+                }`}
+              >
+                {getClassIcon(corps.corpsClass)}
+                <div className="flex-1">
+                  <div className="font-semibold text-text-primary dark:text-text-primary-dark">
+                    {corps.corpsName}
+                  </div>
+                  <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                    {corps.corpsClass} • {corps.stats?.totalShows || 0} shows
+                  </div>
+                </div>
+                {corps.stats?.bestScore > 0 && (
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-primary dark:text-primary-dark">
+                      {corps.stats.bestScore.toFixed(3)}
+                    </div>
+                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      Best
+                    </div>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const { profile, isLoading, fetchUserProfile } = useUserStore();
-  const [activeTab, setActiveTab] = useState('overview');
+  const { profile, corpsList, activeCorpsId, fetchUserProfile, getActiveCorps } = useUserStore();
+  const [activeTab, setActiveTab] = useState('corps');
   const [hasFetched, setHasFetched] = useState(false);
 
-  const handleSetupComplete = () => {
-    if (currentUser) {
-      setHasFetched(false); // Allow refetch
+  const activeCorps = getActiveCorps();
+
+  useEffect(() => {
+    if (currentUser && !hasFetched) {
       fetchUserProfile(currentUser.uid);
+      setHasFetched(true);
+    }
+  }, [currentUser, hasFetched, fetchUserProfile]);
+
+  const handleSetupComplete = async () => {
+    if (currentUser) {
+      setHasFetched(false);
+      await fetchUserProfile(currentUser.uid);
     }
   };
 
-  // Show loading only when actively loading and no profile yet
-  if (isLoading && !profile) {
-    return <LoadingScreen message="Loading your dashboard..." />;
-  }
-
-  // If no user, show login message
   if (!currentUser) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Dashboard
-        </h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please log in to view your dashboard
-        </p>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} />;
   }
 
-  // If no profile after fetch attempt, show error
-  if (!profile && hasFetched) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Profile Not Found
-        </h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark mb-4">
-          We couldn't load your profile. This might be because your account is new.
-        </p>
-        <button 
-          onClick={() => {
-            setHasFetched(false);
-            fetchUserProfile(currentUser.uid);
-          }}
-          className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-theme"
-        >
-          Try Again
-        </button>
-      </div>
-    );
+  if (!profile && !hasFetched) {
+    return <LoadingScreen fullScreen={false} />;
   }
 
-  // Check if user needs setup
-  const needsSetup = profile && (!profile.corps || !profile.corps.corpsName || profile.corps.corpsName === 'New Corps');
+  // Show skeleton while loading
+  if (!profile) {
+    return <DashboardSkeleton />;
+  }
+
+  const needsSetup = !profile.hasCompletedSetup || corpsList.length === 0;
 
   if (needsSetup) {
     return (
       <div className="max-w-4xl mx-auto space-y-8">
-        <Suspense fallback={<LoadingScreen message="Loading setup..." />}>
+        <Suspense fallback={<LoadingScreen fullScreen={false} />}>
           <NewUserSetup profile={profile} onComplete={handleSetupComplete} />
         </Suspense>
       </div>
@@ -143,185 +211,168 @@ const DashboardPage = () => {
 
   const dashboardTabs = [
     { 
-      id: 'overview', 
-      label: 'Overview', 
+      id: 'corps', 
+      label: 'Corps', 
       icon: Target, 
-      description: 'Season summary and quick actions'
+      component: CorpsManager,
+      description: 'Manage your corps',
+      showAlways: true
     },
     { 
       id: 'lineup', 
-      label: 'Caption Selection', 
+      label: 'Captions', 
       icon: Users, 
       component: LineupEditor,
-      description: 'Select corps for each caption'
+      description: 'Select corps for each caption',
+      requiresCorps: true
     },
     { 
       id: 'shows', 
-      label: 'Show Selection', 
+      label: 'Shows', 
       icon: Calendar, 
       component: ShowSelection,
-      description: 'Register for competitions'
+      description: 'Register for competitions',
+      requiresCorps: true
     },
     { 
       id: 'staff', 
-      label: 'Staff Management', 
+      label: 'Staff', 
       icon: Award, 
       component: StaffManagement,
-      description: 'Hire and manage legendary staff'
+      description: 'Hire legendary staff',
+      requiresCorps: true
     },
     { 
       id: 'uniform', 
-      label: 'Uniform Builder', 
+      label: 'Uniform', 
       icon: Palette, 
       component: UniformBuilder,
-      description: 'Design your corps look'
+      description: 'Design your look',
+      requiresCorps: true
     },
     { 
       id: 'analysis', 
-      label: 'Score Analysis', 
+      label: 'Analysis', 
       icon: BarChart3, 
       component: AnalysisTools,
-      description: 'Deep dive into data'
+      description: 'Deep dive into data',
+      requiresCorps: false
     }
   ];
 
-  const ActiveComponent = dashboardTabs.find(tab => tab.id === activeTab)?.component;
+  const availableTabs = dashboardTabs.filter(tab => 
+    tab.showAlways || !tab.requiresCorps || (tab.requiresCorps && activeCorps)
+  );
 
-  // Mock data for overview
-  const currentSeason = '2025';
-  const weekNumber = 5;
-  const isRegistrationOpen = weekNumber <= 4;
-
-  const classInfo = [
-    { 
-      name: 'SoundSport', 
-      icon: Star, 
-      pointLimit: 90, 
-      xpRequired: 0, 
-      description: 'Entry level competition - perfect for beginners' 
-    },
-    { 
-      name: 'A Class', 
-      icon: Award, 
-      pointLimit: 60, 
-      xpRequired: 500, 
-      description: 'Intermediate competition'
-    },
-    { 
-      name: 'Open Class', 
-      icon: Coins, 
-      pointLimit: 120, 
-      xpRequired: 2000, 
-      description: 'Advanced competition'
-    },
-    { 
-      name: 'World Class', 
-      icon: Star, 
-      pointLimit: 150, 
-      xpRequired: 5000, 
-      description: 'Elite competition'
+  useEffect(() => {
+    if (!availableTabs.find(t => t.id === activeTab)) {
+      setActiveTab('corps');
     }
-  ];
+  }, [activeCorps, activeTab, availableTabs]);
+
+  const ActiveComponent = availableTabs.find(tab => tab.id === activeTab)?.component;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Dashboard Header */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-            {profile?.corps?.corpsName || 'Dashboard'}
-          </h1>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-sm text-text-secondary dark:text-text-secondary-dark">XP</div>
-              <div className="text-2xl font-bold text-primary dark:text-primary-dark">{profile?.xp || 0}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-text-secondary dark:text-text-secondary-dark">CorpsCoin</div>
-              <div className="text-2xl font-bold text-secondary dark:text-secondary-dark">{profile?.corpsCoin || 0}</div>
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      {/* Mobile-Optimized Header */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 sm:p-6 shadow-theme dark:shadow-theme-dark">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+              Dashboard
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
+              <div className="flex items-center gap-2 bg-background dark:bg-background-dark px-3 py-1.5 rounded-theme">
+                <TrendingUp className="w-4 h-4 text-primary dark:text-primary-dark" />
+                <span className="font-semibold text-text-primary dark:text-text-primary-dark">
+                  {profile.xp || 0} XP
+                </span>
+              </div>
+              <div className="flex items-center gap-2 bg-background dark:bg-background-dark px-3 py-1.5 rounded-theme">
+                <Coins className="w-4 h-4 text-yellow-500" />
+                <span className="font-semibold text-text-primary dark:text-text-primary-dark">
+                  {profile.corpsCoin?.toLocaleString() || 0}
+                </span>
+              </div>
+              <div className="text-text-secondary dark:text-text-secondary-dark">
+                {corpsList.length} Corps Active
+              </div>
             </div>
           </div>
-        </div>
-        <p className="text-text-secondary dark:text-text-secondary-dark">
-          {profile?.corps?.corpsClass || 'SoundSport'} | Season {currentSeason} | Week {weekNumber}
-        </p>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme shadow-theme dark:shadow-theme-dark overflow-hidden">
-        <div className="flex overflow-x-auto">
-          {dashboardTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-medium transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-primary dark:bg-primary-dark text-white border-b-4 border-primary dark:border-primary-dark'
-                  : 'text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark'
-              }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          {corpsList.length > 0 && (
+            <div className="w-full sm:w-auto">
+              <CorpsSelector />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Tab Content */}
-      <div className="bg-surface dark:bg-surface-dark rounded-theme p-6 shadow-theme dark:shadow-theme-dark min-h-[500px]">
-        {activeTab === 'overview' ? (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Class Registration</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {classInfo.map((cls) => (
-                  <ClassRegistrationCard 
-                    key={cls.name} 
-                    cls={cls} 
-                    profile={profile} 
-                    isRegistrationOpen={isRegistrationOpen} 
-                  />
-                ))}
+        {activeCorps && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-accent dark:border-accent-dark">
+            <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+              <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+                Class
+              </div>
+              <div className={`font-bold flex items-center gap-1 ${getClassColor(activeCorps.corpsClass)}`}>
+                {getClassIcon(activeCorps.corpsClass)}
+                <span className="text-sm">{activeCorps.corpsClass}</span>
               </div>
             </div>
-            
-            {profile?.corps && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <h3 className="text-sm text-text-secondary dark:text-text-secondary-dark mb-1">Latest Score</h3>
-                  <p className="text-3xl font-bold text-primary dark:text-primary-dark">
-                    {profile.corps.latestScore?.toFixed(3) || 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <h3 className="text-sm text-text-secondary dark:text-text-secondary-dark mb-1">Season Rank</h3>
-                  <p className="text-3xl font-bold text-secondary dark:text-secondary-dark">
-                    #{profile.corps.seasonRank || '--'}
-                  </p>
-                </div>
-                <div className="bg-background dark:bg-background-dark p-4 rounded-theme">
-                  <h3 className="text-sm text-text-secondary dark:text-text-secondary-dark mb-1">Performances</h3>
-                  <p className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-                    {profile.corps.performanceCount || 0}
-                  </p>
-                </div>
+            <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+              <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+                Latest Score
               </div>
-            )}
+              <div className="text-lg font-bold text-primary dark:text-primary-dark">
+                {activeCorps.stats?.latestScore?.toFixed(3) || 'N/A'}
+              </div>
+            </div>
+            <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+              <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+                Season Rank
+              </div>
+              <div className="text-lg font-bold text-secondary dark:text-secondary-dark">
+                #{activeCorps.stats?.seasonRank || '--'}
+              </div>
+            </div>
+            <div className="bg-background dark:bg-background-dark p-3 rounded-theme">
+              <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+                Shows
+              </div>
+              <div className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
+                {activeCorps.stats?.totalShows || 0}
+              </div>
+            </div>
           </div>
-        ) : (
-          <Suspense fallback={
-            <div className="flex items-center justify-center min-h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
-                <p className="text-text-secondary dark:text-text-secondary-dark">
-                  Loading {dashboardTabs.find(t => t.id === activeTab)?.label}...
-                </p>
-              </div>
-            </div>
-          }>
-            {ActiveComponent && <ActiveComponent userProfile={profile} />}
-          </Suspense>
         )}
+      </div>
+
+      {/* Mobile-Optimized Tab Navigation */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme shadow-theme dark:shadow-theme-dark overflow-hidden">
+        <div className="overflow-x-auto">
+          <div className="flex min-w-max sm:min-w-0">
+            {availableTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-2 transition-all border-b-4 whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'bg-primary dark:bg-primary-dark text-white border-primary dark:border-primary-dark'
+                    : 'text-text-secondary dark:text-text-secondary-dark hover:bg-accent dark:hover:bg-accent-dark border-transparent'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="font-semibold">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Content with optimized loading */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 sm:p-6 shadow-theme dark:shadow-theme-dark min-h-[500px]">
+        <Suspense fallback={<LoadingScreen fullScreen={false} />}>
+          {ActiveComponent && <ActiveComponent userProfile={profile} activeCorps={activeCorps} />}
+        </Suspense>
       </div>
     </div>
   );
