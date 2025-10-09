@@ -90,10 +90,23 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
       const dciDataSnap = await getDoc(dciDataRef);
 
       if (dciDataSnap.exists()) {
-        const corpsValues = dciDataSnap.data().corpsValues || [];
-        setAvailableCorps(corpsValues);
+        const dciData = dciDataSnap.data();
+        // Handle both 'corps' (new) and 'corpsValues' (legacy) field names
+        const corpsArray = dciData.corps || dciData.corpsValues || [];
+        
+        // Transform to expected format with id for dropdown
+        const formattedCorps = corpsArray.map(corps => ({
+          id: corps.name || corps.corpsName,
+          name: corps.name || corps.corpsName,
+          value: corps.value || corps.pointCost || 0,
+          rank: corps.rank || 0,
+          sourceYear: corps.sourceYear || 'unknown'
+        }));
+        
+        setAvailableCorps(formattedCorps);
+        console.log(`Loaded ${formattedCorps.length} corps for season ${currentSeasonId}`);
       } else {
-        toast.error('No corps data available');
+        toast.error('No corps data available for current season');
         setAvailableCorps([]);
       }
 
@@ -130,9 +143,9 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
       errors.push(`Missing ${missingCaptions.length} caption(s)`);
     }
 
-    Object.values(lineup).forEach(corpsId => {
-      if (corpsId) {
-        const selectedCorps = availableCorps.find(c => c.id === corpsId);
+    Object.values(lineup).forEach(corpsName => {
+      if (corpsName) {
+        const selectedCorps = availableCorps.find(c => c.name === corpsName || c.id === corpsName);
         if (selectedCorps) {
           totalPoints += selectedCorps.value;
         }
@@ -362,7 +375,7 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
                   >
                     <option value="">Select Corps...</option>
                     {availableCorps.map(corps => (
-                      <option key={corps.id} value={corps.id}>
+                      <option key={corps.id} value={corps.name}>
                         {corps.name} ({corps.value} pts)
                       </option>
                     ))}

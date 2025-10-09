@@ -260,11 +260,20 @@ async function assignCorpsForOffSeason(db, seasonId) {
   const usedCorpsNames = new Set();
 
   for (let pointValue = 25; pointValue >= 1; pointValue--) {
-    const candidates = corpsByPoints[pointValue].filter(c => !usedCorpsNames.has(c.corps));
+    // First, try to find unused corps
+    let candidates = corpsByPoints[pointValue].filter(c => !usedCorpsNames.has(c.corps));
+    
+    // If all corps at this point value have been used, allow reusing
+    if (candidates.length === 0) {
+      candidates = corpsByPoints[pointValue];
+      functions.logger.warn(
+        `⚠️  All corps with ${pointValue} points already used. Reusing from pool of ${candidates.length}.`
+      );
+    }
     
     if (candidates.length === 0) {
       throw new Error(
-        `No available corps with ${pointValue} points. ` +
+        `No corps available with ${pointValue} points. ` +
         `Cannot complete 25-corps assignment. ` +
         `Already assigned: ${assignedCorps.length}/25`
       );
@@ -288,10 +297,6 @@ async function assignCorpsForOffSeason(db, seasonId) {
     functions.logger.info(
       `Points ${pointValue}: ${selected.corps} (${selected.sourceYear}, rank ${selected.rank})`
     );
-  }
-
-  if (assignedCorps.length !== 25) {
-    throw new Error(`Assignment incomplete: only ${assignedCorps.length}/25 corps assigned`);
   }
 
   // Sort by value descending for display
