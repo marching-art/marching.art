@@ -341,91 +341,107 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
 
       {/* Shows Grid */}
       <div className="space-y-6">
-        {Object.entries(selectedWeekData.days || {}).map(([day, dayData]) => (
-          <div key={day}>
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              {dayData.date ? new Date(dayData.date).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              }) : `Day ${day}`}
-            </h3>
+        {Object.entries(selectedWeekData.days || {}).map(([day, dayData]) => {
+          // FIXED: Extract date properly from Firestore timestamp
+          let displayDate = `Day ${day.replace('day', '')}`;
+          
+          if (dayData.date) {
+            try {
+              const dateObj = dayData.date.toDate ? dayData.date.toDate() : new Date(dayData.date);
+              if (!isNaN(dateObj.getTime())) {
+                displayDate = dateObj.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                });
+              }
+            } catch (error) {
+              console.error('Error formatting date:', error);
+            }
+          }
+          
+          return (
+            <div key={day}>
+              <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-3 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                {displayDate}
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(dayData.shows || []).map((show) => {
-                const ShowIcon = getShowIcon(show.type);
-                const showColor = getShowColor(show.type);
-                const isRegistered = registeredShows.includes(show.id);
-                const isPast = isShowPast(show);
-                const canRegister = canRegisterForShow(show);
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(dayData.shows || []).map((show) => {
+                  const ShowIcon = getShowIcon(show.type);
+                  const showColor = getShowColor(show.type);
+                  const isRegistered = registeredShows.includes(show.id);
+                  const isPast = isShowPast(show);
+                  const canRegister = canRegisterForShow(show);
 
-                return (
-                  <div
-                    key={show.id}
-                    className={`bg-surface dark:bg-surface-dark p-4 rounded-theme border-2 transition-all cursor-pointer ${
-                      isRegistered
-                        ? 'border-green-500 bg-green-500/5'
-                        : isPast
-                        ? 'border-accent dark:border-accent-dark opacity-50'
-                        : showColor
-                    } hover:shadow-lg`}
-                    onClick={() => {
-                      setSelectedShow(show);
-                      setShowDetailModal(true);
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <ShowIcon className={`w-5 h-5 ${showColor.split(' ')[0]}`} />
-                        <span className="text-xs font-semibold text-text-secondary dark:text-text-secondary-dark uppercase">
-                          {show.type}
-                        </span>
-                      </div>
-                      {isRegistered && (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                      {isPast && !isRegistered && (
-                        <Clock className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
-                      )}
-                    </div>
-
-                    <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2 line-clamp-2">
-                      {show.eventName}
-                    </h4>
-
-                    <div className="flex items-center gap-2 text-sm text-text-secondary dark:text-text-secondary-dark mb-3">
-                      <MapPin className="w-4 h-4" />
-                      <span className="truncate">{show.location}</span>
-                    </div>
-
-                    {show.classRestrictions && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {show.classRestrictions.map(cls => (
-                          <span
-                            key={cls}
-                            className={`text-xs px-2 py-1 rounded ${
-                              cls === activeCorps.corpsClass
-                                ? 'bg-primary/20 text-primary dark:text-primary-dark font-semibold'
-                                : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
-                            }`}
-                          >
-                            {cls}
+                  return (
+                    <div
+                      key={show.id}
+                      className={`bg-surface dark:bg-surface-dark p-4 rounded-theme border-2 transition-all cursor-pointer ${
+                        isRegistered
+                          ? 'border-green-500 bg-green-500/5'
+                          : isPast
+                          ? 'border-accent dark:border-accent-dark opacity-50'
+                          : showColor
+                      } hover:shadow-lg`}
+                      onClick={() => {
+                        setSelectedShow(show);
+                        setShowDetailModal(true);
+                      }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <ShowIcon className={`w-5 h-5 ${showColor.split(' ')[0]}`} />
+                          <span className="text-xs font-semibold text-text-secondary dark:text-text-secondary-dark uppercase">
+                            {show.type}
                           </span>
-                        ))}
+                        </div>
+                        {isRegistered && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                        {isPast && !isRegistered && (
+                          <Clock className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
+                        )}
                       </div>
-                    )}
 
-                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                      {show.participantCount || 0} corps registered
+                      <h4 className="font-bold text-text-primary dark:text-text-primary-dark mb-2 line-clamp-2">
+                        {cleanEventName(show.eventName)}
+                      </h4>
+
+                      <div className="flex items-center gap-2 text-sm text-text-secondary dark:text-text-secondary-dark mb-3">
+                        <MapPin className="w-4 h-4" />
+                        <span className="truncate">{show.location}</span>
+                      </div>
+
+                      {show.classRestrictions && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {show.classRestrictions.map(cls => (
+                            <span
+                              key={cls}
+                              className={`text-xs px-2 py-1 rounded ${
+                                cls === activeCorps.corpsClass
+                                  ? 'bg-primary/20 text-primary dark:text-primary-dark font-semibold'
+                                  : 'bg-accent dark:bg-accent-dark text-text-secondary dark:text-text-secondary-dark'
+                              }`}
+                            >
+                              {cls}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                        {show.participantCount || 0} corps registered
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {Object.keys(selectedWeekData.days || {}).length === 0 && (
           <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-theme border-2 border-dashed border-accent dark:border-accent-dark">
@@ -471,7 +487,21 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark" />
                   <span>
-                    {selectedShow.date ? new Date(selectedShow.date).toLocaleDateString() : 'TBD'}
+                    {selectedShow.date ? (() => {
+                      try {
+                        const dateObj = selectedShow.date.toDate ? selectedShow.date.toDate() : new Date(selectedShow.date);
+                        return !isNaN(dateObj.getTime()) 
+                          ? dateObj.toLocaleDateString('en-US', { 
+                              weekday: 'long',
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })
+                          : 'TBD';
+                      } catch (error) {
+                        return 'TBD';
+                      }
+                    })() : 'TBD'}
                   </span>
                 </div>
               </div>

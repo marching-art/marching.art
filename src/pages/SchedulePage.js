@@ -148,6 +148,13 @@ const SchedulePage = () => {
     
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', timestamp);
+        return 'TBD';
+      }
+      
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -155,6 +162,7 @@ const SchedulePage = () => {
         year: 'numeric'
       });
     } catch (error) {
+      console.error('Error formatting date:', error, timestamp);
       return 'TBD';
     }
   };
