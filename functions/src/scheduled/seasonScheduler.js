@@ -33,50 +33,141 @@ function getSecondSaturdayOfAugust(year) {
 
 function determineCurrentSeason(currentDate) {
   const currentYear = currentDate.getFullYear();
-  const currentYearFinalsDate = getSecondSaturdayOfAugust(currentYear);
-  const liveSeasonStart = new Date(currentYearFinalsDate);
-  liveSeasonStart.setDate(liveSeasonStart.getDate() - (SEASON_CONFIG.LIVE_SEASON_DAYS - 1));
-
-  if (currentDate >= liveSeasonStart && currentDate <= currentYearFinalsDate) {
+  
+  // Calculate the second Saturday of August for this year
+  const augustFirst = new Date(currentYear, 7, 1); // August is month 7 (0-indexed)
+  const firstDayOfWeek = augustFirst.getDay();
+  const daysUntilFirstSaturday = (6 - firstDayOfWeek + 7) % 7;
+  const firstSaturday = 1 + daysUntilFirstSaturday;
+  const secondSaturday = firstSaturday + 7;
+  
+  // Finals day is the second Saturday of August at 23:00 (11 PM)
+  const finalsDay = new Date(currentYear, 7, secondSaturday, 23, 0, 0);
+  
+  // Live season is 70 days (10 weeks) ending on finals day
+  const liveSeasonStart = new Date(finalsDay);
+  liveSeasonStart.setDate(liveSeasonStart.getDate() - 69); // 70 days total (including finals day)
+  
+  const liveSeasonEnd = new Date(finalsDay);
+  liveSeasonEnd.setHours(23, 59, 59, 999);
+  
+  // Off-season is 49 days (7 weeks)
+  const OFF_SEASON_DAYS = 49;
+  const OFF_SEASON_WEEKS = 7;
+  
+  // Check if we're in the live season
+  if (currentDate >= liveSeasonStart && currentDate <= liveSeasonEnd) {
+    functions.logger.info(`Current date is in LIVE SEASON ${currentYear}`);
     return {
       seasonType: 'live',
-      seasonName: `DCI ${currentYear} Live Season`,
+      seasonName: `Live Season ${currentYear}`,
       finalsYear: currentYear,
       startDate: liveSeasonStart,
-      endDate: currentYearFinalsDate,
+      endDate: liveSeasonEnd,
       totalWeeks: 10,
-      totalDays: SEASON_CONFIG.LIVE_SEASON_DAYS
+      totalDays: 70
     };
   }
-
-  const previousYearFinalsDate = currentDate > currentYearFinalsDate ? 
-    currentYearFinalsDate : getSecondSaturdayOfAugust(currentYear - 1);
   
-  const cycleStartDate = new Date(previousYearFinalsDate);
-  cycleStartDate.setDate(cycleStartDate.getDate() + 1);
+  // We're in an off-season - determine which one
+  // Off-seasons are named by the live season they lead up to
   
-  const daysSinceCycleStart = Math.floor((currentDate - cycleStartDate) / (1000 * 60 * 60 * 24));
-  const offSeasonNumber = Math.min(Math.floor(daysSinceCycleStart / SEASON_CONFIG.OFF_SEASON_DAYS) + 1, 6);
+  // Calculate when off-seasons start after previous live season
+  const prevYearFinalsDay = new Date(currentYear - 1, 7, secondSaturday, 23, 0, 0);
+  const prevLiveSeasonEnd = new Date(prevYearFinalsDay);
+  prevLiveSeasonEnd.setHours(23, 59, 59, 999);
   
-  const seasonStartDate = new Date(cycleStartDate);
-  seasonStartDate.setDate(seasonStartDate.getDate() + ((offSeasonNumber - 1) * SEASON_CONFIG.OFF_SEASON_DAYS));
+  // First off-season starts at 3 AM Eastern the day after previous finals
+  const offSeasonsStartDate = new Date(prevLiveSeasonEnd);
+  offSeasonsStartDate.setDate(offSeasonsStartDate.getDate() + 1);
+  offSeasonsStartDate.setHours(3, 0, 0, 0); // 3 AM reset
+  
+  // Calculate which of the 6 off-seasons we're in
+  const daysSinceOffSeasonStart = Math.floor((currentDate - offSeasonsStartDate) / (1000 * 60 * 60 * 24));
+  
+  if (daysSinceOffSeasonStart < 0) {
+    // Before this year's off-seasons, use previous year
+    const prevPrevYearFinalsDay = new Date(currentYear - 2, 7, secondSaturday, 23, 0, 0);
+    const prevPrevLiveEnd = new Date(prevPrevYearFinalsDay);
+    prevPrevLiveEnd.setHours(23, 59, 59, 999);
+    
+    const prevOffSeasonsStart = new Date(prevPrevLiveEnd);
+    prevOffSeasonsStart.setDate(prevOffSeasonsStart.getDate() + 1);
+    prevOffSeasonsStart.setHours(3, 0, 0, 0);
+    
+    const daysSincePrevStart = Math.floor((currentDate - prevOffSeasonsStart) / (1000 * 60 * 60 * 24));
+    const offSeasonNumber = Math.floor(daysSincePrevStart / OFF_SEASON_DAYS) + 1;
+    const dayIntoOffSeason = daysSincePrevStart % OFF_SEASON_DAYS;
+    
+    const seasonStartDate = new Date(prevOffSeasonsStart);
+    seasonStartDate.setDate(seasonStartDate.getDate() + ((offSeasonNumber - 1) * OFF_SEASON_DAYS));
+    
+    const seasonEndDate = new Date(seasonStartDate);
+    seasonEndDate.setDate(seasonEndDate.getDate() + OFF_SEASON_DAYS - 1);
+    seasonEndDate.setHours(23, 59, 59, 999);
+    
+    const seasonTheme = getOffSeasonTheme(offSeasonNumber);
+    const baseYear = currentYear - 1;
+    
+    return {
+      seasonType: seasonTheme.toLowerCase(),
+      seasonName: `${seasonTheme} Season ${baseYear}-${(baseYear + 1).toString().slice(-2)}`,
+      finalsYear: currentYear,
+      startDate: seasonStartDate,
+      endDate: seasonEndDate,
+      totalWeeks: OFF_SEASON_WEEKS,
+      totalDays: OFF_SEASON_DAYS
+    };
+  }
+  
+  // Calculate which off-season (1-6)
+  const offSeasonNumber = Math.floor(daysSinceOffSeasonStart / OFF_SEASON_DAYS) + 1;
+  
+  // If we're past the 6th off-season, we should be in the live season
+  // This is a safety check
+  if (offSeasonNumber > 6) {
+    functions.logger.warn(`Calculated off-season ${offSeasonNumber} > 6, defaulting to live season`);
+    return {
+      seasonType: 'live',
+      seasonName: `Live Season ${currentYear}`,
+      finalsYear: currentYear,
+      startDate: liveSeasonStart,
+      endDate: liveSeasonEnd,
+      totalWeeks: 10,
+      totalDays: 70
+    };
+  }
+  
+  // Calculate start date of this off-season
+  const seasonStartDate = new Date(offSeasonsStartDate);
+  seasonStartDate.setDate(seasonStartDate.getDate() + ((offSeasonNumber - 1) * OFF_SEASON_DAYS));
   
   const seasonEndDate = new Date(seasonStartDate);
-  seasonEndDate.setDate(seasonEndDate.getDate() + (SEASON_CONFIG.OFF_SEASON_DAYS - 1));
-  seasonEndDate.setUTCHours(23, 59, 59, 999);
+  seasonEndDate.setDate(seasonEndDate.getDate() + OFF_SEASON_DAYS - 1);
+  seasonEndDate.setHours(23, 59, 59, 999);
   
-  const seasonTheme = SEASON_CONFIG.SEASON_THEMES[offSeasonNumber - 1];
-  const baseYear = currentDate > currentYearFinalsDate ? currentYear : currentYear - 1;
+  const seasonTheme = getOffSeasonTheme(offSeasonNumber);
+  const baseYear = currentYear - 1;
+  
+  functions.logger.info(`Current date is in ${seasonTheme.toUpperCase()} SEASON (${offSeasonNumber}/6) for year ${baseYear}-${baseYear + 1}`);
   
   return {
     seasonType: seasonTheme.toLowerCase(),
     seasonName: `${seasonTheme} Season ${baseYear}-${(baseYear + 1).toString().slice(-2)}`,
-    finalsYear: baseYear + 1,
+    finalsYear: currentYear,
     startDate: seasonStartDate,
     endDate: seasonEndDate,
-    totalWeeks: 7,
-    totalDays: SEASON_CONFIG.OFF_SEASON_DAYS
+    totalWeeks: OFF_SEASON_WEEKS,
+    totalDays: OFF_SEASON_DAYS
   };
+}
+
+/**
+ * Get themed name for off-season based on number (1-6)
+ */
+function getOffSeasonTheme(offSeasonNumber) {
+  const themes = ['Overture', 'Prelude', 'Intermezzo', 'Nocturne', 'Allegro', 'Finale'];
+  return themes[offSeasonNumber - 1] || 'Allegro';
 }
 
 async function getNextSeasonNumber(db) {
@@ -319,6 +410,8 @@ async function assignCorpsForOffSeason(db, seasonId) {
 // === SCHEDULE GENERATION FROM HISTORICAL DATA ===
 async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
   functions.logger.info(`Generating schedule for ${seasonInfo.totalDays}-day season...`);
+  functions.logger.info(`Season starts: ${seasonInfo.startDate.toISOString()}`);
+  functions.logger.info(`Season ends: ${seasonInfo.endDate.toISOString()}`);
 
   // Load historical events
   const scoresSnapshot = await db.collection("historical_scores").get();
@@ -327,11 +420,11 @@ async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
   scoresSnapshot.forEach((yearDoc) => {
     const yearData = yearDoc.data().data || [];
     yearData.forEach((event) => {
-      if (event.eventName && event.offSeasonDay) {
+      if (event.eventName && event.offSeasonDay && event.location) {
         const showData = {
           eventName: event.eventName,
+          location: event.location,
           date: event.date,
-          location: event.location || 'Various Locations',
         };
         if (!showsByDay.has(event.offSeasonDay)) {
           showsByDay.set(event.offSeasonDay, []);
@@ -341,60 +434,53 @@ async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
     });
   });
 
-  // Initialize schedule template
-  const scheduleTemplate = Array.from({ length: seasonInfo.totalDays }, (_, i) => ({ 
-    day: i + 1, 
-    shows: [] 
-  }));
+  functions.logger.info(`Loaded historical shows for ${showsByDay.size} different days`);
+
+  // Track used cities and event names to avoid duplicates
+  const usedCities = new Set();
+  const regionalCities = new Set(); // Multi-day regionals can reuse cities
   const usedEventNames = new Set();
 
+  // Initialize schedule template
+  const scheduleTemplate = Array.from({ length: seasonInfo.totalDays }, (_, i) => ({
+    day: i + 1,
+    shows: []
+  }));
+
   // Helper to place exclusive shows
-  const placeExclusiveShow = (day, namePattern, location = null) => {
-    const dayObject = scheduleTemplate.find((d) => d.day === day);
-    if (!dayObject) return;
+  function placeExclusiveShow(day, name, location) {
+    scheduleTemplate[day - 1].shows = [{
+      eventName: name,
+      location: location
+    }];
+    usedEventNames.add(name);
+    
+    const city = location.split(',')[0].trim();
+    usedCities.add(city);
+  }
 
-    const candidates = (showsByDay.get(day) || [])
-      .filter(s => s.eventName.toLowerCase().includes(namePattern.toLowerCase()));
+  // Helper to place multi-day regional
+  function placeRegional(days, baseName, location) {
+    const city = location.split(',')[0].trim();
+    regionalCities.add(city); // Allow this city to be used multiple times
     
-    const showToPlace = shuffleArray(candidates)[0] || {
-      eventName: namePattern,
-      location: location || 'Indianapolis, IN'
-    };
-    
-    dayObject.shows = [showToPlace];
-    usedEventNames.add(showToPlace.eventName);
-  };
+    days.forEach((day, index) => {
+      const dayLabel = days.length > 1 ? ` - Day ${index + 1}` : '';
+      placeExclusiveShow(day, `${baseName}${dayLabel}`, location);
+    });
+  }
 
-  // Place championship shows based on season type and gameplay requirements
-  if (seasonInfo.seasonType === 'live') {
-    // Live season championships (days 68-70)
-    placeExclusiveShow(68, "DCI World Championship Prelims", "Indianapolis, IN");
-    placeExclusiveShow(69, "DCI World Championship Semifinals", "Indianapolis, IN");
-    placeExclusiveShow(70, "DCI World Championship Finals", "Indianapolis, IN");
-    
-    // Regional championships
-    placeExclusiveShow(49, "Eastern Classic", "Allentown, PA");
-    placeExclusiveShow(56, "Southeastern Championship", "Atlanta, GA");
-    placeExclusiveShow(62, "Southwestern Championship", "San Antonio, TX");
-  } else {
-    // Off-season championships per requirements
+  // Place championship/regional shows based on season type
+  if (seasonInfo.seasonType !== 'live') {
+    // Off-season schedule (49 days)
+    // Regionals on specific days only
     placeExclusiveShow(28, "Southwestern Championship", "San Antonio, TX");
-    placeExclusiveShow(35, "Southeastern Championship", "Atlanta, GA");
+    placeExclusiveShow(35, "Southern Championship", "Atlanta, GA");
+    placeRegional([41, 42], "Eastern Classic", "Allentown, PA");
     
-    // Eastern Classic (2-day event on days 41-42)
-    const ecShow = {
-      eventName: "Eastern Classic",
-      location: "Allentown, PA"
-    };
-    scheduleTemplate[40].shows = [ecShow]; // Day 41 (0-indexed)
-    scheduleTemplate[41].shows = [ecShow]; // Day 42
-    usedEventNames.add(ecShow.eventName);
-    
-    // Open/A Class Championships
-    placeExclusiveShow(45, "Open and A Class Prelims", "Marion, IN");
-    placeExclusiveShow(46, "Open and A Class Finals", "Marion, IN");
-    
-    // World Championships
+    // Championships - only use Marion and Indianapolis for finals
+    placeExclusiveShow(45, "Open Class Prelims", "Marion, IN");
+    placeExclusiveShow(46, "Open Class Finals", "Marion, IN");
     placeExclusiveShow(47, "World Championships Prelims", "Indianapolis, IN");
     placeExclusiveShow(48, "World Championships Semifinals", "Indianapolis, IN");
     placeExclusiveShow(49, "World Championships Finals", "Indianapolis, IN");
@@ -404,38 +490,109 @@ async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
       eventName: "SoundSport International Music & Food Festival",
       location: "Indianapolis, IN"
     });
+    usedEventNames.add("SoundSport International Music & Food Festival");
+  } else {
+    // Live season schedule (70 days)
+    // Regionals on specific days only
+    placeExclusiveShow(49, "Southwestern Championship", "San Antonio, TX");
+    placeExclusiveShow(56, "Southern Championship", "Atlanta, GA");
+    placeExclusiveShow(62, "Eastern Classic", "Allentown, PA");
+    
+    // Finals week - only use Indianapolis for World Championships
+    placeExclusiveShow(68, "World Championships Prelims", "Indianapolis, IN");
+    placeExclusiveShow(69, "World Championships Semifinals", "Indianapolis, IN");
+    placeExclusiveShow(70, "World Championships Finals", "Indianapolis, IN");
+    
+    // SoundSport
+    scheduleTemplate[69].shows.push({
+      eventName: "SoundSport International Music & Food Festival",
+      location: "Indianapolis, IN"
+    });
+    usedEventNames.add("SoundSport International Music & Food Festival");
   }
 
-  // Fill remaining days with available shows
+  // Fill remaining days with historical shows ONLY
   scheduleTemplate.filter(d => d.shows.length === 0).forEach(dayObject => {
     const potentialShows = shuffleArray(showsByDay.get(dayObject.day) || []);
     const pickedShows = [];
     
     for (const show of potentialShows) {
-      if (pickedShows.length >= 3) break; // Max 3 shows per day
-      if (!usedEventNames.has(show.eventName)) {
-        pickedShows.push(show);
-        usedEventNames.add(show.eventName);
+      if (pickedShows.length >= 3) break;
+      
+      // Check if event name already used
+      if (usedEventNames.has(show.eventName)) continue;
+      
+      // Check if city already used (unless it's a regional city)
+      const city = show.location ? show.location.split(',')[0].trim() : '';
+      if (!city) continue; // Skip shows without valid location
+      
+      if (usedCities.has(city) && !regionalCities.has(city)) continue;
+      
+      // Don't use Marion or Indianapolis during regular season
+      if (!isChampionshipDay(dayObject.day, seasonInfo) && 
+          (city === 'Marion' || city === 'Indianapolis')) continue;
+      
+      pickedShows.push(show);
+      usedEventNames.add(show.eventName);
+      usedCities.add(city);
+    }
+    
+    // If no shows found for this exact day, try nearby days
+    if (pickedShows.length === 0) {
+      const nearbyDays = [
+        dayObject.day - 1, 
+        dayObject.day + 1, 
+        dayObject.day - 2, 
+        dayObject.day + 2
+      ].filter(d => d > 0 && d <= seasonInfo.totalDays);
+      
+      for (const nearbyDay of nearbyDays) {
+        if (pickedShows.length >= 3) break;
+        
+        const nearbyShows = shuffleArray(showsByDay.get(nearbyDay) || []);
+        
+        for (const show of nearbyShows) {
+          if (pickedShows.length >= 3) break;
+          
+          if (usedEventNames.has(show.eventName)) continue;
+          
+          const city = show.location ? show.location.split(',')[0].trim() : '';
+          if (!city) continue;
+          
+          if (usedCities.has(city) && !regionalCities.has(city)) continue;
+          
+          if (!isChampionshipDay(dayObject.day, seasonInfo) && 
+              (city === 'Marion' || city === 'Indianapolis')) continue;
+          
+          pickedShows.push(show);
+          usedEventNames.add(show.eventName);
+          usedCities.add(city);
+        }
+        
+        if (pickedShows.length > 0) {
+          functions.logger.info(`Day ${dayObject.day}: Used shows from nearby day ${nearbyDay}`);
+          break;
+        }
       }
     }
     
-    // If no historical shows, generate placeholder
+    // If still no shows found, log warning but don't generate placeholder
     if (pickedShows.length === 0) {
-      pickedShows.push({
-        eventName: generateShowName(dayObject.day),
-        location: generateShowLocation()
-      });
+      functions.logger.warn(`Day ${dayObject.day}: No historical shows available after filtering`);
+    } else {
+      dayObject.shows = pickedShows;
     }
-    
-    dayObject.shows = pickedShows;
   });
 
-  // Convert to competition format
+  // Convert to competition format with CORRECT dates
   const competitions = [];
   scheduleTemplate.forEach(dayObject => {
+    // Only create competitions if there are shows for this day
+    if (dayObject.shows.length === 0) return;
+    
     dayObject.shows.forEach((show, index) => {
       const competitionDate = new Date(seasonInfo.startDate);
-      competitionDate.setDate(competitionDate.getDate() + dayObject.day - 1);
+      competitionDate.setDate(competitionDate.getDate() + (dayObject.day - 1));
       
       competitions.push({
         id: `${seasonId}_day${dayObject.day}_${index}`,
@@ -451,14 +608,49 @@ async function generateScheduleFromHistory(db, seasonInfo, seasonId) {
     });
   });
 
-  functions.logger.info(`Generated schedule with ${competitions.length} competitions.`);
+  functions.logger.info(`Generated schedule with ${competitions.length} competitions from historical data.`);
+  
+  // Log days without shows
+  const daysWithoutShows = scheduleTemplate.filter(d => d.shows.length === 0).length;
+  if (daysWithoutShows > 0) {
+    functions.logger.warn(`${daysWithoutShows} days have no shows after filtering`);
+  }
+  
   return competitions;
 }
 
+// Helper to check if a day is a championship day
+function isChampionshipDay(day, seasonInfo) {
+  if (seasonInfo.seasonType !== 'live') {
+    // Off-season championships: days 45-49
+    return day >= 45 && day <= 49;
+  } else {
+    // Live season championships: days 68-70
+    return day >= 68 && day <= 70;
+  }
+}
+
+// UPDATED: Competition type determination based on specific days only
 function determineCompetitionType(eventName, day, seasonType) {
   const name = eventName.toLowerCase();
-  if (name.includes('championship') || name.includes('finals')) return 'championship';
-  if (name.includes('regional') || name.includes('classic')) return 'regional';
+  
+  // Finals
+  if (name.includes('finals')) return 'championship';
+  
+  // Regionals on specific days ONLY
+  if (seasonType !== 'live') {
+    // Off-season regionals: days 28, 35, 41-42
+    if ([28, 35, 41, 42].includes(day)) return 'regional';
+  } else {
+    // Live season regionals: days 49, 56, 62
+    if ([49, 56, 62].includes(day)) return 'regional';
+  }
+  
+  // Championships (prelims, semis, finals week)
+  if (name.includes('championship') || name.includes('prelim') || name.includes('semi')) {
+    return 'championship';
+  }
+  
   return 'regular';
 }
 
@@ -475,42 +667,30 @@ function determineAllowedClasses(eventName, day, seasonType) {
     return ['Open Class', 'A Class'];
   }
   
-  // World Championships (exclude SoundSport) - Days 47-49
+  // World Championships (exclude SoundSport) - Days 47-49 off-season, 68-70 live
   if ((seasonType === 'live' && day >= 68) || (seasonType !== 'live' && day >= 47 && day <= 49)) {
     return ['World Class', 'Open Class', 'A Class'];
   }
   
   // Regional championships (exclude SoundSport)
-  // Off-season: Days 28, 35, 41, 42
-  // Live season: Days 49, 56, 62
-  if (name.includes('championship') || name.includes('classic')) {
+  if (seasonType !== 'live' && [28, 35, 41, 42].includes(day)) {
+    return ['World Class', 'Open Class', 'A Class'];
+  }
+  if (seasonType === 'live' && [49, 56, 62].includes(day)) {
     return ['World Class', 'Open Class', 'A Class'];
   }
   
-  // FIXED: Default regular shows - ALL CLASSES INCLUDING SOUNDSPORT
+  // Default regular shows - ALL CLASSES INCLUDING SOUNDSPORT
   return ['World Class', 'Open Class', 'A Class', 'SoundSport'];
 }
 
-function generateShowName(day) {
-  const week = Math.ceil(day / 7);
-  const names = [
-    'Season Opener', 'Early Season Classic', 'Spring Preview',
-    'Regional Showcase', 'Mid-Season Invitational', 'Summer Classic',
-    'Championship Preview', 'Late Season Tournament', 'Finals Warmup',
-    'Championship Series'
-  ];
-  return names[week - 1] || `Competition Day ${day}`;
-}
-
-function generateShowLocation() {
-  const locations = [
-    'San Antonio, TX', 'Atlanta, GA', 'Denver, CO', 'Nashville, TN',
-    'Phoenix, AZ', 'Portland, OR', 'Minneapolis, MN', 'Charlotte, NC',
-    'Kansas City, MO', 'Seattle, WA', 'Detroit, MI', 'Orlando, FL',
-    'St. Louis, MO', 'Cincinnati, OH', 'Pittsburgh, PA', 'Milwaukee, WI',
-    'Indianapolis, IN', 'Columbus, OH', 'Memphis, TN', 'Louisville, KY'
-  ];
-  return locations[Math.floor(Math.random() * locations.length)];
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 // === SEASONAL SCORE GRID - USING EXISTING COLLECTION ===
