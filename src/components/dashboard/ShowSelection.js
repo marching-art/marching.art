@@ -46,72 +46,94 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
   }, [activeCorps?.id]);
 
   const loadScheduleData = async () => {
-    setLoading(true);
-    try {
-      // Get current season
-      const gameSettingsRef = doc(db, 'game-settings/current');
-      const gameSettingsSnap = await getDoc(gameSettingsRef);
+  setLoading(true);
+  try {
+    // Get current season
+    const gameSettingsRef = doc(db, 'game-settings/current');
+    const gameSettingsSnap = await getDoc(gameSettingsRef);
+    
+    if (gameSettingsSnap.exists()) {
+      const seasonData = gameSettingsSnap.data();
+      setCurrentSeason(seasonData);
       
-      if (gameSettingsSnap.exists()) {
-        const seasonData = gameSettingsSnap.data();
-        setCurrentSeason(seasonData);
+      const currentSeasonId = seasonData.activeSeasonId || seasonData.currentSeasonId;
+      
+      // Check if user has a lineup saved FIRST
+      if (currentUser) {
+        const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
+        const profileSnap = await getDoc(profileRef);
         
-        const currentSeasonId = seasonData.activeSeasonId || seasonData.currentSeasonId;
-        
-        // Load schedule from competitions array
-        const scheduleRef = doc(db, 'schedules', currentSeasonId);
-        const scheduleSnap = await getDoc(scheduleRef);
-
-        if (scheduleSnap.exists()) {
-          const scheduleData = scheduleSnap.data();
-          const competitions = scheduleData.competitions || [];
+        if (profileSnap.exists()) {
+          const profile = profileSnap.data();
+          const savedLineup = profile.lineup || {};
           
-          console.log(`Loaded ${competitions.length} competitions`);
+          // Check if lineup is empty or incomplete
+          const requiredCaptions = ['GE1', 'GE2', 'Visual Proficiency', 'Visual Analysis', 'Color Guard', 'Brass', 'Music Analysis', 'Percussion'];
+          const hasCompleteLineup = requiredCaptions.every(caption => savedLineup[caption]);
           
-          // Build weeks structure from competitions array
-          const weekStructure = {};
-          competitions.forEach(comp => {
-            const weekKey = `week${comp.week}`;
-            
-            if (!weekStructure[weekKey]) {
-              weekStructure[weekKey] = {
-                weekNumber: comp.week,
-                days: {}
-              };
-            }
-            
-            const dayKey = `day${comp.day}`;
-            if (!weekStructure[weekKey].days[dayKey]) {
-              weekStructure[weekKey].days[dayKey] = {
-                date: comp.date,
-                shows: []
-              };
-            }
-            
-            // Add competition to this day
-            weekStructure[weekKey].days[dayKey].shows.push({
-              id: comp.id,
-              eventName: comp.name,
-              location: comp.location,
-              date: comp.date,
-              type: comp.type || 'regular',
-              classRestrictions: comp.allowedClasses || null,
-              status: comp.status || 'scheduled'
+          if (!hasCompleteLineup) {
+            toast.error('Please complete your caption selections before registering for shows', {
+              duration: 5000
             });
-          });
-          
-          setSchedule(weekStructure);
-          console.log(`Built schedule with ${Object.keys(weekStructure).length} weeks`);
-          
-          if (Object.keys(weekStructure).length === 0) {
-            toast.warning('No competitions scheduled for current season');
           }
-        } else {
-          console.error('Schedule document not found for season:', currentSeasonId);
-          toast.error('No schedule available for current season');
         }
+      }
+      
+      // Load schedule from competitions array
+      const scheduleRef = doc(db, 'schedules', currentSeasonId);
+      const scheduleSnap = await getDoc(scheduleRef);
+
+      if (scheduleSnap.exists()) {
+        const scheduleData = scheduleSnap.data();
+        const competitions = scheduleData.competitions || [];
         
-        // Load registered shows for THIS specific corps
+        console.log(`Loaded ${competitions.length} competitions`);
+        
+        // Build weeks structure from competitions array
+        const weekStructure = {};
+        competitions.forEach(comp => {
+          const weekKey = `week${comp.week}`;
+          
+          if (!weekStructure[weekKey]) {
+            weekStructure[weekKey] = {
+              weekNumber: comp.week,
+              days: {}
+            };
+          }
+          
+          const dayKey = `day${comp.day}`;
+          if (!weekStructure[weekKey].days[dayKey]) {
+            weekStructure[weekKey].days[dayKey] = {
+              date: comp.date,
+              shows: []
+            };
+          }
+          
+          // Add competition to this day
+          weekStructure[weekKey].days[dayKey].shows.push({
+            id: comp.id,
+            eventName: comp.name,
+            location: comp.location,
+            date: comp.date,
+            type: comp.type || 'regular',
+            classRestrictions: comp.allowedClasses || null,
+            status: comp.status || 'scheduled'
+          });
+        });
+        
+        setSchedule(weekStructure);
+        console.log(`Built schedule with ${Object.keys(weekStructure).length} weeks`);
+        
+        if (Object.keys(weekStructure).length === 0) {
+          toast.warning('No competitions scheduled for current season');
+        }
+      } else {
+        console.error('Schedule document not found for season:', currentSeasonId);
+        toast.error('No schedule available for current season');
+      }
+      
+      // Load registered shows for THIS specific corps
+      if (currentUser && activeCorps) {
         const participantsRef = collection(db, 'participants');
         const participantsQuery = query(
           participantsRef,
@@ -126,14 +148,17 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
           registered.push(doc.data().showId);
         });
         setRegisteredShows(registered);
+        
+        console.log(`User has ${registered.length} registered shows for this corps`);
       }
-    } catch (error) {
-      console.error('Error loading schedule:', error);
-      toast.error('Failed to load schedule data');
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error loading schedule:', error);
+    toast.error('Failed to load schedule data');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleRegisterForShow = async (show) => {
     if (!currentSeason) {
