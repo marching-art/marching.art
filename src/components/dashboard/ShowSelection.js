@@ -56,14 +56,59 @@ const ShowSelection = ({ userProfile, activeCorps }) => {
         const seasonData = gameSettingsSnap.data();
         setCurrentSeason(seasonData);
         
-        const currentSeasonId = seasonData.activeSeasonId || seasonData.currentSeasonId || '2025';
+        const currentSeasonId = seasonData.activeSeasonId || seasonData.currentSeasonId;
         
-        // Load schedule
-        const scheduleRef = doc(db, `dci-data/${currentSeasonId}/schedule/data`);
+        // Load schedule from competitions array
+        const scheduleRef = doc(db, 'schedules', currentSeasonId);
         const scheduleSnap = await getDoc(scheduleRef);
-        
+
         if (scheduleSnap.exists()) {
-          setSchedule(scheduleSnap.data().weeks || {});
+          const scheduleData = scheduleSnap.data();
+          const competitions = scheduleData.competitions || [];
+          
+          console.log(`Loaded ${competitions.length} competitions`);
+          
+          // Build weeks structure from competitions array
+          const weekStructure = {};
+          competitions.forEach(comp => {
+            const weekKey = `week${comp.week}`;
+            
+            if (!weekStructure[weekKey]) {
+              weekStructure[weekKey] = {
+                weekNumber: comp.week,
+                days: {}
+              };
+            }
+            
+            const dayKey = `day${comp.day}`;
+            if (!weekStructure[weekKey].days[dayKey]) {
+              weekStructure[weekKey].days[dayKey] = {
+                date: comp.date,
+                shows: []
+              };
+            }
+            
+            // Add competition to this day
+            weekStructure[weekKey].days[dayKey].shows.push({
+              id: comp.id,
+              eventName: comp.name,
+              location: comp.location,
+              date: comp.date,
+              type: comp.type || 'regular',
+              classRestrictions: comp.allowedClasses || null,
+              status: comp.status || 'scheduled'
+            });
+          });
+          
+          setSchedule(weekStructure);
+          console.log(`Built schedule with ${Object.keys(weekStructure).length} weeks`);
+          
+          if (Object.keys(weekStructure).length === 0) {
+            toast.warning('No competitions scheduled for current season');
+          }
+        } else {
+          console.error('Schedule document not found for season:', currentSeasonId);
+          toast.error('No schedule available for current season');
         }
         
         // Load registered shows for THIS specific corps
