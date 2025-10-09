@@ -1,107 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { db, functions } from '../../firebaseConfig';
-import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { useUserStore } from '../../store/userStore';
 import toast from 'react-hot-toast';
-import LoadingScreen from '../common/LoadingScreen';
-import { 
-  Save, 
-  RotateCcw, 
-  Info, 
-  Shield,
-  AlertCircle,
-  CheckCircle2,
-  Target,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react';
+import { Save, Info, AlertCircle } from 'lucide-react';
 
 const REQUIRED_CAPTIONS = [
-  { short: "GE1", full: "General Effect 1" },
-  { short: "GE2", full: "General Effect 2" },
-  { short: "VP", full: "Visual Proficiency" },
-  { short: "VA", full: "Visual Analysis" },
-  { short: "CG", full: "Color Guard" },
-  { short: "B", full: "Brass" },
-  { short: "MA", full: "Music Analysis" },
-  { short: "P", full: "Percussion" }
+  { full: 'GE1', label: 'General Effect 1' },
+  { full: 'GE2', label: 'General Effect 2' },
+  { full: 'Visual Proficiency', label: 'Visual Proficiency' },
+  { full: 'Visual Analysis', label: 'Visual Analysis' },
+  { full: 'Color Guard', label: 'Color Guard' },
+  { full: 'Brass', label: 'Brass' },
+  { full: 'Music Analysis', label: 'Music Analysis' },
+  { full: 'Percussion', label: 'Percussion' }
 ];
 
 const CLASS_POINT_LIMITS = {
-  "SoundSport": 90,
-  "A Class": 60,
-  "Open Class": 120,
-  "World Class": 150,
+  'SoundSport': 90,
+  'A Class': 60,
+  'Open Class': 120,
+  'World Class': 150
 };
 
-const LineupEditor = ({ userProfile, activeCorps }) => {
+const LineupEditor = () => {
   const { currentUser } = useAuth();
+  const { profile, corpsList, activeCorpsId } = useUserStore();
   
-  const [lineup, setLineup] = useState({});
-  const [originalLineup, setOriginalLineup] = useState({});
-  const [availableCorps, setAvailableCorps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [seasonId, setSeasonId] = useState(null);
-  const [expandedCaption, setExpandedCaption] = useState(null);
-  const [validation, setValidation] = useState({
-    valid: false,
-    errors: [],
-    totalPoints: 0,
-    pointLimit: 0,
-    pointsRemaining: 0
-  });
+  const [seasonId, setSeasonId] = useState('');
+  const [availableCorps, setAvailableCorps] = useState([]);
+  const [lineup, setLineup] = useState({});
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const corpsClass = activeCorps?.corpsClass;
-  const pointLimit = CLASS_POINT_LIMITS[corpsClass] || 90;
+  const activeCorps = corpsList.find(c => c.id === activeCorpsId);
+  const corpsClass = activeCorps?.corpsClass || 'SoundSport';
+  const pointLimit = CLASS_POINT_LIMITS[corpsClass];
 
   useEffect(() => {
-    if (activeCorps && currentUser) {
+    if (currentUser && activeCorps) {
       fetchLineupData();
     }
-  }, [activeCorps?.id, currentUser]);
-
-  useEffect(() => {
-    if (Object.keys(lineup).length > 0 && availableCorps.length > 0) {
-      validateLineupLocally();
-    }
-  }, [lineup, availableCorps]);
+  }, [currentUser, activeCorps?.id]);
 
   const fetchLineupData = async () => {
-    setLoading(true);
-    
     try {
+      setLoading(true);
+
+      // Get current season
       const gameSettingsRef = doc(db, 'game-settings/current');
       const gameSettingsSnap = await getDoc(gameSettingsRef);
-      
+
       if (!gameSettingsSnap.exists()) {
-        toast.error('Season data not available.');
+        toast.error('No active season found');
         setLoading(false);
         return;
       }
 
       const currentSeasonId = gameSettingsSnap.data().activeSeasonId || 
-                              gameSettingsSnap.data().currentSeasonId || 
-                              '2025';
+                              gameSettingsSnap.data().currentSeasonId;
       setSeasonId(currentSeasonId);
 
+      // Get available corps for this season
       const dciDataRef = doc(db, `dci-data/${currentSeasonId}`);
       const dciDataSnap = await getDoc(dciDataRef);
 
       if (dciDataSnap.exists()) {
         const dciData = dciDataSnap.data();
-        // Handle both 'corps' (new) and 'corpsValues' (legacy) field names
         const corpsArray = dciData.corps || dciData.corpsValues || [];
         
-        // Transform to expected format with id for dropdown
+        // Create unique ID for each corps that includes point value
+        // Format: "Bluecoats|25" - this ensures unique selection even if same corps appears twice
         const formattedCorps = corpsArray.map(corps => ({
-          id: corps.name || corps.corpsName,
+          uniqueId: `${corps.name}|${corps.value}`,
           name: corps.name || corps.corpsName,
           value: corps.value || corps.pointCost || 0,
           rank: corps.rank || 0,
-          sourceYear: corps.sourceYear || 'unknown'
+          sourceYear: corps.sourceYear || 'unknown',
+          displayName: `${corps.name} (${corps.sourceYear}) - ${corps.value} pts`
         }));
+        
+        // Sort by value descending for easier selection
+        formattedCorps.sort((a, b) => b.value - a.value);
         
         setAvailableCorps(formattedCorps);
         console.log(`Loaded ${formattedCorps.length} corps for season ${currentSeasonId}`);
@@ -110,20 +92,39 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
         setAvailableCorps([]);
       }
 
-      const lineupRef = doc(db, `activeLineups/${currentSeasonId}/${currentUser.uid}/${activeCorps.id}`);
-      const lineupSnap = await getDoc(lineupRef);
+      // Load existing lineup
+      const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
+      const profileSnap = await getDoc(profileRef);
 
-      if (lineupSnap.exists()) {
-        const lineupData = lineupSnap.data().lineup || {};
-        setLineup(lineupData);
-        setOriginalLineup(lineupData);
+      if (profileSnap.exists()) {
+        const savedLineup = profileSnap.data().lineup || {};
+        
+        // Convert saved lineup to use uniqueId format if needed
+        const convertedLineup = {};
+        REQUIRED_CAPTIONS.forEach(caption => {
+          const savedValue = savedLineup[caption.full];
+          if (savedValue) {
+            // If it's already in uniqueId format, use it
+            if (savedValue.includes('|')) {
+              convertedLineup[caption.full] = savedValue;
+            } else {
+              // Legacy format - just corps name, try to find matching corps
+              // For now, leave it as is and let user reselect
+              convertedLineup[caption.full] = '';
+            }
+          } else {
+            convertedLineup[caption.full] = '';
+          }
+        });
+        
+        setLineup(convertedLineup);
       } else {
+        // Initialize empty lineup
         const emptyLineup = {};
         REQUIRED_CAPTIONS.forEach(caption => {
-          emptyLineup[caption.full] = null;
+          emptyLineup[caption.full] = '';
         });
         setLineup(emptyLineup);
-        setOriginalLineup(emptyLineup);
       }
 
     } catch (error) {
@@ -134,78 +135,81 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
     }
   };
 
-  const validateLineupLocally = () => {
-    const errors = [];
+  const handleCorpsChange = (caption, uniqueId) => {
+    setLineup(prev => ({
+      ...prev,
+      [caption]: uniqueId
+    }));
+    setHasChanges(true);
+  };
+
+  const calculateStats = () => {
     let totalPoints = 0;
+    const usedCorps = new Set();
+    let missingCount = 0;
 
-    const missingCaptions = REQUIRED_CAPTIONS.filter(caption => !lineup[caption.full]);
-    if (missingCaptions.length > 0) {
-      errors.push(`Missing ${missingCaptions.length} caption(s)`);
-    }
-
-    Object.values(lineup).forEach(corpsName => {
-      if (corpsName) {
-        const selectedCorps = availableCorps.find(c => c.name === corpsName || c.id === corpsName);
-        if (selectedCorps) {
-          totalPoints += selectedCorps.value;
+    REQUIRED_CAPTIONS.forEach(caption => {
+      const selectedUniqueId = lineup[caption.full];
+      if (!selectedUniqueId) {
+        missingCount++;
+      } else {
+        const corps = availableCorps.find(c => c.uniqueId === selectedUniqueId);
+        if (corps) {
+          totalPoints += corps.value;
+          // Track corps name (not uniqueId) for duplicate checking
+          usedCorps.add(corps.name);
         }
       }
     });
 
-    if (totalPoints > pointLimit) {
-      errors.push(`${totalPoints - pointLimit} points over limit`);
-    }
-
     const pointsRemaining = pointLimit - totalPoints;
+    const isValid = missingCount === 0 && totalPoints <= pointLimit;
 
-    setValidation({
-      valid: errors.length === 0 && missingCaptions.length === 0,
-      errors,
+    return {
       totalPoints,
-      pointLimit,
-      pointsRemaining
-    });
+      pointsRemaining,
+      missingCount,
+      isValid,
+      isOverBudget: totalPoints > pointLimit
+    };
   };
 
-  const handleCorpsChange = (caption, corpsId) => {
-    setLineup(prev => ({
-      ...prev,
-      [caption]: corpsId
-    }));
-  };
+  const handleSave = async () => {
+    const stats = calculateStats();
 
-  const handleSaveLineup = async () => {
-    if (!validation.valid) {
-      toast.error('Please fix validation errors before saving');
-      return;
+    if (!stats.isValid) {
+      if (stats.missingCount > 0) {
+        toast.error(`Please select all ${stats.missingCount} missing caption(s)`);
+        return;
+      }
+      if (stats.isOverBudget) {
+        toast.error(`Lineup exceeds budget by ${Math.abs(stats.pointsRemaining)} points`);
+        return;
+      }
     }
 
     setSaving(true);
-
     try {
-      const lineupRef = doc(db, `activeLineups/${seasonId}/${currentUser.uid}/${activeCorps.id}`);
+      // Convert uniqueId back to just corps name for storage
+      const lineupToSave = {};
+      Object.entries(lineup).forEach(([caption, uniqueId]) => {
+        if (uniqueId) {
+          const [corpsName] = uniqueId.split('|');
+          lineupToSave[caption] = corpsName;
+        }
+      });
+
+      const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
       
-      await setDoc(lineupRef, {
-        userId: currentUser.uid,
-        corpsId: activeCorps.id,
-        corpsName: activeCorps.corpsName,
-        corpsClass: activeCorps.corpsClass,
-        seasonId: seasonId,
-        lineup: lineup,
-        totalPoints: validation.totalPoints,
-        lastUpdated: new Date(),
-        updatedAt: new Date()
-      });
+      await setDoc(profileRef, {
+        lineup: lineupToSave,
+        activeSeasonId: seasonId,
+        'corps.lastEdit': new Date(),
+        lastUpdated: new Date()
+      }, { merge: true });
 
-      setOriginalLineup(lineup);
-      toast.success('Lineup saved successfully! (+10 XP)');
-
-      const awardXPFunction = httpsCallable(functions, 'awardXP');
-      await awardXPFunction({
-        amount: 10,
-        reason: 'Lineup saved',
-        seasonId: seasonId
-      });
+      toast.success('Lineup saved successfully!');
+      setHasChanges(false);
 
     } catch (error) {
       console.error('Error saving lineup:', error);
@@ -215,185 +219,165 @@ const LineupEditor = ({ userProfile, activeCorps }) => {
     }
   };
 
-  const handleResetLineup = () => {
-    if (window.confirm('Reset lineup to last saved version?')) {
-      setLineup(originalLineup);
-      toast.success('Lineup reset');
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark"></div>
+      </div>
+    );
+  }
 
   if (!activeCorps) {
     return (
       <div className="text-center py-12">
-        <Target className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <AlertCircle className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
         <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
           No Corps Selected
         </h3>
         <p className="text-text-secondary dark:text-text-secondary-dark">
-          Please create or select a corps to manage captions.
+          Please create or select a corps to edit lineups.
         </p>
       </div>
     );
   }
 
-  if (loading) {
-    return <LoadingScreen fullScreen={false} />;
+  if (availableCorps.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="w-16 h-16 mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+        <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+          No Corps Available
+        </h3>
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+          No corps have been assigned for the current season yet.
+        </p>
+      </div>
+    );
   }
 
-  const hasChanges = JSON.stringify(lineup) !== JSON.stringify(originalLineup);
+  const stats = calculateStats();
 
   return (
-    <div className="space-y-4">
-      {/* Compact Header */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header with Stats */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+            <h2 className="text-xl sm:text-2xl font-bold text-text-primary dark:text-text-primary-dark">
               Caption Selection
             </h2>
             <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-              {activeCorps.corpsName}
+              {activeCorps.corpsName} • {corpsClass}
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleResetLineup}
-              disabled={!hasChanges || saving}
-              className="p-2 border border-accent dark:border-accent-dark rounded-theme hover:bg-accent dark:hover:bg-accent-dark transition-colors disabled:opacity-50"
-              title="Reset"
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleSaveLineup}
-              disabled={!validation.valid || !hasChanges || saving}
-              className="px-4 py-2 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-semibold transition-all disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <img 
-                    src="/favicon-32x32.png" 
-                    alt="Saving" 
-                    className="w-4 h-4 animate-spin"
-                    style={{ animationDuration: '1s' }}
-                  />
-                  Saving
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save
-                </>
-              )}
-            </button>
-          </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasChanges || !stats.isValid}
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-primary dark:bg-primary-dark hover:bg-primary-dark dark:hover:bg-primary text-white rounded-theme font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+            {saving ? 'Saving...' : hasChanges ? 'Save Lineup' : 'Saved'}
+          </button>
         </div>
 
-        {/* Compact Validation */}
-        <div className={`p-3 rounded-theme border-2 ${
-          validation.valid 
-            ? 'border-green-500 bg-green-500/10' 
-            : 'border-yellow-500 bg-yellow-500/10'
-        }`}>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              {validation.valid ? (
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-yellow-500" />
-              )}
-              <span className="font-semibold">
-                {validation.valid ? 'Valid' : validation.errors.join(' • ')}
-              </span>
+        {/* Points Summary */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-background dark:bg-background-dark rounded-theme p-3">
+            <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+              Used
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-text-secondary dark:text-text-secondary-dark">
-                <span className="font-bold text-text-primary dark:text-text-primary-dark">
-                  {validation.totalPoints}
-                </span>/{validation.pointLimit}
-              </span>
-              <span className={`font-bold ${
-                validation.pointsRemaining >= 0 ? 'text-green-500' : 'text-error'
-              }`}>
-                {validation.pointsRemaining >= 0 ? `${validation.pointsRemaining} left` : `${Math.abs(validation.pointsRemaining)} over!`}
-              </span>
+            <div className={`text-xl sm:text-2xl font-bold ${
+              stats.isOverBudget ? 'text-error' : 'text-text-primary dark:text-text-primary-dark'
+            }`}>
+              {stats.totalPoints}
+            </div>
+          </div>
+          
+          <div className="bg-background dark:bg-background-dark rounded-theme p-3">
+            <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+              Limit
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+              {pointLimit}
+            </div>
+          </div>
+          
+          <div className="bg-background dark:bg-background-dark rounded-theme p-3">
+            <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+              Remaining
+            </div>
+            <div className={`text-xl sm:text-2xl font-bold ${
+              stats.pointsRemaining < 0 ? 'text-error' : 'text-primary dark:text-primary-dark'
+            }`}>
+              {stats.pointsRemaining}
+            </div>
+          </div>
+          
+          <div className="bg-background dark:bg-background-dark rounded-theme p-3">
+            <div className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">
+              Missing
+            </div>
+            <div className={`text-xl sm:text-2xl font-bold ${
+              stats.missingCount > 0 ? 'text-error' : 'text-primary dark:text-primary-dark'
+            }`}>
+              {stats.missingCount}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Compact Caption List */}
-      <div className="space-y-2">
-        {REQUIRED_CAPTIONS.map(caption => {
-          const selectedCorpsId = lineup[caption.full];
-          const selectedCorps = availableCorps.find(c => c.id === selectedCorpsId);
-          const isExpanded = expandedCaption === caption.short;
+      {/* Caption Selections */}
+      <div className="bg-surface dark:bg-surface-dark rounded-theme p-4 sm:p-6">
+        <div className="space-y-4">
+          {REQUIRED_CAPTIONS.map((caption) => {
+            const selectedUniqueId = lineup[caption.full];
+            const selectedCorps = availableCorps.find(c => c.uniqueId === selectedUniqueId);
 
-          return (
-            <div 
-              key={caption.short}
-              className="bg-surface dark:bg-surface-dark rounded-theme border border-accent dark:border-accent-dark overflow-hidden"
-            >
-              {/* Caption Header - Always Visible */}
-              <button
-                onClick={() => setExpandedCaption(isExpanded ? null : caption.short)}
-                className="w-full p-3 flex items-center justify-between hover:bg-accent dark:hover:bg-accent-dark transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Shield className="w-5 h-5 text-primary dark:text-primary-dark flex-shrink-0" />
-                  <div className="text-left min-w-0 flex-1">
-                    <div className="font-bold text-text-primary dark:text-text-primary-dark">
-                      {caption.short}
-                    </div>
-                    {selectedCorps && (
-                      <div className="text-sm text-text-secondary dark:text-text-secondary-dark truncate">
-                        {selectedCorps.name} ({selectedCorps.value}pts)
-                      </div>
-                    )}
-                    {!selectedCorps && (
-                      <div className="text-sm text-error">Not selected</div>
-                    )}
-                  </div>
-                </div>
-                {isExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-text-secondary dark:text-text-secondary-dark flex-shrink-0" />
-                )}
-              </button>
-
-              {/* Dropdown - Shown when expanded */}
-              {isExpanded && (
-                <div className="border-t border-accent dark:border-accent-dark p-3 bg-background dark:bg-background-dark">
-                  <select
-                    value={selectedCorpsId || ''}
-                    onChange={(e) => {
-                      handleCorpsChange(caption.full, e.target.value);
-                      setExpandedCaption(null);
-                    }}
-                    className="w-full p-3 bg-surface dark:bg-surface-dark border border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
-                  >
-                    <option value="">Select Corps...</option>
-                    {availableCorps.map(corps => (
-                      <option key={corps.id} value={corps.name}>
-                        {corps.name} ({corps.value} pts)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          );
-        })}
+            return (
+              <div key={caption.full} className="space-y-2">
+                <label className="block text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                  {caption.label}
+                  {selectedCorps && (
+                    <span className="ml-2 text-xs font-normal text-text-secondary dark:text-text-secondary-dark">
+                      ({selectedCorps.value} pts)
+                    </span>
+                  )}
+                </label>
+                
+                <select
+                  value={selectedUniqueId || ''}
+                  onChange={(e) => handleCorpsChange(caption.full, e.target.value)}
+                  className="w-full p-3 bg-background dark:bg-background-dark border-2 border-accent dark:border-accent-dark rounded-theme text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+                >
+                  <option value="">Not Selected</option>
+                  {availableCorps.map((corps) => (
+                    <option key={corps.uniqueId} value={corps.uniqueId}>
+                      {corps.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Info Box */}
-      <div className="bg-primary/5 dark:bg-primary-dark/5 border border-primary dark:border-primary-dark rounded-theme p-3">
-        <div className="flex items-start gap-2">
-          <Info className="w-4 h-4 text-primary dark:text-primary-dark flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
-            Tap each caption to select a DCI corps. Stay within your {pointLimit}-point budget for {corpsClass}.
-          </p>
+      <div className="bg-primary/5 dark:bg-primary-dark/5 border border-primary dark:border-primary-dark rounded-theme p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-primary dark:text-primary-dark flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-text-secondary dark:text-text-secondary-dark space-y-1">
+            <p>
+              • Select one DCI corps for each caption within your {pointLimit}-point budget
+            </p>
+            <p>
+              • You can use the same corps for multiple captions if it appears at different point values
+            </p>
+            <p>
+              • All 8 captions must be filled before saving
+            </p>
+          </div>
         </div>
       </div>
     </div>
