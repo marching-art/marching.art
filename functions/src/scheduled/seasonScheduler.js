@@ -189,9 +189,8 @@ async function assignCorpsForOffSeason(db, seasonId) {
     throw new Error("No final rankings found. Cannot assign corps.");
   }
 
-  // Build rankings map with validation
-  const allRankingsByYear = {};
-  let totalValidYears = 0;
+  // Pool ALL corps from ALL years into a single array
+  const allCorps = [];
   
   rankingsSnapshot.forEach(doc => {
     const data = doc.data();
@@ -205,91 +204,94 @@ async function assignCorpsForOffSeason(db, seasonId) {
       rankings = data.data;
     }
     
-    // Validate rankings array
-    if (rankings && rankings.length >= 25) {
-      // Ensure each entry has required fields including POINTS
-      const validRankings = rankings.filter(entry => 
-        entry && 
-        entry.corps && 
-        typeof entry.corps === 'string' &&
-        entry.points &&  // CRITICAL: Must have points field
-        typeof entry.points === 'number' &&
-        entry.points >= 1 && entry.points <= 25
-      );
-      
-      if (validRankings.length >= 25) {
-        allRankingsByYear[year] = validRankings;
-        totalValidYears++;
-        functions.logger.info(`Loaded ${validRankings.length} corps from ${year}`);
-      } else {
-        functions.logger.warn(`Year ${year} has insufficient valid rankings (${validRankings.length}/25)`);
-      }
-    } else {
-      functions.logger.warn(`Year ${year} skipped: ${rankings ? `only ${rankings.length} corps` : 'no rankings array'}`);
+    if (rankings && Array.isArray(rankings)) {
+      // Add all valid corps from this year to the pool
+      rankings.forEach(entry => {
+        if (entry && 
+            entry.corps && 
+            typeof entry.corps === 'string' &&
+            entry.points &&
+            typeof entry.points === 'number' &&
+            entry.points >= 1 && 
+            entry.points <= 25) {
+          
+          allCorps.push({
+            corps: entry.corps,
+            points: entry.points,
+            rank: entry.rank || 0,
+            score: entry.originalScore || entry.score || 0,
+            sourceYear: year
+          });
+        }
+      });
     }
   });
 
-  if (totalValidYears === 0) {
-    throw new Error("No valid final rankings found with sufficient corps data.");
+  if (allCorps.length === 0) {
+    throw new Error("No valid corps found in any final_rankings documents.");
   }
 
-  functions.logger.info(`Found ${totalValidYears} valid years for corps assignment`);
+  functions.logger.info(`Pooled ${allCorps.length} total corps from all years`);
 
-  const availableYears = Object.keys(allRankingsByYear);
+  // Group corps by point value
+  const corpsByPoints = {};
+  for (let p = 1; p <= 25; p++) {
+    corpsByPoints[p] = [];
+  }
+  
+  allCorps.forEach(corps => {
+    if (corpsByPoints[corps.points]) {
+      corpsByPoints[corps.points].push(corps);
+    }
+  });
+
+  // Log availability
+  for (let p = 25; p >= 1; p--) {
+    const count = corpsByPoints[p].length;
+    if (count === 0) {
+      functions.logger.warn(`⚠️  No corps available with ${p} points`);
+    } else {
+      functions.logger.info(`Points ${p}: ${count} corps available`);
+    }
+  }
+
+  // Select one corps for each point value (25 down to 1)
   const assignedCorps = [];
   const usedCorpsNames = new Set();
 
-  // Assign one corps per POINT VALUE (25 down to 1)
   for (let pointValue = 25; pointValue >= 1; pointValue--) {
-    let corpsFound = false;
-    let attempts = 0;
-    const maxAttempts = availableYears.length * 5;
-
-    while (!corpsFound && attempts < maxAttempts) {
-      const randomYear = availableYears[Math.floor(Math.random() * availableYears.length)];
-      const yearRankings = allRankingsByYear[randomYear];
-      
-      if (!yearRankings) {
-        attempts++;
-        continue;
-      }
-      
-      // CRITICAL FIX: Find corps by POINTS field, not rank
-      const candidate = yearRankings.find(c => c.points === pointValue);
-
-      if (candidate && !usedCorpsNames.has(candidate.corps)) {
-        assignedCorps.push({
-          name: candidate.corps,
-          corpsName: candidate.corps,
-          sourceYear: randomYear,
-          value: candidate.points,              // USE points field directly
-          pointCost: candidate.points,          // Same as value
-          rank: candidate.rank || 0,            // Store rank for reference
-          finalScore: candidate.originalScore || candidate.score || 0,
-        });
-        
-        usedCorpsNames.add(candidate.corps);
-        corpsFound = true;
-        
-        functions.logger.info(`Points ${pointValue}: ${candidate.corps} (${randomYear}, rank ${candidate.rank})`);
-      }
-      attempts++;
+    const candidates = corpsByPoints[pointValue].filter(c => !usedCorpsNames.has(c.corps));
+    
+    if (candidates.length === 0) {
+      throw new Error(
+        `No available corps with ${pointValue} points. ` +
+        `Cannot complete 25-corps assignment. ` +
+        `Already assigned: ${assignedCorps.length}/25`
+      );
     }
 
-    if (!corpsFound) {
-      functions.logger.error(`FAILED to find unique corps with ${pointValue} points after ${maxAttempts} attempts`);
-      throw new Error(`Could not assign corps for ${pointValue} points. Insufficient unique corps in rankings data.`);
-    }
+    // Randomly select one from available candidates
+    const selected = candidates[Math.floor(Math.random() * candidates.length)];
+    
+    assignedCorps.push({
+      name: selected.corps,
+      corpsName: selected.corps,
+      sourceYear: selected.sourceYear,
+      value: selected.points,
+      pointCost: selected.points,
+      rank: selected.rank,
+      finalScore: selected.score,
+    });
+    
+    usedCorpsNames.add(selected.corps);
+    
+    functions.logger.info(
+      `Points ${pointValue}: ${selected.corps} (${selected.sourceYear}, rank ${selected.rank})`
+    );
   }
 
   if (assignedCorps.length !== 25) {
     throw new Error(`Assignment incomplete: only ${assignedCorps.length}/25 corps assigned`);
-  }
-
-  // Verify values are correct (1-25 range)
-  const invalidCorps = assignedCorps.filter(c => c.value < 1 || c.value > 25);
-  if (invalidCorps.length > 0) {
-    throw new Error(`Invalid values detected: ${invalidCorps.map(c => `${c.name}=${c.value}`).join(', ')}`);
   }
 
   // Sort by value descending for display
