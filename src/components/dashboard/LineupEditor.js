@@ -67,12 +67,14 @@ const LineupEditor = () => {
     const dciDataRef = doc(db, `dci-data/${currentSeasonId}`);
     const dciDataSnap = await getDoc(dciDataRef);
 
+    let formattedCorps = []; // DECLARE HERE AT TOP OF FUNCTION
+
     if (dciDataSnap.exists()) {
       const dciData = dciDataSnap.data();
       const corpsArray = dciData.corps || dciData.corpsValues || [];
       
       // Create unique ID for each corps that includes point value
-      const formattedCorps = corpsArray.map(corps => ({
+      formattedCorps = corpsArray.map(corps => ({
         uniqueId: `${corps.name}|${corps.value}`,
         name: corps.name || corps.corpsName,
         value: corps.value || corps.pointCost || 0,
@@ -109,7 +111,6 @@ const LineupEditor = () => {
         
         if (savedCorpsName) {
           // Find matching corps in available corps
-          // First try exact match with any value
           const matchingCorps = formattedCorps.find(c => c.name === savedCorpsName);
           
           if (matchingCorps) {
