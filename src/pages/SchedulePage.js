@@ -22,6 +22,12 @@ import {
 } from 'lucide-react';
 import LoadingScreen from '../components/common/LoadingScreen';
 
+const cleanEventName = (name) => {
+  if (!name) return '';
+  // Replace "DCI" with "marching.art"
+  return name.replace(/\bDCI\b/gi, 'marching.art').replace(/\s+/g, ' ').trim();
+};
+
 const SchedulePage = () => {
   const { currentUser } = useAuth();
   

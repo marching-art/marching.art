@@ -23,6 +23,12 @@ import {
   Target
 } from 'lucide-react';
 
+const cleanEventName = (name) => {
+  if (!name) return '';
+  // Replace "DCI" with "marching.art"
+  return name.replace(/\bDCI\b/gi, 'marching.art').replace(/\s+/g, ' ').trim();
+};
+
 const ShowSelection = ({ userProfile, activeCorps }) => {
   const { currentUser } = useAuth();
   
