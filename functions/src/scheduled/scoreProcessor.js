@@ -130,21 +130,16 @@ async function getScoreFromSeasonalGrid(db, seasonId, corpsName, day) {
  * UPDATED: Fetch historical score data with seasonal grid support
  */
 async function fetchHistoricalData(db, seasonId) {
-  // First try to get from seasonal score grid
-  const seasonalScoreDoc = await db.doc(`seasonal_scores/${seasonId}`).get();
+  const scoreGridDoc = await db.doc(`seasonal_scores/${seasonId}`).get();
   
-  if (seasonalScoreDoc.exists && seasonalScoreDoc.data().grid) {
+  if (scoreGridDoc.exists && scoreGridDoc.data().grid) {
     functions.logger.info('Using pre-computed seasonal score grid');
-    return { useGrid: true, grid: seasonalScoreDoc.data().grid };
+    return { useGrid: true, grid: scoreGridDoc.data().grid };
   }
   
-  // Fallback to original historical data fetching
-  functions.logger.info('Falling back to historical scores fetching');
-  const corpsDataRef = db.collection('dci-data').doc(seasonId);
-  const corpsDataSnap = await corpsDataRef.get();
-  
+  // Fallback to historical data
+  const corpsDataSnap = await db.doc(`dci-data/${seasonId}`).get();
   if (!corpsDataSnap.exists) {
-    functions.logger.error(`dci-data document ${seasonId} not found.`);
     return { useGrid: false, historicalData: {} };
   }
   
@@ -453,7 +448,7 @@ async function processLiveSeasonDay(db, seasonData, seasonId, scoredDay) {
 }
 
 /**
- * UPDATED: Generate score for OFF-SEASON competition
+ * UPDATED: Generate score for OFF-SEASON competition - PASS CORPS VALUE
  */
 async function generateOffSeasonScore(db, userData, userId, competition, seasonId, scoredDay, dataSource) {
   const lineup = userData.lineup;
@@ -481,16 +476,20 @@ async function generateOffSeasonScore(db, userData, userId, competition, seasonI
     
     // Find corps info
     const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName || c.corpsName === selectedCorpsName);
-    const corpsValue = corpsInfo ? corpsInfo.value : 15;
-    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear().toString();
     
-    // Get realistic caption score using data source
+    if (!corpsInfo) continue;
+    
+    const corpsValue = corpsInfo.value || 15;
+    const sourceYear = corpsInfo.sourceYear || new Date().getFullYear().toString();
+    
+    // CRITICAL: Pass corpsValue to getRealisticCaptionScore
     let captionScore = getRealisticCaptionScore(
       selectedCorpsName,
       sourceYear,
+      corpsValue,  // PASS THE VALUE!
       caption,
       scoredDay,
-      dataSource  // Pass data source
+      dataSource
     );
     
     // Apply staff bonus
@@ -537,7 +536,7 @@ async function generateOffSeasonScore(db, userData, userId, competition, seasonI
 }
 
 /**
- * UPDATED: Generate score for LIVE SEASON
+ * UPDATED: Generate score for LIVE SEASON - PASS CORPS VALUE
  */
 async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay, dataSource, realScoresMap) {
   const lineup = userData.lineup;
@@ -562,19 +561,32 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
     if (!selectedCorpsName) continue;
     
     const corpsInfo = seasonCorps.find(c => c.name === selectedCorpsName || c.corpsName === selectedCorpsName);
-    const sourceYear = corpsInfo ? corpsInfo.sourceYear : new Date().getFullYear().toString();
+    
+    if (!corpsInfo) continue;
+    
+    const corpsValue = corpsInfo.value || 15;
+    const sourceYear = corpsInfo.sourceYear || new Date().getFullYear().toString();
     
     let captionScore = 0;
     
     // Use real score if available
-    if (realScoresMap.has(selectedCorpsName) && realScoresMap.get(selectedCorpsName)[caption] > 0) {
-      captionScore = realScoresMap.get(selectedCorpsName)[caption];
-    } else {
+    if (realScoresMap.has(selectedCorpsName)) {
+      const realScore = realScoresMap.get(selectedCorpsName)[caption];
+      if (realScore && realScore > 0) {
+        captionScore = realScore;
+      }
+    }
+    
+    // Fallback to prediction if no real score or score is 0
+    if (captionScore === 0) {
       // Map to off-season day for prediction
       const equivalentDay = mapLiveDayToOffSeasonDay(scoredDay);
+      
+      // CRITICAL: Pass corpsValue
       captionScore = getRealisticCaptionScore(
         selectedCorpsName,
         sourceYear,
+        corpsValue,  // PASS THE VALUE!
         caption,
         equivalentDay,
         dataSource
@@ -614,19 +626,28 @@ async function generateLiveSeasonScore(db, userData, userId, seasonId, scoredDay
 }
 
 /**
- * UPDATED: Get realistic caption score using data source
+ * UPDATED: Get realistic caption score using data source with UNIQUE KEY
  */
-function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, dataSource) {
+function getRealisticCaptionScore(corpsName, sourceYear, corpsValue, caption, currentDay, dataSource) {
+  // Use unique key to distinguish duplicate corps
+  const uniqueKey = `${corpsName}_${corpsValue}`;
+  
   // Check if we're using the seasonal grid
   if (dataSource.useGrid && dataSource.grid) {
-    const gridData = dataSource.grid[corpsName];
-    if (gridData && gridData[currentDay]) {
-      const dayScore = gridData[currentDay];
+    const gridData = dataSource.grid[uniqueKey];
+    
+    if (gridData && gridData.scores && gridData.scores[currentDay]) {
+      const dayScore = gridData.scores[currentDay];
+      
+      // Get caption score
       if (dayScore.captions && dayScore.captions[caption]) {
-        return dayScore.captions[caption];
+        const score = dayScore.captions[caption];
+        // IGNORE 0 SCORES
+        return score > 0 ? score : 0;
       }
+      
       // Fallback: distribute total score across captions
-      if (dayScore.totalScore) {
+      if (dayScore.totalScore && dayScore.totalScore > 0) {
         const captionWeight = caption.startsWith('GE') ? 0.2 : 0.1;
         return dayScore.totalScore * captionWeight;
       }
@@ -636,19 +657,19 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, da
   // Fallback to historical data logic
   const historicalData = dataSource.historicalData || dataSource;
   
-  // Try to get actual score for this day
+  // Try to get actual score for this day from the specific source year
   const actualScore = getScoreForDay(currentDay, corpsName, sourceYear, caption, historicalData);
-  if (actualScore !== null) {
+  if (actualScore !== null && actualScore > 0) {
     return actualScore;
   }
   
-  // Collect all available data points for this corps/caption
+  // Collect all available data points for this corps/caption from source year
   const allDataPoints = [];
   const yearData = historicalData[sourceYear] || [];
   
   for (const event of yearData) {
     const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
-    if (score !== null) {
+    if (score !== null && score > 0) {
       if (!allDataPoints.some(p => p[0] === event.offSeasonDay)) {
         allDataPoints.push([event.offSeasonDay, score]);
       }
@@ -672,6 +693,7 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, da
     return 0;
   }
 }
+
 
 /**
  * LOGARITHMIC REGRESSION - Creates realistic DCI-style score curves

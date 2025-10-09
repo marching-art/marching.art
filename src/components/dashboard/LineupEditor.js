@@ -46,94 +46,164 @@ const LineupEditor = () => {
   }, [currentUser, activeCorps?.id]);
 
   const fetchLineupData = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      // Get current season
-      const gameSettingsRef = doc(db, 'game-settings/current');
-      const gameSettingsSnap = await getDoc(gameSettingsRef);
+    // Get current season
+    const gameSettingsRef = doc(db, 'game-settings/current');
+    const gameSettingsSnap = await getDoc(gameSettingsRef);
 
-      if (!gameSettingsSnap.exists()) {
-        toast.error('No active season found');
-        setLoading(false);
-        return;
-      }
+    if (!gameSettingsSnap.exists()) {
+      toast.error('No active season found');
+      setLoading(false);
+      return;
+    }
 
-      const currentSeasonId = gameSettingsSnap.data().activeSeasonId || 
-                              gameSettingsSnap.data().currentSeasonId;
-      setSeasonId(currentSeasonId);
+    const currentSeasonId = gameSettingsSnap.data().activeSeasonId || 
+                            gameSettingsSnap.data().currentSeasonId;
+    setSeasonId(currentSeasonId);
 
-      // Get available corps for this season
-      const dciDataRef = doc(db, `dci-data/${currentSeasonId}`);
-      const dciDataSnap = await getDoc(dciDataRef);
+    // Get available corps for this season
+    const dciDataRef = doc(db, `dci-data/${currentSeasonId}`);
+    const dciDataSnap = await getDoc(dciDataRef);
 
-      if (dciDataSnap.exists()) {
-        const dciData = dciDataSnap.data();
-        const corpsArray = dciData.corps || dciData.corpsValues || [];
+    if (dciDataSnap.exists()) {
+      const dciData = dciDataSnap.data();
+      const corpsArray = dciData.corps || dciData.corpsValues || [];
+      
+      // Create unique ID for each corps that includes point value
+      const formattedCorps = corpsArray.map(corps => ({
+        uniqueId: `${corps.name}|${corps.value}`,
+        name: corps.name || corps.corpsName,
+        value: corps.value || corps.pointCost || 0,
+        rank: corps.rank || 0,
+        sourceYear: corps.sourceYear || 'unknown',
+        displayName: `${corps.name} (${corps.sourceYear}) - ${corps.value} pts`
+      }));
+      
+      formattedCorps.sort((a, b) => b.value - a.value);
+      setAvailableCorps(formattedCorps);
+      
+      console.log(`Loaded ${formattedCorps.length} corps for season ${currentSeasonId}`);
+    } else {
+      toast.error('No corps data available for current season');
+      setAvailableCorps([]);
+      setLoading(false);
+      return;
+    }
+
+    // Load existing lineup from profile
+    const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
+    const profileSnap = await getDoc(profileRef);
+
+    if (profileSnap.exists()) {
+      const profileData = profileSnap.data();
+      const savedLineup = profileData.lineup || {};
+      
+      console.log('Loaded saved lineup:', savedLineup);
+      
+      // Convert saved lineup (corps names) to uniqueId format for display
+      const convertedLineup = {};
+      REQUIRED_CAPTIONS.forEach(caption => {
+        const savedCorpsName = savedLineup[caption.full];
         
-        // Create unique ID for each corps that includes point value
-        // Format: "Bluecoats|25" - this ensures unique selection even if same corps appears twice
-        const formattedCorps = corpsArray.map(corps => ({
-          uniqueId: `${corps.name}|${corps.value}`,
-          name: corps.name || corps.corpsName,
-          value: corps.value || corps.pointCost || 0,
-          rank: corps.rank || 0,
-          sourceYear: corps.sourceYear || 'unknown',
-          displayName: `${corps.name} (${corps.sourceYear}) - ${corps.value} pts`
-        }));
-        
-        // Sort by value descending for easier selection
-        formattedCorps.sort((a, b) => b.value - a.value);
-        
-        setAvailableCorps(formattedCorps);
-        console.log(`Loaded ${formattedCorps.length} corps for season ${currentSeasonId}`);
-      } else {
-        toast.error('No corps data available for current season');
-        setAvailableCorps([]);
-      }
-
-      // Load existing lineup
-      const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
-      const profileSnap = await getDoc(profileRef);
-
-      if (profileSnap.exists()) {
-        const savedLineup = profileSnap.data().lineup || {};
-        
-        // Convert saved lineup to use uniqueId format if needed
-        const convertedLineup = {};
-        REQUIRED_CAPTIONS.forEach(caption => {
-          const savedValue = savedLineup[caption.full];
-          if (savedValue) {
-            // If it's already in uniqueId format, use it
-            if (savedValue.includes('|')) {
-              convertedLineup[caption.full] = savedValue;
-            } else {
-              // Legacy format - just corps name, try to find matching corps
-              // For now, leave it as is and let user reselect
-              convertedLineup[caption.full] = '';
-            }
+        if (savedCorpsName) {
+          // Find matching corps in available corps
+          // First try exact match with any value
+          const matchingCorps = formattedCorps.find(c => c.name === savedCorpsName);
+          
+          if (matchingCorps) {
+            convertedLineup[caption.full] = matchingCorps.uniqueId;
+            console.log(`Loaded ${caption.full}: ${matchingCorps.name} (${matchingCorps.value}pts)`);
           } else {
+            console.warn(`Could not find corps "${savedCorpsName}" for ${caption.full}`);
             convertedLineup[caption.full] = '';
           }
-        });
-        
-        setLineup(convertedLineup);
-      } else {
-        // Initialize empty lineup
-        const emptyLineup = {};
-        REQUIRED_CAPTIONS.forEach(caption => {
-          emptyLineup[caption.full] = '';
-        });
-        setLineup(emptyLineup);
+        } else {
+          convertedLineup[caption.full] = '';
+        }
+      });
+      
+      setLineup(convertedLineup);
+      
+      // Check if lineup is complete
+      const filledCaptions = Object.values(convertedLineup).filter(v => v).length;
+      if (filledCaptions > 0) {
+        toast.success(`Loaded lineup with ${filledCaptions}/8 captions selected`);
       }
-
-    } catch (error) {
-      console.error('Error fetching lineup data:', error);
-      toast.error('Failed to load lineup data');
-    } finally {
-      setLoading(false);
+    } else {
+      // Initialize empty lineup
+      const emptyLineup = {};
+      REQUIRED_CAPTIONS.forEach(caption => {
+        emptyLineup[caption.full] = '';
+      });
+      setLineup(emptyLineup);
+      console.log('No saved lineup found, initialized empty lineup');
     }
-  };
+
+  } catch (error) {
+    console.error('Error fetching lineup data:', error);
+    toast.error('Failed to load lineup data');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSave = async () => {
+  const stats = calculateStats();
+
+  if (!stats.isValid) {
+    if (stats.missingCount > 0) {
+      toast.error(`Please select all ${stats.missingCount} missing caption(s)`);
+      return;
+    }
+    if (stats.isOverBudget) {
+      toast.error(`Lineup exceeds budget by ${Math.abs(stats.pointsRemaining)} points`);
+      return;
+    }
+  }
+
+  setSaving(true);
+  try {
+    // Convert uniqueId back to just corps name for storage
+    const lineupToSave = {};
+    Object.entries(lineup).forEach(([caption, uniqueId]) => {
+      if (uniqueId) {
+        const [corpsName] = uniqueId.split('|');
+        lineupToSave[caption] = corpsName;
+      }
+    });
+
+    console.log('Saving lineup:', lineupToSave);
+
+    const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
+    
+    // Use set with merge to ensure the document exists
+    await setDoc(profileRef, {
+      lineup: lineupToSave,
+      activeSeasonId: seasonId,
+      lastLineupUpdate: new Date().toISOString(),
+      updatedAt: new Date()
+    }, { merge: true });
+
+    console.log('Lineup saved successfully');
+    toast.success('Lineup saved successfully!');
+    setHasChanges(false);
+
+    // Verify the save worked
+    const verifySnap = await getDoc(profileRef);
+    if (verifySnap.exists()) {
+      const verifyData = verifySnap.data();
+      console.log('Verified saved lineup:', verifyData.lineup);
+    }
+
+  } catch (error) {
+    console.error('Error saving lineup:', error);
+    toast.error('Failed to save lineup: ' + error.message);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleCorpsChange = (caption, uniqueId) => {
     setLineup(prev => ({
@@ -172,51 +242,6 @@ const LineupEditor = () => {
       isValid,
       isOverBudget: totalPoints > pointLimit
     };
-  };
-
-  const handleSave = async () => {
-    const stats = calculateStats();
-
-    if (!stats.isValid) {
-      if (stats.missingCount > 0) {
-        toast.error(`Please select all ${stats.missingCount} missing caption(s)`);
-        return;
-      }
-      if (stats.isOverBudget) {
-        toast.error(`Lineup exceeds budget by ${Math.abs(stats.pointsRemaining)} points`);
-        return;
-      }
-    }
-
-    setSaving(true);
-    try {
-      // Convert uniqueId back to just corps name for storage
-      const lineupToSave = {};
-      Object.entries(lineup).forEach(([caption, uniqueId]) => {
-        if (uniqueId) {
-          const [corpsName] = uniqueId.split('|');
-          lineupToSave[caption] = corpsName;
-        }
-      });
-
-      const profileRef = doc(db, `artifacts/marching-art/users/${currentUser.uid}/profile/data`);
-      
-      await setDoc(profileRef, {
-        lineup: lineupToSave,
-        activeSeasonId: seasonId,
-        'corps.lastEdit': new Date(),
-        lastUpdated: new Date()
-      }, { merge: true });
-
-      toast.success('Lineup saved successfully!');
-      setHasChanges(false);
-
-    } catch (error) {
-      console.error('Error saving lineup:', error);
-      toast.error('Failed to save lineup');
-    } finally {
-      setSaving(false);
-    }
   };
 
   if (loading) {

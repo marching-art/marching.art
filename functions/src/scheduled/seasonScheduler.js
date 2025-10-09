@@ -697,46 +697,58 @@ function shuffleArray(array) {
 async function createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo) {
   functions.logger.info(`Creating Seasonal Score Grid for ${seasonId}...`);
 
-  // Group corps by source year for efficient fetching
-  const corpsByYear = {};
-  assignedCorps.forEach(corps => {
-    const year = corps.sourceYear;
-    if (!corpsByYear[year]) corpsByYear[year] = [];
-    corpsByYear[year].push(corps.name);
-  });
-
   const scoreGrid = {};
 
-  // Fetch historical scores for each year
-  for (const year of Object.keys(corpsByYear)) {
-    if (year === 'placeholder') continue;
+  // Process each corps individually with their specific source year
+  for (const corps of assignedCorps) {
+    const corpsName = corps.name;
+    const sourceYear = corps.sourceYear;
     
-    const historicalDoc = await db.doc(`historical_scores/${year}`).get();
-    if (!historicalDoc.exists) continue;
+    // Use a unique key that includes both name and value to prevent duplicates
+    const uniqueKey = `${corpsName}_${corps.value}`;
+    
+    functions.logger.info(`Fetching scores for ${corpsName} from year ${sourceYear} (value ${corps.value})`);
+    
+    // Fetch historical scores for this specific year
+    const historicalDoc = await db.doc(`historical_scores/${sourceYear}`).get();
+    
+    if (!historicalDoc.exists) {
+      functions.logger.warn(`No historical data found for year ${sourceYear}`);
+      continue;
+    }
     
     const yearData = historicalDoc.data().data || [];
-    const corpsInYear = new Set(corpsByYear[year]);
+    
+    // Initialize score grid for this unique corps
+    scoreGrid[uniqueKey] = {
+      corpsName: corpsName,
+      sourceYear: sourceYear,
+      value: corps.value,
+      scores: {}
+    };
     
     // Process each event in the year
     yearData.forEach(event => {
       if (!event.scores || !event.offSeasonDay) return;
       
-      event.scores.forEach(score => {
-        if (corpsInYear.has(score.corps)) {
-          if (!scoreGrid[score.corps]) scoreGrid[score.corps] = {};
-          
-          scoreGrid[score.corps][event.offSeasonDay] = {
-            totalScore: score.score,
-            captions: score.captions || {},
-            eventName: event.eventName,
-            date: event.date
-          };
-        }
-      });
+      // Find this specific corps in the event scores
+      const corpsScore = event.scores.find(s => s.corps === corpsName);
+      
+      if (corpsScore && corpsScore.score && corpsScore.score > 0) {
+        scoreGrid[uniqueKey].scores[event.offSeasonDay] = {
+          totalScore: corpsScore.score,
+          captions: corpsScore.captions || {},
+          eventName: event.eventName,
+          date: event.date
+        };
+      }
     });
+    
+    const scoreDays = Object.keys(scoreGrid[uniqueKey].scores).length;
+    functions.logger.info(`  ${corpsName} (${sourceYear}): Found scores for ${scoreDays} days`);
   }
 
-  // Save score grid to existing seasonal_scores collection
+  // Save score grid to seasonal_scores collection
   const scoreGridRef = db.collection('seasonal_scores').doc(seasonId);
   await scoreGridRef.set({
     seasonId: seasonId,
@@ -746,7 +758,7 @@ async function createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo) 
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
 
-  functions.logger.info(`Score grid created with data for ${Object.keys(scoreGrid).length} corps.`);
+  functions.logger.info(`Score grid created with data for ${Object.keys(scoreGrid).length} unique corps entries.`);
   return scoreGrid;
 }
 
