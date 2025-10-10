@@ -693,7 +693,143 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-// === SEASONAL SCORE GRID - USING EXISTING COLLECTION ===
+  /**
+ * COMPLETE SEASON RESET - Regenerate everything for new season
+ */
+async function performCompleteSeasonReset(db, newSeasonInfo) {
+  const logger = functions.logger;
+  const seasonId = newSeasonInfo.seasonId;
+  
+  logger.info(`Performing COMPLETE season reset for ${seasonId}...`);
+  
+  try {
+    const batch = db.batch();
+    
+    // 1. REGENERATE CORPS with new values and years
+    logger.info('Step 1: Regenerating corps for new season...');
+    const newCorps = await assignCorpsForSeason(db, seasonId, newSeasonInfo.seasonType);
+    
+    const dciDataRef = db.doc(`dci-data/${seasonId}`);
+    batch.set(dciDataRef, {
+      seasonId: seasonId,
+      seasonType: newSeasonInfo.seasonType,
+      corps: newCorps,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      totalCorps: newCorps.length
+    });
+    
+    logger.info(`Generated ${newCorps.length} corps with new values`);
+    
+    // 2. GENERATE NEW SCHEDULE
+    logger.info('Step 2: Generating new schedule...');
+    const competitions = await generateScheduleFromHistory(db, newSeasonInfo, seasonId);
+    
+    const scheduleRef = db.doc(`schedules/${seasonId}`);
+    batch.set(scheduleRef, {
+      seasonId: seasonId,
+      seasonType: newSeasonInfo.seasonType,
+      competitions: competitions,
+      totalCompetitions: competitions.length,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    logger.info(`Generated ${competitions.length} competitions`);
+    
+    // 3. CREATE NEW SCORE GRID
+    logger.info('Step 3: Creating seasonal score grid...');
+    await batch.commit(); // Commit corps and schedule first
+    
+    const scoreGrid = await createSeasonalScoreGrid(db, seasonId, newCorps, newSeasonInfo);
+    logger.info('Score grid created successfully');
+    
+    // 4. CLEAR OLD USER DATA
+    logger.info('Step 4: Resetting user data for new season...');
+    await resetAllUserProfilesForNewSeason(db, seasonId, newSeasonInfo);
+    
+    // 5. CLEAR OLD RECAPS AND LEADERBOARDS
+    logger.info('Step 5: Clearing old season data...');
+    const cleanupBatch = db.batch();
+    
+    // Clear old fantasy recaps
+    const oldRecapsRef = db.doc(`fantasy_recaps/${seasonId}`);
+    cleanupBatch.delete(oldRecapsRef);
+    
+    // Clear old leaderboard
+    const oldLeaderboardRef = db.doc(`leaderboards/${seasonId}`);
+    cleanupBatch.delete(oldLeaderboardRef);
+    
+    // Clear old participants
+    const participantsSnapshot = await db.collection('participants')
+      .where('seasonId', '==', seasonId)
+      .get();
+    
+    participantsSnapshot.forEach(doc => {
+      cleanupBatch.delete(doc.ref);
+    });
+    
+    await cleanupBatch.commit();
+    
+    logger.info(`Season reset complete for ${seasonId}`);
+    
+    return {
+      success: true,
+      seasonId: seasonId,
+      corpsCount: newCorps.length,
+      competitionCount: competitions.length,
+      scoreGridEntries: Object.keys(scoreGrid).length
+    };
+    
+  } catch (error) {
+    logger.error('Error in complete season reset:', error);
+    throw error;
+  }
+}
+
+/**
+ * Reset all user profiles for new season
+ */
+async function resetAllUserProfilesForNewSeason(db, seasonId, seasonInfo) {
+  const logger = functions.logger;
+  
+  // Get all user profiles
+  const usersSnapshot = await db.collectionGroup('data')
+    .where('activeSeasonId', '==', seasonId)
+    .get();
+  
+  if (usersSnapshot.empty) {
+    logger.info('No user profiles to reset');
+    return;
+  }
+  
+  const batch = db.batch();
+  let resetCount = 0;
+  
+  usersSnapshot.forEach(doc => {
+    // Clear lineup, registrations, and season-specific data
+    batch.update(doc.ref, {
+      lineup: {},
+      competitionRegistrations: {},
+      totalSeasonScore: 0,
+      lastCompetitionScore: 0,
+      lastScoredDay: 0,
+      activeSeasonId: seasonId,
+      seasonStartDate: seasonInfo.startDate
+    });
+    
+    resetCount++;
+    
+    // Firestore batch limit is 500
+    if (resetCount >= 500) {
+      logger.warn('Hit batch limit during user reset, some users may need manual reset');
+    }
+  });
+  
+  await batch.commit();
+  
+  logger.info(`Reset ${resetCount} user profiles for new season`);
+}
+
+// === SEASONAL SCORE GRID - FIXED TO USE SOURCE YEAR ===
 async function createSeasonalScoreGrid(db, seasonId, assignedCorps, seasonInfo) {
   functions.logger.info(`Creating Seasonal Score Grid for ${seasonId}...`);
 
@@ -944,35 +1080,144 @@ exports.seasonScheduler = functions
   });
 
 exports.checkSeasonStatus = functions
-  .runWith(getFunctionConfig('scheduled'))
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .pubsub.schedule('0 3 * * *')
   .timeZone('America/New_York')
   .onRun(async (context) => {
     const db = admin.firestore();
-    await checkAndProgressSeason(db);
+    const logger = functions.logger;
+    
+    try {
+      logger.info('Checking season status...');
+      
+      const now = new Date();
+      const seasonDoc = await db.doc('game-settings/current').get();
+      
+      if (!seasonDoc.exists) {
+        logger.warn('No active season found');
+        return;
+      }
+      
+      const currentSeasonData = seasonDoc.data();
+      const seasonEndDate = currentSeasonData.endDate.toDate();
+      
+      // Check if season has ended (after 11:59 PM on end date)
+      const transitionTime = new Date(seasonEndDate);
+      transitionTime.setHours(23, 59, 59, 999);
+      
+      if (now > transitionTime) {
+        logger.info('Season has ended, initiating transition...');
+        
+        // Determine next season
+        const nextSeasonInfo = determineCurrentSeason(now);
+        const nextSeasonId = `${nextSeasonInfo.seasonType}_${nextSeasonInfo.finalsYear}-${(nextSeasonInfo.finalsYear + 1).toString().slice(-2)}`;
+        
+        nextSeasonInfo.seasonId = nextSeasonId;
+        
+        logger.info(`Transitioning to: ${nextSeasonInfo.seasonName}`);
+        
+        // PERFORM COMPLETE SEASON RESET
+        const resetResult = await performCompleteSeasonReset(db, nextSeasonInfo);
+        
+        // Update game-settings/current
+        await db.doc('game-settings/current').set({
+          activeSeasonId: nextSeasonId,
+          currentSeasonId: nextSeasonId,
+          seasonId: nextSeasonId,
+          seasonNumber: nextSeasonInfo.seasonName,
+          seasonName: nextSeasonInfo.seasonName,
+          seasonType: nextSeasonInfo.seasonType,
+          startDate: admin.firestore.Timestamp.fromDate(nextSeasonInfo.startDate),
+          endDate: admin.firestore.Timestamp.fromDate(nextSeasonInfo.endDate),
+          currentDay: 1,
+          currentWeek: 1,
+          finalsYear: nextSeasonInfo.finalsYear,
+          totalWeeks: nextSeasonInfo.totalWeeks,
+          totalDays: nextSeasonInfo.totalDays,
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        logger.info('Season transition complete!', resetResult);
+      } else {
+        // Update current day counter
+        const seasonStartDate = currentSeasonData.startDate.toDate();
+        const daysSinceStart = Math.floor((now - seasonStartDate) / (1000 * 60 * 60 * 24));
+        const currentDay = Math.max(1, daysSinceStart + 1);
+        const currentWeek = Math.ceil(currentDay / 7);
+        
+        await db.doc('game-settings/current').update({
+          currentDay: currentDay,
+          currentWeek: currentWeek,
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        logger.info(`Season ongoing - Day ${currentDay}, Week ${currentWeek}`);
+      }
+      
+    } catch (error) {
+      logger.error('Error in season status check:', error);
+      throw error;
+    }
   });
 
 exports.initializeSeasonManually = functions
-  .runWith(getFunctionConfig('default'))
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .https.onCall(async (data, context) => {
+    // Verify admin
     if (!context.auth || context.auth.uid !== 'o8vfRCOevjTKBY0k2dISlpiYiIH2') {
-      throw new functions.https.HttpsError('permission-denied', 'Admin only');
+      throw new functions.https.HttpsError('permission-denied', 'Admin access required');
     }
-
+    
+    const db = admin.firestore();
+    const logger = functions.logger;
+    
     try {
-      const db = admin.firestore();
-      const currentDate = new Date();
-      const seasonInfo = determineCurrentSeason(currentDate);
-      const result = await initializeNewSeason(db, seasonInfo);
+      logger.info('Manual season initialization requested...');
+      
+      const now = data?.date ? new Date(data.date) : new Date();
+      const seasonInfo = determineCurrentSeason(now);
+      const seasonId = `${seasonInfo.seasonType}_${seasonInfo.finalsYear}-${(seasonInfo.finalsYear + 1).toString().slice(-2)}`;
+      
+      seasonInfo.seasonId = seasonId;
+      
+      logger.info(`Initializing season: ${seasonInfo.seasonName} (${seasonId})`);
+      
+      // PERFORM COMPLETE SEASON RESET
+      const resetResult = await performCompleteSeasonReset(db, seasonInfo);
+      
+      // Update game-settings/current
+      await db.doc('game-settings/current').set({
+        activeSeasonId: seasonId,
+        currentSeasonId: seasonId,
+        seasonId: seasonId,
+        seasonNumber: seasonInfo.seasonName,
+        seasonName: seasonInfo.seasonName,
+        seasonType: seasonInfo.seasonType,
+        startDate: admin.firestore.Timestamp.fromDate(seasonInfo.startDate),
+        endDate: admin.firestore.Timestamp.fromDate(seasonInfo.endDate),
+        currentDay: 1,
+        currentWeek: 1,
+        finalsYear: seasonInfo.finalsYear,
+        totalWeeks: seasonInfo.totalWeeks,
+        totalDays: seasonInfo.totalDays,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      logger.info('Manual season initialization complete!');
       
       return {
         success: true,
-        message: `${seasonInfo.seasonName} initialized successfully`,
-        seasonId: result.seasonId,
-        corpsCount: (await db.collection('dci-data').doc(result.seasonId).get()).data().corps.length
+        message: `Successfully initialized ${seasonInfo.seasonName}`,
+        seasonId: seasonId,
+        seasonType: seasonInfo.seasonType,
+        startDate: seasonInfo.startDate.toISOString(),
+        endDate: seasonInfo.endDate.toISOString(),
+        totalDays: seasonInfo.totalDays,
+        ...resetResult
       };
+      
     } catch (error) {
-      functions.logger.error('Manual initialization error:', error);
+      logger.error('Error in manual season initialization:', error);
       throw new functions.https.HttpsError('internal', error.message);
     }
   });
@@ -1022,3 +1267,127 @@ exports.getAvailableCorps = functions
       throw new functions.https.HttpsError('internal', 'Failed to get available corps.');
     }
   });
+
+  /**
+ * ASSIGN CORPS FOR SEASON - Generate corps with randomized values and source years
+ */
+async function assignCorpsForSeason(db, seasonId, seasonType) {
+  const logger = functions.logger;
+  
+  logger.info(`Assigning corps for season ${seasonId} (${seasonType})...`);
+  
+  // Get all available historical years
+  const historicalScoresSnapshot = await db.collection('historical_scores').get();
+  const availableYears = [];
+  
+  historicalScoresSnapshot.forEach(doc => {
+    if (doc.id.match(/^\d{4}$/)) { // Only year documents
+      availableYears.push(doc.id);
+    }
+  });
+  
+  if (availableYears.length === 0) {
+    throw new Error('No historical score data available');
+  }
+  
+  logger.info(`Found ${availableYears.length} years of historical data`);
+  
+  // Collect all unique corps from all years
+  const allCorpsMap = new Map();
+  
+  for (const year of availableYears) {
+    const yearDoc = await db.doc(`historical_scores/${year}`).get();
+    if (!yearDoc.exists) continue;
+    
+    const yearData = yearDoc.data().data || [];
+    
+    yearData.forEach(event => {
+      if (!event.scores) return;
+      
+      event.scores.forEach(score => {
+        if (!score.corps || score.score === 0) return;
+        
+        const corpsKey = `${score.corps}_${year}`;
+        
+        if (!allCorpsMap.has(corpsKey)) {
+          allCorpsMap.set(corpsKey, {
+            name: score.corps,
+            sourceYear: year,
+            historicalScore: score.score
+          });
+        }
+      });
+    });
+  }
+  
+  const allCorpsEntries = Array.from(allCorpsMap.values());
+  logger.info(`Found ${allCorpsEntries.length} unique corps-year combinations`);
+  
+  // Shuffle and select corps for this season
+  const shuffled = shuffleArray(allCorpsEntries);
+  
+  // Determine how many corps to use based on season type
+  const corpsCount = seasonType === 'live' ? 30 : 25;
+  const selectedCorps = shuffled.slice(0, Math.min(corpsCount, shuffled.length));
+  
+  // Assign random point values (1-25 for off-season, 1-30 for live)
+  const maxValue = seasonType === 'live' ? 30 : 25;
+  const values = Array.from({ length: maxValue }, (_, i) => i + 1);
+  const shuffledValues = shuffleArray(values);
+  
+  const assignedCorps = selectedCorps.map((corps, index) => ({
+    name: corps.name,
+    corpsName: corps.name,
+    value: shuffledValues[index] || (maxValue - index),
+    pointCost: shuffledValues[index] || (maxValue - index),
+    sourceYear: corps.sourceYear,
+    historicalScore: corps.historicalScore,
+    rank: index + 1,
+    corpsClass: determineCorpsClass(corps.name)
+  }));
+  
+  // Sort by value descending
+  assignedCorps.sort((a, b) => b.value - a.value);
+  
+  logger.info(`Assigned ${assignedCorps.length} corps with values 1-${maxValue}`);
+  
+  return assignedCorps;
+}
+
+/**
+ * Determine corps class based on name
+ */
+function determineCorpsClass(corpsName) {
+  const name = corpsName.toLowerCase();
+  
+  // World Class corps (major DCI corps)
+  const worldClassCorps = [
+    'blue devils', 'bluecoats', 'carolina crown', 'cavaliers', 'colts',
+    'crossmen', 'madison scouts', 'mandarins', 'phantom regiment',
+    'santa clara vanguard', 'vanguard', 'boston crusaders', 'blue knights',
+    'blue stars', 'cadets', 'music city', 'pacific crest', 'troopers'
+  ];
+  
+  if (worldClassCorps.some(wc => name.includes(wc))) {
+    return 'World Class';
+  }
+  
+  // Open Class indicators
+  const openClassIndicators = ['academy', 'genesis', 'gold', 'heat wave', 
+                               'legends', 'louisiana stars', 'oregon crusaders',
+                               'raiders', 'spartans', 'vessel'];
+  
+  if (openClassIndicators.some(oc => name.includes(oc))) {
+    return 'Open Class';
+  }
+  
+  // SoundSport indicators
+  if (name.includes('soundsport') || name.includes('sound') || name.includes('music')) {
+    return 'SoundSport';
+  }
+  
+  // Default to A Class
+  return 'A Class';
+}
+
+
