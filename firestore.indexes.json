@@ -1,0 +1,22 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "profile",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "activeSeasonId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "leagueIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "totalSeasonScore",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ]
+}
