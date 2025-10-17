@@ -23,7 +23,11 @@ const ScoresPage = ({ theme }) => {
                 const fetchedRecaps = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                 if (fetchedRecaps.length > 0) {
-                    fetchedRecaps.sort((a, b) => b.seasonName.localeCompare(a.seasonName));
+                    fetchedRecaps.sort((a, b) => {
+                        const aName = a.seasonName || a.id || '';
+                        const bName = b.seasonName || b.id || '';
+                        return bName.localeCompare(aName);
+                    });
                     setAllRecaps(fetchedRecaps);
                     const latestSeason = fetchedRecaps[0];
                     setSelectedSeason(latestSeason);

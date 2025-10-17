@@ -16,6 +16,10 @@ export const useUserStore = create((set, get) => ({
         // User is signed in
         set({ user: firebaseUser, isLoadingAuth: false });
         
+        // Get the ID token to check for admin claims
+        const tokenResult = await firebaseUser.getIdTokenResult();
+        const isAdmin = tokenResult.claims.admin === true;
+        
         // Listen to the user's profile document
         const profileRef = doc(
           db,
@@ -33,6 +37,7 @@ export const useUserStore = create((set, get) => ({
             if (profileSnap.exists()) {
               const profileData = {
                 userId: firebaseUser.uid,
+                isAdmin: isAdmin, // Add admin status from custom claims
                 ...profileSnap.data()
               };
               set({ loggedInProfile: profileData });
