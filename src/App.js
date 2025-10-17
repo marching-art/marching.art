@@ -27,6 +27,18 @@ function AppContent() {
     const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
     
+    // DEBUG: Log authentication state
+    useEffect(() => {
+        console.log('=== AUTH DEBUG ===');
+        console.log('isLoadingAuth:', isLoadingAuth);
+        console.log('user:', user);
+        console.log('user?.uid:', user?.uid);
+        console.log('loggedInProfile:', loggedInProfile);
+        console.log('loggedInProfile?.isAdmin:', loggedInProfile?.isAdmin);
+        console.log('isLoggedIn:', !!user);
+        console.log('==================');
+    }, [user, loggedInProfile, isLoadingAuth]);
+    
     useEffect(() => {
         if (!isLoadingAuth && !user) {
             setPage('home');
@@ -52,13 +64,12 @@ function AppContent() {
     };
 
     const handleSetPage = (newPage, props = {}) => {
+        console.log('Setting page to:', newPage, 'with props:', props);
         setPage(newPage);
         setPageProps(props);
     };
 
     const renderPage = () => {
-        // Now profile is accessed from context within components where needed
-        // Or passed explicitly like here for simplicity
         switch (page) {
             case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
             case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
@@ -82,6 +93,12 @@ function AppContent() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
+            {/* DEBUG INFO - Remove this after debugging */}
+            <div className="bg-yellow-500 text-black p-2 text-xs">
+                DEBUG: user={user ? 'YES' : 'NO'} | profile={loggedInProfile ? 'YES' : 'NO'} | 
+                isAdmin={loggedInProfile?.isAdmin ? 'YES' : 'NO'} | page={page}
+            </div>
+            
             <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
             <AuthModal
                 isOpen={isAuthModalOpen}

@@ -12,50 +12,65 @@ export const useUserStore = create((set, get) => ({
   // Actions
   initAuthListener: () => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('=== AUTH STATE CHANGED ===');
+      console.log('firebaseUser:', firebaseUser);
+      
       if (firebaseUser) {
         // User is signed in
         set({ user: firebaseUser, isLoadingAuth: false });
         
-        // Get the ID token to check for admin claims
-        const tokenResult = await firebaseUser.getIdTokenResult();
-        const isAdmin = tokenResult.claims.admin === true;
-        
-        // Listen to the user's profile document
-        const profileRef = doc(
-          db,
-          'artifacts',
-          dataNamespace,
-          'users',
-          firebaseUser.uid,
-          'profile',
-          'data'
-        );
+        try {
+          // Get the ID token to check for admin claims
+          const tokenResult = await firebaseUser.getIdTokenResult();
+          const isAdmin = tokenResult.claims.admin === true;
+          
+          console.log('Token claims:', tokenResult.claims);
+          console.log('isAdmin:', isAdmin);
+          
+          // Listen to the user's profile document
+          const profileRef = doc(
+            db,
+            'artifacts',
+            dataNamespace,
+            'users',
+            firebaseUser.uid,
+            'profile',
+            'data'
+          );
 
-        const unsubscribeProfile = onSnapshot(
-          profileRef,
-          (profileSnap) => {
-            if (profileSnap.exists()) {
-              const profileData = {
-                userId: firebaseUser.uid,
-                isAdmin: isAdmin, // Add admin status from custom claims
-                ...profileSnap.data()
-              };
-              set({ loggedInProfile: profileData });
-            } else {
-              // Profile doesn't exist yet
+          const unsubscribeProfile = onSnapshot(
+            profileRef,
+            (profileSnap) => {
+              console.log('Profile snapshot exists:', profileSnap.exists());
+              if (profileSnap.exists()) {
+                const profileData = {
+                  userId: firebaseUser.uid,
+                  isAdmin: isAdmin, // Add admin status from custom claims
+                  ...profileSnap.data()
+                };
+                console.log('Setting loggedInProfile:', profileData);
+                set({ loggedInProfile: profileData });
+              } else {
+                // Profile doesn't exist yet
+                console.log('Profile does not exist');
+                set({ loggedInProfile: null });
+              }
+            },
+            (error) => {
+              console.error('Error fetching user profile:', error);
               set({ loggedInProfile: null });
             }
-          },
-          (error) => {
-            console.error('Error fetching user profile:', error);
-            set({ loggedInProfile: null });
-          }
-        );
+          );
 
-        // Store the unsubscribe function
-        set({ unsubscribeProfile });
+          // Store the unsubscribe function
+          set({ unsubscribeProfile });
+        } catch (error) {
+          console.error('Error getting token or setting up profile listener:', error);
+          set({ isLoadingAuth: false });
+        }
       } else {
         // User is signed out
+        console.log('User signed out');
         // Clean up profile listener if it exists
         const { unsubscribeProfile } = get();
         if (unsubscribeProfile) {
