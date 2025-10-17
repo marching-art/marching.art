@@ -27,43 +27,7 @@ export const useUserStore = create((set, get) => ({
           console.log('Token claims:', tokenResult.claims);
           console.log('isAdmin:', isAdmin);
           
-          // DIAGNOSTIC: Check all possible profile paths
-          console.log('=== PROFILE PATH DIAGNOSTIC ===');
-          console.log('User ID:', firebaseUser.uid);
-          console.log('dataNamespace:', dataNamespace);
-          console.log('dataNamespace type:', typeof dataNamespace);
-          console.log('dataNamespace is undefined?', dataNamespace === undefined);
-          
-          const expectedPath = `artifacts/${dataNamespace}/users/${firebaseUser.uid}/profile/data`;
-          console.log('Expected path:', expectedPath);
-          
-          // Try multiple possible paths
-          const pathsToTry = [
-            { name: 'Standard', parts: ['artifacts', dataNamespace, 'users', firebaseUser.uid, 'profile', 'data'] },
-            { name: 'Without namespace', parts: ['users', firebaseUser.uid, 'profile', 'data'] },
-            { name: 'Hardcoded namespace', parts: ['artifacts', 'marching-art', 'users', firebaseUser.uid, 'profile', 'data'] },
-          ];
-          
-          for (const pathConfig of pathsToTry) {
-            try {
-              const pathStr = pathConfig.parts.filter(p => p !== undefined).join('/');
-              console.log(`Trying ${pathConfig.name} path:`, pathStr);
-              
-              const testRef = doc(db, ...pathConfig.parts.filter(p => p !== undefined));
-              const testSnap = await getDoc(testRef);
-              
-              if (testSnap.exists()) {
-                console.log(`  ✅ FOUND at ${pathConfig.name}! Data:`, testSnap.data());
-              } else {
-                console.log(`  ❌ Does not exist at ${pathConfig.name}`);
-              }
-            } catch (error) {
-              console.log(`  ⚠️ Error trying ${pathConfig.name}:`, error.message);
-            }
-          }
-          console.log('=== END DIAGNOSTIC ===');
-          
-          // Listen to the user's profile document (using the expected path)
+          // FIRST: Do a direct read to get the profile immediately
           const profileRef = doc(
             db,
             'artifacts',
@@ -73,35 +37,52 @@ export const useUserStore = create((set, get) => ({
             'profile',
             'data'
           );
-
+          
+          console.log('Attempting direct read of profile...');
+          const profileSnap = await getDoc(profileRef);
+          
+          if (profileSnap.exists()) {
+            console.log('✅ Direct read SUCCESS! Profile data:', profileSnap.data());
+            const profileData = {
+              userId: firebaseUser.uid,
+              isAdmin: isAdmin,
+              ...profileSnap.data()
+            };
+            set({ loggedInProfile: profileData });
+          } else {
+            console.log('❌ Direct read: Profile does not exist');
+            set({ loggedInProfile: null });
+          }
+          
+          // THEN: Set up the realtime listener for updates
+          console.log('Setting up realtime listener...');
           const unsubscribeProfile = onSnapshot(
             profileRef,
             (profileSnap) => {
-              console.log('Profile snapshot exists:', profileSnap.exists());
+              console.log('📡 Realtime update - Profile exists:', profileSnap.exists());
               if (profileSnap.exists()) {
                 const profileData = {
                   userId: firebaseUser.uid,
-                  isAdmin: isAdmin, // Add admin status from custom claims
+                  isAdmin: isAdmin,
                   ...profileSnap.data()
                 };
-                console.log('Setting loggedInProfile:', profileData);
+                console.log('📡 Updating profile from listener:', profileData);
                 set({ loggedInProfile: profileData });
               } else {
-                // Profile doesn't exist yet
-                console.log('Profile does not exist');
+                console.log('📡 Profile no longer exists');
                 set({ loggedInProfile: null });
               }
             },
             (error) => {
-              console.error('Error fetching user profile:', error);
-              set({ loggedInProfile: null });
+              console.error('❌ Listener error:', error);
+              // Don't set profile to null on error - keep the existing data
             }
           );
 
           // Store the unsubscribe function
           set({ unsubscribeProfile });
         } catch (error) {
-          console.error('Error getting token or setting up profile listener:', error);
+          console.error('Error in profile setup:', error);
           set({ isLoadingAuth: false });
         }
       } else {

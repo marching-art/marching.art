@@ -27,16 +27,6 @@ function AppContent() {
     const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
     
-    // If user is logged in but has no profile, force them to the signup modal
-    // This handles the edge case where a user was created without going through the signup flow
-    useEffect(() => {
-        if (!isLoadingAuth && user && !loggedInProfile) {
-            console.warn('User exists but profile is missing. Opening signup modal to create profile.');
-            setAuthModalView('signup');
-            setIsAuthModalOpen(true);
-        }
-    }, [user, loggedInProfile, isLoadingAuth]);
-    
     useEffect(() => {
         if (!isLoadingAuth && !user) {
             setPage('home');
@@ -67,23 +57,8 @@ function AppContent() {
     };
 
     const renderPage = () => {
-        // If user exists but no profile, show a loading/waiting state
-        if (user && !loggedInProfile) {
-            return (
-                <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-center p-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
-                        <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-                            Setting up your profile...
-                        </h2>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">
-                            Please complete the signup form to continue.
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
+        // Now profile is accessed from context within components where needed
+        // Or passed explicitly like here for simplicity
         switch (page) {
             case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
             case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
@@ -110,13 +85,7 @@ function AppContent() {
             <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
             <AuthModal
                 isOpen={isAuthModalOpen}
-                onClose={() => {
-                    // Don't allow closing if user exists but has no profile
-                    if (user && !loggedInProfile) {
-                        return;
-                    }
-                    setIsAuthModalOpen(false);
-                }}
+                onClose={() => setIsAuthModalOpen(false)}
                 initialView={authModalView}
                 onAuthSuccess={() => {
                     setIsAuthModalOpen(false);
@@ -125,7 +94,7 @@ function AppContent() {
             />
             <Header
                 user={user}
-                isLoggedIn={!!user && !!loggedInProfile}
+                isLoggedIn={!!user}
                 isAdmin={loggedInProfile?.isAdmin}
                 onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
