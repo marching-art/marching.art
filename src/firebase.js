@@ -1,9 +1,6 @@
-// src/firebase.js
-// UPDATED VERSION with Offline Persistence
-
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
@@ -17,28 +14,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
-const functions = getFunctions(app);
 
-// ✨ NEW: Enable offline persistence
-// This automatically caches all Firestore reads
-// Works across page refreshes and browser restarts
-enableIndexedDbPersistence(db, {
-  synchronizeTabs: true // Share cache across multiple tabs
-}).then(() => {
-  console.log('✅ Offline persistence enabled');
-}).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    // Multiple tabs open, persistence can only be enabled in one tab at a time
-    console.warn('⚠️ Offline persistence: Multiple tabs open, using memory-only cache');
-  } else if (err.code === 'unimplemented') {
-    // The current browser doesn't support persistence
-    console.warn('⚠️ Offline persistence: Not supported in this browser');
-  } else {
-    console.error('❌ Offline persistence error:', err);
-  }
+// Initialize Firestore WITHOUT persistence to force fresh reads
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 });
 
+const functions = getFunctions(app);
+
 export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
+
+console.log('🔥 Firebase initialized');
+console.log('📦 dataNamespace:', dataNamespace);
 
 export { auth, db, functions };
