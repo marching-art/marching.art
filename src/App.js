@@ -27,16 +27,14 @@ function AppContent() {
     const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
     
-    // DEBUG: Log authentication state
+    // If user is logged in but has no profile, force them to the signup modal
+    // This handles the edge case where a user was created without going through the signup flow
     useEffect(() => {
-        console.log('=== AUTH DEBUG ===');
-        console.log('isLoadingAuth:', isLoadingAuth);
-        console.log('user:', user);
-        console.log('user?.uid:', user?.uid);
-        console.log('loggedInProfile:', loggedInProfile);
-        console.log('loggedInProfile?.isAdmin:', loggedInProfile?.isAdmin);
-        console.log('isLoggedIn:', !!user);
-        console.log('==================');
+        if (!isLoadingAuth && user && !loggedInProfile) {
+            console.warn('User exists but profile is missing. Opening signup modal to create profile.');
+            setAuthModalView('signup');
+            setIsAuthModalOpen(true);
+        }
     }, [user, loggedInProfile, isLoadingAuth]);
     
     useEffect(() => {
@@ -64,12 +62,28 @@ function AppContent() {
     };
 
     const handleSetPage = (newPage, props = {}) => {
-        console.log('Setting page to:', newPage, 'with props:', props);
         setPage(newPage);
         setPageProps(props);
     };
 
     const renderPage = () => {
+        // If user exists but no profile, show a loading/waiting state
+        if (user && !loggedInProfile) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-center p-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark mx-auto mb-4"></div>
+                        <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                            Setting up your profile...
+                        </h2>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">
+                            Please complete the signup form to continue.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
         switch (page) {
             case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
             case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
@@ -93,16 +107,16 @@ function AppContent() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            {/* DEBUG INFO - Remove this after debugging */}
-            <div className="bg-yellow-500 text-black p-2 text-xs">
-                DEBUG: user={user ? 'YES' : 'NO'} | profile={loggedInProfile ? 'YES' : 'NO'} | 
-                isAdmin={loggedInProfile?.isAdmin ? 'YES' : 'NO'} | page={page}
-            </div>
-            
             <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
             <AuthModal
                 isOpen={isAuthModalOpen}
-                onClose={() => setIsAuthModalOpen(false)}
+                onClose={() => {
+                    // Don't allow closing if user exists but has no profile
+                    if (user && !loggedInProfile) {
+                        return;
+                    }
+                    setIsAuthModalOpen(false);
+                }}
                 initialView={authModalView}
                 onAuthSuccess={() => {
                     setIsAuthModalOpen(false);
@@ -111,7 +125,7 @@ function AppContent() {
             />
             <Header
                 user={user}
-                isLoggedIn={!!user}
+                isLoggedIn={!!user && !!loggedInProfile}
                 isAdmin={loggedInProfile?.isAdmin}
                 onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
