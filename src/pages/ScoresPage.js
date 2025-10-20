@@ -89,9 +89,28 @@ const ScoresPage = ({ theme }) => {
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label htmlFor="day-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">Day:</label>
-                        <select id="day-select" value={selectedDay?.offSeasonDay || ''} onChange={e => handleDayChange(e.target.value)} className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary" disabled={!selectedSeason}>
-                            {(selectedSeason?.recaps || []).sort((a,b) => a.offSeasonDay - b.offSeasonDay).map(day => <option key={day.offSeasonDay} value={day.offSeasonDay}>Day {day.offSeasonDay}</option>)}
+                        <label htmlFor="day-select" className="font-semibold text-text-secondary dark:text-text-secondary-dark">
+                            Day:
+                        </label>
+                        <select 
+                            id="day-select" 
+                            value={selectedDay?.offSeasonDay || ''} 
+                            onChange={e => handleDayChange(e.target.value)} 
+                            className="bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary" 
+                            disabled={!selectedSeason}
+                        >
+                            {selectedSeason?.recaps && Array.isArray(selectedSeason.recaps) && selectedSeason.recaps.length > 0 ? (
+                                selectedSeason.recaps
+                                    .slice() // Create a copy to avoid mutating
+                                    .sort((a,b) => a.offSeasonDay - b.offSeasonDay)
+                                    .map(day => (
+                                        <option key={day.offSeasonDay} value={day.offSeasonDay}>
+                                            Day {day.offSeasonDay}
+                                        </option>
+                                    ))
+                            ) : (
+                                <option value="">No recaps available</option>
+                            )}
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
