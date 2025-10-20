@@ -17,6 +17,12 @@ async function startNewLiveSeason() {
   const today = new Date();
   const year = today.getFullYear();
   const previousYear = (year - 1).toString();
+  
+  let oldSeasonUid = null;
+  const oldSeasonDoc = await db.doc("game-settings/season").get();
+  if (oldSeasonDoc.exists) {
+    oldSeasonUid = oldSeasonDoc.data().seasonUid;
+  }
 
   const rankingsDocRef = db.doc(`final_rankings/${previousYear}`);
   const rankingsDoc = await rankingsDocRef.get();
@@ -60,6 +66,40 @@ async function startNewLiveSeason() {
 
   await db.doc("game-settings/season").set(newSeasonData);
   logger.info(`Successfully started the ${newSeasonData.name}.`);
+  
+  if (oldSeasonUid) {
+    const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
+    const profilesSnapshot = await profilesQuery.get();
+
+    if (!profilesSnapshot.empty) {
+      logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
+      
+      let batch = db.batch();
+      let batchCount = 0;
+      
+      for (const doc of profilesSnapshot.docs) {
+        batch.update(doc.ref, {
+          activeSeasonId: null,
+          corps: {}, // Clear all corps
+        });
+        
+        batchCount++;
+        
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} profile resets...`);
+          await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+      
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+      
+      logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+    }
+  }
 }
 
 async function startNewOffSeason() {
@@ -118,7 +158,9 @@ async function startNewOffSeason() {
   const schedule = await generateOffSeasonSchedule(seasonLength, 1);
   const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
   const dataDocId = `off-season-${startDate.getTime()}`;
+
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
+
   const newSeasonSettings = {
     name: seasonName,
     status: "off-season",
@@ -137,14 +179,32 @@ async function startNewOffSeason() {
     const profilesSnapshot = await profilesQuery.get();
 
     if (!profilesSnapshot.empty) {
+      logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
+      
       const batch = db.batch();
+      let batchCount = 0;
+      
       profilesSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, { activeSeasonId: null });
+        batch.update(doc.ref, {
+          activeSeasonId: null,
+          corps: {},
+        });
+        
+        batchCount++;
+        
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} profile resets...`);
+          batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
       });
-      await batch.commit();
-      const logMsg = `Invalidated activeSeasonId for ${profilesSnapshot.size} users ` +
-        `from previous season: ${oldSeasonUid}`;
-      logger.info(logMsg);
+      
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+      
+      logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
     }
   }
 }

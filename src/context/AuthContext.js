@@ -1,26 +1,46 @@
-import React, { createContext, useContext, useEffect } from 'react';
-import { useUserStore } from '../store/userStore';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useUserStore } from '../stores/userStore';
+import { validateProfile } from '../utils/profileValidation';
 
 const AuthContext = createContext();
 
-// This custom hook will now get its data from the Zustand store.
-// Components using useAuth() won't need to be changed.
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  // Select the state and the initializer action from the store
-  const { user, loggedInProfile, isLoadingAuth, initAuthListener } = useUserStore();
+    const { user, loggedInProfile, isLoadingAuth, initAuthListener } = useUserStore();
+    const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
-  // On initial app load, run the authentication listener
-  useEffect(() => {
-    initAuthListener();
-  }, [initAuthListener]);
+    useEffect(() => {
+        initAuthListener();
+    }, [initAuthListener]);
 
-  const value = {
-    user,
-    loggedInProfile,
-    isLoadingAuth,
-  };
+    useEffect(() => {
+        if (!isLoadingAuth && user && loggedInProfile) {
+            const validation = validateProfile(loggedInProfile);
+            setNeedsProfileCompletion(!validation.isValid);
+            
+            if (!validation.isValid) {
+                console.log('⚠️ Profile incomplete. Missing:', validation.missingFields);
+            }
+        } else {
+            setNeedsProfileCompletion(false);
+        }
+    }, [user, loggedInProfile, isLoadingAuth]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={{ 
+            user, 
+            loggedInProfile, 
+            isLoadingAuth,
+            needsProfileCompletion 
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

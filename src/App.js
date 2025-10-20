@@ -18,9 +18,10 @@ import ScoresPage from './pages/ScoresPage';
 import StatsPage from './pages/StatsPage';
 import HowToPlayPage from './pages/HowToPlayPage';
 import AuthModal from './components/auth/AuthModal';
+import ProfileCompletionModal from './components/profile/ProfileCompletionModal';
 
 function AppContent() {
-    const { user, loggedInProfile, isLoadingAuth } = useAuth();
+    const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
@@ -56,9 +57,12 @@ function AppContent() {
         setPageProps(props);
     };
 
+    const handleProfileComplete = () => {
+        // Force refresh the page or re-fetch profile
+        window.location.reload();
+    };
+
     const renderPage = () => {
-        // Now profile is accessed from context within components where needed
-        // Or passed explicitly like here for simplicity
         switch (page) {
             case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
             case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
@@ -83,6 +87,17 @@ function AppContent() {
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
             <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+            
+            {/* Profile Completion Modal - Shows when logged in but profile incomplete */}
+            {user && needsProfileCompletion && (
+                <ProfileCompletionModal
+                    isOpen={true}
+                    userId={user.uid}
+                    existingProfile={loggedInProfile}
+                    onComplete={handleProfileComplete}
+                />
+            )}
+            
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
@@ -92,6 +107,7 @@ function AppContent() {
                     setPage('dashboard');
                 }}
             />
+            
             <Header
                 user={user}
                 isLoggedIn={!!user}
@@ -106,9 +122,11 @@ function AppContent() {
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
             />
+            
             <main className="flex-grow relative">
                 {renderPage()}
             </main>
+            
             <Footer setPage={handleSetPage} />
         </div>
     );
