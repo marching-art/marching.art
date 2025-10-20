@@ -8,6 +8,8 @@ import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility'
 // ADD THIS DEBUG CHECK
 console.log('CORPS_CLASS_ORDER in ScoresPage:', CORPS_CLASS_ORDER);
 console.log('Is array?', Array.isArray(CORPS_CLASS_ORDER));
+console.log('Fetched recaps:', fetchedRecaps);
+console.log('Latest season recaps type:', typeof latestSeason.recaps, latestSeason.recaps);
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
