@@ -8,8 +8,6 @@ import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility'
 // ADD THIS DEBUG CHECK
 console.log('CORPS_CLASS_ORDER in ScoresPage:', CORPS_CLASS_ORDER);
 console.log('Is array?', Array.isArray(CORPS_CLASS_ORDER));
-console.log('Fetched recaps:', fetchedRecaps);
-console.log('Latest season recaps type:', typeof latestSeason.recaps, latestSeason.recaps);
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
@@ -27,17 +25,22 @@ const ScoresPage = ({ theme }) => {
                 const querySnapshot = await getDocs(recapsQuery);
                 const fetchedRecaps = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
+                // ADD THESE DEBUG LOGS HERE ↓
+                console.log('📊 Fetched recaps:', fetchedRecaps);
+                
                 if (fetchedRecaps.length > 0) {
-                    fetchedRecaps.sort((a, b) => {
-                        const aName = a.seasonName || a.id || '';
-                        const bName = b.seasonName || b.id || '';
-                        return bName.localeCompare(aName);
-                    });
+                    fetchedRecaps.sort((a, b) => b.seasonName.localeCompare(a.seasonName));
                     setAllRecaps(fetchedRecaps);
                     const latestSeason = fetchedRecaps[0];
+                    
+                    // ADD THIS DEBUG LOG HERE ↓
+                    console.log('📅 Latest season:', latestSeason);
+                    console.log('📅 Recaps type:', typeof latestSeason.recaps);
+                    console.log('📅 Is array?', Array.isArray(latestSeason.recaps));
+                    
                     setSelectedSeason(latestSeason);
-                    if (latestSeason.recaps?.length > 0) {
-                        const latestDay = latestSeason.recaps.sort((a,b) => b.offSeasonDay - a.offSeasonDay)[0];
+                    if (Array.isArray(latestSeason.recaps) && latestSeason.recaps.length > 0) {
+                        const latestDay = [...latestSeason.recaps].sort((a,b) => b.offSeasonDay - a.offSeasonDay)[0];
                         setSelectedDay(latestDay);
                     }
                 }
