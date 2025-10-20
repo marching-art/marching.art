@@ -3,6 +3,7 @@ module.exports = {
   darkMode: 'class', // Enable dark mode with a class
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
   ],
   theme: {
     extend: {
@@ -58,8 +59,4 @@ module.exports = {
     },
   },
   plugins: [],
-  purge: {
-    enabled: process.env.NODE_ENV === 'production',
-    content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
-  },
 }
