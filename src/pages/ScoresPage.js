@@ -3,8 +3,11 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import Modal from '../components/ui/Modal';
 import CaptionChart from '../components/charts/CaptionChart';
-// MODIFIED: Import CORPS_CLASS_ORDER
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
+
+// ADD THIS DEBUG CHECK
+console.log('CORPS_CLASS_ORDER in ScoresPage:', CORPS_CLASS_ORDER);
+console.log('Is array?', Array.isArray(CORPS_CLASS_ORDER));
 
 const ScoresPage = ({ theme }) => {
     const [allRecaps, setAllRecaps] = useState([]);
