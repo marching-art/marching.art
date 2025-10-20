@@ -1,20 +1,69 @@
 {
-  "short_name": "marching.art",
-  "name": "marching.art",
+  "short_name": "Marching.art",
+  "name": "Marching.art Fantasy League",
+  "description": "Fantasy league for drum corps and marching arts competitions",
   "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#f59e0b",
-  "background_color": "#ffffff"
+  "theme_color": "#ef4444",
+  "background_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "entertainment", "social"],
+  "screenshots": [
+    {
+      "src": "screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "platform": "narrow"
+    },
+    {
+      "src": "screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "platform": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your fantasy dashboard",
+      "url": "/?page=dashboard",
+      "icons": [{ "src": "icon-dashboard.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Leaderboard",
+      "short_name": "Leaderboard",
+      "description": "View global leaderboard",
+      "url": "/?page=leaderboard",
+      "icons": [{ "src": "icon-leaderboard.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Scores",
+      "short_name": "Scores",
+      "description": "View latest scores",
+      "url": "/?page=scores",
+      "icons": [{ "src": "icon-scores.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

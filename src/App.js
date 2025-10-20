@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { signOut } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, trace, logEvent } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import DashboardPage from './pages/DashboardPage';
-import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
-import LeaguePage from './pages/LeaguePage';
-import LeagueDetailPage from './pages/LeagueDetailPage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import SchedulePage from './pages/SchedulePage';
-import ScoresPage from './pages/ScoresPage';
-import StatsPage from './pages/StatsPage';
-import HowToPlayPage from './pages/HowToPlayPage';
 import AuthModal from './components/auth/AuthModal';
 import ProfileCompletionModal from './components/profile/ProfileCompletionModal';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+
+// Eager load critical pages
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+
+// Lazy load non-critical pages
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const LeaguePage = lazy(() => import('./pages/LeaguePage'));
+const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const SchedulePage = lazy(() => import('./pages/SchedulePage'));
+const ScoresPage = lazy(() => import('./pages/ScoresPage'));
+const StatsPage = lazy(() => import('./pages/StatsPage'));
+const HowToPlayPage = lazy(() => import('./pages/HowToPlayPage'));
 
 function AppContent() {
     const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
@@ -26,15 +32,20 @@ function AppContent() {
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('home');
     const [pageProps, setPageProps] = useState({});
-    const [themeMode, setThemeMode] = useState(localStorage.getItem('theme') || 'dark');
+    const [themeMode, setThemeMode] = useState(() => {
+        // Initialize theme from localStorage
+        return localStorage.getItem('theme') || 'dark';
+    });
     
     useEffect(() => {
-        if (!isLoadingAuth && !user) {
+        // Redirect to home if not logged in
+        if (!isLoadingAuth && !user && page !== 'home' && page !== 'howtoplay' && page !== 'schedule' && page !== 'scores' && page !== 'stats') {
             setPage('home');
         }
-    }, [user, isLoadingAuth]);
+    }, [user, isLoadingAuth, page]);
 
     useEffect(() => {
+        // Apply theme
         if (themeMode === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
@@ -43,70 +54,155 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
+    useEffect(() => {
+        // Log page views in production
+        if (process.env.NODE_ENV === 'production') {
+            logEvent('page_view', { page_name: page });
+        }
+    }, [page]);
+
     const handleLogout = async () => {
+        const logoutTrace = trace('user_logout');
+        logoutTrace.start();
+        
         try {
             await signOut(auth);
             setPage('home');
+            logEvent('logout');
         } catch (error) {
             console.error("Error signing out:", error);
+        } finally {
+            logoutTrace.stop();
         }
     };
 
     const handleSetPage = (newPage, props = {}) => {
         setPage(newPage);
         setPageProps(props);
+        
+        // Scroll to top on page change
+        window.scrollTo(0, 0);
     };
 
     const handleProfileComplete = () => {
-        // Force refresh the page or re-fetch profile
         window.location.reload();
     };
 
     const renderPage = () => {
+        const commonProps = {
+            profile: loggedInProfile,
+            userId: user?.uid,
+            setPage: handleSetPage,
+            onViewProfile: (userId) => handleSetPage('profile', { userId })
+        };
+
         switch (page) {
-            case 'dashboard': return <DashboardPage profile={loggedInProfile} userId={user?.uid} />;
-            case 'profile': return <ProfilePage loggedInProfile={loggedInProfile} loggedInUserId={user?.uid} viewingUserId={pageProps.userId} />;
-            case 'admin': return loggedInProfile?.isAdmin ? <AdminPage /> : <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
-            case 'leagues': return <LeaguePage profile={loggedInProfile} setPage={handleSetPage} onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })} />;
-            case 'leagueDetail': return <LeagueDetailPage profile={loggedInProfile} leagueId={pageProps.leagueId} setPage={handleSetPage} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'leaderboard': return <LeaderboardPage profile={loggedInProfile} onViewProfile={(id) => handleSetPage('profile', { userId: id })} />;
-            case 'schedule': return <SchedulePage setPage={handleSetPage} />;
-            case 'scores': return <ScoresPage theme={themeMode} />;
-            case 'stats': return <StatsPage />;
-            case 'howtoplay': return <HowToPlayPage />;
-            case 'home':
+            case 'dashboard':
+                return <DashboardPage {...commonProps} />;
+            
+            case 'profile':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <ProfilePage 
+                            loggedInProfile={loggedInProfile}
+                            loggedInUserId={user?.uid}
+                            viewingUserId={pageProps.userId}
+                        />
+                    </Suspense>
+                );
+            
+            case 'admin':
+                return loggedInProfile?.isAdmin ? (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <AdminPage />
+                    </Suspense>
+                ) : <HomePage setPage={handleSetPage} />;
+            
+            case 'leagues':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <LeaguePage 
+                            {...commonProps}
+                            onViewLeague={(leagueId) => handleSetPage('leagueDetail', { leagueId })}
+                        />
+                    </Suspense>
+                );
+            
+            case 'leagueDetail':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <LeagueDetailPage
+                            {...commonProps}
+                            leagueId={pageProps.leagueId}
+                        />
+                    </Suspense>
+                );
+            
+            case 'leaderboard':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <LeaderboardPage {...commonProps} />
+                    </Suspense>
+                );
+            
+            case 'schedule':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <SchedulePage />
+                    </Suspense>
+                );
+            
+            case 'scores':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <ScoresPage />
+                    </Suspense>
+                );
+            
+            case 'stats':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <StatsPage />
+                    </Suspense>
+                );
+            
+            case 'howtoplay':
+                return (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <HowToPlayPage setPage={handleSetPage} />
+                    </Suspense>
+                );
+            
             default:
-                return <HomePage onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }} />;
+                return <HomePage setPage={handleSetPage} />;
         }
     };
 
-    if (isLoadingAuth) {
-        return <div className="bg-background dark:bg-background-dark min-h-screen flex items-center justify-center text-primary dark:text-primary-dark">Loading...</div>;
-    }
-
     return (
-        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark">
-            <Toaster position="bottom-center" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
+            <Toaster 
+                position="top-center"
+                toastOptions={{
+                    duration: 3000,
+                    style: {
+                        background: themeMode === 'dark' ? '#1f2937' : '#ffffff',
+                        color: themeMode === 'dark' ? '#f9fafb' : '#111827',
+                    },
+                }}
+            />
             
-            {/* Profile Completion Modal - Shows when logged in but profile incomplete */}
-            {user && needsProfileCompletion && (
-                <ProfileCompletionModal
-                    isOpen={true}
-                    userId={user.uid}
-                    existingProfile={loggedInProfile}
-                    onComplete={handleProfileComplete}
-                />
-            )}
-            
-            <AuthModal
+            <AuthModal 
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 initialView={authModalView}
-                onAuthSuccess={() => {
-                    setIsAuthModalOpen(false);
-                    setPage('dashboard');
-                }}
             />
+            
+            {needsProfileCompletion && (
+                <ProfileCompletionModal 
+                    userId={user.uid}
+                    onComplete={handleProfileComplete}
+                />
+            )}
             
             <Header
                 user={user}
@@ -124,7 +220,9 @@ function AppContent() {
             />
             
             <main className="flex-grow relative">
-                {renderPage()}
+                <ErrorBoundary>
+                    {renderPage()}
+                </ErrorBoundary>
             </main>
             
             <Footer setPage={handleSetPage} />
@@ -134,9 +232,11 @@ function AppContent() {
 
 function App() {
     return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        <ErrorBoundary>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }
 

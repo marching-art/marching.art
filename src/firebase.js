@@ -1,7 +1,14 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager,
+  CACHE_SIZE_UNLIMITED
+} from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
+import { getPerformance } from "firebase/performance";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -10,23 +17,69 @@ const firebaseConfig = {
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Auth
 const auth = getAuth(app);
 
-// Initialize Firestore WITHOUT persistence to force fresh reads
+// Initialize Firestore with optimized caching
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
+    tabManager: persistentMultipleTabManager(),
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED // Allow unlimited cache
+  }),
+  experimentalForceLongPolling: false, // Use WebChannel (faster)
+  experimentalAutoDetectLongPolling: true // Auto-detect best connection method
 });
 
+// Initialize Functions
 const functions = getFunctions(app);
 
-export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE;
+// Initialize Performance Monitoring (production only)
+let perf = null;
+if (process.env.NODE_ENV === 'production') {
+  perf = getPerformance(app);
+}
 
-console.log('🔥 Firebase initialized');
-console.log('📦 dataNamespace:', dataNamespace);
+// Initialize Analytics (production only)
+let analytics = null;
+if (process.env.NODE_ENV === 'production' && process.env.REACT_APP_FIREBASE_MEASUREMENT_ID) {
+  analytics = getAnalytics(app);
+}
 
-export { auth, db, functions };
+// Data namespace for environment separation
+export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE || 'marching-art';
+
+// Log initialization in development only
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔥 Firebase initialized');
+  console.log('📦 dataNamespace:', dataNamespace);
+  console.log('🌐 Environment:', process.env.NODE_ENV);
+}
+
+export { auth, db, functions, perf, analytics };
+
+// Performance tracing helper
+export const trace = (traceName) => {
+  if (perf) {
+    return perf.trace(traceName);
+  }
+  // Return mock trace for development
+  return {
+    start: () => {},
+    stop: () => {},
+    putAttribute: () => {},
+    putMetric: () => {}
+  };
+};
+
+// Analytics event helper
+export const logEvent = (eventName, eventParams = {}) => {
+  if (analytics) {
+    analytics.logEvent(eventName, eventParams);
+  }
+};
