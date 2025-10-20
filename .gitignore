@@ -4,6 +4,7 @@
 /node_modules
 functions/node_modules
 functions-scraper/node_modules
+setAdmin.js
 /.pnp
 .pnp.js
 
