@@ -148,14 +148,14 @@ function AppContent() {
             case 'schedule':
                 return (
                     <Suspense fallback={<LoadingSpinner />}>
-                        <SchedulePage />
+                        <SchedulePage setPage={handleSetPage} />
                     </Suspense>
                 );
             
             case 'scores':
                 return (
                     <Suspense fallback={<LoadingSpinner />}>
-                        <ScoresPage />
+                        <ScoresPage theme={themeMode} />
                     </Suspense>
                 );
             
