@@ -29,11 +29,15 @@ const ScoresPage = ({ theme }) => {
                 console.log('📊 Fetched recaps:', fetchedRecaps);
                 
                 if (fetchedRecaps.length > 0) {
-                    fetchedRecaps.sort((a, b) => b.seasonName.localeCompare(a.seasonName));
+                    fetchedRecaps.sort((a, b) => {
+                        const aName = a.seasonName || '';
+                        const bName = b.seasonName || '';
+                        return bName.localeCompare(aName);
+                    });
+                    
                     setAllRecaps(fetchedRecaps);
                     const latestSeason = fetchedRecaps[0];
                     
-                    // ADD THIS DEBUG LOG HERE ↓
                     console.log('📅 Latest season:', latestSeason);
                     console.log('📅 Recaps type:', typeof latestSeason.recaps);
                     console.log('📅 Is array?', Array.isArray(latestSeason.recaps));

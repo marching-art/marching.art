@@ -4,6 +4,8 @@
 /node_modules
 functions/node_modules
 functions-scraper/node_modules
+functions/recaps
+functions/recaps-source
 setAdmin.js
 /.pnp
 .pnp.js

@@ -3,6 +3,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const SchedulePage = ({ setPage }) => {
+    if (!setPage) {
+        console.error('setPage prop is missing in SchedulePage!');
+    }
     const [season, setSeason] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [fantasyRecaps, setFantasyRecaps] = useState(null);
@@ -85,8 +88,17 @@ const SchedulePage = ({ setPage }) => {
                                                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic">No shows scheduled.</p>
                                             )}
                                         </div>
-                                         {hasResults && (
-                                            <button onClick={() => setPage('scores')} className="bg-secondary/80 dark:bg-secondary-dark/80 hover:opacity-90 text-on-secondary font-bold py-2 px-3 rounded-theme transition-all text-sm mt-4">
+                                        {hasResults && (
+                                            <button 
+                                                onClick={() => {
+                                                    if (typeof setPage === 'function') {
+                                                        setPage('scores');
+                                                    } else {
+                                                        console.error('setPage is not a function:', setPage);
+                                                    }
+                                                }} 
+                                                className="bg-secondary/80 dark:bg-secondary-dark/80 hover:opacity-90 text-on-secondary font-bold py-2 px-3 rounded-theme transition-all text-sm mt-4"
+                                            >
                                                 View Results
                                             </button>
                                         )}
