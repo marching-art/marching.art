@@ -68,4 +68,55 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-/admin
+/admin# React build
+/build
+build/
+dist/
+
+# All node_modules (including nested)
+**/node_modules
+node_modules/
+/node_modules
+functions/node_modules
+functions-scraper/node_modules
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+.runtimeconfig.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Service account keys
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+service-account.json
+
+# Large files
+*.zip
+*.tar.gz
+*.mp4
+*.mov
+
+# Cache
+.cache/
+.eslintcache
