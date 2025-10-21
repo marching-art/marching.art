@@ -45,7 +45,6 @@ const Header = ({
                     <NavButton page="howtoplay">How to Play</NavButton>
                     <NavButton page="schedule">Schedule</NavButton>
                     <NavButton page="scores">Scores</NavButton>
-                    <NavButton page="stats">Stats</NavButton>
                     {isLoggedIn && (
                         <>
                             <NavButton page="leaderboard">Leaderboard</NavButton>
@@ -94,7 +93,6 @@ const Header = ({
                         <MobileNavButton page="howtoplay">How to Play</MobileNavButton>
                         <MobileNavButton page="schedule">Schedule</MobileNavButton>
                         <MobileNavButton page="scores">Scores</MobileNavButton>
-                        <MobileNavButton page="stats">Stats</MobileNavButton>
                         <div className="border-t border-accent dark:border-accent-dark my-2"></div>
                         
                         {isLoggedIn ? (
