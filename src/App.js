@@ -194,6 +194,7 @@ function AppContent() {
             <AuthModal 
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
+                onAuthSuccess={() => setIsAuthModalOpen(false)} // <-- Add this line
                 initialView={authModalView}
             />
             
