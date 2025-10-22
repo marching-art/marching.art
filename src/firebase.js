@@ -7,8 +7,8 @@ import {
   CACHE_SIZE_UNLIMITED
 } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
-import { getPerformance } from "firebase/performance";
-import { getAnalytics } from "firebase/analytics";
+import { getPerformance, trace as perfTrace } from "firebase/performance";
+import { getAnalytics, logEvent as logAnalyticsEvent } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -66,7 +66,7 @@ export { auth, db, functions, perf, analytics };
 // Performance tracing helper
 export const trace = (traceName) => {
   if (perf) {
-    return perf.trace(traceName);
+    return perfTrace(perf, traceName);
   }
   // Return mock trace for development
   return {
@@ -80,6 +80,6 @@ export const trace = (traceName) => {
 // Analytics event helper
 export const logEvent = (eventName, eventParams = {}) => {
   if (analytics) {
-    analytics.logEvent(eventName, eventParams);
+    logAnalyticsEvent(analytics, eventName, eventParams);
   }
 };
