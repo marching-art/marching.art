@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, dataNamespace } from '../firebase';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
+import { useParams } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
 import TrophyCase from '../components/profile/TrophyCase';
@@ -113,6 +114,8 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
     const [fantasyRecaps, setFantasyRecaps] = useState(null);
 
+    const { userId } = useParams(); // <-- Gets userId from URL
+    const viewingUserId = userId || loggedInUserId; // Use param, or fallback to logged-in user
     const isOwner = loggedInUserId && viewingUserId === loggedInUserId;
 
     useEffect(() => {

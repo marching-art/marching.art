@@ -4,6 +4,9 @@ import { auth, trace, logEvent } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
+// --- NEW IMPORTS ---
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import AuthModal from './components/auth/AuthModal';
@@ -26,26 +29,47 @@ const ScoresPage = lazy(() => import('./pages/ScoresPage'));
 const StatsPage = lazy(() => import('./pages/StatsPage'));
 const HowToPlayPage = lazy(() => import('./pages/HowToPlayPage'));
 
+
+/**
+ * A helper component to protect routes that require authentication.
+ */
+function ProtectedRoute({ profile, isLoading, children }) {
+    if (isLoading) {
+        return <LoadingSpinner />;
+    }
+    if (!profile) {
+        return <Navigate to="/" replace />;
+    }
+    return children;
+}
+
+/**
+ * A helper component to protect routes that require Admin status.
+ */
+function AdminRoute({ profile, isLoading, children }) {
+    if (isLoading) {
+        return <LoadingSpinner />;
+    }
+    if (!profile || !profile.isAdmin) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+}
+
+
 function AppContent() {
     const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
-    const [page, setPage] = useState('home');
-    const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(() => {
-        // Initialize theme from localStorage
         return localStorage.getItem('theme') || 'dark';
     });
     
+    // --- NEW: React Router's navigation hook ---
+    const navigate = useNavigate();
+    
+    // This effect is fine, it just applies the theme
     useEffect(() => {
-        // Redirect to home if not logged in
-        if (!isLoadingAuth && !user && page !== 'home' && page !== 'howtoplay' && page !== 'schedule' && page !== 'scores' && page !== 'stats') {
-            setPage('home');
-        }
-    }, [user, isLoadingAuth, page]);
-
-    useEffect(() => {
-        // Apply theme
         if (themeMode === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
@@ -54,12 +78,16 @@ function AppContent() {
         localStorage.setItem('theme', themeMode);
     }, [themeMode]);
 
-    useEffect(() => {
-        // Log page views in production
-        if (process.env.NODE_ENV === 'production') {
-            logEvent('page_view', { page_name: page });
-        }
-    }, [page]);
+    // This effect is no longer needed, routing handles it
+    // useEffect(() => {
+    //     if (!isLoadingAuth && !user && page !== 'home' ...) {
+    //         setPage('home');
+    //     }
+    // }, [user, isLoadingAuth, page]);
+
+    // This effect can be simplified or removed,
+    // but logging page views can be done with a dedicated router hook if needed.
+    // For now, we'll leave it out as it depends on the `page` state we removed.
 
     const handleLogout = async () => {
         const logoutTrace = trace('user_logout');
@@ -67,7 +95,7 @@ function AppContent() {
         
         try {
             await signOut(auth);
-            setPage('home');
+            navigate('/'); // <-- Navigate to home on logout
             logEvent('logout');
         } catch (error) {
             console.error("Error signing out:", error);
@@ -76,107 +104,11 @@ function AppContent() {
         }
     };
 
-    const handleSetPage = (newPage, props = {}) => {
-        setPage(newPage);
-        setPageProps(props);
-        
-        // Scroll to top on page change
-        window.scrollTo(0, 0);
-    };
-
     const handleProfileComplete = () => {
         window.location.reload();
     };
 
-    const renderPage = () => {
-        const commonProps = {
-            profile: loggedInProfile,
-            userId: user?.uid,
-            setPage: handleSetPage,
-            onViewProfile: (userId) => handleSetPage('profile', { userId })
-        };
-
-        switch (page) {
-            case 'dashboard':
-                return <DashboardPage {...commonProps} />;
-            
-            case 'profile':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <ProfilePage 
-                            loggedInProfile={loggedInProfile}
-                            loggedInUserId={user?.uid}
-                            viewingUserId={pageProps.userId}
-                        />
-                    </Suspense>
-                );
-            
-            case 'admin':
-                return loggedInProfile?.isAdmin ? (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <AdminPage />
-                    </Suspense>
-                ) : <HomePage setPage={handleSetPage} />;
-            
-            case 'leagues':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <LeaguePage 
-                            {...commonProps}
-                            onViewLeague={(leagueId) => handleSetPage('leagueDetail', { leagueId })}
-                        />
-                    </Suspense>
-                );
-            
-            case 'leagueDetail':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <LeagueDetailPage
-                            {...commonProps}
-                            leagueId={pageProps.leagueId}
-                        />
-                    </Suspense>
-                );
-            
-            case 'leaderboard':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <LeaderboardPage {...commonProps} />
-                    </Suspense>
-                );
-            
-            case 'schedule':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <SchedulePage setPage={handleSetPage} />
-                    </Suspense>
-                );
-            
-            case 'scores':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <ScoresPage theme={themeMode} />
-                    </Suspense>
-                );
-            
-            case 'stats':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <StatsPage />
-                    </Suspense>
-                );
-            
-            case 'howtoplay':
-                return (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <HowToPlayPage setPage={handleSetPage} />
-                    </Suspense>
-                );
-            
-            default:
-                return <HomePage setPage={handleSetPage} />;
-        }
-    };
+    // --- We no longer need `handleSetPage`, `page`, `pageProps`, or `renderPage` ---
 
     return (
         <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
@@ -194,7 +126,10 @@ function AppContent() {
             <AuthModal 
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                onAuthSuccess={() => setIsAuthModalOpen(false)} // <-- Add this line
+                onAuthSuccess={() => {
+                    setIsAuthModalOpen(false);
+                    navigate('/dashboard'); // <-- Go to dashboard after auth
+                }}
                 initialView={authModalView}
             />
             
@@ -205,6 +140,7 @@ function AppContent() {
                 />
             )}
             
+            {/* Header now uses <Link> components internally (see Step 3) */}
             <Header
                 user={user}
                 isLoggedIn={!!user}
@@ -212,9 +148,6 @@ function AppContent() {
                 onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
                 onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
                 onLogout={handleLogout}
-                setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
-                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
                 profile={loggedInProfile}
                 themeMode={themeMode}
                 toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
@@ -222,20 +155,101 @@ function AppContent() {
             
             <main className="flex-grow relative">
                 <ErrorBoundary>
-                    {renderPage()}
+                    {/* The `renderPage` switch statement is replaced by `Routes` */}
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <Routes>
+                            {/* Public Routes */}
+                            <Route 
+                                path="/" 
+                                element={<HomePage onSignUpClick={() => navigate('/dashboard')} />} 
+                            />
+                            <Route path="/how-to-play" element={<HowToPlayPage />} />
+                            <Route path="/schedule" element={<SchedulePage onViewScores={() => navigate('/scores')} />} />
+                            <Route path="/scores" element={<ScoresPage theme={themeMode} />} />
+                            <Route path="/stats" element={<StatsPage />} />
+                            <Route 
+                                path="/leaderboard" 
+                                element={<LeaderboardPage 
+                                    profile={loggedInProfile} 
+                                    onViewProfile={(userId) => navigate(`/profile/${userId}`)} 
+                                />} 
+                            />
+                            
+                            {/* Profile Routes (can be public, but one is special) */}
+                            <Route 
+                                path="/profile/:userId" 
+                                element={<ProfilePage 
+                                    loggedInProfile={loggedInProfile}
+                                    loggedInUserId={user?.uid}
+                                    // viewingUserId is now passed by the router from the URL
+                                />} 
+                            />
+                            
+                            {/* Protected Routes (Require Login) */}
+                            <Route 
+                                path="/dashboard" 
+                                element={<ProtectedRoute profile={loggedInProfile} isLoading={isLoadingAuth}>
+                                    <DashboardPage profile={loggedInProfile} userId={user?.uid} />
+                                </ProtectedRoute>} 
+                            />
+                            <Route 
+                                path="/leagues" 
+                                element={<ProtectedRoute profile={loggedInProfile} isLoading={isLoadingAuth}>
+                                    <LeaguePage 
+                                        profile={loggedInProfile} 
+                                        onViewLeague={(leagueId) => navigate(`/league/${leagueId}`)} 
+                                    />
+                                </ProtectedRoute>} 
+                            />
+                            <Route 
+                                path="/league/:leagueId" 
+                                element={<ProtectedRoute profile={loggedInProfile} isLoading={isLoadingAuth}>
+                                    <LeagueDetailPage
+                                        profile={loggedInProfile}
+                                        onBackToLeagues={() => navigate('/leagues')}
+                                        onViewProfile={(userId) => navigate(`/profile/${userId}`)}
+                                        // leagueId is now passed by the router from the URL
+                                    />
+                                </ProtectedRoute>} 
+                            />
+                            <Route 
+                                path="/profile" 
+                                element={<ProtectedRoute profile={loggedInProfile} isLoading={isLoadingAuth}>
+                                    {/* Redirects /profile to /profile/my-user-id */}
+                                    <Navigate to={`/profile/${user?.uid}`} replace />
+                                </ProtectedRoute>} 
+                            />
+
+                            {/* Admin Route */}
+                            <Route 
+                                path="/admin" 
+                                element={<AdminRoute profile={loggedInProfile} isLoading={isLoadingAuth}>
+                                    <AdminPage />
+                                </AdminRoute>} 
+                            />
+
+                            {/* Fallback for unknown routes */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+
+                        </Routes>
+                    </Suspense>
                 </ErrorBoundary>
             </main>
             
-            <Footer setPage={handleSetPage} />
+            {/* Footer now uses <Link> components internally (see Step 3) */}
+            <Footer />
         </div>
     );
 }
 
+// --- NEW: Wrap AppContent in BrowserRouter ---
 function App() {
     return (
         <ErrorBoundary>
             <AuthProvider>
-                <AppContent />
+                <BrowserRouter>
+                    <AppContent />
+                </BrowserRouter>
             </AuthProvider>
         </ErrorBoundary>
     );

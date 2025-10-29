@@ -3,8 +3,9 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import Leaderboard from '../components/dashboard/Leaderboard';
 import MatchupsDisplay from '../components/leagues/MatchupsDisplay'; // Import new component
+import { useParams } from 'react-router-dom';
 
-const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
+const LeagueDetailPage = ({ profile, leagueId, onBackToLeagues, onViewProfile }) => {
     const [league, setLeague] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [season, setSeason] = useState(null); // State for season data
@@ -55,7 +56,7 @@ const LeagueDetailPage = ({ profile, leagueId, setPage, onViewProfile }) => {
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
             <div>
-                <button onClick={() => setPage('leagues')} className="text-sm text-primary dark:text-primary-dark hover:underline mb-2">
+                <button onClick={onBackToLeagues} className="text-sm text-primary dark:text-primary-dark hover:underline mb-2">
                     &larr; Back to All Leagues
                 </button>
                 <h1 className="text-4xl font-bold text-text-primary dark:text-text-primary-dark">{league.name}</h1>
