@@ -186,7 +186,7 @@ const LineupEditor = ({ profile, corpsData, pointCap, seasonSettings, corpsClass
                     disabled={isLoading || totalPoints > pointCap || (!isNewCorps && pendingTrades === 0) || (!isNewCorps && hasExceededTrades) || (isNewCorps && (!isLineupComplete || !corpsName.trim()))}
                     className="bg-primary hover:opacity-90 text-on-primary font-bold py-2 px-6 rounded-theme disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isLoading ? 'Saving...' : isNewCorps ? 'Create Corps' : 'Save Lineup'}
+                    {isLoading ? 'Saving...' : isNewCorps ? 'Create Corps & Join Season' : 'Save Lineup Changes'}
                 </button>
             </div>
         </div>

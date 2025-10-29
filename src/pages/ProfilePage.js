@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, dataNamespace } from '../firebase';
 import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
-import { useParams } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import UniformDisplay from '../components/profile/UniformDisplay';
 import TrophyCase from '../components/profile/TrophyCase';
@@ -22,7 +21,6 @@ const timeSince = (date) => {
     interval = seconds / 60; if (interval > 1) return Math.floor(interval) + " minutes ago";
     return "a moment ago";
 };
-
 
 const MySchedule = ({ profile }) => {
     const userCorps = getAllUserCorps(profile);
@@ -46,31 +44,19 @@ const MySchedule = ({ profile }) => {
                                     </h4>
                                 </div>
                                 {!corps.selectedShows || Object.keys(corps.selectedShows).length === 0 ? (
-                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark italic pl-5">No shows selected</p>
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark ml-5">No shows selected yet.</p>
                                 ) : (
-                                    <div className="space-y-3 pl-5">
-                                        {Object.keys(corps.selectedShows).sort((a, b) => parseInt(a.replace('week', '')) - parseInt(b.replace('week', ''))).map(weekKey => {
-                                            const weekNum = weekKey.replace('week', '');
+                                    <ul className="space-y-2 ml-5">
+                                        {Object.keys(corps.selectedShows).map(weekKey => {
                                             const shows = corps.selectedShows[weekKey];
-                                            return (
-                                                <div key={weekKey}>
-                                                    <h5 className="font-medium text-text-primary dark:text-text-primary-dark text-sm">Week {weekNum}</h5>
-                                                    {shows && shows.length > 0 ? (
-                                                        <ul className="list-disc list-inside pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark space-y-1">
-                                                            {shows.map((show, index) => (
-                                                                <li key={index}>{show.eventName.replace(/DCI/g, 'marching.art')} - <em className="text-text-secondary/80 dark:text-text-secondary-dark/80">{show.location}</em></li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <p className="pl-2 mt-1 text-xs text-text-secondary dark:text-text-secondary-dark italic">No shows selected</p>
-                                                    )}
-                                                </div>
-                                            );
+                                            return shows.map((show, index) => (
+                                                <li key={`${weekKey}-${index}`} className="text-sm text-text-primary dark:text-text-primary-dark">• {show.eventName}</li>
+                                            ));
                                         })}
-                                    </div>
+                                    </ul>
                                 )}
                             </div>
-                        )
+                        );
                     })}
                 </div>
             )}
@@ -103,7 +89,6 @@ const CorpsSummary = ({ profile }) => {
     );
 };
 
-
 const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [profile, setProfile] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -114,8 +99,6 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
     const [seasonSettings, setSeasonSettings] = useState(null);
     const [fantasyRecaps, setFantasyRecaps] = useState(null);
 
-    const { userId } = useParams(); // <-- Gets userId from URL
-    const viewingUserId = userId || loggedInUserId; // Use param, or fallback to logged-in user
     const isOwner = loggedInUserId && viewingUserId === loggedInUserId;
 
     useEffect(() => {
@@ -130,9 +113,8 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
             }
             
             if (isOwner && loggedInProfile) {
-                // If viewing own profile, use the profile from context
                 setProfile({ userId: targetUserId, ...loggedInProfile });
-                setIsLoading(false);  // ← ADD THIS LINE!
+                setIsLoading(false);
             } else {
                 try {
                     const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', targetUserId, 'profile', 'data');
@@ -197,7 +179,7 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
             setIsEditingBio(false);
         } catch (error) { console.error("Error updating bio:", error); }
     };
-    
+ 
     const handleSaveUniform = async (newUniform) => {
         if (!isOwner || !loggedInUserId) return;
         const userDocRef = doc(db, 'artifacts', dataNamespace, 'users', loggedInUserId, 'profile', 'data');
@@ -247,16 +229,22 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
                         <p className="text-text-secondary dark:text-text-secondary-dark">Last active: {timeSinceActive}</p>
                         <div className="mt-4 bg-surface dark:bg-surface-dark p-4 rounded-theme border-l-4 border-primary dark:border-primary-dark">
                             {isEditingBio ? (
-                                <div className="space-y-2">
-                                    <textarea value={bioText} onChange={(e) => setBioText(e.target.value)} className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2" rows="4"></textarea>
-                                    <div className="flex justify-end space-x-2">
-                                        <button onClick={() => setIsEditingBio(false)} className="border-theme border-accent dark:border-accent-dark hover:bg-accent dark:hover:bg-accent-dark/20 font-bold py-1 px-3 rounded-theme text-sm">Cancel</button>
-                                        <button onClick={handleSaveBio} className="bg-primary hover:opacity-90 text-on-primary font-bold py-1 px-3 rounded-theme text-sm">Save</button>
+                                <div className="flex flex-col gap-2">
+                                    <textarea 
+                                        value={bioText} 
+                                        onChange={(e) => setBioText(e.target.value)} 
+                                        rows={4} 
+                                        className="w-full bg-background dark:bg-background-dark border-theme border-accent dark:border-accent-dark rounded-theme p-2 text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-primary focus:border-primary"
+                                        placeholder="Write something about yourself..."
+                                    />
+                                    <div className="flex gap-2 justify-end">
+                                        <button onClick={handleSaveBio} className="bg-primary hover:opacity-90 text-on-primary font-bold py-1 px-4 rounded-theme text-sm">Save</button>
+                                        <button onClick={() => { setIsEditingBio(false); setBioText(profile?.bio || ''); }} className="bg-secondary hover:opacity-90 text-on-secondary font-bold py-1 px-4 rounded-theme text-sm">Cancel</button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex justify-between items-start">
-                                    <p className="text-text-secondary dark:text-text-secondary-dark italic">{profile.bio || 'No bio has been set.'}</p>
+                                <div className="flex items-start justify-between">
+                                    <p className="text-text-primary dark:text-text-primary-dark italic flex-grow">{profile.bio || 'No bio yet.'}</p>
                                     {isOwner && (
                                         <button onClick={() => setIsEditingBio(true)} className="ml-4 text-sm text-primary dark:text-primary-dark hover:underline flex-shrink-0">Edit</button>
                                     )}
@@ -295,4 +283,5 @@ const ProfilePage = ({ loggedInProfile, loggedInUserId, viewingUserId }) => {
         </>
     );
 };
+
 export default ProfilePage;
