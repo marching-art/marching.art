@@ -20,7 +20,7 @@ const Header = ({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const NavButton = ({ page, children }) => (
-        <button onClick={() => setPage(page)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors">
+        <button onClick={() => setPage(page)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark font-medium transition-colors cursor-pointer">
             {children}
         </button>
     );
