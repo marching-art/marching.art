@@ -30,8 +30,13 @@ function AppContent() {
     const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
-    const [page, setPage] = useState('home');
-    const [pageProps, setPageProps] = useState({});
+    const [page, setPage] = useState(() => {
+        return localStorage.getItem('currentPage') || 'home';
+    });
+    const [pageProps, setPageProps] = useState(() => {
+    const saved = localStorage.getItem('currentPageProps');
+        return saved ? JSON.parse(saved) : {};
+    });
     const [themeMode, setThemeMode] = useState(() => {
         return localStorage.getItem('theme') || 'dark';
     });
@@ -76,6 +81,8 @@ function AppContent() {
         console.log('handleSetPage called with:', newPage, props);
         setPage(newPage);
         setPageProps(props);
+        localStorage.setItem('currentPage', newPage);
+        localStorage.setItem('currentPageProps', JSON.stringify(props));
         window.scrollTo(0, 0);
     };
 
