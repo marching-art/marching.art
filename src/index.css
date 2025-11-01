@@ -68,6 +68,13 @@
     overflow-x: hidden;
   }
   
+  /* Ensure content doesn't hide behind fixed footer on desktop */
+  @media (min-width: 768px) {
+    main {
+      padding-bottom: 80px;
+    }
+  }
+  
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
