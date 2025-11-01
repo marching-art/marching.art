@@ -85,7 +85,7 @@ const HomePage = ({ onSignUpClick }) => {
     return (
         <div className="relative min-h-screen overflow-hidden">
             {/* Particle Background */}
-            <ParticleBackground density={40} color="rgba(255, 185, 15, 0.3)" />
+            <ParticleBackground density={40} color="rgba(247, 148, 29, 0.3)" />
             
             {/* Video Background */}
             <video

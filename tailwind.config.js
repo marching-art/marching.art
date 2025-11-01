@@ -13,12 +13,12 @@ module.exports = {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
-        // Secondary: Bronze/Copper
+        // Secondary: Brown
         secondary: {
           DEFAULT: 'rgb(var(--color-secondary) / <alpha-value>)',
           dark: 'rgb(var(--color-secondary-dark) / <alpha-value>)',
         },
-        // Accent: Mystical Purple
+        // Accent: Warm Tan
         accent: {
           DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
           dark: 'rgb(var(--color-accent-dark) / <alpha-value>)',
