@@ -73,3 +73,46 @@ export const getAllUserCorps = (profile) => {
 export const hasAnyCorps = (profile) => {
     return profile?.corps ? Object.keys(profile.corps).some(key => profile.corps[key]?.corpsName) : !!profile?.corpsName;
 };
+
+export const hasJoinedSeason = (profile, seasonUid) => {
+    if (!profile || !seasonUid) return false;
+    
+    // Check if user has any corps in the current season
+    if (profile.corps) {
+        return Object.values(profile.corps).some(corps => 
+            corps.corpsName && profile.activeSeasonId === seasonUid
+        );
+    }
+    
+    // Backward compatibility
+    return profile.activeSeasonId === seasonUid && profile.corpsName;
+};
+
+export const ensureProfileCompatibility = (profileData) => {
+    if (!profileData) return profileData;
+    
+    // If profile already has the new corps structure, return as-is
+    if (profileData.corps) {
+        return profileData;
+    }
+    
+    // Convert old single-corps structure to new multi-corps structure
+    if (profileData.corpsName) {
+        return {
+            ...profileData,
+            corps: {
+                worldClass: {
+                    corpsName: profileData.corpsName,
+                    lineup: profileData.lineup || {},
+                    totalSeasonScore: profileData.totalSeasonScore || 0,
+                    selectedShows: profileData.selectedShows || {},
+                    weeklyTrades: profileData.weeklyTrades || { used: 0 },
+                    lastScoredDay: profileData.lastScoredDay || 0,
+                    lineupKey: profileData.lineupKey
+                }
+            }
+        };
+    }
+    
+    return profileData;
+};
