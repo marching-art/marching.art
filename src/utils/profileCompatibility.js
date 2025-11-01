@@ -4,11 +4,20 @@
 export const CORPS_CLASSES = {
     worldClass: { name: 'World Class', pointCap: 150, color: 'bg-yellow-500' },
     openClass: { name: 'Open Class', pointCap: 120, color: 'bg-blue-500' },
-    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' }
+    aClass: { name: 'A Class', pointCap: 60, color: 'bg-green-500' },
+    soundSport: { name: 'SoundSport', pointCap: 90, color: 'bg-purple-500' }
 };
 
 // NEW: Added an array to enforce display order.
-export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass'];
+export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+// Helper to get SoundSport rating based on score
+export const getSoundSportRating = (score) => {
+    if (score >= 80) return { rating: 'Gold', color: 'text-yellow-500' };
+    if (score >= 60) return { rating: 'Silver', color: 'text-gray-400' };
+    if (score >= 40) return { rating: 'Bronze', color: 'text-amber-700' };
+    return { rating: 'Unrated', color: 'text-gray-500' };
+};
 
 export const getCorpsData = (profile, corpsClass = 'worldClass') => {
     // New multi-corps structure
@@ -62,50 +71,5 @@ export const getAllUserCorps = (profile) => {
 };
 
 export const hasAnyCorps = (profile) => {
-    return profile?.corps 
-        ? Object.keys(profile.corps).some(key => profile.corps[key]?.corpsName) 
-        : !!profile?.corpsName;
-};
-
-export const hasJoinedSeason = (profile, seasonUid) => {
-    if (!profile || !seasonUid) return false;
-    
-    // Check if user has any corps in the current season
-    if (profile.corps) {
-        return Object.values(profile.corps).some(corps => 
-            corps.corpsName && profile.activeSeasonId === seasonUid
-        );
-    }
-    
-    // Backward compatibility
-    return profile.activeSeasonId === seasonUid && profile.corpsName;
-};
-
-export const ensureProfileCompatibility = (profileData) => {
-    if (!profileData) return profileData;
-    
-    // If profile already has the new corps structure, return as-is
-    if (profileData.corps) {
-        return profileData;
-    }
-    
-    // Convert old single-corps structure to new multi-corps structure
-    if (profileData.corpsName) {
-        return {
-            ...profileData,
-            corps: {
-                worldClass: {
-                    corpsName: profileData.corpsName,
-                    lineup: profileData.lineup || {},
-                    totalSeasonScore: profileData.totalSeasonScore || 0,
-                    selectedShows: profileData.selectedShows || {},
-                    weeklyTrades: profileData.weeklyTrades || { used: 0 },
-                    lastScoredDay: profileData.lastScoredDay || 0,
-                    lineupKey: profileData.lineupKey
-                }
-            }
-        };
-    }
-    
-    return profileData;
+    return profile?.corps ? Object.keys(profile.corps).some(key => profile.corps[key]?.corpsName) : !!profile?.corpsName;
 };

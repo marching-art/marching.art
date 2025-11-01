@@ -9,7 +9,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
   const { lineup, corpsName, corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  const validClasses = ["worldClass", "openClass", "aClass"];
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
@@ -18,6 +18,7 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
     worldClass: 150,
     openClass: 120,
     aClass: 60,
+    soundSport: 90,
   };
   const pointCap = pointCaps[corpsClass];
 
@@ -160,7 +161,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
       "Invalid data. A week number and a maximum of 4 shows are required.");
   }
 
-  if (!corpsClass || !["worldClass", "openClass", "aClass"].includes(corpsClass)) {
+  if (!corpsClass || !["worldClass", "openClass", "aClass", "soundSport"].includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
   }
 

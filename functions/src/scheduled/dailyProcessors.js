@@ -61,7 +61,7 @@ exports.generateWeeklyMatchups = onSchedule({
   if (leaguesSnapshot.empty) return;
 
   const batch = db.batch();
-  const corpsClasses = ["worldClass", "openClass", "aClass"];
+  const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
 
   for (const leagueDoc of leaguesSnapshot.docs) {
     const league = leagueDoc.data();

@@ -80,6 +80,7 @@ const SeasonSignup = ({ profile, userId, seasonSettings, corpsData }) => {
                             {key === 'worldClass' && 'Elite competition with top-tier corps'}
                             {key === 'openClass' && 'Competitive tier with strong performers'}
                             {key === 'aClass' && 'Developing corps and budget-friendly option'}
+                            {key === 'soundSport' && 'Community-based performance with rating system'}
                         </p>
                     </button>
                 ))}

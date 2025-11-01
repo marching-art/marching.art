@@ -2,6 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { collectionGroup, query, where, getDoc, doc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER, getAllUserCorps } from '../../utils/profileCompatibility';
+import { getSoundSportRating } from '../../utils/profileCompatibility';
+
+const renderScoreDisplay = (player, corpsClass) => {
+    const score = player.score || 0;
+    
+    // For SoundSport, show rating instead of numeric score
+    if (corpsClass === 'soundSport') {
+        const { rating, color } = getSoundSportRating(score);
+        return (
+            <span className={`font-bold ${color}`}>
+                {rating}
+            </span>
+        );
+    }
+    
+    // For other classes, show numeric score
+    return (
+        <span className="font-bold text-primary dark:text-primary-dark">
+            {score.toFixed(2)}
+        </span>
+    );
+};
 
 const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -168,18 +190,23 @@ const Leaderboard = ({ profile, onViewProfile, initialLeague = null }) => {
                                 <button
                                     onClick={() => onViewProfile && onViewProfile(player.userId)}
                                     disabled={!onViewProfile}
-                                    className={`w-full p-2 rounded-theme flex justify-between items-center text-left transition-colors ${isCurrentUser ? 'bg-primary/10' : ''} hover:bg-accent dark:hover:bg-accent-dark/20`}
+                                    className={`w-full p-2 rounded-theme flex justify-between items-center text-left transition-colors ${
+                                        isCurrentUser ?
+                                        'bg-primary/20 border-2 border-primary' :
+                                        'hover:bg-accent dark:hover:bg-accent-dark/20'
+                                    }`}
                                 >
-                                    <div className="flex items-center">
-                                        <span className="font-bold text-text-secondary dark:text-text-secondary-dark w-8">{index + 1}.</span>
-                                        <div>
-                                            <span className="font-bold text-text-primary dark:text-text-primary-dark">{player.corpsName}</span>
-                                            <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-2">({player.username})</span>
-                                        </div>
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <span className="font-bold text-text-primary dark:text-text-primary-dark w-8 flex-shrink-0">
+                                            {index + 1}
+                                        </span>
+                                        <span className="truncate text-text-primary dark:text-text-primary-dark">
+                                            {player.corpsName}
+                                        </span>
                                     </div>
-                                    <span className="font-bold text-lg text-primary dark:text-primary-dark">
-                                        {player.totalSeasonScore ? player.totalSeasonScore.toFixed(3) : '0.000'}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {renderScoreDisplay(player, selectedCorpsClass)}
+                                    </div>
                                 </button>
                             </li>
                         );

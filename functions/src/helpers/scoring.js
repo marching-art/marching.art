@@ -410,7 +410,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
     const leaguesSnapshot = await db.collection("leagues").get();
     const winnerBatch = db.batch();
-    const corpsClasses = ["worldClass", "openClass", "aClass"];
+    const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
 
     for (const leagueDoc of leaguesSnapshot.docs) {
       const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`);

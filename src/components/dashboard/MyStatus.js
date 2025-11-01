@@ -1,6 +1,6 @@
+// src/components/dashboard/MyStatus.js - UPDATED WITH SOUNDSPORT SUPPORT
 import React, { useState, useEffect } from 'react';
-// MODIFIED: Import CORPS_CLASS_ORDER to enforce hierarchy
-import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
+import { getAllUserCorps, CORPS_CLASSES, CORPS_CLASS_ORDER, getSoundSportRating } from '../../utils/profileCompatibility';
 
 const MyStatus = ({ username, profile }) => {
     const [userCorps, setUserCorps] = useState({});
@@ -14,19 +14,45 @@ const MyStatus = ({ username, profile }) => {
         }
     }, [profile]);
 
-    const StatCard = ({ label, value, color, large = false }) => (
-        <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-                {color && <div className={`w-3 h-3 rounded-full ${color}`}></div>}
-                <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
+    const StatCard = ({ label, value, color, large = false, isSoundSport = false, score = 0 }) => {
+        // For SoundSport, display rating instead of numeric score
+        if (isSoundSport && score > 0) {
+            const { rating, color: ratingColor } = getSoundSportRating(score);
+            return (
+                <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        {color && <div className={`w-3 h-3 rounded-full ${color}`}></div>}
+                        <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
+                    </div>
+                    {isLoading ? (
+                        <div className="h-8 mt-1 bg-surface dark:bg-surface-dark rounded animate-pulse w-3/4 mx-auto"></div>
+                    ) : (
+                        <div className="flex flex-col items-center">
+                            <p className={`text-xl font-bold ${ratingColor}`}>{rating}</p>
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                                ({score.toFixed(2)} pts)
+                            </p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Standard display for other classes
+        return (
+            <div className="bg-background dark:bg-background-dark p-4 rounded-theme text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    {color && <div className={`w-3 h-3 rounded-full ${color}`}></div>}
+                    <p className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{label}</p>
+                </div>
+                {isLoading ? (
+                    <div className="h-8 mt-1 bg-surface dark:bg-surface-dark rounded animate-pulse w-3/4 mx-auto"></div>
+                ) : (
+                    <p className={`${large ? 'text-2xl' : 'text-xl'} font-bold text-primary dark:text-primary-dark`}>{value}</p>
+                )}
             </div>
-            {isLoading ? (
-                <div className="h-8 mt-1 bg-surface dark:bg-surface-dark rounded animate-pulse w-3/4 mx-auto"></div>
-            ) : (
-                <p className={`${large ? 'text-2xl' : 'text-xl'} font-bold text-primary dark:text-primary-dark`}>{value}</p>
-            )}
-        </div>
-    );
+        );
+    };
 
     const orderedCorpsToDisplay = CORPS_CLASS_ORDER.filter(key => userCorps[key]);
 
@@ -39,22 +65,26 @@ const MyStatus = ({ username, profile }) => {
             
             {Object.keys(userCorps).length === 0 ? (
                 <div className="text-center py-8">
-                    <p className="text-text-secondary dark:text-text-secondary-dark">No corps have been created yet. Visit the Lineup Editor to get started!</p>
+                    <p className="text-text-secondary dark:text-text-secondary-dark">No corps have been created yet. Start your first corps below!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* MODIFIED: Iterate over the ordered and filtered array */}
-                    {orderedCorpsToDisplay.map(corpsClassKey => {
-                        const corps = userCorps[corpsClassKey];
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {orderedCorpsToDisplay.map(key => {
+                        const corps = userCorps[key];
+                        const classInfo = CORPS_CLASSES[key];
+                        const score = corps.totalSeasonScore || 0;
+                        const isSoundSport = key === 'soundSport';
+                        
                         return (
-                             <StatCard 
-                                key={corpsClassKey}
-                                label={`${CORPS_CLASSES[corpsClassKey]?.name || corpsClassKey}`}
-                                value={`${(corps.totalSeasonScore || 0).toFixed(3)}`}
-                                color={CORPS_CLASSES[corpsClassKey]?.color}
-                                large={Object.keys(userCorps).length === 1}
+                            <StatCard
+                                key={key}
+                                label={classInfo.name}
+                                value={isSoundSport ? '' : score.toFixed(2)}
+                                color={classInfo.color}
+                                isSoundSport={isSoundSport}
+                                score={score}
                             />
-                        )
+                        );
                     })}
                 </div>
             )}

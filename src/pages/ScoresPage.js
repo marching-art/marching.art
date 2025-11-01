@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import Modal from '../components/ui/Modal';
 import CaptionChart from '../components/charts/CaptionChart';
 import { CORPS_CLASSES, CORPS_CLASS_ORDER } from '../utils/profileCompatibility';
+import { getSoundSportRating } from '../utils/profileCompatibility';
 
 // ADD THIS DEBUG CHECK
 console.log('CORPS_CLASS_ORDER in ScoresPage:', CORPS_CLASS_ORDER);
@@ -158,23 +159,34 @@ const ScoresPage = ({ theme }) => {
                                         </thead>
                                         <tbody>
                                             {show.results
-                                                .filter(res => res.corpsClass === selectedCorpsClass || !res.corpsClass) // Filter by corps class, include legacy entries without corpsClass
+                                                .filter(res => res.corpsClass === selectedCorpsClass || !res.corpsClass)
                                                 .sort((a, b) => b.totalScore - a.totalScore)
-                                                .map((res, i) => (
-                                                <tr key={res.uid || res.id} className="transition-colors even:bg-accent/40 dark:even:bg-accent-dark/10 hover:bg-accent dark:hover:bg-accent-dark/20">
-                                                    <td className="p-3 font-bold w-12">{i + 1}</td>
-                                                    <td className="p-3 font-semibold">
-                                                        {res.corpsName}
-                                                        {res.corpsClass && (
-                                                            <span className={`ml-2 inline-block w-2 h-2 rounded-full ${CORPS_CLASSES[res.corpsClass]?.color || 'bg-gray-400'}`}></span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-3 text-right">{res.geScore.toFixed(3)}</td>
-                                                    <td className="p-3 text-right">{res.visualScore.toFixed(3)}</td>
-                                                    <td className="p-3 text-right">{res.musicScore.toFixed(3)}</td>
-                                                    <td className="p-3 font-bold text-right text-primary dark:text-primary-dark">{res.totalScore.toFixed(3)}</td>
-                                                </tr>
-                                            ))}
+                                                .map((res, i) => {
+                                                    const isSoundSport = selectedCorpsClass === 'soundSport';
+                                                    const { rating, color } = isSoundSport ? getSoundSportRating(res.totalScore) : {};
+                                                    
+                                                    return (
+                                                        <tr key={res.uid || res.id} className="transition-colors even:bg-accent/40 dark:even:bg-accent-dark/10 hover:bg-accent dark:hover:bg-accent-dark/20">
+                                                            <td className="p-3 font-bold w-12">{i + 1}</td>
+                                                            <td className="p-3 font-semibold text-text-primary dark:text-text-primary-dark">
+                                                                {res.corpsName}
+                                                            </td>
+                                                            <td className="p-3 text-right">{res.geScore?.toFixed(2) || '0.00'}</td>
+                                                            <td className="p-3 text-right">{res.visualScore?.toFixed(2) || '0.00'}</td>
+                                                            <td className="p-3 text-right">{res.musicScore?.toFixed(2) || '0.00'}</td>
+                                                            <td className="p-3 text-right font-bold">
+                                                                {isSoundSport ? (
+                                                                    <span className={color}>{rating}</span>
+                                                                ) : (
+                                                                    <span className="text-primary dark:text-primary-dark">
+                                                                        {res.totalScore?.toFixed(2) || '0.00'}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            }
                                         </tbody>
                                     </table>
                                 </div>

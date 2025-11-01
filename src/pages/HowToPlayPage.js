@@ -46,6 +46,7 @@ const HowToPlayPage = () => {
                         <li><strong>World Class:</strong> The highest tier of competition, with a point cap of 150 for your lineup.</li>
                         <li><strong>Open Class:</strong> A competitive mid-tier with a lineup point cap of 120.</li>
                         <li><strong>A Class:</strong> A great starting point or budget-friendly option, with a lineup point cap of 60.</li>
+                        <li><strong>SoundSport:</strong> Community-based performance class with a 90-point cap. Scores displayed as ratings (Gold, Silver, Bronze).</li>
                     </ul>
                     <p>
                         You'll use the Dashboard to create new corps, edit lineups, and manage show selections for each of your active corps.
