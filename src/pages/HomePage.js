@@ -191,41 +191,6 @@ const HomePage = ({ onSignUpClick }) => {
                         <CommunityCard delay={0.3} />
                     </div>
                 </div>
-
-                {/* Stats Section */}
-                <div className="container mx-auto px-6 pb-24">
-                    <div className="max-w-5xl mx-auto glass rounded-3xl p-12 text-center">
-                        <h2 className="text-4xl font-bold gradient-text mb-12">
-                            Join Thousands of Fantasy Managers
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="animate-fade-in">
-                                <div className="text-5xl font-bold text-primary dark:text-primary-dark mb-2">
-                                    1000+
-                                </div>
-                                <div className="text-text-secondary dark:text-text-secondary-dark">
-                                    Active Players
-                                </div>
-                            </div>
-                            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                                <div className="text-5xl font-bold text-primary dark:text-primary-dark mb-2">
-                                    500+
-                                </div>
-                                <div className="text-text-secondary dark:text-text-secondary-dark">
-                                    Active Leagues
-                                </div>
-                            </div>
-                            <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                                <div className="text-5xl font-bold text-primary dark:text-primary-dark mb-2">
-                                    24/7
-                                </div>
-                                <div className="text-text-secondary dark:text-text-secondary-dark">
-                                    Community Support
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
