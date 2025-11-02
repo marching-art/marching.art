@@ -41,18 +41,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 let firebaseConfig;
 try {
   if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+    // 1. PRODUCTION: Use the globally injected variable
     firebaseConfig = JSON.parse(__firebase_config);
-  } else {
-    console.warn("Using fallback Firebase config. __firebase_config not found.");
+  } else if (process.env.REACT_APP_API_KEY) {
+    // 2. LOCAL DEV: Use variables from .env.local
+    console.warn("Using .env.local Firebase config for development.");
     firebaseConfig = {
-      apiKey: "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
-      authDomain: "marching-art.firebaseapp.com",
-      projectId: "marching-art",
-      storageBucket: "marching-art.firebasestorage.app",
-      messagingSenderId: "278086562126",
-      appId: "1:278086562126:web:f7737ee897774c3d9a6e1f",
-      measurementId: "G-H0KE8GJS7M"
+      apiKey: process.env.REACT_APP_API_KEY,
+      authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+      projectId: process.env.REACT_APP_PROJECT_ID,
+      storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+      messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+      appId: process.env.REACT_APP_APP_ID,
+      measurementId: process.env.REACT_APP_MEASUREMENT_ID
     };
+  } else {
+    // 3. ERROR: No config found
+    console.error("Firebase config not found. Check .env.local or __firebase_config variable.");
+    firebaseConfig = {}; // Fallback to empty config to prevent crash
   }
 } catch (e) {
   console.error("Firebase config is not valid JSON:", e);
