@@ -12,10 +12,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Import design system
 import './styles/modern-design-system.css';
 
-// Eager load critical pages
-import ModernDashboard from './pages/ModernDashboard';
+// Eager load critical pages - FIXED IMPORT PATH
+import DashboardPage from './pages/DashboardPage';
 
-// Lazy load other pages (will be modernized progressively)
+// Lazy load other pages
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const LeaguePage = lazy(() => import('./pages/LeaguePage'));
@@ -40,10 +40,9 @@ function AppContent() {
     const [authModalView, setAuthModalView] = useState('login');
     const [page, setPage] = useState('dashboard');
     const [pageProps, setPageProps] = useState({});
-    const [themeMode] = useState('dark'); // Always dark mode for now
 
     useEffect(() => {
-        // Redirect to dashboard if not logged in and trying to access protected page
+        // Redirect to scores if not logged in and trying to access protected page
         const protectedPages = ['dashboard', 'profile', 'leagues', 'leaderboard', 'admin'];
         if (!isLoadingAuth && !user && protectedPages.includes(page)) {
             setPage('scores');
@@ -78,7 +77,7 @@ function AppContent() {
 
         switch (page) {
             case 'dashboard':
-                return <ModernDashboard {...commonProps} />;
+                return <DashboardPage {...commonProps} />;
             
             case 'profile':
                 return (
@@ -142,7 +141,7 @@ function AppContent() {
             case 'scores':
                 return (
                     <Suspense fallback={<LoadingScreen />}>
-                        <ScoresPage theme={themeMode} />
+                        <ScoresPage theme="dark" />
                     </Suspense>
                 );
             
@@ -154,7 +153,7 @@ function AppContent() {
                 );
             
             default:
-                return <ModernDashboard {...commonProps} />;
+                return <DashboardPage {...commonProps} />;
         }
     };
 
