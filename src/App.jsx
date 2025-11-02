@@ -1,8 +1,8 @@
 /*
-  marching.art - React Frontend Framework (v1.9)
-  - FIX: Corrects typos in placeholder page components (TBD_P -> p).
-  - NOTE: The 'react-firebase-hooks' error is a dependency issue.
-    Run `npm install react-firebase-hooks` to fix it.
+  marching.art - React Frontend Framework (v2.1)
+  - FIX: Corrects react-firebase-hooks import paths.
+    - `useAuthState` is from 'react-firebase-hooks/auth'
+    - `useDocumentData` is from 'react-firebase-hooks/firestore'
 */
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import ReactDOM from 'react-dom/client';
@@ -27,8 +27,9 @@ import {
   signInWithEmailAndPassword
 } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
-// This line will work after you install the package
-import { useAuthState, useDocumentData } from 'react-firebase-hooks/auth';
+// Corrected imports:
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useDocumentData } from 'react-firebase-hooks/firestore';
 
 // Icons
 import {
@@ -176,7 +177,7 @@ const Button = React.forwardRef(({
     >
       {Icon && <Icon className="w-5 h-5 mr-2" />}
       {children}
-    </motion.button>.
+    </motion.button>
   );
 });
 
@@ -446,7 +447,7 @@ const PageChampions = () => (
         <h2 className="text-xl font-semibold mb-2">Past Winners</h2>
         <p className="text-text-secondary">
           A showcase of all previous season champions.
-        </p>
+        </foo>
       </div>
     </Card>
   </div>
@@ -460,7 +461,7 @@ const PageGuide = () => (
         <h2 className="text-xl font-semibold mb-2">How to Play</h2>
         <p className="text-text-secondary">
           The official rulebook and guide to marching.art.
-        </DCI_Fantasy_Platform_Plan.md>
+        </p>
       </div>
     </Card>
   </div>
@@ -576,7 +577,7 @@ const AppRoutes = () => {
         <Route path="/leagues" element={<PageLeagues />} />
         <Route path="/scores" element={<PageScores />} />
         <Route path="/schedule" element={<PageSchedule />} />
-        <Route path="/champions" element={<PageChampions />} />
+        <Route path="/champions"S" element={<PageChampions />} />
         <Route path="/guide" element={<PageGuide />} />
         {isAdmin && <Route path="/admin" element={<PageAdmin />} />}
       </Route>
@@ -611,7 +612,7 @@ export default function App() {
             <h1 className="text-2xl font-bold text-red-500 mb-4">Firebase Configuration Error</h1>
             <p className="text-text-secondary">
               Could not initialize Firebase. Check your `.env.local` or `__firebase_config` variable.
-            </p>
+            </F>
           </div>
         </Card>
       </div>
