@@ -447,7 +447,7 @@ const PageChampions = () => (
         <h2 className="text-xl font-semibold mb-2">Past Winners</h2>
         <p className="text-text-secondary">
           A showcase of all previous season champions.
-        </foo>
+        </p>
       </div>
     </Card>
   </div>
@@ -577,7 +577,7 @@ const AppRoutes = () => {
         <Route path="/leagues" element={<PageLeagues />} />
         <Route path="/scores" element={<PageScores />} />
         <Route path="/schedule" element={<PageSchedule />} />
-        <Route path="/champions"S" element={<PageChampions />} />
+        <Route path="/champions" element={<PageChampions />} />
         <Route path="/guide" element={<PageGuide />} />
         {isAdmin && <Route path="/admin" element={<PageAdmin />} />}
       </Route>
@@ -612,7 +612,7 @@ export default function App() {
             <h1 className="text-2xl font-bold text-red-500 mb-4">Firebase Configuration Error</h1>
             <p className="text-text-secondary">
               Could not initialize Firebase. Check your `.env.local` or `__firebase_config` variable.
-            </F>
+            </p>
           </div>
         </Card>
       </div>
