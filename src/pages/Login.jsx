@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth'; 
-import { auth } from '../../firebase'; // Adjust path
-import { useAuth } from '../../context/AuthContext'; // Adjust path
-import Card from '../../components/ui/Card'; // Adjust path
-import Button from '../../components/ui/Button'; // Adjust path
-import TextInput from '../../components/ui/TextInput'; // Adjust path
-import { Logo } from '../../components/Layout'; // Adjust path (and ensure Logo is exported from Layout.jsx)
+import { auth } from '../firebase';
+import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import TextInput from '../components/ui/TextInput';
+import { Logo } from '../components/Layout';
 import { Loader2 } from 'lucide-react';
 
 const Login = () => {
