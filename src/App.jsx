@@ -1,9 +1,8 @@
 /*
-  marching.art - React Frontend Framework (v1.2)
-  Theme: Semantic "Cream, Black, and Gold"
-  - Uses classes from tailwind.config.js (e.g., bg-background, bg-primary)
-  - Assumes global.css is imported in your project's entry file.
-  - Fixes the </AnAnimatePresence> typo.
+  marching.art - React Frontend Framework (v1.4)
+  - Integrates the advanced, animated logo with hover effects.
+  - Adds a new <LogoIcon /> component for this.
+  - Fixes compilation error.
 */
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { initializeApp } from 'firebase/app';
@@ -19,19 +18,15 @@ import {
 import { getFirestore, doc, getDoc, setDoc, setLogLevel } from 'firebase/firestore';
 import {
   Home,
-  Shield,
   BarChart,
   Users,
   Calendar,
   Award,
   BookOpen,
-  Settings,
-  User,
   LogOut,
   Menu,
   X,
   Plus,
-  ArrowRight,
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -85,6 +80,15 @@ const useFirebase = () => useContext(FirebaseContext);
 
 // --- 3. REUSABLE COMPONENT LIBRARY (Semantic Black & Gold Theme) ---
 
+// NEW: LogoIcon component based on your old site's code
+const LogoIcon = ({ className }) => (
+  <img 
+    src="/logo192.png" 
+    alt="marching.art logo" 
+    className={className} 
+  />
+);
+
 /**
  * MainLayout: The responsive shell for the entire app.
  * THEME UPDATED: All classes now use semantic names from tailwind.config.js
@@ -95,9 +99,14 @@ const MainLayout = ({ children }) => {
   const [currentPage, setCurrentPage] = useState('Hub');
   const { user, userProfile } = useFirebase();
 
+  // Create a custom icon component for 'My Corps'
+  const MyCorpsIcon = () => (
+    <img src="/logo192.png" alt="My Corps" className="h-6 w-6 sm:h-5 sm:w-5" />
+  );
+
   const navItems = [
     { name: 'Hub', icon: Home, page: 'Hub' },
-    { name: 'My Corps', icon: Shield, page: 'Dashboard' },
+    { name: 'My Corps', icon: MyCorpsIcon, page: 'Dashboard' }, // LOGO: Use custom icon
     { name: 'Scores', icon: BarChart, page: 'Scores' },
     { name: 'Leagues', icon: Users, page: 'Leagues' },
     { name: 'Schedule', icon: Calendar, page: 'Schedule' },
@@ -120,7 +129,7 @@ const MainLayout = ({ children }) => {
         }
       `}
     >
-      <item.icon className="h-6 w-6 sm:h-5 sm:w-5" />
+      <item.icon />
       <span className={`
         ${isMobile ? 'ml-4 font-medium' : 'mt-1 text-xs font-medium sm:mt-0 sm:ml-3'}
       `}>
@@ -165,11 +174,24 @@ const MainLayout = ({ children }) => {
       {/* THEME: Card surface and border */}
       <aside className="hidden md:flex md:flex-col md:w-56 lg:w-64 flex-shrink-0 bg-surface border-r border-secondary/30">
         <div className="flex flex-col h-full p-4">
-          <div className="flex items-center gap-2 px-3">
-            {/* THEME: Icon is gold */}
-            <Shield className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-white">marching.art</span>
+          
+          {/* UPDATED: Advanced Logo */}
+          <div 
+            onClick={() => setCurrentPage('Hub')} 
+            className="flex items-center space-x-3 cursor-pointer group px-2"
+          >
+            <div className="relative">
+              <LogoIcon className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+              {/* This uses the 'primary' color from your tailwind.config.js */}
+              <div className="absolute inset-0 blur-xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">
+              {/* This uses 'text-primary' from your tailwind.config.js */}
+              <span className="text-text-primary">marching</span>
+              <span className="gradient-text">.art</span>
+            </span>
           </div>
+          
           <nav className="mt-8 flex-1 space-y-2">
             {navItems.map((item) => <NavLink key={item.name} item={item} />)}
           </nav>
@@ -190,10 +212,25 @@ const MainLayout = ({ children }) => {
             className="fixed inset-0 z-50 flex flex-col bg-surface p-4 md:hidden"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Shield className="h-8 w-8 text-primary" />
-                <span className="text-xl font-bold text-white">marching.art</span>
+              
+              {/* UPDATED: Advanced Logo (Mobile) */}
+              <div 
+                onClick={() => {
+                  setCurrentPage('Hub');
+                  setMobileMenuOpen(false);
+                }} 
+                className="flex items-center space-x-3 cursor-pointer group"
+              >
+                <div className="relative">
+                  <LogoIcon className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+                  <div className="absolute inset-0 blur-xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                <span className="text-2xl font-bold tracking-tight">
+                  <span className="text-text-primary">marching</span>
+                  <span className="gradient-text">.art</span>
+                </span>
               </div>
+
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-text-secondary hover:text-text-primary"
@@ -497,8 +534,8 @@ const AuthScreen = () => {
     <div className="flex items-center justify-center min-h-screen bg-background font-inter">
       <Card className="w-full max-w-sm p-8 shadow-glow-sm">
         <div className="flex justify-center mb-6">
-          {/* THEME: Icon is Gold */}
-          <Shield className="h-12 w-12 text-primary" />
+          {/* LOGO: Replaced Shield icon with logo512.png */}
+          <img src="/logo512.png" alt="marching.art logo" className="h-16 w-16" />
         </div>
         <h2 className="text-2xl font-bold text-center text-white mb-6">
           {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -510,7 +547,7 @@ const AuthScreen = () => {
             label="Email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.taget.value)}
             placeholder="director@marching.art"
             autoComplete="email"
           />
@@ -672,7 +709,6 @@ export default function App() {
 
   return (
     <FirebaseContext.Provider value={authContextValue}>
-      {/* FIX: Corrected typo from AnAnimatePresence */}
       <AnimatePresence>
         {/*
           This logic now shows the MainLayout if you are logged in (via token, email, or anon).

@@ -47,3 +47,13 @@ Import this file into your main index.js or App.jsx.
   }
 }
 
+.gradient-text {
+  background: linear-gradient(90deg, 
+    rgb(var(--color-primary)), 
+    rgb(var(--text-primary))
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
