@@ -1,24 +1,21 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { signOut } from 'firebase/auth';
-import { auth, trace, logEvent } from './firebase';
+import { auth } from './firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import ModernSidebar from './components/modern/ModernSidebar';
 import AuthModal from './components/auth/AuthModal';
 import ProfileCompletionModal from './components/profile/ProfileCompletionModal';
 import ErrorBoundary from './components/ErrorBoundary';
-import LoadingSpinner from './components/ui/LoadingSpinner';
 
-// Import viewport CSS
-import './styles/viewport.css';
+// Import design system
+import './styles/modern-design-system.css';
 
 // Eager load critical pages
-import HomePage from './pages/HomePage';
-import DashboardPage from './pages/DashboardPage';
+import ModernDashboard from './pages/ModernDashboard';
 
-// Lazy load non-critical pages
+// Lazy load other pages (will be modernized progressively)
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const LeaguePage = lazy(() => import('./pages/LeaguePage'));
@@ -26,52 +23,39 @@ const LeagueDetailPage = lazy(() => import('./pages/LeagueDetailPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const ScoresPage = lazy(() => import('./pages/ScoresPage'));
-const StatsPage = lazy(() => import('./pages/StatsPage'));
 const HowToPlayPage = lazy(() => import('./pages/HowToPlayPage'));
+
+const LoadingScreen = () => (
+    <div className="flex items-center justify-center h-screen bg-slate-950">
+        <div className="text-center">
+            <div className="text-6xl mb-4 animate-pulse">🎺</div>
+            <p className="text-lg font-semibold text-gradient">Loading...</p>
+        </div>
+    </div>
+);
 
 function AppContent() {
     const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
-    const [page, setPage] = useState('home');
+    const [page, setPage] = useState('dashboard');
     const [pageProps, setPageProps] = useState({});
-    const [themeMode, setThemeMode] = useState(() => {
-        return localStorage.getItem('theme') || 'dark';
-    });
-    
+    const [themeMode] = useState('dark'); // Always dark mode for now
+
     useEffect(() => {
-        if (!isLoadingAuth && !user && page !== 'home' && page !== 'howtoplay' && page !== 'schedule' && page !== 'scores' && page !== 'stats') {
-            setPage('home');
+        // Redirect to dashboard if not logged in and trying to access protected page
+        const protectedPages = ['dashboard', 'profile', 'leagues', 'leaderboard', 'admin'];
+        if (!isLoadingAuth && !user && protectedPages.includes(page)) {
+            setPage('scores');
         }
     }, [user, isLoadingAuth, page]);
 
-    useEffect(() => {
-        if (themeMode === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('theme', themeMode);
-    }, [themeMode]);
-
-    useEffect(() => {
-        if (process.env.NODE_ENV === 'production') {
-            logEvent('page_view', { page_name: page });
-        }
-    }, [page]);
-
     const handleLogout = async () => {
-        const logoutTrace = trace('user_logout');
-        logoutTrace.start();
-        
         try {
             await signOut(auth);
-            setPage('home');
-            logEvent('logout');
+            setPage('scores');
         } catch (error) {
             console.error("Error signing out:", error);
-        } finally {
-            logoutTrace.stop();
         }
     };
 
@@ -94,11 +78,11 @@ function AppContent() {
 
         switch (page) {
             case 'dashboard':
-                return <DashboardPage {...commonProps} />;
+                return <ModernDashboard {...commonProps} />;
             
             case 'profile':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <ProfilePage 
                             loggedInProfile={loggedInProfile}
                             loggedInUserId={user?.uid}
@@ -109,18 +93,21 @@ function AppContent() {
             
             case 'admin':
                 return loggedInProfile?.isAdmin ? (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <AdminPage />
                     </Suspense>
                 ) : (
-                    <div className="h-full overflow-y-auto custom-scrollbar">
-                        <HomePage setPage={handleSetPage} />
+                    <div className="app-main">
+                        <div className="card-floating text-center py-12">
+                            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+                            <p className="opacity-60">You don't have permission to access this page.</p>
+                        </div>
                     </div>
                 );
             
             case 'leagues':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <LeaguePage 
                             {...commonProps}
                             onViewLeague={(leagueId) => handleSetPage('leagueDetail', { leagueId })}
@@ -130,7 +117,7 @@ function AppContent() {
             
             case 'leagueDetail':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <LeagueDetailPage
                             {...commonProps}
                             leagueId={pageProps.leagueId}
@@ -140,94 +127,75 @@ function AppContent() {
             
             case 'leaderboard':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <LeaderboardPage {...commonProps} />
                     </Suspense>
                 );
             
             case 'schedule':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <SchedulePage setPage={handleSetPage} />
                     </Suspense>
                 );
             
             case 'scores':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <ScoresPage theme={themeMode} />
-                    </Suspense>
-                );
-            
-            case 'stats':
-                return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
-                        <StatsPage />
                     </Suspense>
                 );
             
             case 'howtoplay':
                 return (
-                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
+                    <Suspense fallback={<LoadingScreen />}>
                         <HowToPlayPage setPage={handleSetPage} />
                     </Suspense>
                 );
             
             default:
-                return (
-                    <div className="h-full overflow-y-auto custom-scrollbar">
-                        <HomePage setPage={handleSetPage} />
-                    </div>
-                );
+                return <ModernDashboard {...commonProps} />;
         }
     };
 
     return (
-        <div className="app-container bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
+        <div className="app-layout">
             <Toaster 
                 position="top-center"
                 toastOptions={{
                     duration: 3000,
                     style: {
-                        background: themeMode === 'dark' ? '#1f2937' : '#ffffff',
-                        color: themeMode === 'dark' ? '#f3f4f6' : '#111827',
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        border: '1px solid #334155',
+                        borderRadius: '0.75rem',
+                        padding: '1rem',
+                        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
                     },
                 }}
             />
             
-            <Header
+            <ModernSidebar
+                currentPage={page}
+                onNavigate={handleSetPage}
                 user={user}
-                isLoggedIn={!!user}
-                isAdmin={loggedInProfile?.isAdmin || false}
-                onLoginClick={() => {
+                profile={loggedInProfile}
+                onLogout={handleLogout}
+                onLogin={() => {
                     setAuthModalView('login');
                     setIsAuthModalOpen(true);
                 }}
-                onSignUpClick={() => {
-                    setAuthModalView('signup');
-                    setIsAuthModalOpen(true);
-                }}
-                onLogout={handleLogout}
-                setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
-                profile={loggedInProfile}
-                themeMode={themeMode}
-                toggleThemeMode={() => setThemeMode(prev => prev === 'dark' ? 'light' : 'dark')}
             />
 
             <main className="flex-1 overflow-hidden">
                 <ErrorBoundary>
                     {isLoadingAuth ? (
-                        <div className="flex items-center justify-center h-full">
-                            <LoadingSpinner />
-                        </div>
+                        <LoadingScreen />
                     ) : (
                         renderPage()
                     )}
                 </ErrorBoundary>
             </main>
-
-            {page === 'home' && <Footer />}
 
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -242,6 +210,9 @@ function AppContent() {
                     userId={user.uid}
                 />
             )}
+            
+            {/* Mobile nav padding */}
+            <div className="md:hidden h-20"></div>
         </div>
     );
 }
