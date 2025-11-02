@@ -5,15 +5,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import MainLayout from './components/Layout';
 import GlobalLoader from './components/ui/GlobalLoader';
 
-import PageHub from './pages/Hub';
-import PageDashboard from './pages/Dashboard';
-import PageLeagues from './pages/Leagues';
-import PageScores from './pages/Scores';
-import PageSchedule from './pages/Schedule';
-import PageChampions from './pages/Champions';
-import PageGuide from './pages/Guide';
-import PageAdmin from './pages/Admin';
-import PageLogin from './pages/Login';
+import Hub from './pages/Hub';
+import Dashboard from './pages/Dashboard';
+import Leagues from './pages/Leagues';
+import Scores from './pages/Scores';
+import Schedule from './pages/Schedule';
+import Champions from './pages/Champions';
+import Guide from './pages/Guide';
+import Admin from './pages/Admin';
+import Login from './pages/Login';
 
 import './global.css';
 
@@ -43,7 +43,7 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={<PageLogin />} />
+      <Route path="/login" element={<Login />} />
       
       {/* Protected Routes */}
       <Route 
