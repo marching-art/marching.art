@@ -11,6 +11,9 @@ import ProfileCompletionModal from './components/profile/ProfileCompletionModal'
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
+// Import viewport CSS
+import './styles/viewport.css';
+
 // Eager load critical pages
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
@@ -30,13 +33,8 @@ function AppContent() {
     const { user, loggedInProfile, isLoadingAuth, needsProfileCompletion } = useAuth();
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
-    const [page, setPage] = useState(() => {
-        return localStorage.getItem('currentPage') || 'home';
-    });
-    const [pageProps, setPageProps] = useState(() => {
-    const saved = localStorage.getItem('currentPageProps');
-        return saved ? JSON.parse(saved) : {};
-    });
+    const [page, setPage] = useState('home');
+    const [pageProps, setPageProps] = useState({});
     const [themeMode, setThemeMode] = useState(() => {
         return localStorage.getItem('theme') || 'dark';
     });
@@ -78,12 +76,8 @@ function AppContent() {
     };
 
     const handleSetPage = (newPage, props = {}) => {
-        console.log('handleSetPage called with:', newPage, props);
         setPage(newPage);
         setPageProps(props);
-        localStorage.setItem('currentPage', newPage);
-        localStorage.setItem('currentPageProps', JSON.stringify(props));
-        window.scrollTo(0, 0);
     };
 
     const handleProfileComplete = () => {
@@ -104,7 +98,7 @@ function AppContent() {
             
             case 'profile':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <ProfilePage 
                             loggedInProfile={loggedInProfile}
                             loggedInUserId={user?.uid}
@@ -115,14 +109,18 @@ function AppContent() {
             
             case 'admin':
                 return loggedInProfile?.isAdmin ? (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <AdminPage />
                     </Suspense>
-                ) : <HomePage setPage={handleSetPage} />;
+                ) : (
+                    <div className="h-full overflow-y-auto custom-scrollbar">
+                        <HomePage setPage={handleSetPage} />
+                    </div>
+                );
             
             case 'leagues':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <LeaguePage 
                             {...commonProps}
                             onViewLeague={(leagueId) => handleSetPage('leagueDetail', { leagueId })}
@@ -132,7 +130,7 @@ function AppContent() {
             
             case 'leagueDetail':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <LeagueDetailPage
                             {...commonProps}
                             leagueId={pageProps.leagueId}
@@ -142,98 +140,113 @@ function AppContent() {
             
             case 'leaderboard':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <LeaderboardPage {...commonProps} />
                     </Suspense>
                 );
             
             case 'schedule':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <SchedulePage setPage={handleSetPage} />
                     </Suspense>
                 );
             
             case 'scores':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <ScoresPage theme={themeMode} />
                     </Suspense>
                 );
             
             case 'stats':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <StatsPage />
                     </Suspense>
                 );
             
             case 'howtoplay':
                 return (
-                    <Suspense fallback={<LoadingSpinner />}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><LoadingSpinner /></div>}>
                         <HowToPlayPage setPage={handleSetPage} />
                     </Suspense>
                 );
             
             default:
-                return <HomePage setPage={handleSetPage} />;
+                return (
+                    <div className="h-full overflow-y-auto custom-scrollbar">
+                        <HomePage setPage={handleSetPage} />
+                    </div>
+                );
         }
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
+        <div className="app-container bg-background dark:bg-background-dark text-text-primary dark:text-text-primary-dark">
             <Toaster 
                 position="top-center"
                 toastOptions={{
                     duration: 3000,
                     style: {
                         background: themeMode === 'dark' ? '#1f2937' : '#ffffff',
-                        color: themeMode === 'dark' ? '#f9fafb' : '#111827',
+                        color: themeMode === 'dark' ? '#f3f4f6' : '#111827',
                     },
                 }}
             />
             
-            <AuthModal 
-                isOpen={isAuthModalOpen}
-                onClose={() => setIsAuthModalOpen(false)}
-                onAuthSuccess={() => setIsAuthModalOpen(false)}
-                initialView={authModalView}
-            />
-            
-            {needsProfileCompletion && (
-                <ProfileCompletionModal 
-                    userId={user.uid}
-                    onComplete={handleProfileComplete}
-                />
-            )}
-            
             <Header
                 user={user}
                 isLoggedIn={!!user}
-                isAdmin={loggedInProfile?.isAdmin}
-                onLoginClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
-                onSignUpClick={() => { setAuthModalView('signup'); setIsAuthModalOpen(true); }}
+                isAdmin={loggedInProfile?.isAdmin || false}
+                onLoginClick={() => {
+                    setAuthModalView('login');
+                    setIsAuthModalOpen(true);
+                }}
+                onSignUpClick={() => {
+                    setAuthModalView('signup');
+                    setIsAuthModalOpen(true);
+                }}
                 onLogout={handleLogout}
                 setPage={handleSetPage}
-                onViewOwnProfile={() => handleSetPage('profile', { userId: user.uid })}
-                onViewLeague={(id) => handleSetPage('leagueDetail', { leagueId: id })}
+                onViewOwnProfile={() => handleSetPage('profile', { userId: user?.uid })}
                 profile={loggedInProfile}
                 themeMode={themeMode}
-                toggleThemeMode={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+                toggleThemeMode={() => setThemeMode(prev => prev === 'dark' ? 'light' : 'dark')}
             />
-            
-            <main className="flex-grow relative">
+
+            <main className="flex-1 overflow-hidden">
                 <ErrorBoundary>
-                    {renderPage()}
+                    {isLoadingAuth ? (
+                        <div className="flex items-center justify-center h-full">
+                            <LoadingSpinner />
+                        </div>
+                    ) : (
+                        renderPage()
+                    )}
                 </ErrorBoundary>
             </main>
-            
-            <Footer setPage={handleSetPage} />
+
+            {page === 'home' && <Footer />}
+
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                initialView={authModalView}
+            />
+
+            {needsProfileCompletion && user && (
+                <ProfileCompletionModal
+                    isOpen={needsProfileCompletion}
+                    onComplete={handleProfileComplete}
+                    userId={user.uid}
+                />
+            )}
         </div>
     );
 }
 
-function App() {
+export default function App() {
     return (
         <ErrorBoundary>
             <AuthProvider>
@@ -242,5 +255,3 @@ function App() {
         </ErrorBoundary>
     );
 }
-
-export default App;
