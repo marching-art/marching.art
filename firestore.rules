@@ -1,134 +1,135 @@
-rules_version = '2';
+rules_version = '2';service cloud.firestore {match /databases/{database}/documents {// Helper functions
+function isAuthenticated() {
+  return request.auth != null;
+}
 
-service cloud.firestore {
-  match /databases/{database}/documents {
+function isAdmin() {
+  // Check for the admin UID from your development guidelines
+  return isAuthenticated() && (request.auth.uid == 'o8vfRCOevjTKBY0k2dISlpiYiIH2' || request.auth.token.admin == true);
+}
 
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
+function isOwner(userId) {
+  return isAuthenticated() && request.auth.uid == userId;
+}
 
-    // --- USER DATA ---
-    match /artifacts/{namespace}/users/{userId} {
-      // Profile data is public to read, owner or admin can write
-      match /profile/data {
-        allow read: if true;
-        allow write: if isOwner(userId) || isAdmin();
-      }
-      
-      // Comments are public to read. Logged-in users can create.
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isAuthenticated();
-        allow update: if isAuthenticated() && request.auth.uid == resource.data.authorUid;
-        allow delete: if isAuthenticated() && 
-          (request.auth.uid == userId || request.auth.uid == resource.data.authorUid || isAdmin());
-      }
-      
-      // Notifications are private
-      match /notifications/{notificationId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      // Allow authenticated users to read any user's subcollections (for leaderboards)
-      match /{subcollection}/{document=**} {
-        allow read: if isAuthenticated();
-        allow write: if isOwner(userId) || isAdmin();
-      }
-    }
+// --- USER DATA ---
+// This path now uses {appId} to match our React code and guidelines
+match /artifacts/{appId}/users/{userId} {
 
-    // Collection group query for profiles (needed for leaderboards/dashboard)
-    match /{path=**}/profile/{docId} {
-      allow read: if isAuthenticated();
-    }
-
-    // --- PUBLIC GAME DATA ---
-    match /game-settings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /dci-data/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /dci-stats/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /fantasy_recaps/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /final_rankings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /historical_scores/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /live_scores/{seasonId}/scores/{docId} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /schedules/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // --- LEAGUES ---
-    match /leagues/{leagueId} {
-      // FIX: Allow authenticated users to list leagues, check membership on get
-      allow list: if isAuthenticated(); // Allows querying for leagues
-      allow get: if isAuthenticated() && 
-        (request.auth.uid in resource.data.members || isAdmin());
-      allow write: if false; // Backend functions only
-    }
-    
-    match /leagues/{leagueId}/matchups/{week} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Backend only
-    }
-    
-    match /leagueInvites/{code} {
-      allow read: if isAuthenticated(); // FIX: Users need to read invites they receive
-      allow write: if false; // Backend only
-    }
-
-    // --- MISC & ADMIN ---
-    match /activeLineups/{lineupKey} {
-      allow read, write: if false; // Backend only
-    }
-    
-    match /usernames/{username} {
-      allow read: if true;
-      allow write: if false; // Backend only
-    }
-    
-    match /reports/{reportId} {
-      allow read, update: if isAdmin();
-      allow create: if isAuthenticated();
-    }
-    
-    // Season settings (needed for dashboard)
-    match /season_settings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
+  // Profile data is public to read, owner or admin can write
+  // This is correct for leaderboards and public profiles.
+  match /profile/data {
+    allow read: if true; 
+    allow write: if isOwner(userId) || isAdmin();
+  }
+  
+  // Comments are public to read. Logged-in users can create.
+  match /comments/{commentId} {
+    allow read: if true;
+    allow create: if isAuthenticated();
+    allow update: if isAuthenticated() && request.auth.uid == resource.data.authorUid;
+    allow delete: if isAuthenticated() && 
+      (request.auth.uid == userId || request.auth.uid == resource.data.authorUid || isAdmin());
+  }
+  
+  // Notifications are private
+  match /notifications/{notificationId} {
+    allow read, write: if isOwner(userId);
+  }
+  
+  // All other user subcollections (like corps data, staff rosters, etc.)
+  // can be read by any logged-in user (for leaderboards/profile viewing)
+  // but only written to by the owner or an admin.
+  match /{subcollection}/{document=**} {
+    allow read: if isAuthenticated();
+    allow write: if isOwner(userId) || isAdmin();
   }
 }
+
+// Collection group query for profiles (needed for leaderboards/dashboard)
+match /{path=**}/profile/{docId} {
+  allow read: if isAuthenticated();
+}
+
+// --- PUBLIC GAME DATA (READ-ONLY FOR USERS) ---
+// This structure from your file is perfect.
+match /game-settings/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
+match /dci-data/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
+match /dci-stats/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+match /fantasy_recaps/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+match /final_rankings/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
+match /historical_scores/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+match /live_scores/{seasonId}/scores/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+match /schedules/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
+// --- LEAGUES ---
+// This logic from your file is excellent.
+match /leagues/{leagueId} {
+  allow list: if isAuthenticated(); // Allows querying for leagues
+  allow get: if isAuthenticated() && 
+    (request.auth.uid in resource.data.members || isAdmin());
+  allow write: if false; // Backend functions only
+}
+
+match /leagues/{leagueId}/matchups/{week} {
+  allow read: if isAuthenticated();
+  allow write: if false; // Backend only
+}
+
+match /leagueInvites/{code} {
+  allow read: if isAuthenticated();
+  allow write: if false; // Backend only
+}
+
+// --- MISC & ADMIN ---
+match /activeLineups/{lineupKey} {
+  allow read, write: if false; // Backend only
+}
+
+match /usernames/{username} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
+match /reports/{reportId} {
+  allow read, update: if isAdmin();
+  allow create: if isAuthenticated();
+}
+
+// Season settings (needed for dashboard)
+match /season_settings/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+}}
