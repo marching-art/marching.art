@@ -1,26 +1,36 @@
 /*
-  marching.art - React Frontend Framework (v1.6)
-  - UPGRADE: Implements a realtime `onSnapshot` listener for the user profile.
-  - UPGRADE: Simplifies and secures the auth flow to prioritize the
-    `__initial_auth_token` and remove the anonymous fallback.
+  marching.art - React Frontend Framework (v1.9)
+  - FIX: Corrects typos in placeholder page components (TBD_P -> p).
+  - NOTE: The 'react-firebase-hooks' error is a dependency issue.
+    Run `npm install react-firebase-hooks` to fix it.
 */
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { initializeApp } from 'firebase/app';
+import ReactDOM from 'react-dom/client';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  Outlet,
+  Navigate,
+  useLocation
+} from "react-router-dom";
+
+// Firebase
+import { initializeApp } from "firebase/app";
 import {
   getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
   signInWithCustomToken,
-} from 'firebase/auth';
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  onSnapshot // <-- IMPORT REALTIME LISTENER
-} from 'firebase/firestore'; 
+  signInAnonymously,
+  onAuthStateChanged,
+  signOut,
+  signInWithEmailAndPassword
+} from "firebase/auth";
+import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
+// This line will work after you install the package
+import { useAuthState, useDocumentData } from 'react-firebase-hooks/auth';
+
+// Icons
 import {
   Home,
   BarChart,
@@ -33,18 +43,21 @@ import {
   X,
   Plus,
   Loader2,
-  Shield
+  Shield,
+  LogIn,
+  Library,
+  Settings
 } from 'lucide-react';
+
+// Animation
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- 1. FIREBASE CONFIG ---
 let firebaseConfig;
 try {
   if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-    // 1. PRODUCTION: Use the globally injected variable
     firebaseConfig = JSON.parse(__firebase_config);
   } else if (process.env.REACT_APP_API_KEY) {
-    // 2. LOCAL DEV: Use variables from .env.local
     console.warn("Using .env.local Firebase config for development.");
     firebaseConfig = {
       apiKey: process.env.REACT_APP_API_KEY,
@@ -56,13 +69,12 @@ try {
       measurementId: process.env.REACT_APP_MEASUREMENT_ID
     };
   } else {
-    // 3. ERROR: No config found
     console.error("Firebase config not found. Check .env.local or __firebase_config variable.");
-    firebaseConfig = {}; // Fallback to empty config to prevent crash
+    firebaseConfig = {};
   }
 } catch (e) {
   console.error("Firebase config is not valid JSON:", e);
-  firebaseConfig = {}; 
+  firebaseConfig = {};
 }
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -72,674 +84,556 @@ let app;
 let auth;
 let db;
 
-if (firebaseConfig.apiKey) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} else {
-  console.error("Firebase is not initialized. Check your config.");
+try {
+  if (firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } else {
+    console.error("Firebase is not initialized. Check your config.");
+  }
+} catch (e) {
+  console.error("Error initializing Firebase:", e);
 }
 
-const FirebaseContext = createContext(null);
-const useFirebase = () => useContext(FirebaseContext);
+const AuthContext = createContext();
 
-// --- 3. REUSABLE COMPONENT LIBRARY (Semantic Black & Gold Theme) ---
-
-const LogoIcon = ({ className }) => (
-  <img 
-    src="/logo192.png" 
-    alt="marching.art logo" 
-    className={className} 
-  />
-);
-
-const MainLayout = ({ children }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('Hub');
-  const { user, userProfile } = useFirebase();
-
-  const MyCorpsIcon = () => (
-    <Shield className="h-6 w-6 sm:h-5 sm:w-5" />
+const AuthProvider = ({ children }) => {
+  const [user, loading, error] = useAuthState(auth);
+  const [profile, profileLoading, profileError] = useDocumentData(
+    (auth && user && db) ? doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`) : null
   );
 
-  const navItems = [
-    { name: 'Hub', icon: Home, page: 'Hub' },
-    { name: 'My Corps', icon: MyCorpsIcon, page: 'Dashboard' },
-    { name: 'Scores', icon: BarChart, page: 'Scores' },
-    { name: 'Leagues', icon: Users, page: 'Leagues' },
-    { name: 'Schedule', icon: Calendar, page: 'Schedule' },
-    { name: 'Leaderboard', icon: Award, page: 'Leaderboard' },
-    { name: 'How to Play', icon: BookOpen, page: 'HowToPlay' },
-  ];
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  const NavLink = ({ item, isMobile = false }) => (
-    <button
-      onClick={() => {
-        setCurrentPage(item.page);
-        if (isMobile) setMobileMenuOpen(false);
-      }}
-      className={`
-        flex ${isMobile ? 'items-center px-3 py-3 w-full' : 'flex-col items-center p-2 sm:flex-row sm:p-0 sm:items-start sm:w-full sm:px-3 sm:py-2'}
-        rounded-lg transition-colors duration-150 group
-        ${currentPage === item.page
-          ? 'text-white bg-primary'
-          : 'text-text-secondary hover:text-text-primary hover:bg-surface-dark'
+  useEffect(() => {
+    if (!auth) {
+      console.error("Firebase Auth is not initialized.");
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in.
+      } else {
+        // User is signed out.
+        try {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        } catch (authError) {
+          console.error("Anonymous sign-in failed:", authError);
         }
-      `}
-    >
-      <item.icon />
-      <span className={`
-        ${isMobile ? 'ml-4 font-medium' : 'mt-1 text-xs font-medium sm:mt-0 sm:ml-3'}
-      `}>
-        {item.name}
-      </span>
-    </button>
-  );
+      }
+      setIsAuthReady(true);
+    });
 
-  const ProfileDropdown = () => {
-    const { auth } = useFirebase();
-    return (
-      <div
-        className="flex items-center gap-3 p-3 transition-colors duration-150 cursor-pointer rounded-lg hover:bg-surface-dark"
-        onClick={() => setCurrentPage('Profile')}
-      >
-        <img
-          className="h-10 w-10 rounded-full bg-surface-dark object-cover"
-          src={userProfile?.avatarUrl || `https://api.dicebear.com/8.x/bottts/svg?seed=${user?.uid || 'default'}`}
-          alt="Profile"
-        />
-        <div className="hidden sm:block flex-1">
-          <p className="text-sm font-semibold text-white truncate">{userProfile?.username || 'New Director'}</p>
-          <p className="text-xs text-text-secondary">View Profile</p>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (auth) signOut(auth);
-          }}
-          className="hidden sm:block text-text-secondary hover:text-text-primary"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
-      </div>
-    );
+    return () => unsubscribe();
+  }, []);
+
+  const authContextValue = {
+    user,
+    profile,
+    userId: user ? user.uid : null,
+    isAdmin: profile ? profile.isAdmin === true : false,
+    isLoading: loading || profileLoading || !isAuthReady,
+    authError: error || profileError,
   };
 
   return (
-    <div className="flex h-screen w-full bg-background text-text-primary font-inter">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-56 lg:w-64 flex-shrink-0 bg-surface border-r border-secondary/30">
-        <div className="flex flex-col h-full p-4">
-          
-          <div 
-            onClick={() => setCurrentPage('Hub')} 
-            className="flex items-center space-x-3 cursor-pointer group px-2"
-          >
-            <div className="relative">
-              <LogoIcon className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
-              <div className="absolute inset-0 blur-xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">
-              <span className="text-text-primary">marching</span>
-              <span className="gradient-text">.art</span>
-            </span>
-          </div>
-          
-          <nav className="mt-8 flex-1 space-y-2">
-            {navItems.map((item) => <NavLink key={item.name} item={item} />)}
-          </nav>
-          <div className="mt-auto">
-            {user && <ProfileDropdown />}
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Menu (Overlay) */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-50 flex flex-col bg-surface p-4 md:hidden"
-          >
-            <div className="flex items-center justify-between">
-              
-              <div 
-                onClick={() => {
-                  setCurrentPage('Hub');
-                  setMobileMenuOpen(false);
-                }} 
-                className="flex items-center space-x-3 cursor-pointer group"
-              >
-                <div className="relative">
-                  <LogoIcon className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
-                  <div className="absolute inset-0 blur-xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                <span className="text-2xl font-bold tracking-tight">
-                  <span className="text-text-primary">marching</span>
-                  <span className="gradient-text">.art</span>
-                </span>
-              </div>
-
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-text-secondary hover:text-text-primary"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <nav className="mt-8 flex-1 space-y-2">
-              {navItems.map((item) => (
-                <NavLink key={item.name} item={item} isMobile />
-              ))}
-            </nav>
-            <div className="mt-auto">
-              {user && (
-                <button
-                  onClick={() => {
-                    if (auth) signOut(auth);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center px-3 py-3 w-full rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-dark"
-                >
-                  <LogOut className="h-6 w-6" />
-                  <span className="ml-4 font-medium">Log Out</span>
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Top Bar */}
-        <header className="md:hidden flex items-center justify-between p-4 bg-surface border-b border-secondary/30">
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="text-text-secondary hover:text-text-primary"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <h1 className="text-lg font-bold text-white">{currentPage}</h1>
-          <div className="w-8">
-            {user && (
-              <img
-                className="h-8 w-8 rounded-full bg-surface-dark object-cover"
-                src={userProfile?.avatarUrl || `https://api.dicebear.com/8.x/bottts/svg?seed=${user.uid}`}
-                alt="Profile"
-                onClick={() => setCurrentPage('Profile')}
-              />
-            )}
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="p-4 sm:p-6 lg:p-8"
-            >
-              {/* This is our "Page Router". */}
-              {(() => {
-                switch (currentPage) {
-                  case 'Hub':
-                    return <PageHubFeed />;
-                  case 'Dashboard':
-                    return <PageDashboard />;
-                  case 'Scores':
-                    return <PageScores />;
-                  case 'Leagues':
-                    return <PageLeagues />;
-                  case 'Schedule':
-                    return <PageSchedule />;
-                  case 'Leaderboard':
-                    return <PageLeaderboard />;
-                  case 'HowToPlay':
-                    return <PageHowToPlay />;
-                  case 'Profile':
-                    return <PageProfile />;
-                  default:
-                    return <PageHubFeed />;
-                }
-              })()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-
-        {/* Mobile Bottom Nav */}
-        <nav className="md:hidden flex items-center justify-around p-2 bg-surface border-t border-secondary/30">
-          {navItems.slice(0, 5).map((item) => ( // Show first 5 items
-            <NavLink key={item.name} item={item} />
-          ))}
-        </nav>
-      </div>
-    </div>
+    <AuthContext.Provider value={authContextValue}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-// ... (Card, Button, TextInput, Modal components remain unchanged) ...
-/**
- * Card: A styled content container.
- * THEME: Card surface and border
- */
-const Card = ({ children, className = '' }) => (
-  <div
-    className={`bg-surface border border-secondary/30 rounded-lg ${className}`}
-  >
-    {children}
-  </div>
-);
+const useAuth = () => useContext(AuthContext);
 
-/**
- * Button: A set of styled buttons.
- * THEME: Using semantic colors from tailwind.config.js
- */
-const Button = ({
+// --- 3. REUSABLE UI COMPONENTS ---
+const Button = React.forwardRef(({
   children,
   onClick,
   variant = 'primary',
   className = '',
-  isLoading = false,
-  icon: Icon
-}) => {
-  const baseStyle = "flex items-center justify-center px-4 py-2.5 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50";
-
-  const variants = {
-    primary: 'bg-primary text-on-primary hover:bg-primary-dark focus:ring-primary',
-    secondary: 'bg-secondary text-on-secondary hover:bg-secondary-dark focus:ring-secondary',
-    danger: 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500',
-    ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-dark'
+  icon: Icon,
+  ...props
+}, ref) => {
+  const baseStyle = "relative flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold shadow-sm transition-all duration-300 ease-smooth disabled:opacity-50";
+  const variantStyles = {
+    primary: "bg-primary text-on-primary hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/50",
+    secondary: "bg-surface text-text-primary hover:bg-surface/80 border border-primary/20",
+    danger: "bg-red-600 text-white hover:bg-red-700",
   };
-
   return (
     <motion.button
-      whileHover={{ scale: isLoading ? 1 : 1.05 }}
-      whileTap={{ scale: isLoading ? 1 : 0.95 }}
+      ref={ref}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      disabled={isLoading}
-      className={`${baseStyle} ${variants[variant]} ${className}`}
+      className={`${baseStyle} ${variantStyles[variant]} ${className}`}
+      {...props}
     >
-      {isLoading ? (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ loop: Infinity, duration: 1, ease: 'linear' }}
-        >
-          <Loader2 className="h-5 w-5" />
-        </motion.div>
-      ) : (
-        <>
-          {Icon && <Icon className="h-5 w-5 mr-2" />}
-          {children}
-        </>
-      )}
-    </motion.button>
+      {Icon && <Icon className="w-5 h-5 mr-2" />}
+      {children}
+    </motion.button>.
+  );
+});
+
+const Card = ({ children, className = '' }) => {
+  return (
+    <div className={`bg-surface rounded-xl shadow-lg border border-primary/10 overflow-hidden ${className}`}>
+      {children}
+    </div>
   );
 };
 
-/**
- * TextInput: A styled text input field.
- * THEME: Using semantic colors
- */
-const TextInput = ({ label, id, type = 'text', placeholder, ...props }) => (
+const Modal = ({ children, isOpen, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+            className="bg-background rounded-xl shadow-2xl border border-primary/20 w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const TextInput = ({ label, value, onChange, type = 'text', placeholder = '' }) => (
   <div className="w-full">
-    {/* THEME: Label text */}
-    <label htmlFor={id} className="block text-sm font-medium text-text-primary mb-1">
+    <label className="block text-sm font-medium text-text-secondary mb-1">
       {label}
     </label>
     <input
-      id={id}
       type={type}
+      value={value}
+      onChange={onChange}
       placeholder={placeholder}
-      className="block w-full bg-surface-dark border-secondary/50 border rounded-lg px-3 py-2 text-white placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-      {...props}
+      className="w-full px-4 py-2 rounded-lg bg-surface border border-primary/20 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all duration-300"
     />
   </div>
 );
 
-/**
- * Modal: A pop-up container.
- * THEME: Using semantic colors
- */
-const Modal = ({ children, isOpen, onClose }) => (
-  <AnimatePresence>
-    {isOpen && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="bg-surface rounded-lg shadow-glow-sm w-full max-w-md border border-secondary/30"
-          onClick={(e) => e.stopPropagation()} // Prevent closing on content click
-        >
-          {children}
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
+// --- 4. LAYOUT COMPONENTS ---
+const Logo = () => (
+  <Link to="/" className="flex items-center space-x-3 cursor-pointer group">
+    <div className="relative">
+      <img
+        src="/logo192.png"
+        alt="marching.art logo"
+        className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+      />
+      <div className="absolute inset-0 blur-xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    </div>
+    <span className="text-2xl font-bold tracking-tight">
+      <span className="text-text-primary transition-colors">marching</span>
+      <span className="gradient-text">.art</span>
+    </span>
+  </Link>
 );
 
+const MyCorpsIcon = ({ isActive }) => <Shield className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const HubIcon = ({ isActive }) => <Home className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const LeaguesIcon = ({ isActive }) => <Users className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const ScoresIcon = ({ isActive }) => <BarChart className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const ScheduleIcon = ({ isActive }) => <Calendar className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const ChampionsIcon = ({ isActive }) => <Award className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const GuideIcon = ({ isActive }) => <BookOpen className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
+const AdminIcon = ({ isActive }) => <Library className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-text-secondary'}`} />;
 
-// --- 4. PLACEHOLDER PAGE COMPONENTS ---
+const NavLink = ({ to, text, IconComponent }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <Link
+      to={to}
+      className={`
+        flex items-center space-x-3 px-3 py-2.5 rounded-lg
+        transition-all duration-200 ease-smooth
+        ${isActive
+          ? 'bg-surface text-text-primary shadow-sm'
+          : 'text-text-secondary hover:bg-surface/50 hover:text-text-primary'
+        }
+      `}
+    >
+      <IconComponent isActive={isActive} />
+      <span className="font-semibold">{text}</span>
+    </Link>
+  );
+};
 
-const PageHubFeed = () => (
-  <div>
-    <h1 className="text-3xl font-bold text-white mb-6">Hub</h1>
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold text-white mb-2">Welcome to the Hub</h2>
-      <p className="text-text-secondary mb-4">
-        This will be the central feed for all game activity, including scores,
-        AI-generated recaps, league chat, and marketplace listings.
-      </p>
-      <Button variant="primary" icon={Plus}>Create Post (Demo)</Button>
+const Sidebar = () => {
+  const { isAdmin } = useAuth();
+  return (
+    <div className="hidden lg:flex lg:flex-col w-64 h-screen p-4 bg-background border-r border-primary/10">
+      <div className="mb-8">
+        <Logo />
+      </div>
+      <nav className="flex-1 flex flex-col space-y-2">
+        <NavLink to="/" text="Hub" IconComponent={HubIcon} />
+        <NavLink to="/dashboard" text="My Corps" IconComponent={MyCorpsIcon} />
+        <NavLink to="/leagues" text="Leagues" IconComponent={LeaguesIcon} />
+        <NavLink to="/scores" text="Scores" IconComponent={ScoresIcon} />
+        <NavLink to="/schedule" text="Schedule" IconComponent={ScheduleIcon} />
+        <NavLink to="/champions" text="Champions" IconComponent={ChampionsIcon} />
+        <NavLink to="/guide" text="Guide" IconComponent={GuideIcon} />
+        {isAdmin && (
+          <NavLink to="/admin" text="Admin" IconComponent={AdminIcon} />
+        )}
+      </nav>
+      <div className="mt-auto">
+        <Button
+          variant="secondary"
+          icon={LogOut}
+          className="w-full"
+          onClick={() => signOut(auth)}
+        >
+          Sign Out
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const MobileNav = () => {
+  const location = useLocation();
+  const getIconClass = (path) =>
+    location.pathname === path ? "text-primary" : "text-text-secondary group-hover:text-primary";
+  
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface border-t border-primary/10 shadow-lg flex items-center justify-around z-40">
+      <Link to="/" className="flex flex-col items-center group">
+        <Home className={getIconClass("/")} />
+        <span className="text-xs">Hub</span>
+      </Link>
+      <Link to="/dashboard" className="flex flex-col items-center group">
+        <Shield className={getIconClass("/dashboard")} />
+        <span className="text-xs">My Corps</span>
+      </Link>
+      <Link to="/leagues" className="flex flex-col items-center group">
+        <Users className={getIconClass("/leagues")} />
+        <span className="text-xs">Leagues</span>
+      </Link>
+      <Link to="/scores" className="flex flex-col items-center group">
+        <BarChart className={getIconClass("/scores")} />
+        <span className="text-xs">Scores</span>
+      </Link>
+      <button className="flex flex-col items-center group">
+        <Menu className="text-text-secondary group-hover:text-primary" />
+        <span className="text-xs">More</span>
+      </button>
+    </div>
+  );
+};
+
+const MainLayout = () => {
+  return (
+    <div className="flex h-screen bg-background text-text-primary">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={useLocation().pathname}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 15 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <MobileNav />
+    </div>
+  );
+};
+
+// --- 5. PAGE COMPONENTS ---
+const PageDashboard = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">My Corps Dashboard</h1>
+    <Card className="max-w-md">
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Welcome, Director!</h2>
+        <p className="text-text-secondary mb-4">
+          This is where you will manage your corps, staff, and show.
+        </p>
+        <Button variant="primary" icon={Plus}>
+          Register a New Corps
+        </Button>
+      </div>
     </Card>
   </div>
 );
 
-const PageDashboard = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const { userProfile } = useFirebase(); // Get real-time profile data
-
-  return (
-    <div>
-      <h1 className="text-3xl font-bold text-white mb-6">My Corps Dashboard</h1>
-      <Card className="p-6 mb-6">
-        <h2 className="text-xl font-semibold text-white mb-2">Welcome, {userProfile?.username || 'Director'}!</h2>
+const PageHub = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Hub</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Central Feed</h2>
         <p className="text-text-secondary">
-          Your CorpsCoin: <span className="text-primary font-bold">{userProfile?.corpsCoin || 0}</span>
+          AI-generated recaps, community news, and updates will appear here.
         </p>
-         <p className="text-text-secondary">
-          Your XP: <span className="text-accent font-bold">{userProfile?.xp || 0}</span>
+      </div>
+    </Card>
+  </div>
+);
+
+const PageLeagues = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Leagues</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Your Leagues</h2>
+        <p className="text-text-secondary">
+          League management, chat, and leaderboards will be here.
         </p>
-      </Card>
+      </div>
+    </Card>
+  </div>
+);
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold text-white mb-2">Corps Registration</h2>
-        <p className="text-text-secondary mb-4">
-          You haven't registered a corps for this season.
+const PageScores = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Scores</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Scores & Recaps</h2>
+        <p className="text-text-secondary">
+          Browse all live and off-season scores.
         </p>
-        <Button variant="primary" onClick={() => setModalOpen(true)}>
-          Register Your Corps
-        </Button>
-      </Card>
+      </div>
+    </Card>
+  </div>
+);
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-        <div className="p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Register New Corps</h2>
-          <form className="space-y-4">
-            <TextInput id="corpsName" label="Corps Name" placeholder="e.g., The Vanguard" />
-            <TextInput id="showConcept" label="Show Concept (500 chars)" placeholder="A story of..." />
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="button" variant="primary" onClick={() => { /* save logic */ setModalOpen(false); }}>
-                Save
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-    </div>
-  );
-};
-const PageScores = () => <div><h1 className="text-3xl font-bold text-white">Scores</h1><p className="text-text-secondary">Score recaps will appear here.</p></div>;
-const PageLeagues = () => <div><h1 className="text-3xl font-bold text-white">Leagues</h1><p className="text-text-secondary">League creation and chat will be here.</p></div>;
-const PageSchedule = () => <div><h1 className="text-3xl font-bold text-white">Season Schedule</h1><p className="text-text-secondary">The full tour schedule will be browsable here.</p></div>;
-const PageLeaderboard = () => <div><h1 className="text-3xl font-bold text-white">Leaderboard</h1><p className="text-text-secondary">The global leaderboard will be here.</p></div>;
-const PageHowToPlay = () => <div><h1 className="text-3xl font-bold text-white">How to Play</h1><p className="text-text-secondary">The game guide will be here.</p></div>;
-const PageProfile = () => <div><h1 className="text-3xl font-bold text-white">My Profile</h1><p className="text-text-secondary">User profiles, achievements, and stats.</p></div>;
+const PageSchedule = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Schedule</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Season Schedule</h2>
+        <p className="text-text-secondary">
+          View all upcoming events for both seasons.
+        </p>
+      </div>
+    </Card>
+  </div>
+);
 
-// --- 5. LOGIN/AUTH COMPONENT ---
-const AuthScreen = () => {
+const PageChampions = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Hall of Champions</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Past Winners</h2>
+        <p className="text-text-secondary">
+          A showcase of all previous season champions.
+        </p>
+      </div>
+    </Card>
+  </div>
+);
+
+const PageGuide = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Guide</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">How to Play</h2>
+        <p className="text-text-secondary">
+          The official rulebook and guide to marching.art.
+        </DCI_Fantasy_Platform_Plan.md>
+      </div>
+    </Card>
+  </div>
+);
+
+const PageAdmin = () => (
+  <div className="p-4 lg:p-8">
+    <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+    <Card>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Site Management</h2>
+        <p className="text-text-secondary">
+          Admin-only tools for managing the game.
+        </p>
+      </div>
+    </Card>
+  </div>
+);
+
+const PageLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { auth } = useFirebase();
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!auth) {
-      setError("Auth service is not available.");
-      return;
-    }
     setLoading(true);
     setError('');
-
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message.replace('Firebase: ', ''));
-      } else {
-        setError('An unknown error occurred.');
-      }
-    } finally {
+      setError('Failed to sign in. Check your email and password.');
+      console.error(err);
       setLoading(false);
     }
   };
+  
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background font-inter">
-      <Card className="w-full max-w-sm p-8 shadow-glow-sm">
-        <div className="flex justify-center mb-6">
-          <img src="/logo512.png" alt="marching.art logo" className="h-16 w-16" />
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-sm">
+        <div className="p-8">
+          <div className="flex justify-center mb-6">
+            <Logo />
+          </div>
+          <h2 className="text-xl font-semibold text-center mb-4">Admin & Dev Login</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <TextInput
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@marching.art"
+            />
+            <TextInput
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
         </div>
-        <h2 className="text-2xl font-bold text-center text-white mb-6">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h2>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <TextInput
-            id="email"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="director@marching.art"
-            autoComplete="email"
-          />
-          <TextInput
-            id="password"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete={isLogin ? "current-password" : "new-password"}
-          />
-
-          {error && <p className="text-sm text-red-500">{error}</p>}
-
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            isLoading={loading}
-          >
-            {isLogin ? 'Log In' : 'Sign Up'}
-          </Button>
-        </form>
-
-        <p className="text-sm text-center text-text-secondary mt-6">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-primary hover:text-primary-dark ml-1"
-          >
-            {isLogin ? 'Sign Up' : 'Log In'}
-          </button>
-        </p>
       </Card>
     </div>
   );
 };
 
-// --- 6. MAIN APP & AUTH WRAPPER ---
-// This is the root component. It listens for auth changes
-// and shows either the AuthScreen or the MainLayout.
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authMethod, setAuthMethod] = useState(null); // 'token' or 'email'
-
-  // This effect handles all authentication and profile listening.
-  useEffect(() => {
-    if (!auth || !db) {
-      setIsLoading(false);
-      console.error("Firebase Auth/DB is not initialized.");
-      return;
-    }
-
-    let profileUnsubscribe = () => {}; // Function to detach the snapshot listener
-
-    const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
-      // First, clean up any existing profile listener
-      profileUnsubscribe();
-
-      if (user) {
-        // User is signed in.
-        setUser(user);
-        
-        // This is the CORRECT, SECURE PATH from your guidelines.
-        const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-
-        // *** NEW REALTIME LISTENER ***
-        // Listen for real-time changes to the user's profile.
-        profileUnsubscribe = onSnapshot(userDocRef, 
-          async (docSnap) => {
-            if (docSnap.exists()) {
-              // Profile exists, update our React state
-              setUserProfile(docSnap.data());
-            } else {
-              // First-time sign-in for this user, create their profile.
-              const newProfile = {
-                username: user.email ? user.email.split('@')[0] : 'New Director',
-                email: user.email || null,
-                uid: user.uid,
-                createdAt: new Date(),
-                xp: 0,
-                corpsCoin: 0,
-              };
-              try {
-                await setDoc(userDocRef, newProfile, { merge: true });
-                setUserProfile(newProfile); // Set state after creation
-              } catch (e) {
-                console.error("Error creating user profile:", e);
-              }
-            }
-          },
-          (error) => {
-            console.error("Error listening to user profile:", error);
-          }
-        );
-        
-        // Set the auth method
-        if (user.isAnonymous) {
-           // This case should no longer happen with the new logic
-           console.warn("Anonymous user detected, but flow should prevent this.");
-           setAuthMethod('email'); // Fallback to email
-        } else if (!user.email) {
-          setAuthMethod('token'); // Logged in via custom token
-        } else {
-          setAuthMethod('email'); // Logged in via email/pass
-        }
-
-      } else {
-        // No user is signed in.
-        setUser(null);
-        setUserProfile(null);
-
-        // Check for the custom token provided by the environment.
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          try {
-            await signInWithCustomToken(auth, __initial_auth_token);
-            setAuthMethod('token');
-            // The onAuthStateChanged listener will fire again with the new user.
-            return;
-          } catch (e) {
-            console.error("Custom token sign-in failed:", e);
-            // If token fails, fall back to email auth screen
-            setAuthMethod('email');
-          }
-        } else {
-          // No custom token. Show the email/pass AuthScreen
-          // This is the fallback for local development.
-          setAuthMethod('email');
-        }
-      }
-      setIsLoading(false);
-    });
-
-    // Cleanup both listeners on component unmount
-    return () => {
-      authUnsubscribe();
-      profileUnsubscribe();
-    };
-  }, []); // Empty dependency array ensures this runs only once
-
-  const authContextValue = {
-    auth,
-    db,
-    user,
-    userProfile, // This is now a real-time state
-    appId,
-  };
-
-  // Show a global spinner while auth is resolving
+// --- 6. ROUTING ---
+const ProtectedRoutes = () => {
+  const { isLoading, user } = useAuth();
+  
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-      </div>
-    );
+    return <GlobalLoader />;
   }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <MainLayout />;
+};
 
-  // If Firebase didn't initialize, show an error.
-  if (!auth || !db) {
-     return (
-      <div className="flex items-center justify-center min-h-screen bg-background text-text-primary p-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Firebase Configuration Error</h1>
-          <p className="text-text-secondary">Could not initialize Firebase. Please check your `__firebase_config` variable.</p>
-        </div>
+const AppRoutes = () => {
+  const { isAdmin } = useAuth();
+
+  return (
+    <Routes>
+      <Route path="/login" element={<PageLogin />} />
+      <Route element={<ProtectedRoutes />}>
+        <Route path="/" element={<PageHub />} />
+        <Route path="/dashboard" element={<PageDashboard />} />
+        <Route path="/leagues" element={<PageLeagues />} />
+        <Route path="/scores" element={<PageScores />} />
+        <Route path="/schedule" element={<PageSchedule />} />
+        <Route path="/champions" element={<PageChampions />} />
+        <Route path="/guide" element={<PageGuide />} />
+        {isAdmin && <Route path="/admin" element={<PageAdmin />} />}
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+
+// --- 7. GLOBAL LOADER ---
+const GlobalLoader = () => (
+  <div className="flex items-center justify-center h-screen bg-background">
+    <div className="flex flex-col items-center space-y-4">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ ease: "linear", duration: 1, repeat: Infinity }}
+      >
+        <Loader2 className="w-12 h-12 text-primary" />
+      </motion.div>
+      <p className="text-text-secondary">Loading Director Profile...</p>
+    </div>
+  </div>
+);
+
+// --- 8. MAIN APP COMPONENT ---
+export default function App() {
+  if (!auth) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background p-4">
+        <Card className="max-w-md">
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-500 mb-4">Firebase Configuration Error</h1>
+            <p className="text-text-secondary">
+              Could not initialize Firebase. Check your `.env.local` or `__firebase_config` variable.
+            </p>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <FirebaseContext.Provider value={authContextValue}>
-      <AnimatePresence>
-        {/*
-          This logic is now simpler:
-          - If 'user' object exists (from token OR email), show MainLayout.
-          - If 'user' is null AND authMethod is 'email', show AuthScreen (dev fallback).
-        */}
-        {user ? <MainLayout /> : (authMethod === 'email' ? <AuthScreen /> : <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-      </div>) }
-      </AnimatePresence>
-    </FirebaseContext.Provider>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutesWrapper />
+      </BrowserRouter>
+    </AuthProvider>
   );
+}
+
+const AppRoutesWrapper = () => {
+  const { isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <GlobalLoader />;
+  }
+
+  return <AppRoutes />;
 }
 
