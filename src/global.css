@@ -1,0 +1,49 @@
+/*
+This file defines the CSS variables that your tailwind.config.js uses.
+Import this file into your main index.js or App.jsx.
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Theme: Cream, Black, and Gold */
+    
+    /* Primary (Gold) */
+    --color-primary: 245 158 11; /* amber-500 */
+    --color-primary-dark: 180 83 9; /* amber-700 */
+    --on-primary: 0 0 0; /* black */
+
+    /* Secondary (Dark Brown/Gold Border) */
+    --color-secondary: 69 26 3; /* amber-950 */
+    --color-secondary-dark: 60 22 2;
+    --on-secondary: 231 229 228; /* stone-200 */
+
+    /* Accent (Warm Tan/Cream) */
+    --color-accent: 214 211 209; /* stone-300 */
+    --color-accent-dark: 168 162 158; /* stone-400 */
+    
+    /* Background (Black) */
+    --color-background: 3 7 18; /* gray-950 */
+    --color-background-dark: 0 0 0; /* black */
+
+    /* Surface (Card Backgrounds) */
+    --color-surface: 17 24 39; /* gray-900 */
+    --color-surface-dark: 23 30 48; /* Lighter black for hover */
+
+    /* Text (Cream) */
+    --text-primary: 231 229 228; /* stone-200 */
+    --text-primary-dark: 255 255 255; /* white */
+    
+    --text-secondary: 168 162 158; /* stone-400 */
+    --text-secondary-dark: 214 211 209; /* stone-300 */
+  }
+
+  /* Apply the base background and text colors */
+  body {
+    @apply bg-background text-text-primary;
+  }
+}
+
