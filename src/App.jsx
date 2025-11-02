@@ -15,7 +15,7 @@ import Guide from './pages/Guide';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 
-import './global.css';
+import './index.css';
 
 export default function App() {
   return (
