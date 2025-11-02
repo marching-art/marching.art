@@ -1,8 +1,7 @@
 /*
-  marching.art - React Frontend Framework (v1.4)
-  - Integrates the advanced, animated logo with hover effects.
-  - Adds a new <LogoIcon /> component for this.
-  - Fixes compilation error.
+  marching.art - React Frontend Framework (v1.5)
+  - Replaces "My Corps" icon with <Shield />
+  - Fixes "Unexpected end of file" error by providing the complete file.
 */
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { initializeApp } from 'firebase/app';
@@ -27,7 +26,8 @@ import {
   Menu,
   X,
   Plus,
-  Loader2
+  Loader2,
+  Shield // <-- Correctly imported
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -101,7 +101,7 @@ const MainLayout = ({ children }) => {
 
   // Create a custom icon component for 'My Corps'
   const MyCorpsIcon = () => (
-    <img src="/logo192.png" alt="My Corps" className="h-6 w-6 sm:h-5 sm:w-5" />
+    <Shield className="h-6 w-6 sm:h-5 sm:w-5" /> // <-- CHANGED THIS
   );
 
   const navItems = [
@@ -157,7 +157,7 @@ const MainLayout = ({ children }) => {
         <button
           onClick={(e) => {
             e.stopPropagation(); // Don't trigger the profile click
-            signOut(auth);
+            if (auth) signOut(auth);
           }}
           className="hidden sm:block text-text-secondary hover:text-text-primary"
         >
@@ -196,7 +196,7 @@ const MainLayout = ({ children }) => {
             {navItems.map((item) => <NavLink key={item.name} item={item} />)}
           </nav>
           <div className="mt-auto">
-            <ProfileDropdown />
+            {user && <ProfileDropdown />}
           </div>
         </div>
       </aside>
@@ -244,16 +244,18 @@ const MainLayout = ({ children }) => {
               ))}
             </nav>
             <div className="mt-auto">
-              <button
-                onClick={() => {
-                  signOut(auth);
-                  setMobileMenuOpen(false);
-                }}
-                className="flex items-center px-3 py-3 w-full rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-dark"
-              >
-                <LogOut className="h-6 w-6" />
-                <span className="ml-4 font-medium">Log Out</span>
-              </button>
+              {user && (
+                <button
+                  onClick={() => {
+                    if (auth) signOut(auth);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center px-3 py-3 w-full rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-dark"
+                >
+                  <LogOut className="h-6 w-6" />
+                  <span className="ml-4 font-medium">Log Out</span>
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -272,12 +274,14 @@ const MainLayout = ({ children }) => {
           </button>
           <h1 className="text-lg font-bold text-white">{currentPage}</h1>
           <div className="w-8">
-            <img
-              className="h-8 w-8 rounded-full bg-surface-dark object-cover"
-              src={userProfile?.avatarUrl || `https://api.dicebear.com/8.x/bottts/svg?seed=${user?.uid || 'default'}`}
-              alt="Profile"
-              onClick={() => setCurrentPage('Profile')}
-            />
+            {user && (
+              <img
+                className="h-8 w-8 rounded-full bg-surface-dark object-cover"
+                src={userProfile?.avatarUrl || `https://api.dicebear.com/8.x/bottts/svg?seed=${user.uid}`}
+                alt="Profile"
+                onClick={() => setCurrentPage('Profile')}
+              />
+            )}
           </div>
         </header>
 
@@ -512,7 +516,10 @@ const AuthScreen = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth) {
+      setError("Auth service is not available.");
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -524,7 +531,11 @@ const AuthScreen = () => {
         // The onAuthStateChanged listener will handle creating the profile doc
       }
     } catch (err) {
-      setError(err.message.replace('Firebase: ', ''));
+      if (err instanceof Error) {
+        setError(err.message.replace('Firebase: ', ''));
+      } else {
+        setError('An unknown error occurred.');
+      }
     } finally {
       setLoading(false);
     }
@@ -547,7 +558,7 @@ const AuthScreen = () => {
             label="Email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.taget.value)}
+            onChange={(e) => setEmail(e.target.value)} // Corrected typo here
             placeholder="director@marching.art"
             autoComplete="email"
           />
