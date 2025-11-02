@@ -1,0 +1,406 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Enhanced Fantasy Color Palette - Light Mode (Cream, Black, Gold) */
+    
+    /* Primary: Radiant Gold */
+    --color-primary: 247 148 29;
+    --on-primary: 30 30 30;
+    
+    /* Secondary: Medium Brown */
+    --color-secondary: 139 69 19;
+    --on-secondary: 255 255 255;
+    
+    /* Accent: Warm Tan */
+    --color-accent: 220 200 170;
+    
+    /* Background: Light Cream */
+    --color-background: 250 250 240;
+    
+    /* Surface: Elevated cream with depth */
+    --color-surface: 245 245 230;
+    
+    /* Text Colors */
+    --text-primary: 30 30 30;
+    --text-secondary: 90 90 90;
+    
+    /* Fantasy Effects */
+    --glow-primary: 247 148 29;
+    --glow-accent: 220 200 170;
+    --shimmer: 255 255 255;
+  }
+
+  .dark {
+    /* Enhanced Dark Mode - Deep Fantasy Theme (Black & Gold) */
+    
+    /* Primary: Glowing Gold */
+    --color-primary-dark: 224 133 26;
+    
+    /* Secondary: Rich Sienna */
+    --color-secondary-dark: 160 82 45;
+    
+    /* Accent: Darker Tan/Brown */
+    --color-accent-dark: 101 67 33;
+    
+    /* Background: Deep Black-Brown */
+    --color-background-dark: 29 20 15;
+    
+    /* Surface: Dark Brown */
+    --color-surface-dark: 40 28 20;
+    
+    /* Text Colors */
+    --text-primary-dark: 240 240 240;
+    --text-secondary-dark: 180 180 180;
+    
+    /* Fantasy Effects */
+    --glow-primary: 224 133 26;
+    --glow-accent: 101 67 33;
+    --shimmer: 200 200 200;
+  }
+
+  /* Base styles with smooth transitions */
+  body {
+    @apply bg-background text-text-primary dark:bg-background-dark dark:text-text-primary-dark;
+    @apply transition-colors duration-300;
+    overflow-x: hidden;
+  }
+  
+  /* Ensure content doesn't hide behind fixed footer on desktop */
+  @media (min-width: 768px) {
+    main {
+      padding-bottom: 80px;
+    }
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-background dark:bg-background-dark;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-accent/30 dark:bg-accent-dark/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent/50 dark:bg-accent-dark/50;
+  }
+}
+
+@layer components {
+  /* Glassmorphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Enhanced glow effects */
+  .glow-primary {
+    box-shadow: 
+      0 0 20px rgba(var(--glow-primary), 0.3),
+      0 0 40px rgba(var(--glow-primary), 0.2),
+      0 0 60px rgba(var(--glow-primary), 0.1);
+  }
+  
+  .glow-accent {
+    box-shadow: 
+      0 0 20px rgba(var(--glow-accent), 0.3),
+      0 0 40px rgba(var(--glow-accent), 0.2);
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, 
+      rgb(var(--color-primary)) 0%, 
+      rgb(var(--color-accent)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .dark .gradient-text {
+    background: linear-gradient(135deg, 
+      rgb(var(--color-primary-dark)) 0%, 
+      rgb(var(--color-accent-dark)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Animated gradient backgrounds */
+  .gradient-bg {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-primary), 0.1) 0%, 
+      rgba(var(--color-accent), 0.1) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+  
+  .dark .gradient-bg {
+    background: linear-gradient(135deg, 
+      rgba(var(--color-primary-dark), 0.1) 0%, 
+      rgba(var(--color-accent-dark), 0.1) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+  
+  /* Shimmer effect */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--shimmer), 0.3) 50%,
+      transparent 100%
+    );
+    animation: shimmerMove 3s infinite;
+  }
+  
+  /* Card with depth */
+  .card-elevated {
+    @apply bg-surface dark:bg-surface-dark;
+    @apply border border-accent/20 dark:border-accent-dark/20;
+    @apply rounded-2xl;
+    @apply shadow-lg dark:shadow-2xl;
+    @apply transition-all duration-300;
+  }
+  
+  .card-elevated:hover {
+    @apply shadow-xl dark:shadow-primary-dark/20;
+    @apply -translate-y-1;
+    @apply border-accent/40 dark:border-accent-dark/40;
+  }
+  
+  /* Floating animation */
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Pulse glow */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  
+  /* Button enhancements */
+  .btn-fantasy {
+    @apply relative overflow-hidden;
+    @apply transition-all duration-300;
+    @apply shadow-lg;
+  }
+  
+  .btn-fantasy::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  .btn-fantasy:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .btn-fantasy:active {
+    @apply scale-95;
+  }
+}
+
+@layer utilities {
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Backdrop blur levels */
+  .backdrop-blur-xs {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  
+  .backdrop-blur-sm {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+}
+
+/* Animations */
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shimmerMove {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in on load */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+/* Stagger children animations */
+.stagger-children > * {
+  animation: fadeIn 0.5s ease-out backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-accent/10 dark:bg-accent-dark/10;
+  @apply rounded-theme;
+}
+
+/* Focus states */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary dark:ring-primary-dark ring-offset-2 ring-offset-background dark:ring-offset-background-dark;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/30 dark:bg-primary-dark/30;
+}
+
+/* Image optimization */
+img {
+  @apply max-w-full h-auto;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
