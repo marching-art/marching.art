@@ -1,0 +1,143 @@
+marching.art: Ultimate Director Sim - Project Plan (v5.3)
+1. Core Philosophy
+Model: A "Director Simulation" game, not a traditional fantasy league. The user is a corps director, building a corps from the ground up.
+Aesthetic: Premium, modern, and cinematic. A "cream, black, and gold" theme that feels professional and exciting.
+Engagement: Drive daily repeat visits through layered simulation (long-term) and social competition (short-term).
+Monetization: Free-to-play, supported by "Buy Me a Coffee" donations, not paid plans.
+Tech: React (Vercel), Firebase (Auth, Firestore, Cloud Functions), and Google Cloud.
+2. Core Technical Framework (Phase 1)
+This phase establishes the non-negotiable technical foundation for the entire application.
+React v18+: Main frontend library.
+React Router (react-router-dom): For URL-based navigation (/dashboard, /leagues).
+Firebase v9+: Backend services.
+Auth: signInWithCustomToken (via __initial_auth_token), signInAnonymously, and signInWithEmailAndPassword (for admins).
+Firestore: Main database, secured via firestore.rules.
+Cloud Functions: For all backend logic (scoring, season changes).
+State Management:
+Global Auth/Profile: react-firebase-hooks (useAuthState, useDocumentData) for live-updating user data.
+Local UI State: useState, useContext for modals, forms, etc.
+Styling:
+Tailwind CSS: Utility-first CSS.
+tailwind.config.js: As provided, using CSS variables for theming.
+global.css: Defines the "cream, black, and gold" theme variables.
+Animation & Icons:
+framer-motion: For all UI animations, page transitions, and "wow" factor.
+lucide-react: For all icon components.
+Configuration:
+.env.local: For local development keys (e.g., REACT_APP_API_KEY).
+Vercel Env Variables: For production keys (e.g., REACT_APP_API_KEY, not __firebase_config).
+3. Core Gameplay: The "Two-Season" Model
+The game is split into two distinct, alternating modes to keep users engaged year-round.
+A. The "Off-Season" (Director Sim)
+Duration: ~42 weeks (e.g., August to late May).
+Concept: The primary game mode. A deep simulation where you build a "fantasy" corps using historical data.
+Roster: Users select 8 captions from a list of 25 historical corps (e.g., '14 Blue Devils GE, '08 Phantom Percussion).
+Scoring: Generative/simulated. Scores are calculated nightly based on historical performance curves and synergy bonuses.
+Features: This mode uses all "Ultimate" features:
+Class Progression (SoundSport -> World)
+Show Concept Synergy
+XP Tier Unlocks
+Dynamic Caption Cost
+Staff Management
+Equipment & Logistics
+Uniform Builder / Show Design Showcase
+B. The "Live Season" (Classic Fantasy)
+Duration: ~10 weeks (e.To match the real DCI season).
+Concept: A high-excitement, "classic" fantasy game.
+Roster: Users select captions from the actual, current-season corps (e.g., 2025 Blue Devils, 2025 Bluecoats).
+Scoring: Literal. Uses real scores scraped from DCI's website via your backend functions.
+Features: This is a simpler, faster game mode. It does not use synergy, XP unlocks, or generative scoring. It's a pure test of predicting the real season's winners.
+4. Granular Development Roadmap
+A step-by-step checklist for building the app.
+Phase 1: The Modern Framework (Complete)
+[x] Task 1.1: Define Visual Identity (style-guide.md, tailwind.config.js, global.css).
+[x] Task 1.2: Build the Responsive App Shell (App.jsx v1.0).
+[x] Task 1.3: Refactor to react-router-dom (App.jsx v1.8).
+[x] Task 1.4: Implement react-firebase-hooks for live profile data (App.jsx v2.1).
+[x] Task 1.5: Implement official firestore.rules.
+[x] Task 1.6: Implement .env.local config and remove hard-coded keys.
+Phase 2: The Dashboard & Core Gameplay UI
+[ ] Task 2.1: Refactor: Break App.jsx into separate files:
+src/App.jsx (Root)
+src/firebase.js (Config & exports for db, auth)
+src/AuthContext.js (Auth provider and useAuth hook)
+src/components/Layout.jsx (Sidebar, MobileNav, MainLayout)
+src/components/ui/ (Button.jsx, Card.jsx, Modal.jsx, etc.)
+src/pages/ (PageDashboard.jsx, PageHub.jsx, etc.)
+[ ] Task 2.2: Data: Fetch game-settings/season doc and display current season name/status on the dashboard.
+[ ] Task 2.3: UI (Dashboard): Create "Corps Registration" component (PageDashboard.jsx).
+Displays Modal on button click.
+Includes TextInput for corpsName, location, and showConcept.
+[ ] Task 2.4: Backend (Cloud Function): Create registerCorps callable function.
+Takes corpsName, location, showConcept, class (e.g., 'soundSport').
+Validates inputs (profanity filter, character limits).
+Checks user's profile.unlockedClasses to ensure they can register for that class.
+Writes new corps data to artifacts/{appId}/users/{userId}/profile/data (e.g., corps.soundSport: { corpsName: ... }).
+[ ] Task 2.5: UI (Dashboard): Create "Corps Manager" view.
+If profile.corps.soundSport exists, show this view instead of registration.
+Display corps name, class, and "Edit Show" / "Select Captions" buttons.
+[ ] Task 2.6: UI (Dashboard): Create "Caption Selection" component (PageDashboard.jsx).
+Fetches data from dci-data/{seasonId} to get the 25 available corps.
+Fetches dci-stats/{seasonId} for historical analysis.
+Renders 8 dropdowns (GE1, GE2, etc.).
+Displays "Dynamic Cost" for each caption.
+Displays "XP Tier Unlocks" (locks/disables high-tier corps if user profile.xp is too low).
+[ ] Task 2.7: Backend (Cloud Function): Create saveLineup callable function.
+Takes a lineup object (e.g., { GE1: "'14 BD|19.8", P: "'08 PR|19.5" }).
+Validates the lineup against Dynamic Costs and the user's XP unlocks.
+Saves to profile.corps.soundSport.lineup.
+[ ] Task 2.8: UI (Dashboard): Create "Show Concept Design" component.
+Renders dropdowns for "Primary Theme," "Music Source," and "Drill Style."
+Saves selections to profile.corps.soundSport.showConcept.
+Phase 3: Scoring, Schedules & Recaps
+[ ] Task 3.1: UI (PageScores.jsx): Build the Scores browser.
+Fetch and display data from fantasy_recaps/{seasonId}.
+Group recaps by day/week.
+Allow user to click a recap to see a detailed scoresheet.
+[ ] Task 3.2: UI (PageSchedule.jsx): Build the Schedule browser.
+Fetch game-settings/season to get the events array.
+Display a list of upcoming shows, dates, and locations.
+[ ] Task 3.3: UI (PageDashboard.jsx): Build "Show Selection" UI.
+Allow user to select which shows from game-settings/season.events they want to "attend" for the week.
+Saves to profile.corps.soundSport.selectedShows.
+[ ] Task 3.4: Backend (Cloud Function): Implement "Show Concept Synergy" logic inside the daily runDailyScores function.
+When calculating a user's score, fetch their showConcept.
+Apply bonus points if their lineup's "Synergy Tags" match their concept.
+[ ] Task 3.5: Backend (Cloud Function): Implement "AI Fantasy Recap" (runDailyScores).
+After all scores are calculated, find the day's top 3 corps.
+Call Gemini API (gemini-2.5-flash-preview-09-2025) with a prompt: "Act as a DCI reporter. Write a 1-paragraph recap. @DirectorX won the show with a 98.5..."
+Save this text string to a new collection: hub-feed/{docId}.
+[ ] Task 3.6: UI (PageHub.jsx): Build the main Hub feed.
+Listen for new documents in the hub-feed collection.
+Display a chronological list of all AI-generated recaps.
+Phase 4: Gamification & Social Features
+[ ] Task 4.1: UI (PageLeagues.jsx): Build League creation, join, and management UI.
+[ ] Task 4.2: UI (League Chat): Implement a realtime chat component using a leagues/{leagueId}/chat subcollection.
+[ ] Task 4.3: Backend (Cloud Function): Create createRivalry and createAlliance functions.
+[ ] Task 4.4: UI (Profile): Build the public-facing User Profile page.
+Display user's corps, show concept, and earned achievements/trophies.
+Implement the "Declare Rivalry" button.
+[ ] Task 4.5: UI (Dashboard): Build "Staff Management" portal.
+Renders a "Staff Marketplace" (fetched from staff-market).
+Allows user to "Buy" staff with profile.corpsCoin.
+Allows user to assign staff to their 8 captions.
+[ ] Task 4.6: UI (Dashboard): Build "Equipment & Logistics" portal.
+Allows user to spend CorpsCoin to buy/upgrade buses and trucks.
+[ ] Task 4.7: Backend (Cloud Function): Update runDailyScores to include "Equipment Breakdown" logic (a small % chance of getting a 0 score if corps.equipment.bus.health < 10).
+[ ] Task 4.8: UI (Dashboard): Build "Daily Rehearsal" component.
+A simple button user can press once every 23 hours.
+Calls a Cloud Function runDailyRehearsal to increment profile.xp.
+Phase 5: The "Wow" Factor (Uniform Builder)
+[ ] Task 5.1: Research: Investigate three.js or react-three-fiber for embedding a 3D model.
+[ ] Task 5.2: UI (Dashboard): Build the "Uniform Builder" page.
+Load a generic 3D human model.
+Provide color pickers and texture/pattern selectors.
+Saves the uniform config (JSON object) to profile.corps.soundSport.uniform.
+[ ] Task 5.3: UI (Profile): Display the 3D uniform on the user's public profile.
+[ ] Task 5.4: UI (Showcase): Create a public "Showcase" page where users can vote on their favorite community-made uniforms and show concepts.
+[ ] Task 5.5: UI (Donations): Implement the "Souvenir Shop" concept in the uniform builder, linking to your "Buy Me a Coffee" page.
+Phase 6: Post-Launch & High-Cost AI Features
+[ ] Task 6.1: UI (Dashboard): Build the "Director's AI Assistant" chat modal.
+[ ] Task 6.2: UI (Dashboard): Build the "AI Show Poster Generator" button.
+[ ] Task 6.3: UI (Dashboard): Build the "AI Press Release" button.
+[ ] Task 6.4: Backend: Monitor API costs and enable/disable features based on "Buy Me a Coffee" budget.
