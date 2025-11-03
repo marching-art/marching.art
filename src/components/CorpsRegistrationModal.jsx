@@ -3,7 +3,7 @@ import Modal from './ui/Modal';
 import TextInput from './ui/TextInput';
 import Button from './ui/Button';
 
-[cite_start]// This component will be used to register a new corps for a user. [cite: 30, 31]
+// This component is used to register a new corps for a user.
 const CorpsRegistrationModal = ({ isOpen, onClose }) => {
   const [corpsName, setCorpsName] = useState('');
   const [location, setLocation] = useState('');
@@ -22,12 +22,9 @@ const CorpsRegistrationModal = ({ isOpen, onClose }) => {
     setError(null);
     
     try {
-      [cite_start]// TODO: Call your 'registerCorps' cloud function here (Task 2.4). [cite: 32]
-      // It should pass an object like:
-      [cite_start]// { corpsName, location, showConcept, class: 'soundSport' } [cite: 32]
+      // TODO: Call your 'registerCorps' cloud function here (Task 2.4).
       console.log('Simulating corps registration:', { corpsName, location, showConcept });
       
-      // On success:
       onClose();
       setCorpsName('');
       setLocation('');
@@ -44,7 +41,7 @@ const CorpsRegistrationModal = ({ isOpen, onClose }) => {
       <div className="p-6">
         <h2 className="text-xl font-bold mb-2">Register Your Corps</h2>
         <p className="text-sm text-text-secondary mb-4">
-          [cite_start]Begin your legacy by founding a new SoundSport-class corps. [cite: 32]
+          Begin your legacy by founding a new SoundSport-class corps.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <TextInput
