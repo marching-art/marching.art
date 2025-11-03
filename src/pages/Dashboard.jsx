@@ -1,40 +1,15 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Shield, Loader2 } from 'lucide-react';
-import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { Plus, Loader2 } from 'lucide-react';
+import { useDocument } from 'react-firebase-hooks/firestore';
 import { doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import CorpsManager from '../components/dashboard/CorpsManager';
+import CorpsRegistrationModal from '../components/CorpsRegistrationModal';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import CorpsRegistrationModal from '../components/CorpsRegistrationModal';
 
-// --- Task 2.5: Corps Manager View ---
-// This component shows *after* a corps is registered
-const CorpsManager = ({ corps }) => (
-  <Card className="max-w-md">
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-2">{corps.corpsName}</h2>
-      <p className="text-text-secondary mb-1">
-        <Shield className="inline-block w-4 h-4 mr-1" />
-        {corps.class || 'SoundSport'} Class
-      </p>
-      <p className="text-text-secondary mb-4 text-sm">
-        Concept: {corps.showConcept}
-      </p>
-      <div className="flex space-x-2">
-        <Button variant="primary" icon={Edit}>
-          Select Captions
-        </Button>
-        <Button variant="secondary" icon={Edit}>
-          Edit Show
-        </Button>
-      </div>
-    </div>
-  </Card>
-);
-
-// --- Task 2.3: Registration View ---
-// This component shows *before* a corps is registered
+// This is the view for users *without* a corps
 const RegisterCorps = ({ onRegisterClick }) => (
   <Card className="max-w-md">
     <div className="p-6">
@@ -49,16 +24,14 @@ const RegisterCorps = ({ onRegisterClick }) => (
   </Card>
 );
 
-// --- Main Dashboard Page ---
+// This is the main Dashboard Page
 const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { loggedInProfile, isLoadingAuth } = useAuth(); // Use your hook
+  const { loggedInProfile, isLoadingAuth } = useAuth();
 
-  // --- Task 2.2: Fetch game-settings/season doc ---
-  const seasonRef = doc(db, 'game-settings', 'season');
-  const [seasonData, loadingSeason] = useDocumentData(seasonRef);
+  // Task 2.2: Fetch game-settings/season doc
+  const [seasonDoc, loadingSeason] = useDocument(doc(db, 'game-settings', 'season'));
 
-  // --- Helper Components for Loading/Error ---
   const renderLoading = () => (
     <div className="flex items-center text-text-secondary">
       <Loader2 className="animate-spin w-5 h-5 mr-2" />
@@ -69,22 +42,23 @@ const Dashboard = () => {
   const renderSeasonInfo = () => (
     <div className="mb-4 p-3 bg-surface rounded-md max-w-md">
       <p className="font-bold text-sm text-primary">
-        {loadingSeason ? 'Loading season...' : `Season: ${seasonData?.name}`}
+        {loadingSeason ? 'Loading season...' : `Season: ${seasonDoc?.data()?.name}`}
       </p>
       <p className="text-xs text-text-secondary uppercase">
-        {loadingSeason ? '...' : `Status: ${seasonData?.status}`}
+        {loadingSeason ? '...' : `Status: ${seasonDoc?.data()?.status}`}
       </p>
     </div>
   );
 
-  // --- Main Render Logic ---
   const renderCorpsView = () => {
     // Check for the *specific* corps class from your plan
-    const activeCorps = loggedInProfile?.corps?.soundSport;
+    const activeCorps = loggedInProfile?.corps?.soundSport; 
 
     if (activeCorps) {
-      return <CorpsManager corps={activeCorps} />;
+      // Task 2.5: User has a corps, show the manager
+      return <CorpsManager />;
     } else {
+      // Task 2.3: User needs to register
       return <RegisterCorps onRegisterClick={() => setIsModalOpen(true)} />;
     }
   };
@@ -97,10 +71,13 @@ const Dashboard = () => {
       
       {isLoadingAuth ? renderLoading() : renderCorpsView()}
 
-      <CorpsRegistrationModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      {/* The registration modal is only mounted when needed */}
+      {isModalOpen && (
+        <CorpsRegistrationModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
     </div>
   );
 };
