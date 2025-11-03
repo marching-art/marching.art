@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Loader2 } from 'lucide-react';
-// TODO: Import your 'saveShowConcept' callable function
-// import { saveShowConcept } from '../../firebase/functions';
+import { saveShowConcept } from '../../firebase/functions';
 
 // Placeholder data - this should be fetched from Firestore
 const SYNERGY_OPTIONS = {
@@ -68,11 +67,7 @@ const ShowConceptModal = ({ isOpen, onClose, currentConcept, corpsClass }) => {
     setIsSaving(true);
     setError(null);
     try {
-      // TODO: Call your 'saveShowConcept' function
-      // It should pass an object like: { concept, corpsClass }
-      console.log('Saving new concept...', { concept, corpsClass });
-      // await saveShowConcept({ concept, corpsClass });
-      
+      await saveShowConcept({ concept, corpsClass });
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to save concept.');
@@ -81,7 +76,6 @@ const ShowConceptModal = ({ isOpen, onClose, currentConcept, corpsClass }) => {
     }
   };
 
-  // Per your guidelines, limit to 500 characters 
   const charLimit = 500;
   const charsRemaining = charLimit - (concept.description?.length || 0);
 

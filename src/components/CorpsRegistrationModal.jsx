@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import TextInput from './ui/TextInput';
 import Button from './ui/Button';
+import { Loader2 } from 'lucide-react';
+import { registerCorps } from '../firebase/functions';
 
-// This component is used to register a new corps for a user.
 const CorpsRegistrationModal = ({ isOpen, onClose }) => {
   const [corpsName, setCorpsName] = useState('');
   const [location, setLocation] = useState('');
@@ -22,8 +23,14 @@ const CorpsRegistrationModal = ({ isOpen, onClose }) => {
     setError(null);
     
     try {
-      // TODO: Call your 'registerCorps' cloud function here (Task 2.4).
-      console.log('Simulating corps registration:', { corpsName, location, showConcept });
+      // --- This is the new part ---
+      await registerCorps({ 
+        corpsName, 
+        location, 
+        showConcept, 
+        class: 'soundSport' // Default to SoundSport
+      });
+      // --- End new part ---
       
       onClose();
       setCorpsName('');
@@ -35,7 +42,8 @@ const CorpsRegistrationModal = ({ isOpen, onClose }) => {
       setIsRegistering(false);
     }
   };
-
+  
+  // ... rest of the file (JSX is the same as before)
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-6">
@@ -71,7 +79,7 @@ const CorpsRegistrationModal = ({ isOpen, onClose }) => {
               variant="primary" 
               disabled={isRegistering}
             >
-              {isRegistering ? 'Registering...' : 'Found Corps'}
+              {isRegistering ? <Loader2 className="animate-spin" /> : 'Found Corps'}
             </Button>
           </div>
         </form>
