@@ -5,8 +5,8 @@ import Button from '../components/ui/Button';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { useAuth } from '../AuthContext'; // Import the useAuth hook
-import CorpsRegistrationModal from '../components/CorpsRegistrationModal'; // Import the modal
+import { useAuth } from '../context/AuthContext';
+import CorpsRegistrationModal from '../components/CorpsRegistrationModal';
 
 // --- Task 2.5: Corps Manager View ---
 const CorpsManager = ({ corps }) => (
