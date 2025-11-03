@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Shield } from 'lucide-react';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
+import { Plus, Edit, Shield, Loader2 } from 'lucide-react';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 import CorpsRegistrationModal from '../components/CorpsRegistrationModal';
 
 // --- Task 2.5: Corps Manager View ---
+// This component shows *after* a corps is registered
 const CorpsManager = ({ corps }) => (
   <Card className="max-w-md">
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-2">{corps.corpsName}</h2>
-      <p className="text-text-secondary mb-4">
+      <p className="text-text-secondary mb-1">
         <Shield className="inline-block w-4 h-4 mr-1" />
         {corps.class || 'SoundSport'} Class
+      </p>
+      <p className="text-text-secondary mb-4 text-sm">
+        Concept: {corps.showConcept}
       </p>
       <div className="flex space-x-2">
         <Button variant="primary" icon={Edit}>
@@ -30,6 +34,7 @@ const CorpsManager = ({ corps }) => (
 );
 
 // --- Task 2.3: Registration View ---
+// This component shows *before* a corps is registered
 const RegisterCorps = ({ onRegisterClick }) => (
   <Card className="max-w-md">
     <div className="p-6">
@@ -44,23 +49,26 @@ const RegisterCorps = ({ onRegisterClick }) => (
   </Card>
 );
 
+// --- Main Dashboard Page ---
 const Dashboard = () => {
-  // --- Task 2.2: Fetch Season Data ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { loggedInProfile, isLoadingAuth } = useAuth(); // Use your hook
+
+  // --- Task 2.2: Fetch game-settings/season doc ---
   const seasonRef = doc(db, 'game-settings', 'season');
   const [seasonData, loadingSeason] = useDocumentData(seasonRef);
-  
-  // --- Auth & Profile Data ---
-  const { profile, loading: loadingProfile } = useAuth();
-  
-  // --- Modal State ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const isLoading = loadingSeason || loadingProfile;
+  // --- Helper Components for Loading/Error ---
+  const renderLoading = () => (
+    <div className="flex items-center text-text-secondary">
+      <Loader2 className="animate-spin w-5 h-5 mr-2" />
+      Loading your dashboard...
+    </div>
+  );
 
-  // --- Render Logic ---
   const renderSeasonInfo = () => (
-    <div className="mb-4 p-3 bg-cream-dark rounded-md max-w-md">
-      <p className="font-bold text-sm text-gold">
+    <div className="mb-4 p-3 bg-surface rounded-md max-w-md">
+      <p className="font-bold text-sm text-primary">
         {loadingSeason ? 'Loading season...' : `Season: ${seasonData?.name}`}
       </p>
       <p className="text-xs text-text-secondary uppercase">
@@ -69,13 +77,10 @@ const Dashboard = () => {
     </div>
   );
 
+  // --- Main Render Logic ---
   const renderCorpsView = () => {
-    if (isLoading) {
-      return <p className="text-text-secondary">Loading dashboard...</p>;
-    }
-    
-    // Check for corps data (as per Task 2.5)
-    const activeCorps = profile?.corps?.soundSport; // Or your default class
+    // Check for the *specific* corps class from your plan
+    const activeCorps = loggedInProfile?.corps?.soundSport;
 
     if (activeCorps) {
       return <CorpsManager corps={activeCorps} />;
@@ -89,7 +94,8 @@ const Dashboard = () => {
       <h1 className="text-3xl font-bold mb-6">My Corps Dashboard</h1>
       
       {renderSeasonInfo()}
-      {renderCorpsView()}
+      
+      {isLoadingAuth ? renderLoading() : renderCorpsView()}
 
       <CorpsRegistrationModal 
         isOpen={isModalOpen} 
