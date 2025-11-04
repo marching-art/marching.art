@@ -1,12 +1,12 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespace } = require("../config"); // Assuming config.js exports these
+// Use dataNamespaceParam to match your other files
+const { getDb, dataNamespaceParam } = require("../config"); 
 const admin = require("firebase-admin");
 
-// Basic profanity filter (replace with a more robust one later)
 const isProfane = (text) => /fuck|shit|damn/.test(text.toLowerCase());
 
-exports.registerCorps = onCall(async (request) => {
+exports.registerCorps = onCall({ cors: true }, async (request) => {
   const { corpsName, location, showConcept, class: corpsClass } = request.data;
   const uid = request.auth?.uid;
 
@@ -26,7 +26,8 @@ exports.registerCorps = onCall(async (request) => {
   }
 
   const db = getDb();
-  const profileDocRef = db.doc(`artifacts/${dataNamespace}/users/${uid}/profile/data`);
+  // Use dataNamespaceParam.value()
+  const profileDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
     const profileDoc = await profileDocRef.get();
@@ -51,13 +52,12 @@ exports.registerCorps = onCall(async (request) => {
     const newCorpsData = {
       corpsName,
       location,
-      showConcept, // Initial concept
+      showConcept, 
       class: corpsClass,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lineup: {},
       selectedShows: {},
       totalSeasonScore: 0,
-      // Your plan implies bio carries over, so we set it here
       biography: `The ${corpsName} from ${location}.`, 
     };
 

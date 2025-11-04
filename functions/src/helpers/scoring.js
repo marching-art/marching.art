@@ -3,6 +3,8 @@ const { logger } = require("firebase-functions/v2");
 const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { shuffleArray } = require("./season");
+const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
+
 
 async function fetchHistoricalData(dataDocId) {
   const db = getDb();
@@ -775,6 +777,8 @@ async function calculateCorpsStatisticsLogic() {
 
   logger.info(`Successfully processed and saved stats for ${allCorpsStats.length} corps.`);
 }
+
+
 
 module.exports = {
   fetchHistoricalData,

@@ -1,8 +1,9 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespace } = require("../config");
+// Use dataNamespaceParam to match your other files
+const { getDb, dataNamespaceParam } = require("../config");
 
-exports.saveShowConcept = onCall(async (request) => {
+exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   const { concept, corpsClass } = request.data;
   const uid = request.auth?.uid;
 
@@ -19,7 +20,8 @@ exports.saveShowConcept = onCall(async (request) => {
   }
 
   const db = getDb();
-  const profileDocRef = db.doc(`artifacts/${dataNamespace}/users/${uid}/profile/data`);
+  // Use dataNamespaceParam.value()
+  const profileDocRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
     // Save to profile

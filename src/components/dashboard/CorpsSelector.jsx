@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LineupEditor from './LineupEditor';
+import ShowConceptDesigner from './ShowConceptDesigner';
 import ShowSelection from './ShowSelection';
 import { CORPS_CLASSES, getAllUserCorps, hasAnyCorps, CORPS_CLASS_ORDER } from '../../utils/profileCompatibility';
 
@@ -35,6 +36,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
 
     return (
         <div className="space-y-6">
+            {/* Corps Class Tabs */}
             <div className="flex flex-wrap gap-2 border-b-theme border-accent dark:border-accent-dark pb-4">
                 {CORPS_CLASS_ORDER.map(key => {
                     const classInfo = CORPS_CLASSES[key];
@@ -66,6 +68,7 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
                 })}
             </div>
 
+            {/* Lineup Editor */}
             <div>
                 <LineupEditor
                     profile={activeCorpsProfile}
@@ -78,8 +81,24 @@ const CorpsSelector = ({ profile, corpsData, seasonSettings, seasonEvents, curre
                 />
             </div>
             
+            {/* Show Concept Designer - NEW */}
+            {activeCorpsProfile && activeCorpsProfile.corpsName && (
+                <>
+                    <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
+                    <div>
+                        <ShowConceptDesigner
+                            userId={profile.uid || profile.id}
+                            corpsClass={activeCorps}
+                            initialConcept={activeCorpsProfile.showConcept || {}}
+                            corpsData={corpsData}
+                        />
+                    </div>
+                </>
+            )}
+            
             <div className="border-t-2 border-dashed border-accent dark:border-accent-dark my-8"></div>
 
+            {/* Show Selection */}
             <div>
                 <ShowSelection
                     seasonMode={seasonSettings.status === 'live-season' ? 'live' : 'off'}

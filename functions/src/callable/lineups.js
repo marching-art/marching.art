@@ -2,18 +2,28 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 
-exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
+/**
+ * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
+ */
+// Add { cors: true } here
+exports.saveLineup = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in to save a lineup.");
   }
-  const { lineup, corpsName, corpsClass } = request.data;
+  const { lineup, corpsClass } = request.data;
   const uid = request.auth.uid;
 
+  // 1. --- Validate Inputs ---
   const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
   if (!validClasses.includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Invalid corps class specified.");
   }
 
+  if (!lineup || Object.keys(lineup).length !== 8) {
+    throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
+  }
+
+  // 2. --- Validate Points Cap ---
   const pointCaps = {
     worldClass: 150,
     openClass: 120,
@@ -22,22 +32,20 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
   };
   const pointCap = pointCaps[corpsClass];
 
-  if (!lineup || Object.keys(lineup).length !== 8) {
-    throw new HttpsError("invalid-argument", "A complete 8-caption lineup is required.");
-  }
-
   const totalPoints = Object.values(lineup).reduce((sum, selection) => {
-    const [, points] = selection.split("|");
-    return sum + (Number(points) || 0);
+    if (!selection || typeof selection !== 'string') return sum;
+    const parts = selection.split("|");
+    // Use parts.length-1 to get the last part, which is the points
+    return sum + (Number(parts[parts.length - 1]) || 0);
   }, 0);
 
   if (totalPoints > pointCap) {
-    throw new HttpsError("invalid-argument", `Lineup exceeds ${pointCap} point limit for ${corpsClass}.`);
+    throw new HttpsError("invalid-argument", `Lineup exceeds ${pointCap} point limit for ${corpsClass}. Total: ${totalPoints}`);
   }
 
-  const lineupKey = `${corpsClass}_${Object.values(lineup).sort().join("_")}`;
-
-  const seasonSettingsRef = getDb().doc("game-settings/season");
+  // 3. --- Get Season & Profile Data ---
+  const db = getDb();
+  const seasonSettingsRef = db.doc("game-settings/season");
   const seasonDoc = await seasonSettingsRef.get();
   if (!seasonDoc.exists || !seasonDoc.data().seasonUid) {
     throw new HttpsError("failed-precondition", "There is no active season.");
@@ -45,83 +53,60 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
   const seasonData = seasonDoc.data();
   const activeSeasonId = seasonData.seasonUid;
 
+  // 4. --- Create Unique Lineup Key ---
+  const lineupKey = `${corpsClass}_${Object.values(lineup).sort().join("_")}`;
+
   try {
-    await getDb().runTransaction(async (transaction) => {
-      const userProfileRef = getDb().doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+    await db.runTransaction(async (transaction) => {
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
       const userProfileDoc = await transaction.get(userProfileRef);
       if (!userProfileDoc.exists) {
         throw new HttpsError("not-found", "User profile does not exist.");
       }
+      
+      const userProfileData = userProfileDoc.data();
+      const currentCorpsData = userProfileData.corps?.[corpsClass];
 
-      const newActiveLineupRef = getDb().collection("activeLineups").doc(lineupKey);
+      if (!currentCorpsData) {
+        throw new HttpsError("not-found", `You must register a ${corpsClass} corps before saving a lineup.`);
+      }
+
+      // 5. --- Check Lineup Uniqueness ---
+      const newActiveLineupRef = db.collection("activeLineups").doc(lineupKey);
       const existingLineupDoc = await transaction.get(newActiveLineupRef);
       if (existingLineupDoc.exists && existingLineupDoc.data().uid !== uid) {
         throw new HttpsError("already-exists", "This exact lineup has already been claimed.");
       }
 
-      const userProfileData = userProfileDoc.data();
-
-      if (!userProfileData.corps) {
-        userProfileData.corps = {};
-      }
-
-      const isNewSeasonSignup = userProfileData.activeSeasonId !== activeSeasonId;
-      const currentCorpsData = userProfileData.corps[corpsClass] || {};
-      const isNewCorps = !currentCorpsData.corpsName;
+      // 6. --- Check Trade Limits ---
       const oldLineupKey = currentCorpsData.lineupKey;
-
-      if (oldLineupKey && oldLineupKey !== lineupKey) {
-        transaction.delete(getDb().collection("activeLineups").doc(oldLineupKey));
-      }
-
-      transaction.set(newActiveLineupRef, {
-        uid: uid,
-        seasonId: activeSeasonId,
-        corpsClass: corpsClass,
+      const originalLineup = currentCorpsData.lineup || {};
+      let newTrades = 0;
+      Object.keys(lineup).forEach((caption) => {
+        if (originalLineup[caption] !== lineup[caption]) newTrades++;
       });
 
-      let profileUpdateData = {};
+      const profileUpdateData = {};
 
-      if (isNewSeasonSignup || isNewCorps) {
-        if (!corpsName) throw new HttpsError("invalid-argument", "A corps name is required.");
-
-        profileUpdateData = {
-          activeSeasonId: activeSeasonId,
-          [`corps.${corpsClass}`]: {
-            corpsName: corpsName,
-            lineup: lineup,
-            lineupKey: lineupKey,
-            totalSeasonScore: 0,
-            selectedShows: {},
-            weeklyTrades: { seasonUid: activeSeasonId, week: 1, used: 0 },
-            lastScoredDay: 0,
-          },
-        };
-      } else {
+      if (newTrades > 0) {
         const now = new Date();
         const seasonStartDate = seasonData.schedule.startDate.toDate();
         const diffInMillis = now.getTime() - seasonStartDate.getTime();
         const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
         const currentWeek = Math.ceil(currentDay / 7);
 
-        let tradeLimit = 3;
+        let tradeLimit = 3; // Default
         if (seasonData.status === "off-season" && currentWeek === 1) tradeLimit = Infinity;
         if (seasonData.status === "live-season" && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
 
-        const originalLineup = currentCorpsData.lineup || {};
-        let newTrades = 0;
-        Object.keys(lineup).forEach((caption) => {
-          if (originalLineup[caption] !== lineup[caption]) newTrades++;
-        });
-
-        if (newTrades > 0 && tradeLimit !== Infinity) {
+        if (tradeLimit !== Infinity) {
           const weeklyTrades = currentCorpsData.weeklyTrades || { week: 0, used: 0 };
           let tradesAlreadyUsed = (weeklyTrades.seasonUid === activeSeasonId &&
             weeklyTrades.week === currentWeek) ? weeklyTrades.used : 0;
 
           if (tradesAlreadyUsed + newTrades > tradeLimit) {
             throw new HttpsError("failed-precondition",
-              `Exceeds trade limit. You have ${tradeLimit - tradesAlreadyUsed} trades remaining.`);
+              `Exceeds trade limit. You have ${tradeLimit - tradesAlreadyUsed} trades remaining this week.`);
           }
 
           profileUpdateData[`corps.${corpsClass}.weeklyTrades`] = {
@@ -130,25 +115,38 @@ exports.validateAndSaveLineup = onCall({ cors: true }, async (request) => {
             used: tradesAlreadyUsed + newTrades,
           };
         }
-
-        profileUpdateData[`corps.${corpsClass}.lineup`] = lineup;
-        profileUpdateData[`corps.${corpsClass}.lineupKey`] = lineupKey;
-
-        if (corpsName) {
-          profileUpdateData[`corps.${corpsClass}.corpsName`] = corpsName;
-        }
       }
+
+      // 7. --- Commit Changes ---
+      if (oldLineupKey && oldLineupKey !== lineupKey) {
+        transaction.delete(db.collection("activeLineups").doc(oldLineupKey));
+      }
+      
+      transaction.set(newActiveLineupRef, {
+        uid: uid,
+        seasonId: activeSeasonId,
+        corpsClass: corpsClass,
+      });
+
+      profileUpdateData[`corps.${corpsClass}.lineup`] = lineup;
+      profileUpdateData[`corps.${corpsClass}.lineupKey`] = lineupKey;
+      profileUpdateData.activeSeasonId = activeSeasonId; 
 
       transaction.update(userProfileRef, profileUpdateData);
     });
+
     return { success: true, message: `${corpsClass} lineup saved successfully!` };
   } catch (error) {
-    logger.error(`[validateAndSaveLineup] Transaction FAILED for user ${uid}:`, error);
+    logger.error(`[saveLineup] Transaction FAILED for user ${uid}:`, error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "An error occurred while saving your lineup.");
   }
 });
 
+/**
+ * Task 3.3: Saves a user's selected shows for the week.
+ */
+// Add { cors: true } here
 exports.selectUserShows = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
@@ -156,6 +154,7 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
   const { week, shows, corpsClass } = request.data;
 
+  //
   if (!week || !shows || !Array.isArray(shows) || shows.length > 4) {
     throw new HttpsError("invalid-argument",
       "Invalid data. A week number and a maximum of 4 shows are required.");

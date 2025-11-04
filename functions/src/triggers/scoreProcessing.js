@@ -1,5 +1,8 @@
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
+// --- ADDED THIS LINE ---
+const { getDb, dataNamespaceParam } = require("../config");
+// ---------------------
 const { queueRecapUrlForScraping } = require("../helpers/scraping");
 const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
@@ -25,7 +28,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
     }
 
     const docId = year.toString();
-    const yearDocRef = getDb().collection("historical_scores").doc(docId);
+    const yearDocRef = getDb().collection("historical_scores").doc(docId); // This will now work
 
     const parsedEventDate = new Date(eventDate);
     const offSeasonDay = calculateOffSeasonDay(parsedEventDate, year);
@@ -39,7 +42,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
       offSeasonDay: offSeasonDay,
     };
 
-    await getDb().runTransaction(async (transaction) => {
+    await getDb().runTransaction(async (transaction) => { // This will now work
       const yearDoc = await transaction.get(yearDocRef);
 
       if (!yearDoc.exists) {
@@ -104,7 +107,7 @@ exports.processDciScores = onMessagePublished("dci-scores-topic", async (message
 
 exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (message) => {
   logger.info("Received new live score recap to process.");
-  const db = getDb();
+  const db = getDb(); // This will now work
 
   try {
     const payloadBuffer = Buffer.from(message.data.message.data, "base64").toString("utf-8");
@@ -133,6 +136,7 @@ exports.processLiveScoreRecap = onMessagePublished(LIVE_SCORES_TOPIC, async (mes
       });
     }
 
+    // --- USE dataNamespaceParam HERE ---
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", activeSeasonId);
     const profilesSnapshot = await profilesQuery.get();
     if (profilesSnapshot.empty) {
