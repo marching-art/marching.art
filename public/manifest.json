@@ -1,7 +1,6 @@
 {
-  "short_name": "Marching.art",
-  "name": "Marching.art Fantasy League",
-  "description": "Fantasy league for drum corps and marching arts competitions",
+  "short_name": "marching.art",
+  "name": "marching.art - Ultimate Fantasy Drum Corps",
   "icons": [
     {
       "src": "favicon.ico",
@@ -11,59 +10,31 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "sizes": "512x512"
     }
   ],
-  "start_url": "/",
-  "scope": "/",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ef4444",
-  "background_color": "#0f172a",
-  "orientation": "portrait-primary",
-  "categories": ["sports", "entertainment", "social"],
+  "theme_color": "#FFD44D",
+  "background_color": "#1A1A1A",
+  "orientation": "portrait",
+  "description": "The ultimate fantasy drum corps game. Build your dream corps and compete with directors worldwide.",
+  "categories": ["games", "entertainment", "sports"],
   "screenshots": [
     {
-      "src": "screenshot-mobile.png",
-      "sizes": "540x720",
+      "src": "/screenshots/dashboard.png",
       "type": "image/png",
-      "platform": "narrow"
+      "sizes": "1280x720"
     },
     {
-      "src": "screenshot-desktop.png",
-      "sizes": "1920x1080",
+      "src": "/screenshots/leaderboard.png",
       "type": "image/png",
-      "platform": "wide"
+      "sizes": "1280x720"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your fantasy dashboard",
-      "url": "/?page=dashboard",
-      "icons": [{ "src": "icon-dashboard.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Leaderboard",
-      "short_name": "Leaderboard",
-      "description": "View global leaderboard",
-      "url": "/?page=leaderboard",
-      "icons": [{ "src": "icon-leaderboard.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Scores",
-      "short_name": "Scores",
-      "description": "View latest scores",
-      "url": "/?page=scores",
-      "icons": [{ "src": "icon-scores.png", "sizes": "96x96" }]
-    }
-  ],
-  "prefer_related_applications": false
+  ]
 }

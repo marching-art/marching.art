@@ -1,85 +1,209 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+// src/firebase.js
+import { initializeApp } from 'firebase/app';
 import { 
-  initializeFirestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager,
-  CACHE_SIZE_UNLIMITED
-} from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
-import { getPerformance, trace as perfTrace } from "firebase/performance";
-import { getAnalytics, logEvent as logAnalyticsEvent } from "firebase/analytics";
+  getAuth, 
+  connectAuthEmulator,
+  signInWithEmailAndPassword,
+  signInAnonymously,
+  signInWithCustomToken,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  connectFirestoreEmulator,
+  enableIndexedDbPersistence
+} from 'firebase/firestore';
+import { 
+  getFunctions, 
+  connectFunctionsEmulator 
+} from 'firebase/functions';
+import { 
+  getStorage, 
+  connectStorageEmulator 
+} from 'firebase/storage';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 
+// Firebase configuration from development guidelines
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_API_KEY,
-  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_APP_ID,
-  measurementId: process.env.REACT_APP_MEASUREMENT_ID
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "marching-art.firebaseapp.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "marching-art",
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "marching-art.firebasestorage.app",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "278086562126",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:278086562126:web:f7737ee897774c3d9a6e1f",
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-H0KE8GJS7M"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth
-const auth = getAuth(app);
+// Initialize services
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const functions = getFunctions(app);
+export const storage = getStorage(app);
+export const analytics = getAnalytics(app);
 
-// Initialize Firestore with optimized caching
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED // Allow unlimited cache
-  }),
-  experimentalForceLongPolling: false, // Use WebChannel (faster)
-  experimentalAutoDetectLongPolling: true // Auto-detect best connection method
-});
-
-// Initialize Functions
-const functions = getFunctions(app);
-
-// Initialize Performance Monitoring (production only)
-let perf = null;
-if (process.env.NODE_ENV === 'production') {
-  perf = getPerformance(app);
+// Enable offline persistence
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+    } else if (err.code === 'unimplemented') {
+      console.warn('The current browser does not support offline persistence.');
+    }
+  });
 }
 
-// Initialize Analytics (production only)
-let analytics = null;
-if (process.env.NODE_ENV === 'production' && process.env.REACT_APP_FIREBASE_MEASUREMENT_ID) {
-  analytics = getAnalytics(app);
+// Connect to emulators if in development
+if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_EMULATORS === 'true') {
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+  connectStorageEmulator(storage, 'localhost', 9199);
 }
 
-// Data namespace for environment separation
-export const dataNamespace = process.env.REACT_APP_DATA_NAMESPACE || 'marching-art';
+// Auth helpers
+export const authHelpers = {
+  // Sign in with email and password
+  signInWithEmail: async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      logEvent(analytics, 'login', { method: 'email' });
+      return userCredential;
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  },
 
-// Log initialization in development only
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔥 Firebase initialized');
-  console.log('📦 dataNamespace:', dataNamespace);
-  console.log('🌐 Environment:', process.env.NODE_ENV);
-}
+  // Sign up with email and password
+  signUpWithEmail: async (email, password) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      logEvent(analytics, 'sign_up', { method: 'email' });
+      return userCredential;
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  },
 
-export { auth, db, functions, perf, analytics };
+  // Sign in anonymously
+  signInAnon: async () => {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      logEvent(analytics, 'login', { method: 'anonymous' });
+      return userCredential;
+    } catch (error) {
+      console.error('Error signing in anonymously:', error);
+      throw error;
+    }
+  },
 
-// Performance tracing helper
-export const trace = (traceName) => {
-  if (perf) {
-    return perfTrace(perf, traceName);
+  // Sign in with custom token
+  signInWithToken: async (token) => {
+    try {
+      const userCredential = await signInWithCustomToken(auth, token);
+      logEvent(analytics, 'login', { method: 'custom_token' });
+      return userCredential;
+    } catch (error) {
+      console.error('Error signing in with custom token:', error);
+      throw error;
+    }
+  },
+
+  // Sign out
+  signOut: async () => {
+    try {
+      await signOut(auth);
+      logEvent(analytics, 'logout');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  },
+
+  // Get current user
+  getCurrentUser: () => auth.currentUser,
+
+  // Subscribe to auth state changes
+  onAuthStateChange: (callback) => {
+    return onAuthStateChanged(auth, callback);
   }
-  // Return mock trace for development
-  return {
-    start: () => {},
-    stop: () => {},
-    putAttribute: () => {},
-    putMetric: () => {}
-  };
 };
 
-// Analytics event helper
-export const logEvent = (eventName, eventParams = {}) => {
-  if (analytics) {
-    logAnalyticsEvent(analytics, eventName, eventParams);
+// Season helpers
+export const seasonHelpers = {
+  // Calculate current season based on date
+  getCurrentSeason: () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    
+    // Finals are always on the second Saturday of August
+    const augustFirst = new Date(year, 7, 1);
+    const firstSaturday = augustFirst.getDay() === 6 ? 1 : 7 - augustFirst.getDay() + 6;
+    const finalsDate = new Date(year, 7, firstSaturday + 7);
+    
+    // Live season is 10 weeks before finals
+    const liveSeasonStart = new Date(finalsDate);
+    liveSeasonStart.setDate(liveSeasonStart.getDate() - 70);
+    
+    if (now >= liveSeasonStart && now <= finalsDate) {
+      return {
+        type: 'live',
+        year: year,
+        week: Math.floor((now - liveSeasonStart) / (7 * 24 * 60 * 60 * 1000)) + 1,
+        daysRemaining: Math.floor((finalsDate - now) / (24 * 60 * 60 * 1000))
+      };
+    } else {
+      // Off-season
+      const offSeasonNumber = now < liveSeasonStart ? 
+        Math.floor((liveSeasonStart - now) / (7 * 7 * 24 * 60 * 60 * 1000)) + 1 : 
+        Math.floor((now - finalsDate) / (7 * 7 * 24 * 60 * 60 * 1000)) + 1;
+      
+      return {
+        type: 'off',
+        year: year,
+        offSeasonNumber: Math.min(offSeasonNumber, 6),
+        week: ((now - finalsDate) / (7 * 24 * 60 * 60 * 1000)) % 7 + 1
+      };
+    }
+  },
+
+  // Format season display name
+  formatSeasonName: (season) => {
+    if (season.type === 'live') {
+      return `${season.year} Live Season - Week ${season.week}`;
+    } else {
+      return `${season.year} Off-Season ${season.offSeasonNumber} - Week ${Math.floor(season.week)}`;
+    }
   }
 };
+
+// Analytics helpers
+export const analyticsHelpers = {
+  logPageView: (pageName) => {
+    logEvent(analytics, 'page_view', { page_name: pageName });
+  },
+  
+  logButtonClick: (buttonName) => {
+    logEvent(analytics, 'button_click', { button_name: buttonName });
+  },
+  
+  logCorpsCreated: (corpsClass) => {
+    logEvent(analytics, 'corps_created', { corps_class: corpsClass });
+  },
+  
+  logLeagueJoined: (leagueId) => {
+    logEvent(analytics, 'league_joined', { league_id: leagueId });
+  },
+  
+  logCaptionSelected: (caption, corps) => {
+    logEvent(analytics, 'caption_selected', { caption, corps });
+  }
+};
+
+export default app;
