@@ -1,8 +1,6 @@
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { logger } = require("firebase-functions/v2");
-// --- ADDED THIS LINE ---
 const { getDb, dataNamespaceParam } = require("../config");
-// ---------------------
 const { queueRecapUrlForScraping } = require("../helpers/scraping");
 const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
