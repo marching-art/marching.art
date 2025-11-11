@@ -44,7 +44,9 @@
     ]
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.28.5",
     "autoprefixer": "^10.4.16",
+    "eslint-config-react-app": "^7.0.1",
     "postcss": "^8.4.32",
     "react-scripts": "5.0.1"
   }
