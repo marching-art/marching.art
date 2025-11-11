@@ -1,11 +1,10 @@
 // src/components/Navigation.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Trophy, Calendar, Music, User, Settings, LogOut, 
   Users, Award, HelpCircle, ChevronRight, Sparkles, 
-  BarChart3, MessageSquare, Bell, Star, Zap
+  Star
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -15,7 +14,7 @@ const Navigation = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [notifications, setNotifications] = useState(0);
+  const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {

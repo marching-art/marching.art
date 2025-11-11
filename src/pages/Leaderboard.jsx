@@ -8,6 +8,31 @@ import {
 import { db, seasonHelpers } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
+import { useCallback, useEffect, useState } from 'react';
+
+const subscribeToRankings = useCallback(() => {
+  if (!currentSeason) return;
+  
+  const rankingsRef = collection(db, 'leaderboards', currentSeason.seasonUid, 'rankings');
+  const q = query(rankingsRef, orderBy('totalScore', 'desc'), limit(100));
+  
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const rankingsData = snapshot.docs.map((doc, index) => ({
+      id: doc.id,
+      rank: index + 1,
+      ...doc.data()
+    }));
+    setRankings(rankingsData);
+    setLoading(false);
+  });
+  
+  return unsubscribe;
+}, [currentSeason]);
+
+useEffect(() => {
+  const unsubscribe = subscribeToRankings();
+  return () => unsubscribe && unsubscribe();
+}, [subscribeToRankings]);
 
 const Leaderboard = () => {
   const [activeClass, setActiveClass] = useState('world');

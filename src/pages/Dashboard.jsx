@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 
@@ -19,11 +19,9 @@ const Dashboard = () => {
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
   const [availableCorps, setAvailableCorps] = useState([]);
-  const [selectedCaptions, setSelectedCaptions] = useState({});
-  const [season, setSeason] = useState(seasonHelpers.getCurrentSeason());
+  const [season] = useState(seasonHelpers.getCurrentSeason());
   const [recentScores, setRecentScores] = useState([]);
-  const [leagueRankings, setLeagueRankings] = useState([]);
-
+  
   useEffect(() => {
     if (user) {
       // Subscribe to profile updates
