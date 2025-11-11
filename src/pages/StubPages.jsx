@@ -1,7 +1,7 @@
 // src/pages/Schedule.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Clock, ChevronRight } from 'lucide-react';
 
 export default function Schedule() {
   const weeks = [

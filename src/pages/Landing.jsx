@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Music, Trophy, Users, Star, ArrowRight, Zap, 
-  Target, TrendingUp, Award, Shield, Sparkles,
+  Target, Award, Sparkles,
   ChevronRight, PlayCircle
 } from 'lucide-react';
 

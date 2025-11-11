@@ -1,7 +1,6 @@
 // src/pages/HowToPlay.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Play, Trophy, Users } from 'lucide-react';
 
 const HowToPlay = () => {
   return (

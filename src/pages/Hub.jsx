@@ -1,7 +1,7 @@
 // src/pages/Hub.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Plus, Trophy, MessageSquare, TrendingUp } from 'lucide-react';
+import { Users, Plus, Trophy, } from 'lucide-react';
 
 const Hub = () => {
   return (

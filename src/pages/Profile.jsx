@@ -1,7 +1,7 @@
 // src/pages/Profile.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, Trophy, Star, Award } from 'lucide-react';
+import { User } from 'lucide-react';
 
 const Profile = () => {
   return (

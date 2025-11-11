@@ -1,7 +1,6 @@
 // src/pages/HallOfChampions.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Crown, Medal, Award } from 'lucide-react';
 
 const HallOfChampions = () => {
   return (

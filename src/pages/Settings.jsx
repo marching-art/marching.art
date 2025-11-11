@@ -1,7 +1,6 @@
 // src/pages/Settings.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Bell, Lock, Palette } from 'lucide-react';
 
 const Settings = () => {
   return (

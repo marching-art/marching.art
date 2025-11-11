@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Music, Trophy, Users, Calendar, Star, TrendingUp, 
-  ChevronRight, Plus, Edit, Lock, Unlock, Zap, Award,
-  Shield, Target, Sparkles, AlertCircle, Check
+  ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';

@@ -1,7 +1,7 @@
 // src/pages/Scores.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Music, Calendar, Trophy } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 const Scores = () => {
   return (
