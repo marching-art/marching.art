@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Trophy, Medal, Award, TrendingUp, TrendingDown, 
+  Trophy, Medal, Music2, Award, TrendingUp, TrendingDown, 
   Minus, Filter, ChevronDown, Star, Crown, Shield
 } from 'lucide-react';
 import { db, seasonHelpers } from '../firebase';
@@ -244,7 +244,7 @@ const Leaderboard = () => {
                         <div className="flex items-center gap-3">
                           {/* Corps Avatar */}
                           <div className="w-10 h-10 bg-gradient-to-br from-gold-500/20 to-cream-500/20 rounded-lg flex items-center justify-center">
-                            <Music className="w-5 h-5 text-gold-500" />
+                            <Music2 className="w-5 h-5 text-gold-500" />
                           </div>
                           <div>
                             <p className="font-semibold text-cream-100">
