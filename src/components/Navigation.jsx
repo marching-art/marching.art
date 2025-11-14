@@ -43,6 +43,9 @@ const Navigation = () => {
     }
   }, [user]);
 
+  // Debug: Log admin state whenever component renders
+  console.log('[Navigation] Render - isAdmin:', isAdmin, 'user:', user?.uid);
+
   const navItems = [
     {
       section: 'Main',
@@ -136,6 +139,10 @@ const Navigation = () => {
       ]
     }] : [])
   ];
+
+  // Debug: Log final navItems
+  console.log('[Navigation] Final navItems count:', navItems.length);
+  console.log('[Navigation] Has admin section:', navItems.some(section => section.section === 'Administration'));
 
   const handleSignOut = async () => {
     try {
