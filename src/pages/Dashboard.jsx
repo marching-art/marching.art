@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc, getDocs } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 
@@ -83,20 +83,32 @@ const Dashboard = () => {
     }
   };
 
-  const fetchRecentScores = async () => {
-    try {
-      const scoresQuery = query(
-        collection(db, 'fantasy_recaps', season.year.toString()),
-        orderBy('date', 'desc'),
-        limit(5)
-      );
-      const snapshot = await getDocs(scoresQuery);
-      const scores = snapshot.docs.map(doc => doc.data());
-      setRecentScores(scores);
-    } catch (error) {
-      console.error('Error fetching recent scores:', error);
+const fetchRecentScores = async () => {
+  try {
+    const seasonId = `${season.year}-${season.type}`;
+    const recapDocRef = doc(db, 'fantasy_recaps', seasonId);
+    const recapDocSnap = await getDoc(recapDocRef);
+
+    if (recapDocSnap.exists()) {
+      const allRecaps = recapDocSnap.data().recaps || [];
+      // Sort by date descending and take the first 5, map to expected UI shape
+      const sortedRecaps = allRecaps
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5)
+        .map(r => ({
+          showName: r.showName || r.name || 'Unknown Show',
+          date: r.date || '',
+          totalScore: (typeof r.totalScore === 'number') ? r.totalScore.toFixed(2) : (r.totalScore || '0.00'),
+          rank: r.rank ?? '-'
+        }));
+      setRecentScores(sortedRecaps);
+    } else {
+      setRecentScores([]);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching recent scores:', error);
+  }
+};
 
   const subscribeToLeagueRankings = () => {
     // Subscribe to user's league rankings
@@ -300,7 +312,7 @@ const Dashboard = () => {
                       corps.class === 'open' ? 'badge-cream' :
                       'badge-success'
                     }`}>
-                      {corps.class.charAt(0).toUpperCase() + corps.class.slice(1)} Class
+                      {corps.class ? corps.class.charAt(0).toUpperCase() + corps.class.slice(1) : 'Unknown'} Class
                     </span>
                     {corps.rank && corps.rank <= 10 && (
                       <span className="badge badge-gold">
