@@ -45,6 +45,7 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
+export const dataNamespace = 'prod';
 
 // Enable offline persistence
 if (typeof window !== 'undefined') {
