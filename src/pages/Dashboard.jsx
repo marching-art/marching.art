@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDocs, getDoc } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 
@@ -85,16 +85,27 @@ const Dashboard = () => {
 
   const fetchRecentScores = async () => {
     try {
-      const scoresQuery = query(
-        collection(db, 'fantasy_recaps', season.year.toString()),
-        orderBy('date', 'desc'),
-        limit(5)
-      );
-      const snapshot = await getDocs(scoresQuery);
-      const scores = snapshot.docs.map(doc => doc.data());
-      setRecentScores(scores);
+      const seasonId = `${season.year}-${season.type}`;
+      const recapDocRef = doc(db, 'fantasy_recaps', seasonId);
+      const recapDoc = await getDoc(recapDocRef);
+
+      if (recapDoc.exists()) {
+        const allRecaps = recapDoc.data().recaps || [];
+        // Sort by date descending and take the first 5
+        const sortedRecaps = allRecaps
+          .sort((a, b) => {
+            const dateA = a.date?.toMillis?.() || 0;
+            const dateB = b.date?.toMillis?.() || 0;
+            return dateB - dateA;
+          })
+          .slice(0, 5);
+        setRecentScores(sortedRecaps);
+      } else {
+        setRecentScores([]);
+      }
     } catch (error) {
       console.error('Error fetching recent scores:', error);
+      setRecentScores([]);
     }
   };
 
@@ -300,7 +311,7 @@ const Dashboard = () => {
                       corps.class === 'open' ? 'badge-cream' :
                       'badge-success'
                     }`}>
-                      {corps.class.charAt(0).toUpperCase() + corps.class.slice(1)} Class
+                      {corps.class ? corps.class.charAt(0).toUpperCase() + corps.class.slice(1) : 'Unknown'} Class
                     </span>
                     {corps.rank && corps.rank <= 10 && (
                       <span className="badge badge-gold">
