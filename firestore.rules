@@ -51,6 +51,13 @@ match /{path=**}/profile/{docId} {
   allow read: if isAuthenticated();
 }
 
+// --- LEADERBOARD DATA ---
+// Allow public read access to leaderboard subcollections
+match /artifacts/{appId}/leaderboard/{timeframe}/{classType} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 // --- PUBLIC GAME DATA (READ-ONLY FOR USERS) ---
 // This structure from your file is perfect.
 match /game-settings/{docId} {
@@ -137,5 +144,20 @@ match /reports/{reportId} {
 match /season_settings/{docId} {
   allow read: if true;
   allow write: if isAdmin();
+}
+
+// --- STAFF MANAGEMENT ---
+// Staff database for marketplace
+match /staff_database/{staffId} {
+  allow read: if true; // Public marketplace
+  allow write: if isAdmin(); // Admin only
+}
+
+// Staff marketplace listings (user-to-user sales)
+match /staff_marketplace/{listingId} {
+  allow read: if true;
+  allow create: if isAuthenticated();
+  allow update, delete: if isAuthenticated() &&
+    (request.auth.uid == resource.data.sellerId || isAdmin());
 }
 }}
