@@ -30,7 +30,7 @@ const Admin = () => {
   }, [user]);
 
   const handleStartOffSeason = async () => {
-    if (!confirm('Are you sure you want to start a new off-season? This will reset all current progress.')) {
+    if (!window.confirm('Are you sure you want to start a new off-season? This will reset all current progress.')) {
       return;
     }
 
@@ -48,7 +48,7 @@ const Admin = () => {
   };
 
   const handleStartLiveSeason = async () => {
-    if (!confirm('Are you sure you want to start a new live season? This will transition from off-season.')) {
+    if (!window.confirm('Are you sure you want to start a new live season? This will transition from off-season.')) {
       return;
     }
 
@@ -66,7 +66,7 @@ const Admin = () => {
   };
 
   const handleManualTrigger = async (jobName, displayName) => {
-    if (!confirm(`Are you sure you want to run "${displayName}"?`)) {
+    if (!window.confirm(`Are you sure you want to run "${displayName}"?`)) {
       return;
     }
 
