@@ -168,7 +168,7 @@ const Register = () => {
                 Create Your Account
               </h1>
               <p className="text-cream-500/60 mt-2">
-                Join the ultimate fantasy drum corps experience
+                Join marching.art and compete with directors worldwide
               </p>
             </div>
 

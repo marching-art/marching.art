@@ -45,7 +45,7 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
-export const dataNamespace = 'prod';
+export const dataNamespace = 'marching-art';
 
 // Enable offline persistence
 if (typeof window !== 'undefined') {
@@ -189,21 +189,48 @@ export const analyticsHelpers = {
   logPageView: (pageName) => {
     logEvent(analytics, 'page_view', { page_name: pageName });
   },
-  
+
   logButtonClick: (buttonName) => {
     logEvent(analytics, 'button_click', { button_name: buttonName });
   },
-  
+
   logCorpsCreated: (corpsClass) => {
     logEvent(analytics, 'corps_created', { corps_class: corpsClass });
   },
-  
+
   logLeagueJoined: (leagueId) => {
     logEvent(analytics, 'league_joined', { league_id: leagueId });
   },
-  
+
   logCaptionSelected: (caption, corps) => {
     logEvent(analytics, 'caption_selected', { caption, corps });
+  }
+};
+
+// Admin helpers
+export const adminHelpers = {
+  // Check if current user is admin
+  isAdmin: async () => {
+    const user = auth.currentUser;
+    if (!user) return false;
+
+    // Admin UID from firestore path
+    const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
+
+    if (user.uid === ADMIN_UID) return true;
+
+    // Also check custom claims
+    const tokenResult = await user.getIdTokenResult();
+    return tokenResult.claims.admin === true;
+  },
+
+  // Get current user's admin status and token claims
+  getCurrentUserClaims: async () => {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    const tokenResult = await user.getIdTokenResult();
+    return tokenResult.claims;
   }
 };
 

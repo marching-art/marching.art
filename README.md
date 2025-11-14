@@ -1,4 +1,4 @@
-# marching.art - Ultimate Fantasy Drum Corps Game 🎺🏆
+# marching.art 🎺🏆
 
 ## Overview
 

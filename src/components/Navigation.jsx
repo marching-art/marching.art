@@ -138,7 +138,7 @@ const Navigation = () => {
                 <h1 className="text-xl font-display font-bold text-gradient">
                   marching.art
                 </h1>
-                <p className="text-xs text-cream-500/60">Ultimate Fantasy DCI</p>
+                <p className="text-xs text-cream-500/60">Drum Corps Competition</p>
               </div>
             )}
           </Link>

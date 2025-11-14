@@ -114,7 +114,7 @@ export function HowToPlay() {
           <div className="card p-8 space-y-6">
             <div>
               <h2 className="text-2xl font-semibold text-cream-100 mb-3">Getting Started</h2>
-              <p className="text-cream-300">Welcome to marching.art, the ultimate fantasy drum corps game!</p>
+              <p className="text-cream-300">Welcome to marching.art!</p>
             </div>
 
             <div>
