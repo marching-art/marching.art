@@ -23,6 +23,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
 const Admin = lazy(() => import('./pages/Admin'));
+const DebugUser = lazy(() => import('./pages/DebugUser'));
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -280,6 +281,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Admin />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/debug-user" element={
+            <ProtectedRoute>
+              <Layout>
+                <DebugUser />
               </Layout>
             </ProtectedRoute>
           } />
