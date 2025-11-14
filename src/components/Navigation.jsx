@@ -20,6 +20,8 @@ const Navigation = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('[Navigation] User loaded:', user.uid);
+
       // Subscribe to profile updates
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       const unsubscribe = onSnapshot(profileRef, (doc) => {
@@ -29,9 +31,15 @@ const Navigation = () => {
       });
 
       // Check admin status
-      adminHelpers.isAdmin().then(setIsAdmin);
+      adminHelpers.isAdmin().then((isAdminResult) => {
+        console.log('[Navigation] Admin check result:', isAdminResult);
+        setIsAdmin(isAdminResult);
+      });
 
       return () => unsubscribe();
+    } else {
+      console.log('[Navigation] No user');
+      setIsAdmin(false);
     }
   }, [user]);
 
