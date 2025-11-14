@@ -9,6 +9,7 @@ import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc, getDocs } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
+import SeasonInfo from '../components/SeasonInfo';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -271,7 +272,14 @@ const fetchRecentScores = async () => {
         </div>
       </motion.div>
 
-      {/* Corps Management */}
+      {/* Season Info & Corps Management */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Season Information */}
+        <SeasonInfo className="lg:col-span-1" />
+
+        {/* Corps Management Card */}
+        <div className="lg:col-span-2">
+          {/* Corps Management */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -392,6 +400,8 @@ const fetchRecentScores = async () => {
           </div>
         )}
       </motion.div>
+        </div>
+      </div>
 
       {/* Recent Activity */}
       <motion.div

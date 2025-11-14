@@ -19,6 +19,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
+const Admin = lazy(() => import('./pages/Admin'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
@@ -279,6 +280,14 @@ function App() {
             <Layout>
               <HallOfChampions />
             </Layout>
+          } />
+
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Layout>
+                <Admin />
+              </Layout>
+            </ProtectedRoute>
           } />
 
           {/* 404 Route */}
