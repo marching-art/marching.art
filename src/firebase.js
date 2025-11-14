@@ -207,37 +207,40 @@ export const analyticsHelpers = {
   }
 };
 
+// Admin UID constant - your user ID
+export const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
+
 // Admin helpers
 export const adminHelpers = {
   // Check if current user is admin
   isAdmin: async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      console.log('[Admin Check] No user logged in');
-      return false;
-    }
-
-    // Admin UID from firestore path
-    const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
-
-    console.log('[Admin Check] Current UID:', user.uid);
-    console.log('[Admin Check] Expected UID:', ADMIN_UID);
-    console.log('[Admin Check] UID Match:', user.uid === ADMIN_UID);
-
-    if (user.uid === ADMIN_UID) {
-      console.log('[Admin Check] ✓ Admin by UID match');
-      return true;
-    }
-
-    // Also check custom claims
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('[Admin Check] No user logged in');
+        return false;
+      }
+
+      console.log('[Admin Check] Checking for user:', user.uid);
+      console.log('[Admin Check] Expected admin UID:', ADMIN_UID);
+
+      const isMatch = user.uid === ADMIN_UID;
+      console.log('[Admin Check] UID Match:', isMatch);
+
+      if (isMatch) {
+        console.log('[Admin Check] ✓ ADMIN ACCESS GRANTED');
+        return true;
+      }
+
+      // Also check custom claims as fallback
       const tokenResult = await user.getIdTokenResult();
       console.log('[Admin Check] Custom claims:', tokenResult.claims);
-      const isAdminByClaim = tokenResult.claims.admin === true;
+      const isAdminByClaim = tokenResult.claims?.admin === true;
       console.log('[Admin Check] Admin by claim:', isAdminByClaim);
+
       return isAdminByClaim;
     } catch (error) {
-      console.error('[Admin Check] Error getting token:', error);
+      console.error('[Admin Check] ERROR:', error);
       return false;
     }
   },
