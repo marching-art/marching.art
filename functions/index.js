@@ -9,11 +9,20 @@ const {
   getUserRankings,
   migrateUserProfiles,
   createUserProfile,
+  dailyRehearsal,
+  awardXP,
 } = require("./src/callable/users");
 const {
   validateAndSaveLineup,
   selectUserShows,
 } = require("./src/callable/lineups");
+const {
+  unlockClassWithCorpsCoin,
+  purchaseStaff,
+  assignStaff,
+  getStaffMarketplace,
+} = require("./src/callable/economy");
+const { registerCorps } = require("./src/callable/registerCorps");
 const {
   createLeague,
   joinLeague,
@@ -65,6 +74,13 @@ module.exports = {
   createUserProfile,
   startNewOffSeason,
   startNewLiveSeason,
+  dailyRehearsal,
+  awardXP,
+  unlockClassWithCorpsCoin,
+  purchaseStaff,
+  assignStaff,
+  getStaffMarketplace,
+  registerCorps,
 
   // Scheduled
   seasonScheduler,

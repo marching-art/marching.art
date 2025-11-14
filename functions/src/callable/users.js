@@ -280,3 +280,143 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Migration failed: " + error.message);
   }
 });
+
+/**
+ * Daily rehearsal button - Earns XP once per 23 hours
+ */
+exports.dailyRehearsal = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const uid = request.auth.uid;
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const profileDoc = await profileRef.get();
+    if (!profileDoc.exists) {
+      throw new HttpsError("not-found", "User profile not found.");
+    }
+
+    const profileData = profileDoc.data();
+    const lastRehearsal = profileData.lastRehearsal?.toDate();
+    const now = new Date();
+    const twentyThreeHoursAgo = new Date(now.getTime() - (23 * 60 * 60 * 1000));
+
+    if (lastRehearsal && lastRehearsal > twentyThreeHoursAgo) {
+      const timeRemaining = 23 - Math.floor((now - lastRehearsal) / (60 * 60 * 1000));
+      throw new HttpsError("failed-precondition", `You can rehearse again in ${timeRemaining} hours.`);
+    }
+
+    const XP_PER_REHEARSAL = 10;
+    const currentXP = profileData.xp || 0;
+    const newXP = currentXP + XP_PER_REHEARSAL;
+    const newLevel = Math.floor(newXP / 1000) + 1;
+
+    const updateData = {
+      xp: newXP,
+      xpLevel: newLevel,
+      lastRehearsal: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // Check for class unlocks
+    const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
+    let classUnlocked = null;
+
+    if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+      unlockedClasses.push('aClass');
+      updateData.unlockedClasses = unlockedClasses;
+      classUnlocked = 'A Class';
+    }
+    if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+      unlockedClasses.push('open');
+      updateData.unlockedClasses = unlockedClasses;
+      classUnlocked = 'Open Class';
+    }
+    if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+      unlockedClasses.push('world');
+      updateData.unlockedClasses = unlockedClasses;
+      classUnlocked = 'World Class';
+    }
+
+    await profileRef.update(updateData);
+
+    logger.info(`User ${uid} completed daily rehearsal. Earned ${XP_PER_REHEARSAL} XP. New total: ${newXP} (Level ${newLevel})`);
+
+    return {
+      success: true,
+      xpEarned: XP_PER_REHEARSAL,
+      totalXP: newXP,
+      level: newLevel,
+      classUnlocked: classUnlocked,
+      message: classUnlocked ? `🎉 Unlocked ${classUnlocked}!` : `Great practice! +${XP_PER_REHEARSAL} XP`,
+    };
+  } catch (error) {
+    logger.error(`Error in dailyRehearsal for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to complete rehearsal.");
+  }
+});
+
+/**
+ * Award XP for various actions (comments, chat, etc.)
+ */
+exports.awardXP = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { amount, reason } = request.data;
+  const uid = request.auth.uid;
+
+  if (!amount || amount <= 0) {
+    throw new HttpsError("invalid-argument", "Invalid XP amount.");
+  }
+
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+
+      const profileData = profileDoc.data();
+      const currentXP = profileData.xp || 0;
+      const newXP = currentXP + amount;
+      const newLevel = Math.floor(newXP / 1000) + 1;
+
+      const updateData = {
+        xp: newXP,
+        xpLevel: newLevel,
+      };
+
+      // Check for class unlocks
+      const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
+      if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+        unlockedClasses.push('aClass');
+        updateData.unlockedClasses = unlockedClasses;
+      }
+      if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+        unlockedClasses.push('open');
+        updateData.unlockedClasses = unlockedClasses;
+      }
+      if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+        unlockedClasses.push('world');
+        updateData.unlockedClasses = unlockedClasses;
+      }
+
+      transaction.update(profileRef, updateData);
+    });
+
+    logger.info(`Awarded ${amount} XP to user ${uid} for: ${reason}`);
+    return { success: true, xpAwarded: amount };
+  } catch (error) {
+    logger.error(`Error awarding XP to user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to award XP.");
+  }
+});

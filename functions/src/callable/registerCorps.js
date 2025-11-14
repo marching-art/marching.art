@@ -34,34 +34,62 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     if (!profileDoc.exists) {
       throw new HttpsError("not-found", "User profile does not exist.");
     }
-    
+
     const profileData = profileDoc.data();
-    
-    // --- 2. Check Unlocked Classes ---
+
+    // --- 2. Check Registration Locks Based on Weeks Remaining ---
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (seasonDoc.exists) {
+      const seasonData = seasonDoc.data();
+      const now = new Date();
+      const endDate = seasonData.schedule?.endDate?.toDate();
+
+      if (endDate) {
+        const millisRemaining = endDate.getTime() - now.getTime();
+        const weeksRemaining = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
+
+        const registrationLocks = {
+          world: 6,
+          open: 5,
+          aClass: 4,
+          soundSport: 0, // No lock
+        };
+
+        const lockWeeks = registrationLocks[corpsClass] || 0;
+        if (weeksRemaining < lockWeeks) {
+          throw new HttpsError(
+            "failed-precondition",
+            `Registration for ${corpsClass} is closed (locks at ${lockWeeks} weeks remaining, currently ${weeksRemaining} weeks left).`
+          );
+        }
+      }
+    }
+
+    // --- 3. Check Unlocked Classes ---
     const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
     if (!unlockedClasses.includes(corpsClass)) {
       throw new HttpsError("permission-denied", `You have not unlocked the ${corpsClass} class.`);
     }
 
-    // --- 3. Check if corps already exists for this class ---
+    // --- 4. Check if corps already exists for this class ---
     if (profileData.corps && profileData.corps[corpsClass]) {
       throw new HttpsError("already-exists", `You already have a corps in the ${corpsClass} class.`);
     }
 
-    // --- 4. Create New Corps Data ---
+    // --- 5. Create New Corps Data ---
     const newCorpsData = {
       corpsName,
       location,
-      showConcept, 
+      showConcept,
       class: corpsClass,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lineup: {},
       selectedShows: {},
       totalSeasonScore: 0,
-      biography: `The ${corpsName} from ${location}.`, 
+      biography: `The ${corpsName} from ${location}.`,
     };
 
-    // --- 5. Write to DB ---
+    // --- 6. Write to DB ---
     await profileDocRef.update({
       [`corps.${corpsClass}`]: newCorpsData
     });

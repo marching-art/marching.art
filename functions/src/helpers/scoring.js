@@ -4,6 +4,7 @@ const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { shuffleArray } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
+const { awardCorpsCoin } = require("../callable/economy");
 
 
 async function fetchHistoricalData(dataDocId) {
@@ -297,6 +298,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
           const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
           dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
+
+          // Award CorpsCoin for performance
+          await awardCorpsCoin(uid, corpsClass, show.eventName);
 
           showResult.results.push({
             uid: uid,
