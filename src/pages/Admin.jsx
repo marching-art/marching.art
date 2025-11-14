@@ -7,7 +7,7 @@ import {
   Calendar, Trophy, Users, Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { functions, adminHelpers } from '../firebase';
+import { functions, adminHelpers, ADMIN_UID } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 
@@ -20,13 +20,32 @@ const Admin = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       console.log('[Admin Page] Checking admin status for user:', user?.uid);
-      if (user) {
-        const adminStatus = await adminHelpers.isAdmin();
-        console.log('[Admin Page] Admin status result:', adminStatus);
-        setIsAdmin(adminStatus);
-      } else {
+      console.log('[Admin Page] Expected admin UID:', ADMIN_UID);
+
+      if (!user) {
         console.log('[Admin Page] No user logged in');
+        setLoading(false);
+        return;
       }
+
+      // First check: Direct UID comparison (synchronous)
+      if (user.uid === ADMIN_UID) {
+        console.log('[Admin Page] ✓ UID MATCH - Granting immediate admin access');
+        setIsAdmin(true);
+        setLoading(false);
+        return;
+      }
+
+      // Second check: Async check for custom claims
+      try {
+        const adminStatus = await adminHelpers.isAdmin();
+        console.log('[Admin Page] Async admin check result:', adminStatus);
+        setIsAdmin(adminStatus);
+      } catch (error) {
+        console.error('[Admin Page] Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+
       setLoading(false);
     };
 
