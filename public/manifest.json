@@ -1,6 +1,6 @@
 {
   "short_name": "marching.art",
-  "name": "marching.art - Ultimate Fantasy Drum Corps",
+  "name": "marching.art",
   "icons": [
     {
       "src": "favicon.ico",
@@ -23,7 +23,7 @@
   "theme_color": "#FFD44D",
   "background_color": "#1A1A1A",
   "orientation": "portrait",
-  "description": "The ultimate fantasy drum corps game. Build your dream corps and compete with directors worldwide.",
+  "description": "Build your dream corps and compete with directors worldwide.",
   "categories": ["games", "entertainment", "sports"],
   "screenshots": [
     {
