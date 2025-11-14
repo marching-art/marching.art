@@ -212,16 +212,34 @@ export const adminHelpers = {
   // Check if current user is admin
   isAdmin: async () => {
     const user = auth.currentUser;
-    if (!user) return false;
+    if (!user) {
+      console.log('[Admin Check] No user logged in');
+      return false;
+    }
 
     // Admin UID from firestore path
     const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
 
-    if (user.uid === ADMIN_UID) return true;
+    console.log('[Admin Check] Current UID:', user.uid);
+    console.log('[Admin Check] Expected UID:', ADMIN_UID);
+    console.log('[Admin Check] UID Match:', user.uid === ADMIN_UID);
+
+    if (user.uid === ADMIN_UID) {
+      console.log('[Admin Check] ✓ Admin by UID match');
+      return true;
+    }
 
     // Also check custom claims
-    const tokenResult = await user.getIdTokenResult();
-    return tokenResult.claims.admin === true;
+    try {
+      const tokenResult = await user.getIdTokenResult();
+      console.log('[Admin Check] Custom claims:', tokenResult.claims);
+      const isAdminByClaim = tokenResult.claims.admin === true;
+      console.log('[Admin Check] Admin by claim:', isAdminByClaim);
+      return isAdminByClaim;
+    } catch (error) {
+      console.error('[Admin Check] Error getting token:', error);
+      return false;
+    }
   },
 
   // Get current user's admin status and token claims
@@ -229,8 +247,13 @@ export const adminHelpers = {
     const user = auth.currentUser;
     if (!user) return null;
 
-    const tokenResult = await user.getIdTokenResult();
-    return tokenResult.claims;
+    try {
+      const tokenResult = await user.getIdTokenResult();
+      return tokenResult.claims;
+    } catch (error) {
+      console.error('[Admin Claims] Error:', error);
+      return null;
+    }
   }
 };
 

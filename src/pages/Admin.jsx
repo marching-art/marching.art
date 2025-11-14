@@ -19,9 +19,13 @@ const Admin = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
+      console.log('[Admin Page] Checking admin status for user:', user?.uid);
       if (user) {
         const adminStatus = await adminHelpers.isAdmin();
+        console.log('[Admin Page] Admin status result:', adminStatus);
         setIsAdmin(adminStatus);
+      } else {
+        console.log('[Admin Page] No user logged in');
       }
       setLoading(false);
     };
