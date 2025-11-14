@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { Trophy, Medal, Award, Crown, Star, Users, TrendingUp, ChevronDown } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import toast from 'react-hot-toast';
 

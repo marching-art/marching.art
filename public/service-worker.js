@@ -32,12 +32,20 @@ const ROUTE_STRATEGIES = [
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing...');
-  
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[ServiceWorker] Caching app shell');
-        return cache.addAll(PRECACHE_URLS);
+        // Add files individually to handle failures gracefully
+        return Promise.allSettled(
+          PRECACHE_URLS.map(url =>
+            cache.add(url).catch(err => {
+              console.warn(`[ServiceWorker] Failed to cache ${url}:`, err);
+              return null;
+            })
+          )
+        );
       })
       .then(() => self.skipWaiting())
   );

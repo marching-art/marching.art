@@ -61,6 +61,12 @@ match /game-settings/{docId} {
 match /dci-data/{docId} {
   allow read: if true;
   allow write: if isAdmin();
+
+  // Allow reading subcollections like corpsValues
+  match /{subcollection}/{document=**} {
+    allow read: if true;
+    allow write: if isAdmin();
+  }
 }
 
 match /dci-stats/{docId} {
