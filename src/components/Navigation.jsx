@@ -1,13 +1,13 @@
 // src/components/Navigation.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, Trophy, Calendar, Music, User, Settings, LogOut, 
-  Users, Award, HelpCircle, ChevronRight, Sparkles, 
-  Star
+import {
+  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Users, Award, HelpCircle, ChevronRight, Sparkles,
+  Star, Shield
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../firebase';
+import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const Navigation = () => {
@@ -16,6 +16,7 @@ const Navigation = () => {
   const [profile, setProfile] = useState(null);
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -26,6 +27,9 @@ const Navigation = () => {
           setProfile(doc.data());
         }
       });
+
+      // Check admin status
+      adminHelpers.isAdmin().then(setIsAdmin);
 
       return () => unsubscribe();
     }
@@ -102,15 +106,27 @@ const Navigation = () => {
     {
       section: 'Help',
       items: [
-        { 
-          path: '/how-to-play', 
-          label: 'How to Play', 
+        {
+          path: '/how-to-play',
+          label: 'How to Play',
           icon: HelpCircle,
           badge: null,
           premium: false
         }
       ]
-    }
+    },
+    ...(isAdmin ? [{
+      section: 'Administration',
+      items: [
+        {
+          path: '/admin',
+          label: 'Admin Panel',
+          icon: Shield,
+          badge: null,
+          premium: false
+        }
+      ]
+    }] : [])
   ];
 
   const handleSignOut = async () => {

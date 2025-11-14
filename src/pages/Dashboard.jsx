@@ -6,8 +6,9 @@ import {
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, seasonHelpers, analyticsHelpers } from '../firebase';
+import { db, seasonHelpers, analyticsHelpers, functions } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDocs, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import toast from 'react-hot-toast';
 
@@ -118,49 +119,40 @@ const Dashboard = () => {
 
   const handleCorpsRegistration = async (formData) => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const corpsData = {
-        name: formData.name,
+      const registerCorps = httpsCallable(functions, 'registerCorps');
+      const result = await registerCorps({
+        corpsName: formData.name,
         location: formData.location,
         showConcept: formData.showConcept,
-        class: formData.class,
-        createdAt: new Date(),
-        seasonId: `${season.year}-${season.type}`,
-        lineup: {},
-        score: 0,
-        rank: null
-      };
-
-      await updateDoc(profileRef, {
-        [`corps.${formData.class}`]: corpsData
+        class: formData.class
       });
 
       analyticsHelpers.logCorpsCreated(formData.class);
-      toast.success(`${formData.name} registered successfully!`);
+      toast.success(result.data.message || 'Corps registered successfully!');
       setShowRegistration(false);
     } catch (error) {
       console.error('Error registering corps:', error);
-      toast.error('Failed to register corps. Please try again.');
+      toast.error(error.message || 'Failed to register corps. Please try again.');
     }
   };
 
   const handleCaptionSelection = async (captions) => {
     try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      
-      await updateDoc(profileRef, {
-        [`corps.${corps.class}.lineup`]: captions
+      const saveLineup = httpsCallable(functions, 'saveLineup');
+      const result = await saveLineup({
+        lineup: captions,
+        corpsClass: corps.class
       });
 
       Object.entries(captions).forEach(([caption, corpsName]) => {
         analyticsHelpers.logCaptionSelected(caption, corpsName);
       });
 
-      toast.success('Caption lineup saved successfully!');
+      toast.success(result.data.message || 'Caption lineup saved successfully!');
       setShowCaptionSelection(false);
     } catch (error) {
       console.error('Error saving caption lineup:', error);
-      toast.error('Failed to save lineup. Please try again.');
+      toast.error(error.message || 'Failed to save lineup. Please try again.');
     }
   };
 

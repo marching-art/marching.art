@@ -22,6 +22,7 @@ const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
+const Admin = lazy(() => import('./pages/Admin'));
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -274,7 +275,15 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          
+
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Layout>
+                <Admin />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
           <Route path="/hall-of-champions" element={
             <Layout>
               <HallOfChampions />
