@@ -116,14 +116,31 @@ const Admin = () => {
 
   if (!isAdmin) {
     return (
-      <div className="card p-8 text-center">
-        <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
-          Access Denied
-        </h2>
-        <p className="text-cream-500/60">
-          You must be an administrator to access this page.
-        </p>
+      <div className="space-y-4">
+        <div className="card p-8 text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-cream-500/60 mb-4">
+            You must be an administrator to access this page.
+          </p>
+
+          {/* Debug Info */}
+          <div className="bg-charcoal-900 p-4 rounded text-left mt-6">
+            <h3 className="font-bold text-gold-500 mb-2">Debug Information:</h3>
+            <div className="font-mono text-xs space-y-1 text-cream-300">
+              <div><strong>Your UID:</strong> {user?.uid || 'Not logged in'}</div>
+              <div><strong>Expected UID:</strong> {ADMIN_UID}</div>
+              <div><strong>Match:</strong> {user?.uid === ADMIN_UID ? 'YES ✓' : 'NO ✗'}</div>
+              <div><strong>Email:</strong> {user?.email || 'N/A'}</div>
+            </div>
+            <p className="text-yellow-500 text-sm mt-4">
+              If "Match" shows "YES ✓" above but you still see this error,
+              please screenshot this and share with support.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
