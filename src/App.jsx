@@ -118,7 +118,7 @@ const Layout = ({ children }) => {
         <div className="container-responsive py-8 border-t border-cream-500/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-cream-500/60 text-sm">
-              © 2025 marching.art - The Ultimate Fantasy Drum Corps Game
+              © 2025 marching.art
             </p>
             <div className="flex gap-6">
               <a href="/privacy" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">

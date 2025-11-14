@@ -7,7 +7,7 @@ import {
   Star, Shield
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, adminHelpers } from '../firebase';
+import { db, ADMIN_UID } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const Navigation = () => {
@@ -16,11 +16,15 @@ const Navigation = () => {
   const [profile, setProfile] = useState(null);
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Direct synchronous admin check - no async needed!
+  const isAdmin = user?.uid === ADMIN_UID;
 
   useEffect(() => {
     if (user) {
       console.log('[Navigation] User loaded:', user.uid);
+      console.log('[Navigation] Expected admin UID:', ADMIN_UID);
+      console.log('[Navigation] Is admin:', user.uid === ADMIN_UID);
 
       // Subscribe to profile updates
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -30,16 +34,9 @@ const Navigation = () => {
         }
       });
 
-      // Check admin status
-      adminHelpers.isAdmin().then((isAdminResult) => {
-        console.log('[Navigation] Admin check result:', isAdminResult);
-        setIsAdmin(isAdminResult);
-      });
-
       return () => unsubscribe();
     } else {
       console.log('[Navigation] No user');
-      setIsAdmin(false);
     }
   }, [user]);
 

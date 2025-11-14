@@ -2,15 +2,19 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, Trophy, Calendar, Music, User, Settings, LogOut, 
-  Users, Award, HelpCircle, X, Menu, Bell, Star 
+import {
+  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Users, Award, HelpCircle, X, Menu, Bell, Star, Shield
 } from 'lucide-react';
 import { useAuth } from '../App';
+import { ADMIN_UID } from '../firebase';
 
 const MobileNav = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+
+  // Direct synchronous admin check
+  const isAdmin = user?.uid === ADMIN_UID;
 
   // Close menu on route change
   useEffect(() => {
@@ -39,7 +43,8 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award },
     { path: '/profile', label: 'My Profile', icon: User },
     { path: '/settings', label: 'Settings', icon: Settings },
-    { path: '/how-to-play', label: 'How to Play', icon: HelpCircle }
+    { path: '/how-to-play', label: 'How to Play', icon: HelpCircle },
+    ...(isAdmin ? [{ path: '/admin', label: 'Admin Panel', icon: Shield }] : [])
   ];
 
   const menuVariants = {
