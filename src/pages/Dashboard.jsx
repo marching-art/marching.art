@@ -72,13 +72,17 @@ const Dashboard = () => {
   const fetchAvailableCorps = async () => {
     try {
       const seasonId = `${season.year}-${season.type}`;
-      const corpsRef = doc(db, 'dci-data', seasonId);
-      const snapshot = await getDocs(collection(corpsRef, 'corpsValues'));
-      const corpsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAvailableCorps(corpsData);
+      const corpsDocRef = doc(db, 'dci-data', seasonId);
+      const corpsDocSnap = await getDoc(corpsDocRef);
+
+      if (corpsDocSnap.exists()) {
+        // Support both 'corps' and 'corpsValues' field names
+        const corpsData = corpsDocSnap.data().corps || corpsDocSnap.data().corpsValues || [];
+        setAvailableCorps(corpsData);
+      } else {
+        console.warn(`No corps data found for season: ${seasonId}`);
+        setAvailableCorps([]);
+      }
     } catch (error) {
       console.error('Error fetching available corps:', error);
     }

@@ -16,7 +16,8 @@ async function fetchHistoricalData(dataDocId) {
     return {};
   }
 
-  const seasonCorpsList = corpsDataSnap.data().corpsValues || [];
+  // Support both old 'corpsValues' and new 'corps' array structures
+  const seasonCorpsList = corpsDataSnap.data().corps || corpsDataSnap.data().corpsValues || [];
   const yearsToFetch = [...new Set(seasonCorpsList.map((c) => c.sourceYear))];
   const historicalDocs = await Promise.all(
     yearsToFetch.map((year) => db.doc(`historical_scores/${year}`).get())
@@ -712,7 +713,8 @@ async function calculateCorpsStatisticsLogic() {
   if (!corpsSnap.exists) {
     throw new Error(`Corps data document not found: ${seasonData.dataDocId}`);
   }
-  const corpsInSeason = corpsSnap.data().corpsValues || [];
+  // Support both old 'corpsValues' and new 'corps' array structures
+  const corpsInSeason = corpsSnap.data().corps || corpsSnap.data().corpsValues || [];
   const yearsToFetch = [...new Set(corpsInSeason.map((c) => c.sourceYear))];
 
   // 2. Fetch all necessary historical score documents
@@ -766,7 +768,8 @@ async function calculateCorpsStatisticsLogic() {
       id: uniqueId,
       corpsName: corps.corpsName,
       sourceYear: corps.sourceYear,
-      points: corps.points,
+      // Support both 'points' and 'pointCost' field names
+      points: corps.points || corps.pointCost || corps.value || 0,
       stats: calculatedStats,
     });
   }

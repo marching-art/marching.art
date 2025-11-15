@@ -29,14 +29,18 @@ async function startNewLiveSeason() {
   if (!rankingsDoc.exists) {
     throw new Error(`Cannot start live season: Final rankings for ${previousYear} not found.`);
   }
-  const corpsValues = rankingsDoc.data().data.map((c) => ({
+  const corps = rankingsDoc.data().data.map((c) => ({
     corpsName: c.corps,
+    name: c.corps,
     sourceYear: previousYear,
+    pointCost: c.points,
+    value: c.points,
     points: c.points,
   }));
 
   const dataDocId = `live-season-${year}`;
-  await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
+  // Use 'corps' array for consistency with new Firestore structure
+  await db.doc(`dci-data/${dataDocId}`).set({ corps: corps });
 
   const scheduleTemplateRef = db.doc("schedules/live_season_template");
   const scheduleTemplateDoc = await scheduleTemplateRef.get();
@@ -151,7 +155,14 @@ async function startNewOffSeason() {
     }
     if (chosenCorps) {
       const { corpsName, sourceYear, points: chosenPoints } = chosenCorps;
-      offSeasonCorpsData.push({ corpsName, sourceYear, points: chosenPoints });
+      offSeasonCorpsData.push({
+        corpsName,
+        name: corpsName,
+        sourceYear,
+        pointCost: chosenPoints,
+        value: chosenPoints,
+        points: chosenPoints,
+      });
       usedCorpsNames.add(chosenCorps.corpsName);
     }
   }
@@ -159,7 +170,8 @@ async function startNewOffSeason() {
   const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
   const dataDocId = `off-season-${startDate.getTime()}`;
 
-  await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
+  // Use 'corps' array for consistency with new Firestore structure
+  await db.doc(`dci-data/${dataDocId}`).set({ corps: offSeasonCorpsData });
 
   const newSeasonSettings = {
     name: seasonName,
