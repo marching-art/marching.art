@@ -286,8 +286,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
         if (attended) {
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
           for (const caption in corps.lineup) {
-            const [corpsName, , year] = corps.lineup[caption].split("|");
-            const baseCaptionScore = getRealisticCaptionScore(corpsName, year, caption, scoredDay, historicalData);
+            const [corpsName, sourceYear, points] = corps.lineup[caption].split("|");
+            const baseCaptionScore = getRealisticCaptionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
             // Apply execution multiplier (0.70 - 1.10 based on player decisions)
             const executionMultiplier = await calculateExecutionMultiplier(
@@ -611,7 +611,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             });
 
             for (const caption in corps.lineup) {
-                const [selectedCorps, , sourceYear] = corps.lineup[caption].split("|");
+                const [selectedCorps, sourceYear, points] = corps.lineup[caption].split("|");
                 let baseCaptionScore = 0;
 
                 if (realScoresMap.has(selectedCorps) && realScoresMap.get(selectedCorps)[caption] > 0) {
