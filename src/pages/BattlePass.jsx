@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Star, Lock, Check, Gift, Zap, Crown,
-  TrendingUp, Award, ChevronRight, Sparkles, Coins
+  TrendingUp, Award, ChevronRight, Sparkles, Coins,
+  Music, Target
 } from 'lucide-react';
 import { useAuth } from '../App';
 import {
@@ -487,8 +488,5 @@ const XPSourceCard = ({ icon, title, xp }) => (
     </div>
   </div>
 );
-
-// Missing imports placeholder for icons
-import { Music, Target } from 'lucide-react';
 
 export default BattlePass;
