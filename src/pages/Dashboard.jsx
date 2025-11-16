@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc, getDocs } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import {
@@ -18,6 +18,7 @@ import {
   StaffRoster
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
+import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -97,15 +98,19 @@ const Dashboard = () => {
   const fetchAvailableCorps = async () => {
     try {
       const seasonId = `${season.year}-${season.type}`;
-      const corpsRef = doc(db, 'dci-data', seasonId);
-      const snapshot = await getDocs(collection(corpsRef, 'corpsValues'));
-      const corpsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAvailableCorps(corpsData);
+      const corpsDataRef = doc(db, 'dci-data', seasonId);
+      const corpsDataSnap = await getDoc(corpsDataRef);
+
+      if (corpsDataSnap.exists()) {
+        const data = corpsDataSnap.data();
+        const corpsData = data.corpsValues || [];
+        setAvailableCorps(corpsData);
+      } else {
+        setAvailableCorps([]);
+      }
     } catch (error) {
       console.error('Error fetching available corps:', error);
+      setAvailableCorps([]);
     }
   };
 
@@ -172,23 +177,9 @@ const fetchRecentScores = async () => {
   };
 
   const handleCaptionSelection = async (captions) => {
-    try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      
-      await updateDoc(profileRef, {
-        [`corps.${corps.class}.lineup`]: captions
-      });
-
-      Object.entries(captions).forEach(([caption, corpsName]) => {
-        analyticsHelpers.logCaptionSelected(caption, corpsName);
-      });
-
-      toast.success('Caption lineup saved successfully!');
-      setShowCaptionSelection(false);
-    } catch (error) {
-      console.error('Error saving caption lineup:', error);
-      toast.error('Failed to save lineup. Please try again.');
-    }
+    // The new CaptionSelectionModal handles saving via the backend function
+    // This callback is called after successful save
+    setShowCaptionSelection(false);
   };
 
   if (loading) {
@@ -484,9 +475,26 @@ const fetchRecentScores = async () => {
               {/* Caption Lineup */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-cream-100">
-                    Caption Lineup
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-cream-100">
+                      Caption Lineup
+                    </h3>
+                    {Object.keys(corps.lineup || {}).length > 0 && (() => {
+                      const totalPoints = Object.values(corps.lineup).reduce((sum, selection) => {
+                        const parts = selection.split('|');
+                        return sum + (parseInt(parts[2]) || 0);
+                      }, 0);
+                      const pointLimits = { soundSport: 90, aClass: 60, open: 120, world: 150 };
+                      const limit = pointLimits[activeCorpsClass] || 150;
+                      return (
+                        <p className="text-sm text-cream-500/60">
+                          Total: <span className={`font-bold ${totalPoints > limit ? 'text-red-500' : 'text-gold-500'}`}>
+                            {totalPoints}
+                          </span> / {limit} points
+                        </p>
+                      );
+                    })()}
+                  </div>
                   <button
                     onClick={() => setShowCaptionSelection(true)}
                     className="btn-outline text-sm py-2"
@@ -509,17 +517,27 @@ const fetchRecentScores = async () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(corps.lineup).map(([caption, corpsName]) => (
-                      <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                        <div>
-                          <p className="text-xs text-cream-500/60">{caption}</p>
-                          <p className="text-sm font-medium text-cream-100">{corpsName}</p>
+                    {Object.entries(corps.lineup).map(([caption, selection]) => {
+                      // Parse the selection string: corpsName|sourceYear|points
+                      const parts = selection.split('|');
+                      const corpsName = parts[0] || selection;
+                      const year = parts[1] || '';
+                      const points = parts[2] || '';
+
+                      return (
+                        <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
+                          <div className="flex-1">
+                            <p className="text-xs text-cream-500/60">{caption}</p>
+                            <p className="text-sm font-medium text-cream-100">{corpsName}</p>
+                            {year && <p className="text-xs text-cream-500/40">({year})</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-gold-500">{points || '?'}</p>
+                            <p className="text-xs text-cream-500/60">pts</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gold-500">19.85</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -610,12 +628,13 @@ const fetchRecentScores = async () => {
           />
         )}
         
-        {showCaptionSelection && (
+        {showCaptionSelection && corps && (
           <CaptionSelectionModal
             onClose={() => setShowCaptionSelection(false)}
             onSubmit={handleCaptionSelection}
-            availableCorps={availableCorps}
-            currentLineup={corps?.lineup || {}}
+            corpsClass={activeCorpsClass}
+            currentLineup={corps[activeCorpsClass]?.lineup || {}}
+            seasonId={`${season.year}-${season.type}`}
           />
         )}
       </AnimatePresence>
@@ -787,98 +806,6 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses }) => {
               </button>
             </div>
           </form>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Caption Selection Modal Component
-const CaptionSelectionModal = ({ onClose, onSubmit, availableCorps, currentLineup }) => {
-  const [selections, setSelections] = useState(currentLineup);
-  
-  const captions = [
-    { id: 'GE1', name: 'General Effect 1', category: 'GE' },
-    { id: 'GE2', name: 'General Effect 2', category: 'GE' },
-    { id: 'VP', name: 'Visual Proficiency', category: 'Visual' },
-    { id: 'VA', name: 'Visual Analysis', category: 'Visual' },
-    { id: 'CG', name: 'Color Guard', category: 'Visual' },
-    { id: 'B', name: 'Brass', category: 'Music' },
-    { id: 'MA', name: 'Music Analysis', category: 'Music' },
-    { id: 'P', name: 'Percussion', category: 'Music' }
-  ];
-
-  const handleSubmit = () => {
-    if (Object.keys(selections).length !== 8) {
-      toast.error('Please select all 8 captions');
-      return;
-    }
-    onSubmit(selections);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="glass-dark rounded-2xl p-8">
-          <h2 className="text-3xl font-display font-bold text-gradient mb-6">
-            Select Your Caption Lineup
-          </h2>
-
-          <div className="space-y-4 mb-6">
-            {captions.map((caption) => (
-              <div key={caption.id} className="glass rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-cream-100">{caption.name}</p>
-                    <p className="text-xs text-cream-500/60">{caption.category}</p>
-                  </div>
-                  {selections[caption.id] && (
-                    <Check className="w-5 h-5 text-gold-500" />
-                  )}
-                </div>
-                <select
-                  className="select"
-                  value={selections[caption.id] || ''}
-                  onChange={(e) => setSelections({ ...selections, [caption.id]: e.target.value })}
-                >
-                  <option value="">Select a corps</option>
-                  {availableCorps.map((corps) => (
-                    <option key={corps.id} value={corps.name}>
-                      {corps.name} ({corps.year})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="btn-ghost flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="btn-primary flex-1"
-            >
-              Save Lineup
-            </button>
-          </div>
         </div>
       </motion.div>
     </motion.div>
