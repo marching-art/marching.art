@@ -233,13 +233,8 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/hub" element={
-            <ProtectedRoute>
-              <Layout>
-                <Hub />
-              </Layout>
-            </ProtectedRoute>
-          } />
+          {/* Redirect old /hub route to /leagues */}
+          <Route path="/hub" element={<Navigate to="/leagues" replace />} />
           
           <Route path="/leaderboard" element={
             <Layout>

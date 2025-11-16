@@ -4,12 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star, TrendingUp,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Heart, Wrench, MapPin
+  Target, Heart, Wrench, MapPin, Crown, Gift, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, seasonHelpers, analyticsHelpers } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
+import { getBattlePassProgress } from '../firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import PerformanceChart from '../components/PerformanceChart';
@@ -37,6 +38,8 @@ const Dashboard = () => {
   const [season] = useState(seasonHelpers.getCurrentSeason());
   const [recentScores, setRecentScores] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
+  const [battlePassRewards, setBattlePassRewards] = useState(null);
+  const [unclaimedRewardsCount, setUnclaimedRewardsCount] = useState(0);
 
   // Get the active corps class (for now, use the first available corps)
   const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
@@ -91,6 +94,9 @@ const Dashboard = () => {
 
       // Fetch recent scores
       fetchRecentScores();
+
+      // Fetch battle pass progress
+      fetchBattlePassProgress();
 
       // Subscribe to league rankings
       subscribeToLeagueRankings();
@@ -150,6 +156,34 @@ const fetchRecentScores = async () => {
     console.error('Error fetching recent scores:', error);
   }
 };
+
+  const fetchBattlePassProgress = async () => {
+    try {
+      const result = await getBattlePassProgress();
+      if (result.data && result.data.success) {
+        const progress = result.data.progress;
+        setBattlePassRewards(progress);
+
+        // Count unclaimed rewards
+        let unclaimedCount = 0;
+        for (let level = 1; level <= progress.currentLevel; level++) {
+          // Check free tier
+          if (!progress.claimedRewards?.free?.includes(level)) {
+            unclaimedCount++;
+          }
+          // Check premium tier if user has battle pass
+          if (progress.hasBattlePass && !progress.claimedRewards?.premium?.includes(level)) {
+            unclaimedCount++;
+          }
+        }
+        setUnclaimedRewardsCount(unclaimedCount);
+      }
+    } catch (error) {
+      console.error('Error fetching battle pass progress:', error);
+      setBattlePassRewards(null);
+      setUnclaimedRewardsCount(0);
+    }
+  };
 
   const subscribeToLeagueRankings = () => {
     // Subscribe to user's league rankings
@@ -292,6 +326,44 @@ const fetchRecentScores = async () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Battle Pass Notification */}
+      {unclaimedRewardsCount > 0 && (
+        <motion.a
+          href="/battlepass"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="block"
+        >
+          <div className="glass-premium rounded-xl p-4 border border-gold-500/30 hover:border-gold-500/60 transition-all cursor-pointer group">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Crown className="w-8 h-8 text-gold-500 group-hover:scale-110 transition-transform" />
+                  <Sparkles className="w-4 h-4 text-gold-500 absolute -top-1 -right-1 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gradient flex items-center gap-2">
+                    Battle Pass Rewards Available!
+                    <span className="px-2 py-0.5 bg-gold-500 text-charcoal-900 rounded-full text-xs font-bold">
+                      {unclaimedRewardsCount}
+                    </span>
+                  </h3>
+                  <p className="text-sm text-cream-300">
+                    You have {unclaimedRewardsCount} unclaimed reward{unclaimedRewardsCount > 1 ? 's' : ''} waiting for you
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-gold-500">
+                <Gift className="w-5 h-5" />
+                <span className="text-sm font-semibold">Claim Now</span>
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </motion.a>
+      )}
 
       {/* Quick Stats */}
       <motion.div
