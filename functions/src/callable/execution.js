@@ -90,7 +90,7 @@ const SHOW_DIFFICULTY_PRESETS = {
  * Costs: Morale, Equipment wear
  * Gains: Readiness, XP
  */
-exports.dailyRehearsal = onCall({ cors: true }, async (request) => {
+const dailyRehearsal = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -224,7 +224,7 @@ exports.dailyRehearsal = onCall({ cors: true }, async (request) => {
  * Repair Equipment - Restore equipment condition
  * Costs: CorpsCoin
  */
-exports.repairEquipment = onCall({ cors: true }, async (request) => {
+const repairEquipment = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -313,7 +313,7 @@ exports.repairEquipment = onCall({ cors: true }, async (request) => {
  * Upgrade Equipment - Increase maximum condition
  * Costs: CorpsCoin (expensive!)
  */
-exports.upgradeEquipment = onCall({ cors: true }, async (request) => {
+const upgradeEquipment = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -397,7 +397,7 @@ exports.upgradeEquipment = onCall({ cors: true }, async (request) => {
  * Set Show Difficulty - Choose difficulty level
  * Higher difficulty = Higher ceiling, but needs more preparation
  */
-exports.setShowDifficulty = onCall({ cors: true }, async (request) => {
+const setShowDifficulty = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -460,7 +460,7 @@ exports.setShowDifficulty = onCall({ cors: true }, async (request) => {
 /**
  * Get Execution Status - View current execution state
  */
-exports.getExecutionStatus = onCall({ cors: true }, async (request) => {
+const getExecutionStatus = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -514,7 +514,7 @@ exports.getExecutionStatus = onCall({ cors: true }, async (request) => {
  * Boost Morale - Spend CorpsCoin to improve morale
  * Used when morale drops from excessive rehearsals
  */
-exports.boostMorale = onCall({ cors: true }, async (request) => {
+const boostMorale = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }

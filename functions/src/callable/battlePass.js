@@ -106,7 +106,7 @@ function calculateLevel(xp) {
 /**
  * Purchase Battle Pass - Create Stripe Checkout Session
  */
-exports.purchaseBattlePass = onCall({ cors: true }, async (request) => {
+const purchaseBattlePass = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -177,7 +177,7 @@ exports.purchaseBattlePass = onCall({ cors: true }, async (request) => {
 /**
  * Award XP to user (called by other systems)
  */
-exports.awardBattlePassXP = async (uid, xpAmount, source) => {
+const awardBattlePassXP = async (uid, xpAmount, source) => {
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -238,7 +238,7 @@ exports.awardBattlePassXP = async (uid, xpAmount, source) => {
 /**
  * Claim Reward - Claim earned battle pass reward
  */
-exports.claimBattlePassReward = onCall({ cors: true }, async (request) => {
+const claimBattlePassReward = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -352,7 +352,7 @@ exports.claimBattlePassReward = onCall({ cors: true }, async (request) => {
 /**
  * Get Battle Pass Progress
  */
-exports.getBattlePassProgress = onCall({ cors: true }, async (request) => {
+const getBattlePassProgress = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -419,7 +419,7 @@ exports.getBattlePassProgress = onCall({ cors: true }, async (request) => {
 /**
  * Get Available Rewards to Claim
  */
-exports.getAvailableRewards = onCall({ cors: true }, async (request) => {
+const getAvailableRewards = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }

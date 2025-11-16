@@ -16,7 +16,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
  * - payment_intent.succeeded (successful payment)
  * - payment_intent.payment_failed (failed payment)
  */
-exports.stripeWebhook = onRequest({ cors: true }, async (req, res) => {
+const stripeWebhook = onRequest({ cors: true }, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
@@ -189,5 +189,5 @@ async function handlePaymentFailed(paymentIntent) {
 }
 
 module.exports = {
-  stripeWebhook: exports.stripeWebhook,
+  stripeWebhook,
 };
