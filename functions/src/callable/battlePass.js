@@ -2,7 +2,19 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY || "");
+
+// Lazy-load Stripe to avoid initialization errors during deployment
+let _stripe = null;
+function getStripe() {
+  if (!_stripe) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY environment variable not set");
+    }
+    _stripe = require("stripe")(stripeKey);
+  }
+  return _stripe;
+}
 
 /**
  * Battle Pass Configuration
@@ -133,6 +145,7 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
     }
 
     // Create Stripe Checkout Session
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
