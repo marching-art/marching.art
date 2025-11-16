@@ -32,11 +32,31 @@ exports.seasonScheduler = onSchedule({
   }
 
   logger.info(`Season ${seasonData.name} has ended. Starting next season.`);
+
+  // Calculate when the live season should start (69 days before second Saturday in August)
+  const findSecondSaturday = (year) => {
+    const firstOfAugust = new Date(Date.UTC(year, 7, 1));
+    const dayOfWeek = firstOfAugust.getUTCDay();
+    const daysToAdd = (6 - dayOfWeek + 7) % 7;
+    const firstSaturday = 1 + daysToAdd;
+    return new Date(Date.UTC(year, 7, firstSaturday + 7));
+  };
+
   const today = new Date();
   const currentYear = today.getFullYear();
-  const liveSeasonStartDate = new Date(currentYear, 5, 15);
+  let nextFinalsDate = findSecondSaturday(currentYear);
 
-  if (seasonData.status === "off-season" && today >= liveSeasonStartDate) {
+  // If we're past this year's finals, use next year
+  if (today >= nextFinalsDate) {
+    nextFinalsDate = findSecondSaturday(currentYear + 1);
+  }
+
+  const millisInDay = 24 * 60 * 60 * 1000;
+  const liveSeasonStartDate = new Date(nextFinalsDate.getTime() - 69 * millisInDay);
+
+  // If we're in the live season window, start live season
+  // Otherwise start the appropriate off-season
+  if (today >= liveSeasonStartDate && today < nextFinalsDate) {
     logger.info("It's time for the live season! Starting now.");
     await startNewLiveSeason();
   } else {

@@ -35,13 +35,7 @@ async function startNewLiveSeason() {
     points: c.points,
   }));
 
-  const dataDocId = `live-season-${year}`;
-  await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
-
-  const scheduleTemplateRef = db.doc("schedules/live_season_template");
-  const scheduleTemplateDoc = await scheduleTemplateRef.get();
-  const events = scheduleTemplateDoc.exists ? scheduleTemplateDoc.data().events : [];
-
+  // Calculate finals year for naming (season spans two calendar years)
   const augustFirst = new Date(year, 7, 1);
   const dayOfWeek = augustFirst.getDay();
   const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
@@ -50,8 +44,21 @@ async function startNewLiveSeason() {
   const finalsDate = new Date(firstSaturday.getTime() + 7 * millisInDay);
   const startDate = new Date(finalsDate.getTime() - 69 * millisInDay);
 
+  // Season starts in previous year and ends in current year
+  const startYear = startDate.getFullYear();
+  const endYear = finalsDate.getFullYear();
+  const seasonYearSuffix = `${startYear}-${endYear.toString().slice(-2)}`;
+  const seasonName = `live_${seasonYearSuffix}`;
+
+  const dataDocId = seasonName;
+  await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
+
+  const scheduleTemplateRef = db.doc("schedules/live_season_template");
+  const scheduleTemplateDoc = await scheduleTemplateRef.get();
+  const events = scheduleTemplateDoc.exists ? scheduleTemplateDoc.data().events : [];
+
   const newSeasonData = {
-    name: `DCI ${year} Live Season`,
+    name: seasonName,
     status: "live-season",
     seasonUid: dataDocId,
     seasonYear: year,
@@ -157,7 +164,7 @@ async function startNewOffSeason() {
   }
   const schedule = await generateOffSeasonSchedule(seasonLength, 1);
   const seasonName = getThematicOffSeasonName(seasonType, finalsYear);
-  const dataDocId = `off-season-${startDate.getTime()}`;
+  const dataDocId = seasonName;
 
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
@@ -351,7 +358,7 @@ function calculateOffSeasonDay(eventDate, year) {
 
 function getThematicOffSeasonName(seasonType, finalsYear) {
   const startYear = finalsYear - 1;
-  return `${seasonType} Season ${startYear}-${finalsYear.toString().slice(-2)}`;
+  return `${seasonType.toLowerCase()}_${startYear}-${finalsYear.toString().slice(-2)}`;
 }
 
 function getNextOffSeasonWindow() {
