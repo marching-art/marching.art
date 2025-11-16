@@ -25,7 +25,7 @@ const CLASS_UNLOCK_COSTS = {
 /**
  * Award CorpsCoin after performance (called by scoring functions)
  */
-exports.awardCorpsCoin = async (uid, corpsClass, showName) => {
+const awardCorpsCoin = async (uid, corpsClass, showName) => {
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
@@ -46,7 +46,7 @@ exports.awardCorpsCoin = async (uid, corpsClass, showName) => {
 /**
  * Unlock a class with CorpsCoin
  */
-exports.unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
+const unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -104,7 +104,7 @@ exports.unlockClassWithCorpsCoin = onCall({ cors: true }, async (request) => {
 /**
  * Purchase staff member
  */
-exports.purchaseStaff = onCall({ cors: true }, async (request) => {
+const purchaseStaff = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -188,7 +188,7 @@ exports.purchaseStaff = onCall({ cors: true }, async (request) => {
 /**
  * Assign staff member to a corps caption
  */
-exports.assignStaff = onCall({ cors: true }, async (request) => {
+const assignStaff = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
@@ -255,7 +255,7 @@ exports.assignStaff = onCall({ cors: true }, async (request) => {
 /**
  * List available staff in marketplace (admin creates entries in staff_database)
  */
-exports.getStaffMarketplace = onCall({ cors: true }, async (request) => {
+const getStaffMarketplace = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
