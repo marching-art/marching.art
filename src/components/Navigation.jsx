@@ -46,9 +46,9 @@ const Navigation = () => {
           badge: null,
           premium: false
         },
-        { 
-          path: '/hub', 
-          label: 'League Hub', 
+        {
+          path: '/leagues',
+          label: 'Leagues',
           icon: Users,
           badge: notifications > 0 ? notifications : null,
           premium: false

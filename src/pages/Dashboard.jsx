@@ -12,6 +12,7 @@ import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, 
 import { httpsCallable } from 'firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
+import PerformanceChart from '../components/PerformanceChart';
 import {
   ExecutionDashboard,
   RehearsalPanel,
@@ -679,19 +680,7 @@ const fetchRecentScores = async () => {
             </div>
 
             {/* Performance Chart */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-cream-100 mb-4">
-                {activeCorpsClass === 'soundSport' ? 'Season Journey' : 'Performance Trend'}
-              </h3>
-              <div className="h-64 flex items-center justify-center text-cream-500/40">
-                <TrendingUp className="w-8 h-8" />
-                <span className="ml-2">
-                  {activeCorpsClass === 'soundSport'
-                    ? 'Your performance history will appear here'
-                    : 'Chart coming soon'}
-                </span>
-              </div>
-            </div>
+            <PerformanceChart scores={recentScores} corpsClass={activeCorpsClass} />
           </div>
         )}
       </motion.div>
@@ -747,14 +736,36 @@ const fetchRecentScores = async () => {
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
               <p className="text-cream-500/60 mb-4">Not in any leagues yet</p>
-              <button className="btn-outline">
+              <a href="/leagues" className="btn-outline inline-flex items-center">
                 Browse Leagues
                 <ChevronRight className="w-4 h-4 ml-2" />
-              </button>
+              </a>
             </div>
           ) : (
             <div className="space-y-3">
-              {/* League activity items */}
+              {profile.leagues.slice(0, 3).map((leagueId, index) => (
+                <div
+                  key={leagueId}
+                  className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg hover:bg-charcoal-900/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 text-gold-500" />
+                    <div>
+                      <p className="text-sm font-semibold text-cream-100">League {index + 1}</p>
+                      <p className="text-xs text-cream-500/60">Active</p>
+                    </div>
+                  </div>
+                  <a href="/leagues" className="text-sm text-gold-500 hover:text-gold-400">
+                    View
+                  </a>
+                </div>
+              ))}
+              <a
+                href="/leagues"
+                className="block text-center p-3 text-sm text-gold-500 hover:text-gold-400 hover:bg-charcoal-900/30 rounded-lg transition-colors"
+              >
+                View All Leagues →
+              </a>
             </div>
           )}
         </div>
