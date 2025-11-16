@@ -111,6 +111,9 @@ Thumbs.db
 serviceAccountKey.json
 service-account.json
 
+# Stripe setup scripts (contains actual keys)
+STRIPE_KEYS_SETUP.sh
+
 # Large files
 *.zip
 *.tar.gz

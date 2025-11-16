@@ -1,51 +1,27 @@
 {
-  "name": "marching-art",
+  "name": "marching-art-functions",
   "version": "1.0.0",
+  "description": "Cloud Functions for marching.art",
   "private": true,
-  "dependencies": {
-    "autoprefixer": "^10.4.20",
-    "chart.js": "^4.4.6",
-    "cheerio": "^1.1.2",
-    "firebase": "^11.2.0",
-    "framer-motion": "^12.23.24",
-    "lucide-react": "^0.552.0",
-    "postcss": "^8.4.49",
-    "react": "^18.3.1",
-    "react-chartjs-2": "^5.3.0",
-    "react-dom": "^18.3.1",
-    "react-firebase-hooks": "^5.1.1",
-    "react-hot-toast": "^2.6.0",
-    "react-router-dom": "^7.9.5",
-    "react-scripts": "5.0.1",
-    "tailwindcss": "^3.4.17",
-    "web-vitals": "^4.2.4",
-    "zustand": "^4.5.7"
+  "main": "index.js",
+  "engines": {
+    "node": "20"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.6.0",
+    "puppeteer-core": "^24.27.0",
+    "cheerio": "^1.1.2",
+    "stripe": "^17.4.0"
   },
   "devDependencies": {
-    "source-map-explorer": "^2.5.3"
+    "firebase-functions-test": "^3.1.0"
   }
 }
