@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, AlertCircle, TrendingUp, Lock, Star, Info } from 'lucide-react';
-import { db } from '../../firebase';
+import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { functions } from '../../firebase';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 
