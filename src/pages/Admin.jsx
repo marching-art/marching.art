@@ -11,6 +11,7 @@ import { doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/fi
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
+import { StaffManagement } from '../components/Admin';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -181,7 +182,7 @@ const Admin = () => {
       >
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
         {activeTab === 'season' && <SeasonManagementTab seasonData={seasonData} callAdminFunction={callAdminFunction} />}
-        {activeTab === 'staff' && <StaffDatabaseTab callAdminFunction={callAdminFunction} />}
+        {activeTab === 'staff' && <StaffManagement />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
       </motion.div>
@@ -333,196 +334,7 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
   );
 };
 
-// Staff Database Tab
-const StaffDatabaseTab = ({ callAdminFunction }) => {
-  const [staffList, setStaffList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  useEffect(() => {
-    loadStaff();
-  }, []);
-
-  const loadStaff = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'staff_database'));
-      const staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setStaffList(staff);
-    } catch (error) {
-      console.error('Error loading staff:', error);
-      toast.error('Failed to load staff database');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddStaff = async (staffData) => {
-    try {
-      const newStaffRef = doc(collection(db, 'staff_database'));
-      await setDoc(newStaffRef, {
-        ...staffData,
-        available: true,
-        createdAt: new Date(),
-      });
-      toast.success('Staff member added successfully');
-      setShowAddForm(false);
-      loadStaff();
-    } catch (error) {
-      console.error('Error adding staff:', error);
-      toast.error('Failed to add staff member');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-cream-100">Staff Database</h2>
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="btn-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Staff Member
-          </button>
-        </div>
-
-        {showAddForm && (
-          <AddStaffForm onSubmit={handleAddStaff} onCancel={() => setShowAddForm(false)} />
-        )}
-
-        <div className="text-sm text-cream-500 mb-4">
-          Total: {staffList.length} staff members
-        </div>
-
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gold-500 mx-auto"></div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-charcoal-900/50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-cream-500">Name</th>
-                  <th className="px-4 py-2 text-left text-cream-500">Caption</th>
-                  <th className="px-4 py-2 text-left text-cream-500">Year Inducted</th>
-                  <th className="px-4 py-2 text-left text-cream-500">Base Value</th>
-                  <th className="px-4 py-2 text-left text-cream-500">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-500/10">
-                {staffList.map((staff) => (
-                  <tr key={staff.id} className="hover:bg-charcoal-900/30">
-                    <td className="px-4 py-3 text-cream-100">{staff.name}</td>
-                    <td className="px-4 py-3 text-cream-300">{staff.caption}</td>
-                    <td className="px-4 py-3 text-cream-300">{staff.yearInducted}</td>
-                    <td className="px-4 py-3 text-gold-500">{staff.baseValue} CC</td>
-                    <td className="px-4 py-3">
-                      <span className={`badge ${staff.available ? 'badge-success' : 'badge-disabled'}`}>
-                        {staff.available ? 'Available' : 'Unavailable'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Add Staff Form Component
-const AddStaffForm = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    caption: 'GE1',
-    yearInducted: new Date().getFullYear(),
-    biography: '',
-    baseValue: 100,
-  });
-
-  const captions = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="bg-charcoal-900/30 p-6 rounded-lg mb-6 space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="label">Name</label>
-          <input
-            type="text"
-            className="input"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <label className="label">Caption</label>
-          <select
-            className="select"
-            value={formData.caption}
-            onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
-          >
-            {captions.map((cap) => (
-              <option key={cap} value={cap}>{cap}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="label">Year Inducted</label>
-          <input
-            type="number"
-            className="input"
-            value={formData.yearInducted}
-            onChange={(e) => setFormData({ ...formData, yearInducted: parseInt(e.target.value) })}
-            required
-          />
-        </div>
-        <div>
-          <label className="label">Base Value (CorpsCoin)</label>
-          <input
-            type="number"
-            className="input"
-            value={formData.baseValue}
-            onChange={(e) => setFormData({ ...formData, baseValue: parseInt(e.target.value) })}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="label">Biography</label>
-        <textarea
-          className="textarea"
-          rows="3"
-          value={formData.biography}
-          onChange={(e) => setFormData({ ...formData, biography: e.target.value })}
-          placeholder="Brief biography of this staff member..."
-        />
-      </div>
-
-      <div className="flex gap-3">
-        <button type="submit" className="btn-primary flex-1">
-          Add Staff Member
-        </button>
-        <button type="button" onClick={onCancel} className="btn-ghost flex-1">
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-};
+// Note: StaffManagement component now imported from components/Admin
 
 // User Management Tab
 const UserManagementTab = () => (
