@@ -33,10 +33,20 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     world: 150
   };
 
+  // Map frontend class names to backend expected names
+  const classNameMap = {
+    soundSport: 'soundSport',
+    aClass: 'aClass',
+    open: 'openClass',
+    world: 'worldClass'
+  };
+
   const pointLimit = pointLimits[corpsClass] || 150;
+  const backendClassName = classNameMap[corpsClass] || corpsClass;
 
   useEffect(() => {
     fetchAvailableCorps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seasonId]);
 
   const fetchAvailableCorps = async () => {
@@ -131,7 +141,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
       const saveLineup = httpsCallable(functions, 'saveLineup');
       const result = await saveLineup({
         lineup: selections,
-        corpsClass: corpsClass
+        corpsClass: backendClassName
       });
 
       toast.success(result.data.message || 'Lineup saved successfully!');

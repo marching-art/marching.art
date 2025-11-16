@@ -35,6 +35,7 @@ const Dashboard = () => {
 
   // Get the active corps class (for now, use the first available corps)
   const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
+  const activeCorps = activeCorpsClass ? corps[activeCorpsClass] : null;
 
   // Use execution hook
   const {
@@ -251,7 +252,7 @@ const fetchRecentScores = async () => {
           <div className="flex items-center justify-between mb-2">
             <Trophy className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {corps?.rank || '-'}
+              {activeCorps?.rank || '-'}
             </span>
           </div>
           <p className="text-sm text-cream-500/60">Current Rank</p>
@@ -261,7 +262,7 @@ const fetchRecentScores = async () => {
           <div className="flex items-center justify-between mb-2">
             <Star className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {corps?.score?.toFixed(2) || '0.00'}
+              {activeCorps?.totalSeasonScore?.toFixed(2) || '0.00'}
             </span>
           </div>
           <p className="text-sm text-cream-500/60">Total Score</p>
@@ -289,7 +290,7 @@ const fetchRecentScores = async () => {
       </motion.div>
 
       {/* Tab Navigation */}
-      {corps && (
+      {activeCorps && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -344,7 +345,7 @@ const fetchRecentScores = async () => {
 
       {/* Execution System Panels */}
       <AnimatePresence mode="wait">
-        {corps && activeTab === 'execution' && (
+        {activeCorps && activeTab === 'execution' && (
           <motion.div
             key="execution"
             initial={{ opacity: 0, y: 20 }}
@@ -365,7 +366,7 @@ const fetchRecentScores = async () => {
           </motion.div>
         )}
 
-        {corps && activeTab === 'equipment' && (
+        {activeCorps && activeTab === 'equipment' && (
           <motion.div
             key="equipment"
             initial={{ opacity: 0, y: 20 }}
@@ -383,7 +384,7 @@ const fetchRecentScores = async () => {
           </motion.div>
         )}
 
-        {corps && activeTab === 'staff' && (
+        {activeCorps && activeTab === 'staff' && (
           <motion.div
             key="staff"
             initial={{ opacity: 0, y: 20 }}
@@ -414,7 +415,7 @@ const fetchRecentScores = async () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        {!corps ? (
+        {!activeCorps ? (
           // Registration CTA
           <div className="card-premium p-8 text-center">
             <Music className="w-16 h-16 text-gold-500 mx-auto mb-4" />
@@ -440,18 +441,18 @@ const fetchRecentScores = async () => {
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
-                    {corps.name}
+                    {activeCorps.corpsName || activeCorps.name}
                   </h2>
-                  <p className="text-cream-500/60">{corps.location}</p>
+                  <p className="text-cream-500/60">{activeCorps.location}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`badge ${
-                      corps.class === 'world' ? 'badge-gold' :
-                      corps.class === 'open' ? 'badge-cream' :
+                      activeCorpsClass === 'world' ? 'badge-gold' :
+                      activeCorpsClass === 'open' ? 'badge-cream' :
                       'badge-success'
                     }`}>
-                      {corps.class ? corps.class.charAt(0).toUpperCase() + corps.class.slice(1) : 'Unknown'} Class
+                      {activeCorpsClass ? activeCorpsClass.charAt(0).toUpperCase() + activeCorpsClass.slice(1) : 'Unknown'} Class
                     </span>
-                    {corps.rank && corps.rank <= 10 && (
+                    {activeCorps.rank && activeCorps.rank <= 10 && (
                       <span className="badge badge-gold">
                         <Trophy className="w-3 h-3 mr-1" />
                         Top 10
@@ -465,10 +466,10 @@ const fetchRecentScores = async () => {
               </div>
 
               {/* Show Concept */}
-              {corps.showConcept && (
+              {activeCorps.showConcept && (
                 <div className="p-4 bg-charcoal-900/30 rounded-lg mb-6">
                   <p className="text-sm text-cream-500/60 mb-1">Show Concept</p>
-                  <p className="text-cream-100">{corps.showConcept}</p>
+                  <p className="text-cream-100">{activeCorps.showConcept}</p>
                 </div>
               )}
 
@@ -479,8 +480,8 @@ const fetchRecentScores = async () => {
                     <h3 className="text-lg font-semibold text-cream-100">
                       Caption Lineup
                     </h3>
-                    {Object.keys(corps.lineup || {}).length > 0 && (() => {
-                      const totalPoints = Object.values(corps.lineup).reduce((sum, selection) => {
+                    {Object.keys(activeCorps.lineup || {}).length > 0 && (() => {
+                      const totalPoints = Object.values(activeCorps.lineup).reduce((sum, selection) => {
                         const parts = selection.split('|');
                         return sum + (parseInt(parts[2]) || 0);
                       }, 0);
@@ -504,7 +505,7 @@ const fetchRecentScores = async () => {
                   </button>
                 </div>
 
-                {Object.keys(corps.lineup || {}).length === 0 ? (
+                {Object.keys(activeCorps.lineup || {}).length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
                     <p className="text-cream-500/60">No captions selected yet</p>
@@ -517,7 +518,7 @@ const fetchRecentScores = async () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(corps.lineup).map(([caption, selection]) => {
+                    {Object.entries(activeCorps.lineup).map(([caption, selection]) => {
                       // Parse the selection string: corpsName|sourceYear|points
                       const parts = selection.split('|');
                       const corpsName = parts[0] || selection;
@@ -628,12 +629,12 @@ const fetchRecentScores = async () => {
           />
         )}
         
-        {showCaptionSelection && corps && (
+        {showCaptionSelection && activeCorps && (
           <CaptionSelectionModal
             onClose={() => setShowCaptionSelection(false)}
             onSubmit={handleCaptionSelection}
             corpsClass={activeCorpsClass}
-            currentLineup={corps[activeCorpsClass]?.lineup || {}}
+            currentLineup={activeCorps.lineup || {}}
             seasonId={`${season.year}-${season.type}`}
           />
         )}
