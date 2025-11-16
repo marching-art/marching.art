@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 const { shuffleArray } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { awardCorpsCoin } = require("../callable/economy");
+const { calculateExecutionMultiplier } = require("./executionMultiplier");
 
 
 async function fetchHistoricalData(dataDocId) {
@@ -286,7 +287,17 @@ async function processAndArchiveOffSeasonScoresLogic() {
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
           for (const caption in corps.lineup) {
             const [corpsName, , year] = corps.lineup[caption].split("|");
-            const captionScore = getRealisticCaptionScore(corpsName, year, caption, scoredDay, historicalData);
+            const baseCaptionScore = getRealisticCaptionScore(corpsName, year, caption, scoredDay, historicalData);
+
+            // Apply execution multiplier (0.70 - 1.10 based on player decisions)
+            const executionMultiplier = await calculateExecutionMultiplier(
+              uid,
+              corpsClass,
+              caption,
+              scoredDay,
+              show.eventName
+            );
+            const captionScore = baseCaptionScore * executionMultiplier;
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -601,14 +612,24 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
             for (const caption in corps.lineup) {
                 const [selectedCorps, , sourceYear] = corps.lineup[caption].split("|");
-                let captionScore = 0;
-            
+                let baseCaptionScore = 0;
+
                 if (realScoresMap.has(selectedCorps) && realScoresMap.get(selectedCorps)[caption] > 0) {
-                    captionScore = realScoresMap.get(selectedCorps)[caption];
+                    baseCaptionScore = realScoresMap.get(selectedCorps)[caption];
                 } else {
-                    captionScore = await getLiveCaptionScore(selectedCorps, sourceYear, caption, scoredDay, historicalData);
+                    baseCaptionScore = await getLiveCaptionScore(selectedCorps, sourceYear, caption, scoredDay, historicalData);
                 }
-            
+
+                // Apply execution multiplier (0.70 - 1.10 based on player decisions)
+                const executionMultiplier = await calculateExecutionMultiplier(
+                    uid,
+                    corpsClass,
+                    caption,
+                    scoredDay,
+                    attendedShow.eventName
+                );
+                const captionScore = baseCaptionScore * executionMultiplier;
+
                 if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
                 else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
                 else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;

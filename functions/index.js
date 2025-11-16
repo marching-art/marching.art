@@ -22,6 +22,20 @@ const {
   assignStaff,
   getStaffMarketplace,
 } = require("./src/callable/economy");
+const {
+  dailyRehearsal: execDailyRehearsal,
+  repairEquipment,
+  upgradeEquipment,
+  setShowDifficulty,
+  getExecutionStatus,
+  boostMorale,
+} = require("./src/callable/execution");
+const {
+  purchaseBattlePass,
+  claimBattlePassReward,
+  getBattlePassProgress,
+  getAvailableRewards,
+} = require("./src/callable/battlePass");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
   createLeague,
@@ -46,6 +60,7 @@ const {
   processDailyLiveScores,
   generateWeeklyMatchups,
 } = require("./src/scheduled/dailyProcessors");
+const { battlePassSeasonRotation } = require("./src/scheduled/battlePassRotation");
 
 // Trigger Functions
 const {
@@ -53,6 +68,8 @@ const {
   processLiveScoreRecap,
 } = require("./src/triggers/scoreProcessing");
 
+// Webhooks
+const { stripeWebhook } = require("./src/webhooks/stripe");
 
 // Export all functions for deployment
 module.exports = {
@@ -81,14 +98,28 @@ module.exports = {
   assignStaff,
   getStaffMarketplace,
   registerCorps,
+  execDailyRehearsal,
+  repairEquipment,
+  upgradeEquipment,
+  setShowDifficulty,
+  getExecutionStatus,
+  boostMorale,
+  purchaseBattlePass,
+  claimBattlePassReward,
+  getBattlePassProgress,
+  getAvailableRewards,
 
   // Scheduled
   seasonScheduler,
   dailyOffSeasonProcessor,
   processDailyLiveScores,
   generateWeeklyMatchups,
+  battlePassSeasonRotation,
 
   // Triggers
   processDciScores,
   processLiveScoreRecap,
+
+  // Webhooks
+  stripeWebhook,
 };
