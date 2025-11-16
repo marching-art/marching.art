@@ -346,6 +346,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   <li>Each corps has a point value (1-25) based on historical performance</li>
                   <li>Higher-ranked corps cost more points but typically score better</li>
                   <li>Your total must not exceed {pointLimit} points for {corpsClass} class</li>
+                  {corpsClass === 'soundSport' && (
+                    <li className="text-green-400 font-semibold">SoundSport is non-competitive - scores won't be displayed, just enjoy the experience!</li>
+                  )}
                   <li>Each unique lineup can only be claimed by one player (first come, first served)</li>
                   <li>You have limited caption changes per week during the season</li>
                 </ul>

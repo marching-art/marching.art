@@ -127,12 +127,16 @@ const fetchRecentScores = async () => {
       const sortedRecaps = allRecaps
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5)
-        .map(r => ({
-          showName: r.showName || r.name || 'Unknown Show',
-          date: r.date || '',
-          totalScore: (typeof r.totalScore === 'number') ? r.totalScore.toFixed(2) : (r.totalScore || '0.00'),
-          rank: r.rank ?? '-'
-        }));
+        .map(r => {
+          // For SoundSport, mask the scores
+          const isSoundSport = activeCorpsClass === 'soundSport';
+          return {
+            showName: r.showName || r.name || 'Unknown Show',
+            date: r.date || '',
+            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
+            rank: isSoundSport ? '🎉' : (r.rank ?? '-')
+          };
+        });
       setRecentScores(sortedRecaps);
     } else {
       setRecentScores([]);
@@ -252,20 +256,28 @@ const fetchRecentScores = async () => {
           <div className="flex items-center justify-between mb-2">
             <Trophy className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {activeCorps?.rank || '-'}
+              {activeCorpsClass === 'soundSport' ? '🎉' : (activeCorps?.rank || '-')}
             </span>
           </div>
-          <p className="text-sm text-cream-500/60">Current Rank</p>
+          <p className="text-sm text-cream-500/60">
+            {activeCorpsClass === 'soundSport' ? 'Participant' : 'Current Rank'}
+          </p>
         </div>
 
         <div className="card-hover">
           <div className="flex items-center justify-between mb-2">
             <Star className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {activeCorps?.totalSeasonScore?.toFixed(2) || '0.00'}
+              {activeCorpsClass === 'soundSport' ? (
+                activeCorps?.totalSeasonScore > 0 ? '✓' : '-'
+              ) : (
+                activeCorps?.totalSeasonScore?.toFixed(2) || '0.00'
+              )}
             </span>
           </div>
-          <p className="text-sm text-cream-500/60">Total Score</p>
+          <p className="text-sm text-cream-500/60">
+            {activeCorpsClass === 'soundSport' ? 'Performance' : 'Total Score'}
+          </p>
         </div>
 
         <div className="card-hover">
@@ -448,11 +460,15 @@ const fetchRecentScores = async () => {
                     <span className={`badge ${
                       activeCorpsClass === 'world' ? 'badge-gold' :
                       activeCorpsClass === 'open' ? 'badge-cream' :
-                      'badge-success'
+                      activeCorpsClass === 'soundSport' ? 'badge-success' :
+                      'badge-primary'
                     }`}>
-                      {activeCorpsClass ? activeCorpsClass.charAt(0).toUpperCase() + activeCorpsClass.slice(1) : 'Unknown'} Class
+                      {activeCorpsClass === 'soundSport' ? 'SoundSport' :
+                       activeCorpsClass === 'world' ? 'World Class' :
+                       activeCorpsClass === 'open' ? 'Open Class' :
+                       activeCorpsClass === 'aClass' ? 'A Class' : 'Unknown'}
                     </span>
-                    {activeCorps.rank && activeCorps.rank <= 10 && (
+                    {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
                       <span className="badge badge-gold">
                         <Trophy className="w-3 h-3 mr-1" />
                         Top 10
@@ -547,11 +563,15 @@ const fetchRecentScores = async () => {
             {/* Performance Chart */}
             <div className="card">
               <h3 className="text-lg font-semibold text-cream-100 mb-4">
-                Performance Trend
+                {activeCorpsClass === 'soundSport' ? 'Season Journey' : 'Performance Trend'}
               </h3>
               <div className="h-64 flex items-center justify-center text-cream-500/40">
                 <TrendingUp className="w-8 h-8" />
-                <span className="ml-2">Chart coming soon</span>
+                <span className="ml-2">
+                  {activeCorpsClass === 'soundSport'
+                    ? 'Your performance history will appear here'
+                    : 'Chart coming soon'}
+                </span>
               </div>
             </div>
           </div>
@@ -572,11 +592,13 @@ const fetchRecentScores = async () => {
         {/* Recent Scores */}
         <div className="card">
           <h3 className="text-lg font-semibold text-cream-100 mb-4">
-            Recent Scores
+            {activeCorpsClass === 'soundSport' ? 'Recent Performances' : 'Recent Scores'}
           </h3>
           {recentScores.length === 0 ? (
             <p className="text-cream-500/60 text-center py-8">
-              No scores available yet
+              {activeCorpsClass === 'soundSport'
+                ? 'No performances yet'
+                : 'No scores available yet'}
             </p>
           ) : (
             <div className="space-y-3">
@@ -588,7 +610,9 @@ const fetchRecentScores = async () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gold-500">{score.totalScore}</p>
-                    <p className="text-xs text-cream-500/60">Rank #{score.rank}</p>
+                    {activeCorpsClass !== 'soundSport' && (
+                      <p className="text-xs text-cream-500/60">Rank #{score.rank}</p>
+                    )}
                   </div>
                 </div>
               ))}
