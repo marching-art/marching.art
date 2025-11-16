@@ -1,15 +1,23 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Music, Trophy, Users, Calendar, Star, TrendingUp, 
-  ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check
+import {
+  Music, Trophy, Users, Calendar, Star, TrendingUp,
+  ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
+  Target, Heart, Wrench
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc, getDocs } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
+import {
+  ExecutionDashboard,
+  RehearsalPanel,
+  EquipmentManager,
+  StaffRoster
+} from '../components/Execution';
+import { useExecution } from '../hooks/useExecution';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -22,6 +30,23 @@ const Dashboard = () => {
   const [availableCorps, setAvailableCorps] = useState([]);
   const [season] = useState(seasonHelpers.getCurrentSeason());
   const [recentScores, setRecentScores] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Get the active corps class (for now, use the first available corps)
+  const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
+
+  // Use execution hook
+  const {
+    executionState,
+    loading: executionLoading,
+    processing: executionProcessing,
+    rehearse,
+    repairEquipment,
+    upgradeEquipment,
+    boostMorale,
+    calculateMultiplier,
+    canRehearseToday
+  } = useExecution(user?.uid, activeCorpsClass);
   
   useEffect(() => {
     if (user) {
@@ -272,8 +297,121 @@ const fetchRecentScores = async () => {
         </div>
       </motion.div>
 
+      {/* Tab Navigation */}
+      {corps && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex gap-2 overflow-x-auto"
+        >
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
+              activeTab === 'overview'
+                ? 'bg-gold-500 text-charcoal-900'
+                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('execution')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'execution'
+                ? 'bg-gold-500 text-charcoal-900'
+                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+            }`}
+          >
+            <Target className="w-4 h-4" />
+            Execution
+          </button>
+          <button
+            onClick={() => setActiveTab('equipment')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'equipment'
+                ? 'bg-gold-500 text-charcoal-900'
+                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+            }`}
+          >
+            <Wrench className="w-4 h-4" />
+            Equipment
+          </button>
+          <button
+            onClick={() => setActiveTab('staff')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'staff'
+                ? 'bg-gold-500 text-charcoal-900'
+                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Staff
+          </button>
+        </motion.div>
+      )}
+
+      {/* Execution System Panels */}
+      <AnimatePresence mode="wait">
+        {corps && activeTab === 'execution' && (
+          <motion.div
+            key="execution"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <ExecutionDashboard
+              executionState={executionState}
+              multiplier={calculateMultiplier()}
+            />
+            <RehearsalPanel
+              executionState={executionState}
+              canRehearseToday={canRehearseToday()}
+              onRehearsal={rehearse}
+              processing={executionProcessing}
+            />
+          </motion.div>
+        )}
+
+        {corps && activeTab === 'equipment' && (
+          <motion.div
+            key="equipment"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <EquipmentManager
+              equipment={executionState?.equipment}
+              onRepair={repairEquipment}
+              onUpgrade={upgradeEquipment}
+              processing={executionProcessing}
+              corpsCoin={profile?.corpsCoin || 0}
+            />
+          </motion.div>
+        )}
+
+        {corps && activeTab === 'staff' && (
+          <motion.div
+            key="staff"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <StaffRoster
+              staff={executionState?.staff}
+              processing={executionProcessing}
+              corpsCoin={profile?.corpsCoin || 0}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Season Info & Corps Management */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Season Information */}
         <SeasonInfo className="lg:col-span-1" />
 
@@ -402,8 +540,10 @@ const fetchRecentScores = async () => {
       </motion.div>
         </div>
       </div>
+      )}
 
       {/* Recent Activity */}
+      {activeTab === 'overview' && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -458,6 +598,7 @@ const fetchRecentScores = async () => {
           )}
         </div>
       </motion.div>
+      )}
 
       {/* Modals */}
       <AnimatePresence>
