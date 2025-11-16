@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star, TrendingUp,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Heart, Wrench
+  Target, Heart, Wrench, MapPin
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
@@ -19,6 +19,7 @@ import {
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
+import ShowSelectionModal from '../components/ShowSelection/ShowSelectionModal';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [corps, setCorps] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
+  const [showShowSelection, setShowShowSelection] = useState(false);
   const [availableCorps, setAvailableCorps] = useState([]);
   const [season] = useState(seasonHelpers.getCurrentSeason());
   const [recentScores, setRecentScores] = useState([]);
@@ -185,6 +187,12 @@ const fetchRecentScores = async () => {
     // The new CaptionSelectionModal handles saving via the backend function
     // This callback is called after successful save
     setShowCaptionSelection(false);
+  };
+
+  const handleShowSelection = async (shows) => {
+    // The ShowSelectionModal handles saving via the backend function
+    // This callback is called after successful save
+    setShowShowSelection(false);
   };
 
   if (loading) {
@@ -560,6 +568,69 @@ const fetchRecentScores = async () => {
               </div>
             </div>
 
+            {/* Show Selection */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-cream-100">
+                    Show Schedule
+                  </h3>
+                  <p className="text-sm text-cream-500/60">
+                    Week {season.week || season.week === 0 ? season.week : '?'}
+                    {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 &&
+                      ` - ${activeCorps.selectedShows[`week${season.week}`].length} shows selected`
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowShowSelection(true)}
+                  className="btn-outline text-sm py-2"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
+                </button>
+              </div>
+
+              {!activeCorps.selectedShows?.[`week${season.week}`] || activeCorps.selectedShows[`week${season.week}`].length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
+                  <p className="text-cream-500/60 mb-1">No shows selected for this week</p>
+                  <p className="text-sm text-cream-500/40 mb-4">Select up to 4 shows to attend</p>
+                  <button
+                    onClick={() => setShowShowSelection(true)}
+                    className="btn-primary"
+                  >
+                    Select Shows
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {activeCorps.selectedShows[`week${season.week}`].map((show, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-cream-100">{show.eventName}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          {show.date && (
+                            <p className="text-xs text-cream-500/60 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {show.date}
+                            </p>
+                          )}
+                          {show.location && (
+                            <p className="text-xs text-cream-500/60 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {show.location}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Performance Chart */}
             <div className="card">
               <h3 className="text-lg font-semibold text-cream-100 mb-4">
@@ -660,6 +731,17 @@ const fetchRecentScores = async () => {
             corpsClass={activeCorpsClass}
             currentLineup={activeCorps.lineup || {}}
             seasonId={`${season.year}-${season.type}`}
+          />
+        )}
+
+        {showShowSelection && activeCorps && (
+          <ShowSelectionModal
+            onClose={() => setShowShowSelection(false)}
+            onSubmit={handleShowSelection}
+            corpsClass={activeCorpsClass}
+            currentWeek={season.week || 1}
+            seasonId={`${season.year}-${season.type}`}
+            currentSelections={activeCorps.selectedShows?.[`week${season.week}`] || []}
           />
         )}
       </AnimatePresence>
