@@ -119,7 +119,7 @@ const Leagues = () => {
   };
 
   const handleLeaveLeague = async (leagueId) => {
-    if (!confirm('Are you sure you want to leave this league?')) return;
+    if (!window.confirm('Are you sure you want to leave this league?')) return;
 
     try {
       const result = await leaveLeague({ leagueId });
