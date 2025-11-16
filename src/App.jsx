@@ -15,12 +15,13 @@ const Hub = lazy(() => import('./pages/Hub'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
-const Profile = lazy(() => import('./pages/Profile'));
+const Profile = lazy(() => import('./pages/ProfileNew'));
 const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Staff = lazy(() => import('./pages/Staff'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
@@ -213,6 +214,13 @@ function App() {
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
           <Route path="/how-to-play" element={<HowToPlay />} />
+
+          {/* Onboarding - Protected but minimal layout */}
+          <Route path="/onboarding" element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          } />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={
