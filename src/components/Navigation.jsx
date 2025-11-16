@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Trophy, Calendar, Music, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield
+  Star, Shield, ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, adminHelpers } from '../firebase';
@@ -60,16 +60,24 @@ const Navigation = () => {
           badge: null,
           premium: false
         },
-        { 
-          path: '/schedule', 
-          label: 'Schedule', 
+        {
+          path: '/schedule',
+          label: 'Schedule',
           icon: Calendar,
           badge: null,
           premium: false
         },
-        { 
-          path: '/scores', 
-          label: 'Scores', 
+        {
+          path: '/staff',
+          label: 'Staff Market',
+          icon: ShoppingCart,
+          badge: 'NEW',
+          badgeColor: 'bg-purple-500',
+          premium: false
+        },
+        {
+          path: '/scores',
+          label: 'Scores',
           icon: Music,
           badge: 'LIVE',
           badgeColor: 'bg-red-500',

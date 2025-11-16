@@ -48,6 +48,10 @@ const {
   reportComment,
 } = require("./src/callable/comments");
 const {
+  updateProfile,
+  getPublicProfile,
+} = require("./src/callable/profile");
+const {
   startNewOffSeason,
   startNewLiveSeason,
   manualTrigger,
@@ -86,6 +90,8 @@ module.exports = {
   sendCommentNotification,
   deleteComment,
   reportComment,
+  updateProfile,
+  getPublicProfile,
   manualTrigger,
   migrateUserProfiles,
   createUserProfile,

@@ -80,7 +80,7 @@ const Register = () => {
     try {
       await signUp(formData.email, formData.password);
       toast.success('Account created successfully!');
-      navigate('/dashboard');
+      navigate('/onboarding');
     } catch (err) {
       console.error('Registration error:', err);
       
