@@ -21,6 +21,7 @@ const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Staff = lazy(() => import('./pages/Staff'));
+const BattlePass = lazy(() => import('./pages/BattlePass'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -303,6 +304,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Staff />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/battlepass" element={
+            <ProtectedRoute>
+              <Layout>
+                <BattlePass />
               </Layout>
             </ProtectedRoute>
           } />
