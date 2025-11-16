@@ -24,6 +24,7 @@ import {
 import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowSelectionModal from '../components/ShowSelection/ShowSelectionModal';
+import InfoTooltip from '../components/InfoTooltip';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -306,11 +307,17 @@ const fetchRecentScores = async () => {
                       {profile?.xpLevel || 1}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-sm text-cream-500/60">Level Progress</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-cream-500/60">Level Progress</p>
+                      <InfoTooltip
+                        content="Earn XP by performing shows, completing achievements, and claiming Battle Pass rewards. Every 1000 XP unlocks a new level and may unlock new corps classes."
+                        title="Experience Points"
+                      />
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="w-32 h-2 bg-charcoal-800 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-gold transition-all duration-500"
                           style={{ width: `${((profile?.xp || 0) % 1000) / 10}%` }}
                         />
@@ -621,9 +628,15 @@ const fetchRecentScores = async () => {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-cream-100">
-                      Caption Lineup
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-cream-100">
+                        Caption Lineup
+                      </h3>
+                      <InfoTooltip
+                        content="Select historical caption heads from different corps and years. Each selection has a point value based on their real-world performance. Stay within your class limit."
+                        title="Caption Selection"
+                      />
+                    </div>
                     {Object.keys(activeCorps.lineup || {}).length > 0 && (() => {
                       const totalPoints = Object.values(activeCorps.lineup).reduce((sum, selection) => {
                         const parts = selection.split('|');
@@ -692,9 +705,15 @@ const fetchRecentScores = async () => {
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-cream-100">
-                    Show Schedule
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-cream-100">
+                      Show Schedule
+                    </h3>
+                    <InfoTooltip
+                      content="Select up to 4 shows to compete in each week. More competitive shows offer higher scores but face tougher competition. Choose strategically!"
+                      title="Show Selection"
+                    />
+                  </div>
                   <p className="text-sm text-cream-500/60">
                     Week {season.week || season.week === 0 ? season.week : '?'}
                     {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 &&
