@@ -12,7 +12,7 @@ const { generateSeasonRewards, BATTLE_PASS_CONFIG } = require("../callable/battl
  *
  * Schedule: 0 2 * * * (every day at 2 AM UTC)
  */
-exports.battlePassSeasonRotation = onSchedule(
+const battlePassSeasonRotation = onSchedule(
   {
     schedule: "0 2 * * *", // Daily at 2 AM UTC
     timeZone: "UTC",
@@ -210,12 +210,12 @@ async function archiveCompletedSeason(season) {
 /**
  * Manual trigger to create a new season (for testing/admin use)
  */
-exports.createBattlePassSeasonManual = async () => {
+const createBattlePassSeasonManual = async () => {
   logger.info("Manually creating new battle pass season...");
   return await createNewBattlePassSeason();
 };
 
 module.exports = {
-  battlePassSeasonRotation: exports.battlePassSeasonRotation,
-  createBattlePassSeasonManual: exports.createBattlePassSeasonManual,
+  battlePassSeasonRotation,
+  createBattlePassSeasonManual,
 };
