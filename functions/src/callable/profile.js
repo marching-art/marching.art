@@ -12,7 +12,7 @@ const { FieldValue } = require("firebase-admin/firestore");
  * @param {string} data.bio - User's biography
  * @param {string} data.favoriteCorps - User's favorite corps
  */
-exports.updateProfile = onCall(async (request) => {
+exports.updateProfile = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in to update your profile.");
   }
@@ -90,7 +90,7 @@ exports.updateProfile = onCall(async (request) => {
  * @param {Object} data
  * @param {string} data.userId - The user ID to get profile for
  */
-exports.getPublicProfile = onCall(async (request) => {
+exports.getPublicProfile = onCall({ cors: true }, async (request) => {
   const { userId } = request.data;
 
   if (!userId) {
