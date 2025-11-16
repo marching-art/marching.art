@@ -4,14 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star, TrendingUp,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Heart, Wrench, MapPin
+  Target, Heart, Wrench, MapPin, Crown, Gift, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, seasonHelpers, analyticsHelpers } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
+import { getBattlePassProgress } from '../firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
+import PerformanceChart from '../components/PerformanceChart';
 import {
   ExecutionDashboard,
   RehearsalPanel,
@@ -22,6 +24,7 @@ import {
 import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowSelectionModal from '../components/ShowSelection/ShowSelectionModal';
+import InfoTooltip from '../components/InfoTooltip';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -36,6 +39,8 @@ const Dashboard = () => {
   const [season] = useState(seasonHelpers.getCurrentSeason());
   const [recentScores, setRecentScores] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
+  const [battlePassRewards, setBattlePassRewards] = useState(null);
+  const [unclaimedRewardsCount, setUnclaimedRewardsCount] = useState(0);
 
   // Get the active corps class (for now, use the first available corps)
   const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
@@ -90,6 +95,9 @@ const Dashboard = () => {
 
       // Fetch recent scores
       fetchRecentScores();
+
+      // Fetch battle pass progress
+      fetchBattlePassProgress();
 
       // Subscribe to league rankings
       subscribeToLeagueRankings();
@@ -149,6 +157,34 @@ const fetchRecentScores = async () => {
     console.error('Error fetching recent scores:', error);
   }
 };
+
+  const fetchBattlePassProgress = async () => {
+    try {
+      const result = await getBattlePassProgress();
+      if (result.data && result.data.success) {
+        const progress = result.data.progress;
+        setBattlePassRewards(progress);
+
+        // Count unclaimed rewards
+        let unclaimedCount = 0;
+        for (let level = 1; level <= progress.currentLevel; level++) {
+          // Check free tier
+          if (!progress.claimedRewards?.free?.includes(level)) {
+            unclaimedCount++;
+          }
+          // Check premium tier if user has battle pass
+          if (progress.hasBattlePass && !progress.claimedRewards?.premium?.includes(level)) {
+            unclaimedCount++;
+          }
+        }
+        setUnclaimedRewardsCount(unclaimedCount);
+      }
+    } catch (error) {
+      console.error('Error fetching battle pass progress:', error);
+      setBattlePassRewards(null);
+      setUnclaimedRewardsCount(0);
+    }
+  };
 
   const subscribeToLeagueRankings = () => {
     // Subscribe to user's league rankings
@@ -271,11 +307,17 @@ const fetchRecentScores = async () => {
                       {profile?.xpLevel || 1}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-sm text-cream-500/60">Level Progress</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-cream-500/60">Level Progress</p>
+                      <InfoTooltip
+                        content="Earn XP by performing shows, completing achievements, and claiming Battle Pass rewards. Every 1000 XP unlocks a new level and may unlock new corps classes."
+                        title="Experience Points"
+                      />
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="w-32 h-2 bg-charcoal-800 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-gold transition-all duration-500"
                           style={{ width: `${((profile?.xp || 0) % 1000) / 10}%` }}
                         />
@@ -291,6 +333,44 @@ const fetchRecentScores = async () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Battle Pass Notification */}
+      {unclaimedRewardsCount > 0 && (
+        <motion.a
+          href="/battlepass"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="block"
+        >
+          <div className="glass-premium rounded-xl p-4 border border-gold-500/30 hover:border-gold-500/60 transition-all cursor-pointer group">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Crown className="w-8 h-8 text-gold-500 group-hover:scale-110 transition-transform" />
+                  <Sparkles className="w-4 h-4 text-gold-500 absolute -top-1 -right-1 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gradient flex items-center gap-2">
+                    Battle Pass Rewards Available!
+                    <span className="px-2 py-0.5 bg-gold-500 text-charcoal-900 rounded-full text-xs font-bold">
+                      {unclaimedRewardsCount}
+                    </span>
+                  </h3>
+                  <p className="text-sm text-cream-300">
+                    You have {unclaimedRewardsCount} unclaimed reward{unclaimedRewardsCount > 1 ? 's' : ''} waiting for you
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-gold-500">
+                <Gift className="w-5 h-5" />
+                <span className="text-sm font-semibold">Claim Now</span>
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </motion.a>
+      )}
 
       {/* Quick Stats */}
       <motion.div
@@ -548,9 +628,15 @@ const fetchRecentScores = async () => {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-cream-100">
-                      Caption Lineup
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-cream-100">
+                        Caption Lineup
+                      </h3>
+                      <InfoTooltip
+                        content="Select historical caption heads from different corps and years. Each selection has a point value based on their real-world performance. Stay within your class limit."
+                        title="Caption Selection"
+                      />
+                    </div>
                     {Object.keys(activeCorps.lineup || {}).length > 0 && (() => {
                       const totalPoints = Object.values(activeCorps.lineup).reduce((sum, selection) => {
                         const parts = selection.split('|');
@@ -619,9 +705,15 @@ const fetchRecentScores = async () => {
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-cream-100">
-                    Show Schedule
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-cream-100">
+                      Show Schedule
+                    </h3>
+                    <InfoTooltip
+                      content="Select up to 4 shows to compete in each week. More competitive shows offer higher scores but face tougher competition. Choose strategically!"
+                      title="Show Selection"
+                    />
+                  </div>
                   <p className="text-sm text-cream-500/60">
                     Week {season.week || season.week === 0 ? season.week : '?'}
                     {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 &&
@@ -679,19 +771,7 @@ const fetchRecentScores = async () => {
             </div>
 
             {/* Performance Chart */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-cream-100 mb-4">
-                {activeCorpsClass === 'soundSport' ? 'Season Journey' : 'Performance Trend'}
-              </h3>
-              <div className="h-64 flex items-center justify-center text-cream-500/40">
-                <TrendingUp className="w-8 h-8" />
-                <span className="ml-2">
-                  {activeCorpsClass === 'soundSport'
-                    ? 'Your performance history will appear here'
-                    : 'Chart coming soon'}
-                </span>
-              </div>
-            </div>
+            <PerformanceChart scores={recentScores} corpsClass={activeCorpsClass} />
           </div>
         )}
       </motion.div>
@@ -747,14 +827,36 @@ const fetchRecentScores = async () => {
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
               <p className="text-cream-500/60 mb-4">Not in any leagues yet</p>
-              <button className="btn-outline">
+              <a href="/leagues" className="btn-outline inline-flex items-center">
                 Browse Leagues
                 <ChevronRight className="w-4 h-4 ml-2" />
-              </button>
+              </a>
             </div>
           ) : (
             <div className="space-y-3">
-              {/* League activity items */}
+              {profile.leagues.slice(0, 3).map((leagueId, index) => (
+                <div
+                  key={leagueId}
+                  className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg hover:bg-charcoal-900/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 text-gold-500" />
+                    <div>
+                      <p className="text-sm font-semibold text-cream-100">League {index + 1}</p>
+                      <p className="text-xs text-cream-500/60">Active</p>
+                    </div>
+                  </div>
+                  <a href="/leagues" className="text-sm text-gold-500 hover:text-gold-400">
+                    View
+                  </a>
+                </div>
+              ))}
+              <a
+                href="/leagues"
+                className="block text-center p-3 text-sm text-gold-500 hover:text-gold-400 hover:bg-charcoal-900/30 rounded-lg transition-colors"
+              >
+                View All Leagues →
+              </a>
             </div>
           )}
         </div>

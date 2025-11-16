@@ -1,4 +1,12 @@
-# Deployment Required for CORS Fixes
+# 🚨 URGENT: Deployment Required for CORS Fixes
+
+## Current Issue
+The production website is experiencing CORS errors when calling certain Cloud Functions. The code fixes are already committed to the repository, but **the Cloud Functions need to be deployed to Firebase** for the fixes to take effect.
+
+## Why This Is Happening
+- ✅ Frontend is deployed (Vercel) - **Working**
+- ❌ Backend is NOT deployed (Firebase) - **Needs deployment**
+- The frontend is calling the old backend functions that don't have CORS enabled
 
 ## Overview
 Several Cloud Functions have been updated with CORS configuration fixes, but these changes need to be deployed to Firebase Cloud Functions to take effect in production.
@@ -33,6 +41,24 @@ The following functions are experiencing CORS errors because the updated code ha
 3. **getStaffMarketplace** - Used in staff marketplace
    - Error: "No 'Access-Control-Allow-Origin' header is present"
    - Status: Already has CORS in code, but may need redeployment
+
+## Quick Deploy (Start Here!)
+
+### Using the Deploy Script
+```bash
+# Make the script executable (if not already)
+chmod +x deploy-functions.sh
+
+# Run the deployment script
+./deploy-functions.sh
+```
+
+The script will:
+1. Check for Firebase CLI
+2. Verify authentication
+3. Install dependencies
+4. Deploy all functions
+5. Verify deployment
 
 ## Deployment Instructions
 

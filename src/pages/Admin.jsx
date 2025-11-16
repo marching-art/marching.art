@@ -337,12 +337,94 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
 // Note: StaffManagement component now imported from components/Admin
 
 // User Management Tab
-const UserManagementTab = () => (
-  <div className="card">
-    <h2 className="text-xl font-bold text-cream-100 mb-4">User Management</h2>
-    <p className="text-cream-500">User management tools coming soon...</p>
-  </div>
-);
+const UserManagementTab = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    premiumUsers: 0,
+    totalCorps: 0
+  });
+
+  useEffect(() => {
+    loadUserStats();
+  }, []);
+
+  const loadUserStats = async () => {
+    try {
+      const usersRef = collection(db, 'artifacts/marching-art/users');
+      const snapshot = await getDocs(usersRef);
+
+      let activeCount = 0;
+      let premiumCount = 0;
+      let corpsCount = 0;
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.lastActive) {
+          const lastActive = data.lastActive.toDate();
+          const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceActive <= 7) activeCount++;
+        }
+        if (data.battlePass?.isPremium) premiumCount++;
+        if (data.corps) {
+          corpsCount += Object.keys(data.corps).length;
+        }
+      });
+
+      setStats({
+        totalUsers: snapshot.size,
+        activeUsers: activeCount,
+        premiumUsers: premiumCount,
+        totalCorps: corpsCount
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="card">
+        <h2 className="text-xl font-bold text-cream-100 mb-4">User Statistics</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-charcoal-900/50 rounded-lg">
+            <p className="text-sm text-cream-500/60 mb-1">Total Users</p>
+            <p className="text-3xl font-bold text-cream-100">{stats.totalUsers}</p>
+          </div>
+          <div className="p-4 bg-charcoal-900/50 rounded-lg">
+            <p className="text-sm text-cream-500/60 mb-1">Active (7 days)</p>
+            <p className="text-3xl font-bold text-green-400">{stats.activeUsers}</p>
+          </div>
+          <div className="p-4 bg-charcoal-900/50 rounded-lg">
+            <p className="text-sm text-cream-500/60 mb-1">Premium Users</p>
+            <p className="text-3xl font-bold text-gold-500">{stats.premiumUsers}</p>
+          </div>
+          <div className="p-4 bg-charcoal-900/50 rounded-lg">
+            <p className="text-sm text-cream-500/60 mb-1">Total Corps</p>
+            <p className="text-3xl font-bold text-blue-400">{stats.totalCorps}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2 className="text-xl font-bold text-cream-100 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <button className="p-4 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-left transition-colors">
+            <Users className="w-5 h-5 text-blue-400 mb-2" />
+            <p className="font-semibold text-cream-100">View All Users</p>
+            <p className="text-xs text-cream-500/60">Browse user profiles and activity</p>
+          </button>
+          <button className="p-4 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-left transition-colors">
+            <Shield className="w-5 h-5 text-purple-400 mb-2" />
+            <p className="font-semibold text-cream-100">Manage Roles</p>
+            <p className="text-xs text-cream-500/60">Assign admin and moderator roles</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Background Jobs Tab
 const BackgroundJobsTab = ({ callAdminFunction }) => {

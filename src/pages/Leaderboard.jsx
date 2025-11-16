@@ -217,58 +217,101 @@ const Leaderboard = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold"></div>
           </div>
         ) : leaderboardData[activeTab].length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-black-dark border-b border-cream-dark/20">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Rank</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Player</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Corps</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Score</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Trophies</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-dark/10">
-                {leaderboardData[activeTab].map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className={`hover:bg-black/30 transition-colors ${
-                      loggedInProfile?.username === entry.username ? 'bg-gold/5' : ''
-                    }`}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-black-dark border-b border-cream-dark/20">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Rank</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Player</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Corps</th>
+                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Score</th>
+                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Trophies</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cream-dark/10">
+                  {leaderboardData[activeTab].map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className={`hover:bg-black/30 transition-colors ${
+                        loggedInProfile?.username === entry.username ? 'bg-gold/5' : ''
+                      }`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {getRankIcon(entry.rank)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-cream-dark/20 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-cream-light" />
+                          </div>
+                          <div>
+                            <p className="text-cream font-medium">{entry.username}</p>
+                            <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-cream-light">{entry.corpsName || 'No Corps'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <p className="text-cream font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Trophy className="w-4 h-4 text-gold" />
+                          <span className="text-cream">{entry.trophies || 0}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3 p-4">
+              {leaderboardData[activeTab].map((entry) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`rounded-lg p-4 border-2 transition-all ${
+                    getRankBgColor(entry.rank)
+                  } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-gold' : ''}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
                         {getRankIcon(entry.rank)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-cream-dark/20 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-cream-light" />
-                        </div>
-                        <div>
-                          <p className="text-cream font-medium">{entry.username}</p>
-                          <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
-                        </div>
+                      <div>
+                        <p className="text-cream font-semibold text-base">{entry.username}</p>
+                        <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-cream-light">{entry.corpsName || 'No Corps'}</p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className="text-cream font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Trophy className="w-4 h-4 text-gold" />
-                        <span className="text-cream">{entry.trophies || 0}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-cream font-bold text-lg">{entry.score?.toFixed(2) || '0.00'}</p>
+                      <p className="text-cream-light/60 text-xs">Score</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-cream-light">
+                      <Users className="w-4 h-4" />
+                      <span>{entry.corpsName || 'No Corps'}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-cream-light">
+                      <Trophy className="w-4 h-4 text-gold" />
+                      <span className="font-semibold">{entry.trophies || 0}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-20">
             <Trophy className="w-16 h-16 text-cream-dark mx-auto mb-4" />

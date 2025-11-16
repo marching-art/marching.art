@@ -111,7 +111,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   
   /* Buttons */
   .btn {
-    @apply px-6 py-3 rounded-lg font-display font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+    @apply px-6 py-3.5 rounded-lg font-display font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 min-h-[44px] flex items-center justify-center gap-2;
   }
   
   .btn-primary {
@@ -145,23 +145,23 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   
   /* Form Elements */
   .input {
-    @apply w-full px-4 py-3 rounded-lg bg-charcoal-900/50 border border-cream-500/20 text-cream-100 placeholder-cream-500/50 focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 transition-all duration-300;
+    @apply w-full px-4 py-3.5 rounded-lg bg-charcoal-900/50 border border-cream-500/20 text-cream-100 placeholder-cream-500/50 focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 transition-all duration-300 min-h-[44px] text-base;
   }
-  
+
   .select {
     @apply input appearance-none cursor-pointer;
   }
-  
+
   .textarea {
-    @apply input resize-none;
+    @apply input resize-none min-h-[88px];
   }
-  
+
   .checkbox {
-    @apply w-5 h-5 rounded border-cream-500/20 bg-charcoal-900/50 text-gold-500 focus:ring-gold-500/20;
+    @apply w-6 h-6 rounded border-cream-500/20 bg-charcoal-900/50 text-gold-500 focus:ring-gold-500/20 cursor-pointer;
   }
-  
+
   .label {
-    @apply block text-sm font-medium text-cream-300 mb-2;
+    @apply block text-sm font-medium text-cream-300 mb-2 select-none;
   }
   
   /* Badges */
