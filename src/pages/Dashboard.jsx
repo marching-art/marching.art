@@ -7,8 +7,9 @@ import {
   Target, Heart, Wrench, MapPin
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, seasonHelpers, analyticsHelpers } from '../firebase';
+import { db, functions, seasonHelpers, analyticsHelpers } from '../firebase';
 import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import {
@@ -193,6 +194,43 @@ const fetchRecentScores = async () => {
     // The ShowSelectionModal handles saving via the backend function
     // This callback is called after successful save
     setShowShowSelection(false);
+  };
+
+  const handleDailyRehearsal = async () => {
+    try {
+      const dailyRehearsal = httpsCallable(functions, 'dailyRehearsal');
+      const result = await dailyRehearsal();
+
+      const data = result.data;
+
+      // Show success message
+      if (data.classUnlocked) {
+        toast.success(data.message, { duration: 5000, icon: '🎉' });
+      } else {
+        toast.success(data.message, { duration: 3000 });
+      }
+
+      // Show XP gained
+      toast.success(`+${data.xpEarned} XP! (${data.totalXP} total)`, {
+        duration: 2000,
+        icon: '⭐'
+      });
+
+      if (data.level > (profile?.xpLevel || 1)) {
+        toast.success(`Level Up! Now Level ${data.level}`, {
+          duration: 4000,
+          icon: '🎊'
+        });
+      }
+    } catch (error) {
+      console.error('Error with daily rehearsal:', error);
+
+      if (error.message && error.message.includes('rehearse again in')) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to complete rehearsal. Please try again.');
+      }
+    }
   };
 
   if (loading) {
