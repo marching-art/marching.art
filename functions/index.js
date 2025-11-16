@@ -14,6 +14,7 @@ const {
 } = require("./src/callable/users");
 const {
   validateAndSaveLineup,
+  saveLineup,
   selectUserShows,
 } = require("./src/callable/lineups");
 const {
@@ -83,6 +84,7 @@ module.exports = {
   getShowRegistrations,
   getUserRankings,
   validateAndSaveLineup,
+  saveLineup,
   selectUserShows,
   createLeague,
   joinLeague,

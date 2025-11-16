@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc, getDocs } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import {
@@ -18,6 +18,7 @@ import {
   StaffRoster
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
+import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -34,6 +35,7 @@ const Dashboard = () => {
 
   // Get the active corps class (for now, use the first available corps)
   const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
+  const activeCorps = activeCorpsClass ? corps[activeCorpsClass] : null;
 
   // Use execution hook
   const {
@@ -97,15 +99,19 @@ const Dashboard = () => {
   const fetchAvailableCorps = async () => {
     try {
       const seasonId = `${season.year}-${season.type}`;
-      const corpsRef = doc(db, 'dci-data', seasonId);
-      const snapshot = await getDocs(collection(corpsRef, 'corpsValues'));
-      const corpsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAvailableCorps(corpsData);
+      const corpsDataRef = doc(db, 'dci-data', seasonId);
+      const corpsDataSnap = await getDoc(corpsDataRef);
+
+      if (corpsDataSnap.exists()) {
+        const data = corpsDataSnap.data();
+        const corpsData = data.corpsValues || [];
+        setAvailableCorps(corpsData);
+      } else {
+        setAvailableCorps([]);
+      }
     } catch (error) {
       console.error('Error fetching available corps:', error);
+      setAvailableCorps([]);
     }
   };
 
@@ -121,12 +127,16 @@ const fetchRecentScores = async () => {
       const sortedRecaps = allRecaps
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5)
-        .map(r => ({
-          showName: r.showName || r.name || 'Unknown Show',
-          date: r.date || '',
-          totalScore: (typeof r.totalScore === 'number') ? r.totalScore.toFixed(2) : (r.totalScore || '0.00'),
-          rank: r.rank ?? '-'
-        }));
+        .map(r => {
+          // For SoundSport, mask the scores
+          const isSoundSport = activeCorpsClass === 'soundSport';
+          return {
+            showName: r.showName || r.name || 'Unknown Show',
+            date: r.date || '',
+            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
+            rank: isSoundSport ? '🎉' : (r.rank ?? '-')
+          };
+        });
       setRecentScores(sortedRecaps);
     } else {
       setRecentScores([]);
@@ -172,23 +182,9 @@ const fetchRecentScores = async () => {
   };
 
   const handleCaptionSelection = async (captions) => {
-    try {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      
-      await updateDoc(profileRef, {
-        [`corps.${corps.class}.lineup`]: captions
-      });
-
-      Object.entries(captions).forEach(([caption, corpsName]) => {
-        analyticsHelpers.logCaptionSelected(caption, corpsName);
-      });
-
-      toast.success('Caption lineup saved successfully!');
-      setShowCaptionSelection(false);
-    } catch (error) {
-      console.error('Error saving caption lineup:', error);
-      toast.error('Failed to save lineup. Please try again.');
-    }
+    // The new CaptionSelectionModal handles saving via the backend function
+    // This callback is called after successful save
+    setShowCaptionSelection(false);
   };
 
   if (loading) {
@@ -260,20 +256,28 @@ const fetchRecentScores = async () => {
           <div className="flex items-center justify-between mb-2">
             <Trophy className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {corps?.rank || '-'}
+              {activeCorpsClass === 'soundSport' ? '🎉' : (activeCorps?.rank || '-')}
             </span>
           </div>
-          <p className="text-sm text-cream-500/60">Current Rank</p>
+          <p className="text-sm text-cream-500/60">
+            {activeCorpsClass === 'soundSport' ? 'Participant' : 'Current Rank'}
+          </p>
         </div>
 
         <div className="card-hover">
           <div className="flex items-center justify-between mb-2">
             <Star className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {corps?.score?.toFixed(2) || '0.00'}
+              {activeCorpsClass === 'soundSport' ? (
+                activeCorps?.totalSeasonScore > 0 ? '✓' : '-'
+              ) : (
+                activeCorps?.totalSeasonScore?.toFixed(2) || '0.00'
+              )}
             </span>
           </div>
-          <p className="text-sm text-cream-500/60">Total Score</p>
+          <p className="text-sm text-cream-500/60">
+            {activeCorpsClass === 'soundSport' ? 'Performance' : 'Total Score'}
+          </p>
         </div>
 
         <div className="card-hover">
@@ -298,7 +302,7 @@ const fetchRecentScores = async () => {
       </motion.div>
 
       {/* Tab Navigation */}
-      {corps && (
+      {activeCorps && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -353,7 +357,7 @@ const fetchRecentScores = async () => {
 
       {/* Execution System Panels */}
       <AnimatePresence mode="wait">
-        {corps && activeTab === 'execution' && (
+        {activeCorps && activeTab === 'execution' && (
           <motion.div
             key="execution"
             initial={{ opacity: 0, y: 20 }}
@@ -374,7 +378,7 @@ const fetchRecentScores = async () => {
           </motion.div>
         )}
 
-        {corps && activeTab === 'equipment' && (
+        {activeCorps && activeTab === 'equipment' && (
           <motion.div
             key="equipment"
             initial={{ opacity: 0, y: 20 }}
@@ -392,7 +396,7 @@ const fetchRecentScores = async () => {
           </motion.div>
         )}
 
-        {corps && activeTab === 'staff' && (
+        {activeCorps && activeTab === 'staff' && (
           <motion.div
             key="staff"
             initial={{ opacity: 0, y: 20 }}
@@ -423,7 +427,7 @@ const fetchRecentScores = async () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        {!corps ? (
+        {!activeCorps ? (
           // Registration CTA
           <div className="card-premium p-8 text-center">
             <Music className="w-16 h-16 text-gold-500 mx-auto mb-4" />
@@ -449,18 +453,22 @@ const fetchRecentScores = async () => {
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
-                    {corps.name}
+                    {activeCorps.corpsName || activeCorps.name}
                   </h2>
-                  <p className="text-cream-500/60">{corps.location}</p>
+                  <p className="text-cream-500/60">{activeCorps.location}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`badge ${
-                      corps.class === 'world' ? 'badge-gold' :
-                      corps.class === 'open' ? 'badge-cream' :
-                      'badge-success'
+                      activeCorpsClass === 'world' ? 'badge-gold' :
+                      activeCorpsClass === 'open' ? 'badge-cream' :
+                      activeCorpsClass === 'soundSport' ? 'badge-success' :
+                      'badge-primary'
                     }`}>
-                      {corps.class ? corps.class.charAt(0).toUpperCase() + corps.class.slice(1) : 'Unknown'} Class
+                      {activeCorpsClass === 'soundSport' ? 'SoundSport' :
+                       activeCorpsClass === 'world' ? 'World Class' :
+                       activeCorpsClass === 'open' ? 'Open Class' :
+                       activeCorpsClass === 'aClass' ? 'A Class' : 'Unknown'}
                     </span>
-                    {corps.rank && corps.rank <= 10 && (
+                    {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
                       <span className="badge badge-gold">
                         <Trophy className="w-3 h-3 mr-1" />
                         Top 10
@@ -474,19 +482,36 @@ const fetchRecentScores = async () => {
               </div>
 
               {/* Show Concept */}
-              {corps.showConcept && (
+              {activeCorps.showConcept && (
                 <div className="p-4 bg-charcoal-900/30 rounded-lg mb-6">
                   <p className="text-sm text-cream-500/60 mb-1">Show Concept</p>
-                  <p className="text-cream-100">{corps.showConcept}</p>
+                  <p className="text-cream-100">{activeCorps.showConcept}</p>
                 </div>
               )}
 
               {/* Caption Lineup */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-cream-100">
-                    Caption Lineup
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-cream-100">
+                      Caption Lineup
+                    </h3>
+                    {Object.keys(activeCorps.lineup || {}).length > 0 && (() => {
+                      const totalPoints = Object.values(activeCorps.lineup).reduce((sum, selection) => {
+                        const parts = selection.split('|');
+                        return sum + (parseInt(parts[2]) || 0);
+                      }, 0);
+                      const pointLimits = { soundSport: 90, aClass: 60, open: 120, world: 150 };
+                      const limit = pointLimits[activeCorpsClass] || 150;
+                      return (
+                        <p className="text-sm text-cream-500/60">
+                          Total: <span className={`font-bold ${totalPoints > limit ? 'text-red-500' : 'text-gold-500'}`}>
+                            {totalPoints}
+                          </span> / {limit} points
+                        </p>
+                      );
+                    })()}
+                  </div>
                   <button
                     onClick={() => setShowCaptionSelection(true)}
                     className="btn-outline text-sm py-2"
@@ -496,7 +521,7 @@ const fetchRecentScores = async () => {
                   </button>
                 </div>
 
-                {Object.keys(corps.lineup || {}).length === 0 ? (
+                {Object.keys(activeCorps.lineup || {}).length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
                     <p className="text-cream-500/60">No captions selected yet</p>
@@ -509,17 +534,27 @@ const fetchRecentScores = async () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(corps.lineup).map(([caption, corpsName]) => (
-                      <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                        <div>
-                          <p className="text-xs text-cream-500/60">{caption}</p>
-                          <p className="text-sm font-medium text-cream-100">{corpsName}</p>
+                    {Object.entries(activeCorps.lineup).map(([caption, selection]) => {
+                      // Parse the selection string: corpsName|sourceYear|points
+                      const parts = selection.split('|');
+                      const corpsName = parts[0] || selection;
+                      const year = parts[1] || '';
+                      const points = parts[2] || '';
+
+                      return (
+                        <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
+                          <div className="flex-1">
+                            <p className="text-xs text-cream-500/60">{caption}</p>
+                            <p className="text-sm font-medium text-cream-100">{corpsName}</p>
+                            {year && <p className="text-xs text-cream-500/40">({year})</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-gold-500">{points || '?'}</p>
+                            <p className="text-xs text-cream-500/60">pts</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gold-500">19.85</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -528,11 +563,15 @@ const fetchRecentScores = async () => {
             {/* Performance Chart */}
             <div className="card">
               <h3 className="text-lg font-semibold text-cream-100 mb-4">
-                Performance Trend
+                {activeCorpsClass === 'soundSport' ? 'Season Journey' : 'Performance Trend'}
               </h3>
               <div className="h-64 flex items-center justify-center text-cream-500/40">
                 <TrendingUp className="w-8 h-8" />
-                <span className="ml-2">Chart coming soon</span>
+                <span className="ml-2">
+                  {activeCorpsClass === 'soundSport'
+                    ? 'Your performance history will appear here'
+                    : 'Chart coming soon'}
+                </span>
               </div>
             </div>
           </div>
@@ -553,11 +592,13 @@ const fetchRecentScores = async () => {
         {/* Recent Scores */}
         <div className="card">
           <h3 className="text-lg font-semibold text-cream-100 mb-4">
-            Recent Scores
+            {activeCorpsClass === 'soundSport' ? 'Recent Performances' : 'Recent Scores'}
           </h3>
           {recentScores.length === 0 ? (
             <p className="text-cream-500/60 text-center py-8">
-              No scores available yet
+              {activeCorpsClass === 'soundSport'
+                ? 'No performances yet'
+                : 'No scores available yet'}
             </p>
           ) : (
             <div className="space-y-3">
@@ -569,7 +610,9 @@ const fetchRecentScores = async () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gold-500">{score.totalScore}</p>
-                    <p className="text-xs text-cream-500/60">Rank #{score.rank}</p>
+                    {activeCorpsClass !== 'soundSport' && (
+                      <p className="text-xs text-cream-500/60">Rank #{score.rank}</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -610,12 +653,13 @@ const fetchRecentScores = async () => {
           />
         )}
         
-        {showCaptionSelection && (
+        {showCaptionSelection && activeCorps && (
           <CaptionSelectionModal
             onClose={() => setShowCaptionSelection(false)}
             onSubmit={handleCaptionSelection}
-            availableCorps={availableCorps}
-            currentLineup={corps?.lineup || {}}
+            corpsClass={activeCorpsClass}
+            currentLineup={activeCorps.lineup || {}}
+            seasonId={`${season.year}-${season.type}`}
           />
         )}
       </AnimatePresence>
@@ -787,98 +831,6 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses }) => {
               </button>
             </div>
           </form>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Caption Selection Modal Component
-const CaptionSelectionModal = ({ onClose, onSubmit, availableCorps, currentLineup }) => {
-  const [selections, setSelections] = useState(currentLineup);
-  
-  const captions = [
-    { id: 'GE1', name: 'General Effect 1', category: 'GE' },
-    { id: 'GE2', name: 'General Effect 2', category: 'GE' },
-    { id: 'VP', name: 'Visual Proficiency', category: 'Visual' },
-    { id: 'VA', name: 'Visual Analysis', category: 'Visual' },
-    { id: 'CG', name: 'Color Guard', category: 'Visual' },
-    { id: 'B', name: 'Brass', category: 'Music' },
-    { id: 'MA', name: 'Music Analysis', category: 'Music' },
-    { id: 'P', name: 'Percussion', category: 'Music' }
-  ];
-
-  const handleSubmit = () => {
-    if (Object.keys(selections).length !== 8) {
-      toast.error('Please select all 8 captions');
-      return;
-    }
-    onSubmit(selections);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="glass-dark rounded-2xl p-8">
-          <h2 className="text-3xl font-display font-bold text-gradient mb-6">
-            Select Your Caption Lineup
-          </h2>
-
-          <div className="space-y-4 mb-6">
-            {captions.map((caption) => (
-              <div key={caption.id} className="glass rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-cream-100">{caption.name}</p>
-                    <p className="text-xs text-cream-500/60">{caption.category}</p>
-                  </div>
-                  {selections[caption.id] && (
-                    <Check className="w-5 h-5 text-gold-500" />
-                  )}
-                </div>
-                <select
-                  className="select"
-                  value={selections[caption.id] || ''}
-                  onChange={(e) => setSelections({ ...selections, [caption.id]: e.target.value })}
-                >
-                  <option value="">Select a corps</option>
-                  {availableCorps.map((corps) => (
-                    <option key={corps.id} value={corps.name}>
-                      {corps.name} ({corps.year})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="btn-ghost flex-1"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="btn-primary flex-1"
-            >
-              Save Lineup
-            </button>
-          </div>
         </div>
       </motion.div>
     </motion.div>
