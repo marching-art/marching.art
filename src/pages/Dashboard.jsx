@@ -16,7 +16,8 @@ import {
   ExecutionDashboard,
   RehearsalPanel,
   EquipmentManager,
-  StaffRoster
+  StaffRoster,
+  ShowDifficultySelector
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
@@ -420,6 +421,14 @@ const fetchRecentScores = async () => {
               canRehearseToday={canRehearseToday()}
               onRehearsal={rehearse}
               processing={executionProcessing}
+            />
+            <ShowDifficultySelector
+              corpsClass={activeCorpsClass}
+              currentDifficulty={executionState?.showDesign?.difficulty || activeCorps?.execution?.showDesign?.difficulty}
+              currentDay={profile?.currentDay || 1}
+              onSuccess={() => {
+                toast.success('Show difficulty updated successfully!');
+              }}
             />
           </motion.div>
         )}

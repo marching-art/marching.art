@@ -1,12 +1,15 @@
 // src/components/Execution/ExecutionDashboard.jsx
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Heart, Wrench, TrendingUp, TrendingDown,
-  Minus, Sparkles, AlertCircle
+  Minus, Sparkles, AlertCircle, Users, Zap, Shield,
+  ChevronDown, ChevronUp, Award, Timer, Activity
 } from 'lucide-react';
 
 const ExecutionDashboard = ({ executionState, multiplier }) => {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
   if (!executionState) {
     return (
       <div className="card p-6">
@@ -15,13 +18,106 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
     );
   }
 
-  const { readiness = 0, morale = 0, equipment = {} } = executionState;
+  const {
+    readiness = 0,
+    morale = 0,
+    equipment = {},
+    showDesign = {},
+    staff = {}
+  } = executionState;
 
   // Calculate average equipment condition
   const equipmentConditions = Object.values(equipment).map(e => e.condition || 0);
   const avgEquipment = equipmentConditions.length > 0
     ? equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length
     : 0;
+
+  // Calculate multiplier breakdown factors
+  const getMultiplierBreakdown = () => {
+    const breakdown = [];
+    const baseMultiplier = 1.00;
+
+    // Factor 1: Readiness (±12%)
+    const readinessBonus = (readiness - 0.80) * 0.60;
+    breakdown.push({
+      name: 'Section Readiness',
+      value: readinessBonus,
+      max: 0.12,
+      min: -0.12,
+      icon: Target,
+      description: 'Improved through daily rehearsals',
+      color: readinessBonus >= 0 ? 'text-green-400' : 'text-red-400'
+    });
+
+    // Factor 2: Staff Effectiveness (±8%)
+    const staffCount = Object.keys(staff || {}).length;
+    const staffEffectiveness = staffCount > 0 ? 0.85 : 0.70;
+    const staffBonus = (staffEffectiveness - 0.80) * 0.40;
+    breakdown.push({
+      name: 'Staff Effectiveness',
+      value: staffBonus,
+      max: 0.08,
+      min: -0.08,
+      icon: Users,
+      description: `${staffCount} staff members assigned`,
+      color: staffBonus >= 0 ? 'text-green-400' : 'text-red-400'
+    });
+
+    // Factor 3: Equipment Condition (±5%)
+    const equipmentPenalty = (avgEquipment - 1.00) * 0.50;
+    breakdown.push({
+      name: 'Equipment Condition',
+      value: equipmentPenalty,
+      max: 0,
+      min: -0.05,
+      icon: Wrench,
+      description: 'Keep equipment well-maintained',
+      color: equipmentPenalty >= -0.01 ? 'text-green-400' : 'text-red-400'
+    });
+
+    // Factor 4: Morale (±8%)
+    const moraleBonus = (morale - 0.75) * 0.32;
+    breakdown.push({
+      name: 'Section Morale',
+      value: moraleBonus,
+      max: 0.08,
+      min: -0.08,
+      icon: Heart,
+      description: 'Affected by performance outcomes',
+      color: moraleBonus >= 0 ? 'text-green-400' : 'text-red-400'
+    });
+
+    // Factor 5: Show Difficulty (±15%)
+    const difficultyBonus = showDesign?.ceilingBonus || 0.08;
+    const avgReadiness = readiness; // Simplified
+    const isWellPrepared = avgReadiness >= (showDesign?.preparednessThreshold || 0.80);
+    const difficultyEffect = isWellPrepared ? difficultyBonus : (showDesign?.riskPenalty || -0.10);
+    breakdown.push({
+      name: 'Show Difficulty',
+      value: difficultyEffect,
+      max: 0.15,
+      min: -0.20,
+      icon: Zap,
+      description: isWellPrepared ? 'Well-prepared for difficulty!' : 'Need more preparation',
+      color: difficultyEffect >= 0 ? 'text-gold-400' : 'text-red-400'
+    });
+
+    // Factor 6: Random Variance (±2%)
+    const variance = 0; // Can't predict random variance
+    breakdown.push({
+      name: 'Performance Variance',
+      value: variance,
+      max: 0.02,
+      min: -0.02,
+      icon: Activity,
+      description: 'Random day-to-day fluctuation',
+      color: 'text-blue-400'
+    });
+
+    return breakdown;
+  };
+
+  const multiplierBreakdown = getMultiplierBreakdown();
 
   // Get status color based on value
   const getStatusColor = (value) => {
@@ -70,7 +166,7 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
           <MultiplierIcon className={`w-5 h-5 ${multiplierStatus.color}`} />
         </div>
 
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-3 mb-4">
           <div className="text-5xl font-bold text-gradient">
             {multiplier.toFixed(2)}x
           </div>
@@ -82,12 +178,139 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-charcoal-900/30 rounded-lg">
-          <p className="text-xs text-cream-500/80 leading-relaxed">
-            Your execution multiplier affects all performance scores.
-            Keep readiness, morale, and equipment in top condition to maximize results!
-          </p>
+        {/* Multiplier Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between text-xs text-cream-500/60 mb-2">
+            <span>0.70x (Poor)</span>
+            <span>1.00x (Perfect)</span>
+            <span>1.10x (Elite)</span>
+          </div>
+          <div className="w-full h-3 bg-charcoal-800 rounded-full overflow-hidden relative">
+            <div className="absolute inset-0 flex">
+              <div className="w-[25%] bg-red-500/20" />
+              <div className="w-[25%] bg-yellow-500/20" />
+              <div className="w-[25%] bg-green-500/20" />
+              <div className="w-[25%] bg-blue-500/20" />
+            </div>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${((multiplier - 0.70) / 0.40) * 100}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className={`h-full ${
+                multiplier >= 1.05 ? 'bg-blue-500' :
+                multiplier >= 0.95 ? 'bg-green-500' :
+                multiplier >= 0.85 ? 'bg-yellow-500' :
+                'bg-red-500'
+              } shadow-lg`}
+            />
+          </div>
         </div>
+
+        {/* Toggle Breakdown Button */}
+        <button
+          onClick={() => setShowBreakdown(!showBreakdown)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg transition-colors"
+        >
+          <span className="text-sm font-semibold text-cream-100">
+            View Detailed Breakdown
+          </span>
+          {showBreakdown ? (
+            <ChevronUp className="w-5 h-5 text-cream-500" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-cream-500" />
+          )}
+        </button>
+
+        {/* Detailed Breakdown */}
+        <AnimatePresence>
+          {showBreakdown && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 space-y-3 overflow-hidden"
+            >
+              <div className="p-3 bg-blue-500/10 border-2 border-blue-500/30 rounded-lg">
+                <p className="text-xs text-blue-400 font-semibold mb-1">
+                  Multiplier Components
+                </p>
+                <p className="text-xs text-cream-300">
+                  Each factor contributes to your overall execution score. Green values are positive, red are negative.
+                </p>
+              </div>
+
+              {multiplierBreakdown.map((factor, index) => {
+                const Icon = factor.icon;
+                const percentage = ((factor.value / factor.max) * 100).toFixed(0);
+
+                return (
+                  <motion.div
+                    key={factor.name}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="p-4 bg-charcoal-900/50 rounded-lg"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Icon className={`w-5 h-5 ${factor.color}`} />
+                        <div>
+                          <p className="text-sm font-semibold text-cream-100">
+                            {factor.name}
+                          </p>
+                          <p className="text-xs text-cream-500/60">
+                            {factor.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${factor.color}`}>
+                          {factor.value >= 0 ? '+' : ''}{(factor.value * 100).toFixed(1)}%
+                        </p>
+                        <p className="text-xs text-cream-500/60">
+                          max: {factor.max > 0 ? '+' : ''}{(factor.max * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Factor Bar */}
+                    <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 via-yellow-500/30 to-green-500/30" />
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${Math.abs((factor.value / (factor.max - factor.min)) * 100)}%`,
+                          marginLeft: factor.value < 0 ? 0 : `${((0 - factor.min) / (factor.max - factor.min)) * 100}%`
+                        }}
+                        transition={{ duration: 0.5, delay: index * 0.05 }}
+                        className={`h-full ${
+                          factor.value >= factor.max * 0.5 ? 'bg-green-500' :
+                          factor.value >= 0 ? 'bg-yellow-500' :
+                          'bg-red-500'
+                        }`}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              <div className="p-4 bg-gold-500/10 border-2 border-gold-500/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="w-5 h-5 text-gold-500" />
+                  <p className="text-sm font-semibold text-cream-100">
+                    Pro Tip
+                  </p>
+                </div>
+                <p className="text-xs text-cream-300 leading-relaxed">
+                  Focus on maintaining high readiness and morale, while choosing a show difficulty
+                  that matches your preparation level. A well-prepared corps with excellent staff
+                  can reach the elite 1.10x multiplier!
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Execution Metrics */}
