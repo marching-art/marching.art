@@ -271,9 +271,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
       // --- END: Filter ---
 
       const userCorps = userProfile.corps || {};
-      Object.keys(userCorps).forEach(corpsClass => {
+      for (const corpsClass of Object.keys(userCorps)) {
         const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName) return;
+        if (!corps || !corps.corpsName) continue;
 
         let attended = false;
         if (scoredDay >= 47) {
@@ -321,7 +321,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
             geScore, visualScore, musicScore,
           });
         }
-      });
+      }
     }
     dailyRecap.shows.push(showResult);
   }
