@@ -5,7 +5,8 @@ import {
   Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
   Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
-  Trash2, ArrowRightLeft, MoreVertical, X
+  Trash2, ArrowRightLeft, MoreVertical, X, Flame, TrendingUp,
+  Award, Medal, Activity
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
@@ -54,6 +55,15 @@ const Dashboard = () => {
   const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
   const [corpsFilter, setCorpsFilter] = useState('all'); // all, needsAttention, ready
   const [corpsSortBy, setCorpsSortBy] = useState('class'); // class, rank, score, name
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [newAchievement, setNewAchievement] = useState(null);
+  const [engagementData, setEngagementData] = useState({
+    loginStreak: 0,
+    lastLogin: null,
+    totalLogins: 0,
+    recentActivity: [],
+    weeklyProgress: []
+  });
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -174,6 +184,96 @@ const Dashboard = () => {
       };
     }
   }, [user]);
+
+  // Track daily login streaks and engagement
+  useEffect(() => {
+    if (user && profile) {
+      const updateEngagement = async () => {
+        try {
+          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+          const today = new Date().toDateString();
+          const lastLogin = profile.engagement?.lastLogin;
+          const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
+
+          // Check if this is a new day
+          if (lastLoginDate !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+
+            let newStreak = 1;
+            const currentStreak = profile.engagement?.loginStreak || 0;
+
+            // Continue streak if last login was yesterday
+            if (lastLoginDate === yesterdayStr) {
+              newStreak = currentStreak + 1;
+            }
+
+            // Update engagement data
+            const updatedEngagement = {
+              loginStreak: newStreak,
+              lastLogin: new Date().toISOString(),
+              totalLogins: (profile.engagement?.totalLogins || 0) + 1,
+              recentActivity: profile.engagement?.recentActivity || [],
+              weeklyProgress: profile.engagement?.weeklyProgress || []
+            };
+
+            // Add login activity
+            updatedEngagement.recentActivity.unshift({
+              type: 'login',
+              message: `Day ${newStreak} login streak!`,
+              timestamp: new Date().toISOString(),
+              icon: 'flame'
+            });
+
+            // Keep only last 10 activities
+            updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
+
+            // Award streak achievements
+            const milestones = [3, 7, 14, 30, 60, 100];
+            if (milestones.includes(newStreak)) {
+              const achievementId = `streak_${newStreak}`;
+              const existingAchievements = profile.achievements || [];
+
+              if (!existingAchievements.find(a => a.id === achievementId)) {
+                const achievement = {
+                  id: achievementId,
+                  title: `${newStreak} Day Streak!`,
+                  description: `Logged in ${newStreak} days in a row`,
+                  icon: 'flame',
+                  earnedAt: new Date().toISOString(),
+                  rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
+                };
+
+                await updateDoc(profileRef, {
+                  achievements: [...existingAchievements, achievement]
+                });
+
+                // Show achievement modal
+                setNewAchievement(achievement);
+                setShowAchievementModal(true);
+              }
+            }
+
+            await updateDoc(profileRef, {
+              engagement: updatedEngagement
+            });
+
+            setEngagementData(updatedEngagement);
+          } else {
+            // Same day, just load existing data
+            if (profile.engagement) {
+              setEngagementData(profile.engagement);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating engagement:', error);
+        }
+      };
+
+      updateEngagement();
+    }
+  }, [user, profile?.uid]); // Only run when user changes or profile is first loaded
 
   const fetchAvailableCorps = useCallback(async () => {
     try {
@@ -680,6 +780,93 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.a>
+      )}
+
+      {/* User Engagement Widget */}
+      {engagementData.loginStreak > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass rounded-xl p-4 border border-cream-500/10"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Login Streak */}
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+              <div className="relative">
+                <Flame className={`w-8 h-8 ${
+                  engagementData.loginStreak >= 7 ? 'text-orange-400' : 'text-orange-500'
+                } ${engagementData.loginStreak >= 7 ? 'animate-pulse' : ''}`} />
+                {engagementData.loginStreak >= 7 && (
+                  <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
+                )}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-orange-400">{engagementData.loginStreak}</p>
+                <p className="text-xs text-cream-500/70">Day Streak</p>
+              </div>
+            </div>
+
+            {/* Recent Achievement */}
+            {profile?.achievements && profile.achievements.length > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 rounded-lg border border-gold-500/20">
+                <Award className="w-8 h-8 text-gold-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gold-400 truncate">
+                    {profile.achievements[profile.achievements.length - 1].title}
+                  </p>
+                  <p className="text-xs text-cream-500/70">Latest Achievement</p>
+                </div>
+              </div>
+            )}
+
+            {/* Total Logins */}
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+              <Activity className="w-8 h-8 text-blue-400" />
+              <div>
+                <p className="text-2xl font-bold text-blue-400">{engagementData.totalLogins || 0}</p>
+                <p className="text-xs text-cream-500/70">Total Logins</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity Feed */}
+          {engagementData.recentActivity && engagementData.recentActivity.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-cream-500/10">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-cream-300 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Recent Activity
+                </h4>
+                {profile?.achievements && profile.achievements.length > 0 && (
+                  <button
+                    onClick={() => setShowAchievementModal(true)}
+                    className="text-xs text-gold-500 hover:text-gold-400 transition-colors flex items-center gap-1"
+                  >
+                    <Medal className="w-3 h-3" />
+                    View All Achievements ({profile.achievements.length})
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                {engagementData.recentActivity.slice(0, 5).map((activity, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 text-xs text-cream-500/70 p-2 bg-charcoal-900/30 rounded"
+                  >
+                    {activity.icon === 'flame' && <Flame className="w-3 h-3 text-orange-400 flex-shrink-0" />}
+                    {activity.icon === 'trophy' && <Trophy className="w-3 h-3 text-gold-500 flex-shrink-0" />}
+                    {activity.icon === 'star' && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
+                    <span className="flex-1">{activity.message}</span>
+                    <span className="text-cream-500/50 text-[10px] whitespace-nowrap">
+                      {new Date(activity.timestamp).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
       )}
 
       {/* Quick Stats */}
@@ -1632,6 +1819,14 @@ const Dashboard = () => {
             existingCorps={corps}
           />
         )}
+
+        {showAchievementModal && (
+          <AchievementModal
+            onClose={() => setShowAchievementModal(false)}
+            achievements={profile?.achievements || []}
+            newAchievement={newAchievement}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -2261,6 +2456,169 @@ const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClas
             </form>
           )}
         </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Achievement Modal Component
+const AchievementModal = ({ onClose, achievements, newAchievement }) => {
+  const getRarityColor = (rarity) => {
+    switch (rarity) {
+      case 'legendary':
+        return 'from-purple-500 to-pink-500';
+      case 'epic':
+        return 'from-purple-500 to-blue-500';
+      case 'rare':
+        return 'from-blue-500 to-cyan-500';
+      default:
+        return 'from-gray-500 to-gray-600';
+    }
+  };
+
+  const getRarityBorder = (rarity) => {
+    switch (rarity) {
+      case 'legendary':
+        return 'border-purple-500/50';
+      case 'epic':
+        return 'border-purple-400/50';
+      case 'rare':
+        return 'border-blue-400/50';
+      default:
+        return 'border-gray-500/50';
+    }
+  };
+
+  const getIcon = (iconName) => {
+    switch (iconName) {
+      case 'flame':
+        return Flame;
+      case 'trophy':
+        return Trophy;
+      case 'star':
+        return Star;
+      case 'crown':
+        return Crown;
+      case 'award':
+        return Award;
+      case 'medal':
+        return Medal;
+      default:
+        return Award;
+    }
+  };
+
+  // Sort achievements by date, newest first
+  const sortedAchievements = [...achievements].sort((a, b) =>
+    new Date(b.earnedAt) - new Date(a.earnedAt)
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-charcoal-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: 'spring', duration: 0.5 }}
+        className="glass-premium rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto custom-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-gold-500 to-yellow-500 p-3 rounded-xl">
+              <Trophy className="w-6 h-6 text-charcoal-900" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gradient">Your Achievements</h2>
+              <p className="text-sm text-cream-500/70">
+                {achievements.length} achievement{achievements.length !== 1 ? 's' : ''} unlocked
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="btn-ghost p-2 hover:bg-cream-500/10 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* New Achievement Highlight */}
+        {newAchievement && (
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mb-6 p-4 rounded-xl bg-gradient-to-br from-gold-500/20 to-yellow-500/20 border-2 border-gold-500/50"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-gold-500 animate-pulse" />
+              <p className="text-xs font-semibold text-gold-500 uppercase tracking-wider">
+                Just Unlocked!
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`bg-gradient-to-br ${getRarityColor(newAchievement.rarity)} p-3 rounded-lg`}>
+                {React.createElement(getIcon(newAchievement.icon), { className: 'w-6 h-6 text-white' })}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-cream-100">{newAchievement.title}</h3>
+                <p className="text-sm text-cream-500/80">{newAchievement.description}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Achievement Grid */}
+        {sortedAchievements.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sortedAchievements.map((achievement, idx) => {
+              const IconComponent = getIcon(achievement.icon);
+              return (
+                <motion.div
+                  key={achievement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`p-4 rounded-xl bg-charcoal-800/50 border ${getRarityBorder(achievement.rarity)} hover:border-opacity-100 transition-all group`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`bg-gradient-to-br ${getRarityColor(achievement.rarity)} p-2.5 rounded-lg group-hover:scale-110 transition-transform`}>
+                      <IconComponent className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-cream-100 text-sm">{achievement.title}</h4>
+                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          achievement.rarity === 'legendary' ? 'bg-purple-500/20 text-purple-400' :
+                          achievement.rarity === 'epic' ? 'bg-purple-400/20 text-purple-300' :
+                          achievement.rarity === 'rare' ? 'bg-blue-400/20 text-blue-300' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {achievement.rarity}
+                        </span>
+                      </div>
+                      <p className="text-xs text-cream-500/70 mb-2">{achievement.description}</p>
+                      <p className="text-[10px] text-cream-500/50">
+                        Earned {new Date(achievement.earnedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Award className="w-16 h-16 text-cream-500/30 mx-auto mb-4" />
+            <p className="text-cream-500/60">No achievements yet. Keep playing to unlock them!</p>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
