@@ -88,17 +88,59 @@ async function startNewLiveSeason() {
       for (const doc of profilesSnapshot.docs) {
         const profileData = doc.data();
         const corpsData = profileData.corps || {};
+        const lifetimeStats = profileData.lifetimeStats || {
+          totalSeasons: 0,
+          totalShows: 0,
+          totalPoints: 0,
+          bestSeasonScore: 0,
+          bestWeeklyScore: 0,
+          leagueChampionships: 0
+        };
 
-        // Preserve historical data while resetting season-specific fields
+        // Archive current season data and reset corps
         const resetCorps = {};
+        let seasonShowCount = 0;
+        let seasonPointsTotal = 0;
+
         Object.keys(corpsData).forEach(corpsClass => {
           const corps = corpsData[corpsClass];
+          const seasonHistory = corps.seasonHistory || [];
+
+          // Only archive if this corps was active this season
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            const showsAttended = Object.keys(corps.selectedShows || {}).length;
+            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+
+            // Archive this season's performance
+            seasonHistory.push({
+              seasonId: oldSeasonUid,
+              seasonName: oldSeasonUid,
+              corpsClass,
+              corpsName: corps.corpsName,
+              location: corps.location,
+              lineup: corps.lineup || null,
+              selectedShows: corps.selectedShows || {},
+              weeklyScores: corps.weeklyScores || {},
+              totalSeasonScore: corps.totalSeasonScore || 0,
+              showsAttended,
+              highestWeeklyScore,
+              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            seasonShowCount += showsAttended;
+            seasonPointsTotal += (corps.totalSeasonScore || 0);
+
+            // Update lifetime stats
+            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
+            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+          }
+
           resetCorps[corpsClass] = {
             // PRESERVE: Historical data and staff/trades
             corpsName: corps.corpsName || null,
             location: corps.location || null,
-            seasonHistory: corps.seasonHistory || [],
-            weeklyTrades: corps.weeklyTrades || null, // Preserve trade history
+            seasonHistory,
+            weeklyTrades: corps.weeklyTrades || null,
             // RESET: Season-specific data
             lineup: null,
             lineupKey: null,
@@ -108,9 +150,18 @@ async function startNewLiveSeason() {
           };
         });
 
+        // Update lifetime stats
+        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
+          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
+          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
+          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
+        }
+
         batch.update(doc.ref, {
           activeSeasonId: null,
           corps: resetCorps,
+          lifetimeStats,
+          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
         });
 
         batchCount++;
@@ -250,17 +301,59 @@ async function startNewOffSeason() {
       for (const doc of profilesSnapshot.docs) {
         const profileData = doc.data();
         const corpsData = profileData.corps || {};
+        const lifetimeStats = profileData.lifetimeStats || {
+          totalSeasons: 0,
+          totalShows: 0,
+          totalPoints: 0,
+          bestSeasonScore: 0,
+          bestWeeklyScore: 0,
+          leagueChampionships: 0
+        };
 
-        // Preserve historical data while resetting season-specific fields
+        // Archive current season data and reset corps
         const resetCorps = {};
+        let seasonShowCount = 0;
+        let seasonPointsTotal = 0;
+
         Object.keys(corpsData).forEach(corpsClass => {
           const corps = corpsData[corpsClass];
+          const seasonHistory = corps.seasonHistory || [];
+
+          // Only archive if this corps was active this season
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            const showsAttended = Object.keys(corps.selectedShows || {}).length;
+            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+
+            // Archive this season's performance
+            seasonHistory.push({
+              seasonId: oldSeasonUid,
+              seasonName: oldSeasonUid,
+              corpsClass,
+              corpsName: corps.corpsName,
+              location: corps.location,
+              lineup: corps.lineup || null,
+              selectedShows: corps.selectedShows || {},
+              weeklyScores: corps.weeklyScores || {},
+              totalSeasonScore: corps.totalSeasonScore || 0,
+              showsAttended,
+              highestWeeklyScore,
+              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            seasonShowCount += showsAttended;
+            seasonPointsTotal += (corps.totalSeasonScore || 0);
+
+            // Update lifetime stats
+            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
+            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+          }
+
           resetCorps[corpsClass] = {
             // PRESERVE: Historical data and staff/trades
             corpsName: corps.corpsName || null,
             location: corps.location || null,
-            seasonHistory: corps.seasonHistory || [],
-            weeklyTrades: corps.weeklyTrades || null, // Preserve trade history
+            seasonHistory,
+            weeklyTrades: corps.weeklyTrades || null,
             // RESET: Season-specific data
             lineup: null,
             lineupKey: null,
@@ -270,9 +363,18 @@ async function startNewOffSeason() {
           };
         });
 
+        // Update lifetime stats
+        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
+          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
+          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
+          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
+        }
+
         batch.update(doc.ref, {
           activeSeasonId: null,
           corps: resetCorps,
+          lifetimeStats,
+          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
         });
 
         batchCount++;

@@ -52,6 +52,13 @@ export const getAvailableRewards = httpsCallable(functions, 'getAvailableRewards
 export const awardXP = httpsCallable(functions, 'awardXP');
 
 // ========================================
+// CORPS MANAGEMENT
+// ========================================
+
+export const retireCorps = httpsCallable(functions, 'retireCorps');
+export const unretireCorps = httpsCallable(functions, 'unretireCorps');
+
+// ========================================
 // SOCIAL & LEAGUES
 // ========================================
 

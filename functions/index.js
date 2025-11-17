@@ -39,6 +39,10 @@ const {
 } = require("./src/callable/battlePass");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
+  retireCorps,
+  unretireCorps,
+} = require("./src/callable/corps");
+const {
   createLeague,
   joinLeague,
   leaveLeague,
@@ -116,6 +120,8 @@ module.exports = {
   assignStaff,
   getStaffMarketplace,
   registerCorps,
+  retireCorps,
+  unretireCorps,
   execDailyRehearsal,
   repairEquipment,
   upgradeEquipment,
