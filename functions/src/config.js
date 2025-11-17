@@ -3,15 +3,7 @@ const { defineString } = require("firebase-functions/params");
 
 const dataNamespaceParam = defineString("DATA_NAMESPACE");
 
-let db = null;
-
-const getDb = () => {
-  if (!db) {
-    db = getFirestore();
-    db.settings({ ignoreUndefinedProperties: true });
-  }
-  return db;
-};
+const getDb = () => getFirestore();
 
 module.exports = {
   getDb,
