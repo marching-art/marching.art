@@ -485,26 +485,26 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             Back to Leagues
           </button>
 
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-display font-bold text-gradient">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                <h1 className="text-2xl md:text-4xl font-display font-bold text-gradient">
                   {league.name}
                 </h1>
                 {isCommissioner && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-gold-500/20 border border-gold-500/50 rounded-full">
-                    <Crown className="w-4 h-4 text-gold-500" />
-                    <span className="text-sm font-semibold text-gold-500">Commissioner</span>
+                  <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 bg-gold-500/20 border border-gold-500/50 rounded-full">
+                    <Crown className="w-3 h-3 md:w-4 md:h-4 text-gold-500" />
+                    <span className="text-xs md:text-sm font-semibold text-gold-500">Commissioner</span>
                   </div>
                 )}
               </div>
-              <p className="text-cream-300">{league.description}</p>
+              <p className="text-sm md:text-base text-cream-300">{league.description}</p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <button
                 onClick={onLeave}
-                className="btn-ghost text-red-400 hover:bg-red-500/10"
+                className="btn-ghost text-red-400 hover:bg-red-500/10 flex-1 md:flex-none"
               >
                 Leave League
               </button>
@@ -512,7 +512,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4 md:mt-6">
             <div className="p-4 bg-charcoal-900/50 rounded-lg">
               <p className="text-xs text-cream-500/60 mb-1">Members</p>
               <p className="text-2xl font-bold text-cream-100">
@@ -614,12 +614,12 @@ const StandingsTab = ({ league, standings }) => {
       exit={{ opacity: 0, y: -20 }}
       className="card p-6"
     >
-      <h2 className="text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
-        <Trophy className="w-6 h-6 text-gold-500" />
+      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
+        <Trophy className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
         League Standings
       </h2>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
         <table className="w-full">
           <thead>
             <tr className="border-b border-cream-500/20">
@@ -711,7 +711,7 @@ const MatchupsTab = ({ league, isCommissioner }) => {
       exit={{ opacity: 0, y: -20 }}
       className="card p-6"
     >
-      <h2 className="text-2xl font-bold text-cream-100 mb-6">Weekly Matchups</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6">Weekly Matchups</h2>
       <p className="text-cream-500/60">Matchup system coming soon...</p>
       {isCommissioner && (
         <div className="mt-4">
@@ -733,8 +733,8 @@ const TradesTab = ({ league, trades, userProfile }) => {
       exit={{ opacity: 0, y: -20 }}
       className="card p-6"
     >
-      <h2 className="text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
-        <ArrowLeftRight className="w-6 h-6 text-blue-500" />
+      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
+        <ArrowLeftRight className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
         Staff Trades
       </h2>
 
@@ -820,14 +820,14 @@ const ChatTab = ({ league, messages, userProfile }) => {
       exit={{ opacity: 0, y: -20 }}
       className="card p-6"
     >
-      <h2 className="text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
-        <MessageSquare className="w-6 h-6 text-purple-500" />
+      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
+        <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-purple-500" />
         League Chat
       </h2>
 
       <div className="space-y-4">
         {/* Messages */}
-        <div className="h-96 overflow-y-auto space-y-3 p-4 bg-charcoal-900/50 rounded-lg">
+        <div className="h-64 md:h-96 overflow-y-auto space-y-3 p-4 bg-charcoal-900/50 rounded-lg">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-cream-500/60">No messages yet. Start the conversation!</p>
@@ -883,8 +883,8 @@ const SettingsTab = ({ league }) => {
       exit={{ opacity: 0, y: -20 }}
       className="card p-6"
     >
-      <h2 className="text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
-        <Settings className="w-6 h-6 text-gray-400" />
+      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
+        <Settings className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
         Commissioner Settings
       </h2>
 
@@ -965,30 +965,30 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-2xl my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="glass-dark rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-display font-bold text-gradient">
+        <div className="glass-dark rounded-2xl p-4 md:p-8">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-gradient">
               Create Fantasy League
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-cream-500/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-cream-500/10 rounded-lg transition-colors flex-shrink-0"
             >
-              <X className="w-6 h-6 text-cream-500" />
+              <X className="w-5 h-5 md:w-6 md:h-6 text-cream-500" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             {/* League Name */}
             <div>
               <label className="label">League Name</label>
@@ -1007,7 +1007,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
             <div>
               <label className="label">Description</label>
               <textarea
-                className="textarea h-24"
+                className="textarea h-20"
                 placeholder="Describe your league..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1018,34 +1018,35 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </p>
             </div>
 
-            {/* Max Members */}
-            <div>
-              <label className="label">Maximum Members</label>
-              <input
-                type="number"
-                className="input"
-                min="2"
-                max="50"
-                value={formData.maxMembers}
-                onChange={(e) => setFormData({ ...formData, maxMembers: parseInt(e.target.value) })}
-                required
-              />
-            </div>
+            {/* Max Members & Prize Pool - Side by side on desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Maximum Members</label>
+                <input
+                  type="number"
+                  className="input"
+                  min="2"
+                  max="50"
+                  value={formData.maxMembers}
+                  onChange={(e) => setFormData({ ...formData, maxMembers: parseInt(e.target.value) })}
+                  required
+                />
+              </div>
 
-            {/* Prize Pool */}
-            <div>
-              <label className="label">Prize Pool (CorpsCoin)</label>
-              <input
-                type="number"
-                className="input"
-                min="0"
-                step="100"
-                value={formData.settings.prizePool}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  settings: { ...formData.settings, prizePool: parseInt(e.target.value) }
-                })}
-              />
+              <div>
+                <label className="label">Prize Pool (CorpsCoin)</label>
+                <input
+                  type="number"
+                  className="input"
+                  min="0"
+                  step="100"
+                  value={formData.settings.prizePool}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    settings: { ...formData.settings, prizePool: parseInt(e.target.value) }
+                  })}
+                />
+              </div>
             </div>
 
             {/* Playoff Size */}
@@ -1067,10 +1068,10 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
             </div>
 
             {/* Staff Trading */}
-            <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <div className="flex items-center justify-between p-3 md:p-4 bg-charcoal-900/50 rounded-lg">
               <div>
-                <label className="font-semibold text-cream-100">Enable Staff Trading</label>
-                <p className="text-sm text-cream-500/60">Allow members to trade staff members</p>
+                <label className="font-semibold text-cream-100 text-sm md:text-base">Enable Staff Trading</label>
+                <p className="text-xs md:text-sm text-cream-500/60">Allow members to trade staff</p>
               </div>
               <input
                 type="checkbox"
@@ -1090,14 +1091,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, isPublic: true })}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-3 md:p-4 rounded-lg border-2 transition-all ${
                     formData.isPublic
                       ? 'border-gold-500 bg-gold-500/10'
                       : 'border-cream-500/20 hover:border-cream-500/40'
                   }`}
                 >
-                  <Users className="w-6 h-6 mx-auto mb-2 text-cream-100" />
-                  <p className="font-semibold text-cream-100">Public</p>
+                  <Users className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-cream-100" />
+                  <p className="font-semibold text-cream-100 text-sm md:text-base">Public</p>
                   <p className="text-xs text-cream-500/60 mt-1">
                     Anyone can join
                   </p>
@@ -1105,14 +1106,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, isPublic: false })}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-3 md:p-4 rounded-lg border-2 transition-all ${
                     !formData.isPublic
                       ? 'border-gold-500 bg-gold-500/10'
                       : 'border-cream-500/20 hover:border-cream-500/40'
                   }`}
                 >
-                  <Lock className="w-6 h-6 mx-auto mb-2 text-cream-100" />
-                  <p className="font-semibold text-cream-100">Private</p>
+                  <Lock className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-cream-100" />
+                  <p className="font-semibold text-cream-100 text-sm md:text-base">Private</p>
                   <p className="text-xs text-cream-500/60 mt-1">
                     Invite only
                   </p>
@@ -1121,7 +1122,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-2 md:pt-4 sticky bottom-0 bg-charcoal-900 pb-2 md:pb-0">
               <button
                 type="button"
                 onClick={onClose}
