@@ -1,14 +1,14 @@
 // src/pages/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Music, Trophy, Users, Calendar, Star, TrendingUp,
+  Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Heart, Wrench, MapPin, Crown, Gift, Sparkles
+  Target, Wrench, MapPin, Crown, Gift, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, functions, seasonHelpers, analyticsHelpers } from '../firebase';
-import { doc, collection, onSnapshot, setDoc, updateDoc, query, orderBy, limit, getDoc } from 'firebase/firestore';
+import { db, functions, analyticsHelpers } from '../firebase';
+import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { getBattlePassProgress } from '../firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
@@ -26,6 +26,7 @@ import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelecti
 import ShowSelectionModal from '../components/ShowSelection/ShowSelectionModal';
 import InfoTooltip from '../components/InfoTooltip';
 import toast from 'react-hot-toast';
+import { useSeason, getSeasonProgress } from '../hooks/useSeason';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -36,7 +37,7 @@ const Dashboard = () => {
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
   const [showShowSelection, setShowShowSelection] = useState(false);
   const [availableCorps, setAvailableCorps] = useState([]);
-  const [season] = useState(seasonHelpers.getCurrentSeason());
+  const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
   const [recentScores, setRecentScores] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [battlePassRewards, setBattlePassRewards] = useState(null);
@@ -45,6 +46,9 @@ const Dashboard = () => {
   // Get the active corps class (for now, use the first available corps)
   const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
   const activeCorps = activeCorpsClass ? corps[activeCorpsClass] : null;
+
+  // Calculate current week from season data
+  const { currentWeek } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1 };
 
   // Use execution hook
   const {
@@ -90,12 +94,6 @@ const Dashboard = () => {
         setLoading(false);
       });
 
-      // Fetch available corps for the season
-      fetchAvailableCorps();
-
-      // Fetch recent scores
-      fetchRecentScores();
-
       // Fetch battle pass progress
       fetchBattlePassProgress();
 
@@ -108,10 +106,14 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const fetchAvailableCorps = async () => {
+  const fetchAvailableCorps = useCallback(async () => {
     try {
-      const seasonId = `${season.year}-${season.type}`;
-      const corpsDataRef = doc(db, 'dci-data', seasonId);
+      if (!seasonData?.seasonUid) {
+        setAvailableCorps([]);
+        return;
+      }
+
+      const corpsDataRef = doc(db, 'dci-data', seasonData.seasonUid);
       const corpsDataSnap = await getDoc(corpsDataRef);
 
       if (corpsDataSnap.exists()) {
@@ -125,38 +127,50 @@ const Dashboard = () => {
       console.error('Error fetching available corps:', error);
       setAvailableCorps([]);
     }
-  };
+  }, [seasonData?.seasonUid]);
 
-const fetchRecentScores = async () => {
-  try {
-    const seasonId = `${season.year}-${season.type}`;
-    const recapDocRef = doc(db, 'fantasy_recaps', seasonId);
-    const recapDocSnap = await getDoc(recapDocRef);
+  const fetchRecentScores = useCallback(async () => {
+    try {
+      if (!seasonData?.seasonUid) {
+        setRecentScores([]);
+        return;
+      }
 
-    if (recapDocSnap.exists()) {
-      const allRecaps = recapDocSnap.data().recaps || [];
-      // Sort by date descending and take the first 5, map to expected UI shape
-      const sortedRecaps = allRecaps
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5)
-        .map(r => {
-          // For SoundSport, mask the scores
-          const isSoundSport = activeCorpsClass === 'soundSport';
-          return {
-            showName: r.showName || r.name || 'Unknown Show',
-            date: r.date || '',
-            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
-            rank: isSoundSport ? '🎉' : (r.rank ?? '-')
-          };
-        });
-      setRecentScores(sortedRecaps);
-    } else {
-      setRecentScores([]);
+      const recapDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+      const recapDocSnap = await getDoc(recapDocSnap);
+
+      if (recapDocSnap.exists()) {
+        const allRecaps = recapDocSnap.data().recaps || [];
+        // Sort by date descending and take the first 5, map to expected UI shape
+        const sortedRecaps = allRecaps
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 5)
+          .map(r => {
+            // For SoundSport, mask the scores
+            const isSoundSport = activeCorpsClass === 'soundSport';
+            return {
+              showName: r.showName || r.name || 'Unknown Show',
+              date: r.date || '',
+              totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
+              rank: isSoundSport ? '🎉' : (r.rank ?? '-')
+            };
+          });
+        setRecentScores(sortedRecaps);
+      } else {
+        setRecentScores([]);
+      }
+    } catch (error) {
+      console.error('Error fetching recent scores:', error);
     }
-  } catch (error) {
-    console.error('Error fetching recent scores:', error);
-  }
-};
+  }, [seasonData?.seasonUid, activeCorpsClass]);
+
+  // Fetch season-specific data when seasonData is available
+  useEffect(() => {
+    if (seasonData?.seasonUid) {
+      fetchAvailableCorps();
+      fetchRecentScores();
+    }
+  }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
 
   const fetchBattlePassProgress = async () => {
     try {
@@ -198,6 +212,11 @@ const fetchRecentScores = async () => {
 
   const handleCorpsRegistration = async (formData) => {
     try {
+      if (!seasonData?.seasonUid) {
+        toast.error('Season data not loaded. Please try again.');
+        return;
+      }
+
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       const corpsData = {
         name: formData.name,
@@ -205,7 +224,7 @@ const fetchRecentScores = async () => {
         showConcept: formData.showConcept,
         class: formData.class,
         createdAt: new Date(),
-        seasonId: `${season.year}-${season.type}`,
+        seasonId: seasonData.seasonUid,
         lineup: {},
         score: 0,
         rank: null
@@ -273,7 +292,7 @@ const fetchRecentScores = async () => {
     }
   };
 
-  if (loading) {
+  if (loading || seasonLoading) {
     return (
       <div className="space-y-6">
         <SkeletonLoader type="card" count={3} />
@@ -297,7 +316,7 @@ const fetchRecentScores = async () => {
                 Welcome back, {profile?.displayName || 'Director'}!
               </h1>
               <p className="text-cream-300">
-                {seasonHelpers.formatSeasonName(season)}
+                {seasonData?.name || 'Loading season...'}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -424,10 +443,10 @@ const fetchRecentScores = async () => {
           <div className="flex items-center justify-between mb-2">
             <Calendar className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {season.type === 'live' ? season.daysRemaining : '-'}
+              {weeksRemaining ? `${weeksRemaining}w` : '-'}
             </span>
           </div>
-          <p className="text-sm text-cream-500/60">Days to Finals</p>
+          <p className="text-sm text-cream-500/60">Weeks Remaining</p>
         </div>
       </motion.div>
 
@@ -718,9 +737,9 @@ const fetchRecentScores = async () => {
                     />
                   </div>
                   <p className="text-sm text-cream-500/60">
-                    Week {season.week || season.week === 0 ? season.week : '?'}
-                    {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 &&
-                      ` - ${activeCorps.selectedShows[`week${season.week}`].length} shows selected`
+                    Week {currentWeek}
+                    {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 &&
+                      ` - ${activeCorps.selectedShows[`week${currentWeek}`].length} shows selected`
                     }
                   </p>
                 </div>
@@ -737,11 +756,11 @@ const fetchRecentScores = async () => {
                   className="btn-outline text-sm py-2"
                 >
                   <Calendar className="w-4 h-4 mr-2" />
-                  {activeCorps.selectedShows?.[`week${season.week}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
+                  {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
                 </button>
               </div>
 
-              {!activeCorps.selectedShows?.[`week${season.week}`] || activeCorps.selectedShows[`week${season.week}`].length === 0 ? (
+              {!activeCorps.selectedShows?.[`week${currentWeek}`] || activeCorps.selectedShows[`week${currentWeek}`].length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
                   <p className="text-cream-500/60 mb-1">No shows selected for this week</p>
@@ -763,7 +782,7 @@ const fetchRecentScores = async () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {activeCorps.selectedShows[`week${season.week}`].map((show, index) => (
+                  {activeCorps.selectedShows[`week${currentWeek}`].map((show, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-cream-100">{show.eventName}</p>
@@ -892,24 +911,24 @@ const fetchRecentScores = async () => {
           />
         )}
         
-        {showCaptionSelection && activeCorps && (
+        {showCaptionSelection && activeCorps && seasonData && (
           <CaptionSelectionModal
             onClose={() => setShowCaptionSelection(false)}
             onSubmit={handleCaptionSelection}
             corpsClass={activeCorpsClass}
             currentLineup={activeCorps.lineup || {}}
-            seasonId={`${season.year}-${season.type}`}
+            seasonId={seasonData.seasonUid}
           />
         )}
 
-        {showShowSelection && activeCorps && (
+        {showShowSelection && activeCorps && seasonData && (
           <ShowSelectionModal
             onClose={() => setShowShowSelection(false)}
             onSubmit={handleShowSelection}
             corpsClass={activeCorpsClass}
-            currentWeek={season.week || 1}
-            seasonId={`${season.year}-${season.type}`}
-            currentSelections={activeCorps.selectedShows?.[`week${season.week}`] || []}
+            currentWeek={currentWeek}
+            seasonId={seasonData.seasonUid}
+            currentSelections={activeCorps.selectedShows?.[`week${currentWeek}`] || []}
           />
         )}
       </AnimatePresence>
