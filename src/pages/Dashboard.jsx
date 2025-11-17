@@ -180,7 +180,10 @@ const fetchRecentScores = async () => {
         setUnclaimedRewardsCount(unclaimedCount);
       }
     } catch (error) {
-      console.error('Error fetching battle pass progress:', error);
+      // Silently handle "no active season" errors - this is expected when no battle pass is configured
+      if (error.message && !error.message.includes('No active battle pass season')) {
+        console.error('Error fetching battle pass progress:', error);
+      }
       setBattlePassRewards(null);
       setUnclaimedRewardsCount(0);
     }

@@ -60,8 +60,11 @@ const Admin = () => {
         activeSeasons: 1
       });
     } catch (error) {
-      console.error('Error loading admin data:', error);
-      toast.error('Failed to load admin data');
+      // Silently handle permission errors - user is not an admin
+      if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
+        console.error('Error loading admin data:', error);
+        toast.error('Failed to load admin data');
+      }
     }
   };
 
@@ -74,7 +77,11 @@ const Admin = () => {
       await loadAdminData(); // Refresh data
       return result.data;
     } catch (error) {
-      console.error(`Error calling ${functionName}:`, error);
+      // Only log unexpected errors to console
+      if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
+        console.error(`Error calling ${functionName}:`, error);
+      }
+      // Always show user-friendly error message
       toast.error(error.message || `Failed to execute ${functionName}`);
       throw error;
     }
@@ -262,6 +269,9 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
     try {
       const functionName = type === 'off' ? 'startNewOffSeason' : 'startNewLiveSeason';
       await callAdminFunction(functionName);
+    } catch (error) {
+      // Error is already handled by callAdminFunction (toast shown)
+      // Just prevent uncaught promise rejection
     } finally {
       setNewSeasonLoading(false);
     }
