@@ -85,9 +85,10 @@ const Scores = () => {
               scores: show.results?.map(result => ({
                 corps: result.corpsName,
                 score: result.totalScore || 0,
-                captions: {
-                  GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0
-                }
+                geScore: result.geScore || 0,
+                visualScore: result.visualScore || 0,
+                musicScore: result.musicScore || 0,
+                corpsClass: result.corpsClass
               })).sort((a, b) => b.score - a.score) || []
             })) || []
           );
@@ -136,9 +137,10 @@ const Scores = () => {
               scores: show.results?.map(result => ({
                 corps: result.corpsName,
                 score: result.totalScore || 0,
-                captions: {
-                  GE1: 0, GE2: 0, VP: 0, VA: 0, CG: 0, B: 0, MA: 0, P: 0
-                }
+                geScore: result.geScore || 0,
+                visualScore: result.visualScore || 0,
+                musicScore: result.musicScore || 0,
+                corpsClass: result.corpsClass
               })).sort((a, b) => b.score - a.score) || []
             })) || []
           ).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
@@ -166,7 +168,8 @@ const Scores = () => {
       }
     };
 
-    if (activeTab === 'recent' && currentSeason) {
+    // Fetch recent shows for both 'recent' and 'soundsport' tabs
+    if ((activeTab === 'recent' || activeTab === 'soundsport') && currentSeason) {
       fetchRecentShows();
     }
   }, [activeTab, currentSeason]);
@@ -432,14 +435,27 @@ const Scores = () => {
     );
   };
 
+  // Helper function to get SoundSport rating based on score
+  const getSoundSportRating = (score) => {
+    if (score >= 90) return { rating: 'Gold', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30' };
+    if (score >= 75) return { rating: 'Silver', color: 'text-gray-400', bgColor: 'bg-gray-500/10', borderColor: 'border-gray-400/30' };
+    if (score >= 60) return { rating: 'Bronze', color: 'text-orange-600', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-600/30' };
+    return { rating: 'Participation', color: 'text-cream-500', bgColor: 'bg-cream-500/10', borderColor: 'border-cream-500/30' };
+  };
+
   const renderSoundSport = () => {
+    // Filter for SoundSport events from recent shows
+    const soundSportShows = recentShows.filter(show =>
+      show.scores?.some(s => s.corpsClass === 'soundSport')
+    );
+
     return (
       <div className="space-y-6">
         {/* SoundSport Info */}
         <div className="card p-6 border-2 border-green-500/20">
           <div className="flex items-start gap-4">
             <Music className="w-8 h-8 text-green-500 mt-1" />
-            <div>
+            <div className="flex-1">
               <h3 className="text-lg font-semibold text-cream-100 mb-2">
                 About SoundSport Scoring
               </h3>
@@ -475,11 +491,53 @@ const Scores = () => {
         </div>
 
         {/* SoundSport Results */}
-        <div className="card p-8 text-center">
-          <Star className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-cream-300 mb-2">SoundSport Ratings</p>
-          <p className="text-cream-500/60">SoundSport event results will appear here</p>
-        </div>
+        {soundSportShows.length > 0 ? (
+          <div className="space-y-4">
+            {soundSportShows.map((show, showIdx) => (
+              <div key={showIdx} className="card p-6">
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold text-cream-100">{show.eventName}</h3>
+                  <p className="text-sm text-cream-500/60">{show.location} • {show.date}</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {show.scores
+                    .filter(s => s.corpsClass === 'soundSport')
+                    .map((score, idx) => {
+                      const ratingInfo = getSoundSportRating(score.score);
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-4 rounded-lg border ${ratingInfo.bgColor} ${ratingInfo.borderColor}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Medal className={`w-6 h-6 ${ratingInfo.color}`} />
+                              <div>
+                                <p className="font-semibold text-cream-100">{score.corps}</p>
+                                <p className={`text-sm font-semibold ${ratingInfo.color}`}>
+                                  {ratingInfo.rating}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-cream-500/60">Overall Impression</p>
+                              <p className="text-lg font-bold text-cream-100">{score.score.toFixed(2)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="card p-8 text-center">
+            <Star className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
+            <p className="text-xl text-cream-300 mb-2">No Recent SoundSport Events</p>
+            <p className="text-cream-500/60">SoundSport event results will appear here when available</p>
+          </div>
+        )}
       </div>
     );
   };
@@ -719,19 +777,29 @@ const ShowDetailModal = ({ show, onClose }) => {
 const ScoreRow = ({ score, rank }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const getCaptionScore = (caption) => {
-    return score.captions?.[caption] || 0;
-  };
+  // Check if we have detailed captions (historical data) or aggregate scores (fantasy data)
+  const hasDetailedCaptions = score.captions && Object.keys(score.captions).length > 0;
 
-  const geScore = getCaptionScore('GE1') + getCaptionScore('GE2');
-  const visualScore = (getCaptionScore('VP') + getCaptionScore('VA') + getCaptionScore('CG')) / 2;
-  const musicScore = (getCaptionScore('B') + getCaptionScore('MA') + getCaptionScore('P')) / 2;
+  // Get scores - either from detailed captions or from aggregate scores
+  const geScore = hasDetailedCaptions
+    ? (score.captions.GE1 || 0) + (score.captions.GE2 || 0)
+    : (score.geScore || 0);
+
+  const visualScore = hasDetailedCaptions
+    ? ((score.captions.VP || 0) + (score.captions.VA || 0) + (score.captions.CG || 0)) / 2
+    : (score.visualScore || 0);
+
+  const musicScore = hasDetailedCaptions
+    ? ((score.captions.B || 0) + (score.captions.MA || 0) + (score.captions.P || 0)) / 2
+    : (score.musicScore || 0);
 
   return (
     <div className="bg-charcoal-900/30 rounded-lg overflow-hidden">
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-charcoal-900/50 transition-colors"
-        onClick={() => setExpanded(!expanded)}
+        className={`flex items-center justify-between p-4 transition-colors ${
+          hasDetailedCaptions ? 'cursor-pointer hover:bg-charcoal-900/50' : ''
+        }`}
+        onClick={() => hasDetailedCaptions && setExpanded(!expanded)}
       >
         <div className="flex items-center gap-4">
           <span className={`text-lg font-bold w-8 ${
@@ -742,7 +810,14 @@ const ScoreRow = ({ score, rank }) => {
           }`}>
             #{rank}
           </span>
-          <span className="text-cream-100 font-medium">{score.corps}</span>
+          <div>
+            <span className="text-cream-100 font-medium">{score.corps}</span>
+            {score.corpsClass && (
+              <span className="ml-2 text-xs text-cream-500/60">
+                ({score.corpsClass})
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-4 text-sm">
@@ -771,7 +846,8 @@ const ScoreRow = ({ score, rank }) => {
         </div>
       </div>
 
-      {expanded && (
+      {/* Only show caption breakdown if we have detailed caption data */}
+      {expanded && hasDetailedCaptions && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
@@ -780,7 +856,7 @@ const ScoreRow = ({ score, rank }) => {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-charcoal-900/50 rounded-lg">
             {Object.entries(CAPTION_CATEGORIES).map(([key, caption]) => {
-              const value = getCaptionScore(key);
+              const value = score.captions[key] || 0;
               const maxValue = caption.weight;
               const percentage = (value / maxValue) * 100;
 
