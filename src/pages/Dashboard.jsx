@@ -744,6 +744,19 @@ const Dashboard = () => {
           transition={{ delay: 0.2 }}
           className="flex gap-2 overflow-x-auto"
         >
+          {hasMultipleCorps && (
+            <button
+              onClick={() => setActiveTab('allcorps')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'allcorps'
+                  ? 'bg-gold-500 text-charcoal-900'
+                  : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              All Corps
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
@@ -752,7 +765,7 @@ const Dashboard = () => {
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
-            Overview
+            {hasMultipleCorps ? 'Current Corps' : 'Overview'}
           </button>
           <button
             onClick={() => setActiveTab('execution')}
@@ -855,6 +868,162 @@ const Dashboard = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* All Corps Comparison View */}
+      {hasMultipleCorps && activeTab === 'allcorps' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="card">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
+                  All Corps Overview
+                </h2>
+                <p className="text-cream-500/60">
+                  Manage all {Object.keys(corps).length} of your corps at a glance
+                </p>
+              </div>
+              <button
+                onClick={() => setShowRegistration(true)}
+                className="btn-outline text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Corps
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {Object.entries(corps).map(([classId, corpsData]) => {
+                const needsAttention = [];
+
+                // Check for issues
+                const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+                const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
+
+                if (!hasLineup) needsAttention.push('Missing lineup');
+                if (!hasShows) needsAttention.push('No shows selected');
+
+                return (
+                  <motion.div
+                    key={classId}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`card-hover cursor-pointer relative ${
+                      activeCorpsClass === classId ? 'ring-2 ring-gold-500' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedCorpsClass(classId);
+                      setActiveTab('overview');
+                    }}
+                  >
+                    {/* Alert Badge */}
+                    {needsAttention.length > 0 && (
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="relative">
+                          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">{needsAttention.length}</span>
+                          </div>
+                          <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75" />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeCorpsClass === classId && (
+                      <div className="absolute top-3 right-3">
+                        <div className="px-2 py-1 bg-gold-500 text-charcoal-900 rounded text-xs font-bold">
+                          Active
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${
+                        classId === 'world' ? 'from-gold-500 to-gold-600' :
+                        classId === 'open' ? 'from-purple-500 to-purple-600' :
+                        classId === 'aClass' ? 'from-blue-500 to-blue-600' :
+                        'from-green-500 to-green-600'
+                      } flex items-center justify-center flex-shrink-0`}>
+                        <Music className="w-6 h-6 text-white" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-cream-100 truncate">
+                          {corpsData.corpsName || corpsData.name}
+                        </h3>
+                        <p className="text-sm text-cream-500/60">{corpsData.location}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-0.5 rounded border ${
+                            classId === 'world' ? 'text-gold-500 bg-gold-500/10 border-gold-500/30' :
+                            classId === 'open' ? 'text-purple-500 bg-purple-500/10 border-purple-500/30' :
+                            classId === 'aClass' ? 'text-blue-500 bg-blue-500/10 border-blue-500/30' :
+                            'text-green-500 bg-green-500/10 border-green-500/30'
+                          }`}>
+                            {getCorpsClassName(classId)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-cream-500/10">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Rank</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {classId === 'soundSport' ? '🎉' : (corpsData.rank ? `#${corpsData.rank}` : '-')}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Score</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {classId === 'soundSport' ? (
+                              corpsData.totalSeasonScore > 0 ? '✓' : '-'
+                            ) : (
+                              corpsData.totalSeasonScore?.toFixed(1) || '0.0'
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Lineup</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {Object.keys(corpsData.lineup || {}).length}/8
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    {needsAttention.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-red-500/20">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-red-400 mb-1">Needs Attention</p>
+                            <ul className="text-xs text-red-300/80 space-y-1">
+                              {needsAttention.map((issue, idx) => (
+                                <li key={idx}>• {issue}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between text-xs">
+                      <span className="text-cream-500/60">
+                        Click to view details
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-cream-500/40" />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Season Info & Corps Management */}
       {activeTab === 'overview' && (
