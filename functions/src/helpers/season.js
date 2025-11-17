@@ -94,15 +94,15 @@ async function startNewLiveSeason() {
         Object.keys(corpsData).forEach(corpsClass => {
           const corps = corpsData[corpsClass];
           resetCorps[corpsClass] = {
-            // PRESERVE: Historical data
+            // PRESERVE: Historical data and staff/trades
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory: corps.seasonHistory || [],
+            weeklyTrades: corps.weeklyTrades || null, // Preserve trade history
             // RESET: Season-specific data
             lineup: null,
             lineupKey: null,
             selectedShows: {},
-            weeklyTrades: null,
             weeklyScores: {},
             totalSeasonScore: 0,
           };
@@ -256,15 +256,15 @@ async function startNewOffSeason() {
         Object.keys(corpsData).forEach(corpsClass => {
           const corps = corpsData[corpsClass];
           resetCorps[corpsClass] = {
-            // PRESERVE: Historical data
+            // PRESERVE: Historical data and staff/trades
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory: corps.seasonHistory || [],
+            weeklyTrades: corps.weeklyTrades || null, // Preserve trade history
             // RESET: Season-specific data
             lineup: null,
             lineupKey: null,
             selectedShows: {},
-            weeklyTrades: null,
             weeklyScores: {},
             totalSeasonScore: 0,
           };
