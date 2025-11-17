@@ -75,6 +75,10 @@ const {
   generateWeeklyMatchups,
 } = require("./src/scheduled/dailyProcessors");
 const { battlePassSeasonRotation } = require("./src/scheduled/battlePassRotation");
+const {
+  updateLifetimeLeaderboard,
+  scheduledLifetimeLeaderboardUpdate
+} = require("./src/scheduled/lifetimeLeaderboard");
 
 // Trigger Functions
 const {
@@ -139,6 +143,8 @@ module.exports = {
   processDailyLiveScores,
   generateWeeklyMatchups,
   battlePassSeasonRotation,
+  updateLifetimeLeaderboard,
+  scheduledLifetimeLeaderboardUpdate,
 
   // Triggers
   processDciScores,
