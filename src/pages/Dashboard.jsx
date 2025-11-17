@@ -6,13 +6,13 @@ import {
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
   Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
   Trash2, ArrowRightLeft, MoreVertical, X, Flame, TrendingUp,
-  Award, Medal, Activity
+  Award, Medal, Activity, Archive
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { getBattlePassProgress } from '../firebase/functions';
+import { getBattlePassProgress, retireCorps } from '../firebase/functions';
 import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import PerformanceChart from '../components/PerformanceChart';
@@ -52,6 +52,8 @@ const Dashboard = () => {
   const [showEditCorps, setShowEditCorps] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
+  const [showRetireConfirm, setShowRetireConfirm] = useState(false);
+  const [retiring, setRetiring] = useState(false);
   const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
   const [corpsFilter, setCorpsFilter] = useState('all'); // all, needsAttention, ready
   const [corpsSortBy, setCorpsSortBy] = useState('class'); // class, rank, score, name
@@ -705,6 +707,32 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error deleting corps:', error);
       toast.error('Failed to delete corps. Please try again.');
+    }
+  };
+
+  const handleRetireCorps = async () => {
+    setRetiring(true);
+    try {
+      const result = await retireCorps({ corpsClass: activeCorpsClass });
+      if (result.data.success) {
+        toast.success(result.data.message);
+        setShowRetireConfirm(false);
+
+        // Switch to another corps if available
+        const updatedCorps = { ...corps };
+        delete updatedCorps[activeCorpsClass];
+        const remainingCorps = Object.keys(updatedCorps);
+        if (remainingCorps.length > 0) {
+          setSelectedCorpsClass(remainingCorps[0]);
+        } else {
+          setSelectedCorpsClass(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error retiring corps:', error);
+      toast.error(error.message || 'Failed to retire corps. Please try again.');
+    } finally {
+      setRetiring(false);
     }
   };
 
@@ -1939,6 +1967,16 @@ const Dashboard = () => {
                           <ArrowRightLeft className="w-4 h-4 text-purple-500" />
                           <span className="text-sm">Move to Another Class</span>
                         </button>
+                        <button
+                          onClick={() => {
+                            setShowRetireConfirm(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
+                        >
+                          <Archive className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm">Retire Corps</span>
+                        </button>
                         <div className="border-t border-cream-500/10"></div>
                         <button
                           onClick={() => {
@@ -2278,6 +2316,16 @@ const Dashboard = () => {
             onConfirm={handleDeleteCorps}
             corpsName={activeCorps.corpsName || activeCorps.name}
             corpsClass={activeCorpsClass}
+          />
+        )}
+
+        {showRetireConfirm && activeCorps && (
+          <RetireConfirmModal
+            onClose={() => setShowRetireConfirm(false)}
+            onConfirm={handleRetireCorps}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            corpsClass={activeCorpsClass}
+            retiring={retiring}
           />
         )}
 
@@ -2782,6 +2830,93 @@ const DeleteConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
               className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors"
             >
               Delete Corps
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Retire Confirmation Modal Component
+const RetireConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass, retiring }) => {
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8 border-2 border-orange-500/30">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Archive className="w-8 h-8 text-orange-500" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+              Retire Corps?
+            </h2>
+            <p className="text-cream-300">
+              Honor the legacy of your corps
+            </p>
+          </div>
+
+          <div className="glass-premium rounded-xl p-4 mb-6">
+            <p className="text-sm text-cream-500/60 mb-1">You are about to retire:</p>
+            <p className="text-lg font-semibold text-cream-100">{corpsName}</p>
+            <p className="text-sm text-cream-500/60 mt-1">{getCorpsClassName(corpsClass)}</p>
+          </div>
+
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-300">
+              Your corps will be moved to the Retired Corps Gallery:
+            </p>
+            <ul className="text-sm text-blue-300/80 mt-2 space-y-1 ml-4">
+              <li>• All season history preserved</li>
+              <li>• Lifetime stats maintained</li>
+              <li>• Can be brought out of retirement anytime</li>
+              <li>• Current season data will be reset</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onClose}
+              disabled={retiring}
+              className="btn-outline flex-1 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={retiring}
+              className="flex-1 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {retiring ? (
+                <>
+                  <Archive className="w-4 h-4 animate-pulse" />
+                  Retiring...
+                </>
+              ) : (
+                'Retire Corps'
+              )}
             </button>
           </div>
         </div>

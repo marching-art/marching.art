@@ -30,6 +30,8 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
+const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
+const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -329,6 +331,22 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Leagues />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/retired-corps" element={
+            <ProtectedRoute>
+              <Layout>
+                <RetiredCorpsGallery />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/corps-history" element={
+            <ProtectedRoute>
+              <Layout>
+                <CorpsHistory />
               </Layout>
             </ProtectedRoute>
           } />
