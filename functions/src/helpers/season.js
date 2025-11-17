@@ -73,7 +73,7 @@ async function startNewLiveSeason() {
 
   await db.doc("game-settings/season").set(newSeasonData);
   logger.info(`Successfully started the ${newSeasonData.name}.`);
-  
+
   if (oldSeasonUid) {
     // Reset user profiles from old season
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
@@ -86,9 +86,31 @@ async function startNewLiveSeason() {
       let batchCount = 0;
 
       for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+
+        // Preserve historical data while resetting season-specific fields
+        const resetCorps = {};
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          resetCorps[corpsClass] = {
+            // PRESERVE: Historical data
+            corpsName: corps.corpsName || null,
+            location: corps.location || null,
+            seasonHistory: corps.seasonHistory || [],
+            // RESET: Season-specific data
+            lineup: null,
+            lineupKey: null,
+            selectedShows: {},
+            weeklyTrades: null,
+            weeklyScores: {},
+            totalSeasonScore: 0,
+          };
+        });
+
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {}, // Clear all corps (includes lineups, schedules, trades, etc.)
+          corps: resetCorps,
         });
 
         batchCount++;
@@ -226,9 +248,31 @@ async function startNewOffSeason() {
       let batchCount = 0;
 
       for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+
+        // Preserve historical data while resetting season-specific fields
+        const resetCorps = {};
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          resetCorps[corpsClass] = {
+            // PRESERVE: Historical data
+            corpsName: corps.corpsName || null,
+            location: corps.location || null,
+            seasonHistory: corps.seasonHistory || [],
+            // RESET: Season-specific data
+            lineup: null,
+            lineupKey: null,
+            selectedShows: {},
+            weeklyTrades: null,
+            weeklyScores: {},
+            totalSeasonScore: 0,
+          };
+        });
+
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {}, // Clear all corps (includes lineups, schedules, trades, etc.)
+          corps: resetCorps,
         });
 
         batchCount++;
