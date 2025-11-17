@@ -8,6 +8,9 @@ import { auth, authHelpers, analyticsHelpers } from './firebase';
 import LoadingScreen from './components/LoadingScreen';
 import Navigation from './components/Navigation';
 import MobileNav from './components/MobileNav';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { CelebrationContainer } from './components/Celebration';
+import Tutorial from './components/Tutorial';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -185,6 +188,7 @@ function App() {
   return (
     <AuthContext.Provider value={authContextValue}>
       <Router>
+        {/* Global Components */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -209,6 +213,15 @@ function App() {
             },
           }}
         />
+
+        {/* PWA Install Prompt - shows after user engagement */}
+        {user && <PWAInstallPrompt />}
+
+        {/* Celebration System - for achievements and level ups */}
+        <CelebrationContainer />
+
+        {/* First-Time Tutorial - shows on first login */}
+        {user && <Tutorial />}
 
         <Routes>
           {/* Public Routes */}
