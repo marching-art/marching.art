@@ -186,8 +186,8 @@ const Navigation = () => {
         <div className="p-6 border-b border-cream-500/10">
           <Link to="/" className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
-                <Music className="w-6 h-6 text-charcoal-900" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-gold-500 rounded-full animate-pulse" />
             </div>
