@@ -52,6 +52,8 @@ const Dashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
+  const [corpsFilter, setCorpsFilter] = useState('all'); // all, needsAttention, ready
+  const [corpsSortBy, setCorpsSortBy] = useState('class'); // class, rank, score, name
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -877,7 +879,7 @@ const Dashboard = () => {
           className="space-y-6"
         >
           <div className="card">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
                   All Corps Overview
@@ -895,18 +897,100 @@ const Dashboard = () => {
               </button>
             </div>
 
+            {/* Filters and Sort */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-charcoal-900/30 rounded-lg">
+              <div className="flex-1">
+                <label className="text-xs text-cream-500/60 mb-2 block">Filter</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCorpsFilter('all')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all ${
+                      corpsFilter === 'all'
+                        ? 'bg-gold-500 text-charcoal-900 font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setCorpsFilter('needsAttention')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
+                      corpsFilter === 'needsAttention'
+                        ? 'bg-red-500 text-white font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    Needs Attention
+                  </button>
+                  <button
+                    onClick={() => setCorpsFilter('ready')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
+                      corpsFilter === 'ready'
+                        ? 'bg-green-500 text-white font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    <Check className="w-3 h-3" />
+                    Ready
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-cream-500/60 mb-2 block">Sort By</label>
+                <select
+                  value={corpsSortBy}
+                  onChange={(e) => setCorpsSortBy(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 rounded text-sm text-cream-100 hover:border-cream-500/40 transition-colors"
+                >
+                  <option value="class">Class Level</option>
+                  <option value="rank">Best Rank</option>
+                  <option value="score">Highest Score</option>
+                  <option value="name">Name (A-Z)</option>
+                </select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {Object.entries(corps).map(([classId, corpsData]) => {
-                const needsAttention = [];
+              {Object.entries(corps)
+                .map(([classId, corpsData]) => {
+                  const needsAttention = [];
+                  const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+                  const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
 
-                // Check for issues
-                const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
-                const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
+                  if (!hasLineup) needsAttention.push('Missing lineup');
+                  if (!hasShows) needsAttention.push('No shows selected');
 
-                if (!hasLineup) needsAttention.push('Missing lineup');
-                if (!hasShows) needsAttention.push('No shows selected');
-
-                return (
+                  return { classId, corpsData, needsAttention, hasLineup, hasShows };
+                })
+                .filter(({ needsAttention }) => {
+                  if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
+                  if (corpsFilter === 'ready') return needsAttention.length === 0;
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (corpsSortBy === 'class') {
+                    const classOrder = { soundSport: 0, aClass: 1, open: 2, world: 3 };
+                    return classOrder[a.classId] - classOrder[b.classId];
+                  }
+                  if (corpsSortBy === 'rank') {
+                    const rankA = a.corpsData.rank || 999;
+                    const rankB = b.corpsData.rank || 999;
+                    return rankA - rankB;
+                  }
+                  if (corpsSortBy === 'score') {
+                    const scoreA = a.corpsData.totalSeasonScore || 0;
+                    const scoreB = b.corpsData.totalSeasonScore || 0;
+                    return scoreB - scoreA;
+                  }
+                  if (corpsSortBy === 'name') {
+                    const nameA = (a.corpsData.corpsName || a.corpsData.name || '').toLowerCase();
+                    const nameB = (b.corpsData.corpsName || b.corpsData.name || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                  }
+                  return 0;
+                })
+                .map(({ classId, corpsData, needsAttention, hasLineup, hasShows }) => (
                   <motion.div
                     key={classId}
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -1011,16 +1095,87 @@ const Dashboard = () => {
                       </div>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between text-xs">
-                      <span className="text-cream-500/60">
-                        Click to view details
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-cream-500/40" />
+                    {/* Quick Actions */}
+                    <div className="mt-4 pt-4 border-t border-cream-500/10">
+                      <div className="flex gap-2">
+                        {!hasLineup && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCorpsClass(classId);
+                              setActiveTab('overview');
+                              setTimeout(() => setShowCaptionSelection(true), 100);
+                            }}
+                            className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-xs text-blue-300 font-semibold transition-colors flex items-center justify-center gap-1"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Set Lineup
+                          </button>
+                        )}
+                        {!hasShows && hasLineup && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCorpsClass(classId);
+                              setActiveTab('overview');
+                              setTimeout(() => setShowShowSelection(true), 100);
+                            }}
+                            className="flex-1 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded text-xs text-purple-300 font-semibold transition-colors flex items-center justify-center gap-1"
+                          >
+                            <Calendar className="w-3 h-3" />
+                            Select Shows
+                          </button>
+                        )}
+                        {hasLineup && hasShows && (
+                          <div className="flex-1 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300 font-semibold flex items-center justify-center gap-1">
+                            <Check className="w-3 h-3" />
+                            All Set!
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCorpsClass(classId);
+                            setActiveTab('overview');
+                          }}
+                          className="px-3 py-2 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/20 rounded text-xs text-cream-300 font-semibold transition-colors flex items-center gap-1"
+                        >
+                          View
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
-                );
-              })}
+                ))}
             </div>
+
+            {/* Empty State */}
+            {Object.entries(corps)
+              .map(([classId, corpsData]) => {
+                const needsAttention = [];
+                const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+                const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
+                if (!hasLineup) needsAttention.push('Missing lineup');
+                if (!hasShows) needsAttention.push('No shows selected');
+                return { needsAttention };
+              })
+              .filter(({ needsAttention }) => {
+                if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
+                if (corpsFilter === 'ready') return needsAttention.length === 0;
+                return true;
+              }).length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
+                  <p className="text-lg text-cream-500/60 mb-2">
+                    {corpsFilter === 'needsAttention' ? 'All corps are ready!' : 'No corps match this filter'}
+                  </p>
+                  <p className="text-sm text-cream-500/40">
+                    {corpsFilter === 'needsAttention'
+                      ? 'Great job! All your corps have their lineups and shows selected.'
+                      : 'Try adjusting your filters to see more corps.'}
+                  </p>
+                </div>
+              )}
           </div>
         </motion.div>
       )}
