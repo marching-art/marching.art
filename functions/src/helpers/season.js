@@ -187,30 +187,30 @@ async function startNewOffSeason() {
 
     if (!profilesSnapshot.empty) {
       logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
-      
-      const batch = db.batch();
+
+      let batch = db.batch();
       let batchCount = 0;
-      
-      profilesSnapshot.docs.forEach((doc) => {
+
+      for (const doc of profilesSnapshot.docs) {
         batch.update(doc.ref, {
           activeSeasonId: null,
           corps: {},
         });
-        
+
         batchCount++;
-        
+
         if (batchCount >= 400) {
           logger.info(`Committing batch of ${batchCount} profile resets...`);
-          batch.commit();
+          await batch.commit();
           batch = db.batch();
           batchCount = 0;
         }
-      });
-      
+      }
+
       if (batchCount > 0) {
         await batch.commit();
       }
-      
+
       logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
     }
   }
