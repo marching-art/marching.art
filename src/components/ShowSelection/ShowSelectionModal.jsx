@@ -44,9 +44,20 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
         const weekStart = (currentWeek - 1) * 7 + 1;
         const weekEnd = currentWeek * 7;
 
-        const weekShows = events.filter(event => {
-          const day = event.day || 0;
-          return day >= weekStart && day <= weekEnd;
+        // Flatten the schedule structure and filter for current week
+        const weekShows = [];
+        events.forEach(dayEvent => {
+          const day = dayEvent.offSeasonDay || dayEvent.day || 0;
+          if (day >= weekStart && day <= weekEnd && dayEvent.shows) {
+            // Add each show from this day's shows array
+            dayEvent.shows.forEach(show => {
+              weekShows.push({
+                ...show,
+                day: day, // Normalize to 'day' for consistency
+                offSeasonDay: day
+              });
+            });
+          }
         });
 
         setAvailableShows(weekShows);
