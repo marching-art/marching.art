@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown
+  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
+  Trash2, ArrowRightLeft, MoreVertical, X
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
@@ -47,6 +48,10 @@ const Dashboard = () => {
   const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
   const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
   const [previousUnlockedClasses, setPreviousUnlockedClasses] = useState([]);
+  const [showEditCorps, setShowEditCorps] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMoveCorps, setShowMoveCorps] = useState(false);
+  const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -306,6 +311,77 @@ const Dashboard = () => {
   const handleDeclineSetup = () => {
     setShowClassUnlockCongrats(false);
     toast.success('You can register your new corps anytime from the dashboard!');
+  };
+
+  const handleEditCorps = async (formData) => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
+        [`corps.${activeCorpsClass}.location`]: formData.location,
+        [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
+      });
+
+      toast.success('Corps updated successfully!');
+      setShowEditCorps(false);
+    } catch (error) {
+      console.error('Error updating corps:', error);
+      toast.error('Failed to update corps. Please try again.');
+    }
+  };
+
+  const handleDeleteCorps = async () => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+
+      // Remove the corps from the profile
+      const updatedCorps = { ...corps };
+      delete updatedCorps[activeCorpsClass];
+
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}`]: null
+      });
+
+      toast.success(`${activeCorps.corpsName || activeCorps.name} has been deleted`);
+      setShowDeleteConfirm(false);
+
+      // Switch to another corps if available
+      const remainingCorps = Object.keys(updatedCorps);
+      if (remainingCorps.length > 0) {
+        setSelectedCorpsClass(remainingCorps[0]);
+      } else {
+        setSelectedCorpsClass(null);
+      }
+    } catch (error) {
+      console.error('Error deleting corps:', error);
+      toast.error('Failed to delete corps. Please try again.');
+    }
+  };
+
+  const handleMoveCorps = async (targetClass) => {
+    try {
+      if (corps[targetClass]) {
+        toast.error(`You already have a corps registered in ${getCorpsClassName(targetClass)}`);
+        return;
+      }
+
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+
+      // Copy corps to new class and remove from old class
+      const corpsData = { ...activeCorps, class: targetClass };
+
+      await updateDoc(profileRef, {
+        [`corps.${targetClass}`]: corpsData,
+        [`corps.${activeCorpsClass}`]: null
+      });
+
+      toast.success(`${activeCorps.corpsName || activeCorps.name} moved to ${getCorpsClassName(targetClass)}`);
+      setShowMoveCorps(false);
+      setSelectedCorpsClass(targetClass);
+    } catch (error) {
+      console.error('Error moving corps:', error);
+      toast.error('Failed to move corps. Please try again.');
+    }
   };
 
   const handleCorpsRegistration = async (formData) => {
@@ -843,9 +919,58 @@ const Dashboard = () => {
                     )}
                   </div>
                 </div>
-                <button className="btn-ghost">
-                  <Edit className="w-4 h-4" />
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCorpsManagementMenu(!showCorpsManagementMenu)}
+                    className="btn-ghost"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+
+                  {/* Corps Management Dropdown Menu */}
+                  <AnimatePresence>
+                    {showCorpsManagementMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        className="absolute right-0 top-full mt-2 w-48 glass-dark rounded-lg shadow-xl border border-cream-500/20 z-20 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => {
+                            setShowEditCorps(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
+                        >
+                          <Edit className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm">Edit Details</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMoveCorps(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
+                        >
+                          <ArrowRightLeft className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm">Move to Another Class</span>
+                        </button>
+                        <div className="border-t border-cream-500/10"></div>
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-500/10 transition-colors text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="text-sm">Delete Corps</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Show Concept */}
@@ -1151,6 +1276,38 @@ const Dashboard = () => {
             currentSelections={activeCorps.selectedShows?.[`week${currentWeek}`] || []}
           />
         )}
+
+        {showEditCorps && activeCorps && (
+          <EditCorpsModal
+            onClose={() => setShowEditCorps(false)}
+            onSubmit={handleEditCorps}
+            currentData={{
+              name: activeCorps.corpsName || activeCorps.name,
+              location: activeCorps.location,
+              showConcept: activeCorps.showConcept
+            }}
+          />
+        )}
+
+        {showDeleteConfirm && activeCorps && (
+          <DeleteConfirmModal
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDeleteCorps}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            corpsClass={activeCorpsClass}
+          />
+        )}
+
+        {showMoveCorps && activeCorps && (
+          <MoveCorpsModal
+            onClose={() => setShowMoveCorps(false)}
+            onMove={handleMoveCorps}
+            currentClass={activeCorpsClass}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+            existingCorps={corps}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -1452,6 +1609,333 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, defaultCla
               </button>
             </div>
           </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Edit Corps Modal Component
+const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
+  const [formData, setFormData] = useState({
+    name: currentData.name || '',
+    location: currentData.location || '',
+    showConcept: currentData.showConcept || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-display font-bold text-gradient">
+              Edit Corps Details
+            </h2>
+            <button onClick={onClose} className="btn-ghost p-2">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Corps Name */}
+            <div>
+              <label className="label">Corps Name</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Enter your corps name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                maxLength={50}
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="label">Home Location</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="City, State"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
+                maxLength={50}
+              />
+            </div>
+
+            {/* Show Concept */}
+            <div>
+              <label className="label">Show Concept</label>
+              <textarea
+                className="textarea h-24"
+                placeholder="Describe your show concept for this season..."
+                value={formData.showConcept}
+                onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
+                required
+                maxLength={500}
+              />
+              <p className="text-xs text-cream-500/40 mt-1">
+                {formData.showConcept.length}/500 characters
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-ghost flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Delete Confirmation Modal Component
+const DeleteConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8 border-2 border-red-500/30">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+              Delete Corps?
+            </h2>
+            <p className="text-cream-300">
+              This action cannot be undone
+            </p>
+          </div>
+
+          <div className="glass-premium rounded-xl p-4 mb-6">
+            <p className="text-sm text-cream-500/60 mb-1">You are about to delete:</p>
+            <p className="text-lg font-semibold text-cream-100">{corpsName}</p>
+            <p className="text-sm text-cream-500/60 mt-1">{getCorpsClassName(corpsClass)}</p>
+          </div>
+
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-red-300">
+              All data for this corps will be permanently deleted, including:
+            </p>
+            <ul className="text-sm text-red-300/80 mt-2 space-y-1 ml-4">
+              <li>• Caption lineup</li>
+              <li>• Show selections</li>
+              <li>• Equipment and staff</li>
+              <li>• Performance history</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onClose}
+              className="btn-outline flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              Delete Corps
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Move Corps Modal Component
+const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps }) => {
+  const [selectedClass, setSelectedClass] = useState('');
+
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  const getClassColor = (classId) => {
+    const colors = {
+      soundSport: 'from-green-500 to-green-600',
+      aClass: 'from-blue-500 to-blue-600',
+      open: 'from-purple-500 to-purple-600',
+      world: 'from-gold-500 to-gold-600'
+    };
+    return colors[classId] || 'from-cream-500 to-cream-600';
+  };
+
+  const availableClasses = [
+    { id: 'soundSport', name: 'SoundSport', level: 'Entry' },
+    { id: 'aClass', name: 'A Class', level: 'Intermediate' },
+    { id: 'open', name: 'Open Class', level: 'Advanced' },
+    { id: 'world', name: 'World Class', level: 'Elite' }
+  ].filter(cls =>
+    cls.id !== currentClass && // Not current class
+    unlockedClasses.includes(cls.id) && // User has unlocked it
+    !existingCorps[cls.id] // No corps already in that class
+  );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedClass) {
+      onMove(selectedClass);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-display font-bold text-gradient">
+              Move Corps
+            </h2>
+            <button onClick={onClose} className="btn-ghost p-2">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="glass-premium rounded-xl p-4 mb-6">
+            <p className="text-sm text-cream-500/60 mb-1">Moving:</p>
+            <p className="text-lg font-semibold text-cream-100">{corpsName}</p>
+            <p className="text-sm text-cream-500/60 mt-1">
+              From: <span className="text-cream-300">{getCorpsClassName(currentClass)}</span>
+            </p>
+          </div>
+
+          {availableClasses.length === 0 ? (
+            <div className="text-center py-8">
+              <Lock className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
+              <p className="text-cream-500/60 mb-2">No classes available</p>
+              <p className="text-sm text-cream-500/40">
+                Either you haven't unlocked other classes, or you already have a corps in each available class.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="label">Select Target Class</label>
+                <div className="space-y-2">
+                  {availableClasses.map((cls) => (
+                    <button
+                      key={cls.id}
+                      type="button"
+                      onClick={() => setSelectedClass(cls.id)}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                        selectedClass === cls.id
+                          ? 'border-gold-500 bg-gold-500/10'
+                          : 'border-cream-500/20 hover:border-cream-500/40'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-cream-100">{cls.name}</p>
+                          <p className="text-sm text-cream-500/60">{cls.level}</p>
+                        </div>
+                        {selectedClass === cls.id && (
+                          <Check className="w-5 h-5 text-gold-500" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <p className="text-sm text-blue-300">
+                  <strong>Note:</strong> Moving your corps will preserve all data including lineup, shows, equipment, and staff.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn-ghost flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!selectedClass}
+                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Move Corps
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </motion.div>
     </motion.div>
