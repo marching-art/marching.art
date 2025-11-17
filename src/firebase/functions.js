@@ -59,6 +59,12 @@ export const retireCorps = httpsCallable(functions, 'retireCorps');
 export const unretireCorps = httpsCallable(functions, 'unretireCorps');
 
 // ========================================
+// LEADERBOARDS
+// ========================================
+
+export const updateLifetimeLeaderboard = httpsCallable(functions, 'updateLifetimeLeaderboard');
+
+// ========================================
 // SOCIAL & LEAGUES
 // ========================================
 

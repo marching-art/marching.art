@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, getDoc, where } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { Trophy, Medal, Award, Crown, Star, Users, TrendingUp, ChevronDown } from 'lucide-react';
 import { useAuth } from '../App';
@@ -59,37 +59,21 @@ const Leaderboard = () => {
           ...doc.data()
         }));
 
-        // Fetch lifetime stats leaderboard
-        const usersRef = collection(db, 'artifacts', dataNamespace, 'users');
-        const usersSnapshot = await getDocs(usersRef);
-        const lifetimeData = [];
+        // Fetch lifetime stats leaderboard from pre-computed collection
+        const lifetimeRef = db.doc(`artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
+        const lifetimeDoc = await getDoc(lifetimeRef);
 
-        for (const userDoc of usersSnapshot.docs) {
-          const profileRef = collection(db, 'artifacts', dataNamespace, 'users', userDoc.id, 'profile');
-          const profileSnapshot = await getDocs(profileRef);
-
-          if (!profileSnapshot.empty) {
-            const profileData = profileSnapshot.docs[0].data();
-            if (profileData.lifetimeStats && profileData.username) {
-              lifetimeData.push({
-                id: userDoc.id,
-                username: profileData.username,
-                userTitle: profileData.userTitle,
-                lifetimeStats: profileData.lifetimeStats
-              });
-            }
-          }
+        let sortedLifetimeData = [];
+        if (lifetimeDoc.exists()) {
+          const lifetimeLeaderboard = lifetimeDoc.data();
+          sortedLifetimeData = (lifetimeLeaderboard.entries || []).map((entry, index) => ({
+            id: entry.userId,
+            rank: index + 1,
+            username: entry.username,
+            userTitle: entry.userTitle,
+            lifetimeStats: entry.lifetimeStats
+          }));
         }
-
-        // Sort by the selected lifetime view
-        const sortedLifetimeData = lifetimeData.sort((a, b) => {
-          const aVal = a.lifetimeStats[lifetimeView] || 0;
-          const bVal = b.lifetimeStats[lifetimeView] || 0;
-          return bVal - aVal;
-        }).slice(0, 100).map((entry, index) => ({
-          ...entry,
-          rank: index + 1
-        }));
 
         setLeaderboardData({
           overall: overallData,
