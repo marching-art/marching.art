@@ -13,7 +13,7 @@ exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
     return { success: true, message: "A new off-season has been started successfully." };
   } catch (error) {
     logger.error("Error manually starting new off-season:", error);
-    throw new HttpsError("internal", "An error occurred while starting the season.");
+    throw new HttpsError("internal", `An error occurred while starting the season: ${error.message}`);
   }
 });
 
