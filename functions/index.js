@@ -42,6 +42,11 @@ const {
   createLeague,
   joinLeague,
   leaveLeague,
+  generateMatchups,
+  updateMatchupResults,
+  proposeStaffTrade,
+  respondToStaffTrade,
+  postLeagueMessage,
 } = require("./src/callable/leagues");
 const {
   sendCommentNotification,
@@ -89,6 +94,11 @@ module.exports = {
   createLeague,
   joinLeague,
   leaveLeague,
+  generateMatchups,
+  updateMatchupResults,
+  proposeStaffTrade,
+  respondToStaffTrade,
+  postLeagueMessage,
   sendCommentNotification,
   deleteComment,
   reportComment,

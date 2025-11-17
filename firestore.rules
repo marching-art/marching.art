@@ -107,17 +107,40 @@ match /schedules/{docId} {
 }
 
 // --- LEAGUES ---
-// This logic from your file is excellent.
-match /leagues/{leagueId} {
+// Updated to support new league features
+match /artifacts/{appId}/leagues/{leagueId} {
   allow list: if isAuthenticated(); // Allows querying for leagues
-  allow get: if isAuthenticated() && 
+  allow get: if isAuthenticated() &&
     (request.auth.uid in resource.data.members || isAdmin());
   allow write: if false; // Backend functions only
-}
 
-match /leagues/{leagueId}/matchups/{week} {
-  allow read: if isAuthenticated();
-  allow write: if false; // Backend only
+  // League standings
+  match /standings/{docId} {
+    allow read: if isAuthenticated() &&
+      (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());
+    allow write: if false; // Backend only
+  }
+
+  // League matchups
+  match /matchups/{week} {
+    allow read: if isAuthenticated() &&
+      (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());
+    allow write: if false; // Backend only
+  }
+
+  // League chat
+  match /chat/{messageId} {
+    allow read: if isAuthenticated() &&
+      (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());
+    allow write: if false; // Backend only (via cloud function)
+  }
+
+  // League trades
+  match /trades/{tradeId} {
+    allow read: if isAuthenticated() &&
+      (request.auth.uid in get(/databases/$(database)/documents/artifacts/$(appId)/leagues/$(leagueId)).data.members || isAdmin());
+    allow write: if false; // Backend only
+  }
 }
 
 match /leagueInvites/{code} {
