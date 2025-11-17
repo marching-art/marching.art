@@ -725,7 +725,15 @@ const fetchRecentScores = async () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowShowSelection(true)}
+                  onClick={() => {
+                    // Check if lineup is complete before allowing show selection
+                    const lineup = activeCorps?.lineup;
+                    if (!lineup || Object.keys(lineup).length !== 8) {
+                      toast.error('Please select your 8 captions before choosing shows');
+                      return;
+                    }
+                    setShowShowSelection(true);
+                  }}
                   className="btn-outline text-sm py-2"
                 >
                   <Calendar className="w-4 h-4 mr-2" />
@@ -739,7 +747,15 @@ const fetchRecentScores = async () => {
                   <p className="text-cream-500/60 mb-1">No shows selected for this week</p>
                   <p className="text-sm text-cream-500/40 mb-4">Select up to 4 shows to attend</p>
                   <button
-                    onClick={() => setShowShowSelection(true)}
+                    onClick={() => {
+                      // Check if lineup is complete before allowing show selection
+                      const lineup = activeCorps?.lineup;
+                      if (!lineup || Object.keys(lineup).length !== 8) {
+                        toast.error('Please select your 8 captions before choosing shows');
+                        return;
+                      }
+                      setShowShowSelection(true);
+                    }}
                     className="btn-primary"
                   >
                     Select Shows

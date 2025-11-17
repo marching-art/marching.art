@@ -141,6 +141,13 @@ const Schedule = () => {
       return;
     }
 
+    // Check if lineup is complete (all 8 captions selected)
+    const lineup = activeCorps?.lineup;
+    if (!lineup || Object.keys(lineup).length !== 8) {
+      toast.error('Please select your 8 captions before choosing shows');
+      return;
+    }
+
     setSelectedWeek(weekNumber);
     setShowSelectionModal(true);
   };
@@ -181,6 +188,19 @@ const Schedule = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500"></div>
+      </div>
+    );
+  }
+
+  // Show error state if no season exists
+  if (!seasonData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <AlertCircle className="w-16 h-16 text-red-500" />
+        <h2 className="text-2xl font-display font-bold text-cream-100">No Active Season</h2>
+        <p className="text-cream-500/80 text-center max-w-md">
+          There is currently no active season. Please check back later or contact support if this issue persists.
+        </p>
       </div>
     );
   }
