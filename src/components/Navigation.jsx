@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Trophy, Calendar, Music, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield, ShoppingCart, Crown
+  Star, Shield, ShoppingCart, Crown, Archive, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, adminHelpers } from '../firebase';
@@ -116,25 +116,44 @@ const Navigation = () => {
       ]
     },
     {
+      section: 'Corps',
+      items: [
+        {
+          path: '/corps-history',
+          label: 'Corps History',
+          icon: BarChart3,
+          badge: null,
+          premium: false
+        },
+        {
+          path: '/retired-corps',
+          label: 'Retired Corps',
+          icon: Archive,
+          badge: null,
+          premium: false
+        }
+      ]
+    },
+    {
       section: 'Community',
       items: [
-        { 
-          path: '/hall-of-champions', 
-          label: 'Hall of Champions', 
+        {
+          path: '/hall-of-champions',
+          label: 'Hall of Champions',
           icon: Award,
           badge: null,
           premium: false
         },
-        { 
-          path: '/profile', 
-          label: 'My Profile', 
+        {
+          path: '/profile',
+          label: 'My Profile',
           icon: User,
           badge: null,
           premium: false
         },
-        { 
-          path: '/settings', 
-          label: 'Settings', 
+        {
+          path: '/settings',
+          label: 'Settings',
           icon: Settings,
           badge: null,
           premium: false

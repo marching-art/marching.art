@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Trophy, Calendar, Music, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown
+  ShoppingCart, Crown, Archive, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../App';
 
@@ -39,6 +39,8 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
     { path: '/battlepass', label: 'Battle Pass', icon: Crown },
     { path: '/scores', label: 'Scores', icon: Music },
+    { path: '/corps-history', label: 'Corps History', icon: BarChart3 },
+    { path: '/retired-corps', label: 'Retired Corps', icon: Archive },
     { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award },
     { path: '/profile', label: 'My Profile', icon: User },
     { path: '/settings', label: 'Settings', icon: Settings },
