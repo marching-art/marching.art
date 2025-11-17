@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Wrench, MapPin, Crown, Gift, Sparkles
+  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
@@ -42,10 +42,15 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [battlePassRewards, setBattlePassRewards] = useState(null);
   const [unclaimedRewardsCount, setUnclaimedRewardsCount] = useState(0);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
+  const [showCorpsSelector, setShowCorpsSelector] = useState(false);
 
-  // Get the active corps class (for now, use the first available corps)
-  const activeCorpsClass = corps ? Object.keys(corps)[0] : null;
+  // Get the active corps class - use selected or default to first available
+  const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
   const activeCorps = activeCorpsClass ? corps[activeCorpsClass] : null;
+
+  // Check if user has multiple corps
+  const hasMultipleCorps = corps && Object.keys(corps).length > 1;
 
   // Calculate current week from season data
   const { currentWeek } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1 };
@@ -63,6 +68,38 @@ const Dashboard = () => {
     canRehearseToday
   } = useExecution(user?.uid, activeCorpsClass);
   
+  // Load selected corps from localStorage on mount
+  useEffect(() => {
+    if (user) {
+      const savedCorpsClass = localStorage.getItem(`selectedCorps_${user.uid}`);
+      if (savedCorpsClass) {
+        setSelectedCorpsClass(savedCorpsClass);
+      }
+    }
+  }, [user]);
+
+  // Save selected corps to localStorage when it changes
+  useEffect(() => {
+    if (user && selectedCorpsClass) {
+      localStorage.setItem(`selectedCorps_${user.uid}`, selectedCorpsClass);
+    }
+  }, [user, selectedCorpsClass]);
+
+  // Update selected corps when corps data changes (e.g., new corps registered)
+  useEffect(() => {
+    if (corps) {
+      const corpsClasses = Object.keys(corps);
+      // If selected corps doesn't exist anymore, reset to first available
+      if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
+        setSelectedCorpsClass(corpsClasses[0] || null);
+      }
+      // If no corps selected yet, select the first one
+      if (!selectedCorpsClass && corpsClasses.length > 0) {
+        setSelectedCorpsClass(corpsClasses[0]);
+      }
+    }
+  }, [corps, selectedCorpsClass]);
+
   useEffect(() => {
     if (user) {
       // Subscribe to profile updates
@@ -210,6 +247,32 @@ const Dashboard = () => {
     }
   };
 
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  const getCorpsClassColor = (classId) => {
+    const colors = {
+      soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
+      aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
+      open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
+      world: 'text-gold-500 bg-gold-500/10 border-gold-500/30'
+    };
+    return colors[classId] || 'text-cream-500 bg-cream-500/10 border-cream-500/30';
+  };
+
+  const handleCorpsSwitch = (classId) => {
+    setSelectedCorpsClass(classId);
+    setShowCorpsSelector(false);
+    toast.success(`Switched to ${getCorpsClassName(classId)}`);
+  };
+
   const handleCorpsRegistration = async (formData) => {
     try {
       if (!seasonData?.seasonUid) {
@@ -355,6 +418,112 @@ const Dashboard = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Corps Selector - Show only if user has multiple corps */}
+      {hasMultipleCorps && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative"
+        >
+          <div className="glass rounded-xl p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Music className="w-5 h-5 text-gold-500" />
+                <div>
+                  <p className="text-xs text-cream-500/60 mb-1">Active Corps</p>
+                  <p className="text-sm font-semibold text-cream-100">
+                    {activeCorps?.corpsName || activeCorps?.name || 'Select a corps'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCorpsSelector(!showCorpsSelector)}
+                className="btn-outline text-sm py-2 px-4 flex items-center gap-2"
+              >
+                Switch Corps
+                <ChevronDown className={`w-4 h-4 transition-transform ${showCorpsSelector ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Corps Selection Dropdown */}
+            <AnimatePresence>
+              {showCorpsSelector && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 space-y-2 overflow-hidden"
+                >
+                  <div className="border-t border-cream-500/10 pt-4">
+                    <p className="text-xs text-cream-500/60 mb-3">Select a corps to manage:</p>
+                    <div className="space-y-2">
+                      {Object.entries(corps).map(([classId, corpsData]) => (
+                        <button
+                          key={classId}
+                          onClick={() => handleCorpsSwitch(classId)}
+                          className={`w-full text-left p-3 rounded-lg border transition-all ${
+                            activeCorpsClass === classId
+                              ? 'border-gold-500 bg-gold-500/10'
+                              : 'border-cream-500/20 hover:border-cream-500/40 hover:bg-cream-500/5'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-sm font-semibold ${
+                                  activeCorpsClass === classId ? 'text-gold-500' : 'text-cream-100'
+                                }`}>
+                                  {corpsData.corpsName || corpsData.name}
+                                </span>
+                                {activeCorpsClass === classId && (
+                                  <Check className="w-4 h-4 text-gold-500" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded border ${getCorpsClassColor(classId)}`}>
+                                  {getCorpsClassName(classId)}
+                                </span>
+                                {corpsData.location && (
+                                  <span className="text-xs text-cream-500/60">
+                                    {corpsData.location}
+                                  </span>
+                                )}
+                              </div>
+                              {classId !== 'soundSport' && (
+                                <div className="flex items-center gap-3 mt-2">
+                                  {corpsData.rank && (
+                                    <span className="text-xs text-cream-500/60">
+                                      Rank: <span className="text-gold-500 font-semibold">#{corpsData.rank}</span>
+                                    </span>
+                                  )}
+                                  {corpsData.totalSeasonScore !== undefined && (
+                                    <span className="text-xs text-cream-500/60">
+                                      Score: <span className="text-gold-500 font-semibold">{corpsData.totalSeasonScore.toFixed(2)}</span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setShowRegistration(true)}
+                      className="w-full mt-3 p-3 rounded-lg border-2 border-dashed border-cream-500/20 hover:border-gold-500/40 hover:bg-gold-500/5 transition-all text-sm text-cream-500/60 hover:text-gold-500 flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Register Another Corps
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
 
       {/* Battle Pass Notification */}
       {unclaimedRewardsCount > 0 && (
