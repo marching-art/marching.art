@@ -1,6 +1,10 @@
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+// Configure Firestore to ignore undefined properties
+const db = admin.firestore();
+db.settings({ ignoreUndefinedProperties: true });
+
 // Callable Functions
 const {
   checkUsername,
