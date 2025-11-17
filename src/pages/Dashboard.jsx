@@ -64,6 +64,8 @@ const Dashboard = () => {
     recentActivity: [],
     weeklyProgress: []
   });
+  const [dailyChallenges, setDailyChallenges] = useState([]);
+  const [showChallenges, setShowChallenges] = useState(false);
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -274,6 +276,194 @@ const Dashboard = () => {
       updateEngagement();
     }
   }, [user, profile?.uid]); // Only run when user changes or profile is first loaded
+
+  // Track performance milestones and achievements
+  useEffect(() => {
+    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
+      const trackMilestones = async () => {
+        try {
+          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+          const milestones = profile.milestones || {};
+          const classKey = activeCorpsClass;
+          const classMilestones = milestones[classKey] || {};
+
+          let hasNewMilestone = false;
+          const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
+          const newActivities = [];
+          const newAchievements = [];
+
+          // Track best rank
+          if (activeCorps.rank) {
+            const bestRank = classMilestones.bestRank || Infinity;
+            if (activeCorps.rank < bestRank) {
+              updatedMilestones[classKey].bestRank = activeCorps.rank;
+              hasNewMilestone = true;
+
+              newActivities.push({
+                type: 'milestone',
+                message: `New best rank: #${activeCorps.rank} in ${getCorpsClassName(classKey)}!`,
+                timestamp: new Date().toISOString(),
+                icon: 'trophy'
+              });
+
+              // Award achievement for top 10
+              if (activeCorps.rank <= 10) {
+                const achievementId = `top_10_${classKey}`;
+                const existingAchievements = profile.achievements || [];
+                if (!existingAchievements.find(a => a.id === achievementId)) {
+                  newAchievements.push({
+                    id: achievementId,
+                    title: 'Top 10 Finish!',
+                    description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
+                    icon: 'trophy',
+                    earnedAt: new Date().toISOString(),
+                    rarity: activeCorps.rank === 1 ? 'legendary' : activeCorps.rank <= 3 ? 'epic' : 'rare'
+                  });
+                }
+              }
+            }
+          }
+
+          // Track best score
+          if (activeCorps.totalSeasonScore) {
+            const bestScore = classMilestones.bestScore || 0;
+            if (activeCorps.totalSeasonScore > bestScore) {
+              updatedMilestones[classKey].bestScore = activeCorps.totalSeasonScore;
+              hasNewMilestone = true;
+
+              newActivities.push({
+                type: 'milestone',
+                message: `New high score: ${activeCorps.totalSeasonScore.toFixed(2)} in ${getCorpsClassName(classKey)}!`,
+                timestamp: new Date().toISOString(),
+                icon: 'star'
+              });
+            }
+          }
+
+          // Track rehearsal milestones
+          if (executionState?.rehearsalsCompleted) {
+            const rehearsalMilestones = [5, 10, 25, 50, 100];
+            const currentRehearsals = executionState.rehearsalsCompleted;
+            const trackedRehearsals = classMilestones.rehearsalMilestones || [];
+
+            for (const milestone of rehearsalMilestones) {
+              if (currentRehearsals >= milestone && !trackedRehearsals.includes(milestone)) {
+                updatedMilestones[classKey].rehearsalMilestones = [...trackedRehearsals, milestone];
+                hasNewMilestone = true;
+
+                const achievementId = `rehearsals_${milestone}_${classKey}`;
+                const existingAchievements = profile.achievements || [];
+                if (!existingAchievements.find(a => a.id === achievementId)) {
+                  newAchievements.push({
+                    id: achievementId,
+                    title: `${milestone} Rehearsals!`,
+                    description: `Completed ${milestone} rehearsals in ${getCorpsClassName(classKey)}`,
+                    icon: 'star',
+                    earnedAt: new Date().toISOString(),
+                    rarity: milestone >= 50 ? 'epic' : milestone >= 25 ? 'rare' : 'common'
+                  });
+                }
+              }
+            }
+          }
+
+          // Update if there are new milestones
+          if (hasNewMilestone) {
+            const updateData = {
+              milestones: updatedMilestones
+            };
+
+            // Add new activities
+            if (newActivities.length > 0) {
+              const currentActivities = profile.engagement?.recentActivity || [];
+              updateData['engagement.recentActivity'] = [...newActivities, ...currentActivities].slice(0, 10);
+            }
+
+            // Add new achievements
+            if (newAchievements.length > 0) {
+              const currentAchievements = profile.achievements || [];
+              updateData.achievements = [...currentAchievements, ...newAchievements];
+
+              // Show the first new achievement
+              setNewAchievement(newAchievements[0]);
+              setShowAchievementModal(true);
+            }
+
+            await updateDoc(profileRef, updateData);
+          }
+        } catch (error) {
+          console.error('Error tracking milestones:', error);
+        }
+      };
+
+      trackMilestones();
+    }
+  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, executionState?.rehearsalsCompleted]);
+
+  // Generate and track daily challenges
+  useEffect(() => {
+    if (user && profile && activeCorps) {
+      const generateChallenges = () => {
+        const today = new Date().toDateString();
+        const savedChallenges = profile.challenges || {};
+        const todayChallenges = savedChallenges[today];
+
+        // If we already have challenges for today, use them
+        if (todayChallenges) {
+          setDailyChallenges(todayChallenges);
+          return;
+        }
+
+        // Generate new challenges for today
+        const challenges = [];
+
+        // Challenge 1: Rehearse with your corps
+        if (canRehearseToday && activeCorpsClass !== 'soundSport') {
+          challenges.push({
+            id: 'rehearse_today',
+            title: 'Daily Practice',
+            description: 'Complete a rehearsal with your corps',
+            progress: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today ? 1 : 0,
+            target: 1,
+            reward: '50 XP',
+            icon: 'target',
+            completed: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today
+          });
+        }
+
+        // Challenge 2: Check leaderboard
+        challenges.push({
+          id: 'check_leaderboard',
+          title: 'Scout the Competition',
+          description: 'Visit the leaderboard page',
+          progress: 0,
+          target: 1,
+          reward: '25 XP',
+          icon: 'trophy',
+          completed: false
+        });
+
+        // Challenge 3: Maintain equipment
+        if (executionState?.equipment) {
+          const avgCondition = Object.values(executionState.equipment).reduce((sum, eq) => sum + eq.condition, 0) / Object.keys(executionState.equipment).length;
+          challenges.push({
+            id: 'maintain_equipment',
+            title: 'Equipment Care',
+            description: 'Keep all equipment above 80% condition',
+            progress: avgCondition >= 80 ? 1 : 0,
+            target: 1,
+            reward: '30 XP',
+            icon: 'wrench',
+            completed: avgCondition >= 80
+          });
+        }
+
+        setDailyChallenges(challenges);
+      };
+
+      generateChallenges();
+    }
+  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment]);
 
   const fetchAvailableCorps = useCallback(async () => {
     try {
@@ -863,6 +1053,102 @@ const Dashboard = () => {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Daily Challenges */}
+      {dailyChallenges.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="glass rounded-xl p-4 border border-cream-500/10"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
+              <Target className="w-5 h-5 text-blue-400" />
+              Daily Challenges
+            </h3>
+            <span className="text-xs text-cream-500/60">
+              {dailyChallenges.filter(c => c.completed).length}/{dailyChallenges.length} Complete
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {dailyChallenges.map((challenge) => {
+              const Icon = challenge.icon === 'target' ? Target :
+                          challenge.icon === 'trophy' ? Trophy :
+                          challenge.icon === 'wrench' ? Wrench : Target;
+              const progressPercent = (challenge.progress / challenge.target) * 100;
+
+              return (
+                <div
+                  key={challenge.id}
+                  className={`p-3 rounded-lg border transition-all ${
+                    challenge.completed
+                      ? 'bg-green-500/10 border-green-500/30'
+                      : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/20'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      challenge.completed
+                        ? 'bg-green-500/20'
+                        : 'bg-blue-500/20'
+                    }`}>
+                      <Icon className={`w-4 h-4 ${
+                        challenge.completed ? 'text-green-400' : 'text-blue-400'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="text-sm font-semibold text-cream-100">{challenge.title}</h4>
+                        {challenge.completed && (
+                          <Check className="w-4 h-4 text-green-400" />
+                        )}
+                      </div>
+                      <p className="text-xs text-cream-500/70 mb-2">{challenge.description}</p>
+
+                      {/* Progress Bar */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              challenge.completed
+                                ? 'bg-green-500'
+                                : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-cream-500/60 whitespace-nowrap">
+                          {challenge.progress}/{challenge.target}
+                        </span>
+                      </div>
+
+                      {/* Reward */}
+                      <div className="mt-2 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-gold-500" />
+                        <span className="text-xs text-gold-500 font-semibold">{challenge.reward}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* All Challenges Complete Celebration */}
+          {dailyChallenges.every(c => c.completed) && (
+            <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-gold-500/20 to-yellow-500/20 border border-gold-500/30">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-gold-500" />
+                <p className="text-sm font-semibold text-gold-400">
+                  All challenges complete! Great work! 🎉
+                </p>
               </div>
             </div>
           )}
