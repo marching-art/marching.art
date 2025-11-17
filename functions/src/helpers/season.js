@@ -73,25 +73,99 @@ async function startNewLiveSeason() {
 
   await db.doc("game-settings/season").set(newSeasonData);
   logger.info(`Successfully started the ${newSeasonData.name}.`);
-  
+
   if (oldSeasonUid) {
+    // Reset user profiles from old season
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
     const profilesSnapshot = await profilesQuery.get();
 
     if (!profilesSnapshot.empty) {
       logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
-      
+
       let batch = db.batch();
       let batchCount = 0;
-      
+
       for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+        const lifetimeStats = profileData.lifetimeStats || {
+          totalSeasons: 0,
+          totalShows: 0,
+          totalPoints: 0,
+          bestSeasonScore: 0,
+          bestWeeklyScore: 0,
+          leagueChampionships: 0
+        };
+
+        // Archive current season data and reset corps
+        const resetCorps = {};
+        let seasonShowCount = 0;
+        let seasonPointsTotal = 0;
+
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          const seasonHistory = corps.seasonHistory || [];
+
+          // Only archive if this corps was active this season
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            const showsAttended = Object.keys(corps.selectedShows || {}).length;
+            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+
+            // Archive this season's performance
+            seasonHistory.push({
+              seasonId: oldSeasonUid,
+              seasonName: oldSeasonUid,
+              corpsClass,
+              corpsName: corps.corpsName,
+              location: corps.location,
+              lineup: corps.lineup || null,
+              selectedShows: corps.selectedShows || {},
+              weeklyScores: corps.weeklyScores || {},
+              totalSeasonScore: corps.totalSeasonScore || 0,
+              showsAttended,
+              highestWeeklyScore,
+              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            seasonShowCount += showsAttended;
+            seasonPointsTotal += (corps.totalSeasonScore || 0);
+
+            // Update lifetime stats
+            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
+            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+          }
+
+          resetCorps[corpsClass] = {
+            // PRESERVE: Historical data and staff/trades
+            corpsName: corps.corpsName || null,
+            location: corps.location || null,
+            seasonHistory,
+            weeklyTrades: corps.weeklyTrades || null,
+            // RESET: Season-specific data
+            lineup: null,
+            lineupKey: null,
+            selectedShows: {},
+            weeklyScores: {},
+            totalSeasonScore: 0,
+          };
+        });
+
+        // Update lifetime stats
+        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
+          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
+          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
+          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
+        }
+
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {}, // Clear all corps
+          corps: resetCorps,
+          lifetimeStats,
+          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
         });
-        
+
         batchCount++;
-        
+
         if (batchCount >= 400) {
           logger.info(`Committing batch of ${batchCount} profile resets...`);
           await batch.commit();
@@ -99,12 +173,44 @@ async function startNewLiveSeason() {
           batchCount = 0;
         }
       }
-      
+
       if (batchCount > 0) {
         await batch.commit();
       }
-      
+
       logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+    }
+
+    // Clear all active lineups from previous season
+    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
+    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
+    const lineupSnapshot = await activeLineupsQuery.get();
+
+    if (!lineupSnapshot.empty) {
+      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
+
+      let batch = db.batch();
+      let batchCount = 0;
+
+      for (const doc of lineupSnapshot.docs) {
+        batch.delete(doc.ref);
+        batchCount++;
+
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
+          await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
+    } else {
+      logger.info("No active lineups found to clear");
     }
   }
 }
@@ -182,6 +288,7 @@ async function startNewOffSeason() {
   logger.info(`Successfully started ${seasonName}.`);
 
   if (oldSeasonUid) {
+    // Reset user profiles from old season
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
     const profilesSnapshot = await profilesQuery.get();
 
@@ -192,9 +299,82 @@ async function startNewOffSeason() {
       let batchCount = 0;
 
       for (const doc of profilesSnapshot.docs) {
+        const profileData = doc.data();
+        const corpsData = profileData.corps || {};
+        const lifetimeStats = profileData.lifetimeStats || {
+          totalSeasons: 0,
+          totalShows: 0,
+          totalPoints: 0,
+          bestSeasonScore: 0,
+          bestWeeklyScore: 0,
+          leagueChampionships: 0
+        };
+
+        // Archive current season data and reset corps
+        const resetCorps = {};
+        let seasonShowCount = 0;
+        let seasonPointsTotal = 0;
+
+        Object.keys(corpsData).forEach(corpsClass => {
+          const corps = corpsData[corpsClass];
+          const seasonHistory = corps.seasonHistory || [];
+
+          // Only archive if this corps was active this season
+          if (corps.lineup || corps.totalSeasonScore > 0) {
+            const showsAttended = Object.keys(corps.selectedShows || {}).length;
+            const highestWeeklyScore = Math.max(...Object.values(corps.weeklyScores || {}), 0);
+
+            // Archive this season's performance
+            seasonHistory.push({
+              seasonId: oldSeasonUid,
+              seasonName: oldSeasonUid,
+              corpsClass,
+              corpsName: corps.corpsName,
+              location: corps.location,
+              lineup: corps.lineup || null,
+              selectedShows: corps.selectedShows || {},
+              weeklyScores: corps.weeklyScores || {},
+              totalSeasonScore: corps.totalSeasonScore || 0,
+              showsAttended,
+              highestWeeklyScore,
+              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            seasonShowCount += showsAttended;
+            seasonPointsTotal += (corps.totalSeasonScore || 0);
+
+            // Update lifetime stats
+            lifetimeStats.bestSeasonScore = Math.max(lifetimeStats.bestSeasonScore, corps.totalSeasonScore || 0);
+            lifetimeStats.bestWeeklyScore = Math.max(lifetimeStats.bestWeeklyScore, highestWeeklyScore);
+          }
+
+          resetCorps[corpsClass] = {
+            // PRESERVE: Historical data and staff/trades
+            corpsName: corps.corpsName || null,
+            location: corps.location || null,
+            seasonHistory,
+            weeklyTrades: corps.weeklyTrades || null,
+            // RESET: Season-specific data
+            lineup: null,
+            lineupKey: null,
+            selectedShows: {},
+            weeklyScores: {},
+            totalSeasonScore: 0,
+          };
+        });
+
+        // Update lifetime stats
+        if (seasonShowCount > 0 || seasonPointsTotal > 0) {
+          lifetimeStats.totalSeasons = (lifetimeStats.totalSeasons || 0) + 1;
+          lifetimeStats.totalShows = (lifetimeStats.totalShows || 0) + seasonShowCount;
+          lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
+        }
+
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {},
+          corps: resetCorps,
+          lifetimeStats,
+          retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
         });
 
         batchCount++;
@@ -212,6 +392,38 @@ async function startNewOffSeason() {
       }
 
       logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+    }
+
+    // Clear all active lineups from previous season
+    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
+    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
+    const lineupSnapshot = await activeLineupsQuery.get();
+
+    if (!lineupSnapshot.empty) {
+      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
+
+      let batch = db.batch();
+      let batchCount = 0;
+
+      for (const doc of lineupSnapshot.docs) {
+        batch.delete(doc.ref);
+        batchCount++;
+
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
+          await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
+    } else {
+      logger.info("No active lineups found to clear");
     }
   }
 }

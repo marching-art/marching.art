@@ -15,12 +15,14 @@ const Leaderboard = () => {
   const [leaderboardData, setLeaderboardData] = useState({
     overall: [],
     weekly: [],
-    monthly: []
+    monthly: [],
+    lifetime: []
   });
   const [activeTab, setActiveTab] = useState('overall');
   const [activeClass, setActiveClass] = useState('world');
   const [isLoading, setIsLoading] = useState(true);
   const [userRank, setUserRank] = useState(null);
+  const [lifetimeView, setLifetimeView] = useState('totalPoints'); // totalPoints, totalSeasons, totalShows, bestSeason, championships
 
   // Fetch leaderboard data
   useEffect(() => {
@@ -57,10 +59,43 @@ const Leaderboard = () => {
           ...doc.data()
         }));
 
+        // Fetch lifetime stats leaderboard
+        const usersRef = collection(db, 'artifacts', dataNamespace, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        const lifetimeData = [];
+
+        for (const userDoc of usersSnapshot.docs) {
+          const profileRef = collection(db, 'artifacts', dataNamespace, 'users', userDoc.id, 'profile');
+          const profileSnapshot = await getDocs(profileRef);
+
+          if (!profileSnapshot.empty) {
+            const profileData = profileSnapshot.docs[0].data();
+            if (profileData.lifetimeStats && profileData.username) {
+              lifetimeData.push({
+                id: userDoc.id,
+                username: profileData.username,
+                userTitle: profileData.userTitle,
+                lifetimeStats: profileData.lifetimeStats
+              });
+            }
+          }
+        }
+
+        // Sort by the selected lifetime view
+        const sortedLifetimeData = lifetimeData.sort((a, b) => {
+          const aVal = a.lifetimeStats[lifetimeView] || 0;
+          const bVal = b.lifetimeStats[lifetimeView] || 0;
+          return bVal - aVal;
+        }).slice(0, 100).map((entry, index) => ({
+          ...entry,
+          rank: index + 1
+        }));
+
         setLeaderboardData({
           overall: overallData,
           weekly: weeklyData,
-          monthly: monthlyData
+          monthly: monthlyData,
+          lifetime: sortedLifetimeData
         });
 
         // Find user's rank if logged in
@@ -80,7 +115,7 @@ const Leaderboard = () => {
     };
 
     fetchLeaderboardData();
-  }, [activeClass, user, loggedInProfile]);
+  }, [activeClass, user, loggedInProfile, lifetimeView]);
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -112,7 +147,16 @@ const Leaderboard = () => {
   const tabs = [
     { id: 'overall', label: 'Overall', icon: Trophy },
     { id: 'weekly', label: 'Weekly', icon: TrendingUp },
-    { id: 'monthly', label: 'Monthly', icon: Star }
+    { id: 'monthly', label: 'Monthly', icon: Star },
+    { id: 'lifetime', label: 'Lifetime Stats', icon: Award }
+  ];
+
+  const lifetimeViews = [
+    { id: 'totalPoints', label: 'Total Points', desc: 'All-time points' },
+    { id: 'totalSeasons', label: 'Seasons', desc: 'Seasons played' },
+    { id: 'totalShows', label: 'Shows', desc: 'Shows attended' },
+    { id: 'bestSeasonScore', label: 'Best Season', desc: 'Highest season score' },
+    { id: 'leagueChampionships', label: 'Championships', desc: 'League titles won' }
   ];
 
   const classes = [
@@ -185,24 +229,48 @@ const Leaderboard = () => {
         </div>
       </div>
 
-      {/* Class Filter */}
-      <div className="flex justify-center mb-8">
-        <div className="flex flex-wrap gap-2">
-          {classes.map((cls) => (
-            <button
-              key={cls.id}
-              onClick={() => setActiveClass(cls.id)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                activeClass === cls.id
-                  ? 'bg-cream text-black-dark'
-                  : 'bg-black-light text-cream-light hover:bg-black-light/70'
-              }`}
-            >
-              {cls.label}
-            </button>
-          ))}
+      {/* Class Filter (only show for non-lifetime tabs) */}
+      {activeTab !== 'lifetime' && (
+        <div className="flex justify-center mb-8">
+          <div className="flex flex-wrap gap-2">
+            {classes.map((cls) => (
+              <button
+                key={cls.id}
+                onClick={() => setActiveClass(cls.id)}
+                className={`px-4 py-2 rounded-lg transition-all ${
+                  activeClass === cls.id
+                    ? 'bg-cream text-black-dark'
+                    : 'bg-black-light text-cream-light hover:bg-black-light/70'
+                }`}
+              >
+                {cls.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Lifetime View Selector */}
+      {activeTab === 'lifetime' && (
+        <div className="flex justify-center mb-8">
+          <div className="flex flex-wrap gap-2">
+            {lifetimeViews.map((view) => (
+              <button
+                key={view.id}
+                onClick={() => setLifetimeView(view.id)}
+                className={`px-4 py-2 rounded-lg transition-all ${
+                  lifetimeView === view.id
+                    ? 'bg-gold text-black-dark'
+                    : 'bg-black-light text-cream-light hover:bg-black-light/70'
+                }`}
+              >
+                <div className="text-sm font-semibold">{view.label}</div>
+                <div className="text-xs opacity-75">{view.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Leaderboard Table */}
       <motion.div
@@ -225,9 +293,23 @@ const Leaderboard = () => {
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Rank</th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Player</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Corps</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Score</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Trophies</th>
+                    {activeTab !== 'lifetime' && (
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Corps</th>
+                    )}
+                    {activeTab === 'lifetime' ? (
+                      <>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Total Points</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Seasons</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Shows</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Best Season</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Championships</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Score</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Trophies</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-cream-dark/10">
@@ -254,18 +336,43 @@ const Leaderboard = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-cream-light">{entry.corpsName || 'No Corps'}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <p className="text-cream font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Trophy className="w-4 h-4 text-gold" />
-                          <span className="text-cream">{entry.trophies || 0}</span>
-                        </div>
-                      </td>
+                      {activeTab === 'lifetime' ? (
+                        <>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-cream font-bold">{entry.lifetimeStats?.totalPoints?.toLocaleString() || '0'}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-cream font-bold">{entry.lifetimeStats?.totalSeasons || 0}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-cream font-bold">{entry.lifetimeStats?.totalShows || 0}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-cream font-bold">{entry.lifetimeStats?.bestSeasonScore?.toFixed(2) || '0.00'}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Trophy className="w-4 h-4 text-gold" />
+                              <span className="text-cream font-bold">{entry.lifetimeStats?.leagueChampionships || 0}</span>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4">
+                            <p className="text-cream-light">{entry.corpsName || 'No Corps'}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-cream font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Trophy className="w-4 h-4 text-gold" />
+                              <span className="text-cream">{entry.trophies || 0}</span>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -293,21 +400,52 @@ const Leaderboard = () => {
                         <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-cream font-bold text-lg">{entry.score?.toFixed(2) || '0.00'}</p>
-                      <p className="text-cream-light/60 text-xs">Score</p>
-                    </div>
+                    {activeTab === 'lifetime' ? (
+                      <div className="text-right">
+                        <p className="text-cream font-bold text-lg">{entry.lifetimeStats?.[lifetimeView]?.toLocaleString() || '0'}</p>
+                        <p className="text-cream-light/60 text-xs">{lifetimeViews.find(v => v.id === lifetimeView)?.label}</p>
+                      </div>
+                    ) : (
+                      <div className="text-right">
+                        <p className="text-cream font-bold text-lg">{entry.score?.toFixed(2) || '0.00'}</p>
+                        <p className="text-cream-light/60 text-xs">Score</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-cream-light">
-                      <Users className="w-4 h-4" />
-                      <span>{entry.corpsName || 'No Corps'}</span>
+                  {activeTab === 'lifetime' ? (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Total Points</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalPoints?.toLocaleString() || '0'}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Seasons</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalSeasons || 0}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Shows</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalShows || 0}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Championships</span>
+                        <div className="flex items-center gap-1">
+                          <Trophy className="w-3 h-3 text-gold" />
+                          <span className="font-semibold">{entry.lifetimeStats?.leagueChampionships || 0}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-cream-light">
-                      <Trophy className="w-4 h-4 text-gold" />
-                      <span className="font-semibold">{entry.trophies || 0}</span>
+                  ) : (
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-cream-light">
+                        <Users className="w-4 h-4" />
+                        <span>{entry.corpsName || 'No Corps'}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-cream-light">
+                        <Trophy className="w-4 h-4 text-gold" />
+                        <span className="font-semibold">{entry.trophies || 0}</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </motion.div>
               ))}
             </div>
