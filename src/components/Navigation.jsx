@@ -17,6 +17,8 @@ const Navigation = () => {
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [seasonData, setSeasonData] = useState(null);
+  const [currentWeek, setCurrentWeek] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -34,6 +36,29 @@ const Navigation = () => {
       return () => unsubscribe();
     }
   }, [user]);
+
+  // Subscribe to season data
+  useEffect(() => {
+    const seasonRef = doc(db, 'game-settings/season');
+    const unsubscribe = onSnapshot(seasonRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setSeasonData(data);
+
+        // Calculate current week
+        if (data.schedule?.startDate) {
+          const startDate = data.schedule.startDate.toDate();
+          const now = new Date();
+          const diffInMillis = now.getTime() - startDate.getTime();
+          const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+          const week = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+          setCurrentWeek(week);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const navItems = [
     {
@@ -71,8 +96,7 @@ const Navigation = () => {
           path: '/staff',
           label: 'Staff Market',
           icon: ShoppingCart,
-          badge: 'NEW',
-          badgeColor: 'bg-purple-500',
+          badge: null,
           premium: false
         },
         {
@@ -86,8 +110,7 @@ const Navigation = () => {
           path: '/scores',
           label: 'Scores',
           icon: Music,
-          badge: 'LIVE',
-          badgeColor: 'bg-red-500',
+          badge: null,
           premium: false
         }
       ]
@@ -298,16 +321,18 @@ const Navigation = () => {
         </div>
 
         {/* Season Info */}
-        {!collapsed && (
+        {!collapsed && seasonData && (
           <div className="p-4 border-t border-cream-500/10">
             <div className="text-center">
               <p className="text-xs text-cream-500/60">Current Season</p>
-              <p className="text-sm font-semibold text-gold-500 mt-1">
-                2025 Live Season
+              <p className="text-sm font-semibold text-gold-500 mt-1 capitalize">
+                {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
               </p>
-              <p className="text-xs text-cream-500/40 mt-1">
-                Week 3 of 10
-              </p>
+              {currentWeek && (
+                <p className="text-xs text-cream-500/40 mt-1">
+                  Week {currentWeek} {seasonData.status === 'off-season' ? 'of 7' : 'of 10'}
+                </p>
+              )}
             </div>
           </div>
         )}
