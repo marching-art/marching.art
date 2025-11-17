@@ -66,6 +66,14 @@ const Dashboard = () => {
   });
   const [dailyChallenges, setDailyChallenges] = useState([]);
   const [showChallenges, setShowChallenges] = useState(false);
+  const [weeklyProgress, setWeeklyProgress] = useState({
+    rehearsalsCompleted: 0,
+    scoreImprovement: 0,
+    rankChange: 0,
+    challengesCompleted: 0,
+    equipmentMaintained: 0
+  });
+  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -464,6 +472,56 @@ const Dashboard = () => {
       generateChallenges();
     }
   }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment]);
+
+  // Calculate weekly progress
+  useEffect(() => {
+    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
+      const calculateWeeklyProgress = () => {
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - 7);
+
+        const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || {};
+        const previousWeekData = weekData.previous || {};
+
+        // Calculate rehearsals this week
+        const rehearsalsThisWeek = executionState?.rehearsalsCompleted || 0;
+        const rehearsalsLastWeek = previousWeekData.rehearsalsCompleted || 0;
+
+        // Calculate score improvement
+        const currentScore = activeCorps.totalSeasonScore || 0;
+        const previousScore = previousWeekData.totalScore || 0;
+        const scoreImprovement = currentScore - previousScore;
+
+        // Calculate rank change (lower is better, so improvement is negative)
+        const currentRank = activeCorps.rank || 0;
+        const previousRank = previousWeekData.rank || currentRank;
+        const rankChange = previousRank - currentRank; // positive means improved
+
+        // Calculate equipment maintenance
+        let equipmentMaintained = 0;
+        if (executionState?.equipment) {
+          const equipmentCount = Object.keys(executionState.equipment).length;
+          const wellMaintained = Object.values(executionState.equipment).filter(
+            eq => eq.condition >= 80
+          ).length;
+          equipmentMaintained = equipmentCount > 0 ? (wellMaintained / equipmentCount) * 100 : 0;
+        }
+
+        // Calculate challenges completed this week
+        const challengesCompleted = dailyChallenges.filter(c => c.completed).length;
+
+        setWeeklyProgress({
+          rehearsalsCompleted: rehearsalsThisWeek - rehearsalsLastWeek,
+          scoreImprovement,
+          rankChange,
+          challengesCompleted,
+          equipmentMaintained
+        });
+      };
+
+      calculateWeeklyProgress();
+    }
+  }, [user, profile, activeCorps, activeCorpsClass, executionState, dailyChallenges]);
 
   const fetchAvailableCorps = useCallback(async () => {
     try {
@@ -1152,6 +1210,134 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* Weekly Progress Summary */}
+      {activeCorps && activeCorpsClass !== 'soundSport' && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass rounded-xl p-4 border border-cream-500/10"
+        >
+          <button
+            onClick={() => setShowWeeklySummary(!showWeeklySummary)}
+            className="w-full flex items-center justify-between mb-4"
+          >
+            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-400" />
+              This Week's Progress
+            </h3>
+            <ChevronRight className={`w-5 h-5 text-cream-500 transition-transform ${showWeeklySummary ? 'rotate-90' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {showWeeklySummary && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Rehearsals This Week */}
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-cream-500/70">Rehearsals</span>
+                      </div>
+                      {weeklyProgress.rehearsalsCompleted > 0 && (
+                        <TrendingUp className="w-4 h-4 text-green-400" />
+                      )}
+                    </div>
+                    <p className="text-2xl font-bold text-blue-400">
+                      +{weeklyProgress.rehearsalsCompleted}
+                    </p>
+                    <p className="text-xs text-cream-500/60 mt-1">Completed this week</p>
+                  </div>
+
+                  {/* Score Improvement */}
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-gold-500/10 to-yellow-500/10 border border-gold-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-gold-400" />
+                        <span className="text-xs text-cream-500/70">Score Change</span>
+                      </div>
+                      {weeklyProgress.scoreImprovement > 0 && (
+                        <TrendingUp className="w-4 h-4 text-green-400" />
+                      )}
+                    </div>
+                    <p className={`text-2xl font-bold ${
+                      weeklyProgress.scoreImprovement > 0 ? 'text-green-400' :
+                      weeklyProgress.scoreImprovement < 0 ? 'text-red-400' : 'text-cream-400'
+                    }`}>
+                      {weeklyProgress.scoreImprovement > 0 ? '+' : ''}{weeklyProgress.scoreImprovement.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-cream-500/60 mt-1">Points gained/lost</p>
+                  </div>
+
+                  {/* Rank Change */}
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-purple-400" />
+                        <span className="text-xs text-cream-500/70">Rank Movement</span>
+                      </div>
+                      {weeklyProgress.rankChange > 0 && (
+                        <TrendingUp className="w-4 h-4 text-green-400" />
+                      )}
+                    </div>
+                    <p className={`text-2xl font-bold ${
+                      weeklyProgress.rankChange > 0 ? 'text-green-400' :
+                      weeklyProgress.rankChange < 0 ? 'text-red-400' : 'text-cream-400'
+                    }`}>
+                      {weeklyProgress.rankChange > 0 ? '↑' : weeklyProgress.rankChange < 0 ? '↓' : '→'}
+                      {Math.abs(weeklyProgress.rankChange)}
+                    </p>
+                    <p className="text-xs text-cream-500/60 mt-1">
+                      {weeklyProgress.rankChange > 0 ? 'Positions gained' :
+                       weeklyProgress.rankChange < 0 ? 'Positions lost' : 'No change'}
+                    </p>
+                  </div>
+
+                  {/* Equipment Condition */}
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Wrench className="w-4 h-4 text-orange-400" />
+                        <span className="text-xs text-cream-500/70">Equipment Health</span>
+                      </div>
+                    </div>
+                    <p className={`text-2xl font-bold ${
+                      weeklyProgress.equipmentMaintained >= 80 ? 'text-green-400' :
+                      weeklyProgress.equipmentMaintained >= 60 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      {weeklyProgress.equipmentMaintained.toFixed(0)}%
+                    </p>
+                    <p className="text-xs text-cream-500/60 mt-1">Well-maintained items</p>
+                  </div>
+                </div>
+
+                {/* Weekly Insights */}
+                {(weeklyProgress.scoreImprovement > 0 || weeklyProgress.rankChange > 0) && (
+                  <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-green-400" />
+                      <p className="text-sm text-green-400 font-semibold">
+                        {weeklyProgress.rankChange > 0 && weeklyProgress.scoreImprovement > 0
+                          ? "Outstanding week! You're climbing the ranks! 🚀"
+                          : weeklyProgress.rankChange > 0
+                          ? "Great progress! Keep climbing the leaderboard! 📈"
+                          : "Your scores are improving! Keep up the great work! ⭐"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
