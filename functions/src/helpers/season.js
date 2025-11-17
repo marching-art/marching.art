@@ -75,23 +75,24 @@ async function startNewLiveSeason() {
   logger.info(`Successfully started the ${newSeasonData.name}.`);
   
   if (oldSeasonUid) {
+    // Reset user profiles from old season
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
     const profilesSnapshot = await profilesQuery.get();
 
     if (!profilesSnapshot.empty) {
       logger.info(`Resetting ${profilesSnapshot.size} user profiles from season ${oldSeasonUid}...`);
-      
+
       let batch = db.batch();
       let batchCount = 0;
-      
+
       for (const doc of profilesSnapshot.docs) {
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {}, // Clear all corps
+          corps: {}, // Clear all corps (includes lineups, schedules, trades, etc.)
         });
-        
+
         batchCount++;
-        
+
         if (batchCount >= 400) {
           logger.info(`Committing batch of ${batchCount} profile resets...`);
           await batch.commit();
@@ -99,12 +100,44 @@ async function startNewLiveSeason() {
           batchCount = 0;
         }
       }
-      
+
       if (batchCount > 0) {
         await batch.commit();
       }
-      
+
       logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+    }
+
+    // Clear all active lineups from previous season
+    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
+    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
+    const lineupSnapshot = await activeLineupsQuery.get();
+
+    if (!lineupSnapshot.empty) {
+      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
+
+      let batch = db.batch();
+      let batchCount = 0;
+
+      for (const doc of lineupSnapshot.docs) {
+        batch.delete(doc.ref);
+        batchCount++;
+
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
+          await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
+    } else {
+      logger.info("No active lineups found to clear");
     }
   }
 }
@@ -182,6 +215,7 @@ async function startNewOffSeason() {
   logger.info(`Successfully started ${seasonName}.`);
 
   if (oldSeasonUid) {
+    // Reset user profiles from old season
     const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", oldSeasonUid);
     const profilesSnapshot = await profilesQuery.get();
 
@@ -194,7 +228,7 @@ async function startNewOffSeason() {
       for (const doc of profilesSnapshot.docs) {
         batch.update(doc.ref, {
           activeSeasonId: null,
-          corps: {},
+          corps: {}, // Clear all corps (includes lineups, schedules, trades, etc.)
         });
 
         batchCount++;
@@ -212,6 +246,38 @@ async function startNewOffSeason() {
       }
 
       logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+    }
+
+    // Clear all active lineups from previous season
+    logger.info(`Clearing active lineups from season ${oldSeasonUid}...`);
+    const activeLineupsQuery = db.collection("activeLineups").where("seasonId", "==", oldSeasonUid);
+    const lineupSnapshot = await activeLineupsQuery.get();
+
+    if (!lineupSnapshot.empty) {
+      logger.info(`Found ${lineupSnapshot.size} active lineups to clear...`);
+
+      let batch = db.batch();
+      let batchCount = 0;
+
+      for (const doc of lineupSnapshot.docs) {
+        batch.delete(doc.ref);
+        batchCount++;
+
+        if (batchCount >= 400) {
+          logger.info(`Committing batch of ${batchCount} lineup deletions...`);
+          await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      logger.info(`Successfully cleared ${lineupSnapshot.size} active lineups from previous season`);
+    } else {
+      logger.info("No active lineups found to clear");
     }
   }
 }
