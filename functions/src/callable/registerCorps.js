@@ -89,10 +89,22 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       biography: `The ${corpsName} from ${location}.`,
     };
 
-    // --- 6. Write to DB ---
-    await profileDocRef.update({
+    // --- 6. Set activeSeasonId if not already set ---
+    const updateData = {
       [`corps.${corpsClass}`]: newCorpsData
-    });
+    };
+
+    // Set activeSeasonId when registering first corps for this season
+    if (!profileData.activeSeasonId && seasonDoc.exists()) {
+      const seasonData = seasonDoc.data();
+      if (seasonData.seasonUid) {
+        updateData.activeSeasonId = seasonData.seasonUid;
+        logger.info(`Setting activeSeasonId for user ${uid} to ${seasonData.seasonUid}`);
+      }
+    }
+
+    // --- 7. Write to DB ---
+    await profileDocRef.update(updateData);
 
     logger.info(`User ${uid} successfully registered ${corpsName} (${corpsClass}).`);
     return { success: true, message: "Corps registered!" };
