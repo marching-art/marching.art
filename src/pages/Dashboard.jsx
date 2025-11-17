@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown
+  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
+  Trash2, ArrowRightLeft, MoreVertical, X, Flame, TrendingUp,
+  Award, Medal, Activity
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
@@ -47,6 +49,21 @@ const Dashboard = () => {
   const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
   const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
   const [previousUnlockedClasses, setPreviousUnlockedClasses] = useState([]);
+  const [showEditCorps, setShowEditCorps] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMoveCorps, setShowMoveCorps] = useState(false);
+  const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
+  const [corpsFilter, setCorpsFilter] = useState('all'); // all, needsAttention, ready
+  const [corpsSortBy, setCorpsSortBy] = useState('class'); // class, rank, score, name
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [newAchievement, setNewAchievement] = useState(null);
+  const [engagementData, setEngagementData] = useState({
+    loginStreak: 0,
+    lastLogin: null,
+    totalLogins: 0,
+    recentActivity: [],
+    weeklyProgress: []
+  });
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -167,6 +184,96 @@ const Dashboard = () => {
       };
     }
   }, [user]);
+
+  // Track daily login streaks and engagement
+  useEffect(() => {
+    if (user && profile) {
+      const updateEngagement = async () => {
+        try {
+          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+          const today = new Date().toDateString();
+          const lastLogin = profile.engagement?.lastLogin;
+          const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
+
+          // Check if this is a new day
+          if (lastLoginDate !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+
+            let newStreak = 1;
+            const currentStreak = profile.engagement?.loginStreak || 0;
+
+            // Continue streak if last login was yesterday
+            if (lastLoginDate === yesterdayStr) {
+              newStreak = currentStreak + 1;
+            }
+
+            // Update engagement data
+            const updatedEngagement = {
+              loginStreak: newStreak,
+              lastLogin: new Date().toISOString(),
+              totalLogins: (profile.engagement?.totalLogins || 0) + 1,
+              recentActivity: profile.engagement?.recentActivity || [],
+              weeklyProgress: profile.engagement?.weeklyProgress || []
+            };
+
+            // Add login activity
+            updatedEngagement.recentActivity.unshift({
+              type: 'login',
+              message: `Day ${newStreak} login streak!`,
+              timestamp: new Date().toISOString(),
+              icon: 'flame'
+            });
+
+            // Keep only last 10 activities
+            updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
+
+            // Award streak achievements
+            const milestones = [3, 7, 14, 30, 60, 100];
+            if (milestones.includes(newStreak)) {
+              const achievementId = `streak_${newStreak}`;
+              const existingAchievements = profile.achievements || [];
+
+              if (!existingAchievements.find(a => a.id === achievementId)) {
+                const achievement = {
+                  id: achievementId,
+                  title: `${newStreak} Day Streak!`,
+                  description: `Logged in ${newStreak} days in a row`,
+                  icon: 'flame',
+                  earnedAt: new Date().toISOString(),
+                  rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
+                };
+
+                await updateDoc(profileRef, {
+                  achievements: [...existingAchievements, achievement]
+                });
+
+                // Show achievement modal
+                setNewAchievement(achievement);
+                setShowAchievementModal(true);
+              }
+            }
+
+            await updateDoc(profileRef, {
+              engagement: updatedEngagement
+            });
+
+            setEngagementData(updatedEngagement);
+          } else {
+            // Same day, just load existing data
+            if (profile.engagement) {
+              setEngagementData(profile.engagement);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating engagement:', error);
+        }
+      };
+
+      updateEngagement();
+    }
+  }, [user, profile?.uid]); // Only run when user changes or profile is first loaded
 
   const fetchAvailableCorps = useCallback(async () => {
     try {
@@ -306,6 +413,77 @@ const Dashboard = () => {
   const handleDeclineSetup = () => {
     setShowClassUnlockCongrats(false);
     toast.success('You can register your new corps anytime from the dashboard!');
+  };
+
+  const handleEditCorps = async (formData) => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
+        [`corps.${activeCorpsClass}.location`]: formData.location,
+        [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
+      });
+
+      toast.success('Corps updated successfully!');
+      setShowEditCorps(false);
+    } catch (error) {
+      console.error('Error updating corps:', error);
+      toast.error('Failed to update corps. Please try again.');
+    }
+  };
+
+  const handleDeleteCorps = async () => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+
+      // Remove the corps from the profile
+      const updatedCorps = { ...corps };
+      delete updatedCorps[activeCorpsClass];
+
+      await updateDoc(profileRef, {
+        [`corps.${activeCorpsClass}`]: null
+      });
+
+      toast.success(`${activeCorps.corpsName || activeCorps.name} has been deleted`);
+      setShowDeleteConfirm(false);
+
+      // Switch to another corps if available
+      const remainingCorps = Object.keys(updatedCorps);
+      if (remainingCorps.length > 0) {
+        setSelectedCorpsClass(remainingCorps[0]);
+      } else {
+        setSelectedCorpsClass(null);
+      }
+    } catch (error) {
+      console.error('Error deleting corps:', error);
+      toast.error('Failed to delete corps. Please try again.');
+    }
+  };
+
+  const handleMoveCorps = async (targetClass) => {
+    try {
+      if (corps[targetClass]) {
+        toast.error(`You already have a corps registered in ${getCorpsClassName(targetClass)}`);
+        return;
+      }
+
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+
+      // Copy corps to new class and remove from old class
+      const corpsData = { ...activeCorps, class: targetClass };
+
+      await updateDoc(profileRef, {
+        [`corps.${targetClass}`]: corpsData,
+        [`corps.${activeCorpsClass}`]: null
+      });
+
+      toast.success(`${activeCorps.corpsName || activeCorps.name} moved to ${getCorpsClassName(targetClass)}`);
+      setShowMoveCorps(false);
+      setSelectedCorpsClass(targetClass);
+    } catch (error) {
+      console.error('Error moving corps:', error);
+      toast.error('Failed to move corps. Please try again.');
+    }
   };
 
   const handleCorpsRegistration = async (formData) => {
@@ -604,6 +782,93 @@ const Dashboard = () => {
         </motion.a>
       )}
 
+      {/* User Engagement Widget */}
+      {engagementData.loginStreak > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass rounded-xl p-4 border border-cream-500/10"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Login Streak */}
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+              <div className="relative">
+                <Flame className={`w-8 h-8 ${
+                  engagementData.loginStreak >= 7 ? 'text-orange-400' : 'text-orange-500'
+                } ${engagementData.loginStreak >= 7 ? 'animate-pulse' : ''}`} />
+                {engagementData.loginStreak >= 7 && (
+                  <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
+                )}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-orange-400">{engagementData.loginStreak}</p>
+                <p className="text-xs text-cream-500/70">Day Streak</p>
+              </div>
+            </div>
+
+            {/* Recent Achievement */}
+            {profile?.achievements && profile.achievements.length > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 rounded-lg border border-gold-500/20">
+                <Award className="w-8 h-8 text-gold-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gold-400 truncate">
+                    {profile.achievements[profile.achievements.length - 1].title}
+                  </p>
+                  <p className="text-xs text-cream-500/70">Latest Achievement</p>
+                </div>
+              </div>
+            )}
+
+            {/* Total Logins */}
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+              <Activity className="w-8 h-8 text-blue-400" />
+              <div>
+                <p className="text-2xl font-bold text-blue-400">{engagementData.totalLogins || 0}</p>
+                <p className="text-xs text-cream-500/70">Total Logins</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity Feed */}
+          {engagementData.recentActivity && engagementData.recentActivity.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-cream-500/10">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-cream-300 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Recent Activity
+                </h4>
+                {profile?.achievements && profile.achievements.length > 0 && (
+                  <button
+                    onClick={() => setShowAchievementModal(true)}
+                    className="text-xs text-gold-500 hover:text-gold-400 transition-colors flex items-center gap-1"
+                  >
+                    <Medal className="w-3 h-3" />
+                    View All Achievements ({profile.achievements.length})
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                {engagementData.recentActivity.slice(0, 5).map((activity, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 text-xs text-cream-500/70 p-2 bg-charcoal-900/30 rounded"
+                  >
+                    {activity.icon === 'flame' && <Flame className="w-3 h-3 text-orange-400 flex-shrink-0" />}
+                    {activity.icon === 'trophy' && <Trophy className="w-3 h-3 text-gold-500 flex-shrink-0" />}
+                    {activity.icon === 'star' && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
+                    <span className="flex-1">{activity.message}</span>
+                    <span className="text-cream-500/50 text-[10px] whitespace-nowrap">
+                      {new Date(activity.timestamp).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
       {/* Quick Stats */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -668,6 +933,19 @@ const Dashboard = () => {
           transition={{ delay: 0.2 }}
           className="flex gap-2 overflow-x-auto"
         >
+          {hasMultipleCorps && (
+            <button
+              onClick={() => setActiveTab('allcorps')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'allcorps'
+                  ? 'bg-gold-500 text-charcoal-900'
+                  : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              All Corps
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
@@ -676,7 +954,7 @@ const Dashboard = () => {
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
-            Overview
+            {hasMultipleCorps ? 'Current Corps' : 'Overview'}
           </button>
           <button
             onClick={() => setActiveTab('execution')}
@@ -780,6 +1058,315 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* All Corps Comparison View */}
+      {hasMultipleCorps && activeTab === 'allcorps' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="card">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
+                  All Corps Overview
+                </h2>
+                <p className="text-cream-500/60">
+                  Manage all {Object.keys(corps).length} of your corps at a glance
+                </p>
+              </div>
+              <button
+                onClick={() => setShowRegistration(true)}
+                className="btn-outline text-sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Corps
+              </button>
+            </div>
+
+            {/* Filters and Sort */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-charcoal-900/30 rounded-lg">
+              <div className="flex-1">
+                <label className="text-xs text-cream-500/60 mb-2 block">Filter</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCorpsFilter('all')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all ${
+                      corpsFilter === 'all'
+                        ? 'bg-gold-500 text-charcoal-900 font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setCorpsFilter('needsAttention')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
+                      corpsFilter === 'needsAttention'
+                        ? 'bg-red-500 text-white font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    Needs Attention
+                  </button>
+                  <button
+                    onClick={() => setCorpsFilter('ready')}
+                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
+                      corpsFilter === 'ready'
+                        ? 'bg-green-500 text-white font-semibold'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    }`}
+                  >
+                    <Check className="w-3 h-3" />
+                    Ready
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-cream-500/60 mb-2 block">Sort By</label>
+                <select
+                  value={corpsSortBy}
+                  onChange={(e) => setCorpsSortBy(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 rounded text-sm text-cream-100 hover:border-cream-500/40 transition-colors"
+                >
+                  <option value="class">Class Level</option>
+                  <option value="rank">Best Rank</option>
+                  <option value="score">Highest Score</option>
+                  <option value="name">Name (A-Z)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {Object.entries(corps)
+                .map(([classId, corpsData]) => {
+                  const needsAttention = [];
+                  const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+                  const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
+
+                  if (!hasLineup) needsAttention.push('Missing lineup');
+                  if (!hasShows) needsAttention.push('No shows selected');
+
+                  return { classId, corpsData, needsAttention, hasLineup, hasShows };
+                })
+                .filter(({ needsAttention }) => {
+                  if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
+                  if (corpsFilter === 'ready') return needsAttention.length === 0;
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (corpsSortBy === 'class') {
+                    const classOrder = { soundSport: 0, aClass: 1, open: 2, world: 3 };
+                    return classOrder[a.classId] - classOrder[b.classId];
+                  }
+                  if (corpsSortBy === 'rank') {
+                    const rankA = a.corpsData.rank || 999;
+                    const rankB = b.corpsData.rank || 999;
+                    return rankA - rankB;
+                  }
+                  if (corpsSortBy === 'score') {
+                    const scoreA = a.corpsData.totalSeasonScore || 0;
+                    const scoreB = b.corpsData.totalSeasonScore || 0;
+                    return scoreB - scoreA;
+                  }
+                  if (corpsSortBy === 'name') {
+                    const nameA = (a.corpsData.corpsName || a.corpsData.name || '').toLowerCase();
+                    const nameB = (b.corpsData.corpsName || b.corpsData.name || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                  }
+                  return 0;
+                })
+                .map(({ classId, corpsData, needsAttention, hasLineup, hasShows }) => (
+                  <motion.div
+                    key={classId}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`card-hover cursor-pointer relative ${
+                      activeCorpsClass === classId ? 'ring-2 ring-gold-500' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedCorpsClass(classId);
+                      setActiveTab('overview');
+                    }}
+                  >
+                    {/* Alert Badge */}
+                    {needsAttention.length > 0 && (
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="relative">
+                          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">{needsAttention.length}</span>
+                          </div>
+                          <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75" />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeCorpsClass === classId && (
+                      <div className="absolute top-3 right-3">
+                        <div className="px-2 py-1 bg-gold-500 text-charcoal-900 rounded text-xs font-bold">
+                          Active
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${
+                        classId === 'world' ? 'from-gold-500 to-gold-600' :
+                        classId === 'open' ? 'from-purple-500 to-purple-600' :
+                        classId === 'aClass' ? 'from-blue-500 to-blue-600' :
+                        'from-green-500 to-green-600'
+                      } flex items-center justify-center flex-shrink-0`}>
+                        <Music className="w-6 h-6 text-white" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-cream-100 truncate">
+                          {corpsData.corpsName || corpsData.name}
+                        </h3>
+                        <p className="text-sm text-cream-500/60">{corpsData.location}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-0.5 rounded border ${
+                            classId === 'world' ? 'text-gold-500 bg-gold-500/10 border-gold-500/30' :
+                            classId === 'open' ? 'text-purple-500 bg-purple-500/10 border-purple-500/30' :
+                            classId === 'aClass' ? 'text-blue-500 bg-blue-500/10 border-blue-500/30' :
+                            'text-green-500 bg-green-500/10 border-green-500/30'
+                          }`}>
+                            {getCorpsClassName(classId)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-cream-500/10">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Rank</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {classId === 'soundSport' ? '🎉' : (corpsData.rank ? `#${corpsData.rank}` : '-')}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Score</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {classId === 'soundSport' ? (
+                              corpsData.totalSeasonScore > 0 ? '✓' : '-'
+                            ) : (
+                              corpsData.totalSeasonScore?.toFixed(1) || '0.0'
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-cream-500/60 mb-1">Lineup</p>
+                          <p className="text-lg font-bold text-cream-100">
+                            {Object.keys(corpsData.lineup || {}).length}/8
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    {needsAttention.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-red-500/20">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-red-400 mb-1">Needs Attention</p>
+                            <ul className="text-xs text-red-300/80 space-y-1">
+                              {needsAttention.map((issue, idx) => (
+                                <li key={idx}>• {issue}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quick Actions */}
+                    <div className="mt-4 pt-4 border-t border-cream-500/10">
+                      <div className="flex gap-2">
+                        {!hasLineup && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCorpsClass(classId);
+                              setActiveTab('overview');
+                              setTimeout(() => setShowCaptionSelection(true), 100);
+                            }}
+                            className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-xs text-blue-300 font-semibold transition-colors flex items-center justify-center gap-1"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Set Lineup
+                          </button>
+                        )}
+                        {!hasShows && hasLineup && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCorpsClass(classId);
+                              setActiveTab('overview');
+                              setTimeout(() => setShowShowSelection(true), 100);
+                            }}
+                            className="flex-1 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded text-xs text-purple-300 font-semibold transition-colors flex items-center justify-center gap-1"
+                          >
+                            <Calendar className="w-3 h-3" />
+                            Select Shows
+                          </button>
+                        )}
+                        {hasLineup && hasShows && (
+                          <div className="flex-1 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300 font-semibold flex items-center justify-center gap-1">
+                            <Check className="w-3 h-3" />
+                            All Set!
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCorpsClass(classId);
+                            setActiveTab('overview');
+                          }}
+                          className="px-3 py-2 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/20 rounded text-xs text-cream-300 font-semibold transition-colors flex items-center gap-1"
+                        >
+                          View
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+            </div>
+
+            {/* Empty State */}
+            {Object.entries(corps)
+              .map(([classId, corpsData]) => {
+                const needsAttention = [];
+                const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+                const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
+                if (!hasLineup) needsAttention.push('Missing lineup');
+                if (!hasShows) needsAttention.push('No shows selected');
+                return { needsAttention };
+              })
+              .filter(({ needsAttention }) => {
+                if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
+                if (corpsFilter === 'ready') return needsAttention.length === 0;
+                return true;
+              }).length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
+                  <p className="text-lg text-cream-500/60 mb-2">
+                    {corpsFilter === 'needsAttention' ? 'All corps are ready!' : 'No corps match this filter'}
+                  </p>
+                  <p className="text-sm text-cream-500/40">
+                    {corpsFilter === 'needsAttention'
+                      ? 'Great job! All your corps have their lineups and shows selected.'
+                      : 'Try adjusting your filters to see more corps.'}
+                  </p>
+                </div>
+              )}
+          </div>
+        </motion.div>
+      )}
+
       {/* Season Info & Corps Management */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -843,9 +1430,58 @@ const Dashboard = () => {
                     )}
                   </div>
                 </div>
-                <button className="btn-ghost">
-                  <Edit className="w-4 h-4" />
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCorpsManagementMenu(!showCorpsManagementMenu)}
+                    className="btn-ghost"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+
+                  {/* Corps Management Dropdown Menu */}
+                  <AnimatePresence>
+                    {showCorpsManagementMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        className="absolute right-0 top-full mt-2 w-48 glass-dark rounded-lg shadow-xl border border-cream-500/20 z-20 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => {
+                            setShowEditCorps(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
+                        >
+                          <Edit className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm">Edit Details</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMoveCorps(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
+                        >
+                          <ArrowRightLeft className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm">Move to Another Class</span>
+                        </button>
+                        <div className="border-t border-cream-500/10"></div>
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(true);
+                            setShowCorpsManagementMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-500/10 transition-colors text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="text-sm">Delete Corps</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Show Concept */}
@@ -1151,6 +1787,46 @@ const Dashboard = () => {
             currentSelections={activeCorps.selectedShows?.[`week${currentWeek}`] || []}
           />
         )}
+
+        {showEditCorps && activeCorps && (
+          <EditCorpsModal
+            onClose={() => setShowEditCorps(false)}
+            onSubmit={handleEditCorps}
+            currentData={{
+              name: activeCorps.corpsName || activeCorps.name,
+              location: activeCorps.location,
+              showConcept: activeCorps.showConcept
+            }}
+          />
+        )}
+
+        {showDeleteConfirm && activeCorps && (
+          <DeleteConfirmModal
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDeleteCorps}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            corpsClass={activeCorpsClass}
+          />
+        )}
+
+        {showMoveCorps && activeCorps && (
+          <MoveCorpsModal
+            onClose={() => setShowMoveCorps(false)}
+            onMove={handleMoveCorps}
+            currentClass={activeCorpsClass}
+            corpsName={activeCorps.corpsName || activeCorps.name}
+            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+            existingCorps={corps}
+          />
+        )}
+
+        {showAchievementModal && (
+          <AchievementModal
+            onClose={() => setShowAchievementModal(false)}
+            achievements={profile?.achievements || []}
+            newAchievement={newAchievement}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -1453,6 +2129,496 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, defaultCla
             </div>
           </form>
         </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Edit Corps Modal Component
+const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
+  const [formData, setFormData] = useState({
+    name: currentData.name || '',
+    location: currentData.location || '',
+    showConcept: currentData.showConcept || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-display font-bold text-gradient">
+              Edit Corps Details
+            </h2>
+            <button onClick={onClose} className="btn-ghost p-2">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Corps Name */}
+            <div>
+              <label className="label">Corps Name</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Enter your corps name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                maxLength={50}
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="label">Home Location</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="City, State"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
+                maxLength={50}
+              />
+            </div>
+
+            {/* Show Concept */}
+            <div>
+              <label className="label">Show Concept</label>
+              <textarea
+                className="textarea h-24"
+                placeholder="Describe your show concept for this season..."
+                value={formData.showConcept}
+                onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
+                required
+                maxLength={500}
+              />
+              <p className="text-xs text-cream-500/40 mt-1">
+                {formData.showConcept.length}/500 characters
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-ghost flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Delete Confirmation Modal Component
+const DeleteConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8 border-2 border-red-500/30">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+              Delete Corps?
+            </h2>
+            <p className="text-cream-300">
+              This action cannot be undone
+            </p>
+          </div>
+
+          <div className="glass-premium rounded-xl p-4 mb-6">
+            <p className="text-sm text-cream-500/60 mb-1">You are about to delete:</p>
+            <p className="text-lg font-semibold text-cream-100">{corpsName}</p>
+            <p className="text-sm text-cream-500/60 mt-1">{getCorpsClassName(corpsClass)}</p>
+          </div>
+
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-red-300">
+              All data for this corps will be permanently deleted, including:
+            </p>
+            <ul className="text-sm text-red-300/80 mt-2 space-y-1 ml-4">
+              <li>• Caption lineup</li>
+              <li>• Show selections</li>
+              <li>• Equipment and staff</li>
+              <li>• Performance history</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onClose}
+              className="btn-outline flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              Delete Corps
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Move Corps Modal Component
+const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps }) => {
+  const [selectedClass, setSelectedClass] = useState('');
+
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  const getClassColor = (classId) => {
+    const colors = {
+      soundSport: 'from-green-500 to-green-600',
+      aClass: 'from-blue-500 to-blue-600',
+      open: 'from-purple-500 to-purple-600',
+      world: 'from-gold-500 to-gold-600'
+    };
+    return colors[classId] || 'from-cream-500 to-cream-600';
+  };
+
+  const availableClasses = [
+    { id: 'soundSport', name: 'SoundSport', level: 'Entry' },
+    { id: 'aClass', name: 'A Class', level: 'Intermediate' },
+    { id: 'open', name: 'Open Class', level: 'Advanced' },
+    { id: 'world', name: 'World Class', level: 'Elite' }
+  ].filter(cls =>
+    cls.id !== currentClass && // Not current class
+    unlockedClasses.includes(cls.id) && // User has unlocked it
+    !existingCorps[cls.id] // No corps already in that class
+  );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedClass) {
+      onMove(selectedClass);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="glass-dark rounded-2xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-display font-bold text-gradient">
+              Move Corps
+            </h2>
+            <button onClick={onClose} className="btn-ghost p-2">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="glass-premium rounded-xl p-4 mb-6">
+            <p className="text-sm text-cream-500/60 mb-1">Moving:</p>
+            <p className="text-lg font-semibold text-cream-100">{corpsName}</p>
+            <p className="text-sm text-cream-500/60 mt-1">
+              From: <span className="text-cream-300">{getCorpsClassName(currentClass)}</span>
+            </p>
+          </div>
+
+          {availableClasses.length === 0 ? (
+            <div className="text-center py-8">
+              <Lock className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
+              <p className="text-cream-500/60 mb-2">No classes available</p>
+              <p className="text-sm text-cream-500/40">
+                Either you haven't unlocked other classes, or you already have a corps in each available class.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="label">Select Target Class</label>
+                <div className="space-y-2">
+                  {availableClasses.map((cls) => (
+                    <button
+                      key={cls.id}
+                      type="button"
+                      onClick={() => setSelectedClass(cls.id)}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                        selectedClass === cls.id
+                          ? 'border-gold-500 bg-gold-500/10'
+                          : 'border-cream-500/20 hover:border-cream-500/40'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-cream-100">{cls.name}</p>
+                          <p className="text-sm text-cream-500/60">{cls.level}</p>
+                        </div>
+                        {selectedClass === cls.id && (
+                          <Check className="w-5 h-5 text-gold-500" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <p className="text-sm text-blue-300">
+                  <strong>Note:</strong> Moving your corps will preserve all data including lineup, shows, equipment, and staff.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="btn-ghost flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!selectedClass}
+                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Move Corps
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Achievement Modal Component
+const AchievementModal = ({ onClose, achievements, newAchievement }) => {
+  const getRarityColor = (rarity) => {
+    switch (rarity) {
+      case 'legendary':
+        return 'from-purple-500 to-pink-500';
+      case 'epic':
+        return 'from-purple-500 to-blue-500';
+      case 'rare':
+        return 'from-blue-500 to-cyan-500';
+      default:
+        return 'from-gray-500 to-gray-600';
+    }
+  };
+
+  const getRarityBorder = (rarity) => {
+    switch (rarity) {
+      case 'legendary':
+        return 'border-purple-500/50';
+      case 'epic':
+        return 'border-purple-400/50';
+      case 'rare':
+        return 'border-blue-400/50';
+      default:
+        return 'border-gray-500/50';
+    }
+  };
+
+  const getIcon = (iconName) => {
+    switch (iconName) {
+      case 'flame':
+        return Flame;
+      case 'trophy':
+        return Trophy;
+      case 'star':
+        return Star;
+      case 'crown':
+        return Crown;
+      case 'award':
+        return Award;
+      case 'medal':
+        return Medal;
+      default:
+        return Award;
+    }
+  };
+
+  // Sort achievements by date, newest first
+  const sortedAchievements = [...achievements].sort((a, b) =>
+    new Date(b.earnedAt) - new Date(a.earnedAt)
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-charcoal-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: 'spring', duration: 0.5 }}
+        className="glass-premium rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto custom-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-gold-500 to-yellow-500 p-3 rounded-xl">
+              <Trophy className="w-6 h-6 text-charcoal-900" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gradient">Your Achievements</h2>
+              <p className="text-sm text-cream-500/70">
+                {achievements.length} achievement{achievements.length !== 1 ? 's' : ''} unlocked
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="btn-ghost p-2 hover:bg-cream-500/10 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* New Achievement Highlight */}
+        {newAchievement && (
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mb-6 p-4 rounded-xl bg-gradient-to-br from-gold-500/20 to-yellow-500/20 border-2 border-gold-500/50"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-gold-500 animate-pulse" />
+              <p className="text-xs font-semibold text-gold-500 uppercase tracking-wider">
+                Just Unlocked!
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`bg-gradient-to-br ${getRarityColor(newAchievement.rarity)} p-3 rounded-lg`}>
+                {React.createElement(getIcon(newAchievement.icon), { className: 'w-6 h-6 text-white' })}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-cream-100">{newAchievement.title}</h3>
+                <p className="text-sm text-cream-500/80">{newAchievement.description}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Achievement Grid */}
+        {sortedAchievements.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sortedAchievements.map((achievement, idx) => {
+              const IconComponent = getIcon(achievement.icon);
+              return (
+                <motion.div
+                  key={achievement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`p-4 rounded-xl bg-charcoal-800/50 border ${getRarityBorder(achievement.rarity)} hover:border-opacity-100 transition-all group`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`bg-gradient-to-br ${getRarityColor(achievement.rarity)} p-2.5 rounded-lg group-hover:scale-110 transition-transform`}>
+                      <IconComponent className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-cream-100 text-sm">{achievement.title}</h4>
+                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          achievement.rarity === 'legendary' ? 'bg-purple-500/20 text-purple-400' :
+                          achievement.rarity === 'epic' ? 'bg-purple-400/20 text-purple-300' :
+                          achievement.rarity === 'rare' ? 'bg-blue-400/20 text-blue-300' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {achievement.rarity}
+                        </span>
+                      </div>
+                      <p className="text-xs text-cream-500/70 mb-2">{achievement.description}</p>
+                      <p className="text-[10px] text-cream-500/50">
+                        Earned {new Date(achievement.earnedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Award className="w-16 h-16 text-cream-500/30 mx-auto mb-4" />
+            <p className="text-cream-500/60">No achievements yet. Keep playing to unlock them!</p>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
