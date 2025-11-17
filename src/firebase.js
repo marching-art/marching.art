@@ -10,8 +10,8 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { 
-  getFirestore, 
+import {
+  initializeFirestore,
   connectFirestoreEmulator,
   enableIndexedDbPersistence
 } from 'firebase/firestore';
@@ -41,7 +41,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  ignoreUndefinedProperties: true
+});
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
