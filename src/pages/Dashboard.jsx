@@ -67,7 +67,7 @@ const Dashboard = () => {
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
-  const activeCorps = activeCorpsClass ? corps[activeCorpsClass] : null;
+  const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
 
   // Check if user has multiple corps
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
