@@ -64,24 +64,10 @@ const Navigation = () => {
     {
       section: 'Main',
       items: [
-        { 
-          path: '/dashboard', 
-          label: 'Dashboard', 
-          icon: Home,
-          badge: null,
-          premium: false
-        },
         {
-          path: '/leagues',
-          label: 'Leagues',
-          icon: Users,
-          badge: notifications > 0 ? notifications : null,
-          premium: false
-        },
-        { 
-          path: '/leaderboard', 
-          label: 'Leaderboard', 
-          icon: Trophy,
+          path: '/dashboard',
+          label: 'Dashboard',
+          icon: Home,
           badge: null,
           premium: false
         },
@@ -92,6 +78,25 @@ const Navigation = () => {
           badge: null,
           premium: false
         },
+        {
+          path: '/scores',
+          label: 'Scores',
+          icon: Music,
+          badge: null,
+          premium: false
+        },
+        {
+          path: '/leaderboard',
+          label: 'Leaderboard',
+          icon: Trophy,
+          badge: null,
+          premium: false
+        }
+      ]
+    },
+    {
+      section: 'Manage',
+      items: [
         {
           path: '/staff',
           label: 'Staff Market',
@@ -105,32 +110,6 @@ const Navigation = () => {
           icon: Crown,
           badge: null,
           premium: true
-        },
-        {
-          path: '/scores',
-          label: 'Scores',
-          icon: Music,
-          badge: null,
-          premium: false
-        }
-      ]
-    },
-    {
-      section: 'Corps',
-      items: [
-        {
-          path: '/corps-history',
-          label: 'Corps History',
-          icon: BarChart3,
-          badge: null,
-          premium: false
-        },
-        {
-          path: '/retired-corps',
-          label: 'Retired Corps',
-          icon: Archive,
-          badge: null,
-          premium: false
         }
       ]
     },
@@ -138,15 +117,27 @@ const Navigation = () => {
       section: 'Community',
       items: [
         {
+          path: '/leagues',
+          label: 'Leagues',
+          icon: Users,
+          badge: notifications > 0 ? notifications : null,
+          premium: false
+        },
+        {
           path: '/hall-of-champions',
           label: 'Hall of Champions',
           icon: Award,
           badge: null,
           premium: false
-        },
+        }
+      ]
+    },
+    {
+      section: 'Account',
+      items: [
         {
           path: '/profile',
-          label: 'My Profile',
+          label: 'Profile',
           icon: User,
           badge: null,
           premium: false
@@ -157,12 +148,7 @@ const Navigation = () => {
           icon: Settings,
           badge: null,
           premium: false
-        }
-      ]
-    },
-    {
-      section: 'Help',
-      items: [
+        },
         {
           path: '/how-to-play',
           label: 'How to Play',

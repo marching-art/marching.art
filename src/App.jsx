@@ -8,13 +8,13 @@ import { auth, authHelpers, analyticsHelpers } from './firebase';
 import LoadingScreen from './components/LoadingScreen';
 import Navigation from './components/Navigation';
 import MobileNav from './components/MobileNav';
+import BottomNav from './components/BottomNav';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Hub = lazy(() => import('./pages/Hub'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
@@ -103,7 +103,7 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen">
+      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -121,8 +121,11 @@ const Layout = ({ children }) => {
         </AnimatePresence>
       </main>
 
+      {/* Mobile Bottom Navigation */}
+      <BottomNav />
+
       {/* Footer */}
-      <footer className="lg:ml-64 mt-auto">
+      <footer className="lg:ml-64 mt-auto mb-20 lg:mb-0">
         <div className="container-responsive py-8 border-t border-cream-500/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-cream-500/60 text-sm">
