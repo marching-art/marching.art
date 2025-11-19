@@ -274,8 +274,33 @@ const claimBattlePassReward = onCall({ cors: true }, async (request) => {
       }
 
       const profileData = profileDoc.data();
-      const battlePass = profileData.battlePass;
+      let battlePass = profileData.battlePass;
 
+      // Get current season info
+      const seasonDoc = await db.doc("game-settings/battlePassSeason").get();
+      if (!seasonDoc.exists) {
+        throw new HttpsError("failed-precondition", "No active battle pass season.");
+      }
+      const currentSeason = seasonDoc.data();
+
+      // Initialize battle pass for free rewards if it doesn't exist
+      if (!battlePass && tier === 'free') {
+        battlePass = {
+          seasonId: currentSeason.seasonId,
+          seasonName: currentSeason.name,
+          xp: 0,
+          level: 1,
+          isPremium: false,
+          claimedRewards: {
+            free: [],
+            premium: [],
+          },
+        };
+        // Save the initialized battle pass
+        transaction.update(profileRef, { battlePass });
+      }
+
+      // For premium rewards, battle pass must exist and be premium
       if (!battlePass) {
         throw new HttpsError("failed-precondition", "No active battle pass.");
       }
@@ -296,9 +321,8 @@ const claimBattlePassReward = onCall({ cors: true }, async (request) => {
         throw new HttpsError("already-exists", "Reward already claimed.");
       }
 
-      // Get season rewards
-      const seasonDoc = await db.doc("game-settings/battlePassSeason").get();
-      if (!seasonDoc.exists || battlePass.seasonId !== seasonDoc.data().seasonId) {
+      // Verify season match
+      if (battlePass.seasonId !== currentSeason.seasonId) {
         throw new HttpsError("failed-precondition", "Season mismatch or expired.");
       }
 
