@@ -17,12 +17,21 @@ const Schedule = () => {
   const [seasonData, setSeasonData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState(null);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(1);
 
-  // Get user's active corps class
-  const activeCorpsClass = userProfile?.corps ? Object.keys(userProfile.corps)[0] : null;
-  const activeCorps = activeCorpsClass ? userProfile.corps[activeCorpsClass] : null;
+  // Get all user's corps classes
+  const userCorpsClasses = userProfile?.corps ? Object.keys(userProfile.corps) : [];
+
+  // Set default corps class to first available
+  useEffect(() => {
+    if (userCorpsClasses.length > 0 && !selectedCorpsClass) {
+      setSelectedCorpsClass(userCorpsClasses[0]);
+    }
+  }, [userCorpsClasses, selectedCorpsClass]);
+
+  const activeCorps = selectedCorpsClass ? userProfile?.corps[selectedCorpsClass] : null;
 
   useEffect(() => {
     if (user) {
@@ -136,8 +145,13 @@ const Schedule = () => {
       return;
     }
 
-    if (!activeCorpsClass) {
-      toast.error('Please register a corps first');
+    if (!selectedCorpsClass) {
+      toast.error('Please select a corps class first');
+      return;
+    }
+
+    if (!activeCorps) {
+      toast.error(`Please register a ${selectedCorpsClass} corps first`);
       return;
     }
 
@@ -222,6 +236,39 @@ const Schedule = () => {
           View and select shows for each week
         </p>
       </motion.div>
+
+      {/* Corps Class Selector */}
+      {userCorpsClasses.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="card"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-cream-100 mb-1">Select Corps</h3>
+              <p className="text-sm text-cream-500/60">Choose which corps to manage</p>
+            </div>
+            <select
+              value={selectedCorpsClass || ''}
+              onChange={(e) => setSelectedCorpsClass(e.target.value)}
+              className="px-4 py-2 bg-charcoal-900 border border-cream-500/20 rounded-lg text-cream-100 focus:border-gold-500 focus:outline-none min-w-[200px]"
+            >
+              {userCorpsClasses.map((corpsClass) => (
+                <option key={corpsClass} value={corpsClass}>
+                  {corpsClass === 'worldClass' ? 'World Class' :
+                   corpsClass === 'openClass' ? 'Open Class' :
+                   corpsClass === 'aClass' ? 'A Class' :
+                   corpsClass === 'soundSport' ? 'SoundSport' :
+                   corpsClass}
+                  {activeCorps && corpsClass === selectedCorpsClass ? ` - ${userProfile.corps[corpsClass]?.corpsName || 'Unnamed'}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        </motion.div>
+      )}
 
       {/* Season Info Banner */}
       {seasonData && (
@@ -386,11 +433,11 @@ const Schedule = () => {
 
       {/* Show Selection Modal */}
       <AnimatePresence>
-        {showSelectionModal && selectedWeek && (
+        {showSelectionModal && selectedWeek && selectedCorpsClass && (
           <ShowSelectionModal
             onClose={() => setShowSelectionModal(false)}
             onSubmit={handleShowSelectionSubmit}
-            corpsClass={activeCorpsClass}
+            corpsClass={selectedCorpsClass}
             currentWeek={selectedWeek}
             seasonId={seasonData?.seasonUid}
             currentSelections={getUserSelectedShows(selectedWeek)}

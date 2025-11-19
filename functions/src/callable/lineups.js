@@ -164,7 +164,31 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
   }
 
-  const userProfileRef = getDb().doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+  const db = getDb();
+
+  // Validate that the week is not in the past
+  const seasonRef = db.doc("game-settings/season");
+  const seasonDoc = await seasonRef.get();
+
+  if (!seasonDoc.exists) {
+    throw new HttpsError("failed-precondition", "No active season found.");
+  }
+
+  const seasonData = seasonDoc.data();
+  if (seasonData.schedule?.startDate) {
+    const startDate = seasonData.schedule.startDate.toDate();
+    const now = new Date();
+    const diffInMillis = now.getTime() - startDate.getTime();
+    const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+    const currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+
+    if (week < currentWeek) {
+      throw new HttpsError("failed-precondition",
+        `Cannot select shows for week ${week}. The current week is ${currentWeek}. You can only modify the current or future weeks.`);
+    }
+  }
+
+  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
     await userProfileRef.update({
