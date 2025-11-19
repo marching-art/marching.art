@@ -24,24 +24,18 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     { id: 'P', name: 'Percussion', category: 'Music', color: 'purple', description: 'Battery and front ensemble' }
   ];
 
-  // Point limits by class
+  // Point limits by class (using backend naming convention)
   const pointLimits = {
     soundSport: 90,
     aClass: 60,
-    open: 120,
-    world: 150
+    openClass: 120,
+    worldClass: 150
   };
 
-  // Map frontend class names to backend expected names
-  const classNameMap = {
-    soundSport: 'soundSport',
-    aClass: 'aClass',
-    open: 'openClass',
-    world: 'worldClass'
-  };
-
-  const pointLimit = pointLimits[corpsClass] || 150;
-  const backendClassName = classNameMap[corpsClass] || corpsClass;
+  const pointLimit = pointLimits[corpsClass];
+  if (!pointLimit) {
+    console.error(`Invalid corpsClass: ${corpsClass}`);
+  }
 
   useEffect(() => {
     fetchAvailableCorps();
@@ -140,7 +134,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
       const saveLineup = httpsCallable(functions, 'saveLineup');
       const result = await saveLineup({
         lineup: selections,
-        corpsClass: backendClassName
+        corpsClass: corpsClass
       });
 
       toast.success(result.data.message || 'Lineup saved successfully!');
@@ -184,11 +178,25 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
         <div className="glass-dark rounded-2xl p-8">
           {/* Header */}
           <div className="mb-6">
-            <h2 className="text-3xl font-display font-bold text-gradient mb-2">
-              Select Your Caption Lineup
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-3xl font-display font-bold text-gradient">
+                Select Your Caption Lineup
+              </h2>
+              <span className={`badge text-sm ${
+                corpsClass === 'worldClass' ? 'badge-gold' :
+                corpsClass === 'openClass' ? 'badge-purple' :
+                corpsClass === 'aClass' ? 'badge-primary' :
+                'badge-success'
+              }`}>
+                {corpsClass === 'worldClass' ? 'World Class' :
+                 corpsClass === 'openClass' ? 'Open Class' :
+                 corpsClass === 'aClass' ? 'A Class' :
+                 'SoundSport'}
+              </span>
+            </div>
             <p className="text-cream-300">
-              Choose one corps for each of the 8 captions. Higher-ranked corps cost more points.
+              Choose one corps for each of the 8 captions within your {pointLimit}-point budget.
+              Higher-ranked corps cost more points but typically score better.
             </p>
           </div>
 
@@ -251,106 +259,186 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
             )}
           </div>
 
-          {/* Caption Selection Grid */}
+          {/* Caption Selection Grid - Grouped by Category */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full mx-auto mb-4" />
               <p className="text-cream-500/60">Loading available corps...</p>
             </div>
           ) : (
-            <div className="space-y-4 mb-6">
-              {captions.map((caption) => {
-                const selected = getSelectedCorps(caption.id);
+            <div className="space-y-6 mb-6">
+              {/* Group captions by category */}
+              {['General Effect', 'Visual', 'Music'].map((category) => {
+                const categoryCaptions = captions.filter(c => c.category === category);
+                const categoryColor =
+                  category === 'General Effect' ? 'gold' :
+                  category === 'Visual' ? 'blue' : 'purple';
+                const selectedInCategory = categoryCaptions.filter(c => selections[c.id]).length;
 
                 return (
-                  <div key={caption.id} className="glass rounded-xl p-5 border border-cream-500/10 hover:border-cream-500/20 transition-all">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className={`w-3 h-3 rounded-full ${
-                            caption.color === 'gold' ? 'bg-gold-500' :
-                            caption.color === 'blue' ? 'bg-blue-500' :
-                            'bg-purple-500'
-                          }`} />
-                          <h4 className="font-semibold text-cream-100 text-lg">{caption.name}</h4>
-                          <span className={`badge ${
-                            caption.color === 'gold' ? 'badge-gold' :
-                            caption.color === 'blue' ? 'badge-primary' :
-                            'badge-purple'
-                          } text-xs`}>
-                            {caption.category}
-                          </span>
-                        </div>
-                        <p className="text-sm text-cream-500/60 ml-6">{caption.description}</p>
-                      </div>
-
-                      {selected && (
-                        <div className="flex items-center gap-2">
-                          <div className="text-right mr-3">
-                            <div className="text-2xl font-bold text-gold-500">{selected.points}</div>
-                            <div className="text-xs text-cream-500/60">points</div>
-                          </div>
-                          <Check className="w-6 h-6 text-green-500" />
-                        </div>
-                      )}
+                  <div key={category} className="space-y-3">
+                    {/* Category Header */}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-1 h-6 rounded ${
+                        categoryColor === 'gold' ? 'bg-gold-500' :
+                        categoryColor === 'blue' ? 'bg-blue-500' :
+                        'bg-purple-500'
+                      }`} />
+                      <h3 className="text-xl font-semibold text-cream-100">{category}</h3>
+                      <span className={`badge ${
+                        selectedInCategory === categoryCaptions.length ? 'badge-success' : 'badge-ghost'
+                      } text-xs`}>
+                        {selectedInCategory}/{categoryCaptions.length} selected
+                      </span>
                     </div>
 
-                    <select
-                      className="select w-full"
-                      value={selections[caption.id] || ''}
-                      onChange={(e) => {
-                        if (!e.target.value) {
-                          handleSelectionChange(caption.id, null);
-                        } else {
-                          const corps = availableCorps.find(c =>
-                            `${c.corpsName}|${c.sourceYear}|${c.points}` === e.target.value
-                          );
-                          if (corps) {
-                            handleSelectionChange(caption.id, corps);
-                          }
-                        }
-                      }}
-                    >
-                      <option value="">Select a corps...</option>
-                      {availableCorps.map((corps, index) => {
-                        const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
-                        const wouldExceedLimit = !selections[caption.id] &&
-                          (totalPoints + corps.points > pointLimit);
+                    {/* Category Captions */}
+                    <div className="space-y-3 pl-4">
+                      {categoryCaptions.map((caption) => {
+                        const selected = getSelectedCorps(caption.id);
 
                         return (
-                          <option
-                            key={index}
-                            value={value}
-                            disabled={wouldExceedLimit}
+                          <div
+                            key={caption.id}
+                            className={`glass rounded-xl p-4 border transition-all ${
+                              selected
+                                ? 'border-green-500/30 bg-green-500/5'
+                                : 'border-cream-500/10 hover:border-cream-500/20'
+                            }`}
                           >
-                            {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
-                            {wouldExceedLimit ? ' [Would exceed limit]' : ''}
-                          </option>
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-1">
+                                  {selected ? (
+                                    <Check className="w-5 h-5 text-green-500" />
+                                  ) : (
+                                    <div className={`w-5 h-5 rounded-full border-2 ${
+                                      categoryColor === 'gold' ? 'border-gold-500/30' :
+                                      categoryColor === 'blue' ? 'border-blue-500/30' :
+                                      'border-purple-500/30'
+                                    }`} />
+                                  )}
+                                  <h4 className="font-semibold text-cream-100">{caption.name}</h4>
+                                  <span className="text-xs text-cream-500/60">{caption.id}</span>
+                                </div>
+                                <p className="text-sm text-cream-500/60 ml-8">{caption.description}</p>
+                              </div>
+
+                              {selected && (
+                                <div className="flex items-center gap-3 ml-4">
+                                  <div className="text-right">
+                                    <div className="text-xl font-bold text-gold-500">{selected.points}</div>
+                                    <div className="text-xs text-cream-500/60">pts</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <select
+                              className={`select w-full ${selected ? 'bg-green-500/5' : ''}`}
+                              value={selections[caption.id] || ''}
+                              onChange={(e) => {
+                                if (!e.target.value) {
+                                  handleSelectionChange(caption.id, null);
+                                } else {
+                                  const corps = availableCorps.find(c =>
+                                    `${c.corpsName}|${c.sourceYear}|${c.points}` === e.target.value
+                                  );
+                                  if (corps) {
+                                    handleSelectionChange(caption.id, corps);
+                                  }
+                                }
+                              }}
+                            >
+                              <option value="">
+                                {selected ? `${selected.name} (${selected.year})` : `Select ${caption.name}...`}
+                              </option>
+                              {availableCorps.map((corps, index) => {
+                                const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
+                                const isCurrentSelection = selections[caption.id] === value;
+                                const wouldExceedLimit = !isCurrentSelection &&
+                                  (totalPoints - (selected?.points || 0) + corps.points > pointLimit);
+
+                                return (
+                                  <option
+                                    key={index}
+                                    value={value}
+                                    disabled={wouldExceedLimit}
+                                  >
+                                    {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
+                                    {wouldExceedLimit ? ' [Would exceed limit]' : ''}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
                         );
                       })}
-                    </select>
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Info Box */}
-          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-cream-300">
-                <p className="font-semibold mb-1">How Caption Selection Works:</p>
-                <ul className="list-disc list-inside space-y-1 text-cream-500/80">
-                  <li>Each corps has a point value (1-25) based on historical performance</li>
-                  <li>Higher-ranked corps cost more points but typically score better</li>
-                  <li>Your total must not exceed {pointLimit} points for {corpsClass} class</li>
-                  {corpsClass === 'soundSport' && (
-                    <li className="text-green-400 font-semibold">SoundSport is non-competitive - scores won't be displayed, just enjoy the experience!</li>
-                  )}
-                  <li>Each unique lineup can only be claimed by one player (first come, first served)</li>
-                  <li>You have limited caption changes per week during the season</li>
-                </ul>
+          {/* Quick Stats & Tips */}
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            {/* Selection Progress */}
+            <div className="p-4 bg-charcoal-900/50 rounded-lg border border-cream-500/10">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-gold-500" />
+                <h4 className="font-semibold text-cream-100">Selection Progress</h4>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-cream-500/80">Captions selected:</span>
+                  <span className={`font-semibold ${isComplete ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {Object.keys(selections).length}/8
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-cream-500/80">Points used:</span>
+                  <span className={`font-semibold ${
+                    isOverLimit ? 'text-red-500' :
+                    remainingPoints < 10 ? 'text-yellow-500' :
+                    'text-gold-500'
+                  }`}>
+                    {totalPoints}/{pointLimit}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-cream-500/80">Remaining budget:</span>
+                  <span className={`font-semibold ${
+                    remainingPoints < 0 ? 'text-red-500' :
+                    remainingPoints < 10 ? 'text-yellow-500' :
+                    'text-green-500'
+                  }`}>
+                    {remainingPoints} pts
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-cream-300">
+                  <p className="font-semibold mb-2">Tips for Building Your Lineup:</p>
+                  <ul className="space-y-1 text-cream-500/80">
+                    <li>• Higher-ranked corps cost more points but score better</li>
+                    <li>• Balance your budget across all 8 captions</li>
+                    {!isComplete && (
+                      <li className="text-yellow-400">• You need to select all 8 captions</li>
+                    )}
+                    {isOverLimit && (
+                      <li className="text-red-400 font-semibold">• Reduce your total to {pointLimit} points or less</li>
+                    )}
+                    {corpsClass === 'soundSport' && (
+                      <li className="text-green-400">• SoundSport is non-competitive - just have fun!</li>
+                    )}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
