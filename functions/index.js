@@ -69,6 +69,7 @@ const {
   startNewOffSeason,
   startNewLiveSeason,
   manualTrigger,
+  initializeBattlePassSeason,
 } = require("./src/callable/admin");
 
 // Scheduled Functions
@@ -121,6 +122,7 @@ module.exports = {
   createUserProfile,
   startNewOffSeason,
   startNewLiveSeason,
+  initializeBattlePassSeason,
   dailyRehearsal,
   awardXP,
   unlockClassWithCorpsCoin,
