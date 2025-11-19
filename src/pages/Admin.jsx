@@ -459,6 +459,12 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
       description: 'Manually trigger daily off-season score processing',
       icon: RefreshCw,
     },
+    {
+      id: 'createBattlePassSeason',
+      name: 'Create Battle Pass Season',
+      description: 'Initialize a new battle pass season with rewards',
+      icon: Award,
+    },
   ];
 
   const handleRunJob = async (jobId) => {

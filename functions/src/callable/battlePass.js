@@ -411,11 +411,19 @@ const getBattlePassProgress = onCall({ cors: true }, async (request) => {
     const currentSeason = seasonDoc.data();
     const battlePass = profileDoc.data()?.battlePass;
 
+    // Calculate days remaining
+    const now = new Date();
+    const endDate = currentSeason.endDate.toDate();
+    const daysRemaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+
     // Initialize if not present
     if (!battlePass || battlePass.seasonId !== currentSeason.seasonId) {
       return {
         success: true,
-        season: currentSeason,
+        season: {
+          ...currentSeason,
+          daysRemaining,
+        },
         progress: {
           seasonId: currentSeason.seasonId,
           seasonName: currentSeason.name,
@@ -438,7 +446,10 @@ const getBattlePassProgress = onCall({ cors: true }, async (request) => {
 
     return {
       success: true,
-      season: currentSeason,
+      season: {
+        ...currentSeason,
+        daysRemaining,
+      },
       progress: {
         ...battlePass,
         xpTowardsNextLevel,

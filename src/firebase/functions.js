@@ -89,3 +89,4 @@ export const reportComment = httpsCallable(functions, 'reportComment');
 export const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
 export const startNewLiveSeason = httpsCallable(functions, 'startNewLiveSeason');
 export const manualTrigger = httpsCallable(functions, 'manualTrigger');
+export const initializeBattlePassSeason = httpsCallable(functions, 'initializeBattlePassSeason');
