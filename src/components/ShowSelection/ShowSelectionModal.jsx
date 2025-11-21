@@ -285,7 +285,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                   <li>Select up to {MAX_SHOWS} shows per week</li>
                   <li>Your corps will compete at all selected shows</li>
                   <li>Scores from attended shows contribute to your season total</li>
-                  <li>Championships (Week 7+) automatically include all corps</li>
+                  <li>World Championship finals (Days 47-49) automatically enroll all corps</li>
                   <li>Selections lock when the week begins - choose carefully!</li>
                 </ul>
               </div>
