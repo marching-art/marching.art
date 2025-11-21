@@ -866,61 +866,49 @@ const Dashboard = () => {
         className="relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-gold-500/10 to-cream-500/10 rounded-2xl" />
-        <div className="relative p-8 glass rounded-2xl">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="relative p-4 sm:p-8 glass rounded-2xl">
+          <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-4xl font-display font-bold text-gradient mb-2">
+              <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
                 Welcome back, {profile?.displayName || 'Director'}!
               </h1>
-              <p className="text-cream-300">
+              <p className="text-cream-300 text-sm sm:text-base">
                 {seasonData?.name || 'Loading season...'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* XP Progress */}
-              <div className="glass-dark rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Zap className="w-8 h-8 text-gold-500" />
+              <div className="glass-dark rounded-lg p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="relative flex-shrink-0">
+                    <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-gold-500" />
                     <span className="absolute -top-1 -right-1 text-xs font-bold text-gold-500">
                       {profile?.xpLevel || 1}
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-cream-500/60">Level Progress</p>
-                      <InfoTooltip
-                        content="Earn XP by performing shows, completing achievements, and claiming Battle Pass rewards. Every 1000 XP unlocks a new level and may unlock new corps classes."
-                        title="Experience Points"
-                      />
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-cream-500/60">Level {profile?.xpLevel || 1}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="w-32 h-2 bg-charcoal-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-charcoal-800 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-gold transition-all duration-500"
                           style={{ width: `${((profile?.xp || 0) % 1000) / 10}%` }}
                         />
                       </div>
-                      <span className="text-xs text-cream-300">
-                        {profile?.xp || 0} XP
-                      </span>
                     </div>
+                    <span className="text-xs text-cream-300">
+                      {profile?.xp || 0} XP
+                    </span>
                   </div>
                 </div>
               </div>
               {/* CorpsCoin Balance */}
-              <div className="glass-dark rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <Coins className="w-8 h-8 text-gold-500" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-cream-500/60">CorpsCoin</p>
-                      <InfoTooltip
-                        content="Earn CorpsCoin through daily rehearsals, achievements, and Battle Pass rewards. Spend it on staff, equipment repairs, and upgrades."
-                        title="CorpsCoin"
-                      />
-                    </div>
-                    <p className="text-lg font-bold text-gold-500">
+              <div className="glass-dark rounded-lg p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-gold-500 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-cream-500/60">CorpsCoin</p>
+                    <p className="text-base sm:text-lg font-bold text-gold-500 truncate">
                       {(profile?.corpsCoin || 0).toLocaleString()}
                     </p>
                   </div>
@@ -1448,63 +1436,65 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="flex gap-2 overflow-x-auto"
+          className="flex gap-2 overflow-x-auto pb-2 -mb-2"
         >
           {hasMultipleCorps && (
             <button
               onClick={() => setActiveTab('allcorps')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+              className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'allcorps'
                   ? 'bg-gold-500 text-charcoal-900'
                   : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
               }`}
             >
               <Users className="w-4 h-4" />
-              All Corps
+              <span className="hidden sm:inline">All Corps</span>
+              <span className="sm:hidden">All</span>
             </button>
           )}
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
               activeTab === 'overview'
                 ? 'bg-gold-500 text-charcoal-900'
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
-            {hasMultipleCorps ? 'Current Corps' : 'Overview'}
+            {hasMultipleCorps ? <span className="hidden sm:inline">Current Corps</span> : 'Overview'}
+            {hasMultipleCorps && <span className="sm:hidden">Corps</span>}
           </button>
           <button
             onClick={() => setActiveTab('execution')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'execution'
                 ? 'bg-gold-500 text-charcoal-900'
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
             <Target className="w-4 h-4" />
-            Execution
+            <span className="hidden sm:inline">Execution</span>
           </button>
           <button
             onClick={() => setActiveTab('equipment')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'equipment'
                 ? 'bg-gold-500 text-charcoal-900'
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
             <Wrench className="w-4 h-4" />
-            Equipment
+            <span className="hidden sm:inline">Equipment</span>
           </button>
           <button
             onClick={() => setActiveTab('staff')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'staff'
                 ? 'bg-gold-500 text-charcoal-900'
                 : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
             }`}
           >
             <Users className="w-4 h-4" />
-            Staff
+            <span className="hidden sm:inline">Staff</span>
           </button>
         </motion.div>
       )}
