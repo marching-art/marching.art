@@ -272,7 +272,7 @@ const PerformanceChart = ({ scores = [], corpsClass }) => {
                 </div>
                 <div className="flex items-center gap-3">
                   {score.date && (
-                    <span className="text-xs text-cream-500/40">{score.date}</span>
+                    <span className="text-xs text-cream-500/40">{score.date?.toDate ? score.date.toDate().toLocaleDateString() : score.date}</span>
                   )}
                   {isSoundSport ? (
                     <span className="text-green-400 font-semibold">✓ Complete</span>

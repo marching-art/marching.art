@@ -497,7 +497,7 @@ const Scores = () => {
               <div key={showIdx} className="card p-6">
                 <div className="mb-4">
                   <h3 className="text-xl font-semibold text-cream-100">{show.eventName}</h3>
-                  <p className="text-sm text-cream-500/60">{show.location} • {show.date}</p>
+                  <p className="text-sm text-cream-500/60">{show.location} • {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {show.scores
@@ -697,7 +697,7 @@ const ShowCard = ({ show, isLive = false, onClick }) => {
           <p className="text-cream-500/60">{show.location}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-cream-500/60">{show.date}</p>
+          <p className="text-sm text-cream-500/60">{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
           <p className="text-xs text-cream-500/40">{show.scores?.length || 0} corps</p>
         </div>
       </div>
@@ -749,7 +749,7 @@ const ShowDetailModal = ({ show, onClose }) => {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold text-cream-100 mb-2">{show.eventName}</h2>
-              <p className="text-cream-500/60">{show.location} • {show.date}</p>
+              <p className="text-cream-500/60">{show.location} • {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
             </div>
             <button
               onClick={onClose}

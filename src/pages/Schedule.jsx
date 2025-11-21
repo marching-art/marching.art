@@ -275,7 +275,7 @@ const Schedule = () => {
                               {show.date && (
                                 <div className="flex items-center gap-1">
                                   <Calendar className="w-4 h-4" />
-                                  <span>{show.date}</span>
+                                  <span>{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>
                                 </div>
                               )}
                               {show.location && (
@@ -483,7 +483,7 @@ const ShowRegistrationModal = ({ show, userProfile, onClose, onSuccess }) => {
           <div className="flex flex-wrap gap-3 text-sm text-cream-300">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4 text-gold-500" />
-              <span>{show.date}</span>
+              <span>{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>
             </div>
             <div className="flex items-center gap-1">
               <MapPin className="w-4 h-4 text-blue-500" />
