@@ -19,12 +19,21 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
   }
 
   const {
-    readiness = 0,
-    morale = 0,
+    readiness: rawReadiness = 0,
+    morale: rawMorale = 0,
     equipment = {},
     showDesign = {},
     staff = {}
   } = executionState;
+
+  // Handle both object structure (from Cloud Function) and number structure
+  const readiness = typeof rawReadiness === 'object'
+    ? Object.values(rawReadiness).reduce((sum, v) => sum + v, 0) / Object.values(rawReadiness).length
+    : rawReadiness;
+
+  const morale = typeof rawMorale === 'object'
+    ? Object.values(rawMorale).reduce((sum, v) => sum + v, 0) / Object.values(rawMorale).length
+    : rawMorale;
 
   // Calculate average equipment condition
   const equipmentConditions = Object.values(equipment).map(e => e.condition || 0);
