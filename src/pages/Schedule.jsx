@@ -134,7 +134,7 @@ const Schedule = () => {
       if (isAttending) {
         attendingCorps.push({
           corpsClass,
-          corpsName: corpsData.corpsName || 'Unnamed Corps'
+          corpsName: corpsData.corpsName || corpsData.name || 'Unnamed Corps'
         });
       }
     });
@@ -540,7 +540,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-cream-100">
-                        {corpsData.corpsName || 'Unnamed Corps'}
+                        {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
                       </p>
                       <p className="text-sm text-cream-500/80">
                         {corpsClass === 'worldClass' ? 'World Class' :
