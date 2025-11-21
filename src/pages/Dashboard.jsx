@@ -580,15 +580,16 @@ const Dashboard = () => {
 
       if (recapDocSnap.exists()) {
         const allRecaps = recapDocSnap.data().recaps || [];
-        // Sort by date descending and take the first 5, map to expected UI shape
+        // Filter out invalid entries, sort by date descending and take the first 5
         const sortedRecaps = allRecaps
+          .filter(r => r.showName || r.eventName || r.name) // Only include entries with valid show names
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 5)
           .map(r => {
             // For SoundSport, mask the scores
             const isSoundSport = activeCorpsClass === 'soundSport';
             return {
-              showName: r.showName || r.name || 'Unknown Show',
+              showName: r.showName || r.eventName || r.name || 'Show',
               date: r.date || '',
               totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
               rank: isSoundSport ? '🎉' : (r.rank ?? '-')
