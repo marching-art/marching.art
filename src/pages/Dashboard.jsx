@@ -6,7 +6,7 @@ import {
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
   Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
   Trash2, ArrowRightLeft, MoreVertical, X, Flame, TrendingUp,
-  Award, Medal, Activity, Archive
+  Award, Medal, Activity, Archive, Coins
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions, analyticsHelpers } from '../firebase';
@@ -917,6 +917,24 @@ const Dashboard = () => {
                         {profile?.xp || 0} XP
                       </span>
                     </div>
+                  </div>
+                </div>
+              </div>
+              {/* CorpsCoin Balance */}
+              <div className="glass-dark rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <Coins className="w-8 h-8 text-gold-500" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-cream-500/60">CorpsCoin</p>
+                      <InfoTooltip
+                        content="Earn CorpsCoin through daily rehearsals, achievements, and Battle Pass rewards. Spend it on staff, equipment repairs, and upgrades."
+                        title="CorpsCoin"
+                      />
+                    </div>
+                    <p className="text-lg font-bold text-gold-500">
+                      {(profile?.corpsCoin || 0).toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </div>
