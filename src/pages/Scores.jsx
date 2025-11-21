@@ -21,6 +21,7 @@ import {
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
+import { ScoresSkeleton } from '../components/Skeleton';
 
 const Scores = () => {
   const [activeTab, setActiveTab] = useState('live');
@@ -184,12 +185,7 @@ const Scores = () => {
 
   const renderLiveScores = () => {
     if (loading) {
-      return (
-        <div className="card p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
-          <p className="text-cream-300">Loading live scores...</p>
-        </div>
-      );
+      return <ScoresSkeleton rows={8} />;
     }
 
     if (liveScores.length === 0) {
@@ -213,12 +209,7 @@ const Scores = () => {
 
   const renderRecentShows = () => {
     if (loading) {
-      return (
-        <div className="card p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
-          <p className="text-cream-300">Loading recent shows...</p>
-        </div>
-      );
+      return <ScoresSkeleton rows={6} />;
     }
 
     if (recentShows.length === 0) {
@@ -359,10 +350,7 @@ const Scores = () => {
 
         {/* Results */}
         {loading ? (
-          <div className="card p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
-            <p className="text-cream-300">Searching historical scores...</p>
-          </div>
+          <ScoresSkeleton rows={6} />
         ) : historicalShows.length > 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-cream-500/60">

@@ -83,4 +83,52 @@ export const LeaderboardSkeleton = ({ rows = 5 }) => (
   </div>
 );
 
+export const ProfileSkeleton = () => (
+  <div className="space-y-6">
+    {/* Header section */}
+    <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
+      <div className="flex items-start gap-4">
+        <Skeleton variant="avatar" width="80px" height="80px" />
+        <div className="flex-1">
+          <Skeleton variant="title" className="w-1/3 mb-2" />
+          <Skeleton variant="text" className="w-1/4 mb-2" />
+          <Skeleton variant="text" className="w-1/2" />
+        </div>
+      </div>
+    </div>
+
+    {/* Stats grid */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <StatCardSkeleton key={i} />
+      ))}
+    </div>
+
+    {/* Content section */}
+    <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
+      <Skeleton variant="title" className="w-1/4 mb-4" />
+      <Skeleton variant="text" className="w-full mb-2" />
+      <Skeleton variant="text" className="w-4/5 mb-2" />
+      <Skeleton variant="text" className="w-2/3" />
+    </div>
+  </div>
+);
+
+export const ScoresSkeleton = ({ rows = 5 }) => (
+  <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
+    <Skeleton variant="title" className="w-1/3 mb-4" />
+    <div className="space-y-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between p-3 bg-charcoal-700/30 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Skeleton variant="text" className="w-8" />
+            <Skeleton variant="text" className="w-32" />
+          </div>
+          <Skeleton variant="text" className="w-16" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export default Skeleton;
