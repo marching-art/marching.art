@@ -580,8 +580,9 @@ const Dashboard = () => {
 
       if (recapDocSnap.exists()) {
         const allRecaps = recapDocSnap.data().recaps || [];
-        // Sort by date descending and take the first 5, map to expected UI shape
+        // Filter out invalid entries, sort by date descending and take the first 5
         const sortedRecaps = allRecaps
+          .filter(r => r.showName || r.eventName || r.name) // Only include entries with valid show names
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 5)
           .map(r => {
