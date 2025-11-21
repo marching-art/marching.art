@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Music, Mail, Lock, User, Eye, EyeOff, ArrowLeft, 
-  AlertCircle, Check, X, Info
+import {
+  Mail, Lock, User, Eye, EyeOff, ArrowLeft,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 const Register = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,28 +20,10 @@ const Register = () => {
     displayName: '',
     acceptTerms: false
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState(0);
-
-  // Password strength checker
-  const checkPasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[^a-zA-Z0-9]/)) strength++;
-    setPasswordStrength(strength);
-    return strength;
-  };
-
-  const handlePasswordChange = (value) => {
-    setFormData({ ...formData, password: value });
-    checkPasswordStrength(value);
-  };
 
   const validateForm = () => {
     if (!formData.email || !formData.password || !formData.displayName) {
@@ -83,7 +65,7 @@ const Register = () => {
       navigate('/onboarding');
     } catch (err) {
       console.error('Registration error:', err);
-      
+
       switch (err.code) {
         case 'auth/email-already-in-use':
           setError('An account already exists with this email address');
@@ -102,51 +84,19 @@ const Register = () => {
     }
   };
 
-  const getPasswordStrengthColor = () => {
-    switch (passwordStrength) {
-      case 0:
-      case 1:
-        return 'bg-red-500';
-      case 2:
-        return 'bg-yellow-500';
-      case 3:
-        return 'bg-blue-500';
-      case 4:
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const getPasswordStrengthText = () => {
-    switch (passwordStrength) {
-      case 0:
-      case 1:
-        return 'Weak';
-      case 2:
-        return 'Fair';
-      case 3:
-        return 'Good';
-      case 4:
-        return 'Strong';
-      default:
-        return '';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-main flex items-center justify-center p-4">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-cream-500/10 rounded-full blur-3xl animate-float" 
+        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-cream-500/10 rounded-full blur-3xl animate-float"
              style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Back to Home */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-cream-300 hover:text-gold-500 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -161,14 +111,14 @@ const Register = () => {
           <div className="glass-dark rounded-2xl p-8">
             {/* Logo */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-gold rounded-2xl mb-4">
-                <Music className="w-8 h-8 text-charcoal-900" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden mb-4">
+                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-3xl font-display font-bold text-gradient">
                 Create Your Account
               </h1>
               <p className="text-cream-500/60 mt-2">
-                Join marching.art and compete with directors worldwide
+                Join marching.art and start playing
               </p>
             </div>
 
@@ -230,9 +180,9 @@ const Register = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="input pl-10 pr-10"
-                    placeholder="Create a strong password"
+                    placeholder="Minimum 8 characters"
                     value={formData.password}
-                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     disabled={loading}
                   />
@@ -248,76 +198,6 @@ const Register = () => {
                     )}
                   </button>
                 </div>
-                
-                {/* Password Strength Indicator */}
-                {formData.password && (
-                  <div className="mt-2">
-                    <div className="flex gap-1 mb-1">
-                      {[1, 2, 3, 4].map((level) => (
-                        <div
-                          key={level}
-                          className={`h-1 flex-1 rounded-full transition-all ${
-                            level <= passwordStrength
-                              ? getPasswordStrengthColor()
-                              : 'bg-charcoal-800'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs text-cream-500/60">
-                      Password Strength: <span className={`font-semibold ${
-                        passwordStrength >= 3 ? 'text-green-400' : 'text-yellow-400'
-                      }`}>{getPasswordStrengthText()}</span>
-                    </p>
-                  </div>
-                )}
-
-                {/* Password Requirements */}
-                <div className="mt-2 p-2 bg-charcoal-900/50 rounded-lg">
-                  <p className="text-xs text-cream-500/60 mb-1">Password must contain:</p>
-                  <div className="grid grid-cols-2 gap-1 text-xs">
-                    <div className={`flex items-center gap-1 ${
-                      formData.password.length >= 8 ? 'text-green-400' : 'text-cream-500/40'
-                    }`}>
-                      {formData.password.length >= 8 ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
-                      8+ characters
-                    </div>
-                    <div className={`flex items-center gap-1 ${
-                      formData.password.match(/[A-Z]/) ? 'text-green-400' : 'text-cream-500/40'
-                    }`}>
-                      {formData.password.match(/[A-Z]/) ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
-                      Uppercase
-                    </div>
-                    <div className={`flex items-center gap-1 ${
-                      formData.password.match(/[a-z]/) ? 'text-green-400' : 'text-cream-500/40'
-                    }`}>
-                      {formData.password.match(/[a-z]/) ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
-                      Lowercase
-                    </div>
-                    <div className={`flex items-center gap-1 ${
-                      formData.password.match(/[0-9]/) ? 'text-green-400' : 'text-cream-500/40'
-                    }`}>
-                      {formData.password.match(/[0-9]/) ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
-                      Number
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Confirm Password Field */}
@@ -326,25 +206,14 @@ const Register = () => {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cream-500/40" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    className="input pl-10 pr-10"
+                    type={showPassword ? 'text' : 'password'}
+                    className="input pl-10"
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
                     disabled={loading}
                   />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-cream-500/40 hover:text-cream-300 transition-colors"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
                 </div>
                 {formData.confirmPassword && formData.password !== formData.confirmPassword && (
                   <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
@@ -389,24 +258,11 @@ const Register = () => {
               </button>
             </form>
 
-            {/* Info Box */}
-            <div className="mt-6 p-4 bg-gold-500/10 border border-gold-500/30 rounded-lg">
-              <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-gold-300">
-                  <p className="font-semibold mb-1">Free to Play!</p>
-                  <p className="text-gold-300/80">
-                    No credit card required. Start with SoundSport class and unlock more as you play.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Sign In Link */}
             <p className="text-center mt-6 text-cream-500/60">
               Already have an account?{' '}
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="text-gold-500 hover:text-gold-400 font-semibold transition-colors"
               >
                 Sign in

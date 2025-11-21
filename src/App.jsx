@@ -230,15 +230,17 @@ function App() {
 
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-          <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-          <Route path="/how-to-play" element={<HowToPlay />} />
+          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Landing /></Suspense>} />
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Login /></Suspense>} />
+          <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Register /></Suspense>} />
+          <Route path="/how-to-play" element={<Suspense fallback={<LoadingScreen fullScreen />}><HowToPlay /></Suspense>} />
 
           {/* Onboarding - Protected but minimal layout */}
           <Route path="/onboarding" element={
             <ProtectedRoute>
-              <Onboarding />
+              <Suspense fallback={<LoadingScreen fullScreen />}>
+                <Onboarding />
+              </Suspense>
             </ProtectedRoute>
           } />
 

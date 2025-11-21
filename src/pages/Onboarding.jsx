@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  User, MapPin, Type, Sparkles, ArrowRight, Check
+  User, MapPin, Flag, ArrowRight, Check
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -17,14 +17,18 @@ const Onboarding = () => {
   const [formData, setFormData] = useState({
     displayName: '',
     location: '',
-    bio: '',
-    favoriteCorps: ''
+    corpsName: '',
+    showConcept: ''
   });
   const [loading, setLoading] = useState(false);
 
   const handleNext = () => {
     if (step === 1 && !formData.displayName.trim()) {
       toast.error('Please enter your director name');
+      return;
+    }
+    if (step === 2 && !formData.corpsName.trim()) {
+      toast.error('Please enter a name for your corps');
       return;
     }
     setStep(step + 1);
@@ -44,8 +48,8 @@ const Onboarding = () => {
         email: user.email,
         displayName: formData.displayName.trim(),
         location: formData.location.trim() || 'Unknown',
-        bio: formData.bio.trim() || '',
-        favoriteCorps: formData.favoriteCorps.trim() || '',
+        bio: '',
+        favoriteCorps: '',
         createdAt: new Date(),
         xp: 0,
         xpLevel: 1,
@@ -58,13 +62,20 @@ const Onboarding = () => {
           championships: 0,
           topTenFinishes: 0
         },
-        corps: {},
+        corps: {
+          soundSport: {
+            name: formData.corpsName.trim(),
+            showConcept: formData.showConcept.trim() || 'Untitled Show',
+            class: 'soundSport',
+            createdAt: new Date()
+          }
+        },
         lastRehearsal: null
       };
 
       await setDoc(profileRef, profileData);
 
-      toast.success('Welcome to marching.art! 🎺');
+      toast.success('Welcome to marching.art!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -77,15 +88,18 @@ const Onboarding = () => {
   const steps = [
     {
       number: 1,
-      title: 'What should we call you?',
-      description: 'Choose your director name',
+      title: 'Your Name',
       icon: User
     },
     {
       number: 2,
-      title: 'Tell us about yourself',
-      description: 'Optional but helps personalize your experience',
-      icon: Sparkles
+      title: 'Create Corps',
+      icon: Flag
+    },
+    {
+      number: 3,
+      title: 'Location',
+      icon: MapPin
     }
   ];
 
@@ -98,7 +112,7 @@ const Onboarding = () => {
              style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="w-full max-w-2xl relative z-10">
+      <div className="w-full max-w-lg relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -110,13 +124,13 @@ const Onboarding = () => {
               <div className="flex items-center justify-between mb-4">
                 {steps.map((s, idx) => (
                   <React.Fragment key={s.number}>
-                    <div className={`flex items-center gap-3 ${idx > 0 ? 'flex-1' : ''}`}>
+                    <div className={`flex items-center gap-2 ${idx > 0 ? 'flex-1' : ''}`}>
                       {idx > 0 && (
-                        <div className={`flex-1 h-1 mx-4 rounded-full ${
+                        <div className={`flex-1 h-1 mx-2 rounded-full ${
                           step > idx ? 'bg-gold-500' : 'bg-charcoal-700'
                         }`} />
                       )}
-                      <div className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
                         step === s.number
                           ? 'bg-gold-500 text-charcoal-900'
                           : step > s.number
@@ -124,22 +138,22 @@ const Onboarding = () => {
                           : 'bg-charcoal-700 text-cream-400'
                       }`}>
                         {step > s.number ? (
-                          <Check className="w-5 h-5" />
+                          <Check className="w-4 h-4" />
                         ) : (
-                          <span className="font-bold">{s.number}</span>
+                          <span className="text-sm font-bold">{s.number}</span>
                         )}
                       </div>
                     </div>
                   </React.Fragment>
                 ))}
               </div>
-              <p className="text-center text-cream-300">
+              <p className="text-center text-cream-300 text-sm">
                 Step {step} of {steps.length}
               </p>
             </div>
 
             {/* Step Content */}
-            <div className="min-h-[300px]">
+            <div className="min-h-[280px]">
               {/* Step 1: Director Name */}
               {step === 1 && (
                 <motion.div
@@ -148,15 +162,15 @@ const Onboarding = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-500/20 rounded-2xl mb-4">
-                      <User className="w-8 h-8 text-gold-400" />
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-500/20 rounded-xl mb-4">
+                      <User className="w-7 h-7 text-gold-400" />
                     </div>
                     <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
-                      What should we call you?
+                      What's your name?
                     </h2>
-                    <p className="text-cream-400">
-                      Choose your director name that others will see
+                    <p className="text-cream-400 text-sm">
+                      This is how other directors will see you
                     </p>
                   </div>
 
@@ -171,20 +185,11 @@ const Onboarding = () => {
                       maxLength={50}
                       autoFocus
                     />
-                    <p className="text-xs text-cream-400 mt-1">
-                      {formData.displayName.length}/50 characters
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-gold-500/10 border border-gold-500/30 rounded-lg">
-                    <p className="text-sm text-gold-300">
-                      💡 <strong>Tip:</strong> Choose a name you'll be proud to display on leaderboards!
-                    </p>
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 2: Additional Info */}
+              {/* Step 2: Create Corps */}
               {step === 2 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -192,23 +197,70 @@ const Onboarding = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-500/20 rounded-2xl mb-4">
-                      <Sparkles className="w-8 h-8 text-gold-400" />
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-500/20 rounded-xl mb-4">
+                      <Flag className="w-7 h-7 text-gold-400" />
                     </div>
                     <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
-                      Tell us about yourself
+                      Create Your Corps
                     </h2>
-                    <p className="text-cream-400">
-                      This is optional, but helps personalize your experience
+                    <p className="text-cream-400 text-sm">
+                      Name your first fantasy drum corps
                     </p>
                   </div>
 
                   <div>
-                    <label className="label">
-                      <MapPin className="w-4 h-4 inline mr-1" />
-                      Location
-                    </label>
+                    <label className="label">Corps Name *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., The Cavaliers"
+                      value={formData.corpsName}
+                      onChange={(e) => setFormData({ ...formData, corpsName: e.target.value })}
+                      maxLength={50}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Show Concept (optional)</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., Dreams of Tomorrow"
+                      value={formData.showConcept}
+                      onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
+                      maxLength={100}
+                    />
+                    <p className="text-xs text-cream-400 mt-1">
+                      Give your show a theme or title
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Location */}
+              {step === 3 && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-500/20 rounded-xl mb-4">
+                      <MapPin className="w-7 h-7 text-gold-400" />
+                    </div>
+                    <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+                      Where are you from?
+                    </h2>
+                    <p className="text-cream-400 text-sm">
+                      Optional - helps find local leagues
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="label">Location</label>
                     <input
                       type="text"
                       className="input"
@@ -216,38 +268,13 @@ const Onboarding = () => {
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       maxLength={100}
+                      autoFocus
                     />
                   </div>
 
-                  <div>
-                    <label className="label">
-                      <Type className="w-4 h-4 inline mr-1" />
-                      Favorite Corps
-                    </label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="e.g., Blue Devils, Santa Clara Vanguard"
-                      value={formData.favoriteCorps}
-                      onChange={(e) => setFormData({ ...formData, favoriteCorps: e.target.value })}
-                      maxLength={100}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="label">
-                      About You
-                    </label>
-                    <textarea
-                      className="textarea"
-                      rows="4"
-                      placeholder="Tell the community about yourself and your drum corps experience..."
-                      value={formData.bio}
-                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      maxLength={500}
-                    />
-                    <p className="text-xs text-cream-400 mt-1">
-                      {formData.bio.length}/500 characters
+                  <div className="p-4 bg-gold-500/10 border border-gold-500/30 rounded-lg">
+                    <p className="text-sm text-gold-300">
+                      You're all set! Click "Complete Setup" to start playing.
                     </p>
                   </div>
                 </motion.div>
@@ -268,7 +295,7 @@ const Onboarding = () => {
               {step < steps.length ? (
                 <button
                   onClick={handleNext}
-                  disabled={step === 1 && !formData.displayName.trim()}
+                  disabled={(step === 1 && !formData.displayName.trim()) || (step === 2 && !formData.corpsName.trim())}
                   className="flex-1 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
@@ -283,7 +310,7 @@ const Onboarding = () => {
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
-                      Creating Profile...
+                      Creating...
                     </>
                   ) : (
                     <>
@@ -296,13 +323,13 @@ const Onboarding = () => {
             </div>
 
             {/* Skip Link */}
-            {step === 2 && (
+            {step === 3 && (
               <button
                 onClick={handleSubmit}
                 className="w-full mt-4 text-cream-400 hover:text-cream-200 text-sm transition-colors"
                 disabled={loading}
               >
-                Skip for now
+                Skip location
               </button>
             )}
           </div>
