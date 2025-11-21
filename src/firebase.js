@@ -13,7 +13,8 @@ import {
 import {
   initializeFirestore,
   connectFirestoreEmulator,
-  enableIndexedDbPersistence
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from 'firebase/firestore';
 import { 
   getFunctions, 
@@ -42,23 +43,14 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
 export const dataNamespace = 'marching-art';
 
-// Enable offline persistence
-if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-    } else if (err.code === 'unimplemented') {
-      console.warn('The current browser does not support offline persistence.');
-    }
-  });
-}
 
 // Connect to emulators if in development
 if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_EMULATORS === 'true') {
