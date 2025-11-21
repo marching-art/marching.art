@@ -1,6 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
+const { analyzeLineupTrends } = require("../helpers/captionAnalytics");
 
 /**
  * Task 2.7: Saves a user's 8-caption lineup for a specific corps class.
@@ -240,5 +241,53 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
   } catch (error) {
     logger.error(`Failed to save show concept for user ${uid}:`, error);
     throw new HttpsError("internal", "Could not save show concept.");
+  }
+});
+
+/**
+ * Get caption trend analytics for a lineup
+ * Returns trend indicators without exposing raw scores
+ */
+exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { corpsClass } = request.data;
+  const uid = request.auth.uid;
+
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  if (!validClasses.includes(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
+  }
+
+  const db = getDb();
+
+  try {
+    // Get user's lineup
+    const profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get();
+    if (!profileDoc.exists) {
+      throw new HttpsError("not-found", "User profile not found.");
+    }
+
+    const profileData = profileDoc.data();
+    const lineup = profileData.corps?.[corpsClass]?.lineup;
+
+    if (!lineup) {
+      return { success: true, analytics: {} };
+    }
+
+    // Get current day from season
+    const seasonDoc = await db.doc("game-settings/season").get();
+    const currentDay = seasonDoc.exists ? (seasonDoc.data().currentDay || 1) : 1;
+
+    // Analyze trends
+    const analytics = await analyzeLineupTrends(lineup, currentDay);
+
+    return { success: true, analytics };
+  } catch (error) {
+    logger.error(`Failed to get lineup analytics for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Could not retrieve lineup analytics.");
   }
 });

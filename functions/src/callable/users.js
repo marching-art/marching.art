@@ -282,9 +282,11 @@ exports.migrateUserProfiles = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Daily rehearsal button - Earns XP once per 23 hours
+ * Daily XP Check-in - Earns XP once per 23 hours
+ * Note: This is separate from corps section rehearsals in execution.js
+ * which affect readiness/morale/equipment
  */
-exports.dailyRehearsal = onCall({ cors: true }, async (request) => {
+exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }

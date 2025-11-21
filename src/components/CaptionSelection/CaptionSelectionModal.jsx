@@ -1,16 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, AlertCircle, TrendingUp, Lock, Star, Info } from 'lucide-react';
+import { Check, AlertCircle, TrendingUp, TrendingDown, Minus, Lock, Star, Info, Flame, Snowflake } from 'lucide-react';
 import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+
+// Compact trend badge for displaying in selection
+const TrendBadge = ({ trend, momentum }) => {
+  if (!trend) return null;
+
+  const getTrendIcon = () => {
+    switch (trend.direction) {
+      case 'up': return <TrendingUp className="w-3 h-3 text-green-500" />;
+      case 'down': return <TrendingDown className="w-3 h-3 text-red-500" />;
+      default: return <Minus className="w-3 h-3 text-cream-500/60" />;
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {getTrendIcon()}
+      {momentum?.status === 'hot' && <Flame className="w-3 h-3 text-orange-500" />}
+      {momentum?.status === 'cold' && <Snowflake className="w-3 h-3 text-blue-400" />}
+    </div>
+  );
+};
 
 const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, seasonId }) => {
   const [selections, setSelections] = useState(currentLineup || {});
   const [availableCorps, setAvailableCorps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [analytics, setAnalytics] = useState({});
+
+  // Fetch analytics when lineup changes
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (Object.keys(selections).length === 0) return;
+      try {
+        const getLineupAnalytics = httpsCallable(functions, 'getLineupAnalytics');
+        const result = await getLineupAnalytics({ corpsClass });
+        if (result.data.success) {
+          setAnalytics(result.data.analytics);
+        }
+      } catch (error) {
+        console.log('Analytics not available:', error.message);
+      }
+    };
+    fetchAnalytics();
+  }, [corpsClass, selections]);
 
   // Caption definitions with categories and descriptions
   const captions = [
@@ -326,6 +365,17 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
                               {selected && (
                                 <div className="flex items-center gap-3 ml-4">
+                                  {analytics[caption.id] && (
+                                    <div className="flex flex-col items-center">
+                                      <TrendBadge
+                                        trend={analytics[caption.id].trend}
+                                        momentum={analytics[caption.id].momentum}
+                                      />
+                                      <div className="text-[10px] text-cream-500/50">
+                                        {analytics[caption.id].strength?.label}
+                                      </div>
+                                    </div>
+                                  )}
                                   <div className="text-right">
                                     <div className="text-xl font-bold text-gold-500">{selected.points}</div>
                                     <div className="text-xs text-cream-500/60">pts</div>

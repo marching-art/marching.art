@@ -122,8 +122,9 @@ function calculateCaptionSynergyBonus(showTags, corpsName, sourceYear, corpsSyne
     const matchingTags = showTags.filter(tag => corpsTags.includes(tag));
     const matchRatio = matchingTags.length / showTags.length;
     
-    // Scale: 0 matches = 0 bonus, all matches = 2.0 bonus points
-    return parseFloat((matchRatio * 2.0).toFixed(3));
+    // Scale: 0 matches = 0 bonus, all matches = 1.0 bonus points
+    // Reduced from 2.0 to ensure 100 is extremely rare
+    return parseFloat((matchRatio * 1.0).toFixed(3));
 }
 
 /**

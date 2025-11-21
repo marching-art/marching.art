@@ -305,9 +305,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
               show.eventName
             );
 
-            // Apply synergy bonus (0 - 2.0 based on show concept match)
+            // Apply synergy bonus (0 - 1.0 based on show concept match)
             const synergyBonus = captionBonuses[caption] || 0;
-            const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
+            // Hard cap each caption at 20 points
+            const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -315,7 +316,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
           }
           const visualScore = rawVisualScore / 2;
           const musicScore = rawMusicScore / 2;
-          const totalShowScore = geScore + visualScore + musicScore;
+          // Hard cap at 100 - this is the maximum possible score
+          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
 
           const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
           dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
@@ -645,9 +647,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                     attendedShow.eventName
                 );
 
-                // Apply synergy bonus (0 - 2.0 based on show concept match)
+                // Apply synergy bonus (0 - 1.0 based on show concept match)
                 const synergyBonus = captionBonuses[caption] || 0;
-                const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
+                // Hard cap each caption at 20 points
+                const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
 
                 if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
                 else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -656,7 +659,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
             const visualScore = rawVisualScore / 2;
             const musicScore = rawMusicScore / 2;
-            totalScore = geScore + visualScore + musicScore;
+            // Hard cap at 100 - this is the maximum possible score
+            totalScore = Math.min(100, geScore + visualScore + musicScore);
 
             if (totalScore > 0) {
                 batch.update(userDoc.ref, {

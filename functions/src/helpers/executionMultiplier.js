@@ -310,7 +310,13 @@ function getDefaultExecutionState() {
       uniforms: 0.90,
       props: 0.90,
       bus: 0.90,
-      truck: 0.90
+      truck: 0.90,
+      // Max values for upgrades (start at 100%, can upgrade to 120%)
+      instrumentsMax: 1.00,
+      uniformsMax: 1.00,
+      propsMax: 1.00,
+      busMax: 1.00,
+      truckMax: 1.00
     },
     showDesign: {
       difficulty: 5,
