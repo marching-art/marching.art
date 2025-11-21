@@ -9,13 +9,14 @@ export const useExecution = (userId, corpsClass) => {
   const [executionState, setExecutionState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const functions = getFunctions();
 
   useEffect(() => {
     if (!userId || !corpsClass) {
       setLoading(false);
       return;
     }
+
+    const functions = getFunctions();
 
     // Subscribe to profile document where execution state is stored
     const profileRef = doc(
@@ -37,6 +38,7 @@ export const useExecution = (userId, corpsClass) => {
         } else {
           // Initialize execution state via Cloud Function
           try {
+            const functions = getFunctions();
             const getStatus = httpsCallable(functions, 'getExecutionStatus');
             await getStatus({ corpsClass });
             // The snapshot listener will update state when data is created
@@ -65,7 +67,7 @@ export const useExecution = (userId, corpsClass) => {
     });
 
     return () => unsubscribe();
-  }, [userId, corpsClass, functions]);
+  }, [userId, corpsClass]);
 
   // Daily rehearsal function
   const rehearse = async () => {
@@ -73,6 +75,7 @@ export const useExecution = (userId, corpsClass) => {
 
     setProcessing(true);
     try {
+      const functions = getFunctions();
       const dailyRehearsal = httpsCallable(functions, 'dailyRehearsal');
       const result = await dailyRehearsal({ corpsClass });
 
@@ -98,6 +101,7 @@ export const useExecution = (userId, corpsClass) => {
 
     setProcessing(true);
     try {
+      const functions = getFunctions();
       const repair = httpsCallable(functions, 'repairEquipment');
       const result = await repair({ corpsClass, equipmentType });
 
@@ -123,6 +127,7 @@ export const useExecution = (userId, corpsClass) => {
 
     setProcessing(true);
     try {
+      const functions = getFunctions();
       const upgrade = httpsCallable(functions, 'upgradeEquipment');
       const result = await upgrade({ corpsClass, equipmentType });
 
@@ -148,6 +153,7 @@ export const useExecution = (userId, corpsClass) => {
 
     setProcessing(true);
     try {
+      const functions = getFunctions();
       const setDifficulty = httpsCallable(functions, 'setShowDifficulty');
       const result = await setDifficulty({ corpsClass, difficulty });
 
@@ -173,6 +179,7 @@ export const useExecution = (userId, corpsClass) => {
 
     setProcessing(true);
     try {
+      const functions = getFunctions();
       const boost = httpsCallable(functions, 'boostMorale');
       const result = await boost({ corpsClass });
 
@@ -197,6 +204,7 @@ export const useExecution = (userId, corpsClass) => {
     if (!userId || !corpsClass) return { success: false };
 
     try {
+      const functions = getFunctions();
       const getStatus = httpsCallable(functions, 'getExecutionStatus');
       const result = await getStatus({ corpsClass });
 
