@@ -12,6 +12,7 @@ import BottomNav from './components/BottomNav';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -193,8 +194,9 @@ function App() {
   };
 
   return (
-    <AuthContext.Provider value={authContextValue}>
-      <Router>
+    <ErrorBoundary>
+      <AuthContext.Provider value={authContextValue}>
+        <Router>
         {/* Global Components */}
         <Toaster
           position="top-right"
@@ -375,6 +377,7 @@ function App() {
         </Routes>
       </Router>
     </AuthContext.Provider>
+    </ErrorBoundary>
   );
 }
 
