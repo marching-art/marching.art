@@ -200,3 +200,45 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Could not save your show selections.");
   }
 });
+
+/**
+ * Save show concept (theme, music source, drill style) for synergy bonuses
+ */
+exports.saveShowConcept = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { corpsClass, showConcept } = request.data;
+  const uid = request.auth.uid;
+
+  // Validate inputs
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  if (!validClasses.includes(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
+  }
+
+  if (!showConcept || !showConcept.theme || !showConcept.musicSource || !showConcept.drillStyle) {
+    throw new HttpsError("invalid-argument", "Complete show concept required (theme, musicSource, drillStyle).");
+  }
+
+  const db = getDb();
+  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    await userProfileRef.update({
+      [`corps.${corpsClass}.showConcept`]: {
+        theme: showConcept.theme,
+        musicSource: showConcept.musicSource,
+        drillStyle: showConcept.drillStyle,
+        updatedAt: new Date()
+      }
+    });
+
+    logger.info(`User ${uid} saved show concept for ${corpsClass}`);
+    return { success: true, message: "Show concept saved successfully!" };
+  } catch (error) {
+    logger.error(`Failed to save show concept for user ${uid}:`, error);
+    throw new HttpsError("internal", "Could not save show concept.");
+  }
+});

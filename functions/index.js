@@ -20,6 +20,7 @@ const {
   validateAndSaveLineup,
   saveLineup,
   selectUserShows,
+  saveShowConcept,
 } = require("./src/callable/lineups");
 const {
   unlockClassWithCorpsCoin,
@@ -104,6 +105,7 @@ module.exports = {
   validateAndSaveLineup,
   saveLineup,
   selectUserShows,
+  saveShowConcept,
   createLeague,
   joinLeague,
   leaveLeague,
