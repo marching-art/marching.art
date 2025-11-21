@@ -565,7 +565,7 @@ const Dashboard = () => {
       }
 
       const recapDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-      const recapDocSnap = await getDoc(recapDocSnap);
+      const recapDocSnap = await getDoc(recapDocRef);
 
       if (recapDocSnap.exists()) {
         const allRecaps = recapDocSnap.data().recaps || [];
