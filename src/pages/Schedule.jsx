@@ -23,11 +23,12 @@ const Schedule = () => {
   const [registrationModal, setRegistrationModal] = useState(false);
 
   // Calculate actual calendar date from season start date and day number
+  // Day 1 starts the day after the season start date
   const getActualDate = (dayNumber) => {
     if (!seasonData?.schedule?.startDate) return null;
     const startDate = seasonData.schedule.startDate.toDate();
     const actualDate = new Date(startDate);
-    actualDate.setDate(startDate.getDate() + (dayNumber - 1));
+    actualDate.setDate(startDate.getDate() + dayNumber);
     return actualDate;
   };
 
@@ -266,7 +267,11 @@ const Schedule = () => {
             <div className="grid grid-cols-1 gap-3">
               {weekShows.map((show, index) => {
                 const myCorps = getMyCorpsAtShow(show);
-                const isPast = status === 'past';
+                // Check if show date has passed (compare with today)
+                const showDate = getActualDate(show.day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPast = showDate && showDate < today;
 
                 return (
                   <motion.div
@@ -343,7 +348,7 @@ const Schedule = () => {
                           <button
                             onClick={() => handleRegisterCorps(show)}
                             className="btn-primary flex items-center justify-center gap-2"
-                            disabled={status === 'past'}
+                            disabled={isPast}
                           >
                             <Plus className="w-4 h-4" />
                             Register Corps

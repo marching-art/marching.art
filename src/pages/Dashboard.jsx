@@ -92,6 +92,14 @@ const Dashboard = () => {
   // Check if user has multiple corps
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
 
+  // Format season name for display (e.g., "adagio_2025-26" -> "Adagio 2025-26")
+  const formatSeasonName = (name) => {
+    if (!name) return 'Loading season...';
+    return name
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  };
+
   // Calculate current week from season data
   const { currentWeek } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1 };
 
@@ -460,7 +468,8 @@ const Dashboard = () => {
           target: 1,
           reward: '25 XP',
           icon: 'trophy',
-          completed: false
+          completed: false,
+          action: () => window.location.href = '/leaderboard'
         });
 
         // Challenge 3: Maintain equipment
@@ -474,7 +483,8 @@ const Dashboard = () => {
             target: 1,
             reward: '30 XP',
             icon: 'wrench',
-            completed: avgCondition >= 80
+            completed: avgCondition >= 80,
+            action: () => setActiveTab('equipment')
           });
         }
 
@@ -873,7 +883,7 @@ const Dashboard = () => {
                 Welcome back, {profile?.displayName || 'Director'}!
               </h1>
               <p className="text-cream-300 text-sm sm:text-base">
-                {seasonData?.name || 'Loading season...'}
+                {formatSeasonName(seasonData?.name)}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1178,10 +1188,11 @@ const Dashboard = () => {
               return (
                 <div
                   key={challenge.id}
+                  onClick={() => challenge.action && !challenge.completed && challenge.action()}
                   className={`p-3 rounded-lg border transition-all ${
                     challenge.completed
                       ? 'bg-green-500/10 border-green-500/30'
-                      : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/20'
+                      : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/20 cursor-pointer'
                   }`}
                 >
                   <div className="flex items-start gap-3">
