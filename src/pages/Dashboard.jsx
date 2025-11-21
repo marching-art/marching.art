@@ -2157,7 +2157,7 @@ const Dashboard = () => {
                           {show.date && (
                             <p className="text-xs text-cream-500/60 flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {show.date}
+                              {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}
                             </p>
                           )}
                           {show.location && (
@@ -2209,7 +2209,7 @@ const Dashboard = () => {
                 <div key={index} className="flex items-center justify-between p-3 hover:bg-cream-500/5 rounded-lg transition-colors">
                   <div>
                     <p className="font-medium text-cream-100">{score.showName}</p>
-                    <p className="text-sm text-cream-500/60">{score.date}</p>
+                    <p className="text-sm text-cream-500/60">{score.date?.toDate ? score.date.toDate().toLocaleDateString() : score.date}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gold-500">{score.totalScore}</p>
