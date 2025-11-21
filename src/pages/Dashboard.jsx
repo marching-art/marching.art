@@ -14,7 +14,6 @@ import { db, functions, analyticsHelpers } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { getBattlePassProgress, retireCorps } from '../firebase/functions';
-import { SkeletonLoader } from '../components/LoadingScreen';
 import SeasonInfo from '../components/SeasonInfo';
 import PerformanceChart from '../components/PerformanceChart';
 import {

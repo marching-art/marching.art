@@ -9,7 +9,7 @@ import { db, dataNamespace } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { unretireCorps } from '../firebase/functions';
 import toast from 'react-hot-toast';
-import { SkeletonLoader } from '../components/LoadingScreen';
+import LoadingScreen from '../components/LoadingScreen';
 
 const RetiredCorpsGallery = () => {
   const { user } = useAuth();
@@ -92,7 +92,7 @@ const RetiredCorpsGallery = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 sm:p-6">
-        <SkeletonLoader />
+        <LoadingScreen fullScreen={false} />
       </div>
     );
   }

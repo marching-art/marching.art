@@ -11,7 +11,7 @@ import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
-import { ProfileSkeleton } from '../components/Skeleton';
+import LoadingScreen from '../components/LoadingScreen';
 
 const ProfileNew = () => {
   const { userId } = useParams();
@@ -104,7 +104,7 @@ const ProfileNew = () => {
   };
 
   if (loading) {
-    return <ProfileSkeleton />;
+    return <LoadingScreen fullScreen={false} />;
   }
 
   if (!profile) {

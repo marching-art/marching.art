@@ -21,7 +21,7 @@ import {
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
-import { ScoresSkeleton } from '../components/Skeleton';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Scores = () => {
   const [activeTab, setActiveTab] = useState('live');
@@ -185,7 +185,7 @@ const Scores = () => {
 
   const renderLiveScores = () => {
     if (loading) {
-      return <ScoresSkeleton rows={8} />;
+      return <LoadingScreen fullScreen={false} />;
     }
 
     if (liveScores.length === 0) {
@@ -209,7 +209,7 @@ const Scores = () => {
 
   const renderRecentShows = () => {
     if (loading) {
-      return <ScoresSkeleton rows={6} />;
+      return <LoadingScreen fullScreen={false} />;
     }
 
     if (recentShows.length === 0) {
@@ -350,7 +350,7 @@ const Scores = () => {
 
         {/* Results */}
         {loading ? (
-          <ScoresSkeleton rows={6} />
+          <LoadingScreen fullScreen={false} />
         ) : historicalShows.length > 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-cream-500/60">
