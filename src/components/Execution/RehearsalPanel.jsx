@@ -34,7 +34,10 @@ const RehearsalPanel = ({
   const getNextRehearsalTime = () => {
     if (!executionState?.lastRehearsalDate) return 'Available now';
 
-    const lastRehearsal = new Date(executionState.lastRehearsalDate);
+    const lastRehearsalValue = executionState.lastRehearsalDate;
+    const lastRehearsal = lastRehearsalValue?.toDate
+      ? lastRehearsalValue.toDate()
+      : new Date(lastRehearsalValue);
     const nextRehearsal = new Date(lastRehearsal);
     nextRehearsal.setDate(nextRehearsal.getDate() + 1);
     nextRehearsal.setHours(0, 0, 0, 0);

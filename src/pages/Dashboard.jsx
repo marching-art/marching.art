@@ -214,7 +214,9 @@ const Dashboard = () => {
           const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
           const today = new Date().toDateString();
           const lastLogin = profile.engagement?.lastLogin;
-          const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
+          const lastLoginDate = lastLogin
+            ? (lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin)).toDateString()
+            : null;
 
           // Check if this is a new day
           if (lastLoginDate !== today) {
@@ -1144,7 +1146,7 @@ const Dashboard = () => {
                     {activity.icon === 'star' && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
                     <span className="flex-1">{activity.message}</span>
                     <span className="text-cream-500/50 text-[10px] whitespace-nowrap">
-                      {new Date(activity.timestamp).toLocaleDateString()}
+                      {(activity.timestamp?.toDate ? activity.timestamp.toDate() : new Date(activity.timestamp)).toLocaleDateString()}
                     </span>
                   </div>
                 ))}
