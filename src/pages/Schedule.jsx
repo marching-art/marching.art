@@ -387,7 +387,11 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  const userCorpsClasses = userProfile?.corps ? Object.keys(userProfile.corps) : [];
+  // Sort corps classes in hierarchy order: World, Open, A, SoundSport
+  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+  const userCorpsClasses = userProfile?.corps
+    ? Object.keys(userProfile.corps).sort((a, b) => (classOrder[a] ?? 99) - (classOrder[b] ?? 99))
+    : [];
 
   // Check which corps are already registered
   useEffect(() => {

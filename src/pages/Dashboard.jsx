@@ -1679,7 +1679,7 @@ const Dashboard = () => {
                 })
                 .sort((a, b) => {
                   if (corpsSortBy === 'class') {
-                    const classOrder = { soundSport: 0, aClass: 1, open: 2, world: 3 };
+                    const classOrder = { worldClass: 0, world: 0, openClass: 1, open: 1, aClass: 2, soundSport: 3 };
                     return classOrder[a.classId] - classOrder[b.classId];
                   }
                   if (corpsSortBy === 'rank') {
