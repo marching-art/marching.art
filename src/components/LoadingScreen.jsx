@@ -1,16 +1,29 @@
 // src/components/LoadingScreen.jsx
 import React from 'react';
 
-const LoadingScreen = () => {
-  return (
-    <div className="fixed inset-0 bg-gradient-main z-50 flex items-center justify-center">
-      <div className="text-center">
-        <img
-          src="/logo192.png"
-          alt="marching.art"
-          className="w-20 h-20 mx-auto rounded-2xl shadow-glow"
-        />
+const LoadingScreen = ({ fullScreen = true }) => {
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 bg-gradient-main z-50 flex items-center justify-center">
+        <div className="text-center">
+          <img
+            src="/logo192.png"
+            alt="marching.art"
+            className="w-20 h-20 mx-auto rounded-2xl shadow-glow"
+          />
+        </div>
       </div>
+    );
+  }
+
+  // Inline loading - centered logo for page content loading
+  return (
+    <div className="flex items-center justify-center py-20">
+      <img
+        src="/logo192.png"
+        alt="Loading"
+        className="w-16 h-16 rounded-xl opacity-50"
+      />
     </div>
   );
 };

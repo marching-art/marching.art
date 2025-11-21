@@ -14,7 +14,7 @@ import {
   getAvailableRewards
 } from '../firebase/functions';
 import toast from 'react-hot-toast';
-import { SkeletonLoader } from '../components/LoadingScreen';
+import LoadingScreen from '../components/LoadingScreen';
 
 const BattlePass = () => {
   const { user } = useAuth();
@@ -132,11 +132,7 @@ const BattlePass = () => {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <SkeletonLoader type="card" count={3} />
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} />;
   }
 
   const isPremium = battlePassData?.isPremium || false;

@@ -12,6 +12,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Schedule = () => {
   const { user } = useAuth();
@@ -149,11 +150,7 @@ const Schedule = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <img src="/logo192.png" alt="Loading" className="w-16 h-16 rounded-xl opacity-50" />
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} />;
   }
 
   if (!seasonData) {

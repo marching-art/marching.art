@@ -6,7 +6,7 @@ import { Trophy, Medal, Award, Crown, Star, Users, TrendingUp, ChevronDown } fro
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import toast from 'react-hot-toast';
-import { LeaderboardSkeleton } from '../components/Skeleton';
+import LoadingScreen from '../components/LoadingScreen';
 
 // Remove any duplicate import of useEffect here - this was likely at line 11
 
@@ -266,9 +266,7 @@ const Leaderboard = () => {
         className="bg-black-light rounded-lg overflow-hidden"
       >
         {isLoading ? (
-          <div className="p-4">
-            <LeaderboardSkeleton rows={10} />
-          </div>
+          <LoadingScreen fullScreen={false} />
         ) : leaderboardData[activeTab].length > 0 ? (
           <>
             {/* Desktop Table View */}
