@@ -11,6 +11,7 @@ import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import { ProfileSkeleton } from '../components/Skeleton';
 
 const ProfileNew = () => {
   const { userId } = useParams();
@@ -103,11 +104,7 @@ const ProfileNew = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!profile) {
