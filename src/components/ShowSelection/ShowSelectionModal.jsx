@@ -242,7 +242,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                           {show.date && (
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
-                              <span>{show.date}</span>
+                              <span>{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>
                             </div>
                           )}
                           {show.location && (
@@ -304,7 +304,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                   <div key={index} className="text-sm text-cream-300 flex items-center gap-2">
                     <span className="text-gold-500">•</span>
                     <span>{show.eventName}</span>
-                    {show.date && <span className="text-cream-500/60">- {show.date}</span>}
+                    {show.date && <span className="text-cream-500/60">- {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>}
                   </div>
                 ))}
               </div>
