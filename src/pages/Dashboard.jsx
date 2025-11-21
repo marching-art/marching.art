@@ -1,6 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   Music, Trophy, Users, Calendar, Star,
   ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
@@ -25,7 +26,6 @@ import {
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
-import ShowSelectionModal from '../components/ShowSelection/ShowSelectionModal';
 import InfoTooltip from '../components/InfoTooltip';
 import {
   ClassUnlockCongratsModal,
@@ -46,7 +46,6 @@ const Dashboard = () => {
   const [corps, setCorps] = useState(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
-  const [showShowSelection, setShowShowSelection] = useState(false);
   const [availableCorps, setAvailableCorps] = useState([]);
   const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
   const [recentScores, setRecentScores] = useState([]);
@@ -1829,18 +1828,14 @@ const Dashboard = () => {
                           </button>
                         )}
                         {!hasShows && hasLineup && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCorpsClass(classId);
-                              setActiveTab('overview');
-                              setTimeout(() => setShowShowSelection(true), 100);
-                            }}
+                          <Link
+                            to="/schedule"
+                            onClick={(e) => e.stopPropagation()}
                             className="flex-1 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded text-xs text-purple-300 font-semibold transition-colors flex items-center justify-center gap-1"
                           >
                             <Calendar className="w-3 h-3" />
                             Select Shows
-                          </button>
+                          </Link>
                         )}
                         {hasLineup && hasShows && (
                           <div className="flex-1 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300 font-semibold flex items-center justify-center gap-1">
@@ -2128,42 +2123,27 @@ const Dashboard = () => {
                     }
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    // Check if lineup is complete before allowing show selection
-                    const lineup = activeCorps?.lineup;
-                    if (!lineup || Object.keys(lineup).length !== 8) {
-                      toast.error('Please select your 8 captions before choosing shows');
-                      return;
-                    }
-                    setShowShowSelection(true);
-                  }}
-                  className="btn-outline text-sm py-2"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
-                </button>
+                <Link
+                to="/schedule"
+                className="btn-outline text-sm py-2 inline-flex items-center"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
+              </Link>
               </div>
 
               {!activeCorps.selectedShows?.[`week${currentWeek}`] || activeCorps.selectedShows[`week${currentWeek}`].length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
                   <p className="text-cream-500/60 mb-1">No shows selected for this week</p>
-                  <p className="text-sm text-cream-500/40 mb-4">Select up to 4 shows to attend</p>
-                  <button
-                    onClick={() => {
-                      // Check if lineup is complete before allowing show selection
-                      const lineup = activeCorps?.lineup;
-                      if (!lineup || Object.keys(lineup).length !== 8) {
-                        toast.error('Please select your 8 captions before choosing shows');
-                        return;
-                      }
-                      setShowShowSelection(true);
-                    }}
-                    className="btn-primary"
+                  <p className="text-sm text-cream-500/40 mb-4">Go to Schedule to register for shows</p>
+                  <Link
+                    to="/schedule"
+                    className="btn-primary inline-flex items-center"
                   >
-                    Select Shows
-                  </button>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    View Schedule
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -2313,17 +2293,6 @@ const Dashboard = () => {
             corpsClass={activeCorpsClass}
             currentLineup={activeCorps.lineup || {}}
             seasonId={seasonData.seasonUid}
-          />
-        )}
-
-        {showShowSelection && activeCorps && seasonData && (
-          <ShowSelectionModal
-            onClose={() => setShowShowSelection(false)}
-            onSubmit={handleShowSelection}
-            corpsClass={activeCorpsClass}
-            currentWeek={currentWeek}
-            seasonId={seasonData.seasonUid}
-            currentSelections={activeCorps.selectedShows?.[`week${currentWeek}`] || []}
           />
         )}
 

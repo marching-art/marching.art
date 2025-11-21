@@ -22,6 +22,26 @@ const Schedule = () => {
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
 
+  // Calculate actual calendar date from season start date and day number
+  const getActualDate = (dayNumber) => {
+    if (!seasonData?.schedule?.startDate) return null;
+    const startDate = seasonData.schedule.startDate.toDate();
+    const actualDate = new Date(startDate);
+    actualDate.setDate(startDate.getDate() + (dayNumber - 1));
+    return actualDate;
+  };
+
+  // Format date for display
+  const formatDate = (dayNumber) => {
+    const date = getActualDate(dayNumber);
+    if (!date) return `Day ${dayNumber}`;
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   useEffect(() => {
     if (user) {
       loadScheduleData();
@@ -272,22 +292,16 @@ const Schedule = () => {
                               {show.eventName || show.name}
                             </h3>
                             <div className="flex flex-wrap gap-3 text-sm text-cream-500/80">
-                              {show.date && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                <span>{formatDate(show.day)}</span>
+                              </div>
                               {show.location && (
                                 <div className="flex items-center gap-1">
                                   <MapPin className="w-4 h-4" />
                                   <span>{show.location}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>Day {show.day}</span>
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -351,6 +365,7 @@ const Schedule = () => {
           <ShowRegistrationModal
             show={selectedShow}
             userProfile={userProfile}
+            formattedDate={formatDate(selectedShow.day)}
             onClose={() => {
               setRegistrationModal(false);
               setSelectedShow(null);
@@ -368,7 +383,7 @@ const Schedule = () => {
 };
 
 // Show Registration Modal Component
-const ShowRegistrationModal = ({ show, userProfile, onClose, onSuccess }) => {
+const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSuccess }) => {
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -483,16 +498,14 @@ const ShowRegistrationModal = ({ show, userProfile, onClose, onSuccess }) => {
           <div className="flex flex-wrap gap-3 text-sm text-cream-300">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4 text-gold-500" />
-              <span>{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</span>
+              <span>{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-blue-500" />
-              <span>{show.location}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4 text-purple-500" />
-              <span>Week {show.week}, Day {show.day}</span>
-            </div>
+            {show.location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="w-4 h-4 text-blue-500" />
+                <span>{show.location}</span>
+              </div>
+            )}
           </div>
         </div>
 
