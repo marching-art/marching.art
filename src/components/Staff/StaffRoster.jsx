@@ -20,19 +20,55 @@ const CAPTION_OPTIONS = [
   { value: 'P', label: 'Percussion', color: 'bg-red-500' }
 ];
 
-const StaffRoster = () => {
+const StaffRoster = ({ userCorps = {} }) => {
   const { user } = useAuth();
   const {
     ownedStaff,
     loading,
     getUnassignedStaff,
-    getStaffByCaption
+    getStaffByCaption,
+    assignStaffToCorps,
+    unassignStaff
   } = useStaffMarketplace(user?.uid);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [captionFilter, setCaptionFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all'); // all, assigned, unassigned
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [selectedCorpsClass, setSelectedCorpsClass] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  // Get list of user's registered corps classes
+  const availableCorpsClasses = Object.keys(userCorps);
+
+  const handleAssign = async () => {
+    if (!selectedStaff || !selectedCorpsClass) return;
+
+    setAssigning(true);
+    try {
+      await assignStaffToCorps(selectedStaff.staffId, selectedCorpsClass, selectedStaff.caption);
+      setSelectedStaff(null);
+      setSelectedCorpsClass('');
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleUnassign = async () => {
+    if (!selectedStaff) return;
+
+    setAssigning(true);
+    try {
+      await unassignStaff(selectedStaff.staffId);
+      setSelectedStaff(null);
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const filteredStaff = ownedStaff.filter(staff => {
     // Search filter
@@ -305,16 +341,58 @@ const StaffRoster = () => {
                   </div>
                 </div>
 
-                {selectedStaff.assignedTo && (
+                {selectedStaff.assignedTo ? (
                   <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="w-5 h-5 text-green-400" />
                       <span className="font-semibold text-green-400">Currently Assigned</span>
                     </div>
-                    <p className="text-cream-300">
+                    <p className="text-cream-300 mb-3">
                       <span className="font-semibold">{selectedStaff.assignedTo.corpsClass}</span> Corps
                       {' - '}
                       <span className="font-semibold">{selectedStaff.assignedTo.caption}</span> Caption
+                    </p>
+                    <button
+                      onClick={handleUnassign}
+                      disabled={assigning}
+                      className="w-full btn-outline text-red-400 border-red-500/30 hover:bg-red-500/10"
+                    >
+                      {assigning ? 'Unassigning...' : 'Unassign Staff'}
+                    </button>
+                  </div>
+                ) : availableCorpsClasses.length > 0 ? (
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Target className="w-5 h-5 text-blue-400" />
+                      <span className="font-semibold text-blue-400">Assign to Corps</span>
+                    </div>
+                    <p className="text-cream-400 text-sm mb-3">
+                      This staff member will boost your <span className="font-semibold text-cream-100">{getCaptionLabel(selectedStaff.caption)}</span> caption performance.
+                    </p>
+                    <select
+                      value={selectedCorpsClass}
+                      onChange={(e) => setSelectedCorpsClass(e.target.value)}
+                      className="w-full px-4 py-2 mb-3 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                    >
+                      <option value="">Select Corps Class...</option>
+                      {availableCorpsClasses.map(corpsClass => (
+                        <option key={corpsClass} value={corpsClass}>
+                          {corpsClass.charAt(0).toUpperCase() + corpsClass.slice(1).replace('Class', ' Class')}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleAssign}
+                      disabled={assigning || !selectedCorpsClass}
+                      className="w-full btn-primary disabled:opacity-50"
+                    >
+                      {assigning ? 'Assigning...' : 'Assign to Corps'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-400 text-sm">
+                      Register a corps first to assign staff members.
                     </p>
                   </div>
                 )}
@@ -323,7 +401,7 @@ const StaffRoster = () => {
               <div className="mt-6">
                 <button
                   onClick={() => setSelectedStaff(null)}
-                  className="w-full btn-primary"
+                  className="w-full btn-ghost"
                 >
                   Close
                 </button>

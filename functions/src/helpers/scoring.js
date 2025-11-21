@@ -285,6 +285,13 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
         if (attended) {
           let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+
+          // Calculate synergy bonus for show concept
+          const { captionBonuses } = calculateLineupSynergyBonus(
+            corps.showConcept || {},
+            corps.lineup
+          );
+
           for (const caption in corps.lineup) {
             const [corpsName, sourceYear, points] = corps.lineup[caption].split("|");
             const baseCaptionScore = getRealisticCaptionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
@@ -297,7 +304,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
               scoredDay,
               show.eventName
             );
-            const captionScore = baseCaptionScore * executionMultiplier;
+
+            // Apply synergy bonus (0 - 2.0 based on show concept match)
+            const synergyBonus = captionBonuses[caption] || 0;
+            const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -610,6 +620,12 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                 realScoresMap.set(doc.data().corpsName, doc.data().captions);
             });
 
+            // Calculate synergy bonus for show concept
+            const { captionBonuses } = calculateLineupSynergyBonus(
+                corps.showConcept || {},
+                corps.lineup
+            );
+
             for (const caption in corps.lineup) {
                 const [selectedCorps, sourceYear, points] = corps.lineup[caption].split("|");
                 let baseCaptionScore = 0;
@@ -628,7 +644,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                     scoredDay,
                     attendedShow.eventName
                 );
-                const captionScore = baseCaptionScore * executionMultiplier;
+
+                // Apply synergy bonus (0 - 2.0 based on show concept match)
+                const synergyBonus = captionBonuses[caption] || 0;
+                const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
 
                 if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
                 else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;

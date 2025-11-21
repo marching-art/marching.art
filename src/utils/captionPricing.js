@@ -8,8 +8,8 @@
 export const CLASS_POINT_LIMITS = {
   soundSport: 90,
   aClass: 60,
-  open: 120,
-  world: 150
+  openClass: 120,
+  worldClass: 150
 };
 
 /**
@@ -18,8 +18,8 @@ export const CLASS_POINT_LIMITS = {
 export const CLASS_UNLOCK_REQUIREMENTS = {
   soundSport: 0,  // Always available
   aClass: 3,      // Level 3
-  open: 5,        // Level 5
-  world: 10       // Level 10
+  openClass: 5,   // Level 5
+  worldClass: 10  // Level 10
 };
 
 /**
@@ -28,8 +28,8 @@ export const CLASS_UNLOCK_REQUIREMENTS = {
 export const CLASS_REGISTRATION_LOCKS = {
   soundSport: 0,  // No lock
   aClass: 4,      // Locks 4 weeks before season end
-  open: 5,        // Locks 5 weeks before season end
-  world: 6        // Locks 6 weeks before season end
+  openClass: 5,   // Locks 5 weeks before season end
+  worldClass: 6   // Locks 6 weeks before season end
 };
 
 /**
@@ -37,8 +37,8 @@ export const CLASS_REGISTRATION_LOCKS = {
  */
 export const CLASS_UNLOCK_COSTS = {
   aClass: 1000,
-  open: 2500,
-  world: 5000
+  openClass: 2500,
+  worldClass: 5000
 };
 
 /**
