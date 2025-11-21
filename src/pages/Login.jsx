@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Music, Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 
@@ -94,8 +94,8 @@ const Login = () => {
           <div className="glass-dark rounded-2xl p-8">
             {/* Logo */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-gold rounded-2xl mb-4">
-                <Music className="w-8 h-8 text-charcoal-900" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden mb-4">
+                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-3xl font-display font-bold text-gradient">
                 Welcome Back

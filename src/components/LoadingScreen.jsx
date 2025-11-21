@@ -1,7 +1,6 @@
 // src/components/LoadingScreen.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Music } from 'lucide-react';
 
 const LoadingScreen = ({ fullScreen = false }) => {
   const containerClass = fullScreen 
@@ -65,9 +64,9 @@ const LoadingScreen = ({ fullScreen = false }) => {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="relative w-20 h-20 bg-gradient-gold rounded-2xl flex items-center justify-center shadow-glow"
+              className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-glow"
             >
-              <Music className="w-10 h-10 text-charcoal-900" />
+              <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
             </motion.div>
 
             {/* Orbiting dots */}
