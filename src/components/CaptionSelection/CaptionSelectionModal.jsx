@@ -99,6 +99,24 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   // Check if all 8 captions are selected
   const isComplete = Object.keys(selections).length === 8;
 
+  // Get corps names already used in other captions
+  const getUsedCorpsNames = (excludeCaptionId) => {
+    const usedCorps = new Map(); // corpsName -> captionId
+    Object.entries(selections).forEach(([captionId, value]) => {
+      if (captionId !== excludeCaptionId && value) {
+        const corpsName = value.split('|')[0];
+        usedCorps.set(corpsName, captionId);
+      }
+    });
+    return usedCorps;
+  };
+
+  // Check for duplicate corps in lineup
+  const hasDuplicateCorps = () => {
+    const corpsNames = Object.values(selections).map(v => v.split('|')[0]);
+    return corpsNames.length !== new Set(corpsNames).size;
+  };
+
   const handleSelectionChange = (captionId, corpsData) => {
     if (!corpsData) {
       // Remove selection
@@ -124,6 +142,11 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
     if (isOverLimit) {
       toast.error(`Your lineup exceeds the ${pointLimit} point limit`);
+      return;
+    }
+
+    if (hasDuplicateCorps()) {
+      toast.error('Each corps can only be used for one caption');
       return;
     }
 
@@ -356,16 +379,20 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                               {availableCorps.map((corps, index) => {
                                 const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
                                 const isCurrentSelection = selections[caption.id] === value;
-                                const wouldExceedLimit = !isCurrentSelection &&
+                                const usedCorps = getUsedCorpsNames(caption.id);
+                                const usedInCaption = usedCorps.get(corps.corpsName);
+                                const isAlreadyUsed = !isCurrentSelection && usedInCaption;
+                                const wouldExceedLimit = !isCurrentSelection && !isAlreadyUsed &&
                                   (totalPoints - (selected?.points || 0) + corps.points > pointLimit);
 
                                 return (
                                   <option
                                     key={index}
                                     value={value}
-                                    disabled={wouldExceedLimit}
+                                    disabled={wouldExceedLimit || isAlreadyUsed}
                                   >
                                     {corps.corpsName} ({corps.sourceYear}) - {corps.points} pts
+                                    {isAlreadyUsed ? ` [Used in ${usedInCaption}]` : ''}
                                     {wouldExceedLimit ? ' [Would exceed limit]' : ''}
                                   </option>
                                 );
@@ -433,6 +460,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                     )}
                     {isOverLimit && (
                       <li className="text-red-400 font-semibold">• Reduce your total to {pointLimit} points or less</li>
+                    )}
+                    {hasDuplicateCorps() && (
+                      <li className="text-red-400 font-semibold">• Each corps can only be used for one caption</li>
                     )}
                     {corpsClass === 'soundSport' && (
                       <li className="text-green-400">• SoundSport is non-competitive - just have fun!</li>
