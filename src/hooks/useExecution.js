@@ -17,39 +17,55 @@ export const useExecution = (userId, corpsClass) => {
       return;
     }
 
-    // Subscribe to execution state changes
-    const executionRef = doc(
+    // Subscribe to profile document where execution state is stored
+    const profileRef = doc(
       db,
       'artifacts/marching-art/users',
       userId,
-      'execution',
-      corpsClass
+      'profile',
+      'data'
     );
 
-    const unsubscribe = onSnapshot(executionRef, (docSnap) => {
+    const unsubscribe = onSnapshot(profileRef, async (docSnap) => {
       if (docSnap.exists()) {
-        setExecutionState(docSnap.data());
+        const profileData = docSnap.data();
+        const execution = profileData.corps?.[corpsClass]?.execution;
+
+        if (execution) {
+          setExecutionState(execution);
+          setLoading(false);
+        } else {
+          // Initialize execution state via Cloud Function
+          try {
+            const getStatus = httpsCallable(functions, 'getExecutionStatus');
+            await getStatus({ corpsClass });
+            // The snapshot listener will update state when data is created
+          } catch (error) {
+            console.error('Error initializing execution:', error);
+            // Set default local state as fallback
+            setExecutionState({
+              readiness: 0.85,
+              morale: 0.90,
+              equipment: {
+                uniforms: { condition: 1.0, level: 1 },
+                instruments: { condition: 1.0, level: 1 },
+                props: { condition: 1.0, level: 1 }
+              },
+              staff: [],
+              lastRehearsalDate: null,
+              rehearsalsThisWeek: 0,
+              showDifficulty: 'medium'
+            });
+            setLoading(false);
+          }
+        }
       } else {
-        // Initialize execution state if it doesn't exist
-        setExecutionState({
-          readiness: 0.85, // Start at 85%
-          morale: 0.90, // Start at 90%
-          equipment: {
-            uniforms: { condition: 1.0, level: 1 },
-            instruments: { condition: 1.0, level: 1 },
-            props: { condition: 1.0, level: 1 }
-          },
-          staff: [],
-          lastRehearsalDate: null,
-          rehearsalsThisWeek: 0,
-          showDifficulty: 'medium'
-        });
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [userId, corpsClass]);
+  }, [userId, corpsClass, functions]);
 
   // Daily rehearsal function
   const rehearse = async () => {
