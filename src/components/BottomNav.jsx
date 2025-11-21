@@ -15,7 +15,10 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-charcoal-950/95 backdrop-blur-lg border-t border-cream-500/10 z-40 safe-area-bottom">
+    <nav
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-charcoal-950/95 backdrop-blur-lg border-t border-cream-500/10 z-40 safe-area-bottom"
+      aria-label="Mobile navigation"
+    >
       <div className="flex items-center justify-around px-2 py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -25,6 +28,8 @@ const BottomNav = () => {
             <Link
               key={item.path}
               to={item.path}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
               className={`
                 flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all duration-300 min-w-[64px]
                 ${isActive
@@ -33,7 +38,7 @@ const BottomNav = () => {
                 }
               `}
             >
-              <Icon className={`w-6 h-6 ${isActive ? 'animate-pulse-gold' : ''}`} />
+              <Icon className={`w-6 h-6 ${isActive ? 'animate-pulse-gold' : ''}`} aria-hidden="true" />
               <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
                 {item.label}
               </span>
