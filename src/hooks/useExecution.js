@@ -239,7 +239,10 @@ export const useExecution = (userId, corpsClass) => {
   const canRehearseToday = () => {
     if (!executionState || !executionState.lastRehearsalDate) return true;
 
-    const lastRehearsal = new Date(executionState.lastRehearsalDate);
+    const lastRehearsalValue = executionState.lastRehearsalDate;
+    const lastRehearsal = lastRehearsalValue?.toDate
+      ? lastRehearsalValue.toDate()
+      : new Date(lastRehearsalValue);
     const today = new Date();
 
     // Reset hours to compare just the date
