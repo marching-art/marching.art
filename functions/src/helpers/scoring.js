@@ -305,9 +305,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
               show.eventName
             );
 
-            // Apply synergy bonus (0 - 2.0 based on show concept match)
+            // Apply synergy bonus (0 - 1.0 based on show concept match)
             const synergyBonus = captionBonuses[caption] || 0;
-            const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
+            // Hard cap each caption at 20 points
+            const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -646,9 +647,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                     attendedShow.eventName
                 );
 
-                // Apply synergy bonus (0 - 2.0 based on show concept match)
+                // Apply synergy bonus (0 - 1.0 based on show concept match)
                 const synergyBonus = captionBonuses[caption] || 0;
-                const captionScore = (baseCaptionScore * executionMultiplier) + synergyBonus;
+                // Hard cap each caption at 20 points
+                const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
 
                 if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
                 else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
