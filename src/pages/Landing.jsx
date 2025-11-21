@@ -142,12 +142,12 @@ const Landing = () => {
               © 2025 marching.art
             </p>
             <div className="flex gap-4 sm:gap-6">
-              <a href="/privacy" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
+              <Link to="/privacy" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
                 Privacy
-              </a>
-              <a href="/terms" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
+              </Link>
+              <Link to="/terms" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
                 Terms
-              </a>
+              </Link>
             </div>
           </div>
         </div>
