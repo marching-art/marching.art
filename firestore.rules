@@ -58,6 +58,12 @@ match /artifacts/{appId}/leaderboard/{timeframe}/{classType} {
   allow write: if false; // Backend only
 }
 
+// Allow reading documents within leaderboard class collections
+match /artifacts/{appId}/leaderboard/{timeframe}/{classType}/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 // --- PUBLIC GAME DATA (READ-ONLY FOR USERS) ---
 // This structure from your file is perfect.
 match /game-settings/{docId} {
@@ -165,6 +171,12 @@ match /reports/{reportId} {
 
 // Season settings (needed for dashboard)
 match /season_settings/{docId} {
+  allow read: if true;
+  allow write: if isAdmin();
+}
+
+// Seasons collection (needed for Scores page)
+match /seasons/{seasonId} {
   allow read: if true;
   allow write: if isAdmin();
 }
