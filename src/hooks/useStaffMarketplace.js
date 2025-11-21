@@ -1,7 +1,7 @@
 // src/hooks/useStaffMarketplace.js
 import { useState, useEffect } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -12,8 +12,6 @@ export const useStaffMarketplace = (userId) => {
   const [purchasing, setPurchasing] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [corpsCoin, setCorpsCoin] = useState(0);
-
-  const functions = getFunctions();
 
   // Subscribe to user profile for owned staff and CorpsCoin balance
   useEffect(() => {
