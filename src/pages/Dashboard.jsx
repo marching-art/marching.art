@@ -588,7 +588,7 @@ const Dashboard = () => {
             // For SoundSport, mask the scores
             const isSoundSport = activeCorpsClass === 'soundSport';
             return {
-              showName: r.showName || r.name || 'Unknown Show',
+              showName: r.showName || r.eventName || r.name || 'Show',
               date: r.date || '',
               totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
               rank: isSoundSport ? '🎉' : (r.rank ?? '-')
