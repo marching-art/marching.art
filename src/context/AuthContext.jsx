@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }) => {
                 setNeedsProfileCompletion(missingUsername);
                 
                 if (missingUsername) {
-                    console.log('⚠️ Username is missing - showing completion modal');
                     return; // Don't auto-fix if username is missing
                 }
                 
@@ -37,7 +36,6 @@ export const AuthProvider = ({ children }) => {
                 const needsFix = !loggedInProfile.createdAt || !loggedInProfile.trophies;
                 
                 if (needsFix) {
-                    console.log('🔧 Auto-fixing missing profile fields...');
                     try {
                         const userProfileRef = doc(
                             db, 
@@ -64,7 +62,6 @@ export const AuthProvider = ({ children }) => {
                         }
                         
                         await setDoc(userProfileRef, updates, { merge: true });
-                        console.log('✅ Profile fields auto-fixed');
                     } catch (error) {
                         console.error('❌ Failed to auto-fix profile:', error);
                     }
