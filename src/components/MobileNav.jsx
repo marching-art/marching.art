@@ -31,20 +31,38 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     };
   }, [isOpen]);
 
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/leagues', label: 'Leagues', icon: Users },
-    { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { path: '/schedule', label: 'Schedule', icon: Calendar },
-    { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
-    { path: '/battlepass', label: 'Battle Pass', icon: Crown },
-    { path: '/scores', label: 'Scores', icon: Music },
-    { path: '/corps-history', label: 'Corps History', icon: BarChart3 },
-    { path: '/retired-corps', label: 'Retired Corps', icon: Archive },
-    { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award },
-    { path: '/profile', label: 'My Profile', icon: User },
-    { path: '/settings', label: 'Settings', icon: Settings },
-    { path: '/how-to-play', label: 'How to Play', icon: HelpCircle }
+  const navSections = [
+    {
+      title: 'Main',
+      items: [
+        { path: '/dashboard', label: 'Dashboard', icon: Home },
+        { path: '/schedule', label: 'Schedule', icon: Calendar },
+        { path: '/scores', label: 'Scores', icon: Music },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy }
+      ]
+    },
+    {
+      title: 'Manage',
+      items: [
+        { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
+        { path: '/battlepass', label: 'Battle Pass', icon: Crown }
+      ]
+    },
+    {
+      title: 'Community',
+      items: [
+        { path: '/leagues', label: 'Leagues', icon: Users },
+        { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award }
+      ]
+    },
+    {
+      title: 'Account',
+      items: [
+        { path: '/profile', label: 'Profile', icon: User },
+        { path: '/settings', label: 'Settings', icon: Settings },
+        { path: '/how-to-play', label: 'How to Play', icon: HelpCircle }
+      ]
+    }
   ];
 
   const menuVariants = {
@@ -182,27 +200,34 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
 
                 {/* Navigation Items */}
                 <div className="flex-1 py-4">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
+                  {navSections.map((section) => (
+                    <div key={section.title} className="mb-6">
+                      <h3 className="px-6 mb-2 text-xs font-semibold text-cream-500/40 uppercase tracking-wider">
+                        {section.title}
+                      </h3>
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.path;
 
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`
-                          flex items-center gap-3 px-6 py-3 transition-all duration-300
-                          ${isActive 
-                            ? 'bg-gold-500/20 text-gold-500 border-r-4 border-gold-500' 
-                            : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
-                          }
-                        `}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`
+                              flex items-center gap-3 px-6 py-3 transition-all duration-300
+                              ${isActive
+                                ? 'bg-gold-500/20 text-gold-500 border-r-4 border-gold-500'
+                                : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
+                              }
+                            `}
+                          >
+                            <Icon className="w-5 h-5" />
+                            <span className="font-medium">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Bottom Actions */}
