@@ -854,13 +854,8 @@ const Dashboard = () => {
     }
   };
 
-  if (loading || seasonLoading) {
-    return (
-      <div className="space-y-6">
-        <SkeletonLoader type="card" count={3} />
-      </div>
-    );
-  }
+  // Show nothing extra while loading - Suspense fallback handles initial load
+  // Data will render when ready
 
   return (
     <div className="space-y-8">
