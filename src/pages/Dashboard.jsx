@@ -2071,27 +2071,34 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(activeCorps.lineup).map(([caption, selection]) => {
-                      // Parse the selection string: corpsName|sourceYear|points
-                      const parts = selection.split('|');
-                      const corpsName = parts[0] || selection;
-                      const year = parts[1] || '';
-                      const points = parts[2] || '';
+                    {(() => {
+                      // Sort captions in recap sheet order
+                      const captionOrder = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+                      const sortedEntries = Object.entries(activeCorps.lineup)
+                        .sort((a, b) => captionOrder.indexOf(a[0]) - captionOrder.indexOf(b[0]));
 
-                      return (
-                        <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                          <div className="flex-1">
-                            <p className="text-xs text-cream-500/60">{caption}</p>
-                            <p className="text-sm font-medium text-cream-100">{corpsName}</p>
-                            {year && <p className="text-xs text-cream-500/40">({year})</p>}
+                      return sortedEntries.map(([caption, selection]) => {
+                        // Parse the selection string: corpsName|sourceYear|points
+                        const parts = selection.split('|');
+                        const corpsName = parts[0] || selection;
+                        const year = parts[1] || '';
+                        const points = parts[2] || '';
+
+                        return (
+                          <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
+                            <div className="flex-1">
+                              <p className="text-xs text-cream-500/60">{caption}</p>
+                              <p className="text-sm font-medium text-cream-100">{corpsName}</p>
+                              {year && <p className="text-xs text-cream-500/40">({year})</p>}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gold-500">{points || '?'}</p>
+                              <p className="text-xs text-cream-500/60">pts</p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gold-500">{points || '?'}</p>
-                            <p className="text-xs text-cream-500/60">pts</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>
