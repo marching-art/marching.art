@@ -589,6 +589,89 @@ const boostMorale = onCall({ cors: true }, async (request) => {
   }
 });
 
+/**
+ * Boost Staff Morale - Improve a specific staff member's morale
+ * Staff morale affects their teaching effectiveness
+ */
+const boostStaffMorale = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { staffId } = request.data;
+  const uid = request.auth.uid;
+
+  if (!staffId) {
+    throw new HttpsError("invalid-argument", "Staff ID required.");
+  }
+
+  const STAFF_MORALE_BOOST_COST = 150; // CorpsCoin
+  const STAFF_MORALE_BOOST_AMOUNT = 0.10; // +10% morale
+
+  const db = getDb();
+  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(profileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile not found.");
+      }
+
+      const profileData = profileDoc.data();
+      const staffArray = profileData.staff || [];
+
+      // Find the staff member
+      const staffIndex = staffArray.findIndex(s => s.staffId === staffId);
+      if (staffIndex === -1) {
+        throw new HttpsError("not-found", "Staff member not found in your roster.");
+      }
+
+      const staff = staffArray[staffIndex];
+      const currentMorale = staff.morale || 0.90;
+
+      if (currentMorale >= 1.00) {
+        throw new HttpsError("failed-precondition", "Staff morale is already at maximum.");
+      }
+
+      // Check CorpsCoin balance
+      const currentCoin = profileData.corpsCoin || 0;
+      if (currentCoin < STAFF_MORALE_BOOST_COST) {
+        throw new HttpsError("failed-precondition",
+          `Insufficient CorpsCoin. Need ${STAFF_MORALE_BOOST_COST}, have ${currentCoin}.`);
+      }
+
+      // Apply morale boost
+      const newMorale = Math.min(currentMorale + STAFF_MORALE_BOOST_AMOUNT, 1.00);
+      staffArray[staffIndex] = { ...staff, morale: newMorale };
+
+      transaction.update(profileRef, {
+        corpsCoin: currentCoin - STAFF_MORALE_BOOST_COST,
+        staff: staffArray,
+      });
+
+      return {
+        staffId,
+        staffName: staff.name || staffId,
+        before: currentMorale,
+        after: newMorale,
+        cost: STAFF_MORALE_BOOST_COST,
+      };
+    });
+
+    logger.info(`User ${uid} boosted staff morale for ${result.staffName}`);
+    return {
+      success: true,
+      message: `${result.staffName}'s morale boosted!`,
+      results: result,
+    };
+  } catch (error) {
+    logger.error(`Error boosting staff morale for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Failed to boost staff morale.");
+  }
+});
+
 module.exports = {
   dailyRehearsal,
   repairEquipment,
@@ -596,4 +679,5 @@ module.exports = {
   setShowDifficulty,
   getExecutionStatus,
   boostMorale,
+  boostStaffMorale,
 };

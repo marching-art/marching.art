@@ -149,7 +149,7 @@ const Scores = () => {
 
           // Calculate top score
           const allScores = shows.flatMap(show => show.scores.map(s => s.score));
-          const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(2) : '-';
+          const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
 
           // Count unique corps
           const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
@@ -521,7 +521,7 @@ const Scores = () => {
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-cream-500/60">Overall Impression</p>
-                              <p className="text-lg font-bold text-cream-100">{score.score.toFixed(2)}</p>
+                              <p className="text-lg font-bold text-cream-100">{score.score.toFixed(3)}</p>
                             </div>
                           </div>
                         </div>
@@ -719,7 +719,7 @@ const ShowCard = ({ show, isLive = false, onClick }) => {
                 </span>
                 <span className="text-cream-100 font-medium">{score.corps}</span>
               </div>
-              <span className="text-gold-500 font-bold text-lg">{score.score.toFixed(2)}</span>
+              <span className="text-gold-500 font-bold text-lg">{score.score.toFixed(3)}</span>
             </div>
           ))}
           {show.scores.length > 3 && (
@@ -823,25 +823,25 @@ const ScoreRow = ({ score, rank }) => {
           <div className="hidden md:flex items-center gap-4 text-sm">
             <div className="text-center">
               <div className="text-cream-500/60 text-xs">GE</div>
-              <div className="text-cream-100 font-semibold">{geScore.toFixed(2)}</div>
+              <div className="text-cream-100 font-semibold">{geScore.toFixed(3)}</div>
             </div>
             <div className="text-center">
               <div className="text-cream-500/60 text-xs flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 Visual
               </div>
-              <div className="text-cream-100 font-semibold">{visualScore.toFixed(2)}</div>
+              <div className="text-cream-100 font-semibold">{visualScore.toFixed(3)}</div>
             </div>
             <div className="text-center">
               <div className="text-cream-500/60 text-xs flex items-center gap-1">
                 <Music className="w-3 h-3" />
                 Music
               </div>
-              <div className="text-cream-100 font-semibold">{musicScore.toFixed(2)}</div>
+              <div className="text-cream-100 font-semibold">{musicScore.toFixed(3)}</div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gold-500">{score.score.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-gold-500">{score.score.toFixed(3)}</div>
           </div>
         </div>
       </div>
@@ -864,7 +864,7 @@ const ScoreRow = ({ score, rank }) => {
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-cream-500/60">{caption.shortName}</span>
-                    <span className="text-cream-100 font-semibold">{value.toFixed(2)}</span>
+                    <span className="text-cream-100 font-semibold">{value.toFixed(3)}</span>
                   </div>
                   <div className="h-2 bg-charcoal-900 rounded-full overflow-hidden">
                     <div

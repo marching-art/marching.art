@@ -13,7 +13,7 @@ const {
   getUserRankings,
   migrateUserProfiles,
   createUserProfile,
-  dailyRehearsal,
+  dailyXPCheckIn,
   awardXP,
 } = require("./src/callable/users");
 const {
@@ -21,6 +21,7 @@ const {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  getLineupAnalytics,
 } = require("./src/callable/lineups");
 const {
   unlockClassWithCorpsCoin,
@@ -29,12 +30,13 @@ const {
   getStaffMarketplace,
 } = require("./src/callable/economy");
 const {
-  dailyRehearsal: execDailyRehearsal,
+  dailyRehearsal,
   repairEquipment,
   upgradeEquipment,
   setShowDifficulty,
   getExecutionStatus,
   boostMorale,
+  boostStaffMorale,
 } = require("./src/callable/execution");
 const {
   purchaseBattlePass,
@@ -106,6 +108,7 @@ module.exports = {
   saveLineup,
   selectUserShows,
   saveShowConcept,
+  getLineupAnalytics,
   createLeague,
   joinLeague,
   leaveLeague,
@@ -125,7 +128,7 @@ module.exports = {
   startNewOffSeason,
   startNewLiveSeason,
   initializeBattlePassSeason,
-  dailyRehearsal,
+  dailyXPCheckIn,
   awardXP,
   unlockClassWithCorpsCoin,
   purchaseStaff,
@@ -134,12 +137,13 @@ module.exports = {
   registerCorps,
   retireCorps,
   unretireCorps,
-  execDailyRehearsal,
+  dailyRehearsal,
   repairEquipment,
   upgradeEquipment,
   setShowDifficulty,
   getExecutionStatus,
   boostMorale,
+  boostStaffMorale,
   purchaseBattlePass,
   claimBattlePassReward,
   getBattlePassProgress,
