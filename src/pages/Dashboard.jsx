@@ -817,12 +817,6 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
-  const handleShowSelection = async (shows) => {
-    // The ShowSelectionModal handles saving via the backend function
-    // This callback is called after successful save
-    setShowShowSelection(false);
-  };
-
   const handleDailyRehearsal = async () => {
     try {
       const dailyRehearsal = httpsCallable(functions, 'dailyRehearsal');
