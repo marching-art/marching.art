@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
-const { getDb, dataNamespaceParam } = require("../../../functions-scraper/config");
+const { getDb, dataNamespaceParam } = require("../config");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { scrapeDciScoresLogic } = require("../helpers/scraping");
@@ -8,7 +8,7 @@ const { scrapeDciScoresLogic } = require("../helpers/scraping");
 const LIVE_SCORES_TOPIC = "live-scores-topic";
 
 exports.scrapeDciScores = onSchedule({
-  schedule: "every 15 minutes from 19:00 to 01:50",
+  schedule: "every day 23:30",
   timeZone: "America/New_York",
 }, async () => {
   logger.info("Running live score scraper...");
