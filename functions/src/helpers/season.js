@@ -136,12 +136,12 @@ async function startNewLiveSeason() {
           }
 
           resetCorps[corpsClass] = {
-            // PRESERVE: Historical data and staff/trades
+            // PRESERVE: Historical data
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory,
-            weeklyTrades: corps.weeklyTrades || null,
-            // RESET: Season-specific data
+            // RESET: Season-specific data (including weeklyTrades so users can set up corps)
+            weeklyTrades: null,
             lineup: null,
             lineupKey: null,
             selectedShows: {},
@@ -349,12 +349,12 @@ async function startNewOffSeason() {
           }
 
           resetCorps[corpsClass] = {
-            // PRESERVE: Historical data and staff/trades
+            // PRESERVE: Historical data
             corpsName: corps.corpsName || null,
             location: corps.location || null,
             seasonHistory,
-            weeklyTrades: corps.weeklyTrades || null,
-            // RESET: Season-specific data
+            // RESET: Season-specific data (including weeklyTrades so users can set up corps)
+            weeklyTrades: null,
             lineup: null,
             lineupKey: null,
             selectedShows: {},
