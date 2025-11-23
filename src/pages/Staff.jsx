@@ -13,25 +13,25 @@ const Staff = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('marketplace')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'marketplace'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <ShoppingCart className="w-5 h-5" />
-          Staff Marketplace
+          <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">Staff </span>Marketplace
         </button>
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'roster'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <Users className="w-5 h-5" />
-          My Roster
+          <Users className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">My </span>Roster
         </button>
       </div>
 
