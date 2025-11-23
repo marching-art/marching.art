@@ -37,6 +37,7 @@ import {
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import { useSeason, getSeasonProgress } from '../hooks/useSeason';
+import SeasonSetupWizard from '../components/SeasonSetupWizard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -83,6 +84,8 @@ const Dashboard = () => {
     equipmentMaintained: 0
   });
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [showSeasonSetupWizard, setShowSeasonSetupWizard] = useState(false);
+  const [corpsNeedingSetup, setCorpsNeedingSetup] = useState([]);
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -211,6 +214,29 @@ const Dashboard = () => {
       };
     }
   }, [user]);
+
+  // Detect corps that need season setup (no lineup set)
+  useEffect(() => {
+    if (profile && corps && seasonData && !loading && !seasonLoading) {
+      const needSetup = [];
+
+      // Check each corps for missing lineup
+      Object.entries(corps).forEach(([classId, corpsData]) => {
+        const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+        if (!hasLineup) {
+          needSetup.push(classId);
+        }
+      });
+
+      if (needSetup.length > 0) {
+        setCorpsNeedingSetup(needSetup);
+        setShowSeasonSetupWizard(true);
+      } else {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+      }
+    }
+  }, [profile, corps, seasonData, loading, seasonLoading]);
 
   // Track daily login streaks and engagement
   useEffect(() => {
@@ -867,8 +893,25 @@ const Dashboard = () => {
   // Show nothing extra while loading - Suspense fallback handles initial load
   // Data will render when ready
 
+  // Handle wizard completion
+  const handleSeasonSetupComplete = () => {
+    setShowSeasonSetupWizard(false);
+    setCorpsNeedingSetup([]);
+    toast.success('Season setup complete! Time to compete!');
+  };
+
   return (
     <div className="space-y-8">
+      {/* Season Setup Wizard - Shows when corps need lineup setup */}
+      {showSeasonSetupWizard && corpsNeedingSetup.length > 0 && seasonData && (
+        <SeasonSetupWizard
+          onComplete={handleSeasonSetupComplete}
+          profile={profile}
+          seasonData={seasonData}
+          corpsNeedingSetup={corpsNeedingSetup}
+        />
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
