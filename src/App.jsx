@@ -20,7 +20,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
-const Profile = lazy(() => import('./pages/ProfileNew'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
