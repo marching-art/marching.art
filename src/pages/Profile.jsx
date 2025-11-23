@@ -1,4 +1,4 @@
-// src/pages/ProfileNew.jsx
+// src/pages/Profile.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 
-const ProfileNew = () => {
+const Profile = () => {
   const { userId } = useParams();
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
@@ -401,4 +401,4 @@ const ProfileNew = () => {
   );
 };
 
-export default ProfileNew;
+export default Profile;

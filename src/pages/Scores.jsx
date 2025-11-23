@@ -22,6 +22,7 @@ import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from '
 import { db } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
 import LoadingScreen from '../components/LoadingScreen';
+import Portal from '../components/Portal';
 
 const Scores = () => {
   const [activeTab, setActiveTab] = useState('live');
@@ -725,14 +726,15 @@ const ShowCard = ({ show, isLive = false, onClick }) => {
 // Show Detail Modal Component
 const ShowDetailModal = ({ show, onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="card max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Portal>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className="card max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="p-6 border-b border-cream-500/20">
           <div className="flex items-start justify-between">
             <div>
@@ -758,6 +760,7 @@ const ShowDetailModal = ({ show, onClose }) => {
         </div>
       </motion.div>
     </div>
+  </Portal>
   );
 };
 

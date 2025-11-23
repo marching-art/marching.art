@@ -21,6 +21,7 @@ import {
   postLeagueMessage
 } from '../firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../components/Portal';
 
 const Leagues = () => {
   const { user } = useAuth();
@@ -963,13 +964,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
-    >
+    <Portal>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -1145,6 +1147,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
         </div>
       </motion.div>
     </motion.div>
+  </Portal>
   );
 };
 

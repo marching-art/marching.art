@@ -5,6 +5,7 @@ import {
   Users, Star, TrendingUp, Sparkles, Plus,
   Coins, Music, Target, Heart, ChevronRight
 } from 'lucide-react';
+import Portal from '../Portal';
 
 const StaffRoster = ({ staff, onHireStaff, onAssignStaff, processing, corpsCoin }) => {
   const [showMarketplace, setShowMarketplace] = useState(false);
@@ -211,13 +212,14 @@ const StaffRoster = ({ staff, onHireStaff, onAssignStaff, processing, corpsCoin 
       {/* Staff Marketplace Modal */}
       <AnimatePresence>
         {showMarketplace && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowMarketplace(false)}
-          >
+          <Portal>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setShowMarketplace(false)}
+            >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -316,6 +318,7 @@ const StaffRoster = ({ staff, onHireStaff, onAssignStaff, processing, corpsCoin 
               </button>
             </motion.div>
           </motion.div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>
