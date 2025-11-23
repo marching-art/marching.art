@@ -124,7 +124,7 @@ async function startNewLiveSeason() {
               totalSeasonScore: corps.totalSeasonScore || 0,
               showsAttended,
               highestWeeklyScore,
-              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+              archivedAt: new Date()
             });
 
             seasonShowCount += showsAttended;
@@ -337,7 +337,7 @@ async function startNewOffSeason() {
               totalSeasonScore: corps.totalSeasonScore || 0,
               showsAttended,
               highestWeeklyScore,
-              archivedAt: admin.firestore.FieldValue.serverTimestamp()
+              archivedAt: new Date()
             });
 
             seasonShowCount += showsAttended;
