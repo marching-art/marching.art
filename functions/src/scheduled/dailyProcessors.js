@@ -1,7 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
-const { getFirestore } = require("firebase-admin/firestore");
 const { processAndArchiveOffSeasonScoresLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 
 exports.dailyOffSeasonProcessor = onSchedule({
@@ -46,7 +45,7 @@ exports.generateWeeklyMatchups = onSchedule({
   timeZone: "America/New_York",
 }, async () => {
   logger.info("Starting class-based weekly matchup generation...");
-  const db = getFirestore();
+  const db = getDb();
   const seasonDoc = await db.doc("game-settings/season").get();
   if (!seasonDoc.exists) {
     logger.error("No active season found. Aborting.");

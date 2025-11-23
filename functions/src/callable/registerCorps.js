@@ -39,8 +39,9 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
 
     // --- 2. Check Registration Locks Based on Weeks Remaining ---
     const seasonDoc = await db.doc("game-settings/season").get();
-    if (seasonDoc.exists) {
-      const seasonData = seasonDoc.data();
+    const seasonData = seasonDoc.exists ? seasonDoc.data() : null;
+
+    if (seasonData) {
       const now = new Date();
       const endDate = seasonData.schedule?.endDate?.toDate();
 
@@ -95,12 +96,9 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     };
 
     // Set activeSeasonId when registering first corps for this season
-    if (!profileData.activeSeasonId && seasonDoc.exists) {
-      const seasonData = seasonDoc.data();
-      if (seasonData.seasonUid) {
-        updateData.activeSeasonId = seasonData.seasonUid;
-        logger.info(`Setting activeSeasonId for user ${uid} to ${seasonData.seasonUid}`);
-      }
+    if (!profileData.activeSeasonId && seasonData?.seasonUid) {
+      updateData.activeSeasonId = seasonData.seasonUid;
+      logger.info(`Setting activeSeasonId for user ${uid} to ${seasonData.seasonUid}`);
     }
 
     // --- 7. Write to DB ---
