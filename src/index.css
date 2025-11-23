@@ -219,7 +219,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .btn-ghost {
-    @apply btn bg-transparent text-cream-300 hover:bg-cream-500/10;
+    @apply btn bg-transparent text-cream-300 hover:bg-cream-900;
   }
   
   /* Cards */
