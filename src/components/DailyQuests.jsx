@@ -8,6 +8,7 @@ import {
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import Portal from './Portal';
 
 // Quest definitions - different types of daily challenges
 const QUEST_TEMPLATES = [
@@ -271,21 +272,22 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
   const QuestModal = () => (
     <AnimatePresence>
       {showModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setShowModal(false)}
-        >
+        <Portal>
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowModal(false)}
           >
-            <div className="glass-dark rounded-2xl p-6">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="glass-dark rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
@@ -385,9 +387,10 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
                   <p className="text-xs text-cream-300 mt-1">Come back tomorrow for new challenges</p>
                 </motion.div>
               )}
-            </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </Portal>
       )}
     </AnimatePresence>
   );

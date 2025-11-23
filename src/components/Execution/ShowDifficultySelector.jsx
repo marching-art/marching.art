@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { setShowDifficulty } from '../../firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const DIFFICULTY_OPTIONS = {
   conservative: {
@@ -236,12 +237,13 @@ const ShowDifficultySelector = ({ corpsClass, currentDifficulty, currentDay = 1,
 
       {/* Confirmation Dialog */}
       {showConfirm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setShowConfirm(false)}
-        >
+        <Portal>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowConfirm(false)}
+          >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -318,6 +320,7 @@ const ShowDifficultySelector = ({ corpsClass, currentDifficulty, currentDay = 1,
             </div>
           </motion.div>
         </motion.div>
+      </Portal>
       )}
     </div>
   );
