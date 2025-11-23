@@ -429,7 +429,7 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
           <Award className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-cream-100 mb-1 truncate text-xs">{staff.name}</h3>
+          <h3 className="font-semibold text-cream-100 mb-1 truncate text-sm">{staff.name}</h3>
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(staff.caption)}`}>
               {staff.caption}
