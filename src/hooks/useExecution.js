@@ -1,5 +1,5 @@
 // src/hooks/useExecution.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
@@ -9,6 +9,7 @@ export const useExecution = (userId, corpsClass) => {
   const [executionState, setExecutionState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const initializingRef = useRef(false);
 
   useEffect(() => {
     if (!userId || !corpsClass) {
@@ -16,6 +17,7 @@ export const useExecution = (userId, corpsClass) => {
       return;
     }
 
+    initializingRef.current = false;
 
     // Subscribe to profile document where execution state is stored
     const profileRef = doc(
@@ -26,7 +28,7 @@ export const useExecution = (userId, corpsClass) => {
       'data'
     );
 
-    const unsubscribe = onSnapshot(profileRef, async (docSnap) => {
+    const unsubscribe = onSnapshot(profileRef, (docSnap) => {
       if (docSnap.exists()) {
         const profileData = docSnap.data();
         const execution = profileData.corps?.[corpsClass]?.execution;
@@ -34,30 +36,30 @@ export const useExecution = (userId, corpsClass) => {
         if (execution) {
           setExecutionState(execution);
           setLoading(false);
-        } else {
-          // Initialize execution state via Cloud Function
-          try {
-            const getStatus = httpsCallable(functions, 'getExecutionStatus');
-            await getStatus({ corpsClass });
-            // The snapshot listener will update state when data is created
-          } catch (error) {
-            console.error('Error initializing execution:', error);
-            // Set default local state as fallback
-            setExecutionState({
-              readiness: 0.85,
-              morale: 0.90,
-              equipment: {
-                uniforms: { condition: 1.0, level: 1 },
-                instruments: { condition: 1.0, level: 1 },
-                props: { condition: 1.0, level: 1 }
-              },
-              staff: [],
-              lastRehearsalDate: null,
-              rehearsalsThisWeek: 0,
-              showDifficulty: 'medium'
+        } else if (!initializingRef.current) {
+          // Initialize execution state via Cloud Function (only once)
+          initializingRef.current = true;
+          const getStatus = httpsCallable(functions, 'getExecutionStatus');
+          getStatus({ corpsClass })
+            .catch((error) => {
+              console.error('Error initializing execution:', error);
+              // Set default local state as fallback
+              setExecutionState({
+                readiness: 0.85,
+                morale: 0.90,
+                equipment: {
+                  uniforms: { condition: 1.0, level: 1 },
+                  instruments: { condition: 1.0, level: 1 },
+                  props: { condition: 1.0, level: 1 }
+                },
+                staff: [],
+                lastRehearsalDate: null,
+                rehearsalsThisWeek: 0,
+                showDifficulty: 'medium'
+              });
+              setLoading(false);
             });
-            setLoading(false);
-          }
+          // The snapshot listener will update state when data is created
         }
       } else {
         setLoading(false);
