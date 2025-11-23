@@ -466,20 +466,20 @@ const SeasonSetupWizard = ({
           <p className="text-cream-500/60">Loading available corps...</p>
         </div>
       ) : (
-        <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
+        <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2 relative">
           {['General Effect', 'Visual', 'Music'].map((category) => {
             const categoryCaptions = captions.filter(c => c.category === category);
             const categoryColor = category === 'General Effect' ? 'gold' : category === 'Visual' ? 'blue' : 'purple';
 
             return (
               <div key={category} className="space-y-2">
-                <div className="flex items-center gap-2 sticky top-0 bg-charcoal-900/90 py-2">
-                  <div className={`w-1 h-5 rounded ${
+                <div className="flex items-center gap-2 sticky top-0 bg-charcoal-900 z-10 py-2 -mx-2 px-2">
+                  <div className={`w-1 h-5 rounded flex-shrink-0 ${
                     categoryColor === 'gold' ? 'bg-gold-500' :
                     categoryColor === 'blue' ? 'bg-blue-500' :
                     'bg-purple-500'
                   }`} />
-                  <h3 className="font-semibold text-cream-100">{category}</h3>
+                  <h3 className="font-semibold text-cream-100 text-sm">{category}</h3>
                 </div>
 
                 {categoryCaptions.map((caption) => {
@@ -494,18 +494,18 @@ const SeasonSetupWizard = ({
                           : 'border-cream-500/10 bg-charcoal-900/30'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           {selected ? (
-                            <Check className="w-4 h-4 text-green-500" />
+                            <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-cream-500/30" />
+                            <div className="w-4 h-4 rounded-full border-2 border-cream-500/30 flex-shrink-0" />
                           )}
-                          <span className="font-medium text-cream-100">{caption.name}</span>
-                          <span className="text-xs text-cream-500/60">({caption.id})</span>
+                          <span className="font-medium text-cream-100 text-sm truncate">{caption.name}</span>
+                          <span className="text-xs text-cream-500/60 flex-shrink-0">({caption.id})</span>
                         </div>
                         {selected && (
-                          <span className="text-gold-500 font-bold">{selected.points} pts</span>
+                          <span className="text-gold-500 font-bold text-sm flex-shrink-0">{selected.points} pts</span>
                         )}
                       </div>
 
