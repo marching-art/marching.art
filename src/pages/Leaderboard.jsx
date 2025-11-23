@@ -192,7 +192,7 @@ const Leaderboard = () => {
       )}
 
       {/* Tab Navigation */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-6 -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
         <div className="flex bg-black-light rounded-lg p-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -200,14 +200,15 @@ const Leaderboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-gold text-black-dark'
                     : 'text-cream-light hover:text-cream hover:bg-black-light/50'
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.id === 'lifetime' ? 'Life' : tab.label}</span>
               </button>
             );
           })}
@@ -237,20 +238,20 @@ const Leaderboard = () => {
 
       {/* Lifetime View Selector */}
       {activeTab === 'lifetime' && (
-        <div className="flex justify-center mb-8">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex justify-center mb-8 -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
+          <div className="flex gap-2">
             {lifetimeViews.map((view) => (
               <button
                 key={view.id}
                 onClick={() => setLifetimeView(view.id)}
-                className={`px-4 py-2 rounded-lg transition-all ${
+                className={`px-3 md:px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
                   lifetimeView === view.id
                     ? 'bg-gold text-black-dark'
                     : 'bg-black-light text-cream-light hover:bg-black-light/70'
                 }`}
               >
-                <div className="text-sm font-semibold">{view.label}</div>
-                <div className="text-xs opacity-75">{view.desc}</div>
+                <div className="text-xs md:text-sm font-semibold">{view.label}</div>
+                <div className="text-xs opacity-75 hidden md:block">{view.desc}</div>
               </button>
             ))}
           </div>

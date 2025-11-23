@@ -159,18 +159,18 @@ const ProfileNew = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass rounded-2xl p-8"
       >
-        <div className="flex items-start gap-6 mb-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6">
           {/* Avatar */}
-          <div className="w-24 h-24 bg-gradient-gold rounded-2xl flex items-center justify-center flex-shrink-0">
-            <User className="w-12 h-12 text-charcoal-900" />
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-gold rounded-2xl flex items-center justify-center flex-shrink-0">
+            <User className="w-10 h-10 sm:w-12 sm:h-12 text-charcoal-900" />
           </div>
 
           {/* Info */}
-          <div className="flex-1">
+          <div className="flex-1 text-center sm:text-left w-full">
             {!editing ? (
               <>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-display font-bold text-gradient">
+                <div className="flex items-center justify-center sm:justify-start gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-display font-bold text-gradient">
                     {profile.displayName || 'Unknown Director'}
                   </h1>
                   {isOwnProfile && (
@@ -184,14 +184,14 @@ const ProfileNew = () => {
                 </div>
 
                 {profile.location && (
-                  <div className="flex items-center gap-2 text-cream-400 mb-3">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 text-cream-400 mb-3">
                     <MapPin className="w-4 h-4" />
                     <span>{profile.location}</span>
                   </div>
                 )}
 
                 {profile.favoriteCorps && (
-                  <div className="flex items-center gap-2 text-cream-400 mb-3">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 text-cream-400 mb-3">
                     <Heart className="w-4 h-4 text-red-400" />
                     <span>Favorite Corps: {profile.favoriteCorps}</span>
                   </div>
@@ -319,14 +319,14 @@ const ProfileNew = () => {
             <Award className="w-6 h-6 text-gold-400" />
             Achievements
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {profile.achievements.map((achievement, idx) => (
-              <div key={idx} className="bg-charcoal-800/50 border border-gold-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Trophy className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
+              <div key={idx} className="bg-charcoal-800/50 border border-gold-500/30 rounded-lg p-3 md:p-4">
+                <div className="flex items-start gap-2 md:gap-3">
+                  <Trophy className="w-4 h-4 md:w-5 md:h-5 text-gold-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-cream-100">{achievement.name}</p>
-                    <p className="text-sm text-cream-400 mt-1">{achievement.description}</p>
+                    <p className="font-semibold text-cream-100 text-sm md:text-base">{achievement.name}</p>
+                    <p className="text-xs md:text-sm text-cream-400 mt-1">{achievement.description}</p>
                   </div>
                 </div>
               </div>
@@ -382,18 +382,18 @@ const ProfileNew = () => {
           <Target className="w-6 h-6 text-green-400" />
           Career Stats
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-3 md:gap-6">
           <div className="text-center">
-            <p className="text-4xl font-bold text-gold-400 mb-2">{profile.stats?.championships || 0}</p>
-            <p className="text-cream-400">Championships</p>
+            <p className="text-2xl md:text-4xl font-bold text-gold-400 mb-1 md:mb-2">{profile.stats?.championships || 0}</p>
+            <p className="text-cream-400 text-xs md:text-base">Championships</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl font-bold text-blue-400 mb-2">{profile.stats?.topTenFinishes || 0}</p>
-            <p className="text-cream-400">Top 10 Finishes</p>
+            <p className="text-2xl md:text-4xl font-bold text-blue-400 mb-1 md:mb-2">{profile.stats?.topTenFinishes || 0}</p>
+            <p className="text-cream-400 text-xs md:text-base">Top 10</p>
           </div>
           <div className="text-center">
-            <p className="text-4xl font-bold text-purple-400 mb-2">{profile.stats?.seasonsPlayed || 0}</p>
-            <p className="text-cream-400">Seasons Played</p>
+            <p className="text-2xl md:text-4xl font-bold text-purple-400 mb-1 md:mb-2">{profile.stats?.seasonsPlayed || 0}</p>
+            <p className="text-cream-400 text-xs md:text-base">Seasons</p>
           </div>
         </div>
       </motion.div>

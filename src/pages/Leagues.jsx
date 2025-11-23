@@ -174,18 +174,18 @@ const Leagues = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl" />
         <div className="relative p-8 glass rounded-2xl">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-display font-bold text-gradient mb-2">
+              <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
                 Fantasy Leagues
               </h1>
-              <p className="text-cream-300">
+              <p className="text-cream-300 text-sm sm:text-base">
                 Compete head-to-head with other directors in weekly matchups
               </p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Create League
@@ -198,25 +198,27 @@ const Leagues = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('my-leagues')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'my-leagues'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <Trophy className="w-5 h-5" />
-          My Leagues ({myLeagues.length})
+          <Trophy className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">My Leagues</span>
+          <span className="sm:hidden">My</span>
+          <span className="text-xs md:text-sm">({myLeagues.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('discover')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'discover'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <Search className="w-5 h-5" />
-          Discover Leagues
+          <Search className="w-4 h-4 md:w-5 md:h-5" />
+          Discover
         </button>
       </div>
 
