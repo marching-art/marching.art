@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
   { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
@@ -222,7 +223,8 @@ const StaffMarketplace = () => {
       {/* Purchase Confirmation Modal */}
       <AnimatePresence>
         {selectedStaff && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <Portal>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -319,6 +321,7 @@ const StaffMarketplace = () => {
               </div>
             </motion.div>
           </div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>

@@ -5,6 +5,7 @@ import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, seasonId, currentSelections = [] }) => {
   const [availableShows, setAvailableShows] = useState([]);
@@ -129,21 +130,22 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-3xl font-display font-bold text-gradient mb-2">
@@ -339,9 +341,10 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
               )}
             </button>
           </div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
