@@ -95,7 +95,7 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
     };
 
     // Set activeSeasonId when registering first corps for this season
-    if (!profileData.activeSeasonId && seasonDoc.exists()) {
+    if (!profileData.activeSeasonId && seasonDoc.exists) {
       const seasonData = seasonDoc.data();
       if (seasonData.seasonUid) {
         updateData.activeSeasonId = seasonData.seasonUid;

@@ -20,7 +20,7 @@ exports.processDailyLiveScores = onSchedule({
 
   const seasonDoc = await db.doc("game-settings/season").get();
   
-  if (!seasonDoc.exists() || seasonDoc.data().status !== "live-season") {
+  if (!seasonDoc.exists || seasonDoc.data().status !== "live-season") {
     logger.info("No active live season found. Exiting processor.");
     return;
   }
@@ -48,7 +48,7 @@ exports.generateWeeklyMatchups = onSchedule({
   logger.info("Starting class-based weekly matchup generation...");
   const db = getFirestore();
   const seasonDoc = await db.doc("game-settings/season").get();
-  if (!seasonDoc.exists()) {
+  if (!seasonDoc.exists) {
     logger.error("No active season found. Aborting.");
     return;
   }
@@ -78,7 +78,7 @@ exports.generateWeeklyMatchups = onSchedule({
 
     for (const corpsClass of corpsClasses) {
       const eligibleMembers = profileDocs
-        .filter((pDoc) => pDoc.exists() && pDoc.data().corps && pDoc.data().corps[corpsClass])
+        .filter((pDoc) => pDoc.exists && pDoc.data().corps && pDoc.data().corps[corpsClass])
         .map((pDoc) => pDoc.ref.parent.parent.id); 
 
       if (eligibleMembers.length < 2) continue;
