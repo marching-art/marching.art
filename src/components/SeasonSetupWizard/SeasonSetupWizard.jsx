@@ -51,6 +51,7 @@ const SeasonSetupWizard = ({
   const [availableShows, setAvailableShows] = useState([]);
   const [selectedShows, setSelectedShows] = useState([]);
   const [loadingShows, setLoadingShows] = useState(true);
+  const [selectedDay, setSelectedDay] = useState(1);
 
   const currentCorpsClass = corpsNeedingSetup[currentCorpsIndex];
   const totalCorps = corpsNeedingSetup.length;
@@ -579,156 +580,195 @@ const SeasonSetupWizard = ({
   );
 
   // Render show selection
-  const renderShowSelection = () => (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      className="w-full max-w-4xl mx-auto px-2"
-    >
-      {/* Progress */}
-      <div className="mb-4 md:mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs md:text-sm text-cream-500/60">
-            Corps {currentCorpsIndex + 1} of {totalCorps} - Shows
-          </span>
-          <span className="text-xs md:text-sm font-semibold text-gold-500">
-            {getCorpsClassName(currentCorpsClass)}
-          </span>
-        </div>
-        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
-          <motion.div
-            animate={{ width: `${((currentCorpsIndex + 0.75) / totalCorps) * 100}%` }}
-            className="h-full bg-gradient-gold"
-          />
-        </div>
-      </div>
+  const renderShowSelection = () => {
+    // Group shows by day
+    const showsByDay = {};
+    availableShows.forEach(show => {
+      const day = show.day || 1;
+      if (!showsByDay[day]) showsByDay[day] = [];
+      showsByDay[day].push(show);
+    });
 
-      {/* Header */}
-      <div className="mb-4 md:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient mb-1 md:mb-2">
-          Select Week 1 Shows
-        </h2>
-        <p className="text-sm md:text-base text-cream-300">
-          Choose up to 4 shows for your {getCorpsClassName(currentCorpsClass)} to compete in.
-        </p>
-      </div>
+    const availableDays = Object.keys(showsByDay).map(Number).sort((a, b) => a - b);
+    const currentDayShows = showsByDay[selectedDay] || [];
 
-      {/* Selection Counter */}
-      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm md:text-base font-semibold text-cream-100">Shows Selected</h3>
-            <p className="text-xs md:text-sm text-cream-500/60">{selectedShows.length} of 4</p>
+    // Count selections per day
+    const selectionsPerDay = {};
+    selectedShows.forEach(show => {
+      const day = show.day || 1;
+      selectionsPerDay[day] = (selectionsPerDay[day] || 0) + 1;
+    });
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -50 }}
+        className="w-full max-w-4xl mx-auto px-2"
+      >
+        {/* Progress */}
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs md:text-sm text-cream-500/60">
+              Corps {currentCorpsIndex + 1} of {totalCorps} - Shows
+            </span>
+            <span className="text-xs md:text-sm font-semibold text-gold-500">
+              {getCorpsClassName(currentCorpsClass)}
+            </span>
           </div>
-          <div className={`text-xl md:text-3xl font-bold ${
+          <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
+            <motion.div
+              animate={{ width: `${((currentCorpsIndex + 0.75) / totalCorps) * 100}%` }}
+              className="h-full bg-gradient-gold"
+            />
+          </div>
+        </div>
+
+        {/* Header with selection count */}
+        <div className="mb-4 md:mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient mb-1">
+              Select Week 1 Shows
+            </h2>
+            <p className="text-xs md:text-sm text-cream-300">
+              Choose up to 4 shows for {getCorpsClassName(currentCorpsClass)}
+            </p>
+          </div>
+          <div className={`text-xl md:text-2xl font-bold ${
             selectedShows.length === 0 ? 'text-cream-500/40' :
             selectedShows.length >= 4 ? 'text-gold-500' :
             'text-blue-500'
           }`}>
-            {selectedShows.length} / 4
+            {selectedShows.length}/4
           </div>
         </div>
-        <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
-          <motion.div
-            animate={{ width: `${(selectedShows.length / 4) * 100}%` }}
-            className="h-full bg-gradient-gold"
-          />
-        </div>
-      </div>
 
-      {/* Available Shows */}
-      {loadingShows ? (
-        <div className="text-center py-8">
-          <div className="animate-spin w-8 h-8 border-3 border-gold-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-cream-500/60">Loading shows...</p>
-        </div>
-      ) : availableShows.length === 0 ? (
-        <div className="text-center py-8">
-          <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-          <p className="text-cream-500/60">No shows available for Week 1</p>
-        </div>
-      ) : (
-        <div className="space-y-2 md:space-y-3 mb-4 md:mb-6 max-h-[300px] md:max-h-[350px] overflow-y-auto pr-2">
-          {availableShows.map((show, index) => {
-            const isSelected = selectedShows.some(
-              s => s.eventName === (show.eventName || show.name) && s.date === show.date
-            );
+        {/* Day Navigation */}
+        {!loadingShows && availableDays.length > 0 && (
+          <div className="mb-4">
+            <div className="flex gap-1 overflow-x-auto pb-2">
+              {availableDays.map(day => {
+                const daySelections = selectionsPerDay[day] || 0;
+                const isActive = selectedDay === day;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setSelectedDay(day)}
+                    className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-gold-500 text-charcoal-900'
+                        : 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
+                    }`}
+                  >
+                    Day {day}
+                    {daySelections > 0 && (
+                      <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
+                        isActive ? 'bg-charcoal-900/30 text-charcoal-900' : 'bg-gold-500/20 text-gold-500'
+                      }`}>
+                        {daySelections}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => toggleShow(show)}
-                className={`p-3 md:p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  isSelected
-                    ? 'border-gold-500 bg-gold-500/10'
-                    : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-cream-100 text-sm md:text-base truncate">
+        {/* Shows for selected day */}
+        {loadingShows ? (
+          <div className="text-center py-8">
+            <div className="animate-spin w-8 h-8 border-3 border-gold-500 border-t-transparent rounded-full mx-auto mb-3" />
+            <p className="text-cream-500/60">Loading shows...</p>
+          </div>
+        ) : availableShows.length === 0 ? (
+          <div className="text-center py-8">
+            <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
+            <p className="text-cream-500/60">No shows available for Week 1</p>
+          </div>
+        ) : currentDayShows.length === 0 ? (
+          <div className="text-center py-8">
+            <Calendar className="w-10 h-10 text-cream-500/40 mx-auto mb-2" />
+            <p className="text-sm text-cream-500/60">No shows on Day {selectedDay}</p>
+          </div>
+        ) : (
+          <div className="space-y-2 mb-4">
+            {currentDayShows.map((show, index) => {
+              const isSelected = selectedShows.some(
+                s => s.eventName === (show.eventName || show.name) && s.date === show.date
+              );
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  onClick={() => toggleShow(show)}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-gold-500 bg-gold-500/10'
+                      : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-cream-100 text-sm truncate">
                         {show.eventName || show.name}
                       </h4>
-                      {isSelected && <Check className="w-3 h-3 md:w-4 md:h-4 text-gold-500 flex-shrink-0" />}
+                      {show.location && (
+                        <p className="text-xs text-cream-500/60 truncate">{show.location}</p>
+                      )}
                     </div>
-                    <div className="text-xs md:text-sm text-cream-500/60 truncate">
-                      {show.location && <span>{show.location}</span>}
-                      {show.day && <span> • Day {show.day}</span>}
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      isSelected
+                        ? 'border-gold-500 bg-gold-500'
+                        : 'border-cream-500/30'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-charcoal-900" />}
                     </div>
                   </div>
-                  <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    isSelected
-                      ? 'border-gold-500 bg-gold-500'
-                      : 'border-cream-500/30'
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 md:w-4 md:h-4 text-charcoal-900" />}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Actions */}
-      <div className="flex gap-2 md:gap-3">
-        <button
-          onClick={() => setStep('corps-setup')}
-          className="btn-ghost text-xs md:text-sm px-2 md:px-4"
-        >
-          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-          Back
-        </button>
-        <button
-          onClick={saveShowsAndContinue}
-          disabled={selectedShows.length === 0 || saving}
-          className="btn-primary flex-1 text-xs md:text-sm py-2 md:py-3"
-        >
-          {saving ? (
-            <>
-              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
-              Saving...
-            </>
-          ) : currentCorpsIndex < totalCorps - 1 ? (
-            <>
-              Save & Next Corps
-              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
-            </>
-          ) : (
-            <>
-              Complete Setup
-              <Check className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
-            </>
-          )}
-        </button>
-      </div>
-    </motion.div>
-  );
+        {/* Actions */}
+        <div className="flex gap-2 md:gap-3">
+          <button
+            onClick={() => setStep('corps-setup')}
+            className="btn-ghost text-xs md:text-sm px-2 md:px-4"
+          >
+            <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+            Back
+          </button>
+          <button
+            onClick={saveShowsAndContinue}
+            disabled={selectedShows.length === 0 || saving}
+            className="btn-primary flex-1 text-xs md:text-sm py-2 md:py-3"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                Saving...
+              </>
+            ) : currentCorpsIndex < totalCorps - 1 ? (
+              <>
+                Save & Next Corps
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
+              </>
+            ) : (
+              <>
+                Complete Setup
+                <Check className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
 
   // Render completion screen
   const renderComplete = () => (
