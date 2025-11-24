@@ -299,22 +299,22 @@ const SeasonSetupWizard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="text-center max-w-2xl mx-auto"
+      className="text-center max-w-2xl mx-auto px-2"
     >
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="w-24 h-24 mx-auto mb-6 bg-gradient-gold rounded-full flex items-center justify-center"
+        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-gold rounded-full flex items-center justify-center"
       >
-        <Rocket className="w-12 h-12 text-charcoal-900" />
+        <Rocket className="w-8 h-8 md:w-12 md:h-12 text-charcoal-900" />
       </motion.div>
 
       <motion.h1
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="text-4xl md:text-5xl font-display font-bold text-gradient mb-4"
+        className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gradient mb-2 md:mb-4"
       >
         Welcome to {formatSeasonName(seasonData?.name)}!
       </motion.h1>
@@ -323,7 +323,7 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-xl text-cream-300 mb-8"
+        className="text-base md:text-xl text-cream-300 mb-6 md:mb-8"
       >
         A new season means fresh opportunities for glory!
         Let's get your corps ready to compete.
@@ -333,22 +333,22 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="grid md:grid-cols-3 gap-4 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 md:mb-8"
       >
-        <div className="glass rounded-xl p-4">
-          <Star className="w-8 h-8 text-gold-500 mx-auto mb-2" />
-          <h3 className="font-semibold text-cream-100">Build Your Lineup</h3>
-          <p className="text-sm text-cream-500/60">Select DCI corps for each caption</p>
+        <div className="glass rounded-xl p-3 md:p-4">
+          <Star className="w-6 h-6 md:w-8 md:h-8 text-gold-500 mx-auto mb-1 md:mb-2" />
+          <h3 className="font-semibold text-cream-100 text-sm md:text-base">Build Your Lineup</h3>
+          <p className="text-xs md:text-sm text-cream-500/60">Select DCI corps for each caption</p>
         </div>
-        <div className="glass rounded-xl p-4">
-          <Calendar className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-          <h3 className="font-semibold text-cream-100">Pick Your Shows</h3>
-          <p className="text-sm text-cream-500/60">Choose events to compete in</p>
+        <div className="glass rounded-xl p-3 md:p-4">
+          <Calendar className="w-6 h-6 md:w-8 md:h-8 text-blue-500 mx-auto mb-1 md:mb-2" />
+          <h3 className="font-semibold text-cream-100 text-sm md:text-base">Pick Your Shows</h3>
+          <p className="text-xs md:text-sm text-cream-500/60">Choose events to compete in</p>
         </div>
-        <div className="glass rounded-xl p-4">
-          <Trophy className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-          <h3 className="font-semibold text-cream-100">Chase Glory</h3>
-          <p className="text-sm text-cream-500/60">Climb the leaderboards</p>
+        <div className="glass rounded-xl p-3 md:p-4">
+          <Trophy className="w-6 h-6 md:w-8 md:h-8 text-purple-500 mx-auto mb-1 md:mb-2" />
+          <h3 className="font-semibold text-cream-100 text-sm md:text-base">Chase Glory</h3>
+          <p className="text-xs md:text-sm text-cream-500/60">Climb the leaderboards</p>
         </div>
       </motion.div>
 
@@ -356,14 +356,14 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="bg-charcoal-900/50 rounded-xl p-4 mb-8"
+        className="bg-charcoal-900/50 rounded-xl p-3 md:p-4 mb-6 md:mb-8"
       >
-        <h3 className="font-semibold text-cream-100 mb-2">
+        <h3 className="font-semibold text-cream-100 mb-2 text-sm md:text-base">
           {totalCorps} Corps to Set Up
         </h3>
         <div className="flex flex-wrap justify-center gap-2">
           {corpsNeedingSetup.map((classId) => (
-            <span key={classId} className="badge badge-ghost text-sm">
+            <span key={classId} className="badge badge-ghost text-xs md:text-sm">
               {getCorpsClassName(classId)}
             </span>
           ))}
@@ -375,11 +375,11 @@ const SeasonSetupWizard = ({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
         onClick={() => setStep('corps-setup')}
-        className="btn-primary text-lg px-8 py-4"
+        className="btn-primary text-sm md:text-lg px-6 md:px-8 py-3 md:py-4 w-full sm:w-auto"
       >
-        <Sparkles className="w-5 h-5 mr-2" />
+        <Sparkles className="w-4 h-4 md:w-5 md:h-5 mr-2" />
         Let's Get Started
-        <ChevronRight className="w-5 h-5 ml-2" />
+        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
       </motion.button>
     </motion.div>
   );
@@ -390,19 +390,19 @@ const SeasonSetupWizard = ({
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      className="w-full max-w-5xl mx-auto"
+      className="w-full max-w-5xl mx-auto px-2"
     >
       {/* Progress indicator */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-cream-500/60">
+          <span className="text-xs md:text-sm text-cream-500/60">
             Corps {currentCorpsIndex + 1} of {totalCorps}
           </span>
-          <span className="text-sm font-semibold text-gold-500">
+          <span className="text-xs md:text-sm font-semibold text-gold-500">
             {getCorpsClassName(currentCorpsClass)}
           </span>
         </div>
-        <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${((currentCorpsIndex + 0.5) / totalCorps) * 100}%` }}
@@ -412,28 +412,28 @@ const SeasonSetupWizard = ({
       </div>
 
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-gradient mb-2">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient mb-1 md:mb-2">
           Build Your {getCorpsClassName(currentCorpsClass)} Lineup
         </h2>
-        <p className="text-cream-300">
+        <p className="text-sm md:text-base text-cream-300">
           Select one corps for each caption within your {pointLimit}-point budget.
         </p>
         {currentCorpsData && (
-          <p className="text-sm text-cream-500/60 mt-1">
+          <p className="text-xs md:text-sm text-cream-500/60 mt-1 truncate">
             Corps: {currentCorpsData.corpsName} from {currentCorpsData.location}
           </p>
         )}
       </div>
 
       {/* Point Budget */}
-      <div className="mb-6 p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
-        <div className="flex items-center justify-between mb-3">
+      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
+        <div className="flex items-center justify-between mb-2 md:mb-3">
           <div>
-            <h3 className="text-lg font-semibold text-cream-100">Point Budget</h3>
-            <p className="text-sm text-cream-500/60">{pointLimit} points available</p>
+            <h3 className="text-sm md:text-lg font-semibold text-cream-100">Point Budget</h3>
+            <p className="text-xs md:text-sm text-cream-500/60">{pointLimit} points available</p>
           </div>
-          <div className={`text-3xl font-bold ${
+          <div className={`text-xl md:text-3xl font-bold ${
             isOverLimit ? 'text-red-500' :
             remainingPoints < 10 ? 'text-yellow-500' :
             'text-gold-500'
@@ -441,7 +441,7 @@ const SeasonSetupWizard = ({
             {totalPoints} / {pointLimit}
           </div>
         </div>
-        <div className="h-3 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-2 md:h-3 bg-charcoal-800 rounded-full overflow-hidden">
           <motion.div
             animate={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }}
             className={`h-full ${
@@ -452,8 +452,8 @@ const SeasonSetupWizard = ({
           />
         </div>
         {isOverLimit && (
-          <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-            <AlertCircle className="w-4 h-4" />
+          <p className="mt-2 text-xs md:text-sm text-red-500 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
             Over budget! Remove some high-point corps.
           </p>
         )}
@@ -548,28 +548,29 @@ const SeasonSetupWizard = ({
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-2 md:gap-3">
         <button
           onClick={() => setStep('welcome')}
-          className="btn-ghost"
+          className="btn-ghost text-xs md:text-sm px-2 md:px-4"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" />
+          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
           Back
         </button>
         <button
           onClick={saveLineupAndContinue}
           disabled={!isLineupComplete || isOverLimit || saving}
-          className="btn-primary flex-1"
+          className="btn-primary flex-1 text-xs md:text-sm py-2 md:py-3"
         >
           {saving ? (
             <>
-              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
               Saving...
             </>
           ) : (
             <>
-              Save Lineup & Select Shows
-              <ChevronRight className="w-5 h-5 ml-2" />
+              <span className="hidden sm:inline">Save Lineup & Select Shows</span>
+              <span className="sm:hidden">Save & Continue</span>
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
             </>
           )}
         </button>
@@ -583,19 +584,19 @@ const SeasonSetupWizard = ({
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-4xl mx-auto px-2"
     >
       {/* Progress */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-cream-500/60">
-            Corps {currentCorpsIndex + 1} of {totalCorps} - Show Selection
+          <span className="text-xs md:text-sm text-cream-500/60">
+            Corps {currentCorpsIndex + 1} of {totalCorps} - Shows
           </span>
-          <span className="text-sm font-semibold text-gold-500">
+          <span className="text-xs md:text-sm font-semibold text-gold-500">
             {getCorpsClassName(currentCorpsClass)}
           </span>
         </div>
-        <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
           <motion.div
             animate={{ width: `${((currentCorpsIndex + 0.75) / totalCorps) * 100}%` }}
             className="h-full bg-gradient-gold"
@@ -604,23 +605,23 @@ const SeasonSetupWizard = ({
       </div>
 
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-gradient mb-2">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient mb-1 md:mb-2">
           Select Week 1 Shows
         </h2>
-        <p className="text-cream-300">
-          Choose up to 4 shows for your {getCorpsClassName(currentCorpsClass)} to compete in this week.
+        <p className="text-sm md:text-base text-cream-300">
+          Choose up to 4 shows for your {getCorpsClassName(currentCorpsClass)} to compete in.
         </p>
       </div>
 
       {/* Selection Counter */}
-      <div className="mb-6 p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
+      <div className="mb-4 md:mb-6 p-3 md:p-4 bg-charcoal-900/50 rounded-xl border border-cream-500/10">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-cream-100">Shows Selected</h3>
-            <p className="text-sm text-cream-500/60">{selectedShows.length} of 4</p>
+            <h3 className="text-sm md:text-base font-semibold text-cream-100">Shows Selected</h3>
+            <p className="text-xs md:text-sm text-cream-500/60">{selectedShows.length} of 4</p>
           </div>
-          <div className={`text-3xl font-bold ${
+          <div className={`text-xl md:text-3xl font-bold ${
             selectedShows.length === 0 ? 'text-cream-500/40' :
             selectedShows.length >= 4 ? 'text-gold-500' :
             'text-blue-500'
@@ -628,7 +629,7 @@ const SeasonSetupWizard = ({
             {selectedShows.length} / 4
           </div>
         </div>
-        <div className="mt-3 h-2 bg-charcoal-800 rounded-full overflow-hidden">
+        <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-charcoal-800 rounded-full overflow-hidden">
           <motion.div
             animate={{ width: `${(selectedShows.length / 4) * 100}%` }}
             className="h-full bg-gradient-gold"
@@ -648,7 +649,7 @@ const SeasonSetupWizard = ({
           <p className="text-cream-500/60">No shows available for Week 1</p>
         </div>
       ) : (
-        <div className="space-y-3 mb-6 max-h-[350px] overflow-y-auto pr-2">
+        <div className="space-y-2 md:space-y-3 mb-4 md:mb-6 max-h-[300px] md:max-h-[350px] overflow-y-auto pr-2">
           {availableShows.map((show, index) => {
             const isSelected = selectedShows.some(
               s => s.eventName === (show.eventName || show.name) && s.date === show.date
@@ -661,31 +662,31 @@ const SeasonSetupWizard = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 onClick={() => toggleShow(show)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-3 md:p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-gold-500 bg-gold-500/10'
                     : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-cream-100">
+                      <h4 className="font-semibold text-cream-100 text-sm md:text-base truncate">
                         {show.eventName || show.name}
                       </h4>
-                      {isSelected && <Check className="w-4 h-4 text-gold-500" />}
+                      {isSelected && <Check className="w-3 h-3 md:w-4 md:h-4 text-gold-500 flex-shrink-0" />}
                     </div>
-                    <div className="text-sm text-cream-500/60">
+                    <div className="text-xs md:text-sm text-cream-500/60 truncate">
                       {show.location && <span>{show.location}</span>}
                       {show.day && <span> • Day {show.day}</span>}
                     </div>
                   </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                  <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                     isSelected
                       ? 'border-gold-500 bg-gold-500'
                       : 'border-cream-500/30'
                   }`}>
-                    {isSelected && <Check className="w-4 h-4 text-charcoal-900" />}
+                    {isSelected && <Check className="w-3 h-3 md:w-4 md:h-4 text-charcoal-900" />}
                   </div>
                 </div>
               </motion.div>
@@ -695,33 +696,33 @@ const SeasonSetupWizard = ({
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-2 md:gap-3">
         <button
           onClick={() => setStep('corps-setup')}
-          className="btn-ghost"
+          className="btn-ghost text-xs md:text-sm px-2 md:px-4"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" />
+          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1" />
           Back
         </button>
         <button
           onClick={saveShowsAndContinue}
           disabled={selectedShows.length === 0 || saving}
-          className="btn-primary flex-1"
+          className="btn-primary flex-1 text-xs md:text-sm py-2 md:py-3"
         >
           {saving ? (
             <>
-              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+              <div className="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
               Saving...
             </>
           ) : currentCorpsIndex < totalCorps - 1 ? (
             <>
               Save & Next Corps
-              <ChevronRight className="w-5 h-5 ml-2" />
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
             </>
           ) : (
             <>
               Complete Setup
-              <Check className="w-5 h-5 ml-2" />
+              <Check className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
             </>
           )}
         </button>
@@ -734,22 +735,22 @@ const SeasonSetupWizard = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="text-center max-w-2xl mx-auto"
+      className="text-center max-w-2xl mx-auto px-2"
     >
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-        className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gold-500 to-yellow-400 rounded-full flex items-center justify-center"
+        className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gradient-to-br from-gold-500 to-yellow-400 rounded-full flex items-center justify-center"
       >
-        <PartyPopper className="w-12 h-12 text-charcoal-900" />
+        <PartyPopper className="w-8 h-8 md:w-12 md:h-12 text-charcoal-900" />
       </motion.div>
 
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="text-4xl md:text-5xl font-display font-bold text-gradient mb-4"
+        className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gradient mb-2 md:mb-4"
       >
         You're All Set!
       </motion.h1>
@@ -758,7 +759,7 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-xl text-cream-300 mb-8"
+        className="text-base md:text-xl text-cream-300 mb-6 md:mb-8"
       >
         Your corps are ready to compete in {formatSeasonName(seasonData?.name)}!
       </motion.p>
@@ -767,15 +768,15 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="grid md:grid-cols-2 gap-4 mb-8"
+        className="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8"
       >
-        <div className="glass rounded-xl p-4">
-          <div className="text-3xl font-bold text-gold-500 mb-1">{totalCorps}</div>
-          <div className="text-cream-500/60">Corps Ready</div>
+        <div className="glass rounded-xl p-3 md:p-4">
+          <div className="text-xl md:text-3xl font-bold text-gold-500 mb-1">{totalCorps}</div>
+          <div className="text-xs md:text-base text-cream-500/60">Corps Ready</div>
         </div>
-        <div className="glass rounded-xl p-4">
-          <div className="text-3xl font-bold text-blue-500 mb-1">Week 1</div>
-          <div className="text-cream-500/60">Shows Selected</div>
+        <div className="glass rounded-xl p-3 md:p-4">
+          <div className="text-xl md:text-3xl font-bold text-blue-500 mb-1">Week 1</div>
+          <div className="text-xs md:text-base text-cream-500/60">Shows Selected</div>
         </div>
       </motion.div>
 
@@ -783,10 +784,10 @@ const SeasonSetupWizard = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-8"
+        className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 md:p-4 mb-6 md:mb-8"
       >
-        <Info className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-        <p className="text-sm text-cream-300">
+        <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mx-auto mb-2" />
+        <p className="text-xs md:text-sm text-cream-300">
           Don't forget to rehearse your corps regularly to boost performance!
           You can also select shows for future weeks from your dashboard.
         </p>
@@ -797,11 +798,11 @@ const SeasonSetupWizard = ({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7 }}
         onClick={onComplete}
-        className="btn-primary text-lg px-8 py-4"
+        className="btn-primary text-sm md:text-lg px-6 md:px-8 py-3 md:py-4 w-full sm:w-auto"
       >
-        <Zap className="w-5 h-5 mr-2" />
+        <Zap className="w-4 h-4 md:w-5 md:h-5 mr-2" />
         Go to Dashboard
-        <ChevronRight className="w-5 h-5 ml-2" />
+        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-2" />
       </motion.button>
     </motion.div>
   );
@@ -814,7 +815,7 @@ const SeasonSetupWizard = ({
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-charcoal-950 z-50 overflow-y-auto"
       >
-        <div className="min-h-screen flex items-center justify-center p-4 py-8">
+        <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 py-4 sm:py-8">
           <AnimatePresence mode="wait">
             {step === 'welcome' && renderWelcome()}
             {step === 'corps-setup' && renderCorpsSetup()}
