@@ -215,20 +215,40 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // Detect corps that need season setup (no lineup set)
+  // Detect corps that need season setup (no lineup set) or corps verification
   useEffect(() => {
-    if (profile && corps && seasonData && !loading && !seasonLoading) {
+    if (profile && seasonData && !loading && !seasonLoading) {
       const needSetup = [];
+      const hasCorps = corps && Object.keys(corps).length > 0;
+      const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
+      const unlockedClasses = profile.unlockedClasses || ['soundSport'];
 
       // Check each corps for missing lineup
-      Object.entries(corps).forEach(([classId, corpsData]) => {
-        const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
-        if (!hasLineup) {
-          needSetup.push(classId);
-        }
+      if (corps) {
+        Object.entries(corps).forEach(([classId, corpsData]) => {
+          const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+          if (!hasLineup && corpsData.corpsName) {
+            needSetup.push(classId);
+          }
+        });
+      }
+
+      // Check if user has eligible classes they haven't registered for
+      const hasEligibleNewClasses = unlockedClasses.some(classId => {
+        return !corps?.[classId]?.corpsName;
       });
 
-      if (needSetup.length > 0) {
+      // Show wizard if:
+      // 1. Any corps needs lineup setup
+      // 2. User has existing corps that need verification (at season start when no lineups)
+      // 3. User has retired corps they might want to unretire
+      // 4. User has unlocked classes without corps
+      const shouldShowWizard = needSetup.length > 0 ||
+        (hasCorps && needSetup.length > 0) ||
+        (hasRetiredCorps && !hasCorps) ||
+        (hasEligibleNewClasses && !hasCorps && hasRetiredCorps);
+
+      if (shouldShowWizard) {
         setCorpsNeedingSetup(needSetup);
         setShowSeasonSetupWizard(true);
       } else {
@@ -903,12 +923,15 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Season Setup Wizard - Shows when corps need lineup setup */}
-      {showSeasonSetupWizard && corpsNeedingSetup.length > 0 && seasonData && (
+      {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
           onComplete={handleSeasonSetupComplete}
           profile={profile}
           seasonData={seasonData}
           corpsNeedingSetup={corpsNeedingSetup}
+          existingCorps={corps || {}}
+          retiredCorps={profile?.retiredCorps || []}
+          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
         />
       )}
 
