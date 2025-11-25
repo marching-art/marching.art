@@ -1,45 +1,94 @@
 // src/pages/Scores.jsx
+// Unified hub for scores, rankings, and statistics
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
   Calendar,
   TrendingUp,
-  BarChart3,
   Search,
-  Filter,
   Clock,
   Award,
-  Target,
   Medal,
   ChevronRight,
   Star,
   Music,
   Eye,
-  Zap
+  Users,
+  Crown,
+  ChevronDown,
+  BarChart3
 } from 'lucide-react';
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, dataNamespace } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
+import { useAuth } from '../App';
+import { useUserStore } from '../store/userStore';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
+import toast from 'react-hot-toast';
 
 const Scores = () => {
-  const [activeTab, setActiveTab] = useState('live');
+  const { user } = useAuth();
+  const { loggedInProfile } = useUserStore();
+
+  // Main tab state
+  const [activeTab, setActiveTab] = useState('latest');
   const [loading, setLoading] = useState(true);
+
+  // Scores data
   const [liveScores, setLiveScores] = useState([]);
   const [recentShows, setRecentShows] = useState([]);
-  const [historicalShows, setHistoricalShows] = useState([]);
   const [selectedShow, setSelectedShow] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterClass, setFilterClass] = useState('all');
-  const [filterDate, setFilterDate] = useState('');
-  const [selectedCorps, setSelectedCorps] = useState([]);
   const [stats, setStats] = useState({ showsToday: 0, recentShows: 0, topScore: '-', corpsActive: 0 });
   const [currentSeason, setCurrentSeason] = useState(null);
 
+  // Rankings/Leaderboard data
+  const [leaderboardData, setLeaderboardData] = useState({
+    overall: [],
+    weekly: [],
+    monthly: [],
+    lifetime: []
+  });
+  const [rankingsTab, setRankingsTab] = useState('overall');
+  const [activeClass, setActiveClass] = useState('world');
+  const [userRank, setUserRank] = useState(null);
+  const [lifetimeView, setLifetimeView] = useState('totalPoints');
+
   // Get current date for live scores
   const today = new Date().toISOString().split('T')[0];
+
+  // Main tabs
+  const mainTabs = [
+    { id: 'latest', name: 'Latest Scores', icon: Clock, description: 'Recent shows' },
+    { id: 'rankings', name: 'Rankings', icon: Trophy, description: 'Leaderboards' },
+    { id: 'stats', name: 'Stats', icon: BarChart3, description: 'Lifetime' },
+    { id: 'soundsport', name: 'SoundSport', icon: Music, description: 'Ratings' }
+  ];
+
+  // Rankings sub-tabs
+  const rankingsTabs = [
+    { id: 'overall', label: 'Overall', icon: Trophy },
+    { id: 'weekly', label: 'Weekly', icon: TrendingUp },
+    { id: 'monthly', label: 'Monthly', icon: Star }
+  ];
+
+  // Class filters
+  const classes = [
+    { id: 'world', label: 'World Class' },
+    { id: 'open', label: 'Open Class' },
+    { id: 'a', label: 'A Class' },
+    { id: 'soundsport', label: 'SoundSport' }
+  ];
+
+  // Lifetime views
+  const lifetimeViews = [
+    { id: 'totalPoints', label: 'Total Points', desc: 'All-time points' },
+    { id: 'totalSeasons', label: 'Seasons', desc: 'Seasons played' },
+    { id: 'totalShows', label: 'Shows', desc: 'Shows attended' },
+    { id: 'bestSeasonScore', label: 'Best Season', desc: 'Highest season score' },
+    { id: 'leagueChampionships', label: 'Championships', desc: 'League titles won' }
+  ];
 
   // Fetch current season info
   useEffect(() => {
@@ -61,10 +110,11 @@ const Scores = () => {
     fetchCurrentSeason();
   }, []);
 
-  // Fetch live scores from fantasy_recaps
+  // Fetch scores data (live + recent)
   useEffect(() => {
-    const fetchLiveScores = async () => {
+    const fetchScoresData = async () => {
       if (!currentSeason) return;
+      if (activeTab !== 'latest' && activeTab !== 'soundsport') return;
 
       try {
         setLoading(true);
@@ -73,6 +123,8 @@ const Scores = () => {
 
         if (recapDoc.exists()) {
           const data = recapDoc.data();
+
+          // Get today's shows (live)
           const todayRecaps = data.recaps?.filter(recap => {
             const recapDate = recap.date?.toDate?.() || new Date(recap.date);
             const recapDateStr = recapDate.toISOString().split('T')[0];
@@ -96,32 +148,8 @@ const Scores = () => {
           );
 
           setLiveScores(todayShows);
-          setStats(prev => ({ ...prev, showsToday: todayShows.length }));
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching live scores:', error);
-        setLoading(false);
-      }
-    };
 
-    if (activeTab === 'live' && currentSeason) {
-      fetchLiveScores();
-    }
-  }, [activeTab, currentSeason, today]);
-
-  // Fetch recent shows (past 7 days)
-  useEffect(() => {
-    const fetchRecentShows = async () => {
-      if (!currentSeason) return;
-
-      try {
-        setLoading(true);
-        const recapRef = doc(db, 'fantasy_recaps', currentSeason.id);
-        const recapDoc = await getDoc(recapRef);
-
-        if (recapDoc.exists()) {
-          const data = recapDoc.data();
+          // Get recent shows (past 7 days)
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -149,282 +177,143 @@ const Scores = () => {
 
           setRecentShows(shows);
 
-          // Calculate top score
+          // Calculate stats
           const allScores = shows.flatMap(show => show.scores.map(s => s.score));
           const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
-
-          // Count unique corps
           const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
 
-          setStats(prev => ({
-            ...prev,
+          setStats({
+            showsToday: todayShows.length,
             recentShows: shows.length,
             topScore,
             corpsActive: uniqueCorps.size
-          }));
+          });
         }
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching recent shows:', error);
+        console.error('Error fetching scores:', error);
         setLoading(false);
       }
     };
 
-    // Fetch recent shows for both 'recent' and 'soundsport' tabs
-    if ((activeTab === 'recent' || activeTab === 'soundsport') && currentSeason) {
-      fetchRecentShows();
-    }
-  }, [activeTab, currentSeason]);
+    fetchScoresData();
+  }, [activeTab, currentSeason, today]);
 
-  const tabs = [
-    { id: 'live', name: 'Live', icon: Clock, description: 'Current shows' },
-    { id: 'recent', name: 'Recent', icon: Calendar, description: 'Past 7 days' },
-    { id: 'historical', name: 'Historical', icon: Trophy, description: 'All shows' },
-    { id: 'comparison', name: 'Compare', icon: BarChart3, description: 'Side-by-side' },
-    { id: 'soundsport', name: 'SoundSport', icon: Music, description: 'Ratings' }
-  ];
-
-  const renderLiveScores = () => {
-    if (loading) {
-      return <LoadingScreen fullScreen={false} />;
-    }
-
-    if (liveScores.length === 0) {
-      return (
-        <div className="card p-12 text-center">
-          <Clock className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-cream-300 mb-2">No live shows today</p>
-          <p className="text-cream-500/60">Check back during competition times or view recent shows</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {liveScores.map((show, idx) => (
-          <ShowCard key={idx} show={show} isLive={true} />
-        ))}
-      </div>
-    );
-  };
-
-  const renderRecentShows = () => {
-    if (loading) {
-      return <LoadingScreen fullScreen={false} />;
-    }
-
-    if (recentShows.length === 0) {
-      return (
-        <div className="card p-12 text-center">
-          <Calendar className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-cream-300 mb-2">No recent shows</p>
-          <p className="text-cream-500/60">Shows from the past 7 days will appear here</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {recentShows.map((show, idx) => (
-          <ShowCard key={idx} show={show} onClick={() => setSelectedShow(show)} />
-        ))}
-      </div>
-    );
-  };
-
-  // Fetch historical scores with search and filters
+  // Fetch leaderboard data
   useEffect(() => {
-    const fetchHistoricalScores = async () => {
-      if (activeTab !== 'historical') return;
+    const fetchLeaderboardData = async () => {
+      if (activeTab !== 'rankings' && activeTab !== 'stats') return;
 
+      setLoading(true);
       try {
-        setLoading(true);
-        const years = ['2024', '2023', '2022', '2021', '2020'];
-        let allShows = [];
+        const safeCollectionFetch = async (collectionPath, orderField = 'score') => {
+          try {
+            const collRef = collection(db, ...collectionPath);
+            const q = query(collRef, orderBy(orderField, 'desc'), limit(100));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc, index) => ({
+              id: doc.id,
+              rank: index + 1,
+              ...doc.data()
+            }));
+          } catch (err) {
+            console.log(`Collection ${collectionPath.join('/')} not found or empty`);
+            return [];
+          }
+        };
 
-        for (const year of years) {
-          const historicalRef = doc(db, 'historical_scores', year);
-          const historicalDoc = await getDoc(historicalRef);
+        // Fetch overall leaderboard
+        const overallData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'overall', activeClass]
+        );
 
-          if (historicalDoc.exists()) {
-            const data = historicalDoc.data();
-            const yearShows = data.data?.map(show => ({
-              eventName: show.eventName,
-              location: show.location,
-              date: show.date,
-              year: year,
-              offSeasonDay: show.offSeasonDay,
-              scores: show.scores?.map(score => ({
-                corps: score.corps,
-                score: score.score || 0,
-                captions: score.captions || {}
-              })).sort((a, b) => b.score - a.score) || []
-            })) || [];
-            allShows = [...allShows, ...yearShows];
+        // Fetch weekly leaderboard
+        const weeklyData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'weekly', activeClass]
+        );
+
+        // Fetch monthly leaderboard
+        const monthlyData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'monthly', activeClass]
+        );
+
+        // Fetch lifetime stats
+        let sortedLifetimeData = [];
+        try {
+          const lifetimeRef = doc(db, `artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
+          const lifetimeDoc = await getDoc(lifetimeRef);
+
+          if (lifetimeDoc.exists()) {
+            const lifetimeLeaderboard = lifetimeDoc.data();
+            sortedLifetimeData = (lifetimeLeaderboard.entries || []).map((entry, index) => ({
+              id: entry.userId,
+              rank: index + 1,
+              username: entry.username,
+              userTitle: entry.userTitle,
+              lifetimeStats: entry.lifetimeStats
+            }));
+          }
+        } catch (err) {
+          console.log('Lifetime leaderboard not available yet');
+        }
+
+        setLeaderboardData({
+          overall: overallData,
+          weekly: weeklyData,
+          monthly: monthlyData,
+          lifetime: sortedLifetimeData
+        });
+
+        // Find user's rank if logged in
+        if (user && loggedInProfile?.username) {
+          const userData = overallData.find(entry => entry.username === loggedInProfile.username);
+          if (userData) {
+            setUserRank(userData.rank);
           }
         }
 
-        // Apply filters
-        let filteredShows = allShows;
-
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          filteredShows = filteredShows.filter(show =>
-            show.eventName?.toLowerCase().includes(query) ||
-            show.location?.toLowerCase().includes(query) ||
-            show.scores?.some(s => s.corps?.toLowerCase().includes(query))
-          );
-        }
-
-        if (filterDate) {
-          filteredShows = filteredShows.filter(show =>
-            show.date && show.date.includes(filterDate)
-          );
-        }
-
-        setHistoricalShows(filteredShows.slice(0, 50)); // Limit to 50 results
-        setLoading(false);
       } catch (error) {
-        console.error('Error fetching historical scores:', error);
+        console.error('Error fetching leaderboard:', error);
+        if (error.code !== 'permission-denied' && error.code !== 'not-found') {
+          toast.error('Failed to load leaderboard data');
+        }
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchHistoricalScores();
-  }, [activeTab, searchQuery, filterClass, filterDate]);
+    fetchLeaderboardData();
+  }, [activeTab, activeClass, user, loggedInProfile, lifetimeView]);
 
-  const renderHistoricalScores = () => {
-    return (
-      <div className="space-y-6">
-        {/* Search and Filter Bar */}
-        <div className="card p-4 md:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {/* Search */}
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-cream-300 mb-2">
-                Search Shows or Corps
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cream-500/40" />
-                <input
-                  type="text"
-                  placeholder="e.g., 'DCI Finals 2023' or 'Blue Devils'"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 placeholder-cream-500/40 focus:border-gold-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Class Filter */}
-            <div>
-              <label className="block text-sm font-medium text-cream-300 mb-2">
-                Class
-              </label>
-              <select
-                value={filterClass}
-                onChange={(e) => setFilterClass(e.target.value)}
-                className="w-full px-4 py-2 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 focus:border-gold-500 focus:outline-none"
-              >
-                <option value="all">All Classes</option>
-                <option value="world">World Class</option>
-                <option value="open">Open Class</option>
-                <option value="aClass">A Class</option>
-                <option value="soundSport">SoundSport</option>
-              </select>
-            </div>
-
-            {/* Date Filter */}
-            <div>
-              <label className="block text-sm font-medium text-cream-300 mb-2">
-                Date
-              </label>
-              <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className="w-full px-4 py-2 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 focus:border-gold-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Results */}
-        {loading ? (
-          <LoadingScreen fullScreen={false} />
-        ) : historicalShows.length > 0 ? (
-          <div className="space-y-4">
-            <p className="text-sm text-cream-500/60">
-              Found {historicalShows.length} show{historicalShows.length !== 1 ? 's' : ''}
-            </p>
-            {historicalShows.map((show, idx) => (
-              <ShowCard key={idx} show={show} onClick={() => setSelectedShow(show)} />
-            ))}
-          </div>
-        ) : (
-          <div className="card p-8 text-center">
-            <Trophy className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-            <p className="text-xl text-cream-300 mb-2">
-              {searchQuery || filterDate ? 'No shows found' : 'Search Historical Scores'}
-            </p>
-            <p className="text-cream-500/60">
-              {searchQuery || filterDate
-                ? 'Try adjusting your search criteria'
-                : 'Use the filters above to find specific shows and results'}
-            </p>
-          </div>
-        )}
-      </div>
-    );
+  // Helper functions for rankings
+  const getRankIcon = (rank) => {
+    switch (rank) {
+      case 1:
+        return <Crown className="w-6 h-6 text-yellow-400" />;
+      case 2:
+        return <Trophy className="w-6 h-6 text-gray-400" />;
+      case 3:
+        return <Medal className="w-6 h-6 text-orange-400" />;
+      default:
+        return <span className="text-cream-light font-bold">#{rank}</span>;
+    }
   };
 
-  const renderComparison = () => {
-    return (
-      <div className="space-y-6">
-        {/* Corps Selection */}
-        <div className="card p-6">
-          <h3 className="text-lg font-semibold text-cream-100 mb-4">
-            Select Corps to Compare
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-cream-300 mb-2">
-                Corps 1
-              </label>
-              <select className="w-full px-4 py-2 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 focus:border-gold-500 focus:outline-none">
-                <option value="">Select a corps...</option>
-                <option value="bd">Blue Devils</option>
-                <option value="bluecoats">Bluecoats</option>
-                <option value="carolina-crown">Carolina Crown</option>
-                <option value="cavaliers">The Cavaliers</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-cream-300 mb-2">
-                Corps 2
-              </label>
-              <select className="w-full px-4 py-2 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 focus:border-gold-500 focus:outline-none">
-                <option value="">Select a corps...</option>
-                <option value="bd">Blue Devils</option>
-                <option value="bluecoats">Bluecoats</option>
-                <option value="carolina-crown">Carolina Crown</option>
-                <option value="cavaliers">The Cavaliers</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Comparison View */}
-        <div className="card p-8 text-center">
-          <BarChart3 className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-cream-300 mb-2">Compare Corps Performance</p>
-          <p className="text-cream-500/60">Select two corps above to see side-by-side comparison</p>
-        </div>
-      </div>
-    );
+  const getRankBgColor = (rank) => {
+    switch (rank) {
+      case 1:
+        return 'bg-gradient-to-r from-yellow-400/20 to-yellow-500/10 border-yellow-400/30';
+      case 2:
+        return 'bg-gradient-to-r from-gray-400/20 to-gray-500/10 border-gray-400/30';
+      case 3:
+        return 'bg-gradient-to-r from-orange-400/20 to-orange-500/10 border-orange-400/30';
+      default:
+        if (rank <= 10) return 'bg-cream-dark/20 border-cream-light/20';
+        return 'bg-black-light/30 border-cream-dark/10';
+    }
   };
 
-  // Helper function to get SoundSport rating based on score
+  // SoundSport rating helper
   const getSoundSportRating = (score) => {
     if (score >= 90) return { rating: 'Gold', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30' };
     if (score >= 75) return { rating: 'Silver', color: 'text-gray-400', bgColor: 'bg-gray-500/10', borderColor: 'border-gray-400/30' };
@@ -432,8 +321,422 @@ const Scores = () => {
     return { rating: 'Participation', color: 'text-cream-500', bgColor: 'bg-cream-500/10', borderColor: 'border-cream-500/30' };
   };
 
+  // Render Latest Scores tab
+  const renderLatestScores = () => {
+    if (loading) {
+      return <LoadingScreen fullScreen={false} />;
+    }
+
+    const hasLiveShows = liveScores.length > 0;
+    const hasRecentShows = recentShows.length > 0;
+
+    return (
+      <div className="space-y-6">
+        {/* Live Shows */}
+        {hasLiveShows && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              Live Now
+            </h3>
+            {liveScores.map((show, idx) => (
+              <ShowCard key={`live-${idx}`} show={show} isLive={true} onClick={() => setSelectedShow(show)} />
+            ))}
+          </div>
+        )}
+
+        {/* Recent Shows */}
+        {hasRecentShows ? (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-cream-400" />
+              Recent Shows
+            </h3>
+            {recentShows.map((show, idx) => (
+              <ShowCard key={`recent-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
+            ))}
+          </div>
+        ) : !hasLiveShows && (
+          <div className="card p-12 text-center">
+            <Clock className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
+            <p className="text-xl text-cream-300 mb-2">No shows this week</p>
+            <p className="text-cream-500/60">Check back during competition times or view the schedule</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render Rankings tab
+  const renderRankings = () => {
+    const currentData = leaderboardData[rankingsTab];
+
+    return (
+      <div className="space-y-6">
+        {/* User Rank Card */}
+        {user && userRank && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-r from-gold/20 to-gold-light/10 border border-gold/30 rounded-lg p-4 md:p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gold/20 flex items-center justify-center">
+                  {getRankIcon(userRank)}
+                </div>
+                <div>
+                  <p className="text-cream-light text-sm">Your Current Rank</p>
+                  <p className="text-xl md:text-2xl font-bold text-cream">#{userRank}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Rankings Sub-tabs */}
+        <div className="flex justify-center -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
+          <div className="flex bg-black-light rounded-lg p-1">
+            {rankingsTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setRankingsTab(tab.id)}
+                  className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap ${
+                    rankingsTab === tab.id
+                      ? 'bg-gold text-black-dark'
+                      : 'text-cream-light hover:text-cream hover:bg-black-light/50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Class Filter */}
+        <div className="flex justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {classes.map((cls) => (
+              <button
+                key={cls.id}
+                onClick={() => setActiveClass(cls.id)}
+                className={`px-3 md:px-4 py-2 rounded-lg transition-all text-sm ${
+                  activeClass === cls.id
+                    ? 'bg-cream text-black-dark'
+                    : 'bg-black-light text-cream-light hover:bg-black-light/70'
+                }`}
+              >
+                {cls.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Leaderboard Table/Cards */}
+        <motion.div
+          key={`${rankingsTab}-${activeClass}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-black-light rounded-lg overflow-hidden"
+        >
+          {loading ? (
+            <LoadingScreen fullScreen={false} />
+          ) : currentData.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-black-dark border-b border-cream-dark/20">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Rank</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Player</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Corps</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Score</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Trophies</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-cream-dark/10">
+                    {currentData.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className={`hover:bg-black/30 transition-colors ${
+                          loggedInProfile?.username === entry.username ? 'bg-gold/5' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            {getRankIcon(entry.rank)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-cream-dark/20 flex items-center justify-center">
+                              <Users className="w-5 h-5 text-cream-light" />
+                            </div>
+                            <div>
+                              <p className="text-cream font-medium">{entry.username}</p>
+                              <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-cream-light">{entry.corpsName || 'No Corps'}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <p className="text-cream font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Trophy className="w-4 h-4 text-gold" />
+                            <span className="text-cream">{entry.trophies || 0}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {currentData.map((entry) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-lg p-4 border-2 transition-all ${
+                      getRankBgColor(entry.rank)
+                    } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-gold' : ''}`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          {getRankIcon(entry.rank)}
+                        </div>
+                        <div>
+                          <p className="text-cream font-semibold text-base">{entry.username}</p>
+                          <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-cream font-bold text-lg">{entry.score?.toFixed(2) || '0.00'}</p>
+                        <p className="text-cream-light/60 text-xs">Score</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-cream-light">
+                        <Users className="w-4 h-4" />
+                        <span>{entry.corpsName || 'No Corps'}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-cream-light">
+                        <Trophy className="w-4 h-4 text-gold" />
+                        <span className="font-semibold">{entry.trophies || 0}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-20">
+              <Trophy className="w-16 h-16 text-cream-dark mx-auto mb-4" />
+              <p className="text-cream-light text-lg font-semibold">No scores recorded yet</p>
+              <p className="text-cream-light/60 text-sm mt-2 max-w-md mx-auto">
+                {rankingsTab === 'weekly'
+                  ? 'Weekly rankings will appear after shows are scored this week'
+                  : rankingsTab === 'monthly'
+                  ? 'Monthly rankings will appear after shows are scored this month'
+                  : 'Rankings will appear after the first shows are scored this season'}
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Load More Button */}
+        {!loading && currentData.length >= 100 && (
+          <div className="flex justify-center">
+            <button className="flex items-center gap-2 px-6 py-3 bg-black-light text-cream rounded-lg hover:bg-black/50 transition-colors">
+              <ChevronDown className="w-5 h-5" />
+              Load More
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render Stats tab (Lifetime Stats)
+  const renderStats = () => {
+    const lifetimeData = leaderboardData.lifetime;
+
+    return (
+      <div className="space-y-6">
+        {/* Lifetime View Selector */}
+        <div className="flex justify-center -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
+          <div className="flex gap-2">
+            {lifetimeViews.map((view) => (
+              <button
+                key={view.id}
+                onClick={() => setLifetimeView(view.id)}
+                className={`px-3 md:px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                  lifetimeView === view.id
+                    ? 'bg-gold text-black-dark'
+                    : 'bg-black-light text-cream-light hover:bg-black-light/70'
+                }`}
+              >
+                <div className="text-xs md:text-sm font-semibold">{view.label}</div>
+                <div className="text-xs opacity-75 hidden md:block">{view.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Lifetime Stats Table/Cards */}
+        <motion.div
+          key={lifetimeView}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-black-light rounded-lg overflow-hidden"
+        >
+          {loading ? (
+            <LoadingScreen fullScreen={false} />
+          ) : lifetimeData.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-black-dark border-b border-cream-dark/20">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Rank</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-cream-light">Player</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Total Points</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Seasons</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Shows</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Best Season</th>
+                      <th className="px-6 py-4 text-right text-sm font-medium text-cream-light">Championships</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-cream-dark/10">
+                    {lifetimeData.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className={`hover:bg-black/30 transition-colors ${
+                          loggedInProfile?.username === entry.username ? 'bg-gold/5' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            {getRankIcon(entry.rank)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-cream-dark/20 flex items-center justify-center">
+                              <Users className="w-5 h-5 text-cream-light" />
+                            </div>
+                            <div>
+                              <p className="text-cream font-medium">{entry.username}</p>
+                              <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <p className="text-cream font-bold">{entry.lifetimeStats?.totalPoints?.toLocaleString() || '0'}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <p className="text-cream font-bold">{entry.lifetimeStats?.totalSeasons || 0}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <p className="text-cream font-bold">{entry.lifetimeStats?.totalShows || 0}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <p className="text-cream font-bold">{entry.lifetimeStats?.bestSeasonScore?.toFixed(2) || '0.00'}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Trophy className="w-4 h-4 text-gold" />
+                            <span className="text-cream font-bold">{entry.lifetimeStats?.leagueChampionships || 0}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {lifetimeData.map((entry) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-lg p-4 border-2 transition-all ${
+                      getRankBgColor(entry.rank)
+                    } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-gold' : ''}`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          {getRankIcon(entry.rank)}
+                        </div>
+                        <div>
+                          <p className="text-cream font-semibold text-base">{entry.username}</p>
+                          <p className="text-cream-light/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-cream font-bold text-lg">{entry.lifetimeStats?.[lifetimeView]?.toLocaleString() || '0'}</p>
+                        <p className="text-cream-light/60 text-xs">{lifetimeViews.find(v => v.id === lifetimeView)?.label}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Total Points</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalPoints?.toLocaleString() || '0'}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Seasons</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalSeasons || 0}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Shows</span>
+                        <span className="font-semibold">{entry.lifetimeStats?.totalShows || 0}</span>
+                      </div>
+                      <div className="flex flex-col text-cream-light">
+                        <span className="text-xs opacity-60">Championships</span>
+                        <div className="flex items-center gap-1">
+                          <Trophy className="w-3 h-3 text-gold" />
+                          <span className="font-semibold">{entry.lifetimeStats?.leagueChampionships || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-20">
+              <Award className="w-16 h-16 text-cream-dark mx-auto mb-4" />
+              <p className="text-cream-light text-lg font-semibold">No lifetime stats yet</p>
+              <p className="text-cream-light/60 text-sm mt-2 max-w-md mx-auto">
+                Complete seasons to appear on the lifetime leaderboard
+              </p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    );
+  };
+
+  // Render SoundSport tab
   const renderSoundSport = () => {
-    // Filter for SoundSport events from recent shows
     const soundSportShows = recentShows.filter(show =>
       show.scores?.some(s => s.corpsClass === 'soundSport')
     );
@@ -480,13 +783,15 @@ const Scores = () => {
         </div>
 
         {/* SoundSport Results */}
-        {soundSportShows.length > 0 ? (
+        {loading ? (
+          <LoadingScreen fullScreen={false} />
+        ) : soundSportShows.length > 0 ? (
           <div className="space-y-4">
             {soundSportShows.map((show, showIdx) => (
               <div key={showIdx} className="card p-6">
                 <div className="mb-4">
                   <h3 className="text-xl font-semibold text-cream-100">{show.eventName}</h3>
-                  <p className="text-sm text-cream-500/60">{show.location} • {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
+                  <p className="text-sm text-cream-500/60">{show.location} • {show.date}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {show.scores
@@ -536,10 +841,10 @@ const Scores = () => {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-4xl font-display font-bold text-gradient mb-4">
-          Scores Central
+          Scores & Rankings
         </h1>
         <p className="text-cream-300">
-          Live results, historical data, and performance analytics
+          Live results, player rankings, and performance statistics
         </p>
       </motion.div>
 
@@ -570,7 +875,7 @@ const Scores = () => {
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-500/10 rounded-lg">
-              <Target className="w-6 h-6 text-blue-500" />
+              <Calendar className="w-6 h-6 text-blue-500" />
             </div>
             <div>
               <p className="text-2xl font-bold text-cream-100">{stats.recentShows}</p>
@@ -614,10 +919,10 @@ const Scores = () => {
         </motion.div>
       </div>
 
-      {/* Tabs */}
+      {/* Main Tabs */}
       <div className="border-b border-cream-500/20">
         <div className="flex gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
-          {tabs.map((tab) => {
+          {mainTabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
@@ -649,10 +954,9 @@ const Scores = () => {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === 'live' && renderLiveScores()}
-          {activeTab === 'recent' && renderRecentShows()}
-          {activeTab === 'historical' && renderHistoricalScores()}
-          {activeTab === 'comparison' && renderComparison()}
+          {activeTab === 'latest' && renderLatestScores()}
+          {activeTab === 'rankings' && renderRankings()}
+          {activeTab === 'stats' && renderStats()}
           {activeTab === 'soundsport' && renderSoundSport()}
         </motion.div>
       </AnimatePresence>
@@ -686,7 +990,7 @@ const ShowCard = ({ show, isLive = false, onClick }) => {
           <p className="text-cream-500/60">{show.location}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-cream-500/60">{show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
+          <p className="text-sm text-cream-500/60">{show.date}</p>
           <p className="text-xs text-cream-500/40">{show.scores?.length || 0} corps</p>
         </div>
       </div>
@@ -739,7 +1043,7 @@ const ShowDetailModal = ({ show, onClose }) => {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold text-cream-100 mb-2">{show.eventName}</h2>
-              <p className="text-cream-500/60">{show.location} • {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}</p>
+              <p className="text-cream-500/60">{show.location} • {show.date}</p>
             </div>
             <button
               onClick={onClose}
