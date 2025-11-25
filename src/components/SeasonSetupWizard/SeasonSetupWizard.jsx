@@ -4,7 +4,7 @@ import {
   Sparkles, ChevronRight, ChevronLeft, Check, Star, Trophy,
   Music, Calendar, Target, Zap, Crown, PartyPopper, Rocket,
   TrendingUp, TrendingDown, Minus, AlertCircle, Info, Flame, Snowflake,
-  RotateCcw, Plus, Archive, Play, Unlock
+  RotateCcw, Plus, Archive, Play, Unlock, MapPin
 } from 'lucide-react';
 import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -61,11 +61,11 @@ const SeasonSetupWizard = ({
   const [availableShows, setAvailableShows] = useState([]);
   const [selectedShows, setSelectedShows] = useState([]);
   const [loadingShows, setLoadingShows] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [selectedDay, setSelectedDay] = useState(null); // Will be set based on current week
+  const [currentWeek, setCurrentWeek] = useState(1);
 
   const currentCorpsClass = finalCorpsNeedingSetup[currentCorpsIndex];
   const totalCorps = finalCorpsNeedingSetup.length;
-  const currentWeek = 1; // Always start with week 1 for new season
 
   // Valid classes and registration locks
   const allClasses = ['soundSport', 'aClass', 'openClass', 'worldClass'];
@@ -177,20 +177,63 @@ const SeasonSetupWizard = ({
         const data = seasonSnap.data();
         const events = data.events || [];
 
-        // Get week 1 shows (days 1-7)
+        // Calculate current week based on season start date
+        let calculatedWeek = 1;
+        let currentDay = 1;
+        const startDate = data.schedule?.startDate?.toDate();
+        const now = new Date();
+
+        if (startDate) {
+          const diffInMillis = now.getTime() - startDate.getTime();
+          const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+          currentDay = diffInDays + 1; // Day 1 starts the day after start date
+          calculatedWeek = Math.max(1, Math.min(7, Math.ceil(currentDay / 7)));
+        }
+
+        setCurrentWeek(calculatedWeek);
+
+        // Calculate week day range
+        const weekStartDay = (calculatedWeek - 1) * 7 + 1;
+        const weekEndDay = calculatedWeek * 7;
+
+        // Get shows for current week, filtering out past (adjudicated) shows
         const weekShows = [];
         events.forEach(dayEvent => {
           const day = dayEvent.offSeasonDay || dayEvent.day || 0;
-          if (day >= 1 && day <= 7 && dayEvent.shows) {
-            dayEvent.shows.forEach(show => {
-              weekShows.push({
-                ...show,
-                day: day
+          if (day >= weekStartDay && day <= weekEndDay && dayEvent.shows) {
+            // Calculate the actual date for this day
+            let showDate = null;
+            if (startDate) {
+              showDate = new Date(startDate);
+              showDate.setDate(startDate.getDate() + day);
+            }
+
+            // Skip shows that have already been adjudicated (past shows)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isPast = showDate && showDate < today;
+
+            if (!isPast) {
+              dayEvent.shows.forEach(show => {
+                weekShows.push({
+                  ...show,
+                  day: day,
+                  actualDate: showDate
+                });
               });
-            });
+            }
           }
         });
+
         setAvailableShows(weekShows);
+
+        // Set the selected day to the first available day with shows
+        if (weekShows.length > 0) {
+          const availableDays = [...new Set(weekShows.map(s => s.day))].sort((a, b) => a - b);
+          setSelectedDay(availableDays[0]);
+        } else {
+          setSelectedDay(weekStartDay);
+        }
       }
     } catch (error) {
       console.error('Error fetching shows:', error);
@@ -296,7 +339,7 @@ const SeasonSetupWizard = ({
         corpsClass: backendClassMap[currentCorpsClass] || currentCorpsClass
       });
 
-      toast.success(`Week 1 shows selected for ${getCorpsClassName(currentCorpsClass)}!`);
+      toast.success(`Week ${currentWeek} shows selected for ${getCorpsClassName(currentCorpsClass)}!`);
 
       // Check if more corps need setup
       if (currentCorpsIndex < totalCorps - 1) {
@@ -1054,16 +1097,16 @@ const SeasonSetupWizard = ({
         </div>
 
         {/* Header with selection count */}
-        <div className="mb-4 md:mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient mb-1">
-              Select Week 1 Shows
+        <div className="mb-4 md:mb-6 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl md:text-3xl font-display font-bold text-gradient mb-1 truncate">
+              Select Week {currentWeek} Shows
             </h2>
             <p className="text-xs md:text-sm text-cream-300">
               Choose up to 4 shows for {getCorpsClassName(currentCorpsClass)}
             </p>
           </div>
-          <div className={`text-xl md:text-2xl font-bold ${
+          <div className={`text-lg md:text-2xl font-bold flex-shrink-0 ${
             selectedShows.length === 0 ? 'text-cream-500/40' :
             selectedShows.length >= 4 ? 'text-gold-500' :
             'text-blue-500'
@@ -1075,24 +1118,30 @@ const SeasonSetupWizard = ({
         {/* Day Navigation */}
         {!loadingShows && availableDays.length > 0 && (
           <div className="mb-4">
-            <div className="flex gap-1 overflow-x-auto pb-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
               {availableDays.map(day => {
                 const daySelections = selectionsPerDay[day] || 0;
                 const isActive = selectedDay === day;
+                const showCount = showsByDay[day]?.length || 0;
                 return (
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
-                    className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                    className={`relative flex-shrink-0 min-w-[4.5rem] px-3 py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-gold-500 text-charcoal-900'
+                        ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
                         : 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
                     }`}
                   >
-                    Day {day}
+                    <div className="text-center">
+                      <div className="font-semibold">Day {day}</div>
+                      <div className={`text-[10px] mt-0.5 ${isActive ? 'text-charcoal-900/70' : 'text-cream-500/60'}`}>
+                        {showCount} show{showCount !== 1 ? 's' : ''}
+                      </div>
+                    </div>
                     {daySelections > 0 && (
-                      <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                        isActive ? 'bg-charcoal-900/30 text-charcoal-900' : 'bg-gold-500/20 text-gold-500'
+                      <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
+                        isActive ? 'bg-charcoal-900 text-gold-500' : 'bg-gold-500 text-charcoal-900'
                       }`}>
                         {daySelections}
                       </span>
@@ -1113,7 +1162,10 @@ const SeasonSetupWizard = ({
         ) : availableShows.length === 0 ? (
           <div className="text-center py-8">
             <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-            <p className="text-cream-500/60">No shows available for Week 1</p>
+            <p className="text-cream-500/60">No shows available for Week {currentWeek}</p>
+            <p className="text-xs text-cream-500/40 mt-2">
+              All shows for this week may have already been adjudicated
+            </p>
           </div>
         ) : currentDayShows.length === 0 ? (
           <div className="text-center py-8">
@@ -1121,7 +1173,7 @@ const SeasonSetupWizard = ({
             <p className="text-sm text-cream-500/60">No shows on Day {selectedDay}</p>
           </div>
         ) : (
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2.5 mb-4 max-h-[45vh] overflow-y-auto pr-1 -mr-1">
             {currentDayShows.map((show, index) => {
               const isSelected = selectedShows.some(
                 s => s.eventName === (show.eventName || show.name) && s.date === show.date
@@ -1134,27 +1186,30 @@ const SeasonSetupWizard = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
                   onClick={() => toggleShow(show)}
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  className={`p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all active:scale-[0.98] ${
                     isSelected
-                      ? 'border-gold-500 bg-gold-500/10'
-                      : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30'
+                      ? 'border-gold-500 bg-gold-500/10 shadow-md shadow-gold-500/10'
+                      : 'border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-semibold text-cream-100 text-sm truncate">
+                      <h4 className="font-semibold text-cream-100 text-sm sm:text-base leading-tight line-clamp-2">
                         {show.eventName || show.name}
                       </h4>
                       {show.location && (
-                        <p className="text-xs text-cream-500/60 truncate">{show.location}</p>
+                        <p className="text-xs sm:text-sm text-cream-500/60 mt-1 flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{show.location}</span>
+                        </p>
                       )}
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                       isSelected
-                        ? 'border-gold-500 bg-gold-500'
+                        ? 'border-gold-500 bg-gold-500 scale-110'
                         : 'border-cream-500/30'
                     }`}>
-                      {isSelected && <Check className="w-3 h-3 text-charcoal-900" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-charcoal-900" />}
                     </div>
                   </div>
                 </motion.div>
@@ -1244,7 +1299,7 @@ const SeasonSetupWizard = ({
           <div className="text-xs md:text-base text-cream-500/60">Corps Ready</div>
         </div>
         <div className="glass rounded-xl p-3 md:p-4">
-          <div className="text-xl md:text-3xl font-bold text-blue-500 mb-1">Week 1</div>
+          <div className="text-xl md:text-3xl font-bold text-blue-500 mb-1">Week {currentWeek}</div>
           <div className="text-xs md:text-base text-cream-500/60">Shows Selected</div>
         </div>
       </motion.div>
@@ -1258,7 +1313,7 @@ const SeasonSetupWizard = ({
         <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mx-auto mb-2" />
         <p className="text-xs md:text-sm text-cream-300">
           Don't forget to rehearse your corps regularly to boost performance!
-          You can also select shows for future weeks from your dashboard.
+          {currentWeek < 7 && ' You can select shows for upcoming weeks from your Schedule.'}
         </p>
       </motion.div>
 
