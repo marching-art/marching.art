@@ -150,20 +150,14 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
     class: defaultClass || 'soundSport'
   });
 
+  // Classes in hierarchy order: World → Open → A → SoundSport
   const classes = [
     {
-      id: 'soundSport',
-      name: 'SoundSport',
-      description: 'Entry level - Perfect for beginners',
-      unlocked: true,
-      color: 'bg-green-500'
-    },
-    {
-      id: 'aClass',
-      name: 'A Class',
-      description: 'Intermediate - Requires Level 3',
-      unlocked: unlockedClasses.includes('aClass'),
-      color: 'bg-blue-500'
+      id: 'world',
+      name: 'World Class',
+      description: 'Elite - Requires Level 10',
+      unlocked: unlockedClasses.includes('world'),
+      color: 'bg-gold-500'
     },
     {
       id: 'open',
@@ -173,11 +167,18 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
       color: 'bg-purple-500'
     },
     {
-      id: 'world',
-      name: 'World Class',
-      description: 'Elite - Requires Level 10',
-      unlocked: unlockedClasses.includes('world'),
-      color: 'bg-gold-500'
+      id: 'aClass',
+      name: 'A Class',
+      description: 'Intermediate - Requires Level 3',
+      unlocked: unlockedClasses.includes('aClass'),
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'soundSport',
+      name: 'SoundSport',
+      description: 'Entry level - Perfect for beginners',
+      unlocked: true,
+      color: 'bg-green-500'
     }
   ];
 

@@ -445,7 +445,12 @@ const Profile = () => {
                   Active Corps
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(profile.corps).map(([classKey, corps]) => (
+                  {Object.entries(profile.corps)
+                    .sort((a, b) => {
+                      const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+                      return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+                    })
+                    .map(([classKey, corps]) => (
                     <div key={classKey} className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4 hover:border-gold-500/50 transition-colors">
                       <div className="flex items-start justify-between mb-2">
                         <div>

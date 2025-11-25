@@ -67,8 +67,8 @@ const SeasonSetupWizard = ({
   const currentCorpsClass = finalCorpsNeedingSetup[currentCorpsIndex];
   const totalCorps = finalCorpsNeedingSetup.length;
 
-  // Valid classes and registration locks
-  const allClasses = ['soundSport', 'aClass', 'openClass', 'worldClass'];
+  // Valid classes in hierarchy order (World → Open → A → SoundSport)
+  const allClasses = ['worldClass', 'openClass', 'aClass', 'soundSport'];
   const registrationLocks = {
     worldClass: 6,
     openClass: 5,
