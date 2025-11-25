@@ -735,7 +735,7 @@ const Dashboard = () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
-        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
+        [`corps.${activeCorpsClass}.name`]: formData.name,
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
       });
@@ -1619,7 +1619,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-2">
             <Users className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {profile?.leagues?.length || 0}
+              {profile?.leagueIds?.length || 0}
             </span>
           </div>
           <p className="text-sm text-cream-500/60">Active Leagues</p>
@@ -2416,7 +2416,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold text-cream-100 mb-4">
             League Activity
           </h3>
-          {!profile?.leagues || profile.leagues.length === 0 ? (
+          {!profile?.leagueIds || profile.leagueIds.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
               <p className="text-cream-500/60 mb-4">Not in any leagues yet</p>
@@ -2427,7 +2427,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {profile.leagues.slice(0, 3).map((leagueId, index) => (
+              {profile.leagueIds.slice(0, 3).map((leagueId, index) => (
                 <div
                   key={leagueId}
                   className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg hover:bg-charcoal-900/50 transition-colors"

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit, getDoc } from 'firebase/firestore';
 import {
   createLeague,
   joinLeague,
@@ -589,6 +589,35 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
 
 // Standings Tab
 const StandingsTab = ({ league, standings }) => {
+  const [memberProfiles, setMemberProfiles] = useState({});
+
+  // Fetch member profiles to get displayNames
+  useEffect(() => {
+    const fetchMemberProfiles = async () => {
+      if (!standings?.records) return;
+
+      const uids = Object.keys(standings.records);
+      const profiles = {};
+
+      for (const uid of uids) {
+        try {
+          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
+          const profileDoc = await getDoc(profileRef);
+
+          if (profileDoc.exists()) {
+            profiles[uid] = profileDoc.data();
+          }
+        } catch (error) {
+          console.error(`Error fetching profile for ${uid}:`, error);
+        }
+      }
+
+      setMemberProfiles(profiles);
+    };
+
+    fetchMemberProfiles();
+  }, [standings]);
+
   if (!standings || !standings.records) {
     return (
       <div className="card p-8 text-center">
@@ -609,6 +638,12 @@ const StandingsTab = ({ league, standings }) => {
       // Then by points for
       return b.pointsFor - a.pointsFor;
     });
+
+  // Helper to get director display name
+  const getDirectorName = (uid) => {
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
+  };
 
   return (
     <motion.div
@@ -658,7 +693,7 @@ const StandingsTab = ({ league, standings }) => {
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="font-semibold text-cream-100">Director {record.uid.slice(0, 6)}</span>
+                    <span className="font-semibold text-cream-100">{getDirectorName(record.uid)}</span>
                   </td>
                   <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.wins}</td>
                   <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.losses}</td>

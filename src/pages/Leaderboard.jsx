@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, query, orderBy, limit, getDocs, getDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, getDoc, doc, where } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { Trophy, Medal, Award, Crown, Star, Users, TrendingUp, ChevronDown } from 'lucide-react';
 import { useAuth } from '../App';
@@ -30,50 +30,57 @@ const Leaderboard = () => {
     const fetchLeaderboardData = async () => {
       setIsLoading(true);
       try {
+        // Helper to safely fetch collection data
+        const safeCollectionFetch = async (collectionPath, orderField = 'score') => {
+          try {
+            const collRef = collection(db, ...collectionPath);
+            const q = query(collRef, orderBy(orderField, 'desc'), limit(100));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc, index) => ({
+              id: doc.id,
+              rank: index + 1,
+              ...doc.data()
+            }));
+          } catch (err) {
+            // Collection might not exist yet - that's okay
+            console.log(`Collection ${collectionPath.join('/')} not found or empty`);
+            return [];
+          }
+        };
+
         // Fetch overall leaderboard
-        const overallRef = collection(db, 'artifacts', dataNamespace, 'leaderboard', 'overall', activeClass);
-        const overallQuery = query(overallRef, orderBy('score', 'desc'), limit(100));
-        const overallSnapshot = await getDocs(overallQuery);
-        const overallData = overallSnapshot.docs.map((doc, index) => ({
-          id: doc.id,
-          rank: index + 1,
-          ...doc.data()
-        }));
+        const overallData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'overall', activeClass]
+        );
 
         // Fetch weekly leaderboard
-        const weeklyRef = collection(db, 'artifacts', dataNamespace, 'leaderboard', 'weekly', activeClass);
-        const weeklyQuery = query(weeklyRef, orderBy('score', 'desc'), limit(100));
-        const weeklySnapshot = await getDocs(weeklyQuery);
-        const weeklyData = weeklySnapshot.docs.map((doc, index) => ({
-          id: doc.id,
-          rank: index + 1,
-          ...doc.data()
-        }));
+        const weeklyData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'weekly', activeClass]
+        );
 
         // Fetch monthly leaderboard
-        const monthlyRef = collection(db, 'artifacts', dataNamespace, 'leaderboard', 'monthly', activeClass);
-        const monthlyQuery = query(monthlyRef, orderBy('score', 'desc'), limit(100));
-        const monthlySnapshot = await getDocs(monthlyQuery);
-        const monthlyData = monthlySnapshot.docs.map((doc, index) => ({
-          id: doc.id,
-          rank: index + 1,
-          ...doc.data()
-        }));
+        const monthlyData = await safeCollectionFetch(
+          ['artifacts', dataNamespace, 'leaderboard', 'monthly', activeClass]
+        );
 
         // Fetch lifetime stats leaderboard from pre-computed collection
-        const lifetimeRef = db.doc(`artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
-        const lifetimeDoc = await getDoc(lifetimeRef);
-
         let sortedLifetimeData = [];
-        if (lifetimeDoc.exists()) {
-          const lifetimeLeaderboard = lifetimeDoc.data();
-          sortedLifetimeData = (lifetimeLeaderboard.entries || []).map((entry, index) => ({
-            id: entry.userId,
-            rank: index + 1,
-            username: entry.username,
-            userTitle: entry.userTitle,
-            lifetimeStats: entry.lifetimeStats
-          }));
+        try {
+          const lifetimeRef = doc(db, `artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
+          const lifetimeDoc = await getDoc(lifetimeRef);
+
+          if (lifetimeDoc.exists()) {
+            const lifetimeLeaderboard = lifetimeDoc.data();
+            sortedLifetimeData = (lifetimeLeaderboard.entries || []).map((entry, index) => ({
+              id: entry.userId,
+              rank: index + 1,
+              username: entry.username,
+              userTitle: entry.userTitle,
+              lifetimeStats: entry.lifetimeStats
+            }));
+          }
+        } catch (err) {
+          console.log('Lifetime leaderboard not available yet');
         }
 
         setLeaderboardData({
@@ -93,7 +100,10 @@ const Leaderboard = () => {
 
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
-        toast.error('Failed to load leaderboard data');
+        // Only show error toast for unexpected errors, not for empty data
+        if (error.code !== 'permission-denied' && error.code !== 'not-found') {
+          toast.error('Failed to load leaderboard data');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -437,8 +447,16 @@ const Leaderboard = () => {
         ) : (
           <div className="text-center py-20">
             <Trophy className="w-16 h-16 text-cream-dark mx-auto mb-4" />
-            <p className="text-cream-light">No leaderboard data available</p>
-            <p className="text-cream-light/60 text-sm mt-2">Check back after the first competition</p>
+            <p className="text-cream-light text-lg font-semibold">No scores recorded yet</p>
+            <p className="text-cream-light/60 text-sm mt-2 max-w-md mx-auto">
+              {activeTab === 'lifetime'
+                ? 'Complete seasons to appear on the lifetime leaderboard'
+                : activeTab === 'weekly'
+                ? 'Weekly rankings will appear after shows are scored this week'
+                : activeTab === 'monthly'
+                ? 'Monthly rankings will appear after shows are scored this month'
+                : 'Rankings will appear after the first shows are scored this season'}
+            </p>
           </div>
         )}
       </motion.div>
