@@ -995,6 +995,135 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
+      {/* Quick Actions - Daily Rehearsal prominently displayed */}
+      {activeCorps && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {/* Daily Rehearsal Card */}
+          <button
+            onClick={async () => {
+              if (canRehearseToday()) {
+                const result = await rehearse();
+                if (result.success) {
+                  toast.success(`Rehearsal complete! +${result.data?.xpGained || 25} XP`);
+                }
+              } else {
+                toast('Rehearsal already completed today!', { icon: '✓' });
+              }
+            }}
+            disabled={executionProcessing}
+            className={`p-4 rounded-xl border-2 transition-all text-left ${
+              canRehearseToday()
+                ? 'border-gold-500/50 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 hover:border-gold-500 hover:shadow-lg hover:shadow-gold-500/10 cursor-pointer'
+                : 'border-green-500/30 bg-green-500/5 cursor-default'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  canRehearseToday() ? 'bg-gold-500/20' : 'bg-green-500/20'
+                }`}>
+                  {canRehearseToday() ? (
+                    <Activity className="w-5 h-5 text-gold-500" />
+                  ) : (
+                    <Check className="w-5 h-5 text-green-500" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-cream-100">Daily Rehearsal</p>
+                  <p className="text-xs text-cream-500/60">
+                    {canRehearseToday() ? 'Tap to rehearse!' : 'Completed today'}
+                  </p>
+                </div>
+              </div>
+              {canRehearseToday() && (
+                <span className="px-2 py-1 bg-gold-500/20 rounded-full text-xs font-semibold text-gold-500">
+                  +25 XP
+                </span>
+              )}
+            </div>
+            {executionState?.rehearsalsThisWeek !== undefined && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-cream-500/60">Weekly Progress</span>
+                  <span className="text-cream-300 font-medium">{executionState.rehearsalsThisWeek}/7</span>
+                </div>
+                <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-gold transition-all"
+                    style={{ width: `${(executionState.rehearsalsThisWeek / 7) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Readiness Status Card */}
+          <button
+            onClick={() => setActiveTab('execution')}
+            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-cream-100">Corps Readiness</p>
+                <p className="text-xs text-cream-500/60">View execution stats</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-cream-500/60">Readiness Level</span>
+                <span className={`font-medium ${
+                  (executionState?.readiness || 0.75) >= 0.9 ? 'text-green-400' :
+                  (executionState?.readiness || 0.75) >= 0.7 ? 'text-blue-400' :
+                  'text-orange-400'
+                }`}>
+                  {((executionState?.readiness || 0.75) * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    (executionState?.readiness || 0.75) >= 0.9 ? 'bg-green-500' :
+                    (executionState?.readiness || 0.75) >= 0.7 ? 'bg-blue-500' :
+                    'bg-orange-500'
+                  }`}
+                  style={{ width: `${(executionState?.readiness || 0.75) * 100}%` }}
+                />
+              </div>
+            </div>
+          </button>
+
+          {/* Schedule Quick Link */}
+          <Link
+            to="/schedule"
+            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-cream-100">Week {currentWeek} Schedule</p>
+                <p className="text-xs text-cream-500/60">Select shows to compete</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-cream-500/60">
+                {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} shows selected
+              </span>
+              <ChevronRight className="w-4 h-4 text-cream-500/40" />
+            </div>
+          </Link>
+        </motion.div>
+      )}
+
       {/* Corps Selector - Show only if user has multiple corps */}
       {hasMultipleCorps && (
         <motion.div
