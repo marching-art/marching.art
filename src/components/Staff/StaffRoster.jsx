@@ -39,8 +39,11 @@ const StaffRoster = ({ userCorps = {} }) => {
   const [selectedCorpsClass, setSelectedCorpsClass] = useState('');
   const [assigning, setAssigning] = useState(false);
 
-  // Get list of user's registered corps classes
-  const availableCorpsClasses = Object.keys(userCorps);
+  // Get list of user's registered corps classes in hierarchy order
+  const availableCorpsClasses = Object.keys(userCorps).sort((a, b) => {
+    const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+    return (classOrder[a] ?? 99) - (classOrder[b] ?? 99);
+  });
 
   const handleAssign = async () => {
     if (!selectedStaff || !selectedCorpsClass) return;
