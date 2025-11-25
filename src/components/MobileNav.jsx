@@ -3,9 +3,9 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown, Archive, BarChart3, Sun, Moon
+  ShoppingCart, Crown, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useTheme } from '../context/ThemeContext';
@@ -39,8 +39,7 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
       items: [
         { path: '/dashboard', label: 'Dashboard', icon: Home },
         { path: '/schedule', label: 'Schedule', icon: Calendar },
-        { path: '/scores', label: 'Scores', icon: Music },
-        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy }
+        { path: '/scores', label: 'Scores & Rankings', icon: Trophy }
       ]
     },
     {

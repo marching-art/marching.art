@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield, ShoppingCart, Crown, Archive, BarChart3,
+  Star, Shield, ShoppingCart, Crown,
   Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../App';
@@ -83,14 +83,7 @@ const Navigation = () => {
         },
         {
           path: '/scores',
-          label: 'Scores',
-          icon: Music,
-          badge: null,
-          premium: false
-        },
-        {
-          path: '/leaderboard',
-          label: 'Leaderboard',
+          label: 'Scores & Rankings',
           icon: Trophy,
           badge: null,
           premium: false

@@ -25,21 +25,11 @@ const QUEST_TEMPLATES = [
   {
     id: 'check_scores',
     name: 'Score Scout',
-    description: 'Check the latest scores',
+    description: 'Check scores and rankings',
     icon: 'trophy',
-    xpReward: 25,
-    coinReward: 50,
+    xpReward: 50,
+    coinReward: 100,
     type: 'scores',
-    requirement: 1
-  },
-  {
-    id: 'visit_leaderboard',
-    name: 'Competitor Analysis',
-    description: 'View the leaderboard',
-    icon: 'target',
-    xpReward: 25,
-    coinReward: 50,
-    type: 'leaderboard',
     requirement: 1
   },
   {
