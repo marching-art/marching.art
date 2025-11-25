@@ -20,7 +20,7 @@ import {
   ExecutionDashboard,
   RehearsalPanel,
   EquipmentManager,
-  StaffRoster,
+  DashboardStaffPanel,
   ShowDifficultySelector
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
@@ -1762,10 +1762,8 @@ const Dashboard = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <StaffRoster
-              staff={executionState?.staff}
-              processing={executionProcessing}
-              corpsCoin={profile?.corpsCoin || 0}
+            <DashboardStaffPanel
+              activeCorpsClass={activeCorpsClass}
             />
           </motion.div>
         )}
