@@ -525,13 +525,46 @@ const Dashboard = () => {
           challenges.push({
             id: 'maintain_equipment',
             title: 'Equipment Care',
-            description: 'Keep all equipment above 80% condition',
-            progress: avgCondition >= 80 ? 1 : 0,
+            description: 'Check your equipment status',
+            progress: 0,
             target: 1,
             reward: '30 XP',
             icon: 'wrench',
-            completed: avgCondition >= 80,
+            completed: false,
             action: () => setActiveTab('equipment')
+          });
+        }
+
+        // Challenge 4: Visit staff market
+        challenges.push({
+          id: 'staff_meeting',
+          title: 'Staff Meeting',
+          description: 'Visit the staff market',
+          progress: 0,
+          target: 1,
+          reward: '25 XP',
+          icon: 'users',
+          completed: false,
+          action: () => setActiveTab('staff')
+        });
+
+        // Challenge 5: Complete season schedule (check if all 7 weeks have shows)
+        if (activeCorps?.selectedShows) {
+          const totalWeeks = 7;
+          const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
+            weekKey => activeCorps.selectedShows[weekKey]?.length > 0
+          ).length;
+          const hasFullSchedule = weeksWithShows >= totalWeeks;
+
+          challenges.push({
+            id: 'schedule_master',
+            title: 'Schedule Master',
+            description: 'Select shows for all 7 weeks',
+            progress: weeksWithShows,
+            target: totalWeeks,
+            reward: '100 XP',
+            icon: 'calendar',
+            completed: hasFullSchedule
           });
         }
 
@@ -1402,7 +1435,9 @@ const Dashboard = () => {
             {dailyChallenges.map((challenge) => {
               const Icon = challenge.icon === 'target' ? Target :
                           challenge.icon === 'trophy' ? Trophy :
-                          challenge.icon === 'wrench' ? Wrench : Target;
+                          challenge.icon === 'wrench' ? Wrench :
+                          challenge.icon === 'users' ? Users :
+                          challenge.icon === 'calendar' ? Calendar : Target;
               const progressPercent = (challenge.progress / challenge.target) * 100;
 
               return (
@@ -1721,7 +1756,11 @@ const Dashboard = () => {
             <span className="hidden sm:inline">Equipment</span>
           </button>
           <button
-            onClick={() => setActiveTab('staff')}
+            onClick={() => {
+              setActiveTab('staff');
+              // Complete staff meeting challenge when visiting staff tab
+              completeDailyChallenge('staff_meeting');
+            }}
             className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'staff'
                 ? 'bg-gold-500 text-charcoal-900'
