@@ -168,6 +168,18 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
   }
 
+  // Validate no two shows on the same day
+  const daysUsed = new Set();
+  for (const show of shows) {
+    if (show.day !== undefined && show.day !== null) {
+      if (daysUsed.has(show.day)) {
+        throw new HttpsError("invalid-argument",
+          `Cannot select multiple shows on day ${show.day}. Corps can only attend one show per day.`);
+      }
+      daysUsed.add(show.day);
+    }
+  }
+
   const db = getDb();
 
   // Validate that the week is not in the past
