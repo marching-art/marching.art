@@ -1,16 +1,10 @@
 // src/pages/Dashboard.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import {
-  Music, Plus, Edit, Calendar, Users, AlertCircle, Check,
-  Target, Wrench, Trophy, Star, ChevronRight, MapPin
-} from 'lucide-react';
+import { Music, Users, Target, Wrench } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import SeasonInfo from '../components/SeasonInfo';
-import PerformanceChart from '../components/PerformanceChart';
 import {
   ExecutionDashboard,
   RehearsalPanel,
@@ -270,6 +264,7 @@ const Dashboard = () => {
           onCorpsSwitch={handleCorpsSwitch}
           getCorpsClassName={getCorpsClassName}
           getCorpsClassColor={getCorpsClassColor}
+          recentScores={recentScores}
         />
       )}
 
@@ -343,109 +338,20 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-4"
               >
-                {/* Corps Panel + Season Info in Grid */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                  <div className="xl:col-span-2">
-                    <DashboardCorpsPanel
-                      activeCorps={activeCorps}
-                      activeCorpsClass={activeCorpsClass}
-                      profile={profile}
-                      currentWeek={currentWeek}
-                      getCorpsClassName={getCorpsClassName}
-                      onShowCaptionSelection={() => setShowCaptionSelection(true)}
-                      onShowEditCorps={() => setShowEditCorps(true)}
-                      onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-                      onShowMoveCorps={() => setShowMoveCorps(true)}
-                      onShowRetireConfirm={() => setShowRetireConfirm(true)}
-                      onShowRegistration={() => setShowRegistration(true)}
-                    />
-                  </div>
-                  <div className="xl:col-span-1">
-                    <SeasonInfo />
-                  </div>
-                </div>
-
-                {/* Performance Chart + Recent Activity */}
-                {activeCorps && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    <PerformanceChart scores={recentScores} corpsClass={activeCorpsClass} />
-
-                    {/* Recent Scores */}
-                    <div className="card">
-                      <h3 className="text-sm font-semibold text-cream-100 mb-3 flex items-center gap-2">
-                        <Star className="w-4 h-4 text-gold-500" />
-                        {activeCorpsClass === 'soundSport' ? 'Recent Performances' : 'Recent Scores'}
-                      </h3>
-                      {recentScores.length === 0 ? (
-                        <p className="text-cream-500/60 text-center py-6 text-sm">
-                          No scores available yet
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {recentScores.slice(0, 4).map((score, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 hover:bg-cream-500/5 rounded-lg transition-colors">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-cream-100 truncate">{score.showName}</p>
-                                <p className="text-xs text-cream-500/60">
-                                  {score.date?.toDate ? score.date.toDate().toLocaleDateString() : score.date}
-                                </p>
-                              </div>
-                              <div className="text-right pl-2">
-                                <p className="text-sm font-bold text-gold-500">{score.totalScore}</p>
-                                {activeCorpsClass !== 'soundSport' && score.rank && (
-                                  <p className="text-xs text-cream-500/60">#{score.rank}</p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <Link
-                        to="/scores"
-                        className="block mt-3 pt-3 border-t border-cream-500/10 text-center text-xs text-gold-500 hover:text-gold-400"
-                      >
-                        View All Scores <ChevronRight className="w-3 h-3 inline" />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                {/* League Activity */}
-                {activeCorps && (
-                  <div className="card">
-                    <h3 className="text-sm font-semibold text-cream-100 mb-3 flex items-center gap-2">
-                      <Trophy className="w-4 h-4 text-gold-500" />
-                      League Activity
-                    </h3>
-                    {!profile?.leagueIds || profile.leagueIds.length === 0 ? (
-                      <div className="text-center py-4">
-                        <Users className="w-8 h-8 text-cream-500/40 mx-auto mb-2" />
-                        <p className="text-sm text-cream-500/60 mb-2">Not in any leagues yet</p>
-                        <Link to="/leagues" className="btn-outline text-xs inline-flex items-center">
-                          Browse Leagues <ChevronRight className="w-3 h-3 ml-1" />
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {profile.leagueIds.slice(0, 3).map((leagueId, index) => (
-                          <div
-                            key={leagueId}
-                            className="flex items-center gap-2 px-3 py-2 bg-charcoal-900/30 rounded-lg"
-                          >
-                            <Trophy className="w-4 h-4 text-gold-500" />
-                            <span className="text-sm text-cream-100">League {index + 1}</span>
-                          </div>
-                        ))}
-                        <Link
-                          to="/leagues"
-                          className="flex items-center gap-1 px-3 py-2 text-sm text-gold-500 hover:text-gold-400"
-                        >
-                          View All <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Corps Panel */}
+                <DashboardCorpsPanel
+                  activeCorps={activeCorps}
+                  activeCorpsClass={activeCorpsClass}
+                  profile={profile}
+                  currentWeek={currentWeek}
+                  getCorpsClassName={getCorpsClassName}
+                  onShowCaptionSelection={() => setShowCaptionSelection(true)}
+                  onShowEditCorps={() => setShowEditCorps(true)}
+                  onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+                  onShowMoveCorps={() => setShowMoveCorps(true)}
+                  onShowRetireConfirm={() => setShowRetireConfirm(true)}
+                  onShowRegistration={() => setShowRegistration(true)}
+                />
               </motion.div>
             )}
 

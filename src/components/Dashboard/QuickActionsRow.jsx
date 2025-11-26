@@ -12,6 +12,9 @@ import toast from 'react-hot-toast';
  * Compact quick actions row for the dashboard.
  * Displays key actions (rehearsal, readiness, schedule) in a single row.
  */
+// Class order for sorting: World, Open, A, SoundSport
+const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
+
 const QuickActionsRow = ({
   activeCorps,
   activeCorpsClass,
@@ -25,7 +28,8 @@ const QuickActionsRow = ({
   corps,
   onCorpsSwitch,
   getCorpsClassName,
-  getCorpsClassColor
+  getCorpsClassColor,
+  recentScores
 }) => {
   if (!activeCorps) return null;
 
@@ -56,7 +60,9 @@ const QuickActionsRow = ({
           <Music className="w-4 h-4 text-gold-500" />
           <span className="text-sm text-cream-500/60">Active:</span>
           <div className="flex-1 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-            {Object.entries(corps).map(([classId, corpsData]) => (
+            {Object.entries(corps)
+              .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+              .map(([classId, corpsData]) => (
               <button
                 key={classId}
                 onClick={() => onCorpsSwitch(classId)}
@@ -175,9 +181,9 @@ const QuickActionsRow = ({
             <span className="text-sm font-bold text-gold-500">
               {activeCorpsClass === 'soundSport' ? '🎉' : `#${activeCorps?.rank || '-'}`}
             </span>
-            {activeCorpsClass !== 'soundSport' && (
+            {activeCorpsClass !== 'soundSport' && recentScores?.length > 0 && (
               <span className="text-[10px] text-cream-500/40">
-                {activeCorps?.totalSeasonScore?.toFixed(1) || '0.0'} pts
+                {recentScores[0]?.totalScore?.toFixed(1) || '-'}
               </span>
             )}
           </div>
