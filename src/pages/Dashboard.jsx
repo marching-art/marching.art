@@ -38,7 +38,7 @@ import {
 import toast from 'react-hot-toast';
 import { useSeason, getSeasonProgress } from '../hooks/useSeason';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
-import { useUserStore } from '../store/userStore';
+import { useUserStore, getGameDay } from '../store/userStore';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -479,7 +479,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user && profile && activeCorps) {
       const generateChallenges = () => {
-        const today = new Date().toDateString();
+        const today = getGameDay(); // Uses 2 AM EST reset time
         const savedChallenges = profile.challenges || {};
         const todayChallenges = savedChallenges[today];
 
@@ -492,17 +492,23 @@ const Dashboard = () => {
         // Generate new challenges for today
         const challenges = [];
 
+        // Check if rehearsal was done today (using game day)
+        const lastRehearsalDate = executionState?.lastRehearsalDate?.toDate?.();
+        const rehearsedToday = lastRehearsalDate &&
+          new Date(lastRehearsalDate.getTime()).toDateString() === new Date().toDateString() &&
+          new Date().getHours() >= 2; // Only count if after 2 AM EST reset
+
         // Challenge 1: Rehearse with your corps
         if (canRehearseToday && activeCorpsClass !== 'soundSport') {
           challenges.push({
             id: 'rehearse_today',
             title: 'Daily Practice',
             description: 'Complete a rehearsal with your corps',
-            progress: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today ? 1 : 0,
+            progress: rehearsedToday ? 1 : 0,
             target: 1,
             reward: '50 XP',
             icon: 'target',
-            completed: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today
+            completed: rehearsedToday
           });
         }
 
@@ -583,7 +589,7 @@ const Dashboard = () => {
   // Sync challenges from store when updated (e.g., from Scores page)
   useEffect(() => {
     if (loggedInProfile?.challenges) {
-      const today = new Date().toDateString();
+      const today = getGameDay(); // Uses 2 AM EST reset time
       const storeChallenges = loggedInProfile.challenges[today];
       if (storeChallenges && storeChallenges.length > 0) {
         // Check if any challenges in store are more up-to-date (completed)

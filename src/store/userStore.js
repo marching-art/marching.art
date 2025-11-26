@@ -20,6 +20,32 @@ import {
 } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
+// Get the "game day" string - resets at 2 AM EST (after scores are posted)
+// This ensures challenges reset after daily score processing
+export const getGameDay = () => {
+  const now = new Date();
+
+  // Convert to EST (UTC-5) or EDT (UTC-4)
+  const estOffset = -5 * 60; // EST is UTC-5
+  const edtOffset = -4 * 60; // EDT is UTC-4
+
+  // Determine if we're in EDT (roughly March-November)
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const jul = new Date(now.getFullYear(), 6, 1);
+  const isDST = now.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+
+  const offset = isDST ? edtOffset : estOffset;
+  const localOffset = now.getTimezoneOffset();
+  const estTime = new Date(now.getTime() + (localOffset - offset) * 60 * 1000);
+
+  // If before 2 AM EST, use previous day
+  if (estTime.getHours() < 2) {
+    estTime.setDate(estTime.getDate() - 1);
+  }
+
+  return estTime.toDateString();
+};
+
 export const useUserStore = create((set, get) => ({
   // State
   user: null,
@@ -225,7 +251,7 @@ export const useUserStore = create((set, get) => ({
     }
 
     try {
-      const today = new Date().toDateString();
+      const today = getGameDay(); // Uses 2 AM EST reset time
       const currentChallenges = loggedInProfile.challenges || {};
       let todayChallenges = currentChallenges[today] || [];
 
@@ -339,7 +365,7 @@ export const useUserStore = create((set, get) => ({
     }
 
     try {
-      const today = new Date().toDateString();
+      const today = getGameDay(); // Uses 2 AM EST reset time
       const currentChallenges = loggedInProfile.challenges || {};
 
       // Don't overwrite if we already have challenges for today

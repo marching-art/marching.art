@@ -95,13 +95,17 @@ const Scores = () => {
   useEffect(() => {
     const fetchCurrentSeason = async () => {
       try {
-        const seasonsRef = collection(db, 'seasons');
-        const seasonsQuery = query(seasonsRef, where('status', '==', 'active'), limit(1));
-        const snapshot = await getDocs(seasonsQuery);
+        // Use game-settings/season - the single source of truth for season data
+        const seasonRef = doc(db, 'game-settings', 'season');
+        const seasonDoc = await getDoc(seasonRef);
 
-        if (!snapshot.empty) {
-          const seasonData = snapshot.docs[0].data();
-          setCurrentSeason({ id: snapshot.docs[0].id, ...seasonData });
+        if (seasonDoc.exists()) {
+          const seasonData = seasonDoc.data();
+          // Use seasonUid as the ID for fetching recaps
+          setCurrentSeason({
+            id: seasonData.seasonUid,
+            ...seasonData
+          });
         }
       } catch (error) {
         console.error('Error fetching current season:', error);
