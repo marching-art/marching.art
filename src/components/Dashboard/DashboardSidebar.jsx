@@ -1,10 +1,9 @@
 // src/components/Dashboard/DashboardSidebar.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import {
-  Target, Trophy, Wrench, Users, Calendar, Star,
-  ChevronDown, ChevronRight, Check, Sparkles, TrendingUp,
+  Target, Trophy, Wrench, Calendar, Star,
+  ChevronDown, Check, Sparkles,
   Flame, Award, Crown, Gift, Activity
 } from 'lucide-react';
 
@@ -333,40 +332,6 @@ const DashboardSidebar = ({
         </div>
       )}
 
-      {/* Quick Links */}
-      <div className="glass rounded-xl p-3">
-        <p className="text-xs text-cream-500/60 mb-2">Quick Links</p>
-        <div className="grid grid-cols-2 gap-2">
-          <Link
-            to="/schedule"
-            className="p-2 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-center transition-colors"
-          >
-            <Calendar className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-            <span className="text-xs text-cream-300">Schedule</span>
-          </Link>
-          <Link
-            to="/leaderboard"
-            className="p-2 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-center transition-colors"
-          >
-            <Trophy className="w-4 h-4 text-gold-400 mx-auto mb-1" />
-            <span className="text-xs text-cream-300">Leaderboard</span>
-          </Link>
-          <Link
-            to="/leagues"
-            className="p-2 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-center transition-colors"
-          >
-            <Users className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-            <span className="text-xs text-cream-300">Leagues</span>
-          </Link>
-          <Link
-            to="/scores"
-            className="p-2 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-center transition-colors"
-          >
-            <Star className="w-4 h-4 text-green-400 mx-auto mb-1" />
-            <span className="text-xs text-cream-300">Scores</span>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 };
