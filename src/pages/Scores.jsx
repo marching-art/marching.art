@@ -10,6 +10,7 @@ import {
   Award,
   Medal,
   ChevronRight,
+  ChevronLeft,
   ChevronDown as ChevronDownIcon,
   Star,
   Music,
@@ -38,7 +39,9 @@ const Scores = () => {
   const [loading, setLoading] = useState(true);
 
   // Scores data
-  const [recentShows, setRecentShows] = useState([]);
+  const [allShows, setAllShows] = useState([]); // All shows grouped by day
+  const [selectedDay, setSelectedDay] = useState(null); // Current day being viewed
+  const [availableDays, setAvailableDays] = useState([]); // Days with shows
   const [selectedShow, setSelectedShow] = useState(null);
   const [stats, setStats] = useState({ recentShows: 0, topScore: '-', corpsActive: 0 });
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -117,7 +120,7 @@ const Scores = () => {
     }
   }, [user, loggedInProfile, completeDailyChallenge]);
 
-  // Fetch scores data (recent shows only)
+  // Fetch scores data (all shows with day-based organization)
   useEffect(() => {
     const fetchScoresData = async () => {
       if (!currentSeason) return;
@@ -130,17 +133,10 @@ const Scores = () => {
 
         if (recapDoc.exists()) {
           const data = recapDoc.data();
+          const recaps = data.recaps || [];
 
-          // Get recent shows (past 7 days)
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-          const recentRecaps = data.recaps?.filter(recap => {
-            const recapDate = recap.date?.toDate?.() || new Date(recap.date);
-            return recapDate >= sevenDaysAgo;
-          }) || [];
-
-          const shows = recentRecaps.flatMap(recap =>
+          // Process all shows and group by day
+          const shows = recaps.flatMap(recap =>
             recap.shows?.map(show => ({
               eventName: show.eventName,
               location: show.location,
@@ -157,7 +153,16 @@ const Scores = () => {
             })) || []
           ).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
 
-          setRecentShows(shows);
+          setAllShows(shows);
+
+          // Get unique days that have shows (sorted descending - most recent first)
+          const days = [...new Set(shows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
+          setAvailableDays(days);
+
+          // Set selected day to most recent if not already set
+          if (days.length > 0 && selectedDay === null) {
+            setSelectedDay(days[0]);
+          }
 
           // Calculate stats
           const allScores = shows.flatMap(show => show.scores.map(s => s.score));
@@ -302,37 +307,100 @@ const Scores = () => {
     return { rating: 'Participation', color: 'text-cream-500', bgColor: 'bg-cream-500/10', borderColor: 'border-cream-500/30' };
   };
 
+  // Navigate to previous day (older)
+  const goToPreviousDay = () => {
+    const currentIndex = availableDays.indexOf(selectedDay);
+    if (currentIndex < availableDays.length - 1) {
+      setSelectedDay(availableDays[currentIndex + 1]);
+    }
+  };
+
+  // Navigate to next day (newer)
+  const goToNextDay = () => {
+    const currentIndex = availableDays.indexOf(selectedDay);
+    if (currentIndex > 0) {
+      setSelectedDay(availableDays[currentIndex - 1]);
+    }
+  };
+
   // Render Latest Scores tab
   const renderLatestScores = () => {
     if (loading) {
       return <LoadingScreen fullScreen={false} />;
     }
 
-    // Filter out SoundSport corps from show scores (SoundSport has its own tab)
-    const filteredShows = recentShows.map(show => ({
-      ...show,
-      scores: show.scores?.filter(s => s.corpsClass !== 'soundSport') || []
-    })).filter(show => show.scores.length > 0);
+    // Filter shows for selected day and exclude SoundSport corps
+    const dayShows = allShows
+      .filter(show => show.offSeasonDay === selectedDay)
+      .map(show => ({
+        ...show,
+        scores: show.scores?.filter(s => s.corpsClass !== 'soundSport') || []
+      }))
+      .filter(show => show.scores.length > 0);
 
-    const hasRecentShows = filteredShows.length > 0;
+    const hasShows = dayShows.length > 0;
+    const currentDayIndex = availableDays.indexOf(selectedDay);
+    const canGoBack = currentDayIndex < availableDays.length - 1;
+    const canGoForward = currentDayIndex > 0;
+
+    // Get the date for the selected day from the first show
+    const selectedDayDate = dayShows.length > 0 ? dayShows[0].date : null;
 
     return (
       <div className="space-y-6">
-        {/* Recent Shows */}
-        {hasRecentShows ? (
+        {/* Day Navigation */}
+        {availableDays.length > 0 && (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={goToPreviousDay}
+              disabled={!canGoBack}
+              className={`p-2 rounded-lg transition-all ${
+                canGoBack
+                  ? 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
+                  : 'text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <div className="text-center min-w-[200px]">
+              <p className="text-xl md:text-2xl font-bold text-cream-100">Day {selectedDay}</p>
+              {selectedDayDate && (
+                <p className="text-sm text-cream-500/60">{selectedDayDate}</p>
+              )}
+            </div>
+
+            <button
+              onClick={goToNextDay}
+              disabled={!canGoForward}
+              className={`p-2 rounded-lg transition-all ${
+                canGoForward
+                  ? 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
+                  : 'text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+        )}
+
+        {/* Shows for Selected Day */}
+        {hasShows ? (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-cream-400" />
-              Recent Shows
-            </h3>
-            {filteredShows.map((show, idx) => (
-              <ShowCard key={`recent-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
+            {dayShows.map((show, idx) => (
+              <ShowCard key={`day-${selectedDay}-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
             ))}
+          </div>
+        ) : availableDays.length > 0 ? (
+          <div className="card p-8 md:p-12 text-center">
+            <Calendar className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
+            <p className="text-lg md:text-xl text-cream-300 mb-2">No shows on Day {selectedDay}</p>
+            <p className="text-sm md:text-base text-cream-500/60">Use the arrows to navigate to other days</p>
           </div>
         ) : (
           <div className="card p-8 md:p-12 text-center">
             <Clock className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
-            <p className="text-lg md:text-xl text-cream-300 mb-2">No shows this week</p>
+            <p className="text-lg md:text-xl text-cream-300 mb-2">No shows yet</p>
             <p className="text-sm md:text-base text-cream-500/60">Check back during competition times or view the schedule</p>
           </div>
         )}
@@ -368,18 +436,18 @@ const Scores = () => {
         )}
 
         {/* Rankings Sub-tabs */}
-        <div className="flex justify-center -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
-          <div className="flex bg-charcoal-800/50 rounded-lg p-1">
+        <div className="border-b border-cream-500/20">
+          <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
             {rankingsTabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setRankingsTab(tab.id)}
-                  className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                     rankingsTab === tab.id
-                      ? 'bg-gold-500 text-charcoal-900'
-                      : 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
+                      ? 'text-gold-500 border-b-2 border-gold-500'
+                      : 'text-cream-500/60 hover:text-cream-300'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -550,20 +618,19 @@ const Scores = () => {
     return (
       <div className="space-y-6">
         {/* Lifetime View Selector */}
-        <div className="flex justify-center -mx-4 px-4 overflow-x-auto md:mx-0 md:px-0">
-          <div className="flex gap-2">
+        <div className="border-b border-cream-500/20">
+          <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
             {lifetimeViews.map((view) => (
               <button
                 key={view.id}
                 onClick={() => setLifetimeView(view.id)}
-                className={`px-3 md:px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+                className={`px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                   lifetimeView === view.id
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800/50 text-cream-300 hover:bg-charcoal-800'
+                    ? 'text-gold-500 border-b-2 border-gold-500'
+                    : 'text-cream-500/60 hover:text-cream-300'
                 }`}
               >
-                <div className="text-xs md:text-sm font-semibold">{view.label}</div>
-                <div className="text-xs opacity-75 hidden md:block">{view.desc}</div>
+                {view.label}
               </button>
             ))}
           </div>
@@ -718,7 +785,7 @@ const Scores = () => {
 
   // Render SoundSport tab
   const renderSoundSport = () => {
-    const soundSportShows = recentShows.filter(show =>
+    const soundSportShows = allShows.filter(show =>
       show.scores?.some(s => s.corpsClass === 'soundSport')
     );
 
@@ -741,27 +808,22 @@ const Scores = () => {
                 SoundSport ensembles receive ratings (Gold, Silver, Bronze) based on their performance.
                 Scores are not publicly announced or ranked.
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="p-2 md:p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-center md:text-left">
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 mb-1">
-                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
-                    <span className="font-semibold text-yellow-500 text-xs md:text-sm">Gold</span>
-                  </div>
-                  <p className="text-xs text-cream-400">90+</p>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+                  <Medal className="w-4 h-4 text-yellow-500" />
+                  <span className="font-semibold text-yellow-500 text-xs md:text-sm">Gold</span>
                 </div>
-                <div className="p-2 md:p-3 bg-gray-500/10 border border-gray-400/30 rounded-lg text-center md:text-left">
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 mb-1">
-                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-                    <span className="font-semibold text-gray-400 text-xs md:text-sm">Silver</span>
-                  </div>
-                  <p className="text-xs text-cream-400">75-89</p>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-500/10 border border-gray-400/30 rounded-full">
+                  <Medal className="w-4 h-4 text-gray-400" />
+                  <span className="font-semibold text-gray-400 text-xs md:text-sm">Silver</span>
                 </div>
-                <div className="p-2 md:p-3 bg-orange-500/10 border border-orange-600/30 rounded-lg text-center md:text-left">
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 mb-1">
-                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-orange-600" />
-                    <span className="font-semibold text-orange-600 text-xs md:text-sm">Bronze</span>
-                  </div>
-                  <p className="text-xs text-cream-400">60-74</p>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 border border-orange-600/30 rounded-full">
+                  <Medal className="w-4 h-4 text-orange-600" />
+                  <span className="font-semibold text-orange-600 text-xs md:text-sm">Bronze</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cream-500/10 border border-cream-500/30 rounded-full">
+                  <Medal className="w-4 h-4 text-cream-500" />
+                  <span className="font-semibold text-cream-500 text-xs md:text-sm">Participation</span>
                 </div>
               </div>
             </div>
@@ -800,18 +862,13 @@ const Scores = () => {
                           key={idx}
                           className={`p-3 md:p-4 rounded-lg border ${ratingInfo.bgColor} ${ratingInfo.borderColor}`}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                              <Medal className={`w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${ratingInfo.color}`} />
-                              <div className="min-w-0">
-                                <p className="font-semibold text-cream-100 text-sm md:text-base truncate">{score.corps}</p>
-                                <p className={`text-xs md:text-sm font-semibold ${ratingInfo.color}`}>
-                                  {ratingInfo.rating}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-base md:text-lg font-bold text-cream-100">{score.score.toFixed(3)}</p>
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <Medal className={`w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${ratingInfo.color}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-cream-100 text-sm md:text-base truncate">{score.corps}</p>
+                              <p className={`text-xs md:text-sm font-semibold ${ratingInfo.color}`}>
+                                {ratingInfo.rating}
+                              </p>
                             </div>
                           </div>
                         </div>
