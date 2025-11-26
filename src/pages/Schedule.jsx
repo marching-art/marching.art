@@ -1,10 +1,10 @@
 // src/pages/Schedule.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Calendar, MapPin, ChevronRight, Check, Clock,
-  Trophy, Users, AlertCircle, Music, ExternalLink,
-  Plus, X, Info
+  Calendar, MapPin, ChevronRight, Check,
+  AlertCircle, Music, ExternalLink,
+  Plus, X, Info, ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions } from '../firebase';
@@ -21,8 +21,10 @@ const Schedule = () => {
   const [seasonData, setSeasonData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(1);
+  const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
+  const weekTabsRef = useRef(null);
 
   // Calculate actual calendar date from season start date and day number
   // Day 1 starts the day after the season start date
@@ -34,8 +36,8 @@ const Schedule = () => {
     return actualDate;
   };
 
-  // Format date for display
-  const formatDate = (dayNumber) => {
+  // Format date for display - compact version
+  const formatDateCompact = (dayNumber) => {
     const date = getActualDate(dayNumber);
     if (!date) return `Day ${dayNumber}`;
     return date.toLocaleDateString('en-US', {
@@ -51,6 +53,13 @@ const Schedule = () => {
       loadUserProfile();
     }
   }, [user]);
+
+  // Set selectedWeek to currentWeek once data loads
+  useEffect(() => {
+    if (currentWeek) {
+      setSelectedWeek(currentWeek);
+    }
+  }, [currentWeek]);
 
   const loadScheduleData = async () => {
     try {
@@ -150,6 +159,18 @@ const Schedule = () => {
     setRegistrationModal(true);
   };
 
+  // Get count of user's registrations for a week
+  const getWeekRegistrationCount = (weekNumber) => {
+    if (!userProfile?.corps) return 0;
+    let count = 0;
+    Object.values(userProfile.corps).forEach(corpsData => {
+      const weekKey = `week${weekNumber}`;
+      const shows = corpsData.selectedShows?.[weekKey] || [];
+      count += shows.length;
+    });
+    return count;
+  };
+
   if (loading) {
     return <LoadingScreen fullScreen={false} />;
   }
@@ -167,200 +188,248 @@ const Schedule = () => {
   }
 
   const allShows = getAllShows();
+  const selectedWeekShows = allShows.filter(show => show.week === selectedWeek);
+  const weekStatus = getWeekStatus(selectedWeek);
 
   return (
-    <div className="space-y-8 pb-20">
-      {/* Header */}
+    <div className="flex flex-col h-full max-h-[calc(100vh-120px)]">
+      {/* Compact Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex-shrink-0 mb-4"
       >
-        <h1 className="text-4xl font-display font-bold text-gradient mb-4">
-          Season Schedule
-        </h1>
-        <p className="text-cream-300">
-          {seasonData?.name || 'Current Season'} - Complete show schedule and registration
-        </p>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-gradient">
+            Season Schedule
+          </h1>
+          <div className="flex items-center gap-4 text-sm text-cream-400">
+            <span className="flex items-center gap-1">
+              <Music className="w-4 h-4 text-blue-400" />
+              {allShows.length} shows
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4 text-gold-500" />
+              Week {currentWeek} of 7
+            </span>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Season Info */}
+      {/* Week Tabs - Sticky Navigation */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-dark rounded-xl p-6 border border-cream-500/10"
+        className="flex-shrink-0 mb-4"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-6 h-6 text-gold-500" />
-            <div>
-              <p className="text-sm text-cream-500/60">Current Week</p>
-              <p className="text-xl font-bold text-cream-100">Week {currentWeek}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Music className="w-6 h-6 text-blue-500" />
-            <div>
-              <p className="text-sm text-cream-500/60">Total Shows</p>
-              <p className="text-xl font-bold text-cream-100">{allShows.length}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-purple-500" />
-            <div>
-              <p className="text-sm text-cream-500/60">Season Length</p>
-              <p className="text-xl font-bold text-cream-100">7 Weeks</p>
-            </div>
-          </div>
+        <div
+          ref={weekTabsRef}
+          className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {[1, 2, 3, 4, 5, 6, 7].map(weekNum => {
+            const status = getWeekStatus(weekNum);
+            const weekShows = allShows.filter(s => s.week === weekNum);
+            const registrations = getWeekRegistrationCount(weekNum);
+            const isSelected = selectedWeek === weekNum;
+
+            return (
+              <button
+                key={weekNum}
+                onClick={() => setSelectedWeek(weekNum)}
+                className={`flex-shrink-0 px-4 py-3 rounded-xl border-2 transition-all min-w-[100px] ${
+                  isSelected
+                    ? 'border-gold-500 bg-gold-500/20 text-gold-400'
+                    : status === 'past'
+                    ? 'border-cream-500/10 bg-charcoal-800/50 text-cream-500/60 hover:border-cream-500/30'
+                    : status === 'current'
+                    ? 'border-gold-500/30 bg-gold-500/10 text-cream-200 hover:border-gold-500/50'
+                    : 'border-cream-500/10 bg-charcoal-800/50 text-cream-300 hover:border-cream-500/30'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-xs uppercase tracking-wide mb-1 opacity-70">
+                    {status === 'current' ? 'Now' : status === 'past' ? 'Done' : `Wk ${weekNum}`}
+                  </div>
+                  <div className="font-bold text-lg">
+                    {weekNum}
+                  </div>
+                  <div className="text-xs mt-1 opacity-70">
+                    {weekShows.length} shows
+                  </div>
+                  {registrations > 0 && (
+                    <div className="mt-1">
+                      <span className="inline-flex items-center justify-center w-5 h-5 text-xs rounded-full bg-green-500/30 text-green-400">
+                        {registrations}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 
-      {/* Info Banner */}
-      <div className="card bg-blue-500/10 border-2 border-blue-500/20">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-cream-300">
-            <p className="font-semibold text-blue-400 mb-2">How to Register:</p>
-            <ul className="space-y-1 text-cream-400">
-              <li>• Click "Register Corps" on any show to select which of your corps will attend</li>
-              <li>• Each corps can attend up to 4 shows per week</li>
-              <li>• You cannot register for shows in past weeks</li>
-              <li>• Past shows display results - click "View Scores" to see them</li>
-            </ul>
-          </div>
+      {/* Selected Week Header */}
+      <motion.div
+        key={`header-${selectedWeek}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex-shrink-0 flex items-center justify-between mb-3"
+      >
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-display font-bold text-cream-100">
+            Week {selectedWeek}
+          </h2>
+          {weekStatus === 'current' && (
+            <span className="px-2 py-0.5 bg-gradient-gold text-charcoal-900 rounded-full text-xs font-semibold">
+              Current
+            </span>
+          )}
+          {weekStatus === 'past' && (
+            <span className="px-2 py-0.5 bg-charcoal-700 text-cream-500/60 rounded-full text-xs font-semibold">
+              Completed
+            </span>
+          )}
         </div>
-      </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
+            disabled={selectedWeek === 1}
+            className="p-1.5 rounded-lg bg-charcoal-800 text-cream-400 hover:bg-charcoal-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setSelectedWeek(Math.min(7, selectedWeek + 1))}
+            disabled={selectedWeek === 7}
+            className="p-1.5 rounded-lg bg-charcoal-800 text-cream-400 hover:bg-charcoal-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </motion.div>
 
-      {/* Shows by Week */}
-      {[1, 2, 3, 4, 5, 6, 7].map(weekNumber => {
-        const weekShows = allShows.filter(show => show.week === weekNumber);
-        const status = getWeekStatus(weekNumber);
+      {/* Shows Grid - Scrollable Area */}
+      <motion.div
+        key={`shows-${selectedWeek}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-1 overflow-y-auto min-h-0"
+      >
+        {selectedWeekShows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Calendar className="w-12 h-12 text-cream-500/30 mb-3" />
+            <p className="text-cream-400">No shows scheduled for Week {selectedWeek}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 pb-4">
+            {selectedWeekShows.map((show, index) => {
+              const myCorps = getMyCorpsAtShow(show);
+              const showDate = getActualDate(show.day);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isPast = showDate && showDate < today;
 
-        if (weekShows.length === 0) return null;
-
-        return (
-          <div key={weekNumber} className="space-y-4">
-            {/* Week Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-display font-bold text-cream-100">
-                  Week {weekNumber}
-                </h2>
-                {status === 'current' && (
-                  <span className="px-3 py-1 bg-gradient-gold text-charcoal-900 rounded-full text-xs font-semibold">
-                    Current Week
-                  </span>
-                )}
-                {status === 'past' && (
-                  <span className="px-3 py-1 bg-charcoal-700 text-cream-500/60 rounded-full text-xs font-semibold">
-                    Completed
-                  </span>
-                )}
-              </div>
-              <span className="text-sm text-cream-500/60">
-                {weekShows.length} show{weekShows.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            {/* Show Cards */}
-            <div className="grid grid-cols-1 gap-3">
-              {weekShows.map((show, index) => {
-                const myCorps = getMyCorpsAtShow(show);
-                // Check if show date has passed (compare with today)
-                const showDate = getActualDate(show.day);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const isPast = showDate && showDate < today;
-
-                return (
-                  <motion.div
-                    key={`${show.eventName}-${show.day}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`card ${isPast ? 'opacity-75' : ''}`}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Show Info */}
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className={`p-2 rounded-lg ${
-                            isPast ? 'bg-charcoal-700' : 'bg-gold-500/20'
-                          }`}>
-                            <Music className={`w-5 h-5 ${
-                              isPast ? 'text-cream-500/60' : 'text-gold-500'
-                            }`} />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-cream-100 mb-1">
-                              {show.eventName || show.name}
-                            </h3>
-                            <div className="flex flex-wrap gap-3 text-sm text-cream-500/80">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>{formatDate(show.day)}</span>
-                              </div>
-                              {show.location && (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="w-4 h-4" />
-                                  <span>{show.location}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* My Corps Attending */}
-                        {myCorps.length > 0 && (
-                          <div className="ml-11 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                            <p className="text-xs font-semibold text-green-400 mb-2">
-                              <Check className="w-3 h-3 inline mr-1" />
-                              Your Corps Registered:
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {myCorps.map((corps, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-medium"
-                                >
-                                  {corps.corpsName} ({corps.corpsClass === 'worldClass' ? 'World' :
-                                   corps.corpsClass === 'openClass' ? 'Open' :
-                                   corps.corpsClass === 'aClass' ? 'A' : 'SoundSport'})
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+              return (
+                <motion.div
+                  key={`${show.eventName}-${show.day}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={`glass-dark rounded-xl p-4 border border-cream-500/10 ${
+                    isPast ? 'opacity-70' : ''
+                  } ${myCorps.length > 0 ? 'ring-1 ring-green-500/30' : ''}`}
+                >
+                  {/* Show Header */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-cream-100 truncate text-sm">
+                        {show.eventName || show.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-cream-500/70">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDateCompact(show.day)}
+                        </span>
                       </div>
+                      {show.location && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-cream-500/60 truncate">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{show.location}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className={`p-1.5 rounded-lg flex-shrink-0 ${
+                      isPast ? 'bg-charcoal-700' : 'bg-gold-500/20'
+                    }`}>
+                      <Music className={`w-4 h-4 ${
+                        isPast ? 'text-cream-500/60' : 'text-gold-500'
+                      }`} />
+                    </div>
+                  </div>
 
-                      {/* Actions */}
-                      <div className="flex flex-col gap-2 min-w-[160px]">
-                        {isPast ? (
-                          <Link
-                            to="/scores"
-                            className="btn-outline flex items-center justify-center gap-2"
+                  {/* Registered Corps */}
+                  {myCorps.length > 0 && (
+                    <div className="mb-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center gap-1 text-xs text-green-400 mb-1">
+                        <Check className="w-3 h-3" />
+                        <span className="font-medium">Registered</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {myCorps.map((corps, idx) => (
+                          <span
+                            key={idx}
+                            className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-xs"
                           >
-                            <ExternalLink className="w-4 h-4" />
-                            View Scores
-                          </Link>
-                        ) : (
-                          <button
-                            onClick={() => handleRegisterCorps(show)}
-                            className="btn-primary flex items-center justify-center gap-2"
-                            disabled={isPast}
-                          >
-                            <Plus className="w-4 h-4" />
-                            Register Corps
-                          </button>
-                        )}
+                            {corps.corpsName.length > 12
+                              ? corps.corpsName.substring(0, 12) + '...'
+                              : corps.corpsName}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  )}
+
+                  {/* Action Button */}
+                  {isPast ? (
+                    <Link
+                      to="/scores"
+                      className="btn-outline w-full text-sm py-2 flex items-center justify-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      View Scores
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleRegisterCorps(show)}
+                      className="btn-primary w-full text-sm py-2 flex items-center justify-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {myCorps.length > 0 ? 'Edit Registration' : 'Register Corps'}
+                    </button>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
-        );
-      })}
+        )}
+      </motion.div>
+
+      {/* Quick Tip - Collapsible Info */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex-shrink-0 mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl"
+      >
+        <div className="flex items-center gap-2 text-xs text-cream-400">
+          <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
+          <span>
+            Each corps can attend up to 4 shows per week. Tap a show to register your corps.
+          </span>
+        </div>
+      </motion.div>
 
       {/* Registration Modal */}
       <AnimatePresence>
@@ -368,7 +437,7 @@ const Schedule = () => {
           <ShowRegistrationModal
             show={selectedShow}
             userProfile={userProfile}
-            formattedDate={formatDate(selectedShow.day)}
+            formattedDate={formatDateCompact(selectedShow.day)}
             onClose={() => {
               setRegistrationModal(false);
               setSelectedShow(null);
