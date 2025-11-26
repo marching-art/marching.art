@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 
 const Scores = () => {
   const { user } = useAuth();
-  const { loggedInProfile } = useUserStore();
+  const { loggedInProfile, completeDailyChallenge } = useUserStore();
 
   // Main tab state
   const [activeTab, setActiveTab] = useState('latest');
@@ -110,6 +110,13 @@ const Scores = () => {
 
     fetchCurrentSeason();
   }, []);
+
+  // Complete the daily challenge for checking scores/leaderboard
+  useEffect(() => {
+    if (user && completeDailyChallenge) {
+      completeDailyChallenge('check_leaderboard');
+    }
+  }, [user, completeDailyChallenge]);
 
   // Fetch scores data (live + recent)
   useEffect(() => {

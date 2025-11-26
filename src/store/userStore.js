@@ -216,6 +216,123 @@ export const useUserStore = create((set, get) => ({
     }
   },
 
+  // Complete a daily challenge
+  completeDailyChallenge: async (challengeId) => {
+    const { user, loggedInProfile } = get();
+
+    if (!user || !loggedInProfile) {
+      return false;
+    }
+
+    try {
+      const today = new Date().toDateString();
+      const currentChallenges = loggedInProfile.challenges || {};
+      const todayChallenges = currentChallenges[today] || [];
+
+      // Find and update the challenge
+      const updatedChallenges = todayChallenges.map(challenge => {
+        if (challenge.id === challengeId && !challenge.completed) {
+          return { ...challenge, progress: challenge.target, completed: true };
+        }
+        return challenge;
+      });
+
+      // Check if anything changed
+      const wasUpdated = updatedChallenges.some(
+        (c, i) => c.completed !== todayChallenges[i]?.completed
+      );
+
+      if (!wasUpdated) {
+        return false; // Challenge already completed or not found
+      }
+
+      const profileRef = doc(
+        db,
+        'artifacts',
+        dataNamespace,
+        'users',
+        user.uid,
+        'profile',
+        'data'
+      );
+
+      const newChallengesData = {
+        ...currentChallenges,
+        [today]: updatedChallenges
+      };
+
+      await updateDoc(profileRef, { challenges: newChallengesData });
+
+      // Find the completed challenge for the toast message
+      const completedChallenge = updatedChallenges.find(c => c.id === challengeId);
+      const challengeTitle = completedChallenge?.title || 'Challenge';
+      const challengeReward = completedChallenge?.reward || '';
+
+      set({
+        loggedInProfile: {
+          ...loggedInProfile,
+          challenges: newChallengesData
+        }
+      });
+
+      // Show toast with reward if available (consistent with rehearsal toast)
+      const rewardText = challengeReward ? ` +${challengeReward}` : '';
+      toast.success(`${challengeTitle} complete!${rewardText}`);
+      return true;
+    } catch (error) {
+      console.error('Error completing challenge:', error);
+      return false;
+    }
+  },
+
+  // Save daily challenges to profile
+  saveDailyChallenges: async (challenges) => {
+    const { user, loggedInProfile } = get();
+
+    if (!user || !loggedInProfile) {
+      return false;
+    }
+
+    try {
+      const today = new Date().toDateString();
+      const currentChallenges = loggedInProfile.challenges || {};
+
+      // Don't overwrite if we already have challenges for today
+      if (currentChallenges[today] && currentChallenges[today].length > 0) {
+        return false;
+      }
+
+      const profileRef = doc(
+        db,
+        'artifacts',
+        dataNamespace,
+        'users',
+        user.uid,
+        'profile',
+        'data'
+      );
+
+      const newChallengesData = {
+        ...currentChallenges,
+        [today]: challenges
+      };
+
+      await updateDoc(profileRef, { challenges: newChallengesData });
+
+      set({
+        loggedInProfile: {
+          ...loggedInProfile,
+          challenges: newChallengesData
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error saving challenges:', error);
+      return false;
+    }
+  },
+
   // Update profile
   updateUserProfile: async (updates) => {
     const { user, loggedInProfile } = get();
