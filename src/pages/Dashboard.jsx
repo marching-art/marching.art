@@ -38,9 +38,11 @@ import {
 import toast from 'react-hot-toast';
 import { useSeason, getSeasonProgress } from '../hooks/useSeason';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
+import { useUserStore } from '../store/userStore';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { saveDailyChallenges, completeDailyChallenge, loggedInProfile } = useUserStore();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [corps, setCorps] = useState(null);
@@ -534,11 +536,34 @@ const Dashboard = () => {
         }
 
         setDailyChallenges(challenges);
+
+        // Save newly generated challenges to Firestore
+        if (challenges.length > 0) {
+          saveDailyChallenges(challenges);
+        }
       };
 
       generateChallenges();
     }
-  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment]);
+  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment, saveDailyChallenges]);
+
+  // Sync challenges from store when updated (e.g., from Scores page)
+  useEffect(() => {
+    if (loggedInProfile?.challenges) {
+      const today = new Date().toDateString();
+      const storeChallenges = loggedInProfile.challenges[today];
+      if (storeChallenges && storeChallenges.length > 0) {
+        // Check if any challenges in store are more up-to-date (completed)
+        const hasUpdates = storeChallenges.some((storeChallenge, index) => {
+          const localChallenge = dailyChallenges.find(c => c.id === storeChallenge.id);
+          return localChallenge && !localChallenge.completed && storeChallenge.completed;
+        });
+        if (hasUpdates) {
+          setDailyChallenges(storeChallenges);
+        }
+      }
+    }
+  }, [loggedInProfile?.challenges, dailyChallenges]);
 
   // Calculate weekly progress
   useEffect(() => {
@@ -1681,7 +1706,11 @@ const Dashboard = () => {
             <span className="hidden sm:inline">Execution</span>
           </button>
           <button
-            onClick={() => setActiveTab('equipment')}
+            onClick={() => {
+              setActiveTab('equipment');
+              // Complete equipment challenge when checking equipment status
+              completeDailyChallenge('maintain_equipment');
+            }}
             className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'equipment'
                 ? 'bg-gold-500 text-charcoal-900'
