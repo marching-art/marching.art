@@ -9,14 +9,14 @@ import { useAuth } from '../App';
 const Staff = () => {
   const [activeTab, setActiveTab] = useState('marketplace');
   const { user } = useAuth();
-  const { completeDailyChallenge } = useUserStore();
+  const { loggedInProfile, completeDailyChallenge } = useUserStore();
 
   // Complete the daily challenge for visiting staff market
   useEffect(() => {
-    if (user && completeDailyChallenge) {
+    if (user && loggedInProfile && completeDailyChallenge) {
       completeDailyChallenge('staff_meeting');
     }
-  }, [user, completeDailyChallenge]);
+  }, [user, loggedInProfile, completeDailyChallenge]);
 
   return (
     <div className="space-y-6">

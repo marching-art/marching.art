@@ -113,10 +113,10 @@ const Scores = () => {
 
   // Complete the daily challenge for checking scores/leaderboard
   useEffect(() => {
-    if (user && completeDailyChallenge) {
+    if (user && loggedInProfile && completeDailyChallenge) {
       completeDailyChallenge('check_leaderboard');
     }
-  }, [user, completeDailyChallenge]);
+  }, [user, loggedInProfile, completeDailyChallenge]);
 
   // Fetch scores data (live + recent)
   useEffect(() => {
