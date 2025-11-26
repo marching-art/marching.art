@@ -50,7 +50,7 @@ const StaffRoster = ({ userCorps = {} }) => {
 
     setAssigning(true);
     try {
-      await assignStaffToCorps(selectedStaff.staffId, selectedCorpsClass, selectedStaff.caption);
+      await assignStaffToCorps(selectedStaff.staffId, selectedCorpsClass);
       setSelectedStaff(null);
       setSelectedCorpsClass('');
     } catch (error) {
@@ -353,9 +353,8 @@ const StaffRoster = ({ userCorps = {} }) => {
                       <span className="font-semibold text-green-400">Currently Assigned</span>
                     </div>
                     <p className="text-cream-300 mb-3">
-                      <span className="font-semibold">{selectedStaff.assignedTo.corpsClass}</span> Corps
-                      {' - '}
-                      <span className="font-semibold">{selectedStaff.assignedTo.caption}</span> Caption
+                      Boosting <span className="font-semibold">{getCaptionLabel(selectedStaff.caption)}</span> for{' '}
+                      <span className="font-semibold">{selectedStaff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
                     </p>
                     <button
                       onClick={handleUnassign}
@@ -460,7 +459,7 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
         <div className="mt-3 pt-3 border-t border-charcoal-700">
           <div className="flex items-center gap-2 text-xs text-green-400">
             <Target className="w-3 h-3" />
-            <span>{staff.assignedTo.corpsClass} - {staff.assignedTo.caption}</span>
+            <span>{staff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
           </div>
         </div>
       )}

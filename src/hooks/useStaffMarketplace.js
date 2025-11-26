@@ -77,12 +77,12 @@ export const useStaffMarketplace = (userId) => {
     }
   };
 
-  // Assign staff to corps caption
-  const assignStaffToCorps = async (staffId, corpsClass, caption) => {
+  // Assign staff to corps (caption is auto-derived from staff specialty)
+  const assignStaffToCorps = async (staffId, corpsClass) => {
     try {
       setAssigning(true);
       const assign = httpsCallable(functions, 'assignStaff');
-      const result = await assign({ staffId, corpsClass, caption });
+      const result = await assign({ staffId, corpsClass });
 
       toast.success(
         <div>
@@ -107,7 +107,7 @@ export const useStaffMarketplace = (userId) => {
     try {
       setAssigning(true);
       const assign = httpsCallable(functions, 'assignStaff');
-      await assign({ staffId, corpsClass: null, caption: null });
+      await assign({ staffId, corpsClass: null });
 
       toast.success('Staff member unassigned');
     } catch (error) {
