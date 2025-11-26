@@ -38,10 +38,9 @@ const Scores = () => {
   const [loading, setLoading] = useState(true);
 
   // Scores data
-  const [liveScores, setLiveScores] = useState([]);
   const [recentShows, setRecentShows] = useState([]);
   const [selectedShow, setSelectedShow] = useState(null);
-  const [stats, setStats] = useState({ showsToday: 0, recentShows: 0, topScore: '-', corpsActive: 0 });
+  const [stats, setStats] = useState({ recentShows: 0, topScore: '-', corpsActive: 0 });
   const [currentSeason, setCurrentSeason] = useState(null);
 
   // Rankings/Leaderboard data
@@ -56,15 +55,12 @@ const Scores = () => {
   const [userRank, setUserRank] = useState(null);
   const [lifetimeView, setLifetimeView] = useState('totalPoints');
 
-  // Get current date for live scores
-  const today = new Date().toISOString().split('T')[0];
-
   // Main tabs
   const mainTabs = [
-    { id: 'latest', name: 'Latest Scores', icon: Clock, description: 'Recent shows' },
-    { id: 'rankings', name: 'Rankings', icon: Trophy, description: 'Leaderboards' },
-    { id: 'stats', name: 'Stats', icon: BarChart3, description: 'Lifetime' },
-    { id: 'soundsport', name: 'SoundSport', icon: Music, description: 'Ratings' }
+    { id: 'latest', name: 'Latest Scores', icon: Clock },
+    { id: 'rankings', name: 'Rankings', icon: Trophy },
+    { id: 'stats', name: 'Stats', icon: BarChart3 },
+    { id: 'soundsport', name: 'SoundSport', icon: Music }
   ];
 
   // Rankings sub-tabs
@@ -74,12 +70,11 @@ const Scores = () => {
     { id: 'monthly', label: 'Monthly', icon: Star }
   ];
 
-  // Class filters
+  // Class filters (SoundSport has its own tab)
   const classes = [
     { id: 'world', label: 'World Class' },
     { id: 'open', label: 'Open Class' },
-    { id: 'a', label: 'A Class' },
-    { id: 'soundsport', label: 'SoundSport' }
+    { id: 'a', label: 'A Class' }
   ];
 
   // Lifetime views
@@ -122,7 +117,7 @@ const Scores = () => {
     }
   }, [user, loggedInProfile, completeDailyChallenge]);
 
-  // Fetch scores data (live + recent)
+  // Fetch scores data (recent shows only)
   useEffect(() => {
     const fetchScoresData = async () => {
       if (!currentSeason) return;
@@ -135,31 +130,6 @@ const Scores = () => {
 
         if (recapDoc.exists()) {
           const data = recapDoc.data();
-
-          // Get today's shows (live)
-          const todayRecaps = data.recaps?.filter(recap => {
-            const recapDate = recap.date?.toDate?.() || new Date(recap.date);
-            const recapDateStr = recapDate.toISOString().split('T')[0];
-            return recapDateStr === today;
-          }) || [];
-
-          const todayShows = todayRecaps.flatMap(recap =>
-            recap.shows?.map(show => ({
-              eventName: show.eventName,
-              location: show.location,
-              date: recap.date?.toDate?.().toLocaleDateString() || 'TBD',
-              scores: show.results?.map(result => ({
-                corps: result.corpsName,
-                score: result.totalScore || 0,
-                geScore: result.geScore || 0,
-                visualScore: result.visualScore || 0,
-                musicScore: result.musicScore || 0,
-                corpsClass: result.corpsClass
-              })).sort((a, b) => b.score - a.score) || []
-            })) || []
-          );
-
-          setLiveScores(todayShows);
 
           // Get recent shows (past 7 days)
           const sevenDaysAgo = new Date();
@@ -195,7 +165,6 @@ const Scores = () => {
           const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
 
           setStats({
-            showsToday: todayShows.length,
             recentShows: shows.length,
             topScore,
             corpsActive: uniqueCorps.size
@@ -209,7 +178,7 @@ const Scores = () => {
     };
 
     fetchScoresData();
-  }, [activeTab, currentSeason, today]);
+  }, [activeTab, currentSeason]);
 
   // Fetch leaderboard data
   useEffect(() => {
@@ -339,24 +308,16 @@ const Scores = () => {
       return <LoadingScreen fullScreen={false} />;
     }
 
-    const hasLiveShows = liveScores.length > 0;
-    const hasRecentShows = recentShows.length > 0;
+    // Filter out SoundSport corps from show scores (SoundSport has its own tab)
+    const filteredShows = recentShows.map(show => ({
+      ...show,
+      scores: show.scores?.filter(s => s.corpsClass !== 'soundSport') || []
+    })).filter(show => show.scores.length > 0);
+
+    const hasRecentShows = filteredShows.length > 0;
 
     return (
       <div className="space-y-6">
-        {/* Live Shows */}
-        {hasLiveShows && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              Live Now
-            </h3>
-            {liveScores.map((show, idx) => (
-              <ShowCard key={`live-${idx}`} show={show} isLive={true} onClick={() => setSelectedShow(show)} />
-            ))}
-          </div>
-        )}
-
         {/* Recent Shows */}
         {hasRecentShows ? (
           <div className="space-y-4">
@@ -364,11 +325,11 @@ const Scores = () => {
               <Calendar className="w-5 h-5 text-cream-400" />
               Recent Shows
             </h3>
-            {recentShows.map((show, idx) => (
+            {filteredShows.map((show, idx) => (
               <ShowCard key={`recent-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
             ))}
           </div>
-        ) : !hasLiveShows && (
+        ) : (
           <div className="card p-8 md:p-12 text-center">
             <Clock className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
             <p className="text-lg md:text-xl text-cream-300 mb-2">No shows this week</p>
@@ -747,6 +708,14 @@ const Scores = () => {
     );
   };
 
+  // Helper to get rating order for sorting (lower = better)
+  const getRatingOrder = (score) => {
+    if (score >= 90) return 0; // Gold
+    if (score >= 75) return 1; // Silver
+    if (score >= 60) return 2; // Bronze
+    return 3; // Participation
+  };
+
   // Render SoundSport tab
   const renderSoundSport = () => {
     const soundSportShows = recentShows.filter(show =>
@@ -769,7 +738,7 @@ const Scores = () => {
                 About SoundSport Scoring
               </h3>
               <p className="text-cream-300 text-sm md:text-base mb-4">
-                SoundSport ensembles receive ratings (Gold, Silver, Bronze) based on Overall Impression scoring.
+                SoundSport ensembles receive ratings (Gold, Silver, Bronze) based on their performance.
                 Scores are not publicly announced or ranked.
               </p>
               <div className="grid grid-cols-3 gap-2">
@@ -804,16 +773,27 @@ const Scores = () => {
           <LoadingScreen fullScreen={false} />
         ) : soundSportShows.length > 0 ? (
           <div className="space-y-4">
-            {soundSportShows.map((show, showIdx) => (
-              <div key={showIdx} className="card p-4 md:p-6">
-                <div className="mb-3 md:mb-4">
-                  <h3 className="text-lg md:text-xl font-semibold text-cream-100">{show.eventName}</h3>
-                  <p className="text-xs md:text-sm text-cream-500/60">{show.location} • {show.date}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                  {show.scores
-                    .filter(s => s.corpsClass === 'soundSport')
-                    .map((score, idx) => {
+            {soundSportShows.map((show, showIdx) => {
+              // Filter and sort SoundSport scores by rating group, then alphabetically
+              const sortedScores = show.scores
+                .filter(s => s.corpsClass === 'soundSport')
+                .sort((a, b) => {
+                  const ratingOrderA = getRatingOrder(a.score);
+                  const ratingOrderB = getRatingOrder(b.score);
+                  if (ratingOrderA !== ratingOrderB) {
+                    return ratingOrderA - ratingOrderB; // Gold first, then Silver, Bronze, Participation
+                  }
+                  return a.corps.localeCompare(b.corps); // Alphabetical within same rating
+                });
+
+              return (
+                <div key={showIdx} className="card p-4 md:p-6">
+                  <div className="mb-3 md:mb-4">
+                    <h3 className="text-lg md:text-xl font-semibold text-cream-100">{show.eventName}</h3>
+                    <p className="text-xs md:text-sm text-cream-500/60">{show.location} • {show.date}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                    {sortedScores.map((score, idx) => {
                       const ratingInfo = getSoundSportRating(score.score);
                       return (
                         <div
@@ -831,16 +811,16 @@ const Scores = () => {
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="text-xs text-cream-500/60 hidden md:block">Overall Impression</p>
                               <p className="text-base md:text-lg font-bold text-cream-100">{score.score.toFixed(3)}</p>
                             </div>
                           </div>
                         </div>
                       );
                     })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="card p-8 md:p-12 text-center">
@@ -861,33 +841,16 @@ const Scores = () => {
           Scores & Rankings
         </h1>
         <p className="text-cream-300">
-          Live results, player rankings, and performance statistics
+          Results, player rankings, and performance statistics
         </p>
       </motion.div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card p-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gold-500/10 rounded-lg">
-              <Trophy className="w-6 h-6 text-gold-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.showsToday}</p>
-              <p className="text-xs text-cream-500/60">Shows Today</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
           className="card p-4"
         >
           <div className="flex items-center gap-3">
@@ -904,7 +867,7 @@ const Scores = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
           className="card p-4"
         >
           <div className="flex items-center gap-3">
@@ -921,7 +884,7 @@ const Scores = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
           className="card p-4"
         >
           <div className="flex items-center gap-3">
@@ -953,9 +916,6 @@ const Scores = () => {
               >
                 <Icon className="w-4 h-4" />
                 {tab.name}
-                <span className="hidden md:inline text-xs text-cream-500/40">
-                  {tab.description}
-                </span>
               </button>
             );
           })}
@@ -987,7 +947,7 @@ const Scores = () => {
 };
 
 // Show Card Component
-const ShowCard = ({ show, isLive = false, onClick }) => {
+const ShowCard = ({ show, onClick }) => {
   return (
     <motion.div
       whileHover={{ scale: 1.005 }}
@@ -998,11 +958,6 @@ const ShowCard = ({ show, isLive = false, onClick }) => {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-base md:text-xl font-semibold text-cream-100 truncate">{show.eventName}</h3>
-            {isLive && (
-              <span className="px-2 py-0.5 bg-red-500/20 text-red-500 text-xs font-semibold rounded-full animate-pulse flex-shrink-0">
-                LIVE
-              </span>
-            )}
           </div>
           <p className="text-xs md:text-sm text-cream-500/60 truncate">{show.location}</p>
         </div>

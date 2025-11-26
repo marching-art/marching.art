@@ -93,6 +93,13 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
         s => !(s.eventName === showIdentifier.eventName && s.date === showIdentifier.date)
       ));
     } else {
+      // Check if there's already a show selected for the same day
+      const sameDayShow = selectedShows.find(s => s.day === showIdentifier.day);
+      if (sameDayShow) {
+        toast.error(`You already have a show selected on day ${showIdentifier.day}. Corps can only attend one show per day.`);
+        return;
+      }
+
       // Add show if under limit
       if (selectedShows.length < MAX_SHOWS) {
         setSelectedShows([...selectedShows, showIdentifier]);
@@ -285,6 +292,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                 <p className="font-semibold mb-1">Show Selection Rules:</p>
                 <ul className="list-disc list-inside space-y-1 text-cream-500/80">
                   <li>Select up to {MAX_SHOWS} shows per week</li>
+                  <li>Only one show per day - corps cannot be in two places at once</li>
                   <li>Your corps will compete at all selected shows</li>
                   <li>Scores from attended shows contribute to your season total</li>
                   <li>World Championship finals (Days 47-49) automatically enroll all corps</li>
