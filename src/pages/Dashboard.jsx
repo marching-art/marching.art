@@ -1,19 +1,14 @@
 // src/pages/Dashboard.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Music, Trophy, Users, Calendar, Star,
-  ChevronRight, Plus, Edit, Lock, Zap, AlertCircle, Check,
-  Target, Wrench, MapPin, Crown, Gift, Sparkles, ChevronDown,
-  Trash2, ArrowRightLeft, MoreVertical, X, Flame, TrendingUp,
-  Award, Medal, Activity, Archive, Coins
+  Music, Plus, Edit, Calendar, Users, AlertCircle, Check,
+  Target, Wrench, Trophy, Star, ChevronRight, MapPin
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, functions, analyticsHelpers } from '../firebase';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { getBattlePassProgress, retireCorps } from '../firebase/functions';
+import { db, analyticsHelpers } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import SeasonInfo from '../components/SeasonInfo';
 import PerformanceChart from '../components/PerformanceChart';
 import {
@@ -23,9 +18,7 @@ import {
   DashboardStaffPanel,
   ShowDifficultySelector
 } from '../components/Execution';
-import { useExecution } from '../hooks/useExecution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
-import InfoTooltip from '../components/InfoTooltip';
 import {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
@@ -33,758 +26,90 @@ import {
   DeleteConfirmModal,
   RetireConfirmModal,
   MoveCorpsModal,
-  AchievementModal
+  AchievementModal,
+  DashboardHeader,
+  DashboardSidebar,
+  QuickActionsRow,
+  DashboardCorpsPanel
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
-import { useSeason, getSeasonProgress } from '../hooks/useSeason';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
-import { useUserStore, getGameDay } from '../store/userStore';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { retireCorps } from '../firebase/functions';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { saveDailyChallenges, completeDailyChallenge, loggedInProfile } = useUserStore();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [corps, setCorps] = useState(null);
+
+  // Use centralized dashboard hook
+  const dashboardData = useDashboardData();
+
+  // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
-  const [availableCorps, setAvailableCorps] = useState([]);
-  const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
-  const [recentScores, setRecentScores] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [battlePassRewards, setBattlePassRewards] = useState(null);
-  const [unclaimedRewardsCount, setUnclaimedRewardsCount] = useState(0);
-  const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
-  const [showCorpsSelector, setShowCorpsSelector] = useState(false);
-  const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
-  const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
-  const [previousUnlockedClasses, setPreviousUnlockedClasses] = useState([]);
   const [showEditCorps, setShowEditCorps] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
-  const [retiring, setRetiring] = useState(false);
-  const [showCorpsManagementMenu, setShowCorpsManagementMenu] = useState(false);
-  const [corpsFilter, setCorpsFilter] = useState('all'); // all, needsAttention, ready
-  const [corpsSortBy, setCorpsSortBy] = useState('class'); // class, rank, score, name
+  const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [newAchievement, setNewAchievement] = useState(null);
-  const [engagementData, setEngagementData] = useState({
-    loginStreak: 0,
-    lastLogin: null,
-    totalLogins: 0,
-    recentActivity: [],
-    weeklyProgress: []
-  });
-  const [dailyChallenges, setDailyChallenges] = useState([]);
-  const [showChallenges, setShowChallenges] = useState(false);
-  const [weeklyProgress, setWeeklyProgress] = useState({
-    rehearsalsCompleted: 0,
-    scoreImprovement: 0,
-    rankChange: 0,
-    challengesCompleted: 0,
-    equipmentMaintained: 0
-  });
-  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
-  const [showSeasonSetupWizard, setShowSeasonSetupWizard] = useState(false);
-  const [corpsNeedingSetup, setCorpsNeedingSetup] = useState([]);
+  const [retiring, setRetiring] = useState(false);
 
-  // Get the active corps class - use selected or default to first available
-  const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
-  const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
+  // Tab state
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Check if user has multiple corps
-  const hasMultipleCorps = corps && Object.keys(corps).length > 1;
-
-  // Format season name for display (e.g., "adagio_2025-26" -> "Adagio 2025-26")
-  const formatSeasonName = (name) => {
-    if (!name) return 'Loading season...';
-    return name
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
-  };
-
-  // Calculate current week from season data
-  const { currentWeek } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1 };
-
-  // Use execution hook
+  // Destructure commonly used values
   const {
+    profile,
+    corps,
+    activeCorps,
+    activeCorpsClass,
+    hasMultipleCorps,
+    seasonData,
+    weeksRemaining,
+    currentWeek,
+    formatSeasonName,
+    engagementData,
+    dailyChallenges,
+    weeklyProgress,
+    unclaimedRewardsCount,
+    showSeasonSetupWizard,
+    setShowSeasonSetupWizard,
+    corpsNeedingSetup,
+    handleSeasonSetupComplete,
+    handleCorpsSwitch,
+    newlyUnlockedClass,
+    clearNewlyUnlockedClass,
+    newAchievement,
+    clearNewAchievement,
+    recentScores,
     executionState,
-    loading: executionLoading,
-    processing: executionProcessing,
+    executionProcessing,
     rehearse,
     repairEquipment,
     upgradeEquipment,
     boostMorale,
     calculateMultiplier,
-    canRehearseToday
-  } = useExecution(user?.uid, activeCorpsClass);
-  
-  // Load selected corps from localStorage on mount
-  useEffect(() => {
-    if (user) {
-      const savedCorpsClass = localStorage.getItem(`selectedCorps_${user.uid}`);
-      if (savedCorpsClass) {
-        setSelectedCorpsClass(savedCorpsClass);
-      }
+    canRehearseToday,
+    getCorpsClassName,
+    getCorpsClassColor,
+    completeDailyChallenge
+  } = dashboardData;
+
+  // Show class unlock congrats when newly unlocked
+  React.useEffect(() => {
+    if (newlyUnlockedClass) {
+      setShowClassUnlockCongrats(true);
     }
-  }, [user]);
+  }, [newlyUnlockedClass]);
 
-  // Save selected corps to localStorage when it changes
-  useEffect(() => {
-    if (user && selectedCorpsClass) {
-      localStorage.setItem(`selectedCorps_${user.uid}`, selectedCorpsClass);
+  // Show achievement modal when new achievement
+  React.useEffect(() => {
+    if (newAchievement) {
+      setShowAchievementModal(true);
     }
-  }, [user, selectedCorpsClass]);
+  }, [newAchievement]);
 
-  // Update selected corps when corps data changes (e.g., new corps registered)
-  useEffect(() => {
-    if (corps) {
-      const corpsClasses = Object.keys(corps);
-      // If selected corps doesn't exist anymore, reset to first available
-      if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
-        setSelectedCorpsClass(corpsClasses[0] || null);
-      }
-      // If no corps selected yet, select the first one
-      if (!selectedCorpsClass && corpsClasses.length > 0) {
-        setSelectedCorpsClass(corpsClasses[0]);
-      }
-    }
-  }, [corps, selectedCorpsClass]);
-
-  // Detect when a new class is unlocked
-  useEffect(() => {
-    if (profile?.unlockedClasses && previousUnlockedClasses.length > 0) {
-      const currentUnlocked = profile.unlockedClasses;
-      const newlyUnlocked = currentUnlocked.filter(
-        classId => !previousUnlockedClasses.includes(classId)
-      );
-
-      if (newlyUnlocked.length > 0) {
-        // Show congratulations for the first newly unlocked class
-        const unlockedClass = newlyUnlocked[0];
-        setNewlyUnlockedClass(unlockedClass);
-        setShowClassUnlockCongrats(true);
-      }
-    }
-
-    // Update the previous unlocked classes tracker
-    if (profile?.unlockedClasses) {
-      setPreviousUnlockedClasses(profile.unlockedClasses);
-    }
-  }, [profile?.unlockedClasses, previousUnlockedClasses]);
-
-  useEffect(() => {
-    if (user) {
-      // Subscribe to profile updates
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const unsubscribeProfile = onSnapshot(profileRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          setProfile(data);
-          setCorps(data.corps || null);
-        } else {
-          // Create initial profile
-          const initialProfile = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || 'Director',
-            createdAt: new Date(),
-            xp: 0,
-            xpLevel: 1,
-            unlockedClasses: ['soundSport'],
-            achievements: [],
-            stats: {
-              seasonsPlayed: 0,
-              championships: 0,
-              topTenFinishes: 0
-            }
-          };
-          setDoc(profileRef, initialProfile);
-        }
-        setLoading(false);
-      });
-
-      // Fetch battle pass progress
-      fetchBattlePassProgress();
-
-      // Subscribe to league rankings
-      subscribeToLeagueRankings();
-
-      return () => {
-        unsubscribeProfile();
-      };
-    }
-  }, [user]);
-
-  // Detect corps that need season setup (no lineup set) or corps verification
-  useEffect(() => {
-    if (profile && seasonData && !loading && !seasonLoading) {
-      const needSetup = [];
-      const hasCorps = corps && Object.keys(corps).length > 0;
-      const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
-      const unlockedClasses = profile.unlockedClasses || ['soundSport'];
-
-      // Check each corps for missing lineup
-      if (corps) {
-        Object.entries(corps).forEach(([classId, corpsData]) => {
-          const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
-          if (!hasLineup && corpsData.corpsName) {
-            needSetup.push(classId);
-          }
-        });
-      }
-
-      // Check if user has eligible classes they haven't registered for
-      const hasEligibleNewClasses = unlockedClasses.some(classId => {
-        return !corps?.[classId]?.corpsName;
-      });
-
-      // Show wizard if:
-      // 1. Any corps needs lineup setup
-      // 2. User has existing corps that need verification (at season start when no lineups)
-      // 3. User has retired corps they might want to unretire
-      // 4. User has unlocked classes without corps
-      const shouldShowWizard = needSetup.length > 0 ||
-        (hasCorps && needSetup.length > 0) ||
-        (hasRetiredCorps && !hasCorps) ||
-        (hasEligibleNewClasses && !hasCorps && hasRetiredCorps);
-
-      if (shouldShowWizard) {
-        setCorpsNeedingSetup(needSetup);
-        setShowSeasonSetupWizard(true);
-      } else {
-        setCorpsNeedingSetup([]);
-        setShowSeasonSetupWizard(false);
-      }
-    }
-  }, [profile, corps, seasonData, loading, seasonLoading]);
-
-  // Track daily login streaks and engagement
-  useEffect(() => {
-    if (user && profile) {
-      const updateEngagement = async () => {
-        try {
-          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-          const today = new Date().toDateString();
-          const lastLogin = profile.engagement?.lastLogin;
-          const lastLoginDate = lastLogin
-            ? (lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin)).toDateString()
-            : null;
-
-          // Check if this is a new day
-          if (lastLoginDate !== today) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toDateString();
-
-            let newStreak = 1;
-            const currentStreak = profile.engagement?.loginStreak || 0;
-
-            // Continue streak if last login was yesterday
-            if (lastLoginDate === yesterdayStr) {
-              newStreak = currentStreak + 1;
-            }
-
-            // Update engagement data
-            const updatedEngagement = {
-              loginStreak: newStreak,
-              lastLogin: new Date().toISOString(),
-              totalLogins: (profile.engagement?.totalLogins || 0) + 1,
-              recentActivity: profile.engagement?.recentActivity || [],
-              weeklyProgress: profile.engagement?.weeklyProgress || []
-            };
-
-            // Add login activity
-            updatedEngagement.recentActivity.unshift({
-              type: 'login',
-              message: `Day ${newStreak} login streak!`,
-              timestamp: new Date().toISOString(),
-              icon: 'flame'
-            });
-
-            // Keep only last 10 activities
-            updatedEngagement.recentActivity = updatedEngagement.recentActivity.slice(0, 10);
-
-            // Award streak achievements
-            const milestones = [3, 7, 14, 30, 60, 100];
-            if (milestones.includes(newStreak)) {
-              const achievementId = `streak_${newStreak}`;
-              const existingAchievements = profile.achievements || [];
-
-              if (!existingAchievements.find(a => a.id === achievementId)) {
-                const achievement = {
-                  id: achievementId,
-                  title: `${newStreak} Day Streak!`,
-                  description: `Logged in ${newStreak} days in a row`,
-                  icon: 'flame',
-                  earnedAt: new Date().toISOString(),
-                  rarity: newStreak >= 30 ? 'legendary' : newStreak >= 14 ? 'epic' : newStreak >= 7 ? 'rare' : 'common'
-                };
-
-                await updateDoc(profileRef, {
-                  achievements: [...existingAchievements, achievement]
-                });
-
-                // Show achievement modal
-                setNewAchievement(achievement);
-                setShowAchievementModal(true);
-              }
-            }
-
-            await updateDoc(profileRef, {
-              engagement: updatedEngagement
-            });
-
-            setEngagementData(updatedEngagement);
-          } else {
-            // Same day, just load existing data
-            if (profile.engagement) {
-              setEngagementData(profile.engagement);
-            }
-          }
-        } catch (error) {
-          console.error('Error updating engagement:', error);
-        }
-      };
-
-      updateEngagement();
-    }
-  }, [user, profile?.uid]); // Only run when user changes or profile is first loaded
-
-  // Track performance milestones and achievements
-  useEffect(() => {
-    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
-      const trackMilestones = async () => {
-        try {
-          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-          const milestones = profile.milestones || {};
-          const classKey = activeCorpsClass;
-          const classMilestones = milestones[classKey] || {};
-
-          let hasNewMilestone = false;
-          const updatedMilestones = { ...milestones, [classKey]: { ...classMilestones } };
-          const newActivities = [];
-          const newAchievements = [];
-
-          // Track best rank
-          if (activeCorps.rank) {
-            const bestRank = classMilestones.bestRank || Infinity;
-            if (activeCorps.rank < bestRank) {
-              updatedMilestones[classKey].bestRank = activeCorps.rank;
-              hasNewMilestone = true;
-
-              newActivities.push({
-                type: 'milestone',
-                message: `New best rank: #${activeCorps.rank} in ${getCorpsClassName(classKey)}!`,
-                timestamp: new Date().toISOString(),
-                icon: 'trophy'
-              });
-
-              // Award achievement for top 10
-              if (activeCorps.rank <= 10) {
-                const achievementId = `top_10_${classKey}`;
-                const existingAchievements = profile.achievements || [];
-                if (!existingAchievements.find(a => a.id === achievementId)) {
-                  newAchievements.push({
-                    id: achievementId,
-                    title: 'Top 10 Finish!',
-                    description: `Reached top 10 in ${getCorpsClassName(classKey)}`,
-                    icon: 'trophy',
-                    earnedAt: new Date().toISOString(),
-                    rarity: activeCorps.rank === 1 ? 'legendary' : activeCorps.rank <= 3 ? 'epic' : 'rare'
-                  });
-                }
-              }
-            }
-          }
-
-          // Track best score
-          if (activeCorps.totalSeasonScore) {
-            const bestScore = classMilestones.bestScore || 0;
-            if (activeCorps.totalSeasonScore > bestScore) {
-              updatedMilestones[classKey].bestScore = activeCorps.totalSeasonScore;
-              hasNewMilestone = true;
-
-              newActivities.push({
-                type: 'milestone',
-                message: `New high score: ${activeCorps.totalSeasonScore.toFixed(2)} in ${getCorpsClassName(classKey)}!`,
-                timestamp: new Date().toISOString(),
-                icon: 'star'
-              });
-            }
-          }
-
-          // Track rehearsal milestones
-          if (executionState?.rehearsalsCompleted) {
-            const rehearsalMilestones = [5, 10, 25, 50, 100];
-            const currentRehearsals = executionState.rehearsalsCompleted;
-            const trackedRehearsals = classMilestones.rehearsalMilestones || [];
-
-            for (const milestone of rehearsalMilestones) {
-              if (currentRehearsals >= milestone && !trackedRehearsals.includes(milestone)) {
-                updatedMilestones[classKey].rehearsalMilestones = [...trackedRehearsals, milestone];
-                hasNewMilestone = true;
-
-                const achievementId = `rehearsals_${milestone}_${classKey}`;
-                const existingAchievements = profile.achievements || [];
-                if (!existingAchievements.find(a => a.id === achievementId)) {
-                  newAchievements.push({
-                    id: achievementId,
-                    title: `${milestone} Rehearsals!`,
-                    description: `Completed ${milestone} rehearsals in ${getCorpsClassName(classKey)}`,
-                    icon: 'star',
-                    earnedAt: new Date().toISOString(),
-                    rarity: milestone >= 50 ? 'epic' : milestone >= 25 ? 'rare' : 'common'
-                  });
-                }
-              }
-            }
-          }
-
-          // Update if there are new milestones
-          if (hasNewMilestone) {
-            const updateData = {
-              milestones: updatedMilestones
-            };
-
-            // Add new activities
-            if (newActivities.length > 0) {
-              const currentActivities = profile.engagement?.recentActivity || [];
-              updateData['engagement.recentActivity'] = [...newActivities, ...currentActivities].slice(0, 10);
-            }
-
-            // Add new achievements
-            if (newAchievements.length > 0) {
-              const currentAchievements = profile.achievements || [];
-              updateData.achievements = [...currentAchievements, ...newAchievements];
-
-              // Show the first new achievement
-              setNewAchievement(newAchievements[0]);
-              setShowAchievementModal(true);
-            }
-
-            await updateDoc(profileRef, updateData);
-          }
-        } catch (error) {
-          console.error('Error tracking milestones:', error);
-        }
-      };
-
-      trackMilestones();
-    }
-  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, executionState?.rehearsalsCompleted]);
-
-  // Generate and track daily challenges
-  useEffect(() => {
-    if (user && profile && activeCorps) {
-      const generateChallenges = () => {
-        const today = getGameDay(); // Uses 2 AM EST reset time
-        const savedChallenges = profile.challenges || {};
-        const todayChallenges = savedChallenges[today];
-
-        // If we already have challenges for today, use them
-        if (todayChallenges) {
-          setDailyChallenges(todayChallenges);
-          return;
-        }
-
-        // Generate new challenges for today
-        const challenges = [];
-
-        // Check if rehearsal was done today (using game day)
-        const lastRehearsalDate = executionState?.lastRehearsalDate?.toDate?.();
-        const rehearsedToday = lastRehearsalDate &&
-          new Date(lastRehearsalDate.getTime()).toDateString() === new Date().toDateString() &&
-          new Date().getHours() >= 2; // Only count if after 2 AM EST reset
-
-        // Challenge 1: Rehearse with your corps
-        if (canRehearseToday && activeCorpsClass !== 'soundSport') {
-          challenges.push({
-            id: 'rehearse_today',
-            title: 'Daily Practice',
-            description: 'Complete a rehearsal with your corps',
-            progress: rehearsedToday ? 1 : 0,
-            target: 1,
-            reward: '50 XP',
-            icon: 'target',
-            completed: rehearsedToday
-          });
-        }
-
-        // Challenge 2: Check leaderboard
-        challenges.push({
-          id: 'check_leaderboard',
-          title: 'Scout the Competition',
-          description: 'Visit the leaderboard page',
-          progress: 0,
-          target: 1,
-          reward: '25 XP',
-          icon: 'trophy',
-          completed: false,
-          action: () => window.location.href = '/leaderboard'
-        });
-
-        // Challenge 3: Maintain equipment
-        if (executionState?.equipment) {
-          const avgCondition = Object.values(executionState.equipment).reduce((sum, eq) => sum + eq.condition, 0) / Object.keys(executionState.equipment).length;
-          challenges.push({
-            id: 'maintain_equipment',
-            title: 'Equipment Care',
-            description: 'Check your equipment status',
-            progress: 0,
-            target: 1,
-            reward: '30 XP',
-            icon: 'wrench',
-            completed: false,
-            action: () => setActiveTab('equipment')
-          });
-        }
-
-        // Challenge 4: Visit staff market
-        challenges.push({
-          id: 'staff_meeting',
-          title: 'Staff Meeting',
-          description: 'Visit the staff market',
-          progress: 0,
-          target: 1,
-          reward: '25 XP',
-          icon: 'users',
-          completed: false,
-          action: () => setActiveTab('staff')
-        });
-
-        // Challenge 5: Complete season schedule (check if all 7 weeks have shows)
-        if (activeCorps?.selectedShows) {
-          const totalWeeks = 7;
-          const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
-            weekKey => activeCorps.selectedShows[weekKey]?.length > 0
-          ).length;
-          const hasFullSchedule = weeksWithShows >= totalWeeks;
-
-          challenges.push({
-            id: 'schedule_master',
-            title: 'Schedule Master',
-            description: 'Select shows for all 7 weeks',
-            progress: weeksWithShows,
-            target: totalWeeks,
-            reward: '100 XP',
-            icon: 'calendar',
-            completed: hasFullSchedule
-          });
-        }
-
-        setDailyChallenges(challenges);
-
-        // Save newly generated challenges to Firestore
-        if (challenges.length > 0) {
-          saveDailyChallenges(challenges);
-        }
-      };
-
-      generateChallenges();
-    }
-  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment, saveDailyChallenges]);
-
-  // Sync challenges from store when updated (e.g., from Scores page)
-  useEffect(() => {
-    if (loggedInProfile?.challenges) {
-      const today = getGameDay(); // Uses 2 AM EST reset time
-      const storeChallenges = loggedInProfile.challenges[today];
-      if (storeChallenges && storeChallenges.length > 0) {
-        // Check if any challenges in store are more up-to-date (completed)
-        const hasUpdates = storeChallenges.some((storeChallenge, index) => {
-          const localChallenge = dailyChallenges.find(c => c.id === storeChallenge.id);
-          return localChallenge && !localChallenge.completed && storeChallenge.completed;
-        });
-        if (hasUpdates) {
-          setDailyChallenges(storeChallenges);
-        }
-      }
-    }
-  }, [loggedInProfile?.challenges, dailyChallenges]);
-
-  // Calculate weekly progress
-  useEffect(() => {
-    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
-      const calculateWeeklyProgress = () => {
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - 7);
-
-        const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || {};
-        const previousWeekData = weekData.previous || {};
-
-        // Calculate rehearsals this week
-        const rehearsalsThisWeek = executionState?.rehearsalsCompleted || 0;
-        const rehearsalsLastWeek = previousWeekData.rehearsalsCompleted || 0;
-
-        // Calculate score improvement
-        const currentScore = activeCorps.totalSeasonScore || 0;
-        const previousScore = previousWeekData.totalScore || 0;
-        const scoreImprovement = currentScore - previousScore;
-
-        // Calculate rank change (lower is better, so improvement is negative)
-        const currentRank = activeCorps.rank || 0;
-        const previousRank = previousWeekData.rank || currentRank;
-        const rankChange = previousRank - currentRank; // positive means improved
-
-        // Calculate equipment maintenance
-        let equipmentMaintained = 0;
-        if (executionState?.equipment) {
-          const equipmentCount = Object.keys(executionState.equipment).length;
-          const wellMaintained = Object.values(executionState.equipment).filter(
-            eq => eq.condition >= 80
-          ).length;
-          equipmentMaintained = equipmentCount > 0 ? (wellMaintained / equipmentCount) * 100 : 0;
-        }
-
-        // Calculate challenges completed this week
-        const challengesCompleted = dailyChallenges.filter(c => c.completed).length;
-
-        setWeeklyProgress({
-          rehearsalsCompleted: rehearsalsThisWeek - rehearsalsLastWeek,
-          scoreImprovement,
-          rankChange,
-          challengesCompleted,
-          equipmentMaintained
-        });
-      };
-
-      calculateWeeklyProgress();
-    }
-  }, [user, profile, activeCorps, activeCorpsClass, executionState, dailyChallenges]);
-
-  const fetchAvailableCorps = useCallback(async () => {
-    try {
-      if (!seasonData?.seasonUid) {
-        setAvailableCorps([]);
-        return;
-      }
-
-      const corpsDataRef = doc(db, 'dci-data', seasonData.seasonUid);
-      const corpsDataSnap = await getDoc(corpsDataRef);
-
-      if (corpsDataSnap.exists()) {
-        const data = corpsDataSnap.data();
-        const corpsData = data.corpsValues || [];
-        setAvailableCorps(corpsData);
-      } else {
-        setAvailableCorps([]);
-      }
-    } catch (error) {
-      console.error('Error fetching available corps:', error);
-      setAvailableCorps([]);
-    }
-  }, [seasonData?.seasonUid]);
-
-  const fetchRecentScores = useCallback(async () => {
-    try {
-      if (!seasonData?.seasonUid) {
-        setRecentScores([]);
-        return;
-      }
-
-      const recapDocRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
-      const recapDocSnap = await getDoc(recapDocRef);
-
-      if (recapDocSnap.exists()) {
-        const allRecaps = recapDocSnap.data().recaps || [];
-        // Filter out invalid entries, sort by date descending and take the first 5
-        const sortedRecaps = allRecaps
-          .filter(r => r.showName || r.eventName || r.name) // Only include entries with valid show names
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 5)
-          .map(r => {
-            // For SoundSport, mask the scores
-            const isSoundSport = activeCorpsClass === 'soundSport';
-            return {
-              showName: r.showName || r.eventName || r.name || 'Show',
-              date: r.date || '',
-              totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
-              rank: isSoundSport ? '🎉' : (r.rank ?? '-')
-            };
-          });
-        setRecentScores(sortedRecaps);
-      } else {
-        setRecentScores([]);
-      }
-    } catch (error) {
-      console.error('Error fetching recent scores:', error);
-    }
-  }, [seasonData?.seasonUid, activeCorpsClass]);
-
-  // Fetch season-specific data when seasonData is available
-  useEffect(() => {
-    if (seasonData?.seasonUid) {
-      fetchAvailableCorps();
-      fetchRecentScores();
-    }
-  }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
-
-  const fetchBattlePassProgress = async () => {
-    try {
-      const result = await getBattlePassProgress();
-      if (result.data && result.data.success) {
-        const progress = result.data.progress;
-        setBattlePassRewards(progress);
-
-        // Count unclaimed rewards
-        let unclaimedCount = 0;
-        for (let level = 1; level <= progress.currentLevel; level++) {
-          // Check free tier
-          if (!progress.claimedRewards?.free?.includes(level)) {
-            unclaimedCount++;
-          }
-          // Check premium tier if user has battle pass
-          if (progress.hasBattlePass && !progress.claimedRewards?.premium?.includes(level)) {
-            unclaimedCount++;
-          }
-        }
-        setUnclaimedRewardsCount(unclaimedCount);
-      }
-    } catch (error) {
-      // Silently handle "no active season" errors - this is expected when no battle pass is configured
-      if (error.message && !error.message.includes('No active battle pass season')) {
-        console.error('Error fetching battle pass progress:', error);
-      }
-      setBattlePassRewards(null);
-      setUnclaimedRewardsCount(0);
-    }
-  };
-
-  const subscribeToLeagueRankings = () => {
-    // Subscribe to user's league rankings
-    if (profile?.leagues) {
-      // Implementation for league rankings
-    }
-  };
-
-  const getCorpsClassName = (classId) => {
-    const classNames = {
-      soundSport: 'SoundSport',
-      aClass: 'A Class',
-      open: 'Open Class',
-      world: 'World Class'
-    };
-    return classNames[classId] || classId;
-  };
-
-  const getCorpsClassColor = (classId) => {
-    const colors = {
-      soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
-      aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
-      open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
-      world: 'text-gold-500 bg-gold-500/10 border-gold-500/30'
-    };
-    return colors[classId] || 'text-cream-500 bg-cream-500/10 border-cream-500/30';
-  };
-
-  const handleCorpsSwitch = (classId) => {
-    setSelectedCorpsClass(classId);
-    setShowCorpsSelector(false);
-    toast.success(`Switched to ${getCorpsClassName(classId)}`);
-  };
-
+  // Handler functions
   const handleSetupNewClass = () => {
     setShowClassUnlockCongrats(false);
     setShowRegistration(true);
@@ -792,6 +117,7 @@ const Dashboard = () => {
 
   const handleDeclineSetup = () => {
     setShowClassUnlockCongrats(false);
+    clearNewlyUnlockedClass();
     toast.success('You can register your new corps anytime from the dashboard!');
   };
 
@@ -803,7 +129,6 @@ const Dashboard = () => {
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
       });
-
       toast.success('Corps updated successfully!');
       setShowEditCorps(false);
     } catch (error) {
@@ -815,25 +140,11 @@ const Dashboard = () => {
   const handleDeleteCorps = async () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-
-      // Remove the corps from the profile
-      const updatedCorps = { ...corps };
-      delete updatedCorps[activeCorpsClass];
-
       await updateDoc(profileRef, {
         [`corps.${activeCorpsClass}`]: null
       });
-
       toast.success(`${activeCorps.corpsName || activeCorps.name} has been deleted`);
       setShowDeleteConfirm(false);
-
-      // Switch to another corps if available
-      const remainingCorps = Object.keys(updatedCorps);
-      if (remainingCorps.length > 0) {
-        setSelectedCorpsClass(remainingCorps[0]);
-      } else {
-        setSelectedCorpsClass(null);
-      }
     } catch (error) {
       console.error('Error deleting corps:', error);
       toast.error('Failed to delete corps. Please try again.');
@@ -847,16 +158,6 @@ const Dashboard = () => {
       if (result.data.success) {
         toast.success(result.data.message);
         setShowRetireConfirm(false);
-
-        // Switch to another corps if available
-        const updatedCorps = { ...corps };
-        delete updatedCorps[activeCorpsClass];
-        const remainingCorps = Object.keys(updatedCorps);
-        if (remainingCorps.length > 0) {
-          setSelectedCorpsClass(remainingCorps[0]);
-        } else {
-          setSelectedCorpsClass(null);
-        }
       }
     } catch (error) {
       console.error('Error retiring corps:', error);
@@ -872,20 +173,14 @@ const Dashboard = () => {
         toast.error(`You already have a corps registered in ${getCorpsClassName(targetClass)}`);
         return;
       }
-
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-
-      // Copy corps to new class and remove from old class
       const corpsData = { ...activeCorps, class: targetClass };
-
       await updateDoc(profileRef, {
         [`corps.${targetClass}`]: corpsData,
         [`corps.${activeCorpsClass}`]: null
       });
-
       toast.success(`${activeCorps.corpsName || activeCorps.name} moved to ${getCorpsClassName(targetClass)}`);
       setShowMoveCorps(false);
-      setSelectedCorpsClass(targetClass);
     } catch (error) {
       console.error('Error moving corps:', error);
       toast.error('Failed to move corps. Please try again.');
@@ -898,7 +193,6 @@ const Dashboard = () => {
         toast.error('Season data not loaded. Please try again.');
         return;
       }
-
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       const corpsData = {
         name: formData.name,
@@ -911,15 +205,13 @@ const Dashboard = () => {
         score: 0,
         rank: null
       };
-
       await updateDoc(profileRef, {
         [`corps.${formData.class}`]: corpsData
       });
-
       analyticsHelpers.logCorpsCreated(formData.class);
       toast.success(`${formData.name} registered successfully!`);
       setShowRegistration(false);
-      setNewlyUnlockedClass(null); // Clear newly unlocked class after registration
+      clearNewlyUnlockedClass();
     } catch (error) {
       console.error('Error registering corps:', error);
       toast.error('Failed to register corps. Please try again.');
@@ -928,65 +220,16 @@ const Dashboard = () => {
 
   const handleCloseRegistration = () => {
     setShowRegistration(false);
-    setNewlyUnlockedClass(null); // Clear newly unlocked class when closing
+    clearNewlyUnlockedClass();
   };
 
-  const handleCaptionSelection = async (captions) => {
-    // The new CaptionSelectionModal handles saving via the backend function
-    // This callback is called after successful save
+  const handleCaptionSelection = async () => {
     setShowCaptionSelection(false);
   };
 
-  const handleDailyRehearsal = async () => {
-    try {
-      const dailyRehearsal = httpsCallable(functions, 'dailyRehearsal');
-      const result = await dailyRehearsal();
-
-      const data = result.data;
-
-      // Show success message
-      if (data.classUnlocked) {
-        toast.success(data.message, { duration: 5000, icon: '🎉' });
-      } else {
-        toast.success(data.message, { duration: 3000 });
-      }
-
-      // Show XP gained
-      toast.success(`+${data.xpEarned} XP! (${data.totalXP} total)`, {
-        duration: 2000,
-        icon: '⭐'
-      });
-
-      if (data.level > (profile?.xpLevel || 1)) {
-        toast.success(`Level Up! Now Level ${data.level}`, {
-          duration: 4000,
-          icon: '🎊'
-        });
-      }
-    } catch (error) {
-      console.error('Error with daily rehearsal:', error);
-
-      if (error.message && error.message.includes('rehearse again in')) {
-        toast.error(error.message);
-      } else {
-        toast.error('Failed to complete rehearsal. Please try again.');
-      }
-    }
-  };
-
-  // Show nothing extra while loading - Suspense fallback handles initial load
-  // Data will render when ready
-
-  // Handle wizard completion
-  const handleSeasonSetupComplete = () => {
-    setShowSeasonSetupWizard(false);
-    setCorpsNeedingSetup([]);
-    toast.success('Season setup complete! Time to compete!');
-  };
-
   return (
-    <div className="space-y-8">
-      {/* Season Setup Wizard - Shows when corps need lineup setup */}
+    <div className="space-y-4">
+      {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
           onComplete={handleSeasonSetupComplete}
@@ -999,1536 +242,306 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-gold-500/10 to-cream-500/10 rounded-2xl" />
-        <div className="relative p-4 sm:p-8 glass rounded-2xl">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
-                Welcome back, {profile?.displayName || 'Director'}!
-              </h1>
-              <p className="text-cream-300 text-sm sm:text-base">
-                {formatSeasonName(seasonData?.name)}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {/* XP Progress */}
-              <div className="glass-dark rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="relative flex-shrink-0">
-                    <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-gold-500" />
-                    <span className="absolute -top-1 -right-1 text-xs font-bold text-gold-500">
-                      {profile?.xpLevel || 1}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-cream-500/60">Level {profile?.xpLevel || 1}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-2 bg-charcoal-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-gold transition-all duration-500"
-                          style={{ width: `${((profile?.xp || 0) % 1000) / 10}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="text-xs text-cream-300">
-                      {profile?.xp || 0} XP
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {/* CorpsCoin Balance */}
-              <div className="glass-dark rounded-lg p-3 sm:p-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-gold-500 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-cream-500/60">CorpsCoin</p>
-                    <p className="text-base sm:text-lg font-bold text-gold-500 truncate">
-                      {(profile?.corpsCoin || 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      {/* Compact Header */}
+      <DashboardHeader
+        profile={profile}
+        seasonData={seasonData}
+        formatSeasonName={formatSeasonName}
+        weeksRemaining={weeksRemaining}
+        currentWeek={currentWeek}
+        engagementData={engagementData}
+        activeCorps={activeCorps}
+        activeCorpsClass={activeCorpsClass}
+      />
 
-      {/* Quick Actions - Daily Rehearsal prominently displayed */}
+      {/* Quick Actions Row */}
       {activeCorps && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          {/* Daily Rehearsal Card */}
-          <button
-            onClick={async () => {
-              if (canRehearseToday()) {
-                const result = await rehearse();
-                if (result.success) {
-                  toast.success(`Rehearsal complete! +${result.data?.xpGained || 25} XP`);
-                }
-              } else {
-                toast('Rehearsal already completed today!', { icon: '✓' });
-              }
-            }}
-            disabled={executionProcessing}
-            className={`p-4 rounded-xl border-2 transition-all text-left ${
-              canRehearseToday()
-                ? 'border-gold-500/50 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 hover:border-gold-500 hover:shadow-lg hover:shadow-gold-500/10 cursor-pointer'
-                : 'border-green-500/30 bg-green-500/5 cursor-default'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  canRehearseToday() ? 'bg-gold-500/20' : 'bg-green-500/20'
-                }`}>
-                  {canRehearseToday() ? (
-                    <Activity className="w-5 h-5 text-gold-500" />
-                  ) : (
-                    <Check className="w-5 h-5 text-green-500" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-cream-100">Daily Rehearsal</p>
-                  <p className="text-xs text-cream-500/60">
-                    {canRehearseToday() ? 'Tap to rehearse!' : 'Completed today'}
-                  </p>
-                </div>
-              </div>
-              {canRehearseToday() && (
-                <span className="px-2 py-1 bg-gold-500/20 rounded-full text-xs font-semibold text-gold-500">
-                  +25 XP
-                </span>
-              )}
-            </div>
-            {executionState?.rehearsalsThisWeek !== undefined && (
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-cream-500/60">Weekly Progress</span>
-                  <span className="text-cream-300 font-medium">{executionState.rehearsalsThisWeek}/7</span>
-                </div>
-                <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-gold transition-all"
-                    style={{ width: `${(executionState.rehearsalsThisWeek / 7) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </button>
-
-          {/* Readiness Status Card */}
-          <button
-            onClick={() => setActiveTab('execution')}
-            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Target className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-cream-100">Corps Readiness</p>
-                <p className="text-xs text-cream-500/60">View execution stats</p>
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-cream-500/60">Readiness Level</span>
-                <span className={`font-medium ${
-                  (executionState?.readiness || 0.75) >= 0.9 ? 'text-green-400' :
-                  (executionState?.readiness || 0.75) >= 0.7 ? 'text-blue-400' :
-                  'text-orange-400'
-                }`}>
-                  {((executionState?.readiness || 0.75) * 100).toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    (executionState?.readiness || 0.75) >= 0.9 ? 'bg-green-500' :
-                    (executionState?.readiness || 0.75) >= 0.7 ? 'bg-blue-500' :
-                    'bg-orange-500'
-                  }`}
-                  style={{ width: `${(executionState?.readiness || 0.75) * 100}%` }}
-                />
-              </div>
-            </div>
-          </button>
-
-          {/* Schedule Quick Link */}
-          <Link
-            to="/schedule"
-            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-cream-100">Week {currentWeek} Schedule</p>
-                <p className="text-xs text-cream-500/60">Select shows to compete</p>
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-xs text-cream-500/60">
-                {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} shows selected
-              </span>
-              <ChevronRight className="w-4 h-4 text-cream-500/40" />
-            </div>
-          </Link>
-        </motion.div>
+        <QuickActionsRow
+          activeCorps={activeCorps}
+          activeCorpsClass={activeCorpsClass}
+          executionState={executionState}
+          executionProcessing={executionProcessing}
+          canRehearseToday={canRehearseToday}
+          rehearse={rehearse}
+          currentWeek={currentWeek}
+          onTabChange={setActiveTab}
+          hasMultipleCorps={hasMultipleCorps}
+          corps={corps}
+          onCorpsSwitch={handleCorpsSwitch}
+          getCorpsClassName={getCorpsClassName}
+          getCorpsClassColor={getCorpsClassColor}
+        />
       )}
 
-      {/* Corps Selector - Show only if user has multiple corps */}
-      {hasMultipleCorps && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="relative"
-        >
-          <div className="glass rounded-xl p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Music className="w-5 h-5 text-gold-500" />
-                <div>
-                  <p className="text-xs text-cream-500/60 mb-1">Active Corps</p>
-                  <p className="text-sm font-semibold text-cream-100">
-                    {activeCorps?.corpsName || activeCorps?.name || 'Select a corps'}
-                  </p>
-                </div>
-              </div>
+      {/* Main Content Layout - Desktop: 2 columns, Mobile: stacked */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Main Content Area */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Tab Navigation */}
+          {activeCorps && (
+            <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               <button
-                onClick={() => setShowCorpsSelector(!showCorpsSelector)}
-                className="btn-outline text-sm py-2 px-4 flex items-center gap-2"
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activeTab === 'overview'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                }`}
               >
-                Switch Corps
-                <ChevronDown className={`w-4 h-4 transition-transform ${showCorpsSelector ? 'rotate-180' : ''}`} />
+                <Music className="w-4 h-4" />
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('execution')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activeTab === 'execution'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                }`}
+              >
+                <Target className="w-4 h-4" />
+                Execution
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('equipment');
+                  completeDailyChallenge('maintain_equipment');
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activeTab === 'equipment'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                }`}
+              >
+                <Wrench className="w-4 h-4" />
+                Equipment
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('staff');
+                  completeDailyChallenge('staff_meeting');
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activeTab === 'staff'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Staff
               </button>
             </div>
-
-            {/* Corps Selection Dropdown */}
-            <AnimatePresence>
-              {showCorpsSelector && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 space-y-2 overflow-hidden"
-                >
-                  <div className="border-t border-cream-500/10 pt-4">
-                    <p className="text-xs text-cream-500/60 mb-3">Select a corps to manage:</p>
-                    <div className="space-y-2">
-                      {Object.entries(corps).map(([classId, corpsData]) => (
-                        <button
-                          key={classId}
-                          onClick={() => handleCorpsSwitch(classId)}
-                          className={`w-full text-left p-3 rounded-lg border transition-all ${
-                            activeCorpsClass === classId
-                              ? 'border-gold-500 bg-gold-500/10'
-                              : 'border-cream-500/20 hover:border-cream-500/40 hover:bg-cream-500/5'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-sm font-semibold ${
-                                  activeCorpsClass === classId ? 'text-gold-500' : 'text-cream-100'
-                                }`}>
-                                  {corpsData.corpsName || corpsData.name}
-                                </span>
-                                {activeCorpsClass === classId && (
-                                  <Check className="w-4 h-4 text-gold-500" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-0.5 rounded border ${getCorpsClassColor(classId)}`}>
-                                  {getCorpsClassName(classId)}
-                                </span>
-                                {corpsData.location && (
-                                  <span className="text-xs text-cream-500/60">
-                                    {corpsData.location}
-                                  </span>
-                                )}
-                              </div>
-                              {classId !== 'soundSport' && (
-                                <div className="flex items-center gap-3 mt-2">
-                                  {corpsData.rank && (
-                                    <span className="text-xs text-cream-500/60">
-                                      Rank: <span className="text-gold-500 font-semibold">#{corpsData.rank}</span>
-                                    </span>
-                                  )}
-                                  {corpsData.totalSeasonScore !== undefined && (
-                                    <span className="text-xs text-cream-500/60">
-                                      Score: <span className="text-gold-500 font-semibold">{corpsData.totalSeasonScore.toFixed(2)}</span>
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setShowRegistration(true)}
-                      className="w-full mt-3 p-3 rounded-lg border-2 border-dashed border-cream-500/20 hover:border-gold-500/40 hover:bg-gold-500/5 transition-all text-sm text-cream-500/60 hover:text-gold-500 flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Register Another Corps
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Battle Pass Notification */}
-      {unclaimedRewardsCount > 0 && (
-        <motion.a
-          href="/battlepass"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="block"
-        >
-          <div className="glass-premium rounded-xl p-4 border border-gold-500/30 hover:border-gold-500/60 transition-all cursor-pointer group">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Crown className="w-8 h-8 text-gold-500 group-hover:scale-110 transition-transform" />
-                  <Sparkles className="w-4 h-4 text-gold-500 absolute -top-1 -right-1 animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gradient flex items-center gap-2">
-                    Battle Pass Rewards Available!
-                    <span className="px-2 py-0.5 bg-gold-500 text-charcoal-900 rounded-full text-xs font-bold">
-                      {unclaimedRewardsCount}
-                    </span>
-                  </h3>
-                  <p className="text-sm text-cream-300">
-                    You have {unclaimedRewardsCount} unclaimed reward{unclaimedRewardsCount > 1 ? 's' : ''} waiting for you
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-gold-500">
-                <Gift className="w-5 h-5" />
-                <span className="text-sm font-semibold">Claim Now</span>
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </div>
-        </motion.a>
-      )}
-
-      {/* User Engagement Widget */}
-      {engagementData.loginStreak > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass rounded-xl p-4 border border-cream-500/10"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Login Streak */}
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
-              <div className="relative">
-                <Flame className={`w-8 h-8 ${
-                  engagementData.loginStreak >= 7 ? 'text-orange-400' : 'text-orange-500'
-                } ${engagementData.loginStreak >= 7 ? 'animate-pulse' : ''}`} />
-                {engagementData.loginStreak >= 7 && (
-                  <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
-                )}
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-orange-400">{engagementData.loginStreak}</p>
-                <p className="text-xs text-cream-500/70">Day Streak</p>
-              </div>
-            </div>
-
-            {/* Recent Achievement */}
-            {profile?.achievements && profile.achievements.length > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 rounded-lg border border-gold-500/20">
-                <Award className="w-8 h-8 text-gold-500" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gold-400 truncate">
-                    {profile.achievements[profile.achievements.length - 1].title}
-                  </p>
-                  <p className="text-xs text-cream-500/70">Latest Achievement</p>
-                </div>
-              </div>
-            )}
-
-            {/* Total Logins */}
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-              <Activity className="w-8 h-8 text-blue-400" />
-              <div>
-                <p className="text-2xl font-bold text-blue-400">{engagementData.totalLogins || 0}</p>
-                <p className="text-xs text-cream-500/70">Total Logins</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity Feed */}
-          {engagementData.recentActivity && engagementData.recentActivity.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-cream-500/10">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-cream-300 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Recent Activity
-                </h4>
-                {profile?.achievements && profile.achievements.length > 0 && (
-                  <button
-                    onClick={() => setShowAchievementModal(true)}
-                    className="text-xs text-gold-500 hover:text-gold-400 transition-colors flex items-center gap-1"
-                  >
-                    <Medal className="w-3 h-3" />
-                    View All Achievements ({profile.achievements.length})
-                  </button>
-                )}
-              </div>
-              <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                {engagementData.recentActivity.slice(0, 5).map((activity, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 text-xs text-cream-500/70 p-2 bg-charcoal-900/30 rounded"
-                  >
-                    {activity.icon === 'flame' && <Flame className="w-3 h-3 text-orange-400 flex-shrink-0" />}
-                    {activity.icon === 'trophy' && <Trophy className="w-3 h-3 text-gold-500 flex-shrink-0" />}
-                    {activity.icon === 'star' && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
-                    <span className="flex-1">{activity.message}</span>
-                    <span className="text-cream-500/50 text-[10px] whitespace-nowrap">
-                      {(activity.timestamp?.toDate ? activity.timestamp.toDate() : new Date(activity.timestamp)).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
-        </motion.div>
-      )}
 
-      {/* Daily Challenges */}
-      {dailyChallenges.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="glass rounded-xl p-4 border border-cream-500/10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
-              <Target className="w-5 h-5 text-blue-400" />
-              Daily Challenges
-            </h3>
-            <span className="text-xs text-cream-500/60">
-              {dailyChallenges.filter(c => c.completed).length}/{dailyChallenges.length} Complete
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {dailyChallenges.map((challenge) => {
-              const Icon = challenge.icon === 'target' ? Target :
-                          challenge.icon === 'trophy' ? Trophy :
-                          challenge.icon === 'wrench' ? Wrench :
-                          challenge.icon === 'users' ? Users :
-                          challenge.icon === 'calendar' ? Calendar : Target;
-              const progressPercent = (challenge.progress / challenge.target) * 100;
-
-              return (
-                <div
-                  key={challenge.id}
-                  onClick={() => challenge.action && !challenge.completed && challenge.action()}
-                  className={`p-3 rounded-lg border transition-all ${
-                    challenge.completed
-                      ? 'bg-green-500/10 border-green-500/30'
-                      : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/20 cursor-pointer'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      challenge.completed
-                        ? 'bg-green-500/20'
-                        : 'bg-blue-500/20'
-                    }`}>
-                      <Icon className={`w-4 h-4 ${
-                        challenge.completed ? 'text-green-400' : 'text-blue-400'
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-sm font-semibold text-cream-100">{challenge.title}</h4>
-                        {challenge.completed && (
-                          <Check className="w-4 h-4 text-green-400" />
-                        )}
-                      </div>
-                      <p className="text-xs text-cream-500/70 mb-2">{challenge.description}</p>
-
-                      {/* Progress Bar */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-500 ${
-                              challenge.completed
-                                ? 'bg-green-500'
-                                : 'bg-blue-500'
-                            }`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-cream-500/60 whitespace-nowrap">
-                          {challenge.progress}/{challenge.target}
-                        </span>
-                      </div>
-
-                      {/* Reward */}
-                      <div className="mt-2 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-gold-500" />
-                        <span className="text-xs text-gold-500 font-semibold">{challenge.reward}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* All Challenges Complete Celebration */}
-          {dailyChallenges.every(c => c.completed) && (
-            <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-gold-500/20 to-yellow-500/20 border border-gold-500/30">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-gold-500" />
-                <p className="text-sm font-semibold text-gold-400">
-                  All challenges complete! Great work! 🎉
-                </p>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      )}
-
-      {/* Weekly Progress Summary */}
-      {activeCorps && activeCorpsClass !== 'soundSport' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="glass rounded-xl p-4 border border-cream-500/10"
-        >
-          <button
-            onClick={() => setShowWeeklySummary(!showWeeklySummary)}
-            className="w-full flex items-center justify-between mb-4"
-          >
-            <h3 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-purple-400" />
-              This Week's Progress
-            </h3>
-            <ChevronRight className={`w-5 h-5 text-cream-500 transition-transform ${showWeeklySummary ? 'rotate-90' : ''}`} />
-          </button>
-
-          <AnimatePresence>
-            {showWeeklySummary && (
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+                key="overview"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Rehearsals This Week */}
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Target className="w-4 h-4 text-blue-400" />
-                        <span className="text-xs text-cream-500/70">Rehearsals</span>
-                      </div>
-                      {weeklyProgress.rehearsalsCompleted > 0 && (
-                        <TrendingUp className="w-4 h-4 text-green-400" />
-                      )}
-                    </div>
-                    <p className="text-2xl font-bold text-blue-400">
-                      +{weeklyProgress.rehearsalsCompleted}
-                    </p>
-                    <p className="text-xs text-cream-500/60 mt-1">Completed this week</p>
+                {/* Corps Panel + Season Info in Grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                  <div className="xl:col-span-2">
+                    <DashboardCorpsPanel
+                      activeCorps={activeCorps}
+                      activeCorpsClass={activeCorpsClass}
+                      profile={profile}
+                      currentWeek={currentWeek}
+                      getCorpsClassName={getCorpsClassName}
+                      onShowCaptionSelection={() => setShowCaptionSelection(true)}
+                      onShowEditCorps={() => setShowEditCorps(true)}
+                      onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+                      onShowMoveCorps={() => setShowMoveCorps(true)}
+                      onShowRetireConfirm={() => setShowRetireConfirm(true)}
+                      onShowRegistration={() => setShowRegistration(true)}
+                    />
                   </div>
-
-                  {/* Score Improvement */}
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-gold-500/10 to-yellow-500/10 border border-gold-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-gold-400" />
-                        <span className="text-xs text-cream-500/70">Score Change</span>
-                      </div>
-                      {weeklyProgress.scoreImprovement > 0 && (
-                        <TrendingUp className="w-4 h-4 text-green-400" />
-                      )}
-                    </div>
-                    <p className={`text-2xl font-bold ${
-                      weeklyProgress.scoreImprovement > 0 ? 'text-green-400' :
-                      weeklyProgress.scoreImprovement < 0 ? 'text-red-400' : 'text-cream-400'
-                    }`}>
-                      {weeklyProgress.scoreImprovement > 0 ? '+' : ''}{weeklyProgress.scoreImprovement.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-cream-500/60 mt-1">Points gained/lost</p>
-                  </div>
-
-                  {/* Rank Change */}
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-purple-400" />
-                        <span className="text-xs text-cream-500/70">Rank Movement</span>
-                      </div>
-                      {weeklyProgress.rankChange > 0 && (
-                        <TrendingUp className="w-4 h-4 text-green-400" />
-                      )}
-                    </div>
-                    <p className={`text-2xl font-bold ${
-                      weeklyProgress.rankChange > 0 ? 'text-green-400' :
-                      weeklyProgress.rankChange < 0 ? 'text-red-400' : 'text-cream-400'
-                    }`}>
-                      {weeklyProgress.rankChange > 0 ? '↑' : weeklyProgress.rankChange < 0 ? '↓' : '→'}
-                      {Math.abs(weeklyProgress.rankChange)}
-                    </p>
-                    <p className="text-xs text-cream-500/60 mt-1">
-                      {weeklyProgress.rankChange > 0 ? 'Positions gained' :
-                       weeklyProgress.rankChange < 0 ? 'Positions lost' : 'No change'}
-                    </p>
-                  </div>
-
-                  {/* Equipment Condition */}
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="w-4 h-4 text-orange-400" />
-                        <span className="text-xs text-cream-500/70">Equipment Health</span>
-                      </div>
-                    </div>
-                    <p className={`text-2xl font-bold ${
-                      weeklyProgress.equipmentMaintained >= 80 ? 'text-green-400' :
-                      weeklyProgress.equipmentMaintained >= 60 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {weeklyProgress.equipmentMaintained.toFixed(0)}%
-                    </p>
-                    <p className="text-xs text-cream-500/60 mt-1">Well-maintained items</p>
+                  <div className="xl:col-span-1">
+                    <SeasonInfo />
                   </div>
                 </div>
 
-                {/* Weekly Insights */}
-                {(weeklyProgress.scoreImprovement > 0 || weeklyProgress.rankChange > 0) && (
-                  <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-green-400" />
-                      <p className="text-sm text-green-400 font-semibold">
-                        {weeklyProgress.rankChange > 0 && weeklyProgress.scoreImprovement > 0
-                          ? "Outstanding week! You're climbing the ranks! 🚀"
-                          : weeklyProgress.rankChange > 0
-                          ? "Great progress! Keep climbing the leaderboard! 📈"
-                          : "Your scores are improving! Keep up the great work! ⭐"}
-                      </p>
+                {/* Performance Chart + Recent Activity */}
+                {activeCorps && (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <PerformanceChart scores={recentScores} corpsClass={activeCorpsClass} />
+
+                    {/* Recent Scores */}
+                    <div className="card">
+                      <h3 className="text-sm font-semibold text-cream-100 mb-3 flex items-center gap-2">
+                        <Star className="w-4 h-4 text-gold-500" />
+                        {activeCorpsClass === 'soundSport' ? 'Recent Performances' : 'Recent Scores'}
+                      </h3>
+                      {recentScores.length === 0 ? (
+                        <p className="text-cream-500/60 text-center py-6 text-sm">
+                          No scores available yet
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {recentScores.slice(0, 4).map((score, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 hover:bg-cream-500/5 rounded-lg transition-colors">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-cream-100 truncate">{score.showName}</p>
+                                <p className="text-xs text-cream-500/60">
+                                  {score.date?.toDate ? score.date.toDate().toLocaleDateString() : score.date}
+                                </p>
+                              </div>
+                              <div className="text-right pl-2">
+                                <p className="text-sm font-bold text-gold-500">{score.totalScore}</p>
+                                {activeCorpsClass !== 'soundSport' && score.rank && (
+                                  <p className="text-xs text-cream-500/60">#{score.rank}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <Link
+                        to="/scores"
+                        className="block mt-3 pt-3 border-t border-cream-500/10 text-center text-xs text-gold-500 hover:text-gold-400"
+                      >
+                        View All Scores <ChevronRight className="w-3 h-3 inline" />
+                      </Link>
                     </div>
+                  </div>
+                )}
+
+                {/* League Activity */}
+                {activeCorps && (
+                  <div className="card">
+                    <h3 className="text-sm font-semibold text-cream-100 mb-3 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-gold-500" />
+                      League Activity
+                    </h3>
+                    {!profile?.leagueIds || profile.leagueIds.length === 0 ? (
+                      <div className="text-center py-4">
+                        <Users className="w-8 h-8 text-cream-500/40 mx-auto mb-2" />
+                        <p className="text-sm text-cream-500/60 mb-2">Not in any leagues yet</p>
+                        <Link to="/leagues" className="btn-outline text-xs inline-flex items-center">
+                          Browse Leagues <ChevronRight className="w-3 h-3 ml-1" />
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {profile.leagueIds.slice(0, 3).map((leagueId, index) => (
+                          <div
+                            key={leagueId}
+                            className="flex items-center gap-2 px-3 py-2 bg-charcoal-900/30 rounded-lg"
+                          >
+                            <Trophy className="w-4 h-4 text-gold-500" />
+                            <span className="text-sm text-cream-100">League {index + 1}</span>
+                          </div>
+                        ))}
+                        <Link
+                          to="/leagues"
+                          className="flex items-center gap-1 px-3 py-2 text-sm text-gold-500 hover:text-gold-400"
+                        >
+                          View All <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
             )}
+
+            {activeCorps && activeTab === 'execution' && (
+              <motion.div
+                key="execution"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
+              >
+                <ExecutionDashboard
+                  executionState={executionState}
+                  multiplier={calculateMultiplier()}
+                />
+                <RehearsalPanel
+                  executionState={executionState}
+                  canRehearseToday={canRehearseToday()}
+                  onRehearsal={rehearse}
+                  processing={executionProcessing}
+                />
+                <ShowDifficultySelector
+                  corpsClass={activeCorpsClass}
+                  currentDifficulty={executionState?.showDesign?.difficulty || activeCorps?.execution?.showDesign?.difficulty}
+                  currentDay={profile?.currentDay || 1}
+                  onSuccess={() => {
+                    toast.success('Show difficulty updated successfully!');
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {activeCorps && activeTab === 'equipment' && (
+              <motion.div
+                key="equipment"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <EquipmentManager
+                  equipment={executionState?.equipment}
+                  onRepair={repairEquipment}
+                  onUpgrade={upgradeEquipment}
+                  processing={executionProcessing}
+                  corpsCoin={profile?.corpsCoin || 0}
+                />
+              </motion.div>
+            )}
+
+            {activeCorps && activeTab === 'staff' && (
+              <motion.div
+                key="staff"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
+              </motion.div>
+            )}
           </AnimatePresence>
-        </motion.div>
-      )}
-
-      {/* Quick Stats */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
-      >
-        <div className="card-hover">
-          <div className="flex items-center justify-between mb-2">
-            <Trophy className="w-5 h-5 text-gold-500" />
-            <span className="text-2xl font-bold text-cream-100">
-              {activeCorpsClass === 'soundSport' ? '🎉' : (activeCorps?.rank || '-')}
-            </span>
-          </div>
-          <p className="text-sm text-cream-500/60">
-            {activeCorpsClass === 'soundSport' ? 'Participant' : 'Current Rank'}
-          </p>
         </div>
 
-        <div className="card-hover">
-          <div className="flex items-center justify-between mb-2">
-            <Star className="w-5 h-5 text-gold-500" />
-            <span className="text-2xl font-bold text-cream-100">
-              {activeCorpsClass === 'soundSport' ? (
-                activeCorps?.totalSeasonScore > 0 ? '✓' : '-'
-              ) : (
-                activeCorps?.totalSeasonScore?.toFixed(2) || '0.00'
-              )}
-            </span>
-          </div>
-          <p className="text-sm text-cream-500/60">
-            {activeCorpsClass === 'soundSport' ? 'Performance' : 'Total Score'}
-          </p>
-        </div>
-
-        <div className="card-hover">
-          <div className="flex items-center justify-between mb-2">
-            <Users className="w-5 h-5 text-gold-500" />
-            <span className="text-2xl font-bold text-cream-100">
-              {profile?.leagueIds?.length || 0}
-            </span>
-          </div>
-          <p className="text-sm text-cream-500/60">Active Leagues</p>
-        </div>
-
-        <div className="card-hover">
-          <div className="flex items-center justify-between mb-2">
-            <Calendar className="w-5 h-5 text-gold-500" />
-            <span className="text-2xl font-bold text-cream-100">
-              {weeksRemaining ? `${weeksRemaining}w` : '-'}
-            </span>
-          </div>
-          <p className="text-sm text-cream-500/60">Weeks Remaining</p>
-        </div>
-      </motion.div>
-
-      {/* Tab Navigation */}
-      {activeCorps && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex gap-2 overflow-x-auto pb-2 -mb-2"
-        >
-          {hasMultipleCorps && (
-            <button
-              onClick={() => setActiveTab('allcorps')}
-              className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'allcorps'
-                  ? 'bg-gold-500 text-charcoal-900'
-                  : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">All Corps</span>
-              <span className="sm:hidden">All</span>
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-            }`}
-          >
-            {hasMultipleCorps ? <span className="hidden sm:inline">Current Corps</span> : 'Overview'}
-            {hasMultipleCorps && <span className="sm:hidden">Corps</span>}
-          </button>
-          <button
-            onClick={() => setActiveTab('execution')}
-            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'execution'
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-            }`}
-          >
-            <Target className="w-4 h-4" />
-            <span className="hidden sm:inline">Execution</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('equipment');
-              // Complete equipment challenge when checking equipment status
-              completeDailyChallenge('maintain_equipment');
-            }}
-            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'equipment'
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-            }`}
-          >
-            <Wrench className="w-4 h-4" />
-            <span className="hidden sm:inline">Equipment</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('staff');
-              // Complete staff meeting challenge when visiting staff tab
-              completeDailyChallenge('staff_meeting');
-            }}
-            className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'staff'
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Staff</span>
-          </button>
-        </motion.div>
-      )}
-
-      {/* Execution System Panels */}
-      <AnimatePresence mode="wait">
-        {activeCorps && activeTab === 'execution' && (
-          <motion.div
-            key="execution"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <ExecutionDashboard
-              executionState={executionState}
-              multiplier={calculateMultiplier()}
-            />
-            <RehearsalPanel
-              executionState={executionState}
-              canRehearseToday={canRehearseToday()}
-              onRehearsal={rehearse}
-              processing={executionProcessing}
-            />
-            <ShowDifficultySelector
-              corpsClass={activeCorpsClass}
-              currentDifficulty={executionState?.showDesign?.difficulty || activeCorps?.execution?.showDesign?.difficulty}
-              currentDay={profile?.currentDay || 1}
-              onSuccess={() => {
-                toast.success('Show difficulty updated successfully!');
-              }}
-            />
-          </motion.div>
-        )}
-
-        {activeCorps && activeTab === 'equipment' && (
-          <motion.div
-            key="equipment"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <EquipmentManager
-              equipment={executionState?.equipment}
-              onRepair={repairEquipment}
-              onUpgrade={upgradeEquipment}
-              processing={executionProcessing}
-              corpsCoin={profile?.corpsCoin || 0}
-            />
-          </motion.div>
-        )}
-
-        {activeCorps && activeTab === 'staff' && (
-          <motion.div
-            key="staff"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <DashboardStaffPanel
+        {/* Sidebar - Hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:block lg:col-span-1">
+          <div className="sticky top-4">
+            <DashboardSidebar
+              dailyChallenges={dailyChallenges}
+              weeklyProgress={weeklyProgress}
+              engagementData={engagementData}
+              profile={profile}
+              activeCorps={activeCorps}
               activeCorpsClass={activeCorpsClass}
+              currentWeek={currentWeek}
+              unclaimedRewardsCount={unclaimedRewardsCount}
+              onTabChange={setActiveTab}
+              completeDailyChallenge={completeDailyChallenge}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* All Corps Comparison View */}
-      {hasMultipleCorps && activeTab === 'allcorps' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          <div className="card">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
-                  All Corps Overview
-                </h2>
-                <p className="text-cream-500/60">
-                  Manage all {Object.keys(corps).length} of your corps at a glance
-                </p>
-              </div>
-              <button
-                onClick={() => setShowRegistration(true)}
-                className="btn-outline text-sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Corps
-              </button>
-            </div>
-
-            {/* Filters and Sort */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-charcoal-900/30 rounded-lg">
-              <div className="flex-1">
-                <label className="text-xs text-cream-500/60 mb-2 block">Filter</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCorpsFilter('all')}
-                    className={`px-3 py-1.5 rounded text-sm transition-all ${
-                      corpsFilter === 'all'
-                        ? 'bg-gold-500 text-charcoal-900 font-semibold'
-                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setCorpsFilter('needsAttention')}
-                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
-                      corpsFilter === 'needsAttention'
-                        ? 'bg-red-500 text-white font-semibold'
-                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-                    }`}
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    Needs Attention
-                  </button>
-                  <button
-                    onClick={() => setCorpsFilter('ready')}
-                    className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-1 ${
-                      corpsFilter === 'ready'
-                        ? 'bg-green-500 text-white font-semibold'
-                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-                    }`}
-                  >
-                    <Check className="w-3 h-3" />
-                    Ready
-                  </button>
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-cream-500/60 mb-2 block">Sort By</label>
-                <select
-                  value={corpsSortBy}
-                  onChange={(e) => setCorpsSortBy(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 rounded text-sm text-cream-100 hover:border-cream-500/40 transition-colors"
-                >
-                  <option value="class">Class Level</option>
-                  <option value="rank">Best Rank</option>
-                  <option value="score">Highest Score</option>
-                  <option value="name">Name (A-Z)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {Object.entries(corps)
-                .map(([classId, corpsData]) => {
-                  const needsAttention = [];
-                  const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
-                  const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
-
-                  if (!hasLineup) needsAttention.push('Missing lineup');
-                  if (!hasShows) needsAttention.push('No shows selected');
-
-                  return { classId, corpsData, needsAttention, hasLineup, hasShows };
-                })
-                .filter(({ needsAttention }) => {
-                  if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
-                  if (corpsFilter === 'ready') return needsAttention.length === 0;
-                  return true;
-                })
-                .sort((a, b) => {
-                  if (corpsSortBy === 'class') {
-                    const classOrder = { worldClass: 0, world: 0, openClass: 1, open: 1, aClass: 2, soundSport: 3 };
-                    return classOrder[a.classId] - classOrder[b.classId];
-                  }
-                  if (corpsSortBy === 'rank') {
-                    const rankA = a.corpsData.rank || 999;
-                    const rankB = b.corpsData.rank || 999;
-                    return rankA - rankB;
-                  }
-                  if (corpsSortBy === 'score') {
-                    const scoreA = a.corpsData.totalSeasonScore || 0;
-                    const scoreB = b.corpsData.totalSeasonScore || 0;
-                    return scoreB - scoreA;
-                  }
-                  if (corpsSortBy === 'name') {
-                    const nameA = (a.corpsData.corpsName || a.corpsData.name || '').toLowerCase();
-                    const nameB = (b.corpsData.corpsName || b.corpsData.name || '').toLowerCase();
-                    return nameA.localeCompare(nameB);
-                  }
-                  return 0;
-                })
-                .map(({ classId, corpsData, needsAttention, hasLineup, hasShows }) => (
-                  <motion.div
-                    key={classId}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`card-hover cursor-pointer relative ${
-                      activeCorpsClass === classId ? 'ring-2 ring-gold-500' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedCorpsClass(classId);
-                      setActiveTab('overview');
-                    }}
-                  >
-                    {/* Alert Badge */}
-                    {needsAttention.length > 0 && (
-                      <div className="absolute -top-2 -right-2 z-10">
-                        <div className="relative">
-                          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">{needsAttention.length}</span>
-                          </div>
-                          <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75" />
-                        </div>
-                      </div>
-                    )}
-
-                    {activeCorpsClass === classId && (
-                      <div className="absolute top-3 right-3">
-                        <div className="px-2 py-1 bg-gold-500 text-charcoal-900 rounded text-xs font-bold">
-                          Active
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${
-                        classId === 'world' ? 'from-gold-500 to-gold-600' :
-                        classId === 'open' ? 'from-purple-500 to-purple-600' :
-                        classId === 'aClass' ? 'from-blue-500 to-blue-600' :
-                        'from-green-500 to-green-600'
-                      } flex items-center justify-center flex-shrink-0`}>
-                        <Music className="w-6 h-6 text-white" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-cream-100 truncate">
-                          {corpsData.corpsName || corpsData.name}
-                        </h3>
-                        <p className="text-sm text-cream-500/60">{corpsData.location}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-xs px-2 py-0.5 rounded border ${
-                            classId === 'world' ? 'text-gold-500 bg-gold-500/10 border-gold-500/30' :
-                            classId === 'open' ? 'text-purple-500 bg-purple-500/10 border-purple-500/30' :
-                            classId === 'aClass' ? 'text-blue-500 bg-blue-500/10 border-blue-500/30' :
-                            'text-green-500 bg-green-500/10 border-green-500/30'
-                          }`}>
-                            {getCorpsClassName(classId)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-cream-500/10">
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <p className="text-xs text-cream-500/60 mb-1">Rank</p>
-                          <p className="text-lg font-bold text-cream-100">
-                            {classId === 'soundSport' ? '🎉' : (corpsData.rank ? `#${corpsData.rank}` : '-')}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-cream-500/60 mb-1">Score</p>
-                          <p className="text-lg font-bold text-cream-100">
-                            {classId === 'soundSport' ? (
-                              corpsData.totalSeasonScore > 0 ? '✓' : '-'
-                            ) : (
-                              corpsData.totalSeasonScore?.toFixed(1) || '0.0'
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-cream-500/60 mb-1">Lineup</p>
-                          <p className="text-lg font-bold text-cream-100">
-                            {Object.keys(corpsData.lineup || {}).length}/8
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Alerts */}
-                    {needsAttention.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-red-500/20">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-xs font-semibold text-red-400 mb-1">Needs Attention</p>
-                            <ul className="text-xs text-red-300/80 space-y-1">
-                              {needsAttention.map((issue, idx) => (
-                                <li key={idx}>• {issue}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Quick Actions */}
-                    <div className="mt-4 pt-4 border-t border-cream-500/10">
-                      <div className="flex gap-2">
-                        {!hasLineup && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCorpsClass(classId);
-                              setActiveTab('overview');
-                              setTimeout(() => setShowCaptionSelection(true), 100);
-                            }}
-                            className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-xs text-blue-300 font-semibold transition-colors flex items-center justify-center gap-1"
-                          >
-                            <Edit className="w-3 h-3" />
-                            Set Lineup
-                          </button>
-                        )}
-                        {!hasShows && hasLineup && (
-                          <Link
-                            to="/schedule"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex-1 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded text-xs text-purple-300 font-semibold transition-colors flex items-center justify-center gap-1"
-                          >
-                            <Calendar className="w-3 h-3" />
-                            Select Shows
-                          </Link>
-                        )}
-                        {hasLineup && hasShows && (
-                          <div className="flex-1 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-300 font-semibold flex items-center justify-center gap-1">
-                            <Check className="w-3 h-3" />
-                            All Set!
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCorpsClass(classId);
-                            setActiveTab('overview');
-                          }}
-                          className="px-3 py-2 bg-charcoal-800 hover:bg-charcoal-700 border border-cream-500/20 rounded text-xs text-cream-300 font-semibold transition-colors flex items-center gap-1"
-                        >
-                          View
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-            </div>
-
-            {/* Empty State */}
-            {Object.entries(corps)
-              .map(([classId, corpsData]) => {
-                const needsAttention = [];
-                const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
-                const hasShows = corpsData.selectedShows?.[`week${currentWeek}`]?.length > 0;
-                if (!hasLineup) needsAttention.push('Missing lineup');
-                if (!hasShows) needsAttention.push('No shows selected');
-                return { needsAttention };
-              })
-              .filter(({ needsAttention }) => {
-                if (corpsFilter === 'needsAttention') return needsAttention.length > 0;
-                if (corpsFilter === 'ready') return needsAttention.length === 0;
-                return true;
-              }).length === 0 && (
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-                  <p className="text-lg text-cream-500/60 mb-2">
-                    {corpsFilter === 'needsAttention' ? 'All corps are ready!' : 'No corps match this filter'}
-                  </p>
-                  <p className="text-sm text-cream-500/40">
-                    {corpsFilter === 'needsAttention'
-                      ? 'Great job! All your corps have their lineups and shows selected.'
-                      : 'Try adjusting your filters to see more corps.'}
-                  </p>
-                </div>
-              )}
           </div>
-        </motion.div>
-      )}
-
-      {/* Season Info & Corps Management */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Season Information */}
-        <SeasonInfo className="lg:col-span-1" />
-
-        {/* Corps Management Card */}
-        <div className="lg:col-span-2">
-          {/* Corps Management */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        {!activeCorps ? (
-          // Registration CTA
-          <div className="card-premium p-8 text-center">
-            <Music className="w-16 h-16 text-gold-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
-              Start Your Journey
-            </h2>
-            <p className="text-cream-300 mb-6">
-              Register your fantasy corps and compete in the ultimate drum corps experience
-            </p>
-            <button
-              onClick={() => setShowRegistration(true)}
-              className="btn-primary"
-            >
-              <Plus className="w-5 h-5 inline mr-2" />
-              Register Corps
-            </button>
-          </div>
-        ) : (
-          // Corps Dashboard
-          <div className="space-y-6">
-            {/* Corps Info */}
-            <div className="card">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-display font-bold text-cream-100 mb-1">
-                    {activeCorps.corpsName || activeCorps.name}
-                  </h2>
-                  <p className="text-cream-500/60">{activeCorps.location}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className={`badge ${
-                      activeCorpsClass === 'world' ? 'badge-gold' :
-                      activeCorpsClass === 'open' ? 'badge-cream' :
-                      activeCorpsClass === 'soundSport' ? 'badge-success' :
-                      'badge-primary'
-                    }`}>
-                      {activeCorpsClass === 'soundSport' ? 'SoundSport' :
-                       activeCorpsClass === 'world' ? 'World Class' :
-                       activeCorpsClass === 'open' ? 'Open Class' :
-                       activeCorpsClass === 'aClass' ? 'A Class' : 'Unknown'}
-                    </span>
-                    {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="badge badge-gold">
-                        <Trophy className="w-3 h-3 mr-1" />
-                        Top 10
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowCorpsManagementMenu(!showCorpsManagementMenu)}
-                    className="btn-ghost"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-
-                  {/* Corps Management Dropdown Menu */}
-                  <AnimatePresence>
-                    {showCorpsManagementMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        className="absolute right-0 top-full mt-2 w-48 glass-dark rounded-lg shadow-xl border border-cream-500/20 z-20 overflow-hidden"
-                      >
-                        <button
-                          onClick={() => {
-                            setShowEditCorps(true);
-                            setShowCorpsManagementMenu(false);
-                          }}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
-                        >
-                          <Edit className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm">Edit Details</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowMoveCorps(true);
-                            setShowCorpsManagementMenu(false);
-                          }}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
-                        >
-                          <ArrowRightLeft className="w-4 h-4 text-purple-500" />
-                          <span className="text-sm">Move to Another Class</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowRetireConfirm(true);
-                            setShowCorpsManagementMenu(false);
-                          }}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-cream-500/10 transition-colors text-cream-100"
-                        >
-                          <Archive className="w-4 h-4 text-orange-500" />
-                          <span className="text-sm">Retire Corps</span>
-                        </button>
-                        <div className="border-t border-cream-500/10"></div>
-                        <button
-                          onClick={() => {
-                            setShowDeleteConfirm(true);
-                            setShowCorpsManagementMenu(false);
-                          }}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-500/10 transition-colors text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="text-sm">Delete Corps</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Show Concept */}
-              {activeCorps.showConcept && (
-                <div className="p-4 bg-charcoal-900/30 rounded-lg mb-6">
-                  <p className="text-sm text-cream-500/60 mb-1">Show Concept</p>
-                  <p className="text-cream-100">{activeCorps.showConcept}</p>
-                </div>
-              )}
-
-              {/* Caption Lineup */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-cream-100">
-                        Caption Lineup
-                      </h3>
-                      <InfoTooltip
-                        content="Select historical caption heads from different corps and years. Each selection has a point value based on their real-world performance. Stay within your class limit."
-                        title="Caption Selection"
-                      />
-                    </div>
-                    {Object.keys(activeCorps.lineup || {}).length > 0 && (() => {
-                      const totalPoints = Object.values(activeCorps.lineup).reduce((sum, selection) => {
-                        const parts = selection.split('|');
-                        return sum + (parseInt(parts[2]) || 0);
-                      }, 0);
-                      const pointLimits = { soundSport: 90, aClass: 60, open: 120, world: 150 };
-                      const limit = pointLimits[activeCorpsClass] || 150;
-                      return (
-                        <p className="text-sm text-cream-500/60">
-                          Total: <span className={`font-bold ${totalPoints > limit ? 'text-red-500' : 'text-gold-500'}`}>
-                            {totalPoints}
-                          </span> / {limit} points
-                        </p>
-                      );
-                    })()}
-                  </div>
-                  <button
-                    onClick={() => setShowCaptionSelection(true)}
-                    className="btn-outline text-sm py-2"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Lineup
-                  </button>
-                </div>
-
-                {Object.keys(activeCorps.lineup || {}).length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertCircle className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-                    <p className="text-cream-500/60">No captions selected yet</p>
-                    <button
-                      onClick={() => setShowCaptionSelection(true)}
-                      className="btn-primary mt-4"
-                    >
-                      Select Captions
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(() => {
-                      // Sort captions in recap sheet order
-                      const captionOrder = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
-                      const sortedEntries = Object.entries(activeCorps.lineup)
-                        .sort((a, b) => captionOrder.indexOf(a[0]) - captionOrder.indexOf(b[0]));
-
-                      return sortedEntries.map(([caption, selection]) => {
-                        // Parse the selection string: corpsName|sourceYear|points
-                        const parts = selection.split('|');
-                        const corpsName = parts[0] || selection;
-                        const year = parts[1] || '';
-                        const points = parts[2] || '';
-
-                        return (
-                          <div key={caption} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                            <div className="flex-1">
-                              <p className="text-xs text-cream-500/60">{caption}</p>
-                              <p className="text-sm font-medium text-cream-100">{corpsName}</p>
-                              {year && <p className="text-xs text-cream-500/40">({year})</p>}
-                            </div>
-                            <div className="text-right">
-                              <p className="text-lg font-bold text-gold-500">{points || '?'}</p>
-                              <p className="text-xs text-cream-500/60">pts</p>
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Show Selection */}
-            <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-cream-100">
-                      Show Schedule
-                    </h3>
-                    <InfoTooltip
-                      content="Select up to 4 shows to compete in each week. More competitive shows offer higher scores but face tougher competition. Choose strategically!"
-                      title="Show Selection"
-                    />
-                  </div>
-                  <p className="text-sm text-cream-500/60">
-                    Week {currentWeek}
-                    {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 &&
-                      ` - ${activeCorps.selectedShows[`week${currentWeek}`].length} shows selected`
-                    }
-                  </p>
-                </div>
-                <Link
-                to="/schedule"
-                className="btn-outline text-sm py-2 inline-flex items-center"
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                {activeCorps.selectedShows?.[`week${currentWeek}`]?.length > 0 ? 'Edit Shows' : 'Select Shows'}
-              </Link>
-              </div>
-
-              {!activeCorps.selectedShows?.[`week${currentWeek}`] || activeCorps.selectedShows[`week${currentWeek}`].length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-                  <p className="text-cream-500/60 mb-1">No shows selected for this week</p>
-                  <p className="text-sm text-cream-500/40 mb-4">Go to Schedule to register for shows</p>
-                  <Link
-                    to="/schedule"
-                    className="btn-primary inline-flex items-center"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    View Schedule
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {activeCorps.selectedShows[`week${currentWeek}`].map((show, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-cream-100">{show.eventName}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          {show.date && (
-                            <p className="text-xs text-cream-500/60 flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}
-                            </p>
-                          )}
-                          {show.location && (
-                            <p className="text-xs text-cream-500/60 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {show.location}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <Check className="w-5 h-5 text-green-500" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Performance Chart */}
-            <PerformanceChart scores={recentScores} corpsClass={activeCorpsClass} />
-          </div>
-        )}
-      </motion.div>
         </div>
       </div>
-      )}
 
-      {/* Recent Activity */}
-      {activeTab === 'overview' && (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-      >
-        {/* Recent Scores */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-cream-100 mb-4">
-            {activeCorpsClass === 'soundSport' ? 'Recent Performances' : 'Recent Scores'}
-          </h3>
-          {recentScores.length === 0 ? (
-            <p className="text-cream-500/60 text-center py-8">
-              {activeCorpsClass === 'soundSport'
-                ? 'No performances yet'
-                : 'No scores available yet'}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {recentScores.map((score, index) => (
-                <div key={index} className="flex items-center justify-between p-3 hover:bg-cream-500/5 rounded-lg transition-colors">
-                  <div>
-                    <p className="font-medium text-cream-100">{score.showName}</p>
-                    <p className="text-sm text-cream-500/60">{score.date?.toDate ? score.date.toDate().toLocaleDateString() : score.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gold-500">{score.totalScore}</p>
-                    {activeCorpsClass !== 'soundSport' && (
-                      <p className="text-xs text-cream-500/60">Rank #{score.rank}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* League Activity */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-cream-100 mb-4">
-            League Activity
-          </h3>
-          {!profile?.leagueIds || profile.leagueIds.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-              <p className="text-cream-500/60 mb-4">Not in any leagues yet</p>
-              <a href="/leagues" className="btn-outline inline-flex items-center">
-                Browse Leagues
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </a>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {profile.leagueIds.slice(0, 3).map((leagueId, index) => (
-                <div
-                  key={leagueId}
-                  className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg hover:bg-charcoal-900/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Trophy className="w-5 h-5 text-gold-500" />
-                    <div>
-                      <p className="text-sm font-semibold text-cream-100">League {index + 1}</p>
-                      <p className="text-xs text-cream-500/60">Active</p>
-                    </div>
-                  </div>
-                  <a href="/leagues" className="text-sm text-gold-500 hover:text-gold-400">
-                    View
-                  </a>
-                </div>
-              ))}
-              <a
-                href="/leagues"
-                className="block text-center p-3 text-sm text-gold-500 hover:text-gold-400 hover:bg-charcoal-900/30 rounded-lg transition-colors"
-              >
-                View All Leagues →
-              </a>
-            </div>
-          )}
-        </div>
-      </motion.div>
-      )}
+      {/* Mobile: Challenges Section (shown below main content) */}
+      <div className="lg:hidden">
+        <DashboardSidebar
+          dailyChallenges={dailyChallenges}
+          weeklyProgress={weeklyProgress}
+          engagementData={engagementData}
+          profile={profile}
+          activeCorps={activeCorps}
+          activeCorpsClass={activeCorpsClass}
+          currentWeek={currentWeek}
+          unclaimedRewardsCount={unclaimedRewardsCount}
+          onTabChange={setActiveTab}
+          completeDailyChallenge={completeDailyChallenge}
+        />
+      </div>
 
       {/* Modals */}
       <AnimatePresence>
@@ -2549,7 +562,7 @@ const Dashboard = () => {
             defaultClass={newlyUnlockedClass}
           />
         )}
-        
+
         {showCaptionSelection && activeCorps && seasonData && (
           <CaptionSelectionModal
             onClose={() => setShowCaptionSelection(false)}
@@ -2604,7 +617,10 @@ const Dashboard = () => {
 
         {showAchievementModal && (
           <AchievementModal
-            onClose={() => setShowAchievementModal(false)}
+            onClose={() => {
+              setShowAchievementModal(false);
+              clearNewAchievement();
+            }}
             achievements={profile?.achievements || []}
             newAchievement={newAchievement}
           />
