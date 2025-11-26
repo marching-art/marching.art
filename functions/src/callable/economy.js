@@ -188,29 +188,27 @@ const purchaseStaff = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Assign staff member to a corps caption
+ * Assign staff member to a corps
+ * Caption is automatically derived from the staff member's specialty
  */
 const assignStaff = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { staffId, corpsClass, caption } = request.data;
+  const { staffId, corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  if (!staffId || !corpsClass || !caption) {
-    throw new HttpsError("invalid-argument", "Staff ID, corps class, and caption required.");
-  }
-
-  const validCaptions = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
-  if (!validCaptions.includes(caption)) {
-    throw new HttpsError("invalid-argument", "Invalid caption.");
+  if (!staffId) {
+    throw new HttpsError("invalid-argument", "Staff ID is required.");
   }
 
   const db = getDb();
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
+    let resultMessage;
+
     await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
       if (!profileDoc.exists) {
@@ -225,16 +223,18 @@ const assignStaff = onCall({ cors: true }, async (request) => {
         throw new HttpsError("not-found", "Staff member not found in your roster.");
       }
 
-      // Check if staff caption matches the caption being assigned
-      if (staffMember.caption !== caption) {
-        throw new HttpsError("invalid-argument", `This staff member specializes in ${staffMember.caption}, not ${caption}.`);
+      // If corpsClass is null/undefined, unassign the staff member
+      if (!corpsClass) {
+        staffMember.assignedTo = null;
+        resultMessage = "Staff member unassigned successfully!";
+      } else {
+        // Assign to corps - caption is automatically the staff member's specialty
+        staffMember.assignedTo = {
+          corpsClass: corpsClass,
+          caption: staffMember.caption,
+        };
+        resultMessage = "Staff member assigned successfully!";
       }
-
-      // Update assignment
-      staffMember.assignedTo = {
-        corpsClass: corpsClass,
-        caption: caption,
-      };
 
       // Save updated staff array
       transaction.update(profileRef, {
@@ -242,10 +242,10 @@ const assignStaff = onCall({ cors: true }, async (request) => {
       });
     });
 
-    logger.info(`User ${uid} assigned staff ${staffId} to ${corpsClass} ${caption}`);
+    logger.info(`User ${uid} ${corpsClass ? 'assigned' : 'unassigned'} staff ${staffId}${corpsClass ? ` to ${corpsClass}` : ''}`);
     return {
       success: true,
-      message: "Staff member assigned successfully!",
+      message: resultMessage,
     };
   } catch (error) {
     logger.error(`Error assigning staff for user ${uid}:`, error);
