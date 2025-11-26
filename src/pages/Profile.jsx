@@ -455,7 +455,7 @@ const Profile = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="text-xs text-cream-400 uppercase tracking-wide">{classKey}</p>
-                          <h3 className="font-bold text-cream-100 text-lg">{corps.name || 'Unnamed Corps'}</h3>
+                          <h3 className="font-bold text-cream-100 text-lg">{corps.corpsName || corps.name || 'Unnamed Corps'}</h3>
                         </div>
                         {corps.totalSeasonScore !== undefined && (
                           <div className="text-right">
