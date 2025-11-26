@@ -266,6 +266,7 @@ export const useUserStore = create((set, get) => ({
       // Find the completed challenge for the toast message
       const completedChallenge = updatedChallenges.find(c => c.id === challengeId);
       const challengeTitle = completedChallenge?.title || 'Challenge';
+      const challengeReward = completedChallenge?.reward || '';
 
       set({
         loggedInProfile: {
@@ -274,7 +275,9 @@ export const useUserStore = create((set, get) => ({
         }
       });
 
-      toast.success(`${challengeTitle} complete! 🎯`);
+      // Show toast with reward if available (consistent with rehearsal toast)
+      const rewardText = challengeReward ? ` +${challengeReward}` : '';
+      toast.success(`${challengeTitle} complete!${rewardText}`);
       return true;
     } catch (error) {
       console.error('Error completing challenge:', error);
