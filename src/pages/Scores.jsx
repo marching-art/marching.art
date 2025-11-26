@@ -785,7 +785,7 @@ const Scores = () => {
 
   // Render SoundSport tab
   const renderSoundSport = () => {
-    const soundSportShows = recentShows.filter(show =>
+    const soundSportShows = allShows.filter(show =>
       show.scores?.some(s => s.corpsClass === 'soundSport')
     );
 
