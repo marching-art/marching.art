@@ -1,7 +1,8 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
+const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic } = require("../helpers/season");
-const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic } = require("../helpers/scoring");
+const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { createBattlePassSeasonManual } = require("../scheduled/battlePassRotation");
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
@@ -51,6 +52,21 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
     case "processAndArchiveOffSeasonScores":
       await processAndArchiveOffSeasonScoresLogic();
       return { success: true, message: "Off-Season Score Processor & Archiver finished successfully." };
+    case "processLiveSeasonScores": {
+      const db = getDb();
+      const seasonDoc = await db.doc("game-settings/season").get();
+      if (!seasonDoc.exists || seasonDoc.data().status !== "live-season") {
+        throw new HttpsError("failed-precondition", "No active live season found.");
+      }
+      const seasonData = seasonDoc.data();
+      const seasonStartDate = seasonData.schedule.startDate.toDate();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const diffInMillis = yesterday.getTime() - seasonStartDate.getTime();
+      const scoredDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+      await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
+      return { success: true, message: `Live Season scores processed for day ${scoredDay}.` };
+    }
     case "createBattlePassSeason":
       await createBattlePassSeasonManual();
       return { success: true, message: "Battle pass season created successfully." };
