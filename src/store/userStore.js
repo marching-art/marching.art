@@ -227,23 +227,73 @@ export const useUserStore = create((set, get) => ({
     try {
       const today = new Date().toDateString();
       const currentChallenges = loggedInProfile.challenges || {};
-      const todayChallenges = currentChallenges[today] || [];
+      let todayChallenges = currentChallenges[today] || [];
 
-      // Find and update the challenge
-      const updatedChallenges = todayChallenges.map(challenge => {
-        if (challenge.id === challengeId && !challenge.completed) {
-          return { ...challenge, progress: challenge.target, completed: true };
+      // Challenge definitions for creating if not exists
+      const challengeDefinitions = {
+        check_leaderboard: {
+          id: 'check_leaderboard',
+          title: 'Scout the Competition',
+          description: 'Visit the leaderboard page',
+          progress: 1,
+          target: 1,
+          reward: '25 XP',
+          icon: 'trophy',
+          completed: true
+        },
+        maintain_equipment: {
+          id: 'maintain_equipment',
+          title: 'Equipment Care',
+          description: 'Check your equipment status',
+          progress: 1,
+          target: 1,
+          reward: '30 XP',
+          icon: 'wrench',
+          completed: true
+        },
+        staff_meeting: {
+          id: 'staff_meeting',
+          title: 'Staff Meeting',
+          description: 'Visit the staff market',
+          progress: 1,
+          target: 1,
+          reward: '25 XP',
+          icon: 'users',
+          completed: true
         }
-        return challenge;
-      });
+      };
 
-      // Check if anything changed
-      const wasUpdated = updatedChallenges.some(
-        (c, i) => c.completed !== todayChallenges[i]?.completed
-      );
+      // Check if challenge exists
+      const existingChallenge = todayChallenges.find(c => c.id === challengeId);
 
-      if (!wasUpdated) {
-        return false; // Challenge already completed or not found
+      let updatedChallenges;
+      let challengeTitle;
+      let challengeReward;
+
+      if (existingChallenge) {
+        // Challenge exists - update it if not already completed
+        if (existingChallenge.completed) {
+          return false; // Already completed
+        }
+
+        updatedChallenges = todayChallenges.map(challenge => {
+          if (challenge.id === challengeId) {
+            return { ...challenge, progress: challenge.target, completed: true };
+          }
+          return challenge;
+        });
+
+        challengeTitle = existingChallenge.title;
+        challengeReward = existingChallenge.reward;
+      } else if (challengeDefinitions[challengeId]) {
+        // Challenge doesn't exist but we have a definition - create it
+        const newChallenge = challengeDefinitions[challengeId];
+        updatedChallenges = [...todayChallenges, newChallenge];
+        challengeTitle = newChallenge.title;
+        challengeReward = newChallenge.reward;
+      } else {
+        // Unknown challenge
+        return false;
       }
 
       const profileRef = doc(
@@ -262,11 +312,6 @@ export const useUserStore = create((set, get) => ({
       };
 
       await updateDoc(profileRef, { challenges: newChallengesData });
-
-      // Find the completed challenge for the toast message
-      const completedChallenge = updatedChallenges.find(c => c.id === challengeId);
-      const challengeTitle = completedChallenge?.title || 'Challenge';
-      const challengeReward = completedChallenge?.reward || '';
 
       set({
         loggedInProfile: {
