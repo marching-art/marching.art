@@ -40,69 +40,7 @@ exports.processDailyLiveScores = onSchedule({
   await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
 });
 
-exports.generateWeeklyMatchups = onSchedule({
-  schedule: "every monday 04:00",
-  timeZone: "America/New_York",
-}, async () => {
-  logger.info("Starting class-based weekly matchup generation...");
-  const db = getDb();
-  const seasonDoc = await db.doc("game-settings/season").get();
-  if (!seasonDoc.exists) {
-    logger.error("No active season found. Aborting.");
-    return;
-  }
-  const seasonData = seasonDoc.data();
-  const now = new Date();
-  const diffInMillis = now.getTime() - seasonData.schedule.startDate.toDate().getTime();
-  const currentWeek = Math.ceil((Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1) / 7);
-
-  const leaguesSnapshot = await db.collection("leagues").get();
-  if (leaguesSnapshot.empty) return;
-
-  const batch = db.batch();
-  const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
-
-  for (const leagueDoc of leaguesSnapshot.docs) {
-    const league = leagueDoc.data();
-    const members = league.members || [];
-    if (members.length < 2) continue;
-
-    const weeklyMatchupData = {
-      week: currentWeek,
-      seasonUid: seasonData.seasonUid,
-    };
-
-    const profilePromises = members.map((uid) => db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`).get());
-    const profileDocs = await Promise.all(profilePromises);
-
-    for (const corpsClass of corpsClasses) {
-      const eligibleMembers = profileDocs
-        .filter((pDoc) => pDoc.exists && pDoc.data().corps && pDoc.data().corps[corpsClass])
-        .map((pDoc) => pDoc.ref.parent.parent.id); 
-
-      if (eligibleMembers.length < 2) continue;
-
-      const shuffledMembers = [...eligibleMembers].sort(() => 0.5 - Math.random());
-      const matchups = [];
-      while (shuffledMembers.length > 1) {
-        const p1 = shuffledMembers.pop();
-        const p2 = shuffledMembers.pop();
-        matchups.push({ pair: [p1, p2], scores: { [p1]: 0, [p2]: 0 }, winner: null });
-      }
-      if (shuffledMembers.length === 1) {
-        const p = shuffledMembers.pop();
-        matchups.push({ pair: [p, "BYE"], scores: { [p]: 0 }, winner: p });
-      }
-
-      weeklyMatchupData[`${corpsClass}Matchups`] = matchups;
-    }
-
-    const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${currentWeek}`);
-    batch.set(matchupDocRef, weeklyMatchupData);
-    logger.info(`Generated matchups for league ${league.name} for week ${currentWeek}.`);
-  }
-
-  await batch.commit();
-  logger.info("Weekly matchup generation complete.");
-  return null;
-});
+// Note: Legacy H2H matchup generation removed.
+// Leagues now use circuit-style scoring where all members compete at weekly "tour stops"
+// and are ranked by their fantasy_recaps scores. No matchup generation needed.
+// Circuit standings are calculated client-side from existing fantasy_recaps data.
