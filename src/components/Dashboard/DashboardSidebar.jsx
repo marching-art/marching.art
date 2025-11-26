@@ -1,8 +1,9 @@
 // src/components/Dashboard/DashboardSidebar.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
-  Target, Trophy, Wrench, Calendar, Star,
+  Target, Trophy, Wrench, Users, Calendar, Star,
   ChevronDown, Check, Sparkles,
   Flame, Award, Crown, Gift, Activity
 } from 'lucide-react';
