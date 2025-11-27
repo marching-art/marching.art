@@ -14,17 +14,21 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
+import { useSeasonStore } from '../store/seasonStore';
 
 const Schedule = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [seasonData, setSeasonData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(1);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
   const weekTabsRef = useRef(null);
+
+  // Use global season store instead of fetching independently
+  const seasonData = useSeasonStore((state) => state.seasonData);
+  const currentWeek = useSeasonStore((state) => state.currentWeek);
+  const seasonLoading = useSeasonStore((state) => state.loading);
 
   // Calculate actual calendar date from season start date and day number
   // Day 1 starts the day after the season start date
@@ -49,7 +53,6 @@ const Schedule = () => {
 
   useEffect(() => {
     if (user) {
-      loadScheduleData();
       loadUserProfile();
     }
   }, [user]);
@@ -61,35 +64,14 @@ const Schedule = () => {
     }
   }, [currentWeek]);
 
-  const loadScheduleData = async () => {
-    try {
-      setLoading(true);
-      const seasonRef = doc(db, 'game-settings/season');
-      const seasonSnap = await getDoc(seasonRef);
-
-      if (seasonSnap.exists()) {
-        const data = seasonSnap.data();
-        setSeasonData(data);
-
-        // Calculate current week based on season start date
-        if (data.schedule?.startDate) {
-          const startDate = data.schedule.startDate.toDate();
-          const now = new Date();
-          const diffInMillis = now.getTime() - startDate.getTime();
-          const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-          const calculatedWeek = Math.max(1, Math.min(7, Math.ceil((diffInDays + 1) / 7)));
-          setCurrentWeek(calculatedWeek);
-        }
-      } else {
-        toast.error('No active season found');
-      }
-    } catch (error) {
-      console.error('Error loading schedule:', error);
-      toast.error('Failed to load schedule');
-    } finally {
+  // Update loading state based on season store and user profile
+  useEffect(() => {
+    if (!seasonLoading && userProfile !== null) {
+      setLoading(false);
+    } else if (!seasonLoading && !user) {
       setLoading(false);
     }
-  };
+  }, [seasonLoading, userProfile, user]);
 
   const loadUserProfile = async () => {
     try {

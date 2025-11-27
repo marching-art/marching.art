@@ -1,52 +1,20 @@
 // src/hooks/useSeason.js
-import { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { useSeasonStore } from '../store/seasonStore';
 
 /**
  * Hook to access current season data in real-time
+ *
+ * This hook now uses the global seasonStore to prevent duplicate
+ * Firestore listeners across components. The store maintains a single
+ * listener that is initialized at app startup.
+ *
  * @returns {Object} { seasonData, loading, error, weeksRemaining }
  */
 export const useSeason = () => {
-  const [seasonData, setSeasonData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [weeksRemaining, setWeeksRemaining] = useState(null);
-
-  useEffect(() => {
-    const seasonRef = doc(db, 'game-settings/season');
-
-    const unsubscribe = onSnapshot(
-      seasonRef,
-      (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          setSeasonData(data);
-
-          // Calculate weeks remaining
-          if (data.schedule?.endDate) {
-            const endDate = data.schedule.endDate.toDate();
-            const now = new Date();
-            const millisRemaining = endDate.getTime() - now.getTime();
-            const weeks = Math.ceil(millisRemaining / (7 * 24 * 60 * 60 * 1000));
-            setWeeksRemaining(weeks > 0 ? weeks : 0);
-          }
-
-          setError(null);
-        } else {
-          setError('No active season found');
-        }
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Error fetching season data:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
+  const seasonData = useSeasonStore((state) => state.seasonData);
+  const loading = useSeasonStore((state) => state.loading);
+  const error = useSeasonStore((state) => state.error);
+  const weeksRemaining = useSeasonStore((state) => state.weeksRemaining);
 
   return {
     seasonData,

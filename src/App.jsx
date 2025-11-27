@@ -14,6 +14,7 @@ import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { useSeasonStore } from './store/seasonStore';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -156,6 +157,17 @@ const Layout = ({ children }) => {
 function App() {
   const [user, loading, error] = useAuthState(auth);
   const [initialAuthChecked, setInitialAuthChecked] = useState(false);
+  const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
+  const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
+
+  // Initialize global season listener ONCE at app startup
+  // This prevents duplicate Firestore listeners across components
+  useEffect(() => {
+    const unsubscribe = initSeasonListener();
+    return () => {
+      cleanupSeasonListener();
+    };
+  }, [initSeasonListener, cleanupSeasonListener]);
 
   useEffect(() => {
     // Check for initial auth token (from URL parameters)
