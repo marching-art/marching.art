@@ -7,7 +7,7 @@ const LoadingScreen = ({ fullScreen = true }) => {
       <div className="fixed inset-0 bg-gradient-main z-50 flex items-center justify-center">
         <div className="text-center">
           <img
-            src="/logo192.png"
+            src="/logo192.webp"
             alt="marching.art"
             className="w-20 h-20 mx-auto rounded-2xl shadow-glow"
           />
@@ -20,7 +20,7 @@ const LoadingScreen = ({ fullScreen = true }) => {
   return (
     <div className="flex items-center justify-center py-20">
       <img
-        src="/logo192.png"
+        src="/logo192.webp"
         alt="Loading"
         className="w-16 h-16 rounded-xl opacity-50"
       />

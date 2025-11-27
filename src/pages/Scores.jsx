@@ -21,7 +21,7 @@ import {
   BarChart3,
   X
 } from 'lucide-react';
-import { collection, query, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, doc, getDoc, startAfter } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
 import { useAuth } from '../App';
@@ -61,6 +61,12 @@ const Scores = () => {
   const [activeClass, setActiveClass] = useState('world');
   const [userRank, setUserRank] = useState(null);
   const [lifetimeView, setLifetimeView] = useState('totalPoints');
+
+  // Pagination state
+  const [lastDocs, setLastDocs] = useState({ overall: null, weekly: null, monthly: null });
+  const [hasMore, setHasMore] = useState({ overall: false, weekly: false, monthly: false });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const PAGE_SIZE = 25;
 
   // Main tabs
   const mainTabs = [
@@ -165,45 +171,55 @@ const Scores = () => {
     fetchScoresData();
   }, [activeTab, seasonUid]);
 
-  // Fetch leaderboard data
+  // Fetch leaderboard data with pagination
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       if (activeTab !== 'rankings' && activeTab !== 'stats') return;
 
       setLoading(true);
+      // Reset pagination when filters change
+      setLastDocs({ overall: null, weekly: null, monthly: null });
+      setHasMore({ overall: false, weekly: false, monthly: false });
+
       try {
         const safeCollectionFetch = async (collectionPath, orderField = 'score') => {
           try {
             const collRef = collection(db, ...collectionPath);
-            const q = query(collRef, orderBy(orderField, 'desc'), limit(100));
+            const q = query(collRef, orderBy(orderField, 'desc'), limit(PAGE_SIZE));
             const snapshot = await getDocs(q);
-            return snapshot.docs.map((doc, index) => ({
-              id: doc.id,
-              rank: index + 1,
-              ...doc.data()
-            }));
+            const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+            const hasMoreDocs = snapshot.docs.length === PAGE_SIZE;
+            return {
+              data: snapshot.docs.map((doc, index) => ({
+                id: doc.id,
+                rank: index + 1,
+                ...doc.data()
+              })),
+              lastDoc: lastVisible,
+              hasMore: hasMoreDocs
+            };
           } catch (err) {
             console.log(`Collection ${collectionPath.join('/')} not found or empty`);
-            return [];
+            return { data: [], lastDoc: null, hasMore: false };
           }
         };
 
         // Fetch overall leaderboard
-        const overallData = await safeCollectionFetch(
+        const overallResult = await safeCollectionFetch(
           ['artifacts', dataNamespace, 'leaderboard', 'overall', activeClass]
         );
 
         // Fetch weekly leaderboard
-        const weeklyData = await safeCollectionFetch(
+        const weeklyResult = await safeCollectionFetch(
           ['artifacts', dataNamespace, 'leaderboard', 'weekly', activeClass]
         );
 
         // Fetch monthly leaderboard
-        const monthlyData = await safeCollectionFetch(
+        const monthlyResult = await safeCollectionFetch(
           ['artifacts', dataNamespace, 'leaderboard', 'monthly', activeClass]
         );
 
-        // Fetch lifetime stats
+        // Fetch lifetime stats (single document, no pagination needed)
         let sortedLifetimeData = [];
         try {
           const lifetimeRef = doc(db, `artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
@@ -224,15 +240,27 @@ const Scores = () => {
         }
 
         setLeaderboardData({
-          overall: overallData,
-          weekly: weeklyData,
-          monthly: monthlyData,
+          overall: overallResult.data,
+          weekly: weeklyResult.data,
+          monthly: monthlyResult.data,
           lifetime: sortedLifetimeData
+        });
+
+        setLastDocs({
+          overall: overallResult.lastDoc,
+          weekly: weeklyResult.lastDoc,
+          monthly: monthlyResult.lastDoc
+        });
+
+        setHasMore({
+          overall: overallResult.hasMore,
+          weekly: weeklyResult.hasMore,
+          monthly: monthlyResult.hasMore
         });
 
         // Find user's rank if logged in
         if (user && loggedInProfile?.username) {
-          const userData = overallData.find(entry => entry.username === loggedInProfile.username);
+          const userData = overallResult.data.find(entry => entry.username === loggedInProfile.username);
           if (userData) {
             setUserRank(userData.rank);
           }
@@ -250,6 +278,53 @@ const Scores = () => {
 
     fetchLeaderboardData();
   }, [activeTab, activeClass, user, loggedInProfile, lifetimeView]);
+
+  // Load more leaderboard entries
+  const loadMoreLeaderboard = async () => {
+    if (loadingMore || !hasMore[rankingsTab] || !lastDocs[rankingsTab]) return;
+
+    setLoadingMore(true);
+    try {
+      const collRef = collection(db, 'artifacts', dataNamespace, 'leaderboard', rankingsTab, activeClass);
+      const q = query(
+        collRef,
+        orderBy('score', 'desc'),
+        startAfter(lastDocs[rankingsTab]),
+        limit(PAGE_SIZE)
+      );
+      const snapshot = await getDocs(q);
+
+      const currentLength = leaderboardData[rankingsTab].length;
+      const newData = snapshot.docs.map((doc, index) => ({
+        id: doc.id,
+        rank: currentLength + index + 1,
+        ...doc.data()
+      }));
+
+      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
+      setLeaderboardData(prev => ({
+        ...prev,
+        [rankingsTab]: [...prev[rankingsTab], ...newData]
+      }));
+
+      setLastDocs(prev => ({
+        ...prev,
+        [rankingsTab]: lastVisible
+      }));
+
+      setHasMore(prev => ({
+        ...prev,
+        [rankingsTab]: snapshot.docs.length === PAGE_SIZE
+      }));
+
+    } catch (error) {
+      console.error('Error loading more:', error);
+      toast.error('Failed to load more entries');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Helper functions for rankings
   const getRankIcon = (rank) => {
@@ -579,11 +654,15 @@ const Scores = () => {
         </motion.div>
 
         {/* Load More Button */}
-        {!loading && currentData.length >= 100 && (
+        {!loading && hasMore[rankingsTab] && (
           <div className="flex justify-center">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors text-sm">
-              <ChevronDown className="w-4 h-4" />
-              Load More
+            <button
+              onClick={loadMoreLeaderboard}
+              disabled={loadingMore}
+              className="flex items-center gap-2 px-5 py-2.5 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors text-sm disabled:opacity-50"
+            >
+              <ChevronDown className={`w-4 h-4 ${loadingMore ? 'animate-bounce' : ''}`} />
+              {loadingMore ? 'Loading...' : 'Load More'}
             </button>
           </div>
         )}

@@ -1,5 +1,5 @@
 // src/components/SeasonInfo.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Trophy, AlertCircle } from 'lucide-react';
 import { useSeason, getSeasonProgress, getSeasonTypeInfo } from '../hooks/useSeason';
@@ -111,4 +111,4 @@ const SeasonInfo = ({ className = '' }) => {
   );
 };
 
-export default SeasonInfo;
+export default memo(SeasonInfo);

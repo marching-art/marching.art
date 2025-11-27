@@ -36,7 +36,7 @@ const Landing = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
+                <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-lg sm:text-2xl font-display font-bold text-gradient">
                 marching.art
@@ -132,7 +132,7 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
+                <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" loading="lazy" />
               </div>
               <span className="font-display font-bold text-cream-100 text-sm sm:text-base">
                 marching.art

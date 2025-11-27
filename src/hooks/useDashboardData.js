@@ -628,11 +628,10 @@ export const useDashboardData = () => {
     }
   }, [seasonData?.seasonUid, activeCorpsClass]);
 
-  // Fetch season-specific data when seasonData is available
+  // Fetch season-specific data when seasonData is available (parallel)
   useEffect(() => {
     if (seasonData?.seasonUid) {
-      fetchAvailableCorps();
-      fetchRecentScores();
+      Promise.all([fetchAvailableCorps(), fetchRecentScores()]);
     }
   }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
 

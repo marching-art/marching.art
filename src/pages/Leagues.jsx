@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit, getDoc, startAfter } from 'firebase/firestore';
 import {
   createLeague,
   joinLeague,
@@ -32,6 +32,8 @@ const getPlacementPoints = (placement) => {
   return PLACEMENT_POINTS[placement] || 1;
 };
 
+const LEAGUES_PAGE_SIZE = 12;
+
 const Leagues = () => {
   const { user } = useAuth();
   const [activeView, setActiveView] = useState('browse'); // browse, league
@@ -43,6 +45,11 @@ const Leagues = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userProfile, setUserProfile] = useState(null);
   const [selectedLeague, setSelectedLeague] = useState(null);
+
+  // Pagination state
+  const [lastLeagueDoc, setLastLeagueDoc] = useState(null);
+  const [hasMoreLeagues, setHasMoreLeagues] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -67,7 +74,8 @@ const Leagues = () => {
       const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
       const q = query(
         leaguesRef,
-        where('members', 'array-contains', user.uid)
+        where('members', 'array-contains', user.uid),
+        firestoreLimit(20) // Users typically won't be in more than 20 leagues
       );
 
       const querySnapshot = await getDocs(q);
@@ -84,15 +92,31 @@ const Leagues = () => {
     }
   };
 
-  const loadAvailableLeagues = async () => {
+  const loadAvailableLeagues = async (loadMore = false) => {
+    if (loadMore && loadingMore) return;
+
     try {
+      if (loadMore) setLoadingMore(true);
+
       const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
-      const q = query(
-        leaguesRef,
-        where('isPublic', '==', true),
-        orderBy('createdAt', 'desc'),
-        firestoreLimit(20)
-      );
+      let q;
+
+      if (loadMore && lastLeagueDoc) {
+        q = query(
+          leaguesRef,
+          where('isPublic', '==', true),
+          orderBy('createdAt', 'desc'),
+          startAfter(lastLeagueDoc),
+          firestoreLimit(LEAGUES_PAGE_SIZE)
+        );
+      } else {
+        q = query(
+          leaguesRef,
+          where('isPublic', '==', true),
+          orderBy('createdAt', 'desc'),
+          firestoreLimit(LEAGUES_PAGE_SIZE)
+        );
+      }
 
       const querySnapshot = await getDocs(q);
       const leagues = querySnapshot.docs.map(doc => ({
@@ -100,9 +124,19 @@ const Leagues = () => {
         ...doc.data()
       }));
 
-      setAvailableLeagues(leagues);
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+      setLastLeagueDoc(lastVisible);
+      setHasMoreLeagues(querySnapshot.docs.length === LEAGUES_PAGE_SIZE);
+
+      if (loadMore) {
+        setAvailableLeagues(prev => [...prev, ...leagues]);
+      } else {
+        setAvailableLeagues(leagues);
+      }
     } catch (error) {
       console.error('Error loading available leagues:', error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -324,23 +358,39 @@ const Leagues = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredAvailableLeagues.map(league => (
-                  <LeagueCard
-                    key={league.id}
-                    league={league}
-                    isMember={myLeagues.some(l => l.id === league.id)}
-                    onJoin={() => handleJoinLeague(league.id)}
-                    onClick={() => {
-                      if (myLeagues.some(l => l.id === league.id)) {
-                        setSelectedLeague(league);
-                        setActiveView('league');
-                      }
-                    }}
-                    userProfile={userProfile}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredAvailableLeagues.map(league => (
+                    <LeagueCard
+                      key={league.id}
+                      league={league}
+                      isMember={myLeagues.some(l => l.id === league.id)}
+                      onJoin={() => handleJoinLeague(league.id)}
+                      onClick={() => {
+                        if (myLeagues.some(l => l.id === league.id)) {
+                          setSelectedLeague(league);
+                          setActiveView('league');
+                        }
+                      }}
+                      userProfile={userProfile}
+                    />
+                  ))}
+                </div>
+
+                {/* Load More Button */}
+                {hasMoreLeagues && !searchTerm && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={() => loadAvailableLeagues(true)}
+                      disabled={loadingMore}
+                      className="flex items-center gap-2 px-6 py-3 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors disabled:opacity-50"
+                    >
+                      <ChevronDown className={`w-4 h-4 ${loadingMore ? 'animate-bounce' : ''}`} />
+                      {loadingMore ? 'Loading...' : 'Load More Leagues'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
