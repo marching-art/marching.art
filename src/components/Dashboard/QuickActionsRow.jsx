@@ -1,5 +1,5 @@
 // src/components/Dashboard/QuickActionsRow.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -193,4 +193,4 @@ const QuickActionsRow = ({
   );
 };
 
-export default QuickActionsRow;
+export default memo(QuickActionsRow);

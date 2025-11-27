@@ -1,5 +1,5 @@
 // src/components/Execution/DashboardStaffPanel.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -217,4 +217,4 @@ const DashboardStaffPanel = ({ activeCorpsClass }) => {
   );
 };
 
-export default DashboardStaffPanel;
+export default memo(DashboardStaffPanel);

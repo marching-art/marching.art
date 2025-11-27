@@ -1,5 +1,5 @@
 // src/components/Dashboard/DashboardSidebar.jsx
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -337,4 +337,4 @@ const DashboardSidebar = ({
   );
 };
 
-export default DashboardSidebar;
+export default memo(DashboardSidebar);

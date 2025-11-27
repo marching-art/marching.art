@@ -1,5 +1,5 @@
 // src/components/Execution/RehearsalPanel.jsx
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Check, Clock, Zap, Star, TrendingUp,
@@ -270,4 +270,4 @@ const RehearsalPanel = ({
   );
 };
 
-export default RehearsalPanel;
+export default memo(RehearsalPanel);

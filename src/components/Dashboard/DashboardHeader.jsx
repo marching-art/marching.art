@@ -1,5 +1,5 @@
 // src/components/Dashboard/DashboardHeader.jsx
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Coins, Calendar, Flame, Award, Trophy } from 'lucide-react';
 
@@ -150,4 +150,4 @@ const DashboardHeader = ({
   );
 };
 
-export default DashboardHeader;
+export default memo(DashboardHeader);

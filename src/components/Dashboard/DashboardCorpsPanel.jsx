@@ -1,5 +1,5 @@
 // src/components/Dashboard/DashboardCorpsPanel.jsx
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -348,4 +348,4 @@ const DashboardCorpsPanel = ({
   );
 };
 
-export default DashboardCorpsPanel;
+export default memo(DashboardCorpsPanel);
