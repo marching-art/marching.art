@@ -28,6 +28,11 @@ const {
   purchaseStaff,
   assignStaff,
   getStaffMarketplace,
+  listStaffForAuction,
+  bidOnStaff,
+  completeAuction,
+  getActiveAuctions,
+  cancelAuction,
 } = require("./src/callable/economy");
 const {
   dailyRehearsal,
@@ -135,6 +140,11 @@ module.exports = {
   purchaseStaff,
   assignStaff,
   getStaffMarketplace,
+  listStaffForAuction,
+  bidOnStaff,
+  completeAuction,
+  getActiveAuctions,
+  cancelAuction,
   registerCorps,
   processCorpsDecisions,
   retireCorps,
