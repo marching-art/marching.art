@@ -5,11 +5,13 @@ import { ShoppingCart, Users } from 'lucide-react';
 import { StaffMarketplace, StaffRoster } from '../components/Staff';
 import { useUserStore } from '../store/userStore';
 import { useAuth } from '../App';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 const Staff = () => {
   const [activeTab, setActiveTab] = useState('marketplace');
   const { user } = useAuth();
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
+  const { corps } = useDashboardData();
 
   // Complete the daily challenge for visiting staff market
   useEffect(() => {
@@ -54,7 +56,7 @@ const Staff = () => {
         transition={{ duration: 0.3 }}
       >
         {activeTab === 'marketplace' && <StaffMarketplace />}
-        {activeTab === 'roster' && <StaffRoster userCorps={loggedInProfile?.corps || {}} />}
+        {activeTab === 'roster' && <StaffRoster userCorps={corps || {}} />}
       </motion.div>
     </div>
   );
