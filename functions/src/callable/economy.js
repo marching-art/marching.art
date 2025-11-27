@@ -209,6 +209,7 @@ const assignStaff = onCall({ cors: true }, async (request) => {
 
   try {
     let resultMessage;
+    let corpsName = null;
 
     await db.runTransaction(async (transaction) => {
       const profileDoc = await transaction.get(profileRef);
@@ -229,12 +230,23 @@ const assignStaff = onCall({ cors: true }, async (request) => {
         staffMember.assignedTo = null;
         resultMessage = "Staff member unassigned successfully!";
       } else {
-        // Assign to corps - caption is automatically the staff member's specialty
+        // Get the corps data to include corps name
+        const userCorps = profileData.corps || {};
+        const targetCorps = userCorps[corpsClass];
+
+        if (!targetCorps) {
+          throw new HttpsError("not-found", `No corps found for class ${corpsClass}.`);
+        }
+
+        corpsName = targetCorps.corpsName || targetCorps.name || corpsClass;
+
+        // Assign to corps - includes corps name for display/history
         staffMember.assignedTo = {
           corpsClass: corpsClass,
+          corpsName: corpsName,
           caption: staffMember.caption,
         };
-        resultMessage = "Staff member assigned successfully!";
+        resultMessage = `Staff member assigned to ${corpsName}!`;
       }
 
       // Save updated staff array
@@ -243,7 +255,7 @@ const assignStaff = onCall({ cors: true }, async (request) => {
       });
     });
 
-    logger.info(`User ${uid} ${corpsClass ? 'assigned' : 'unassigned'} staff ${staffId}${corpsClass ? ` to ${corpsClass}` : ''}`);
+    logger.info(`User ${uid} ${corpsClass ? 'assigned' : 'unassigned'} staff ${staffId}${corpsClass ? ` to ${corpsName || corpsClass}` : ''}`);
     return {
       success: true,
       message: resultMessage,

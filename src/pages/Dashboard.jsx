@@ -145,13 +145,42 @@ const Dashboard = () => {
     }
   };
 
-  const handleRetireCorps = async () => {
+  // Track assigned staff for retirement flow
+  const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
+
+  // Check for assigned staff when opening retire modal
+  const handleOpenRetireModal = async () => {
+    try {
+      // Check for staff assigned to this corps
+      const result = await retireCorps({ corpsClass: activeCorpsClass, checkOnly: true });
+      if (result.data.assignedStaff) {
+        setAssignedStaffForRetire(result.data.assignedStaff);
+      } else {
+        setAssignedStaffForRetire([]);
+      }
+      setShowRetireConfirm(true);
+    } catch (error) {
+      console.error('Error checking assigned staff:', error);
+      setAssignedStaffForRetire([]);
+      setShowRetireConfirm(true);
+    }
+  };
+
+  const handleRetireCorps = async (staffActions = {}) => {
     setRetiring(true);
     try {
-      const result = await retireCorps({ corpsClass: activeCorpsClass });
+      const result = await retireCorps({
+        corpsClass: activeCorpsClass,
+        staffActions: Object.keys(staffActions).length > 0 ? staffActions : undefined
+      });
       if (result.data.success) {
         toast.success(result.data.message);
         setShowRetireConfirm(false);
+        setAssignedStaffForRetire([]);
+      } else if (result.data.needsStaffHandling) {
+        // Staff needs to be handled - this shouldn't happen with the new flow
+        setAssignedStaffForRetire(result.data.assignedStaff || []);
+        toast.error('Please specify what to do with assigned staff.');
       }
     } catch (error) {
       console.error('Error retiring corps:', error);
@@ -349,7 +378,7 @@ const Dashboard = () => {
                   onShowEditCorps={() => setShowEditCorps(true)}
                   onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
                   onShowMoveCorps={() => setShowMoveCorps(true)}
-                  onShowRetireConfirm={() => setShowRetireConfirm(true)}
+                  onShowRetireConfirm={handleOpenRetireModal}
                   onShowRegistration={() => setShowRegistration(true)}
                 />
               </motion.div>
@@ -502,11 +531,17 @@ const Dashboard = () => {
 
         {showRetireConfirm && activeCorps && (
           <RetireConfirmModal
-            onClose={() => setShowRetireConfirm(false)}
+            onClose={() => {
+              setShowRetireConfirm(false);
+              setAssignedStaffForRetire([]);
+            }}
             onConfirm={handleRetireCorps}
             corpsName={activeCorps.corpsName || activeCorps.name}
             corpsClass={activeCorpsClass}
             retiring={retiring}
+            assignedStaff={assignedStaffForRetire}
+            otherCorps={corps || {}}
+            inLeague={false} // TODO: Check if user is in a league
           />
         )}
 

@@ -354,7 +354,7 @@ const StaffRoster = ({ userCorps = {} }) => {
                     </div>
                     <p className="text-cream-300 mb-3">
                       Boosting <span className="font-semibold">{getCaptionLabel(selectedStaff.caption)}</span> for{' '}
-                      <span className="font-semibold">{selectedStaff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
+                      <span className="font-semibold">{selectedStaff.assignedTo.corpsName || selectedStaff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
                     </p>
                     <button
                       onClick={handleUnassign}
@@ -378,12 +378,16 @@ const StaffRoster = ({ userCorps = {} }) => {
                       onChange={(e) => setSelectedCorpsClass(e.target.value)}
                       className="w-full px-4 py-2 mb-3 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
                     >
-                      <option value="">Select Corps Class...</option>
-                      {availableCorpsClasses.map(corpsClass => (
-                        <option key={corpsClass} value={corpsClass}>
-                          {corpsClass.charAt(0).toUpperCase() + corpsClass.slice(1).replace('Class', ' Class')}
-                        </option>
-                      ))}
+                      <option value="">Select Corps...</option>
+                      {availableCorpsClasses.map(corpsClass => {
+                        const corpsData = userCorps[corpsClass];
+                        const corpsName = corpsData?.corpsName || corpsData?.name || corpsClass;
+                        return (
+                          <option key={corpsClass} value={corpsClass}>
+                            {corpsName}
+                          </option>
+                        );
+                      })}
                     </select>
                     <button
                       onClick={handleAssign}
@@ -459,7 +463,7 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
         <div className="mt-3 pt-3 border-t border-charcoal-700">
           <div className="flex items-center gap-2 text-xs text-green-400">
             <Target className="w-3 h-3" />
-            <span>{staff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
+            <span>{staff.assignedTo.corpsName || staff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
           </div>
         </div>
       )}
