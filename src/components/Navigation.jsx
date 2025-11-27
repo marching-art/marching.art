@@ -11,6 +11,7 @@ import { useAuth } from '../App';
 import { useTheme } from '../context/ThemeContext';
 import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { useSeasonStore } from '../store/seasonStore';
 
 const Navigation = () => {
   const location = useLocation();
@@ -20,8 +21,10 @@ const Navigation = () => {
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [seasonData, setSeasonData] = useState(null);
-  const [currentWeek, setCurrentWeek] = useState(null);
+
+  // Use global season store instead of creating a separate listener
+  const seasonData = useSeasonStore((state) => state.seasonData);
+  const currentWeek = useSeasonStore((state) => state.currentWeek);
 
   useEffect(() => {
     if (user) {
@@ -39,29 +42,6 @@ const Navigation = () => {
       return () => unsubscribe();
     }
   }, [user]);
-
-  // Subscribe to season data
-  useEffect(() => {
-    const seasonRef = doc(db, 'game-settings/season');
-    const unsubscribe = onSnapshot(seasonRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setSeasonData(data);
-
-        // Calculate current week
-        if (data.schedule?.startDate) {
-          const startDate = data.schedule.startDate.toDate();
-          const now = new Date();
-          const diffInMillis = now.getTime() - startDate.getTime();
-          const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
-          const week = Math.max(1, Math.ceil((diffInDays + 1) / 7));
-          setCurrentWeek(week);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const navItems = [
     {

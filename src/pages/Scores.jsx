@@ -21,11 +21,12 @@ import {
   BarChart3,
   X
 } from 'lucide-react';
-import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { CAPTION_CATEGORIES } from '../utils/captionPricing';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
+import { useSeasonStore } from '../store/seasonStore';
 import LoadingScreen from '../components/LoadingScreen';
 import Portal from '../components/Portal';
 import toast from 'react-hot-toast';
@@ -33,6 +34,10 @@ import toast from 'react-hot-toast';
 const Scores = () => {
   const { user } = useAuth();
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
+
+  // Use global season store instead of fetching independently
+  const seasonData = useSeasonStore((state) => state.seasonData);
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
 
   // Main tab state
   const [activeTab, setActiveTab] = useState('latest');
@@ -44,7 +49,6 @@ const Scores = () => {
   const [availableDays, setAvailableDays] = useState([]); // Days with shows
   const [selectedShow, setSelectedShow] = useState(null);
   const [stats, setStats] = useState({ recentShows: 0, topScore: '-', corpsActive: 0 });
-  const [currentSeason, setCurrentSeason] = useState(null);
 
   // Rankings/Leaderboard data
   const [leaderboardData, setLeaderboardData] = useState({
@@ -89,30 +93,6 @@ const Scores = () => {
     { id: 'leagueChampionships', label: 'Championships', desc: 'League titles won' }
   ];
 
-  // Fetch current season info
-  useEffect(() => {
-    const fetchCurrentSeason = async () => {
-      try {
-        // Use game-settings/season - the single source of truth for season data
-        const seasonRef = doc(db, 'game-settings', 'season');
-        const seasonDoc = await getDoc(seasonRef);
-
-        if (seasonDoc.exists()) {
-          const seasonData = seasonDoc.data();
-          // Use seasonUid as the ID for fetching recaps
-          setCurrentSeason({
-            id: seasonData.seasonUid,
-            ...seasonData
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching current season:', error);
-      }
-    };
-
-    fetchCurrentSeason();
-  }, []);
-
   // Complete the daily challenge for checking scores/leaderboard
   useEffect(() => {
     if (user && loggedInProfile && completeDailyChallenge) {
@@ -123,12 +103,12 @@ const Scores = () => {
   // Fetch scores data (all shows with day-based organization)
   useEffect(() => {
     const fetchScoresData = async () => {
-      if (!currentSeason) return;
+      if (!seasonUid) return;
       if (activeTab !== 'latest' && activeTab !== 'soundsport') return;
 
       try {
         setLoading(true);
-        const recapRef = doc(db, 'fantasy_recaps', currentSeason.id);
+        const recapRef = doc(db, 'fantasy_recaps', seasonUid);
         const recapDoc = await getDoc(recapRef);
 
         if (recapDoc.exists()) {
@@ -183,7 +163,7 @@ const Scores = () => {
     };
 
     fetchScoresData();
-  }, [activeTab, currentSeason]);
+  }, [activeTab, seasonUid]);
 
   // Fetch leaderboard data
   useEffect(() => {
