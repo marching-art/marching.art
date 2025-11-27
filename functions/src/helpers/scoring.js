@@ -398,7 +398,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     logger.info(`Day ${scoredDay} is Finals day. Awarding championship trophies and finalist medals...`);
     const finalsShow = dailyRecap.shows[0]; // There's only one show on Finals day
     finalsShow.results.sort((a,b) => b.totalScore - a.totalScore);
-    
+
     // Award trophies to top 3
     const top3 = finalsShow.results.slice(0, 3);
     top3.forEach((winner, index) => {
@@ -428,6 +428,52 @@ async function processAndArchiveOffSeasonScoresLogic() {
             'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
         });
     });
+
+    // --- SAVE SEASON CHAMPIONS BY CLASS ---
+    // Group results by corps class and get top 3 for each
+    const resultsByClass = {};
+    finalsShow.results.forEach(result => {
+      const corpsClass = result.corpsClass || 'worldClass';
+      if (!resultsByClass[corpsClass]) {
+        resultsByClass[corpsClass] = [];
+      }
+      resultsByClass[corpsClass].push(result);
+    });
+
+    const seasonChampionsData = {
+      seasonId: seasonData.seasonUid,
+      seasonName: seasonData.name,
+      seasonType: seasonData.status,
+      archivedAt: new Date(),
+      classes: {}
+    };
+
+    // Process each class and get top 3
+    for (const [corpsClass, classResults] of Object.entries(resultsByClass)) {
+      classResults.sort((a, b) => b.totalScore - a.totalScore);
+      const classTop3 = classResults.slice(0, 3);
+
+      // Fetch usernames for champions
+      const championsWithUsernames = await Promise.all(classTop3.map(async (result, index) => {
+        const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${result.uid}/profile/data`).get();
+        const username = userProfileDoc.exists ? userProfileDoc.data().username : 'Unknown';
+        return {
+          rank: index + 1,
+          uid: result.uid,
+          username,
+          corpsName: result.corpsName,
+          score: result.totalScore
+        };
+      }));
+
+      seasonChampionsData.classes[corpsClass] = championsWithUsernames;
+    }
+
+    // Save to season_champions collection
+    const seasonChampionsRef = db.doc(`season_champions/${seasonData.seasonUid}`);
+    batch.set(seasonChampionsRef, seasonChampionsData);
+    logger.info(`Saved season champions for ${Object.keys(resultsByClass).length} classes.`);
+    // --- END SAVE SEASON CHAMPIONS BY CLASS ---
   }
   // --- END: TROPHY AWARDING LOGIC ---
 
@@ -718,6 +764,52 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             const medal = { type: 'finalist', seasonName: seasonData.name, rank: index + 1 };
             batch.update(userProfileRef, { 'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal) });
         });
+
+        // --- SAVE SEASON CHAMPIONS BY CLASS ---
+        // Group results by corps class and get top 3 for each
+        const resultsByClass = {};
+        finalsShow.results.forEach(result => {
+          const corpsClass = result.corpsClass || 'worldClass';
+          if (!resultsByClass[corpsClass]) {
+            resultsByClass[corpsClass] = [];
+          }
+          resultsByClass[corpsClass].push(result);
+        });
+
+        const seasonChampionsData = {
+          seasonId: seasonData.seasonUid,
+          seasonName: seasonData.name,
+          seasonType: seasonData.status,
+          archivedAt: new Date(),
+          classes: {}
+        };
+
+        // Process each class and get top 3
+        for (const [corpsClass, classResults] of Object.entries(resultsByClass)) {
+          classResults.sort((a, b) => b.totalScore - a.totalScore);
+          const classTop3 = classResults.slice(0, 3);
+
+          // Fetch usernames for champions
+          const championsWithUsernames = await Promise.all(classTop3.map(async (result, index) => {
+            const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${result.uid}/profile/data`).get();
+            const username = userProfileDoc.exists ? userProfileDoc.data().username : 'Unknown';
+            return {
+              rank: index + 1,
+              uid: result.uid,
+              username,
+              corpsName: result.corpsName,
+              score: result.totalScore
+            };
+          }));
+
+          seasonChampionsData.classes[corpsClass] = championsWithUsernames;
+        }
+
+        // Save to season_champions collection
+        const seasonChampionsRef = db.doc(`season_champions/${seasonData.seasonUid}`);
+        batch.set(seasonChampionsRef, seasonChampionsData);
+        logger.info(`Saved season champions for ${Object.keys(resultsByClass).length} classes.`);
+        // --- END SAVE SEASON CHAMPIONS BY CLASS ---
     }
   }
   // --- END LIVE SEASON TROPHY AWARDING ---
