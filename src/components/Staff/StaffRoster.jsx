@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Award, Trophy, DollarSign, Calendar, Target,
-  ChevronDown, Filter, Search, X, Link as LinkIcon
+  ChevronDown, Filter, Search, X, Link as LinkIcon, Gavel
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
+import { listStaffForAuction } from '../../firebase/functions';
 import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
@@ -38,6 +39,13 @@ const StaffRoster = ({ userCorps = {} }) => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState('');
   const [assigning, setAssigning] = useState(false);
+
+  // Auction listing state
+  const [showAuctionForm, setShowAuctionForm] = useState(false);
+  const [auctionMinBid, setAuctionMinBid] = useState(100);
+  const [auctionDuration, setAuctionDuration] = useState(24);
+  const [listingAuction, setListingAuction] = useState(false);
+  const [auctionError, setAuctionError] = useState('');
 
   // Get list of user's registered corps classes in hierarchy order
   const availableCorpsClasses = Object.keys(userCorps).sort((a, b) => {
@@ -71,6 +79,29 @@ const StaffRoster = ({ userCorps = {} }) => {
       // Error handled in hook
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleListForAuction = async () => {
+    if (!selectedStaff || auctionMinBid < 1) return;
+
+    setListingAuction(true);
+    setAuctionError('');
+    try {
+      await listStaffForAuction({
+        staffId: selectedStaff.staffId,
+        minimumBid: auctionMinBid,
+        durationHours: auctionDuration
+      });
+      setSelectedStaff(null);
+      setShowAuctionForm(false);
+      setAuctionMinBid(100);
+      setAuctionDuration(24);
+    } catch (error) {
+      console.error('Failed to list for auction:', error);
+      setAuctionError(error.message || 'Failed to list staff for auction');
+    } finally {
+      setListingAuction(false);
     }
   };
 
@@ -284,7 +315,11 @@ const StaffRoster = ({ userCorps = {} }) => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-cream-100">Staff Details</h3>
                 <button
-                  onClick={() => setSelectedStaff(null)}
+                  onClick={() => {
+                    setSelectedStaff(null);
+                    setShowAuctionForm(false);
+                    setAuctionError('');
+                  }}
                   className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -354,7 +389,7 @@ const StaffRoster = ({ userCorps = {} }) => {
                     </div>
                     <p className="text-cream-300 mb-3">
                       Boosting <span className="font-semibold">{getCaptionLabel(selectedStaff.caption)}</span> for{' '}
-                      <span className="font-semibold">{selectedStaff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
+                      <span className="font-semibold">{selectedStaff.assignedTo.corpsName || selectedStaff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
                     </p>
                     <button
                       onClick={handleUnassign}
@@ -364,47 +399,150 @@ const StaffRoster = ({ userCorps = {} }) => {
                       {assigning ? 'Unassigning...' : 'Unassign Staff'}
                     </button>
                   </div>
-                ) : availableCorpsClasses.length > 0 ? (
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Target className="w-5 h-5 text-blue-400" />
-                      <span className="font-semibold text-blue-400">Assign to Corps</span>
-                    </div>
-                    <p className="text-cream-400 text-sm mb-3">
-                      This staff member will boost your <span className="font-semibold text-cream-100">{getCaptionLabel(selectedStaff.caption)}</span> caption performance.
-                    </p>
-                    <select
-                      value={selectedCorpsClass}
-                      onChange={(e) => setSelectedCorpsClass(e.target.value)}
-                      className="w-full px-4 py-2 mb-3 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
-                    >
-                      <option value="">Select Corps Class...</option>
-                      {availableCorpsClasses.map(corpsClass => (
-                        <option key={corpsClass} value={corpsClass}>
-                          {corpsClass.charAt(0).toUpperCase() + corpsClass.slice(1).replace('Class', ' Class')}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={handleAssign}
-                      disabled={assigning || !selectedCorpsClass}
-                      className="w-full btn-primary disabled:opacity-50"
-                    >
-                      {assigning ? 'Assigning...' : 'Assign to Corps'}
-                    </button>
-                  </div>
                 ) : (
-                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <p className="text-yellow-400 text-sm">
-                      Register a corps first to assign staff members.
-                    </p>
-                  </div>
+                  <>
+                    {/* Assign to Corps section */}
+                    {availableCorpsClasses.length > 0 && !showAuctionForm && (
+                      <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Target className="w-5 h-5 text-blue-400" />
+                          <span className="font-semibold text-blue-400">Assign to Corps</span>
+                        </div>
+                        <p className="text-cream-400 text-sm mb-3">
+                          This staff member will boost your <span className="font-semibold text-cream-100">{getCaptionLabel(selectedStaff.caption)}</span> caption performance.
+                        </p>
+                        <select
+                          value={selectedCorpsClass}
+                          onChange={(e) => setSelectedCorpsClass(e.target.value)}
+                          className="w-full px-4 py-2 mb-3 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                        >
+                          <option value="">Select Corps...</option>
+                          {availableCorpsClasses.map(corpsClass => {
+                            const corpsData = userCorps[corpsClass];
+                            const corpsName = corpsData?.corpsName || corpsData?.name || corpsClass;
+                            return (
+                              <option key={corpsClass} value={corpsClass}>
+                                {corpsName}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <button
+                          onClick={handleAssign}
+                          disabled={assigning || !selectedCorpsClass}
+                          className="w-full btn-primary disabled:opacity-50"
+                        >
+                          {assigning ? 'Assigning...' : 'Assign to Corps'}
+                        </button>
+                      </div>
+                    )}
+
+                    {availableCorpsClasses.length === 0 && !showAuctionForm && (
+                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                        <p className="text-yellow-400 text-sm">
+                          Register a corps first to assign staff members.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* List for Auction section */}
+                    {!showAuctionForm ? (
+                      <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Gavel className="w-5 h-5 text-purple-400" />
+                            <span className="font-semibold text-purple-400">List for Auction</span>
+                          </div>
+                          <button
+                            onClick={() => setShowAuctionForm(true)}
+                            className="btn-outline text-purple-400 border-purple-500/30 hover:bg-purple-500/10 text-sm px-3 py-1.5"
+                          >
+                            Start Auction
+                          </button>
+                        </div>
+                        <p className="text-cream-400 text-sm mt-2">
+                          Put this staff member up for auction to sell to the highest bidder.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Gavel className="w-5 h-5 text-purple-400" />
+                          <span className="font-semibold text-purple-400">Auction Settings</span>
+                        </div>
+
+                        {auctionError && (
+                          <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-red-400 text-sm">
+                            {auctionError}
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-cream-300 text-sm mb-1">Minimum Bid</label>
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-gold-400" />
+                              <input
+                                type="number"
+                                min="1"
+                                value={auctionMinBid}
+                                onChange={(e) => setAuctionMinBid(Math.max(1, parseInt(e.target.value) || 1))}
+                                className="flex-1 px-3 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                              />
+                            </div>
+                            <p className="text-xs text-cream-400 mt-1">
+                              Staff value: {selectedStaff.currentValue || selectedStaff.baseValue || 0} coins
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-cream-300 text-sm mb-1">Duration</label>
+                            <select
+                              value={auctionDuration}
+                              onChange={(e) => setAuctionDuration(parseInt(e.target.value))}
+                              className="w-full px-3 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                            >
+                              <option value={6}>6 hours</option>
+                              <option value={12}>12 hours</option>
+                              <option value={24}>24 hours</option>
+                              <option value={48}>48 hours</option>
+                              <option value={72}>72 hours</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={() => {
+                              setShowAuctionForm(false);
+                              setAuctionError('');
+                            }}
+                            className="flex-1 btn-ghost"
+                            disabled={listingAuction}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleListForAuction}
+                            disabled={listingAuction || auctionMinBid < 1}
+                            className="flex-1 btn-primary bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                          >
+                            {listingAuction ? 'Listing...' : 'List for Auction'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
               <div className="mt-6">
                 <button
-                  onClick={() => setSelectedStaff(null)}
+                  onClick={() => {
+                    setSelectedStaff(null);
+                    setShowAuctionForm(false);
+                    setAuctionError('');
+                  }}
                   className="w-full btn-ghost"
                 >
                   Close
@@ -459,7 +597,7 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
         <div className="mt-3 pt-3 border-t border-charcoal-700">
           <div className="flex items-center gap-2 text-xs text-green-400">
             <Target className="w-3 h-3" />
-            <span>{staff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
+            <span>{staff.assignedTo.corpsName || staff.assignedTo.corpsClass.replace('Class', ' Class')}</span>
           </div>
         </div>
       )}
