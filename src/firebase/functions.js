@@ -31,6 +31,16 @@ export const assignStaff = httpsCallable(functions, 'assignStaff');
 export const getStaffMarketplace = httpsCallable(functions, 'getStaffMarketplace');
 
 // ========================================
+// STAFF AUCTIONS
+// ========================================
+
+export const listStaffForAuction = httpsCallable(functions, 'listStaffForAuction');
+export const bidOnStaff = httpsCallable(functions, 'bidOnStaff');
+export const completeAuction = httpsCallable(functions, 'completeAuction');
+export const getActiveAuctions = httpsCallable(functions, 'getActiveAuctions');
+export const cancelAuction = httpsCallable(functions, 'cancelAuction');
+
+// ========================================
 // EXECUTION SYSTEM
 // ========================================
 
