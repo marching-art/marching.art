@@ -54,7 +54,7 @@ const Staff = () => {
         transition={{ duration: 0.3 }}
       >
         {activeTab === 'marketplace' && <StaffMarketplace />}
-        {activeTab === 'roster' && <StaffRoster />}
+        {activeTab === 'roster' && <StaffRoster userCorps={loggedInProfile?.corps || {}} />}
       </motion.div>
     </div>
   );
