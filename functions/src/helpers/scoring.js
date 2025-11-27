@@ -188,7 +188,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
   const week = Math.ceil(scoredDay / 7);
   const dailyRecap = {
     offSeasonDay: scoredDay,
-    date: new Date(),
+    date: yesterday,  // Use yesterday since scores are for the previous day
     shows: [],
   };
   const batch = db.batch();
@@ -569,10 +569,15 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     return;
   }
 
+  // Calculate the actual date for this scored day
+  const seasonStartDate = seasonData.schedule.startDate.toDate();
+  const scoreDate = new Date(seasonStartDate);
+  scoreDate.setDate(seasonStartDate.getDate() + (scoredDay - 1));
+
   const historicalData = await fetchHistoricalData(seasonData.dataDocId);
   const dailyRecap = {
     offSeasonDay: scoredDay,
-    date: new Date(),
+    date: scoreDate,  // Use the calculated date for this day, not the current date
     shows: [],
   };
   const batch = db.batch();
