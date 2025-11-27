@@ -151,6 +151,7 @@ const purchaseStaff = onCall({ cors: true }, async (request) => {
       }
 
       // Add staff to user's roster
+      // Note: Cannot use FieldValue.serverTimestamp() inside arrays, so use Timestamp.now()
       const newStaffEntry = {
         staffId: staffId,
         name: staffData.name,
@@ -158,7 +159,7 @@ const purchaseStaff = onCall({ cors: true }, async (request) => {
         yearInducted: staffData.yearInducted,
         biography: staffData.biography || '',
         baseValue: cost,
-        purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
+        purchaseDate: admin.firestore.Timestamp.now(),
         seasonsCompleted: 0,
         currentValue: cost,
         assignedTo: null, // Not assigned to any corps yet
