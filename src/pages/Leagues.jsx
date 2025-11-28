@@ -1,138 +1,65 @@
 // src/pages/Leagues.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Trophy, Plus, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit, startAfter } from 'firebase/firestore';
-import {
-  createLeague,
-  joinLeague,
-  leaveLeague
-} from '../firebase/functions';
 import toast from 'react-hot-toast';
+
+// Import React Query hooks
+import {
+  useMyLeagues,
+  usePublicLeagues,
+  useCreateLeague,
+  useJoinLeague,
+  useLeaveLeague
+} from '../hooks/useLeagues';
+import { useProfile } from '../hooks/useProfile';
 
 // Import modular components
 import { LeagueCard, CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
-
-const LEAGUES_PAGE_SIZE = 12;
 
 const Leagues = () => {
   const { user } = useAuth();
   const [activeView, setActiveView] = useState('browse'); // browse, league
   const [activeTab, setActiveTab] = useState('my-leagues');
-  const [myLeagues, setMyLeagues] = useState([]);
-  const [availableLeagues, setAvailableLeagues] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [userProfile, setUserProfile] = useState(null);
   const [selectedLeague, setSelectedLeague] = useState(null);
 
-  // Pagination state
-  const [lastLeagueDoc, setLastLeagueDoc] = useState(null);
-  const [hasMoreLeagues, setHasMoreLeagues] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  // React Query hooks
+  const { data: userProfile } = useProfile(user?.uid);
+  const { data: myLeagues = [], isLoading: loadingMyLeagues } = useMyLeagues(user?.uid);
+  const {
+    data: publicLeaguesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = usePublicLeagues(12);
 
-  useEffect(() => {
-    if (user) {
-      loadUserProfile();
-      loadMyLeagues();
-      loadAvailableLeagues();
-    }
-  }, [user]);
+  // Mutations
+  const createLeagueMutation = useCreateLeague();
+  const joinLeagueMutation = useJoinLeague(user?.uid);
+  const leaveLeagueMutation = useLeaveLeague(user?.uid);
 
-  const loadUserProfile = () => {
-    const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-    const unsubscribe = onSnapshot(profileRef, (doc) => {
-      if (doc.exists()) {
-        setUserProfile(doc.data());
-      }
-    });
-    return unsubscribe;
-  };
+  // Flatten paginated public leagues data
+  const availableLeagues = useMemo(() => {
+    if (!publicLeaguesData?.pages) return [];
+    return publicLeaguesData.pages.flatMap(page => page.data);
+  }, [publicLeaguesData]);
 
-  const loadMyLeagues = async () => {
-    try {
-      const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
-      const q = query(
-        leaguesRef,
-        where('members', 'array-contains', user.uid),
-        firestoreLimit(20) // Users typically won't be in more than 20 leagues
-      );
-
-      const querySnapshot = await getDocs(q);
-      const leagues = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      setMyLeagues(leagues);
-    } catch (error) {
-      console.error('Error loading my leagues:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAvailableLeagues = async (loadMore = false) => {
-    if (loadMore && loadingMore) return;
-
-    try {
-      if (loadMore) setLoadingMore(true);
-
-      const leaguesRef = collection(db, 'artifacts/marching-art/leagues');
-      let q;
-
-      if (loadMore && lastLeagueDoc) {
-        q = query(
-          leaguesRef,
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          startAfter(lastLeagueDoc),
-          firestoreLimit(LEAGUES_PAGE_SIZE)
-        );
-      } else {
-        q = query(
-          leaguesRef,
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          firestoreLimit(LEAGUES_PAGE_SIZE)
-        );
-      }
-
-      const querySnapshot = await getDocs(q);
-      const leagues = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
-      setLastLeagueDoc(lastVisible);
-      setHasMoreLeagues(querySnapshot.docs.length === LEAGUES_PAGE_SIZE);
-
-      if (loadMore) {
-        setAvailableLeagues(prev => [...prev, ...leagues]);
-      } else {
-        setAvailableLeagues(leagues);
-      }
-    } catch (error) {
-      console.error('Error loading available leagues:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  // Filter leagues by search term
+  const filteredAvailableLeagues = useMemo(() => {
+    return availableLeagues.filter(league =>
+      league.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      league.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [availableLeagues, searchTerm]);
 
   const handleCreateLeague = async (leagueData) => {
     try {
-      const result = await createLeague(leagueData);
-
-      if (result.data.success) {
-        toast.success('League created successfully!', { icon: '🏆' });
-        setShowCreateModal(false);
-        loadMyLeagues();
-        loadAvailableLeagues();
-      }
+      await createLeagueMutation.mutateAsync(leagueData);
+      toast.success('League created successfully!', { icon: '🏆' });
+      setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating league:', error);
       toast.error(error.message || 'Failed to create league');
@@ -141,13 +68,8 @@ const Leagues = () => {
 
   const handleJoinLeague = async (leagueId) => {
     try {
-      const result = await joinLeague({ leagueId });
-
-      if (result.data.success) {
-        toast.success('Joined league successfully!', { icon: '🎉' });
-        loadMyLeagues();
-        loadAvailableLeagues();
-      }
+      await joinLeagueMutation.mutateAsync(leagueId);
+      toast.success('Joined league successfully!', { icon: '🎉' });
     } catch (error) {
       console.error('Error joining league:', error);
       toast.error(error.message || 'Failed to join league');
@@ -158,24 +80,15 @@ const Leagues = () => {
     if (!window.confirm('Are you sure you want to leave this league?')) return;
 
     try {
-      const result = await leaveLeague({ leagueId });
-
-      if (result.data.success) {
-        toast.success('Left league successfully');
-        setSelectedLeague(null);
-        setActiveView('browse');
-        loadMyLeagues();
-      }
+      await leaveLeagueMutation.mutateAsync(leagueId);
+      toast.success('Left league successfully');
+      setSelectedLeague(null);
+      setActiveView('browse');
     } catch (error) {
       console.error('Error leaving league:', error);
       toast.error(error.message || 'Failed to leave league');
     }
   };
-
-  const filteredAvailableLeagues = availableLeagues.filter(league =>
-    league.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    league.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   // Show league detail view when a league is selected
   if (activeView === 'league' && selectedLeague) {
@@ -260,7 +173,7 @@ const Leagues = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            {loading ? (
+            {loadingMyLeagues ? (
               <div className="card p-8 text-center">
                 <p className="text-cream-500/60">Loading leagues...</p>
               </div>
@@ -362,15 +275,15 @@ const Leagues = () => {
                 </div>
 
                 {/* Load More Button */}
-                {hasMoreLeagues && !searchTerm && (
+                {hasNextPage && !searchTerm && (
                   <div className="flex justify-center mt-6">
                     <button
-                      onClick={() => loadAvailableLeagues(true)}
-                      disabled={loadingMore}
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
                       className="flex items-center gap-2 px-6 py-3 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors disabled:opacity-50"
                     >
-                      <ChevronDown className={`w-4 h-4 ${loadingMore ? 'animate-bounce' : ''}`} />
-                      {loadingMore ? 'Loading...' : 'Load More Leagues'}
+                      <ChevronDown className={`w-4 h-4 ${isFetchingNextPage ? 'animate-bounce' : ''}`} />
+                      {isFetchingNextPage ? 'Loading...' : 'Load More Leagues'}
                     </button>
                   </div>
                 )}
