@@ -69,6 +69,18 @@ export const retireCorps = httpsCallable(functions, 'retireCorps');
 export const unretireCorps = httpsCallable(functions, 'unretireCorps');
 
 // ========================================
+// DAILY OPERATIONS
+// ========================================
+
+export const claimDailyLogin = httpsCallable(functions, 'claimDailyLogin');
+export const staffCheckin = httpsCallable(functions, 'staffCheckin');
+export const memberWellnessCheck = httpsCallable(functions, 'memberWellnessCheck');
+export const equipmentInspection = httpsCallable(functions, 'equipmentInspection');
+export const sectionalRehearsal = httpsCallable(functions, 'sectionalRehearsal');
+export const showReview = httpsCallable(functions, 'showReview');
+export const getDailyOpsStatus = httpsCallable(functions, 'getDailyOpsStatus');
+
+// ========================================
 // LEADERBOARDS
 // ========================================
 

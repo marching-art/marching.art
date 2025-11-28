@@ -75,6 +75,15 @@ const {
   getPublicProfile,
 } = require("./src/callable/profile");
 const {
+  claimDailyLogin,
+  staffCheckin,
+  memberWellnessCheck,
+  equipmentInspection,
+  sectionalRehearsal,
+  showReview,
+  getDailyOpsStatus,
+} = require("./src/callable/dailyOps");
+const {
   startNewOffSeason,
   startNewLiveSeason,
   manualTrigger,
@@ -160,6 +169,13 @@ module.exports = {
   claimBattlePassReward,
   getBattlePassProgress,
   getAvailableRewards,
+  claimDailyLogin,
+  staffCheckin,
+  memberWellnessCheck,
+  equipmentInspection,
+  sectionalRehearsal,
+  showReview,
+  getDailyOpsStatus,
 
   // Scheduled
   seasonScheduler,
