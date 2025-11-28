@@ -43,6 +43,19 @@ const EquipmentManager = ({
     }
   ];
 
+  // Helper to extract equipment data from either flat number or object format
+  const getEquipmentData = (equipmentValue, maxValue) => {
+    if (typeof equipmentValue === 'number') {
+      // Flat number format from backend - calculate level from max value
+      const level = maxValue ? Math.round((maxValue - 1.0) / 0.05) + 1 : 1;
+      return { condition: equipmentValue, level: Math.max(1, level) };
+    }
+    if (typeof equipmentValue === 'object' && equipmentValue !== null) {
+      return { condition: equipmentValue.condition || 0.90, level: equipmentValue.level || 1 };
+    }
+    return { condition: 0.90, level: 1 };
+  };
+
   const getConditionColor = (condition) => {
     if (condition >= 0.85) return 'text-green-500';
     if (condition >= 0.70) return 'text-yellow-500';
@@ -104,9 +117,8 @@ const EquipmentManager = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {equipmentTypes.map((type, index) => {
-            const equipmentData = equipment?.[type.id] || { condition: 1.0, level: 1 };
-            const condition = equipmentData.condition || 1.0;
-            const level = equipmentData.level || 1;
+            const maxValue = equipment?.[`${type.id}Max`];
+            const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
 
             return (
               <motion.div
@@ -189,9 +201,8 @@ const EquipmentManager = ({
             >
               {(() => {
                 const type = equipmentTypes.find(t => t.id === selectedEquipment);
-                const equipmentData = equipment?.[selectedEquipment] || { condition: 1.0, level: 1 };
-                const condition = equipmentData.condition || 1.0;
-                const level = equipmentData.level || 1;
+                const maxValue = equipment?.[`${selectedEquipment}Max`];
+                const { condition, level } = getEquipmentData(equipment?.[selectedEquipment], maxValue);
 
                 return (
                   <div className="space-y-6">

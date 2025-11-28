@@ -43,14 +43,17 @@ export const useExecution = (userId, corpsClass) => {
           getStatus({ corpsClass })
             .catch((error) => {
               console.error('Error initializing execution:', error);
-              // Set default local state as fallback
+              // Set default local state as fallback (using flat number format matching backend)
               setExecutionState({
                 readiness: 0.85,
                 morale: 0.90,
                 equipment: {
-                  uniforms: { condition: 1.0, level: 1 },
-                  instruments: { condition: 1.0, level: 1 },
-                  props: { condition: 1.0, level: 1 }
+                  uniforms: 0.90,
+                  instruments: 0.90,
+                  props: 0.90,
+                  uniformsMax: 1.00,
+                  instrumentsMax: 1.00,
+                  propsMax: 1.00
                 },
                 staff: [],
                 lastRehearsalDate: null,
@@ -219,11 +222,22 @@ export const useExecution = (userId, corpsClass) => {
 
     const { readiness = 0, morale = 0, equipment = {}, staff = [] } = executionState;
 
-    // Average equipment condition
-    const equipmentConditions = Object.values(equipment).map(e => e.condition || 0);
+    // Helper to extract condition value from either flat number or object format
+    const getConditionValue = (value) => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'object' && value?.condition !== undefined) return value.condition;
+      return 0;
+    };
+
+    // Average equipment condition (handles both flat numbers and objects)
+    // Filter out "Max" keys which store upgrade limits
+    const equipmentConditions = Object.entries(equipment)
+      .filter(([key]) => !key.includes('Max') && !key.includes('bus') && !key.includes('truck'))
+      .map(([, value]) => getConditionValue(value))
+      .filter(v => v > 0);
     const avgEquipment = equipmentConditions.length > 0
       ? equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length
-      : 0;
+      : 0.90;
 
     // Staff effectiveness (0.95-1.05 range)
     const staffBonus = Math.min(staff.length * 0.01, 0.05);
