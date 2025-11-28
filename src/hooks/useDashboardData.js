@@ -686,6 +686,23 @@ export const useDashboardData = () => {
     setNewAchievement(null);
   };
 
+  // Manual profile refresh - useful after daily activities complete
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      try {
+        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+        const profileDoc = await getDoc(profileRef);
+        if (profileDoc.exists()) {
+          const data = profileDoc.data();
+          setProfile(data);
+          setCorps(data.corps || null);
+        }
+      } catch (error) {
+        console.error('Error refreshing profile:', error);
+      }
+    }
+  }, [user]);
+
   return {
     // Core data
     user,
@@ -750,7 +767,8 @@ export const useDashboardData = () => {
 
     // Utility functions
     getCorpsClassName,
-    getCorpsClassColor
+    getCorpsClassColor,
+    refreshProfile
   };
 };
 
