@@ -341,18 +341,7 @@ const Dashboard = () => {
                 }`}
               >
                 <Music className="w-4 h-4" />
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('execution')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'execution'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-                }`}
-              >
-                <Target className="w-4 h-4" />
-                Execution
+                Corps
               </button>
               <button
                 onClick={() => {
@@ -397,8 +386,13 @@ const Dashboard = () => {
                 <DailyOperations
                   corpsClass={activeCorpsClass}
                   profile={profile}
+                  executionState={executionState}
+                  canRehearseToday={canRehearseToday()}
+                  onRehearsal={rehearse}
+                  rehearsalProcessing={executionProcessing}
+                  calculateMultiplier={calculateMultiplier}
+                  dailyChallenges={dailyChallenges}
                   onActivityComplete={(type, data) => {
-                    // Refresh dashboard data after activity completion
                     completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
                   }}
                 />
@@ -426,35 +420,6 @@ const Dashboard = () => {
                   onShowMoveCorps={() => setShowMoveCorps(true)}
                   onShowRetireConfirm={handleOpenRetireModal}
                   onShowRegistration={() => setShowRegistration(true)}
-                />
-              </motion.div>
-            )}
-
-            {activeCorps && activeTab === 'execution' && (
-              <motion.div
-                key="execution"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
-              >
-                <ExecutionDashboard
-                  executionState={executionState}
-                  multiplier={calculateMultiplier()}
-                />
-                <RehearsalPanel
-                  executionState={executionState}
-                  canRehearseToday={canRehearseToday()}
-                  onRehearsal={rehearse}
-                  processing={executionProcessing}
-                />
-                <ShowDifficultySelector
-                  corpsClass={activeCorpsClass}
-                  currentDifficulty={executionState?.showDesign?.difficulty || activeCorps?.execution?.showDesign?.difficulty}
-                  currentDay={profile?.currentDay || 1}
-                  onSuccess={() => {
-                    toast.success('Show difficulty updated successfully!');
-                  }}
                 />
               </motion.div>
             )}
