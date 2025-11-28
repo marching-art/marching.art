@@ -54,20 +54,6 @@ const Dashboard = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState('daily');
 
-  // Show morning report on first visit of the day
-  useEffect(() => {
-    if (profile && activeCorps) {
-      const today = new Date().toDateString();
-      const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
-
-      if (lastVisit !== today) {
-        // First visit today - show morning report
-        setShowMorningReport(true);
-        localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
-      }
-    }
-  }, [profile, activeCorps, user?.uid]);
-
   // Destructure commonly used values
   const {
     profile,
@@ -105,6 +91,20 @@ const Dashboard = () => {
     getCorpsClassColor,
     completeDailyChallenge
   } = dashboardData;
+
+  // Show morning report on first visit of the day
+  useEffect(() => {
+    if (profile && activeCorps) {
+      const today = new Date().toDateString();
+      const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
+
+      if (lastVisit !== today) {
+        // First visit today - show morning report
+        setShowMorningReport(true);
+        localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
+      }
+    }
+  }, [profile, activeCorps, user?.uid]);
 
   // Show class unlock congrats when newly unlocked
   React.useEffect(() => {
