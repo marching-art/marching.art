@@ -391,7 +391,6 @@ const Dashboard = () => {
                   onRehearsal={rehearse}
                   rehearsalProcessing={executionProcessing}
                   calculateMultiplier={calculateMultiplier}
-                  dailyChallenges={dailyChallenges}
                   onActivityComplete={(type, data) => {
                     completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
                   }}

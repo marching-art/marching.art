@@ -3,9 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Users, Wrench, Heart, Music, Eye, Flag,
-  Drum, CheckCircle, Circle, Zap, ChevronRight, Play,
-  Coffee, Clock, Sparkles, TrendingUp, AlertCircle,
-  ChevronDown, ChevronUp, Check
+  Drum, Zap, ChevronRight, Play,
+  Coffee, ChevronDown, ChevronUp, Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -31,7 +30,6 @@ const DailyOperations = ({
   onRehearsal,
   rehearsalProcessing,
   calculateMultiplier,
-  dailyChallenges,
   onActivityComplete
 }) => {
   const [loading, setLoading] = useState(true);
@@ -475,42 +473,6 @@ const DailyOperations = ({
               loading={processing === 'sectional_percussion'}
               onClick={() => handleSectionalRehearsal('percussion')}
             />
-          </div>
-        </div>
-      )}
-
-      {/* Daily Challenges */}
-      {dailyChallenges && dailyChallenges.length > 0 && (
-        <div className="glass rounded-xl p-4">
-          <h4 className="text-sm font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            Bonus Challenges
-          </h4>
-          <div className="space-y-2">
-            {dailyChallenges.slice(0, 4).map((challenge) => (
-              <div
-                key={challenge.id}
-                className={`flex items-center gap-3 p-2 rounded-lg ${
-                  challenge.completed ? 'bg-green-500/10' : 'bg-charcoal-800/50'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                  challenge.completed ? 'bg-green-500/20' : 'bg-charcoal-700'
-                }`}>
-                  {challenge.completed ? (
-                    <Check className="w-3 h-3 text-green-400" />
-                  ) : (
-                    <Circle className="w-2 h-2 text-cream-500/40" />
-                  )}
-                </div>
-                <span className={`flex-1 text-sm ${
-                  challenge.completed ? 'text-cream-500/60 line-through' : 'text-cream-300'
-                }`}>
-                  {challenge.title}
-                </span>
-                <span className="text-xs text-gold-500">{challenge.reward}</span>
-              </div>
-            ))}
           </div>
         </div>
       )}

@@ -58,6 +58,48 @@ const DAILY_OPS_CONFIG = {
 /**
  * Random events that can occur during equipment inspection
  */
+/**
+ * Helper to calculate new level and check for class unlocks
+ * Level = floor(xp / 1000) + 1
+ */
+const calculateXPUpdates = (profileData, xpToAdd) => {
+  const currentXP = profileData.xp || 0;
+  const newXP = currentXP + xpToAdd;
+  const newLevel = Math.floor(newXP / 1000) + 1;
+
+  const updates = {
+    xp: newXP,
+    xpLevel: newLevel
+  };
+
+  // Also update battle pass if active
+  if (profileData.battlePass?.currentSeason) {
+    updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpToAdd);
+  }
+
+  // Check for class unlocks
+  const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
+  let classUnlocked = null;
+
+  if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+    unlockedClasses.push('aClass');
+    updates.unlockedClasses = unlockedClasses;
+    classUnlocked = 'A Class';
+  }
+  if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+    unlockedClasses.push('open');
+    updates.unlockedClasses = unlockedClasses;
+    classUnlocked = 'Open Class';
+  }
+  if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+    unlockedClasses.push('world');
+    updates.unlockedClasses = unlockedClasses;
+    classUnlocked = 'World Class';
+  }
+
+  return { updates, newXP, newLevel, classUnlocked };
+};
+
 const INSPECTION_EVENTS = [
   {
     id: 'found_damage',
@@ -139,16 +181,15 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       const xpReward = Math.floor(DAILY_OPS_CONFIG.loginBonus.baseXp * (1 + streakBonus));
       const coinReward = Math.floor(DAILY_OPS_CONFIG.loginBonus.baseCoin * (1 + streakBonus));
 
-      // Apply rewards
+      // Calculate XP updates (profile level + battle pass)
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
+      // Combine all updates
       const updates = {
+        ...xpUpdates,
         'dailyOps.lastLoginClaim': admin.firestore.FieldValue.serverTimestamp(),
         corpsCoin: admin.firestore.FieldValue.increment(coinReward)
       };
-
-      // Add XP to battle pass if active
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpReward);
-      }
 
       transaction.update(profileRef, updates);
 
@@ -156,7 +197,10 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         xpReward,
         coinReward,
         loginStreak,
-        streakBonus: Math.round(streakBonus * 100)
+        streakBonus: Math.round(streakBonus * 100),
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
@@ -233,22 +277,25 @@ const staffCheckin = onCall({ cors: true }, async (request) => {
         return s;
       });
 
+      // Calculate XP updates (profile level + battle pass)
+      const xpReward = DAILY_OPS_CONFIG.staffCheckin.xpReward;
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
       const updates = {
+        ...xpUpdates,
         [`dailyOps.lastStaffCheckin.${corpsClass}`]: admin.firestore.FieldValue.serverTimestamp(),
         staff: updatedStaff
       };
 
-      // Add XP
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(DAILY_OPS_CONFIG.staffCheckin.xpReward);
-      }
-
       transaction.update(profileRef, updates);
 
       return {
-        xpReward: DAILY_OPS_CONFIG.staffCheckin.xpReward,
+        xpReward,
         staffCount: assignedStaff.length,
-        moraleBoost: DAILY_OPS_CONFIG.staffCheckin.moraleBoost
+        moraleBoost: DAILY_OPS_CONFIG.staffCheckin.moraleBoost,
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
@@ -318,22 +365,25 @@ const memberWellnessCheck = onCall({ cors: true }, async (request) => {
       const currentMorale = typeof execution.morale === 'number' ? execution.morale : 0.80;
       const newMorale = Math.min(currentMorale + DAILY_OPS_CONFIG.memberWellness.moraleBoost, 1.0);
 
+      // Calculate XP updates (profile level + battle pass)
+      const xpReward = DAILY_OPS_CONFIG.memberWellness.xpReward;
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
       const updates = {
+        ...xpUpdates,
         [`dailyOps.lastWellnessCheck.${corpsClass}`]: admin.firestore.FieldValue.serverTimestamp(),
         [`corps.${corpsClass}.execution.morale`]: newMorale
       };
 
-      // Add XP
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(DAILY_OPS_CONFIG.memberWellness.xpReward);
-      }
-
       transaction.update(profileRef, updates);
 
       return {
-        xpReward: DAILY_OPS_CONFIG.memberWellness.xpReward,
+        xpReward,
         moraleBoost: DAILY_OPS_CONFIG.memberWellness.moraleBoost,
-        newMorale
+        newMorale,
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
@@ -411,7 +461,11 @@ const equipmentInspection = onCall({ cors: true }, async (request) => {
         if (event.effect.coinBonus) coinReward += event.effect.coinBonus;
       }
 
+      // Calculate XP updates (profile level + battle pass)
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
       const updates = {
+        ...xpUpdates,
         [`dailyOps.lastEquipmentInspection.${corpsClass}`]: admin.firestore.FieldValue.serverTimestamp(),
         corpsCoin: admin.firestore.FieldValue.increment(coinReward)
       };
@@ -436,17 +490,15 @@ const equipmentInspection = onCall({ cors: true }, async (request) => {
         updates[`corps.${corpsClass}.execution.morale`] = Math.min(currentMorale + event.effect.moraleBonus, 1.0);
       }
 
-      // Add XP
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpReward);
-      }
-
       transaction.update(profileRef, updates);
 
       return {
         xpReward,
         coinReward,
-        event: event ? { id: event.id, type: event.type, message: event.message } : null
+        event: event ? { id: event.id, type: event.type, message: event.message } : null,
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
@@ -531,25 +583,28 @@ const sectionalRehearsal = onCall({ cors: true }, async (request) => {
       const sectionalFocus = execution.sectionalFocus || {};
       sectionalFocus[section] = (sectionalFocus[section] || 0) + 1;
 
+      // Calculate XP updates (profile level + battle pass)
+      const xpReward = sectionConfig.xpReward;
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
       const updates = {
+        ...xpUpdates,
         [`dailyOps.lastSectionalRehearsal.${corpsClass}.${section}`]: admin.firestore.FieldValue.serverTimestamp(),
         [`corps.${corpsClass}.execution.readiness`]: newReadiness,
         [`corps.${corpsClass}.execution.sectionalFocus`]: sectionalFocus
       };
 
-      // Add XP
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(sectionConfig.xpReward);
-      }
-
       transaction.update(profileRef, updates);
 
       return {
         section,
-        xpReward: sectionConfig.xpReward,
+        xpReward,
         readinessGain: sectionConfig.readinessGain,
         newReadiness,
-        totalSectionals: sectionalFocus
+        totalSectionals: sectionalFocus,
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
@@ -667,20 +722,23 @@ const showReview = onCall({ cors: true }, async (request) => {
         insights.push({ type: 'success', message: 'Corps is in good shape. Keep up the consistent work!' });
       }
 
+      // Calculate XP updates (profile level + battle pass)
+      const xpReward = DAILY_OPS_CONFIG.showReview.xpReward;
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, xpReward);
+
       const updates = {
+        ...xpUpdates,
         [`dailyOps.lastShowReview.${corpsClass}`]: admin.firestore.FieldValue.serverTimestamp()
       };
-
-      // Add XP
-      if (profileData.battlePass?.currentSeason) {
-        updates['battlePass.xp'] = admin.firestore.FieldValue.increment(DAILY_OPS_CONFIG.showReview.xpReward);
-      }
 
       transaction.update(profileRef, updates);
 
       return {
-        xpReward: DAILY_OPS_CONFIG.showReview.xpReward,
-        insights
+        xpReward,
+        insights,
+        newXP,
+        newLevel,
+        classUnlocked
       };
     });
 
