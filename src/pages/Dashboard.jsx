@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Users, Target, Wrench } from 'lucide-react';
+import { Music, Users, Target, Wrench, Zap } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -24,7 +24,9 @@ import {
   DashboardHeader,
   DashboardSidebar,
   QuickActionsRow,
-  DashboardCorpsPanel
+  DashboardCorpsPanel,
+  MorningReport,
+  DailyOperations
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
@@ -47,9 +49,24 @@ const Dashboard = () => {
   const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [retiring, setRetiring] = useState(false);
+  const [showMorningReport, setShowMorningReport] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('daily');
+
+  // Show morning report on first visit of the day
+  useEffect(() => {
+    if (profile && activeCorps) {
+      const today = new Date().toDateString();
+      const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
+
+      if (lastVisit !== today) {
+        // First visit today - show morning report
+        setShowMorningReport(true);
+        localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
+      }
+    }
+  }, [profile, activeCorps, user?.uid]);
 
   // Destructure commonly used values
   const {
@@ -305,6 +322,17 @@ const Dashboard = () => {
           {activeCorps && (
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               <button
+                onClick={() => setActiveTab('daily')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                  activeTab === 'daily'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                }`}
+              >
+                <Zap className="w-4 h-4" />
+                Daily Ops
+              </button>
+              <button
                 onClick={() => setActiveTab('overview')}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'overview'
@@ -359,6 +387,24 @@ const Dashboard = () => {
 
           {/* Tab Content */}
           <AnimatePresence mode="wait">
+            {activeTab === 'daily' && activeCorps && (
+              <motion.div
+                key="daily"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <DailyOperations
+                  corpsClass={activeCorpsClass}
+                  profile={profile}
+                  onActivityComplete={(type, data) => {
+                    // Refresh dashboard data after activity completion
+                    completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
+                  }}
+                />
+              </motion.div>
+            )}
+
             {activeTab === 'overview' && (
               <motion.div
                 key="overview"
@@ -567,6 +613,32 @@ const Dashboard = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Morning Report Modal */}
+      <MorningReport
+        isOpen={showMorningReport}
+        onClose={() => setShowMorningReport(false)}
+        profile={profile}
+        activeCorps={activeCorps}
+        activeCorpsClass={activeCorpsClass}
+        executionState={executionState}
+        engagementData={engagementData}
+        dailyChallenges={dailyChallenges}
+        recentScores={recentScores}
+        canRehearseToday={canRehearseToday}
+        onStartRehearsal={() => {
+          setShowMorningReport(false);
+          rehearse();
+        }}
+        onNavigateToEquipment={() => {
+          setShowMorningReport(false);
+          setActiveTab('equipment');
+        }}
+        onNavigateToStaff={() => {
+          setShowMorningReport(false);
+          setActiveTab('staff');
+        }}
+      />
     </div>
   );
 };
