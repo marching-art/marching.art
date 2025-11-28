@@ -89,7 +89,8 @@ const Dashboard = () => {
     canRehearseToday,
     getCorpsClassName,
     getCorpsClassColor,
-    completeDailyChallenge
+    completeDailyChallenge,
+    refreshProfile
   } = dashboardData;
 
   // Show morning report on first visit of the day
@@ -393,6 +394,8 @@ const Dashboard = () => {
                   calculateMultiplier={calculateMultiplier}
                   onActivityComplete={(type, data) => {
                     completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
+                    // Refresh profile to update XP display in header
+                    refreshProfile();
                   }}
                 />
               </motion.div>
