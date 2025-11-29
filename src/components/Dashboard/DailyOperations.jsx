@@ -291,12 +291,12 @@ const DailyOperations = ({
 
   return (
     <div className="space-y-4">
-      {/* Execution Multiplier & Corps Health - Classic Prestige Cream Card */}
-      <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-5">
+      {/* Execution Multiplier & Corps Health */}
+      <div className="glass-premium rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-oswald font-bold text-black uppercase tracking-wide">Corps Performance</h3>
-            <p className="text-xs text-black/50">
+            <h3 className="text-lg font-semibold text-cream-100">Corps Performance</h3>
+            <p className="text-xs text-cream-500/60">
               {completionStats.completed}/{completionStats.total} daily tasks complete
             </p>
           </div>
@@ -312,7 +312,7 @@ const DailyOperations = ({
 
         {/* Multiplier Bar */}
         <div className="mb-4">
-          <div className="w-full h-2 bg-cream-300 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(((multiplier - 0.70) / 0.40) * 100, 100)}%` }}
@@ -320,7 +320,7 @@ const DailyOperations = ({
               className={`h-full ${multiplierStatus.bg}`}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-black/40 mt-1">
+          <div className="flex justify-between text-[10px] text-cream-500/40 mt-1">
             <span>0.70x</span>
             <span>1.00x</span>
             <span>1.10x</span>
@@ -349,7 +349,7 @@ const DailyOperations = ({
         {/* Expand Breakdown */}
         <button
           onClick={() => setShowMultiplierBreakdown(!showMultiplierBreakdown)}
-          className="w-full mt-3 pt-3 border-t border-gold-400/20 flex items-center justify-center gap-2 text-xs text-black/50 hover:text-black/70 transition-colors"
+          className="w-full mt-3 pt-3 border-t border-cream-500/10 flex items-center justify-center gap-2 text-xs text-cream-500/60 hover:text-cream-400 transition-colors"
         >
           {showMultiplierBreakdown ? 'Hide Details' : 'Show Multiplier Breakdown'}
           {showMultiplierBreakdown ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -364,8 +364,8 @@ const DailyOperations = ({
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-2 text-xs">
-                <div className="text-black/50 mb-2">
-                  Formula: (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
+                <div className="text-cream-500/60 mb-2">
+                  Base: 1.00x, adjusted by each factor, clamped to 0.70x - 1.10x
                 </div>
                 <BreakdownRowNew
                   label="Readiness"
@@ -385,17 +385,41 @@ const DailyOperations = ({
                   description={`${Math.round((breakdownData.equipment?.current || metrics.equipment) * 100)}% (baseline 100%)`}
                   range="-5% to +10%"
                 />
-                <div className="flex justify-between items-center pt-2 border-t border-gold-400/20">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-3 h-3 text-blue-600" />
-                    <span className="text-black/50">Staff Bonus ({breakdownData.staff.count} staff)</span>
-                  </div>
-                  <span className={breakdownData.staff.value > 0 ? 'text-blue-600' : 'text-black/40'}>
-                    +{(breakdownData.staff.value * 100).toFixed(1)}%
-                  </span>
+                <BreakdownRowNew
+                  label="Staff"
+                  value={breakdownData.staff?.value || 0}
+                  description={`${breakdownData.staff?.count || 0} assigned (baseline 80% eff.)`}
+                  range="±8%"
+                />
+                {breakdownData.showDifficulty && (
+                  <BreakdownRowNew
+                    label="Show Difficulty"
+                    value={breakdownData.showDifficulty.value}
+                    description={breakdownData.showDifficulty.isPrepared ? 'Prepared!' : 'Under-prepared'}
+                    range="-20% to +15%"
+                  />
+                )}
+                {breakdownData.fatigue && (
+                  <BreakdownRowNew
+                    label="Late Season Fatigue"
+                    value={breakdownData.fatigue.value}
+                    description="Day 35+ penalty"
+                    range="up to -5%"
+                  />
+                )}
+                {breakdownData.championship && (
+                  <BreakdownRowNew
+                    label="Championship Pressure"
+                    value={breakdownData.championship.value}
+                    description="Finals week"
+                    range="±2%"
+                  />
+                )}
+                <div className="text-cream-500/40 text-[10px] mt-1">
+                  Note: ±2% random variance applied at scoring time
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gold-400/30 font-semibold">
-                  <span className="text-black">Total Multiplier</span>
+                <div className="flex justify-between items-center pt-2 border-t border-cream-500/20 font-semibold">
+                  <span className="text-cream-300">Total Multiplier</span>
                   <span className={multiplierStatus.color}>{multiplier.toFixed(2)}x</span>
                 </div>
               </div>
@@ -404,24 +428,24 @@ const DailyOperations = ({
         </AnimatePresence>
       </div>
 
-      {/* Main Rehearsal - Classic Prestige Cream Card */}
-      <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-4">
+      {/* Main Rehearsal */}
+      <div className="glass rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gold-500">
-              <Music className="w-5 h-5 text-forest-900" />
+            <div className="p-2 rounded-lg bg-gold-500/20">
+              <Music className="w-5 h-5 text-gold-500" />
             </div>
             <div>
-              <h4 className="font-semibold text-black">Full Rehearsal</h4>
-              <p className="text-xs text-black/50">+5% readiness, +25 XP | -2% morale, -1% equip</p>
+              <h4 className="font-semibold text-cream-100">Full Rehearsal</h4>
+              <p className="text-xs text-cream-500/60">+5% readiness, +25 XP | -2% morale, -1% equip</p>
             </div>
           </div>
           {executionState?.rehearsalsThisWeek !== undefined && (
             <div className="text-right">
-              <div className="text-sm font-medium text-black">
+              <div className="text-sm font-medium text-cream-300">
                 {executionState.rehearsalsThisWeek}/7
               </div>
-              <div className="text-xs text-black/50">this week</div>
+              <div className="text-xs text-cream-500/60">this week</div>
             </div>
           )}
         </div>
@@ -431,13 +455,13 @@ const DailyOperations = ({
           disabled={!canRehearseToday || rehearsalProcessing || showRehearsalAnimation}
           className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
             canRehearseToday
-              ? 'bg-gold-500 text-forest-900 hover:bg-gold-400 shadow-md hover:shadow-lg'
-              : 'bg-cream-300 text-black/40 cursor-not-allowed'
+              ? 'bg-gold-500 text-charcoal-900 hover:bg-gold-400'
+              : 'bg-charcoal-800 text-cream-500/60 cursor-not-allowed'
           }`}
         >
           {rehearsalProcessing || showRehearsalAnimation ? (
             <>
-              <div className="w-5 h-5 border-2 border-forest-900 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
               Rehearsing...
             </>
           ) : canRehearseToday ? (
@@ -447,17 +471,17 @@ const DailyOperations = ({
             </>
           ) : (
             <>
-              <Check className="w-5 h-5 text-green-600" />
+              <Check className="w-5 h-5 text-green-500" />
               Rehearsal Complete
             </>
           )}
         </button>
       </div>
 
-      {/* Daily Activities - Classic Prestige Cream Card */}
-      <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-4">
-        <h4 className="text-sm font-oswald font-bold text-black uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-gold-600" />
+      {/* Daily Activities */}
+      <div className="glass rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <Zap className="w-4 h-4 text-gold-500" />
           Daily Activities
         </h4>
 
@@ -505,13 +529,13 @@ const DailyOperations = ({
         </div>
       </div>
 
-      {/* Sectional Rehearsals - Classic Prestige Cream Card */}
+      {/* Sectional Rehearsals */}
       {opsStatus?.sectionalRehearsals && (
-        <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-4">
-          <h4 className="text-sm font-oswald font-bold text-black uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-600" />
+        <div className="glass rounded-xl p-4">
+          <h4 className="text-sm font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-blue-400" />
             Sectional Rehearsals
-            <span className="text-xs font-normal text-black/50">(+2% readiness each)</span>
+            <span className="text-xs font-normal text-cream-500/60">(+2% readiness each)</span>
           </h4>
 
           <div className="grid grid-cols-4 gap-2">
@@ -660,31 +684,30 @@ const DailyOperations = ({
   );
 };
 
-// Metric Pill Component - Classic Prestige Theme
+// Metric Pill Component
 const MetricPill = ({ icon: Icon, label, value }) => {
   const getColor = (v) => {
-    if (v >= 0.85) return 'text-green-600 bg-green-100 border-green-300';
-    if (v >= 0.70) return 'text-yellow-600 bg-yellow-100 border-yellow-300';
-    return 'text-red-600 bg-red-100 border-red-300';
+    if (v >= 0.85) return 'text-green-400 bg-green-500/20';
+    if (v >= 0.70) return 'text-yellow-400 bg-yellow-500/20';
+    return 'text-red-400 bg-red-500/20';
   };
 
   const colorClass = getColor(value);
-  const classes = colorClass.split(' ');
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${classes[1]} ${classes[2]}`}>
-      <Icon className={`w-4 h-4 ${classes[0]}`} />
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colorClass.split(' ')[1]}`}>
+      <Icon className={`w-4 h-4 ${colorClass.split(' ')[0]}`} />
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-bold ${classes[0]}`}>
+        <div className={`text-sm font-bold ${colorClass.split(' ')[0]}`}>
           {Math.round(value * 100)}%
         </div>
-        <div className="text-[10px] text-black/50 truncate">{label}</div>
+        <div className="text-[10px] text-cream-500/60 truncate">{label}</div>
       </div>
     </div>
   );
 };
 
-// Detailed Breakdown Row Component - Classic Prestige Theme
+// Detailed Breakdown Row Component
 const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) => {
   const percentage = Math.round(current * 100);
   const isAtMax = current >= 0.99;
@@ -693,15 +716,15 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-2">
-        <span className="text-black/60">{label}</span>
-        <span className="text-black/40">({percentage}% × {weight}%)</span>
+        <span className="text-cream-500/60">{label}</span>
+        <span className="text-cream-500/40">({percentage}% × {weight}%)</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className={isAtMax ? 'text-green-600' : current >= 0.85 ? 'text-yellow-600' : 'text-red-600'}>
+        <span className={isAtMax ? 'text-green-400' : current >= 0.85 ? 'text-yellow-400' : 'text-red-400'}>
           {(contribution * 100).toFixed(1)}%
         </span>
         {!isAtMax && (
-          <span className="text-red-500/60 text-[10px]">
+          <span className="text-red-400/60 text-[10px]">
             ({deltaDisplay}%)
           </span>
         )}
@@ -710,7 +733,7 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
   );
 };
 
-// New Breakdown Row Component - Classic Prestige Theme
+// New Breakdown Row Component
 // Shows value as +/- percentage with description and range
 const BreakdownRowNew = ({ label, value, description, range }) => {
   const isPositive = value >= 0;
@@ -719,12 +742,12 @@ const BreakdownRowNew = ({ label, value, description, range }) => {
   return (
     <div className="flex justify-between items-center py-1">
       <div className="flex items-center gap-2">
-        <span className="text-black/70">{label}</span>
-        <span className="text-black/40 text-[10px]">({range})</span>
+        <span className="text-cream-300">{label}</span>
+        <span className="text-cream-500/40 text-[10px]">({range})</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-black/50 text-[10px]">{description}</span>
-        <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+        <span className="text-cream-500/50 text-[10px]">{description}</span>
+        <span className={`font-medium ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
           {isPositive ? '+' : ''}{displayValue}%
         </span>
       </div>
@@ -732,56 +755,56 @@ const BreakdownRowNew = ({ label, value, description, range }) => {
   );
 };
 
-// Activity Row Component - Classic Prestige Theme
+// Activity Row Component
 const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick }) => {
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
         available
-          ? 'bg-cream-200/70 hover:bg-cream-200 border border-gold-400/30 hover:border-gold-400 cursor-pointer'
-          : 'bg-cream-200/40 border border-cream-300/50 cursor-default opacity-60'
+          ? 'bg-charcoal-800/50 hover:bg-charcoal-800 cursor-pointer'
+          : 'bg-charcoal-900/30 cursor-default opacity-60'
       }`}
     >
-      <div className={`p-2 rounded-lg ${available ? 'bg-gold-500' : 'bg-green-500'}`}>
+      <div className={`p-2 rounded-lg ${available ? 'bg-gold-500/20' : 'bg-green-500/20'}`}>
         {loading ? (
-          <div className="w-4 h-4 border-2 border-forest-900 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : available ? (
-          <Icon className="w-4 h-4 text-forest-900" />
+          <Icon className="w-4 h-4 text-gold-500" />
         ) : (
-          <Check className="w-4 h-4 text-white" />
+          <Check className="w-4 h-4 text-green-500" />
         )}
       </div>
       <div className="flex-1 text-left">
-        <div className="text-sm font-medium text-black">{title}</div>
-        <div className="text-xs text-black/50">{reward}</div>
+        <div className="text-sm font-medium text-cream-100">{title}</div>
+        <div className="text-xs text-cream-500/60">{reward}</div>
       </div>
-      {available && <ChevronRight className="w-4 h-4 text-black/40" />}
+      {available && <ChevronRight className="w-4 h-4 text-cream-500/40" />}
     </button>
   );
 };
 
-// Sectional Button Component - Classic Prestige Theme
+// Sectional Button Component
 const SectionalButton = ({ icon: Icon, label, available, loading, onClick }) => {
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-200 ${
+      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
         available
-          ? 'bg-cream-200/70 hover:bg-cream-200 border border-gold-400/30 hover:border-gold-400 cursor-pointer'
-          : 'bg-cream-200/40 border border-cream-300/50 cursor-default opacity-60'
+          ? 'bg-charcoal-800/50 hover:bg-charcoal-800 cursor-pointer'
+          : 'bg-charcoal-900/30 cursor-default opacity-60'
       }`}
     >
       {loading ? (
-        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
       ) : available ? (
-        <Icon className="w-5 h-5 text-blue-600" />
+        <Icon className="w-5 h-5 text-blue-400" />
       ) : (
-        <Check className="w-5 h-5 text-green-600" />
+        <Check className="w-5 h-5 text-green-500" />
       )}
-      <span className="text-xs text-black/70">{label}</span>
+      <span className="text-xs text-cream-400">{label}</span>
     </button>
   );
 };

@@ -18,7 +18,7 @@
   --transition-slow: 500ms;
 }
 
-/* Dark Mode (Default) - Classic Prestige Theme */
+/* Dark Mode (Default) */
 [data-theme="dark"], :root {
   /* Cream scale - light colors for text in dark mode */
   --cream-50: #FDFBF5;
@@ -192,13 +192,14 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply backdrop-blur-md border border-gold-400/30 rounded-xl;
   }
 
-  /* Premium Glass - Cream card with gold shadows for main content panels */
+  /* Premium Glass - Dark glass with subtle gold accents for main content panels */
   .glass-premium {
-    @apply bg-cream-100 border border-gold-400/40 rounded-xl shadow-gold-deep;
+    background: rgba(23, 23, 28, 0.85);
+    @apply backdrop-blur-lg border border-gold-500/20 rounded-xl;
   }
 
   .glass-premium:hover {
-    @apply shadow-gold-lift;
+    @apply border-gold-500/30;
   }
 
   /* Gradient Backgrounds */
@@ -387,17 +388,18 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* ================================================
-     CLASSIC PRESTIGE UX PATTERNS
+     CARD UX PATTERNS
      ================================================ */
 
-  /* Card with hover lift effect - "physically lifting toward user" */
+  /* Card with hover lift effect */
   .card-prestige {
-    @apply bg-cream-100 border border-gold-400 rounded-xl shadow-gold-deep p-4;
+    background: rgba(23, 23, 28, 0.85);
+    @apply backdrop-blur-lg border border-gold-500/20 rounded-xl p-4;
     @apply transition-all duration-200 ease-damped;
   }
 
   .card-prestige:hover {
-    @apply scale-101 shadow-gold-lift;
+    @apply scale-101 border-gold-500/30;
   }
 
   /* Interactive row with lift effect */
@@ -406,7 +408,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .row-interactive:hover {
-    @apply scale-101 shadow-gold-lift bg-cream-200/80;
+    @apply scale-101 bg-charcoal-800/80;
   }
 
   /* Gold glow button hover (200ms fade) */
@@ -507,11 +509,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .empty-state-title {
-    @apply font-oswald font-bold text-xl text-black mt-6;
+    @apply font-bold text-xl text-cream-100 mt-6;
   }
 
   .empty-state-description {
-    @apply font-montserrat text-sm text-black/70 mt-2;
+    @apply text-sm text-cream-500/60 mt-2;
   }
 
   /* Urgent task styling */

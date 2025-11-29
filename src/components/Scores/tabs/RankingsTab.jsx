@@ -117,7 +117,7 @@ const RankingsTab = ({
               onClick={() => setActiveClass(cls.id)}
               className={`px-3 md:px-4 py-2 rounded-lg transition-all text-sm ${
                 activeClass === cls.id
-                  ? 'bg-cream-100 text-charcoal-900 font-medium'
+                  ? 'bg-gold-500 text-charcoal-900 font-medium'
                   : 'bg-charcoal-800/50 text-cream-300 hover:bg-charcoal-800'
               }`}
             >

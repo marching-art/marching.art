@@ -201,14 +201,14 @@ const Navigation: React.FC = () => {
         <div className="p-6 border-b border-gold-400/20">
           <Link to="/" className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-cream-100">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-charcoal-800">
                 <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-gold-500 rounded-full animate-pulse" />
             </div>
             {!collapsed && (
               <div>
-                <h1 className="text-xl font-oswald font-bold text-cream-100 tracking-wide">
+                <h1 className="text-xl font-bold text-cream-100 tracking-wide">
                   MARCHING.ART
                 </h1>
                 <p className="text-xs text-cream-200/60">Fantasy Drum & Bugle Corps</p>
@@ -228,11 +228,11 @@ const Navigation: React.FC = () => {
         {/* User Info */}
         {user && profile && (
           <div className={`p-4 border-b border-gold-400/20 ${collapsed ? 'px-2' : ''}`}>
-            <div className={`bg-cream-100 rounded-lg p-3 shadow-gold-deep ${collapsed ? 'p-2' : ''}`}>
+            <div className={`glass rounded-lg p-3 ${collapsed ? 'p-2' : ''}`}>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 bg-gold-500 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-forest-900" />
+                    <User className="w-5 h-5 text-charcoal-900" />
                   </div>
                   {(profile.xpLevel ?? 0) >= 10 && (
                     <div className="absolute -top-1 -right-1">
@@ -242,14 +242,14 @@ const Navigation: React.FC = () => {
                 </div>
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-black truncate">
+                    <p className="text-sm font-semibold text-cream-100 truncate">
                       {profile.displayName || 'Director'}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-black/60">
+                      <span className="text-xs text-cream-500/60">
                         Level {profile.xpLevel || 1}
                       </span>
-                      <div className="flex-1 h-1 bg-cream-200 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1 bg-charcoal-800 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-gold transition-all duration-500"
                           style={{ width: `${((profile.xp ?? 0) % 1000) / 10}%` }}
@@ -284,7 +284,7 @@ const Navigation: React.FC = () => {
                       className={`
                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ease-damped group
                         ${isActive
-                          ? 'bg-cream-100 text-forest-900 shadow-gold-deep'
+                          ? 'bg-gold-500/20 text-gold-400'
                           : 'text-cream-200 hover:bg-forest-800 hover:text-cream-100'
                         }
                         ${collapsed ? 'justify-center' : ''}
@@ -304,7 +304,7 @@ const Navigation: React.FC = () => {
                           {item.badge && (
                             <span className={`
                               px-2 py-0.5 text-xs font-semibold rounded-full
-                              ${item.badgeColor || 'bg-gold-500 text-forest-900'}
+                              ${item.badgeColor || 'bg-gold-500 text-charcoal-900'}
                             `}>
                               {item.badge}
                             </span>
