@@ -35,22 +35,18 @@ import {
   connectStorageEmulator,
 } from 'firebase/storage';
 
+// Import centralized configuration
+import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG } from '../config';
+
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "marching-art.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "marching-art",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "marching-art.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "278086562126",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:278086562126:web:f7737ee897774c3d9a6e1f",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-H0KE8GJS7M"
-};
+// Use centralized Firebase config
+const firebaseConfig = FIREBASE_CONFIG;
 
-// Data namespace for Firestore paths
-export const DATA_NAMESPACE = 'marching-art';
+// Data namespace for Firestore paths (exported for backwards compatibility)
+export const DATA_NAMESPACE = DATA_CONFIG.namespace;
 
 // =============================================================================
 // FIREBASE INSTANCES
@@ -75,12 +71,13 @@ function initializeFirebase(): void {
   functions = getFunctions(app);
   storage = getStorage(app);
 
-  // Connect to emulators in development
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    connectStorageEmulator(storage, 'localhost', 9199);
+  // Connect to emulators in development (using centralized config)
+  if (DEV_CONFIG.useEmulators) {
+    const { emulators } = DEV_CONFIG;
+    connectAuthEmulator(auth, `http://localhost:${emulators.auth}`, { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', emulators.firestore);
+    connectFunctionsEmulator(functions, 'localhost', emulators.functions);
+    connectStorageEmulator(storage, 'localhost', emulators.storage);
   }
 }
 
@@ -153,14 +150,16 @@ export const authApi = {
 
   /**
    * Check if user is admin
+   * Uses centralized AUTH_CONFIG for admin UID list
    */
   isAdmin: async (): Promise<boolean> => {
     const user = auth.currentUser;
     if (!user) return false;
 
-    const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
-    if (user.uid === ADMIN_UID) return true;
+    // Check against configured admin UIDs
+    if (AUTH_CONFIG.isAdminUid(user.uid)) return true;
 
+    // Also check custom claims
     const tokenResult = await user.getIdTokenResult();
     return tokenResult.claims.admin === true;
   },

@@ -41,6 +41,17 @@ export { analytics, analytics as analyticsHelpers } from './analytics';
 // Re-export all cloud functions
 export * from './functions';
 
+// Re-export configuration
+export {
+  APP_CONFIG,
+  DATA_CONFIG,
+  AUTH_CONFIG,
+  FIREBASE_CONFIG,
+  GAME_CONFIG,
+  FEATURE_FLAGS,
+  DEV_CONFIG,
+} from '../config';
+
 // Re-export profile API
 export {
   getProfile,

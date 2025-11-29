@@ -15,6 +15,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
 import ErrorBoundary from './components/ErrorBoundary';
+import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
 
@@ -38,6 +39,13 @@ const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
 const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+
+// Helper component to wrap pages with error boundaries
+const Page = ({ name, children }) => (
+  <PageErrorBoundary name={name}>
+    {children}
+  </PageErrorBoundary>
+);
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -266,71 +274,71 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Protected Routes */}
+          {/* Protected Routes - Each page wrapped with error boundary */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Layout>
-                <Dashboard />
+                <Page name="Dashboard"><Dashboard /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           {/* Redirect old /hub route to /leagues */}
           <Route path="/hub" element={<Navigate to="/leagues" replace />} />
-          
+
           {/* Redirect old /leaderboard route to /scores */}
           <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
-          
+
           <Route path="/schedule" element={
             <ProtectedRoute>
               <Layout>
-                <Schedule />
+                <Page name="Schedule"><Schedule /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/scores" element={
             <ProtectedRoute>
               <Layout>
-                <Scores />
+                <Page name="Scores"><Scores /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/scores/:date" element={
             <ProtectedRoute>
               <Layout>
-                <Scores />
+                <Page name="Scores"><Scores /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/profile/:userId?" element={
             <ProtectedRoute>
               <Layout>
-                <Profile />
+                <Page name="Profile"><Profile /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/settings" element={
             <ProtectedRoute>
               <Layout>
-                <Settings />
+                <Page name="Settings"><Settings /></Page>
               </Layout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/hall-of-champions" element={
             <Layout>
-              <HallOfChampions />
+              <Page name="Hall of Champions"><HallOfChampions /></Page>
             </Layout>
           } />
 
           <Route path="/admin" element={
             <ProtectedRoute>
               <Layout>
-                <Admin />
+                <Page name="Admin"><Admin /></Page>
               </Layout>
             </ProtectedRoute>
           } />
@@ -338,7 +346,7 @@ function App() {
           <Route path="/staff" element={
             <ProtectedRoute>
               <Layout>
-                <Staff />
+                <Page name="Staff"><Staff /></Page>
               </Layout>
             </ProtectedRoute>
           } />
@@ -346,7 +354,7 @@ function App() {
           <Route path="/battlepass" element={
             <ProtectedRoute>
               <Layout>
-                <BattlePass />
+                <Page name="Battle Pass"><BattlePass /></Page>
               </Layout>
             </ProtectedRoute>
           } />
@@ -354,7 +362,7 @@ function App() {
           <Route path="/leagues" element={
             <ProtectedRoute>
               <Layout>
-                <Leagues />
+                <Page name="Leagues"><Leagues /></Page>
               </Layout>
             </ProtectedRoute>
           } />
@@ -362,7 +370,7 @@ function App() {
           <Route path="/retired-corps" element={
             <ProtectedRoute>
               <Layout>
-                <RetiredCorpsGallery />
+                <Page name="Retired Corps"><RetiredCorpsGallery /></Page>
               </Layout>
             </ProtectedRoute>
           } />
@@ -370,7 +378,7 @@ function App() {
           <Route path="/corps-history" element={
             <ProtectedRoute>
               <Layout>
-                <CorpsHistory />
+                <Page name="Corps History"><CorpsHistory /></Page>
               </Layout>
             </ProtectedRoute>
           } />
