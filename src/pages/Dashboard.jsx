@@ -269,7 +269,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -283,7 +283,7 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Compact Header */}
+      {/* Classic Prestige Dashboard Header */}
       <DashboardHeader
         profile={profile}
         seasonData={seasonData}
@@ -295,39 +295,144 @@ const Dashboard = () => {
         activeCorpsClass={activeCorpsClass}
       />
 
-      {/* Quick Actions Row */}
-      {activeCorps && (
-        <QuickActionsRow
-          activeCorps={activeCorps}
-          activeCorpsClass={activeCorpsClass}
-          executionState={executionState}
-          executionProcessing={executionProcessing}
-          canRehearseToday={canRehearseToday}
-          rehearse={rehearse}
-          currentWeek={currentWeek}
-          onTabChange={setActiveTab}
-          hasMultipleCorps={hasMultipleCorps}
-          corps={corps}
-          onCorpsSwitch={handleCorpsSwitch}
-          getCorpsClassName={getCorpsClassName}
-          getCorpsClassColor={getCorpsClassColor}
-          recentScores={recentScores}
-        />
-      )}
+      {/* MY CORPS OVERVIEW - 2x2 Grid (Classic Prestige Layout) */}
+      <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-5">
+        <h2 className="font-oswald text-lg font-bold text-black uppercase tracking-wide mb-4">
+          My Corps Overview
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* World Class */}
+          <CorpsOverviewCard
+            classType="worldClass"
+            label="WORLD CLASS"
+            corps={corps?.worldClass}
+            isActive={activeCorpsClass === 'worldClass'}
+            onSwitch={() => handleCorpsSwitch('worldClass')}
+            onRegister={() => {
+              setShowRegistration(true);
+            }}
+            isUnlocked={profile?.unlockedClasses?.includes('worldClass')}
+            getCorpsClassName={getCorpsClassName}
+          />
+          {/* Open Class */}
+          <CorpsOverviewCard
+            classType="openClass"
+            label="OPEN CLASS"
+            corps={corps?.openClass}
+            isActive={activeCorpsClass === 'openClass'}
+            onSwitch={() => handleCorpsSwitch('openClass')}
+            onRegister={() => {
+              setShowRegistration(true);
+            }}
+            isUnlocked={profile?.unlockedClasses?.includes('openClass')}
+            getCorpsClassName={getCorpsClassName}
+          />
+          {/* A Class */}
+          <CorpsOverviewCard
+            classType="aClass"
+            label="A CLASS"
+            corps={corps?.aClass}
+            isActive={activeCorpsClass === 'aClass'}
+            onSwitch={() => handleCorpsSwitch('aClass')}
+            onRegister={() => {
+              setShowRegistration(true);
+            }}
+            isUnlocked={profile?.unlockedClasses?.includes('aClass')}
+            getCorpsClassName={getCorpsClassName}
+          />
+          {/* SoundSport */}
+          <CorpsOverviewCard
+            classType="soundSport"
+            label="SOUNDSPORT"
+            corps={corps?.soundSport}
+            isActive={activeCorpsClass === 'soundSport'}
+            onSwitch={() => handleCorpsSwitch('soundSport')}
+            onRegister={() => {
+              setShowRegistration(true);
+            }}
+            isUnlocked={profile?.unlockedClasses?.includes('soundSport')}
+            getCorpsClassName={getCorpsClassName}
+          />
+        </div>
+      </div>
+
+      {/* TODAY'S BRIEFING Panel (Classic Prestige Layout) */}
+      <div className="bg-cream-100 rounded-xl shadow-gold-deep border border-gold-400/40 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-oswald text-lg font-bold text-black uppercase tracking-wide flex items-center gap-2">
+            <Target className="w-5 h-5 text-gold-600" />
+            Today's Briefing
+          </h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-black/70">
+              Day {currentWeek ? ((currentWeek - 1) * 7 + new Date().getDay() + 1) : '-'} of 70
+            </span>
+            <div className="bg-gold-500 text-forest-900 px-3 py-1 rounded-lg text-sm font-bold">
+              Captions Lock in: {weeksRemaining ? `${weeksRemaining}w` : '-'}
+            </div>
+          </div>
+        </div>
+
+        {/* Briefing Items */}
+        <div className="space-y-3">
+          {/* Urgent Action Item */}
+          {canRehearseToday && canRehearseToday() && (
+            <BriefingItem
+              type="action"
+              title="ACTION: Daily Rehearsal Available"
+              description="Your corps is ready for today's rehearsal session."
+              onAction={() => {
+                setActiveTab('daily');
+                rehearse();
+              }}
+            />
+          )}
+
+          {/* Review Item */}
+          {recentScores && recentScores.length > 0 && (
+            <BriefingItem
+              type="review"
+              title={`REVIEW: ${recentScores.length} new score recap${recentScores.length > 1 ? 's' : ''} available`}
+              description="Check your recent competition scores and recaps."
+              linkTo="/scores"
+            />
+          )}
+
+          {/* Strategy Item */}
+          {executionState && executionState.readiness < 0.85 && (
+            <BriefingItem
+              type="strategy"
+              title="STRATEGY: Corps Readiness Below Target"
+              description={`Current readiness at ${Math.round((executionState.readiness || 0.75) * 100)}%. Consider additional rehearsals.`}
+              onAction={() => setActiveTab('daily')}
+            />
+          )}
+
+          {/* Staff Check */}
+          {executionState && (!executionState.staff || executionState.staff.length < 3) && (
+            <BriefingItem
+              type="strategy"
+              title="STRATEGY: Hire More Staff"
+              description="Your corps would benefit from additional staff members."
+              linkTo="/staff"
+            />
+          )}
+        </div>
+      </div>
 
       {/* Main Content Layout - Desktop: 2 columns, Mobile: stacked */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content Area */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Tab Navigation */}
+          {/* Tab Navigation - Classic Prestige Style */}
           {activeCorps && (
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               <button
                 onClick={() => setActiveTab('daily')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'daily'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-forest-900 shadow-md'
+                    : 'bg-cream-100 text-black/70 border border-gold-400/30 hover:border-gold-400 hover:text-black'
                 }`}
               >
                 <Zap className="w-4 h-4" />
@@ -335,10 +440,10 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'overview'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-forest-900 shadow-md'
+                    : 'bg-cream-100 text-black/70 border border-gold-400/30 hover:border-gold-400 hover:text-black'
                 }`}
               >
                 <Music className="w-4 h-4" />
@@ -349,10 +454,10 @@ const Dashboard = () => {
                   setActiveTab('equipment');
                   completeDailyChallenge('maintain_equipment');
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'equipment'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-forest-900 shadow-md'
+                    : 'bg-cream-100 text-black/70 border border-gold-400/30 hover:border-gold-400 hover:text-black'
                 }`}
               >
                 <Wrench className="w-4 h-4" />
@@ -363,10 +468,10 @@ const Dashboard = () => {
                   setActiveTab('staff');
                   completeDailyChallenge('staff_meeting');
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'staff'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-forest-900 shadow-md'
+                    : 'bg-cream-100 text-black/70 border border-gold-400/30 hover:border-gold-400 hover:text-black'
                 }`}
               >
                 <Users className="w-4 h-4" />
@@ -608,6 +713,136 @@ const Dashboard = () => {
       />
     </div>
   );
+};
+
+// =============================================================================
+// HELPER COMPONENTS - Classic Prestige Theme
+// =============================================================================
+
+/**
+ * Corps Overview Card - Shows corps status in the 2x2 grid
+ */
+const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegister, isUnlocked, getCorpsClassName }) => {
+  const { Link } = require('react-router-dom');
+  const { Trophy, Lock, Plus, CheckCircle } = require('lucide-react');
+
+  if (!isUnlocked) {
+    return (
+      <div className="bg-cream-200/50 border border-gold-400/20 rounded-lg p-4 opacity-60">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-black/40" />
+            <span className="font-oswald text-sm font-semibold text-black/40 uppercase">{label}</span>
+          </div>
+        </div>
+        <p className="text-xs text-black/40 mt-2">Unlock by gaining more XP</p>
+      </div>
+    );
+  }
+
+  if (!corps) {
+    return (
+      <button
+        onClick={onRegister}
+        className="bg-cream-200/50 border-2 border-dashed border-gold-400/40 rounded-lg p-4 hover:border-gold-500 hover:bg-cream-200 transition-all duration-200 text-left w-full group"
+      >
+        <div className="flex items-center gap-2">
+          <Plus className="w-4 h-4 text-gold-600 group-hover:scale-110 transition-transform" />
+          <span className="font-oswald text-sm font-semibold text-black uppercase">{label}</span>
+        </div>
+        <p className="text-xs text-black/60 mt-2">Click to register a corps</p>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onSwitch}
+      className={`border rounded-lg p-4 text-left w-full transition-all duration-200 ${
+        isActive
+          ? 'bg-gold-500 border-gold-600 shadow-lg'
+          : 'bg-cream-200/50 border-gold-400/30 hover:border-gold-400 hover:bg-cream-200'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isActive && <CheckCircle className="w-4 h-4 text-forest-900" />}
+          <span className={`font-oswald text-sm font-semibold uppercase ${isActive ? 'text-forest-900' : 'text-black'}`}>
+            {label}
+          </span>
+        </div>
+        {corps.rank && (
+          <div className={`flex items-center gap-1 text-xs font-bold ${isActive ? 'text-forest-900' : 'text-gold-600'}`}>
+            <Trophy className="w-3 h-3" />
+            #{corps.rank}
+          </div>
+        )}
+      </div>
+      <p className={`text-sm font-medium mt-1 truncate ${isActive ? 'text-forest-900' : 'text-black'}`}>
+        {corps.corpsName || corps.name}
+      </p>
+      <p className={`text-xs mt-1 ${isActive ? 'text-forest-900/70' : 'text-black/60'}`}>
+        {corps.totalSeasonScore?.toFixed(2) || '0.00'} pts
+      </p>
+    </button>
+  );
+};
+
+/**
+ * Briefing Item - Shows action/review/strategy items in Today's Briefing
+ */
+const BriefingItem = ({ type, title, description, onAction, linkTo }) => {
+  const { Link } = require('react-router-dom');
+  const { AlertTriangle, Eye, Lightbulb, ChevronRight, Square } = require('lucide-react');
+
+  const typeConfig = {
+    action: {
+      icon: AlertTriangle,
+      iconBg: 'bg-red-100',
+      iconColor: 'text-red-600',
+      borderColor: 'border-l-red-500',
+      bgColor: 'bg-red-50/50'
+    },
+    review: {
+      icon: Eye,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      borderColor: 'border-l-blue-500',
+      bgColor: 'bg-blue-50/50'
+    },
+    strategy: {
+      icon: Lightbulb,
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      borderColor: 'border-l-amber-500',
+      bgColor: 'bg-amber-50/50'
+    }
+  };
+
+  const config = typeConfig[type] || typeConfig.strategy;
+  const Icon = config.icon;
+
+  const content = (
+    <div className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${config.borderColor} ${config.bgColor} hover:shadow-md transition-all duration-200 cursor-pointer`}>
+      <div className={`p-2 rounded-lg ${config.iconBg}`}>
+        <Icon className={`w-4 h-4 ${config.iconColor}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-black">{title}</p>
+        <p className="text-xs text-black/60 mt-0.5">{description}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Square className="w-4 h-4 text-black/30" />
+        <ChevronRight className="w-4 h-4 text-black/40" />
+      </div>
+    </div>
+  );
+
+  if (linkTo) {
+    return <Link to={linkTo}>{content}</Link>;
+  }
+
+  return <div onClick={onAction}>{content}</div>;
 };
 
 export default Dashboard;

@@ -140,19 +140,19 @@ const Layout = ({ children }) => {
 
       {/* Footer */}
       <footer className="lg:ml-64 mt-auto mb-20 lg:mb-0">
-        <div className="container-responsive py-8 border-t border-cream-500/20">
+        <div className="container-responsive py-8 border-t border-gold-400/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-cream-500/60 text-sm">
+            <p className="text-cream-200/60 text-sm">
               © 2025 marching.art - The Ultimate Fantasy Drum Corps Game
             </p>
             <div className="flex gap-6">
-              <a href="/privacy" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
+              <a href="/privacy" className="text-cream-200/60 hover:text-gold-400 text-sm transition-colors">
                 Privacy
               </a>
-              <a href="/terms" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
+              <a href="/terms" className="text-cream-200/60 hover:text-gold-400 text-sm transition-colors">
                 Terms
               </a>
-              <a href="/support" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
+              <a href="/support" className="text-cream-200/60 hover:text-gold-400 text-sm transition-colors">
                 Support
               </a>
             </div>
