@@ -67,6 +67,21 @@ module.exports = {
         'oswald': ['Oswald', 'system-ui', 'sans-serif'], // Headers / Impact
         'montserrat': ['Montserrat', 'system-ui', 'sans-serif'], // Body / Data
       },
+      // Custom scale values for subtle hover lift effect
+      scale: {
+        '101': '1.01', // Subtle lift for cards/rows
+        '102': '1.02', // Gold band highlight scale
+      },
+      // Transition timing for "damped spring" feel
+      transitionTimingFunction: {
+        'damped': 'cubic-bezier(0.4, 0, 0.2, 1)', // Starts quick, decelerates smoothly
+        'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Slight overshoot for physical feel
+      },
+      transitionDuration: {
+        '250': '250ms', // Standard interaction
+        '400': '400ms', // Task slide animations
+        '500': '500ms', // Task completion delay
+      },
       animation: {
         'fade-up': 'fadeUp 0.5s ease-out',
         'fade-in': 'fadeIn 0.3s ease-out',
@@ -77,7 +92,13 @@ module.exports = {
         'glow': 'glow 2s ease-in-out infinite alternate',
         'shimmer': 'shimmer 2s linear infinite',
         'spin-slow': 'spin 8s linear infinite',
-        'bounce-slow': 'bounce 2s infinite'
+        'bounce-slow': 'bounce 2s infinite',
+        // Task completion animations
+        'strikethrough': 'strikethrough 0.3s ease-out forwards',
+        'slide-out-right': 'slideOutRight 0.4s ease-out forwards',
+        'slide-up': 'slideUp 0.3s ease-out forwards',
+        // Skeleton loading
+        'skeleton': 'skeleton 1.5s ease-in-out infinite',
       },
       keyframes: {
         fadeUp: {
@@ -119,6 +140,50 @@ module.exports = {
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
+        },
+        // Task completion: text strikes through from left to right
+        strikethrough: {
+          '0%': {
+            textDecorationLine: 'line-through',
+            textDecorationColor: 'transparent',
+            backgroundSize: '0% 2px'
+          },
+          '100%': {
+            textDecorationLine: 'line-through',
+            textDecorationColor: 'currentColor',
+            backgroundSize: '100% 2px'
+          }
+        },
+        // Task completion: row slides out to right and fades
+        slideOutRight: {
+          '0%': {
+            opacity: '1',
+            transform: 'translateX(0)'
+          },
+          '100%': {
+            opacity: '0',
+            transform: 'translateX(100%)'
+          }
+        },
+        // Task completion: remaining tasks slide up to fill gap
+        slideUp: {
+          '0%': {
+            opacity: '0.5',
+            transform: 'translateY(20px)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
+        // Skeleton loading shimmer effect
+        skeleton: {
+          '0%': {
+            backgroundPosition: '-200% 0'
+          },
+          '100%': {
+            backgroundPosition: '200% 0'
+          }
         }
       },
       backgroundImage: {
@@ -127,7 +192,9 @@ module.exports = {
         'gradient-gold': 'linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%)',
         'gradient-cream': 'linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%)',
-        'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)'
+        'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)',
+        // Skeleton loading gradient (cream theme)
+        'skeleton-cream': 'linear-gradient(90deg, #F4F1E8 0%, #E0D8C0 50%, #F4F1E8 100%)',
       },
       boxShadow: {
         'glow': '0 0 20px rgba(255, 212, 77, 0.5)',
@@ -135,11 +202,24 @@ module.exports = {
         'inner-glow': 'inset 0 0 20px rgba(255, 212, 77, 0.2)',
         // Classic Prestige Deep Gold Shadow (warm, heavy shadow for layered physical feel)
         'gold-deep': '0 10px 15px -3px rgba(74, 63, 16, 0.4), 0 4px 6px -2px rgba(74, 63, 16, 0.2)',
+        // Hover lift shadow (deeper than gold-deep for "lifting toward user" effect)
+        'gold-lift': '0 14px 20px -4px rgba(74, 63, 16, 0.5), 0 6px 8px -2px rgba(74, 63, 16, 0.25)',
+        // Accessibility: Gold focus ring for keyboard navigation
+        'focus-gold': '0 0 0 3px rgba(212, 175, 55, 0.5)',
+        'focus-gold-strong': '0 0 0 3px rgba(212, 175, 55, 0.8)',
         'elevation-1': '0 2px 4px rgba(0,0,0,0.1)',
         'elevation-2': '0 4px 8px rgba(0,0,0,0.12)',
         'elevation-3': '0 8px 16px rgba(0,0,0,0.14)',
         'elevation-4': '0 16px 32px rgba(0,0,0,0.16)',
         'elevation-5': '0 24px 48px rgba(0,0,0,0.18)'
+      },
+      // Accessibility: Focus ring colors
+      ringColor: {
+        gold: '#D4AF37',
+      },
+      ringOffsetColor: {
+        cream: '#F4F1E8',
+        forest: '#0A2214',
       },
       backdropBlur: {
         'xs': '2px'

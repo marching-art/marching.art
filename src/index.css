@@ -376,6 +376,169 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gold-600;
   }
+
+  /* ================================================
+     CLASSIC PRESTIGE UX PATTERNS
+     ================================================ */
+
+  /* Card with hover lift effect - "physically lifting toward user" */
+  .card-prestige {
+    @apply bg-cream-100 border border-gold-400 rounded-xl shadow-gold-deep p-4;
+    @apply transition-all duration-200 ease-damped;
+  }
+
+  .card-prestige:hover {
+    @apply scale-101 shadow-gold-lift;
+  }
+
+  /* Interactive row with lift effect */
+  .row-interactive {
+    @apply transition-all duration-200 ease-damped;
+  }
+
+  .row-interactive:hover {
+    @apply scale-101 shadow-gold-lift bg-cream-200/80;
+  }
+
+  /* Gold glow button hover (200ms fade) */
+  .btn-glow {
+    @apply transition-shadow duration-200 ease-out;
+  }
+
+  .btn-glow:hover {
+    @apply shadow-glow;
+  }
+
+  /* Skeleton loading placeholder */
+  .skeleton-card {
+    @apply bg-skeleton-cream bg-[length:200%_100%] animate-skeleton rounded-xl;
+  }
+
+  .skeleton-text {
+    @apply bg-skeleton-cream bg-[length:200%_100%] animate-skeleton rounded h-4;
+  }
+
+  .skeleton-circle {
+    @apply bg-skeleton-cream bg-[length:200%_100%] animate-skeleton rounded-full;
+  }
+
+  /* Task completion strikethrough animation */
+  .task-completed {
+    @apply relative;
+  }
+
+  .task-completed::after {
+    content: '';
+    @apply absolute left-0 top-1/2 h-0.5 bg-black;
+    animation: strikethroughLine 0.3s ease-out forwards;
+  }
+
+  @keyframes strikethroughLine {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  /* Task slide out animation */
+  .task-slide-out {
+    @apply animate-slide-out-right;
+  }
+
+  /* Accessibility: Gold focus ring for keyboard navigation */
+  .focus-gold {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2;
+  }
+
+  .focus-gold-cream {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream;
+  }
+
+  .focus-gold-forest {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-forest;
+  }
+
+  /* Mobile horizontal scroll carousel */
+  .carousel-mobile {
+    @apply flex overflow-x-auto snap-x snap-mandatory;
+    @apply scrollbar-none -mx-4 px-4;
+    scroll-padding: 1rem;
+  }
+
+  .carousel-mobile > * {
+    @apply snap-start flex-shrink-0;
+  }
+
+  /* Show ~1.2 cards at a time on mobile */
+  .carousel-card {
+    @apply w-[85vw] max-w-[320px];
+  }
+
+  /* Hide scrollbar for carousel */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Gold band highlight for user's corps row */
+  .gold-band {
+    @apply bg-gold-500 rounded-lg shadow-md py-4 border-none;
+    @apply scale-102 my-2;
+  }
+
+  .gold-band * {
+    @apply text-black;
+  }
+
+  /* Empty state container */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-6 text-center;
+  }
+
+  .empty-state-title {
+    @apply font-oswald font-bold text-xl text-black mt-6;
+  }
+
+  .empty-state-description {
+    @apply font-montserrat text-sm text-black/70 mt-2;
+  }
+
+  /* Urgent task styling */
+  .task-urgent {
+    @apply bg-red-alert/5 border-l-4 border-l-red-alert;
+    @apply animate-pulse-red-glow;
+  }
+
+  /* Navigation badge */
+  .nav-badge {
+    @apply absolute right-2 top-1/2 -translate-y-1/2;
+    @apply h-5 min-w-[1.25rem] rounded-full flex items-center justify-center px-1;
+    @apply bg-red-alert text-white text-xs font-bold font-montserrat;
+  }
+
+  /* Bottom navigation (mobile) */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-forest-900 border-t border-forest-800;
+    @apply flex justify-around items-center;
+    @apply safe-area-pb;
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-4;
+    @apply text-cream-200 transition-colors duration-200;
+  }
+
+  .bottom-nav-item.active {
+    @apply text-gold-500;
+  }
+
+  /* Safe area padding for mobile devices with notches */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  }
 }
 
 /* Custom Animations */
