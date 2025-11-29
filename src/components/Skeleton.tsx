@@ -1,18 +1,48 @@
+// =============================================================================
+// SKELETON COMPONENT (TypeScript)
+// =============================================================================
+// Base skeleton component with shimmer animation and pre-built layouts
+
 import React from 'react';
 
-// Base skeleton component with shimmer animation
-const Skeleton = ({ className = '', variant = 'text', width, height }) => {
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export type SkeletonVariant = 'text' | 'title' | 'avatar' | 'card' | 'button';
+
+export interface SkeletonProps {
+  /** Additional CSS classes */
+  className?: string;
+  /** Skeleton variant for preset sizing */
+  variant?: SkeletonVariant;
+  /** Custom width (CSS value) */
+  width?: string | number;
+  /** Custom height (CSS value) */
+  height?: string | number;
+}
+
+// =============================================================================
+// BASE SKELETON COMPONENT
+// =============================================================================
+
+const variantClasses: Record<SkeletonVariant, string> = {
+  text: 'h-4 rounded',
+  title: 'h-6 rounded',
+  avatar: 'rounded-full',
+  card: 'rounded-lg',
+  button: 'h-10 rounded-lg',
+};
+
+const Skeleton: React.FC<SkeletonProps> = ({
+  className = '',
+  variant = 'text',
+  width,
+  height,
+}) => {
   const baseClasses = 'animate-pulse bg-charcoal-700/50 rounded';
 
-  const variantClasses = {
-    text: 'h-4 rounded',
-    title: 'h-6 rounded',
-    avatar: 'rounded-full',
-    card: 'rounded-lg',
-    button: 'h-10 rounded-lg',
-  };
-
-  const style = {};
+  const style: React.CSSProperties = {};
   if (width) style.width = width;
   if (height) style.height = height;
 
@@ -24,8 +54,11 @@ const Skeleton = ({ className = '', variant = 'text', width, height }) => {
   );
 };
 
-// Pre-built skeleton layouts
-export const CardSkeleton = () => (
+// =============================================================================
+// PRE-BUILT SKELETON LAYOUTS
+// =============================================================================
+
+export const CardSkeleton: React.FC = () => (
   <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
     <div className="flex items-center gap-4 mb-4">
       <Skeleton variant="avatar" width="48px" height="48px" />
@@ -40,7 +73,7 @@ export const CardSkeleton = () => (
   </div>
 );
 
-export const ListItemSkeleton = () => (
+export const ListItemSkeleton: React.FC = () => (
   <div className="flex items-center gap-4 p-4 border-b border-cream-500/10">
     <Skeleton variant="avatar" width="40px" height="40px" />
     <div className="flex-1">
@@ -51,7 +84,12 @@ export const ListItemSkeleton = () => (
   </div>
 );
 
-export const TableRowSkeleton = ({ columns = 4 }) => (
+export interface TableRowSkeletonProps {
+  /** Number of columns to render */
+  columns?: number;
+}
+
+export const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({ columns = 4 }) => (
   <tr>
     {Array.from({ length: columns }).map((_, i) => (
       <td key={i} className="px-4 py-3">
@@ -61,14 +99,19 @@ export const TableRowSkeleton = ({ columns = 4 }) => (
   </tr>
 );
 
-export const StatCardSkeleton = () => (
+export const StatCardSkeleton: React.FC = () => (
   <div className="bg-charcoal-800 rounded-lg border border-cream-500/10 p-4">
     <Skeleton variant="text" className="w-1/2 mb-2" />
     <Skeleton variant="title" className="w-2/3" />
   </div>
 );
 
-export const LeaderboardSkeleton = ({ rows = 5 }) => (
+export interface LeaderboardSkeletonProps {
+  /** Number of rows to render */
+  rows?: number;
+}
+
+export const LeaderboardSkeleton: React.FC<LeaderboardSkeletonProps> = ({ rows = 5 }) => (
   <div className="space-y-2">
     {Array.from({ length: rows }).map((_, i) => (
       <div key={i} className="flex items-center gap-4 p-3 bg-charcoal-800/50 rounded-lg">
@@ -83,7 +126,7 @@ export const LeaderboardSkeleton = ({ rows = 5 }) => (
   </div>
 );
 
-export const ProfileSkeleton = () => (
+export const ProfileSkeleton: React.FC = () => (
   <div className="space-y-6">
     {/* Header section */}
     <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
@@ -114,7 +157,12 @@ export const ProfileSkeleton = () => (
   </div>
 );
 
-export const ScoresSkeleton = ({ rows = 5 }) => (
+export interface ScoresSkeletonProps {
+  /** Number of rows to render */
+  rows?: number;
+}
+
+export const ScoresSkeleton: React.FC<ScoresSkeletonProps> = ({ rows = 5 }) => (
   <div className="bg-charcoal-800 rounded-xl border border-cream-500/10 p-6">
     <Skeleton variant="title" className="w-1/3 mb-4" />
     <div className="space-y-3">

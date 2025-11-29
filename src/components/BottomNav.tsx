@@ -1,18 +1,40 @@
-// src/components/BottomNav.jsx
+// =============================================================================
+// BOTTOM NAV COMPONENT (TypeScript)
+// =============================================================================
+// Mobile bottom navigation bar with icon links
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Trophy, Users, User } from 'lucide-react';
+import { Home, Calendar, Trophy, Users, User, LucideIcon } from 'lucide-react';
 
-const BottomNav = () => {
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const navItems: NavItem[] = [
+  { path: '/dashboard', label: 'Home', icon: Home },
+  { path: '/schedule', label: 'Schedule', icon: Calendar },
+  { path: '/scores', label: 'Scores', icon: Trophy },
+  { path: '/leagues', label: 'Leagues', icon: Users },
+  { path: '/profile', label: 'Profile', icon: User },
+];
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+const BottomNav: React.FC = () => {
   const location = useLocation();
-
-  const navItems = [
-    { path: '/dashboard', label: 'Home', icon: Home },
-    { path: '/schedule', label: 'Schedule', icon: Calendar },
-    { path: '/scores', label: 'Scores', icon: Trophy },
-    { path: '/leagues', label: 'Leagues', icon: Users },
-    { path: '/profile', label: 'Profile', icon: User }
-  ];
 
   return (
     <nav
