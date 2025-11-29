@@ -16,9 +16,9 @@ export function useLeaderboard(
 ) {
   return useInfiniteQuery({
     queryKey: [...queryKeys.leaderboard(type, corpsClass), pageSize],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam }: { pageParam: unknown }) =>
       leaderboardApi.getLeaderboard(type, corpsClass, pageSize, pageParam),
-    initialPageParam: undefined,
+    initialPageParam: undefined as unknown,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.lastDoc : undefined,
     staleTime: 5 * 60 * 1000, // Leaderboard data stays fresh for 5 minutes

@@ -163,8 +163,7 @@ export function useChallenges(
       if (activeCorps?.selectedShows) {
         const totalWeeks = 7;
         const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
-          (weekKey) =>
-            (activeCorps.selectedShows as Record<string, string[]>)[weekKey]?.length > 0
+          (weekKey) => activeCorps.selectedShows?.[weekKey]?.length > 0
         ).length;
         const hasFullSchedule = weeksWithShows >= totalWeeks;
 

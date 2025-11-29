@@ -40,14 +40,44 @@ export interface UserProfile {
   // Stats
   lifetimeStats?: LifetimeStats;
 
-  // Daily challenges
-  dailyChallenges?: DailyChallenges;
+  // Daily challenges (keyed by date string)
+  challenges?: Record<string, DailyChallenge[]>;
+  dailyChallenges?: DailyChallenges; // Legacy/alternative structure
+
+  // Engagement tracking
+  engagement?: EngagementData;
 
   // Achievements
   achievements?: Achievement[];
 
   // Settings
   settings?: UserSettings;
+}
+
+export interface EngagementData {
+  loginStreak: number;
+  lastLogin: string | null;
+  totalLogins: number;
+  recentActivity: RecentActivity[];
+  weeklyProgress?: Record<CorpsClass, WeeklyProgressData>;
+}
+
+export interface RecentActivity {
+  type: string;
+  description: string;
+  timestamp: string;
+  xp?: number;
+}
+
+export interface WeeklyProgressData {
+  rehearsalsCompleted?: number;
+  scoreImprovement?: number;
+  rankChange?: number;
+  previous?: {
+    rehearsalsCompleted?: number;
+    scoreImprovement?: number;
+    rankChange?: number;
+  };
 }
 
 export interface LifetimeStats {
@@ -96,8 +126,8 @@ export interface CorpsData {
   // Staff assignments (caption -> staffId)
   assignedStaff?: Record<Caption, string>;
 
-  // Show selections
-  selectedShows?: string[];
+  // Show selections (keyed by week number)
+  selectedShows?: Record<string, string[]>;
 
   // Lineup
   lineup?: Lineup;
