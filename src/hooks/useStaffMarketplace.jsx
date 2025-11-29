@@ -30,6 +30,7 @@ export const useStaffMarketplace = (userId) => {
     queryFn: fetchMarketplaceStaff,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    enabled: !!userId, // Only run query when user is authenticated
   });
 
   // Subscribe to user profile for owned staff and CorpsCoin balance
