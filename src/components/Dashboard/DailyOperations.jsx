@@ -66,7 +66,7 @@ const DailyOperations = ({
 
   // Get execution metrics
   const getMetrics = () => {
-    if (!executionState) return { readiness: 0.75, morale: 0.80, equipment: 0.85 };
+    if (!executionState) return { readiness: 0.75, morale: 0.80, equipment: 0.85, staffCount: 0 };
 
     const readiness = typeof executionState.readiness === 'number' ? executionState.readiness : 0.75;
     const morale = typeof executionState.morale === 'number' ? executionState.morale : 0.80;
@@ -80,10 +80,37 @@ const DailyOperations = ({
       ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
       : 0.85;
 
-    return { readiness, morale, equipment: avgEquipment };
+    // Get staff count for bonus calculation
+    const staffCount = Array.isArray(executionState.staff) ? executionState.staff.length : 0;
+
+    return { readiness, morale, equipment: avgEquipment, staffCount };
   };
 
   const metrics = getMetrics();
+
+  // Calculate actual multiplier breakdown that matches useExecution.calculateMultiplier
+  const getMultiplierBreakdownData = () => {
+    // Actual formula: baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (equipment * 0.3) + staffBonus
+    // Then clamped to 0.70 - 1.10
+    const readinessContrib = metrics.readiness * 0.4;
+    const moraleContrib = metrics.morale * 0.3;
+    const equipmentContrib = metrics.equipment * 0.3;
+    const staffBonus = Math.min(metrics.staffCount * 0.01, 0.05);
+
+    // Show deviation from perfect (1.0 for each factor)
+    const readinessDelta = (metrics.readiness - 1.0) * 0.4;
+    const moraleDelta = (metrics.morale - 1.0) * 0.3;
+    const equipmentDelta = (metrics.equipment - 1.0) * 0.3;
+
+    return {
+      readiness: { value: readinessContrib, delta: readinessDelta, weight: 40, current: metrics.readiness },
+      morale: { value: moraleContrib, delta: moraleDelta, weight: 30, current: metrics.morale },
+      equipment: { value: equipmentContrib, delta: equipmentDelta, weight: 30, current: metrics.equipment },
+      staff: { value: staffBonus, count: metrics.staffCount, maxBonus: 0.05 }
+    };
+  };
+
+  const breakdownData = getMultiplierBreakdownData();
 
   // Handle main rehearsal
   const handleRehearsal = async () => {
@@ -324,10 +351,43 @@ const DailyOperations = ({
               className="overflow-hidden"
             >
               <div className="pt-3 space-y-2 text-xs">
-                <BreakdownRow label="Readiness" value={(metrics.readiness - 0.80) * 0.60} />
-                <BreakdownRow label="Morale" value={(metrics.morale - 0.75) * 0.32} />
-                <BreakdownRow label="Equipment" value={(metrics.equipment - 1.00) * 0.50} />
-                <BreakdownRow label="Show Difficulty" value={executionState?.showDesign?.ceilingBonus || 0.08} />
+                <div className="text-cream-500/60 mb-2">
+                  Formula: (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
+                </div>
+                <BreakdownRowDetailed
+                  label="Readiness"
+                  weight={40}
+                  current={metrics.readiness}
+                  contribution={breakdownData.readiness.value}
+                  delta={breakdownData.readiness.delta}
+                />
+                <BreakdownRowDetailed
+                  label="Morale"
+                  weight={30}
+                  current={metrics.morale}
+                  contribution={breakdownData.morale.value}
+                  delta={breakdownData.morale.delta}
+                />
+                <BreakdownRowDetailed
+                  label="Equipment"
+                  weight={30}
+                  current={metrics.equipment}
+                  contribution={breakdownData.equipment.value}
+                  delta={breakdownData.equipment.delta}
+                />
+                <div className="flex justify-between items-center pt-2 border-t border-cream-500/10">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-3 h-3 text-blue-400" />
+                    <span className="text-cream-500/60">Staff Bonus ({breakdownData.staff.count} staff)</span>
+                  </div>
+                  <span className={breakdownData.staff.value > 0 ? 'text-blue-400' : 'text-cream-500/40'}>
+                    +{(breakdownData.staff.value * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-cream-500/20 font-semibold">
+                  <span className="text-cream-300">Total Multiplier</span>
+                  <span className={multiplierStatus.color}>{multiplier.toFixed(2)}x</span>
+                </div>
               </div>
             </motion.div>
           )}
@@ -613,15 +673,29 @@ const MetricPill = ({ icon: Icon, label, value }) => {
   );
 };
 
-// Breakdown Row Component
-const BreakdownRow = ({ label, value }) => {
-  const isPositive = value >= 0;
+// Detailed Breakdown Row Component - shows actual contribution vs potential
+const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) => {
+  const maxContribution = weight / 100; // Convert weight % to decimal
+  const percentage = Math.round(current * 100);
+  const isAtMax = current >= 0.99;
+  const deltaDisplay = delta >= 0 ? '' : (delta * 100).toFixed(1);
+
   return (
     <div className="flex justify-between items-center">
-      <span className="text-cream-500/60">{label}</span>
-      <span className={isPositive ? 'text-green-400' : 'text-red-400'}>
-        {isPositive ? '+' : ''}{(value * 100).toFixed(1)}%
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-cream-500/60">{label}</span>
+        <span className="text-cream-500/40">({percentage}% × {weight}%)</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={isAtMax ? 'text-green-400' : current >= 0.85 ? 'text-yellow-400' : 'text-red-400'}>
+          {(contribution * 100).toFixed(1)}%
+        </span>
+        {!isAtMax && (
+          <span className="text-red-400/60 text-[10px]">
+            ({deltaDisplay}%)
+          </span>
+        )}
+      </div>
     </div>
   );
 };
