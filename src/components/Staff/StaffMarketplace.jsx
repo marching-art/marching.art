@@ -1,5 +1,5 @@
 // src/components/Staff/StaffMarketplace.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, DollarSign, Award, Filter, Search, X,
@@ -22,6 +22,17 @@ const CAPTION_OPTIONS = [
   { value: 'P', label: 'Percussion', color: 'bg-red-500', description: 'Battery Instructors' }
 ];
 
+// Memoized helper functions - defined outside component to avoid recreation
+const getCaptionColor = (caption) => {
+  const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
+  return option?.color || 'bg-gray-500';
+};
+
+const getCaptionLabel = (caption) => {
+  const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
+  return option?.label || caption;
+};
+
 const StaffMarketplace = () => {
   const { user } = useAuth();
   const {
@@ -29,7 +40,6 @@ const StaffMarketplace = () => {
     corpsCoin,
     loading,
     purchasing,
-    fetchMarketplace,
     purchaseStaff,
     ownsStaff,
     canAfford
@@ -38,30 +48,29 @@ const StaffMarketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [captionFilter, setCaptionFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest'); // newest, oldest, cheapest, expensive
-  const [filteredStaff, setFilteredStaff] = useState([]);
   const [selectedStaff, setSelectedStaff] = useState(null);
 
-  useEffect(() => {
-    fetchMarketplace(captionFilter === 'all' ? null : captionFilter);
-  }, [captionFilter]);
+  // Memoized filtering and sorting - only recalculates when dependencies change
+  const filteredStaff = useMemo(() => {
+    let filtered = marketplace;
 
-  useEffect(() => {
-    filterAndSortStaff();
-  }, [marketplace, searchTerm, sortBy]);
-
-  const filterAndSortStaff = () => {
-    let filtered = [...marketplace];
+    // Apply caption filter
+    if (captionFilter !== 'all') {
+      filtered = filtered.filter(staff => staff.caption === captionFilter);
+    }
 
     // Apply search filter
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(staff =>
-        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.biography?.toLowerCase().includes(searchTerm.toLowerCase())
+        staff.name.toLowerCase().includes(searchLower) ||
+        staff.biography?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
+    // Apply sorting - create new array only if needed
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
           return b.yearInducted - a.yearInducted;
@@ -76,10 +85,11 @@ const StaffMarketplace = () => {
       }
     });
 
-    setFilteredStaff(filtered);
-  };
+    return sorted;
+  }, [marketplace, captionFilter, searchTerm, sortBy]);
 
-  const handlePurchase = async (staff) => {
+  // Memoized handlers
+  const handlePurchase = useCallback(async (staff) => {
     if (ownsStaff(staff.id)) {
       toast.error('You already own this staff member');
       return;
@@ -101,17 +111,20 @@ const StaffMarketplace = () => {
     } catch (error) {
       // Error already handled in hook
     }
-  };
+  }, [ownsStaff, canAfford, corpsCoin, purchaseStaff]);
 
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
+  const handleSelectStaff = useCallback((staff) => {
+    setSelectedStaff(staff);
+  }, []);
 
-  const getCaptionLabel = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.label || caption;
-  };
+  const handleCloseModal = useCallback(() => {
+    setSelectedStaff(null);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setCaptionFilter('all');
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -194,10 +207,7 @@ const StaffMarketplace = () => {
           </p>
           {(searchTerm || captionFilter !== 'all') && (
             <button
-              onClick={() => {
-                setSearchTerm('');
-                setCaptionFilter('all');
-              }}
+              onClick={handleClearFilters}
               className="btn-outline"
             >
               Clear Filters
@@ -212,9 +222,7 @@ const StaffMarketplace = () => {
               staff={staff}
               owned={ownsStaff(staff.id)}
               canAfford={canAfford(staff.baseValue)}
-              onPurchase={() => setSelectedStaff(staff)}
-              getCaptionColor={getCaptionColor}
-              getCaptionLabel={getCaptionLabel}
+              onPurchase={handleSelectStaff}
             />
           ))}
         </div>
@@ -234,7 +242,7 @@ const StaffMarketplace = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-cream-100">Confirm Purchase</h3>
                 <button
-                  onClick={() => setSelectedStaff(null)}
+                  onClick={handleCloseModal}
                   className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -291,7 +299,7 @@ const StaffMarketplace = () => {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setSelectedStaff(null)}
+                  onClick={handleCloseModal}
                   className="flex-1 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-lg hover:bg-charcoal-600 transition-colors"
                 >
                   Cancel
@@ -328,8 +336,12 @@ const StaffMarketplace = () => {
   );
 };
 
-// Staff Card Component
-const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCaptionLabel }) => {
+// Memoized Staff Card Component - only re-renders when props change
+const StaffCard = memo(({ staff, owned, canAfford, onPurchase }) => {
+  const handleClick = useCallback(() => {
+    onPurchase(staff);
+  }, [onPurchase, staff]);
+
   return (
     <motion.div
       layout
@@ -369,7 +381,7 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
           </div>
         ) : (
           <button
-            onClick={onPurchase}
+            onClick={handleClick}
             disabled={!canAfford}
             className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
               canAfford
@@ -383,6 +395,8 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
       </div>
     </motion.div>
   );
-};
+});
+
+StaffCard.displayName = 'StaffCard';
 
 export default StaffMarketplace;

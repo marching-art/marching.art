@@ -269,23 +269,22 @@ const assignStaff = onCall({ cors: true }, async (request) => {
 
 /**
  * List available staff in marketplace (admin creates entries in staff_database)
+ * Returns all available staff - filtering is done client-side for better caching
  */
 const getStaffMarketplace = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { caption } = request.data; // Optional filter by caption
   const db = getDb();
 
   try {
-    let query = db.collection("staff_database").where("available", "==", true);
+    // Fetch all available staff - client will handle filtering/sorting
+    // This allows for better caching since the query doesn't change
+    const snapshot = await db.collection("staff_database")
+      .where("available", "==", true)
+      .get();
 
-    if (caption) {
-      query = query.where("caption", "==", caption);
-    }
-
-    const snapshot = await query.limit(50).get();
     const staffList = [];
 
     snapshot.forEach(doc => {
