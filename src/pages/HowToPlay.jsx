@@ -330,42 +330,84 @@ const HowToPlay = () => {
           <Section id="execution" title="Execution & Performance" icon={Zap}>
             <p>
               Your corps' final score is affected by an execution multiplier that reflects various
-              factors of your corps management. The multiplier can range from approximately 0.50x to 1.50x.
+              factors of your corps management. The base multiplier starts at 1.00x and is adjusted
+              by each factor, clamped to 0.70x - 1.10x range.
             </p>
 
             <div className="space-y-3 mt-4">
               <h4 className="font-semibold text-cream-100">Execution Factors:</h4>
               <div className="space-y-2">
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Section Readiness</span>
+                  <div>
+                    <span className="text-cream-300">Section Readiness</span>
+                    <span className="text-cream-500/60 text-xs ml-2">(baseline 80%)</span>
+                  </div>
                   <span className="text-gold-400 font-semibold">±12%</span>
                 </div>
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Staff Effectiveness</span>
+                  <div>
+                    <span className="text-cream-300">Staff Effectiveness</span>
+                    <span className="text-cream-500/60 text-xs ml-2">(baseline 80%)</span>
+                  </div>
                   <span className="text-gold-400 font-semibold">±8%</span>
                 </div>
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Section Morale</span>
-                  <span className="text-gold-400 font-semibold">±8%</span>
+                  <div>
+                    <span className="text-cream-300">Equipment Condition</span>
+                    <span className="text-cream-500/60 text-xs ml-2">(baseline 100%)</span>
+                  </div>
+                  <span className="text-gold-400 font-semibold">-5% to +10%</span>
                 </div>
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <span className="text-cream-300">Equipment Condition</span>
-                  <span className="text-gold-400 font-semibold">±5%</span>
+                  <div>
+                    <span className="text-cream-300">Section Morale</span>
+                    <span className="text-cream-500/60 text-xs ml-2">(baseline 75%)</span>
+                  </div>
+                  <span className="text-gold-400 font-semibold">±8%</span>
                 </div>
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
                   <span className="text-cream-300">Show Difficulty</span>
-                  <span className="text-gold-400 font-semibold">±15%</span>
+                  <span className="text-gold-400 font-semibold">-20% to +15%</span>
                 </div>
                 <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
                   <span className="text-cream-300">Performance Variance</span>
                   <span className="text-gold-400 font-semibold">±2%</span>
                 </div>
+                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
+                  <span className="text-cream-300">Late Season Fatigue (day 35+)</span>
+                  <span className="text-red-400 font-semibold">up to -5%</span>
+                </div>
+                <div className="flex items-center justify-between bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
+                  <span className="text-cream-300">Championship Pressure (days 47-49)</span>
+                  <span className="text-gold-400 font-semibold">±2%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <h4 className="font-semibold text-yellow-400 mb-2">Daily Rehearsal Trade-offs</h4>
+              <p className="text-sm text-cream-300 mb-2">
+                Each rehearsal has both benefits and costs:
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1">
+                  <p className="text-green-400 font-medium">Benefits:</p>
+                  <p className="text-cream-300">+5% Readiness</p>
+                  <p className="text-cream-300">+25 XP</p>
+                  <p className="text-cream-300">+50 XP (7-day streak)</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-red-400 font-medium">Costs:</p>
+                  <p className="text-cream-300">-2% Morale</p>
+                  <p className="text-cream-300">-1% Equipment wear</p>
+                </div>
               </div>
             </div>
 
             <InfoBox title="Improving Execution" color="blue">
-              Complete daily rehearsals to improve section readiness and morale. Hire quality staff from
-              the marketplace and maintain your equipment to maximize your execution multiplier!
+              Complete daily rehearsals to improve readiness, but monitor morale and equipment!
+              No staff means -2% penalty. Hire quality staff from the marketplace and use Morale Boost
+              (100 CC) if morale drops too low. Repair equipment regularly to avoid penalties.
             </InfoBox>
           </Section>
 

@@ -40,8 +40,11 @@ const DailyOperations = ({
   const [showRehearsalAnimation, setShowRehearsalAnimation] = useState(false);
   const [rehearsalResults, setRehearsalResults] = useState(null);
 
-  // Calculate multiplier
-  const multiplier = calculateMultiplier ? calculateMultiplier() : 1.0;
+  // Calculate multiplier - now returns { multiplier, breakdown } object
+  const currentDay = profile?.currentDay || 1;
+  const multiplierResult = calculateMultiplier ? calculateMultiplier(currentDay) : { multiplier: 0.90, breakdown: {} };
+  const multiplier = typeof multiplierResult === 'number' ? multiplierResult : multiplierResult.multiplier;
+  const multiplierBreakdown = typeof multiplierResult === 'object' ? multiplierResult.breakdown : {};
 
   // Fetch daily ops status
   const fetchStatus = useCallback(async () => {
@@ -88,25 +91,35 @@ const DailyOperations = ({
 
   const metrics = getMetrics();
 
-  // Calculate actual multiplier breakdown that matches useExecution.calculateMultiplier
+  // Use breakdown from calculateMultiplier which now matches backend formula
+  // Backend formula: Start at 1.00, add/subtract factors, clamp to 0.70-1.10
   const getMultiplierBreakdownData = () => {
-    // Actual formula: baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (equipment * 0.3) + staffBonus
-    // Then clamped to 0.70 - 1.10
-    const readinessContrib = metrics.readiness * 0.4;
-    const moraleContrib = metrics.morale * 0.3;
-    const equipmentContrib = metrics.equipment * 0.3;
-    const staffBonus = Math.min(metrics.staffCount * 0.01, 0.05);
+    // Use the breakdown from useExecution's calculateMultiplier
+    if (multiplierBreakdown && Object.keys(multiplierBreakdown).length > 0) {
+      return {
+        readiness: multiplierBreakdown.readiness || { value: 0, current: metrics.readiness },
+        morale: multiplierBreakdown.morale || { value: 0, current: metrics.morale },
+        equipment: multiplierBreakdown.equipment || { value: 0, current: metrics.equipment },
+        staff: multiplierBreakdown.staff || { value: 0, count: 0 },
+        showDifficulty: multiplierBreakdown.showDifficulty,
+        fatigue: multiplierBreakdown.fatigue,
+        championship: multiplierBreakdown.championship
+      };
+    }
 
-    // Show deviation from perfect (1.0 for each factor)
-    const readinessDelta = (metrics.readiness - 1.0) * 0.4;
-    const moraleDelta = (metrics.morale - 1.0) * 0.3;
-    const equipmentDelta = (metrics.equipment - 1.0) * 0.3;
+    // Fallback: Calculate manually using backend formula
+    // Backend: Readiness (±12%), Staff (±8%), Equipment (-5% to +10%), Morale (±8%)
+    const readinessBonus = (metrics.readiness - 0.80) * 0.60;
+    const staffEffectiveness = metrics.staffCount > 0 ? Math.min(0.80 + (metrics.staffCount * 0.03), 1.00) : 0.75;
+    const staffBonus = (staffEffectiveness - 0.80) * 0.40;
+    const equipmentPenalty = (metrics.equipment - 1.00) * 0.50;
+    const moraleBonus = (metrics.morale - 0.75) * 0.32;
 
     return {
-      readiness: { value: readinessContrib, delta: readinessDelta, weight: 40, current: metrics.readiness },
-      morale: { value: moraleContrib, delta: moraleDelta, weight: 30, current: metrics.morale },
-      equipment: { value: equipmentContrib, delta: equipmentDelta, weight: 30, current: metrics.equipment },
-      staff: { value: staffBonus, count: metrics.staffCount, maxBonus: 0.05 }
+      readiness: { value: readinessBonus, current: metrics.readiness },
+      morale: { value: moraleBonus, current: metrics.morale },
+      equipment: { value: equipmentPenalty, current: metrics.equipment },
+      staff: { value: staffBonus, count: metrics.staffCount }
     };
   };
 
@@ -352,37 +365,58 @@ const DailyOperations = ({
             >
               <div className="pt-3 space-y-2 text-xs">
                 <div className="text-cream-500/60 mb-2">
-                  Formula: (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
+                  Base: 1.00x, adjusted by each factor, clamped to 0.70x - 1.10x
                 </div>
-                <BreakdownRowDetailed
+                <BreakdownRowNew
                   label="Readiness"
-                  weight={40}
-                  current={metrics.readiness}
-                  contribution={breakdownData.readiness.value}
-                  delta={breakdownData.readiness.delta}
+                  value={breakdownData.readiness?.value || 0}
+                  description={`${Math.round((breakdownData.readiness?.current || metrics.readiness) * 100)}% (baseline 80%)`}
+                  range="±12%"
                 />
-                <BreakdownRowDetailed
+                <BreakdownRowNew
                   label="Morale"
-                  weight={30}
-                  current={metrics.morale}
-                  contribution={breakdownData.morale.value}
-                  delta={breakdownData.morale.delta}
+                  value={breakdownData.morale?.value || 0}
+                  description={`${Math.round((breakdownData.morale?.current || metrics.morale) * 100)}% (baseline 75%)`}
+                  range="±8%"
                 />
-                <BreakdownRowDetailed
+                <BreakdownRowNew
                   label="Equipment"
-                  weight={30}
-                  current={metrics.equipment}
-                  contribution={breakdownData.equipment.value}
-                  delta={breakdownData.equipment.delta}
+                  value={breakdownData.equipment?.value || 0}
+                  description={`${Math.round((breakdownData.equipment?.current || metrics.equipment) * 100)}% (baseline 100%)`}
+                  range="-5% to +10%"
                 />
-                <div className="flex justify-between items-center pt-2 border-t border-cream-500/10">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-3 h-3 text-blue-400" />
-                    <span className="text-cream-500/60">Staff Bonus ({breakdownData.staff.count} staff)</span>
-                  </div>
-                  <span className={breakdownData.staff.value > 0 ? 'text-blue-400' : 'text-cream-500/40'}>
-                    +{(breakdownData.staff.value * 100).toFixed(1)}%
-                  </span>
+                <BreakdownRowNew
+                  label="Staff"
+                  value={breakdownData.staff?.value || 0}
+                  description={`${breakdownData.staff?.count || 0} assigned (baseline 80% eff.)`}
+                  range="±8%"
+                />
+                {breakdownData.showDifficulty && (
+                  <BreakdownRowNew
+                    label="Show Difficulty"
+                    value={breakdownData.showDifficulty.value}
+                    description={breakdownData.showDifficulty.isPrepared ? 'Prepared!' : 'Under-prepared'}
+                    range="-20% to +15%"
+                  />
+                )}
+                {breakdownData.fatigue && (
+                  <BreakdownRowNew
+                    label="Late Season Fatigue"
+                    value={breakdownData.fatigue.value}
+                    description="Day 35+ penalty"
+                    range="up to -5%"
+                  />
+                )}
+                {breakdownData.championship && (
+                  <BreakdownRowNew
+                    label="Championship Pressure"
+                    value={breakdownData.championship.value}
+                    description="Finals week"
+                    range="±2%"
+                  />
+                )}
+                <div className="text-cream-500/40 text-[10px] mt-1">
+                  Note: ±2% random variance applied at scoring time
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-cream-500/20 font-semibold">
                   <span className="text-cream-300">Total Multiplier</span>
@@ -403,7 +437,7 @@ const DailyOperations = ({
             </div>
             <div>
               <h4 className="font-semibold text-cream-100">Full Rehearsal</h4>
-              <p className="text-xs text-cream-500/60">+5% readiness, +50 XP</p>
+              <p className="text-xs text-cream-500/60">+5% readiness, +25 XP | -2% morale, -1% equip</p>
             </div>
           </div>
           {executionState?.rehearsalsThisWeek !== undefined && (
@@ -727,6 +761,27 @@ const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick })
       </div>
       {available && <ChevronRight className="w-4 h-4 text-cream-500/40" />}
     </button>
+  );
+};
+
+// New Breakdown Row Component - shows value as +/- percentage with description
+const BreakdownRowNew = ({ label, value, description, range }) => {
+  const isPositive = value >= 0;
+  const displayValue = (value * 100).toFixed(1);
+
+  return (
+    <div className="flex justify-between items-center py-1">
+      <div className="flex items-center gap-2">
+        <span className="text-cream-300">{label}</span>
+        <span className="text-cream-500/40 text-[10px]">({range})</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-cream-500/50 text-[10px]">{description}</span>
+        <span className={`font-medium ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+          {isPositive ? '+' : ''}{displayValue}%
+        </span>
+      </div>
+    </div>
   );
 };
 
