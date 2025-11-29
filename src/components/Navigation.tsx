@@ -194,25 +194,24 @@ const Navigation: React.FC = () => {
 
   return (
     <nav
-      className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`}
-      style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color-light)' }}
+      className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} bg-forest-900 border-r border-forest-800 backdrop-blur-lg transition-all duration-300 z-40`}
     >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
-        <div className="p-6 border-b border-cream-500/10">
+        <div className="p-6 border-b border-gold-400/20">
           <Link to="/" className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-cream-100">
                 <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-gold-500 rounded-full animate-pulse" />
             </div>
             {!collapsed && (
               <div>
-                <h1 className="text-xl font-display font-bold text-gradient">
-                  marching.art
+                <h1 className="text-xl font-oswald font-bold text-cream-100 tracking-wide">
+                  MARCHING.ART
                 </h1>
-                <p className="text-xs text-cream-500/60">Fantasy Drum & Bugle Corps</p>
+                <p className="text-xs text-cream-200/60">Fantasy Drum & Bugle Corps</p>
               </div>
             )}
           </Link>
@@ -220,20 +219,20 @@ const Navigation: React.FC = () => {
           {/* Collapse Toggle */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="mt-4 w-full flex items-center justify-center p-2 rounded-lg hover:bg-cream-500/10 transition-colors"
+            className="mt-4 w-full flex items-center justify-center p-2 rounded-lg hover:bg-gold-500/10 transition-colors"
           >
-            <ChevronRight className={`w-5 h-5 text-cream-500 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
+            <ChevronRight className={`w-5 h-5 text-cream-200 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
           </button>
         </div>
 
         {/* User Info */}
         {user && profile && (
-          <div className={`p-4 border-b border-cream-500/10 ${collapsed ? 'px-2' : ''}`}>
-            <div className={`glass rounded-lg p-3 ${collapsed ? 'p-2' : ''}`}>
+          <div className={`p-4 border-b border-gold-400/20 ${collapsed ? 'px-2' : ''}`}>
+            <div className={`bg-cream-100 rounded-lg p-3 shadow-gold-deep ${collapsed ? 'p-2' : ''}`}>
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-cream rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-charcoal-900" />
+                  <div className="w-10 h-10 bg-gold-500 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-forest-900" />
                   </div>
                   {(profile.xpLevel ?? 0) >= 10 && (
                     <div className="absolute -top-1 -right-1">
@@ -243,14 +242,14 @@ const Navigation: React.FC = () => {
                 </div>
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-cream-100 truncate">
+                    <p className="text-sm font-semibold text-black truncate">
                       {profile.displayName || 'Director'}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-cream-500/60">
+                      <span className="text-xs text-black/60">
                         Level {profile.xpLevel || 1}
                       </span>
-                      <div className="flex-1 h-1 bg-charcoal-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1 bg-cream-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-gold transition-all duration-500"
                           style={{ width: `${((profile.xp ?? 0) % 1000) / 10}%` }}
@@ -269,7 +268,7 @@ const Navigation: React.FC = () => {
           {navItems.map((section) => (
             <div key={section.section} className="mb-6">
               {!collapsed && (
-                <h3 className="px-6 mb-2 text-xs font-semibold text-cream-500/40 uppercase tracking-wider">
+                <h3 className="px-6 mb-2 text-xs font-semibold text-gold-400/60 uppercase tracking-wider">
                   {section.section}
                 </h3>
               )}
@@ -283,29 +282,29 @@ const Navigation: React.FC = () => {
                       key={item.path}
                       to={item.path}
                       className={`
-                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ease-damped group
                         ${isActive
-                          ? 'bg-gold-500/20 text-gold-500 shadow-inner-glow'
-                          : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
+                          ? 'bg-cream-100 text-forest-900 shadow-gold-deep'
+                          : 'text-cream-200 hover:bg-forest-800 hover:text-cream-100'
                         }
                         ${collapsed ? 'justify-center' : ''}
                       `}
                     >
                       <div className="relative">
-                        <Icon className={`w-5 h-5 ${isActive ? 'animate-pulse-gold' : ''}`} />
+                        <Icon className={`w-5 h-5 ${isActive ? 'text-gold-600' : ''}`} />
                         {item.premium && (
                           <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-gold-500" />
                         )}
                       </div>
                       {!collapsed && (
                         <>
-                          <span className="flex-1 font-medium">
+                          <span className={`flex-1 font-medium ${isActive ? 'font-semibold' : ''}`}>
                             {item.label}
                           </span>
                           {item.badge && (
                             <span className={`
                               px-2 py-0.5 text-xs font-semibold rounded-full
-                              ${item.badgeColor || 'bg-gold-500/20 text-gold-300'}
+                              ${item.badgeColor || 'bg-gold-500 text-forest-900'}
                             `}>
                               {item.badge}
                             </span>
@@ -321,14 +320,14 @@ const Navigation: React.FC = () => {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-cream-500/10 space-y-2">
+        <div className="p-4 border-t border-gold-400/20 space-y-2">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className={`
               w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-              text-cream-300 hover:bg-gold-500/10 hover:text-gold-500
-              transition-all duration-300
+              text-cream-200 hover:bg-forest-800 hover:text-gold-400
+              transition-all duration-200
               ${collapsed ? 'justify-center' : ''}
             `}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -350,8 +349,8 @@ const Navigation: React.FC = () => {
             onClick={handleSignOut}
             className={`
               w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-              text-cream-300 hover:bg-red-500/10 hover:text-red-400
-              transition-all duration-300
+              text-cream-200 hover:bg-red-500/20 hover:text-red-400
+              transition-all duration-200
               ${collapsed ? 'justify-center' : ''}
             `}
           >
@@ -362,14 +361,14 @@ const Navigation: React.FC = () => {
 
         {/* Season Info */}
         {!collapsed && seasonData && (
-          <div className="p-4 border-t border-cream-500/10">
-            <div className="text-center">
-              <p className="text-xs text-cream-500/60">Current Season</p>
-              <p className="text-sm font-semibold text-gold-500 mt-1 capitalize">
+          <div className="p-4 border-t border-gold-400/20">
+            <div className="bg-forest-800 rounded-lg p-3 text-center">
+              <p className="text-xs text-gold-400/60 uppercase tracking-wider">Current Season</p>
+              <p className="text-sm font-semibold text-cream-100 mt-1 capitalize">
                 {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
               </p>
               {currentWeek && (
-                <p className="text-xs text-cream-500/40 mt-1">
+                <p className="text-xs text-cream-200/60 mt-1">
                   Week {currentWeek} {seasonData.status === 'off-season' ? 'of 7' : 'of 10'}
                 </p>
               )}
