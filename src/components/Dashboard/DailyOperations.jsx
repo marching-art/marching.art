@@ -413,7 +413,7 @@ const DailyOperations = ({
             </div>
             <div>
               <h4 className="font-semibold text-black">Full Rehearsal</h4>
-              <p className="text-xs text-black/50">+5% readiness, +50 XP</p>
+              <p className="text-xs text-black/50">+5% readiness, +25 XP | -2% morale, -1% equip</p>
             </div>
           </div>
           {executionState?.rehearsalsThisWeek !== undefined && (
@@ -705,6 +705,28 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
             ({deltaDisplay}%)
           </span>
         )}
+      </div>
+    </div>
+  );
+};
+
+// New Breakdown Row Component - Classic Prestige Theme
+// Shows value as +/- percentage with description and range
+const BreakdownRowNew = ({ label, value, description, range }) => {
+  const isPositive = value >= 0;
+  const displayValue = (value * 100).toFixed(1);
+
+  return (
+    <div className="flex justify-between items-center py-1">
+      <div className="flex items-center gap-2">
+        <span className="text-black/70">{label}</span>
+        <span className="text-black/40 text-[10px]">({range})</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-black/50 text-[10px]">{description}</span>
+        <span className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          {isPositive ? '+' : ''}{displayValue}%
+        </span>
       </div>
     </div>
   );
