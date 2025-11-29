@@ -283,3 +283,41 @@ export async function withErrorHandling<T>(
     throw new ApiError(errorMessage, undefined, error);
   }
 }
+
+// =============================================================================
+// ADMIN HELPERS (Backwards compatible)
+// =============================================================================
+
+export const adminHelpers = {
+  /**
+   * Check if current user is admin
+   */
+  isAdmin: async (): Promise<boolean> => {
+    return authApi.isAdmin();
+  },
+
+  /**
+   * Get current user's token claims
+   */
+  getCurrentUserClaims: async () => {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    const tokenResult = await user.getIdTokenResult();
+    return tokenResult.claims;
+  },
+};
+
+// =============================================================================
+// AUTH HELPERS (Backwards compatible alias)
+// =============================================================================
+
+export const authHelpers = {
+  signInWithEmail: authApi.signInWithEmail,
+  signUpWithEmail: authApi.signUpWithEmail,
+  signInAnon: authApi.signInAnonymously,
+  signInWithToken: authApi.signInWithToken,
+  signOut: authApi.signOut,
+  getCurrentUser: authApi.getCurrentUser,
+  onAuthStateChange: authApi.onAuthStateChange,
+};

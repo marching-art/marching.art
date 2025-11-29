@@ -1,5 +1,8 @@
-// API Index - Central export for all API modules
+// =============================================================================
+// API INDEX - Central export for all API modules
+// =============================================================================
 // This provides a clean interface for importing API functions throughout the app
+// Usage: import { db, authApi, analytics, retireCorps } from '@/api';
 
 // Re-export everything from client
 export {
@@ -23,7 +26,20 @@ export {
   // Error handling
   ApiError,
   withErrorHandling,
+
+  // Backwards-compatible helpers
+  adminHelpers,
+  authHelpers,
 } from './client';
+
+// Backwards-compatible alias for dataNamespace
+export { DATA_NAMESPACE as dataNamespace } from './client';
+
+// Re-export analytics
+export { analytics, analytics as analyticsHelpers } from './analytics';
+
+// Re-export all cloud functions
+export * from './functions';
 
 // Re-export profile API
 export {
