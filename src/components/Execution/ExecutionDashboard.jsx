@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Heart, Wrench, TrendingUp, TrendingDown,
-  Minus, Sparkles, AlertCircle, Users, Zap, Shield,
-  ChevronDown, ChevronUp, Award, Timer, Activity
+  Minus, Sparkles, AlertCircle, Users,
+  ChevronDown, ChevronUp, Award
 } from 'lucide-react';
 
 const ExecutionDashboard = ({ executionState, multiplier }) => {
@@ -52,86 +52,74 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
     ? equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length
     : 0.90;
 
-  // Calculate multiplier breakdown factors
+  // Calculate multiplier breakdown factors - matches actual formula in useExecution.calculateMultiplier
+  // Actual formula: baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (equipment * 0.3) + staffBonus
+  // Then clamped to 0.70 - 1.10
   const getMultiplierBreakdown = () => {
     const breakdown = [];
-    const baseMultiplier = 1.00;
+    const staffCount = Array.isArray(staff) ? staff.length : Object.keys(staff || {}).length;
+    const staffBonusValue = Math.min(staffCount * 0.01, 0.05);
 
-    // Factor 1: Readiness (±12%)
-    const readinessBonus = (readiness - 0.80) * 0.60;
+    // Factor 1: Readiness (40% weight)
+    const readinessContribution = readiness * 0.40;
+    const readinessDelta = (readiness - 1.0) * 0.40;
     breakdown.push({
       name: 'Section Readiness',
-      value: readinessBonus,
-      max: 0.12,
-      min: -0.12,
+      value: readinessContribution,
+      delta: readinessDelta,
+      weight: 40,
+      current: readiness,
+      max: 0.40,
+      min: 0,
       icon: Target,
-      description: 'Improved through daily rehearsals',
-      color: readinessBonus >= 0 ? 'text-green-400' : 'text-red-400'
+      description: `${Math.round(readiness * 100)}% readiness × 40% weight`,
+      color: readiness >= 0.95 ? 'text-green-400' : readiness >= 0.80 ? 'text-yellow-400' : 'text-red-400'
     });
 
-    // Factor 2: Staff Effectiveness (±8%)
-    const staffCount = Object.keys(staff || {}).length;
-    const staffEffectiveness = staffCount > 0 ? 0.85 : 0.70;
-    const staffBonus = (staffEffectiveness - 0.80) * 0.40;
-    breakdown.push({
-      name: 'Staff Effectiveness',
-      value: staffBonus,
-      max: 0.08,
-      min: -0.08,
-      icon: Users,
-      description: `${staffCount} staff members assigned`,
-      color: staffBonus >= 0 ? 'text-green-400' : 'text-red-400'
-    });
-
-    // Factor 3: Equipment Condition (±5%)
-    const equipmentPenalty = (avgEquipment - 1.00) * 0.50;
-    breakdown.push({
-      name: 'Equipment Condition',
-      value: equipmentPenalty,
-      max: 0,
-      min: -0.05,
-      icon: Wrench,
-      description: 'Keep equipment well-maintained',
-      color: equipmentPenalty >= -0.01 ? 'text-green-400' : 'text-red-400'
-    });
-
-    // Factor 4: Morale (±8%)
-    const moraleBonus = (morale - 0.75) * 0.32;
+    // Factor 2: Morale (30% weight)
+    const moraleContribution = morale * 0.30;
+    const moraleDelta = (morale - 1.0) * 0.30;
     breakdown.push({
       name: 'Section Morale',
-      value: moraleBonus,
-      max: 0.08,
-      min: -0.08,
+      value: moraleContribution,
+      delta: moraleDelta,
+      weight: 30,
+      current: morale,
+      max: 0.30,
+      min: 0,
       icon: Heart,
-      description: 'Affected by performance outcomes',
-      color: moraleBonus >= 0 ? 'text-green-400' : 'text-red-400'
+      description: `${Math.round(morale * 100)}% morale × 30% weight`,
+      color: morale >= 0.95 ? 'text-green-400' : morale >= 0.80 ? 'text-yellow-400' : 'text-red-400'
     });
 
-    // Factor 5: Show Difficulty (±15%)
-    const difficultyBonus = showDesign?.ceilingBonus || 0.08;
-    const avgReadiness = readiness; // Simplified
-    const isWellPrepared = avgReadiness >= (showDesign?.preparednessThreshold || 0.80);
-    const difficultyEffect = isWellPrepared ? difficultyBonus : (showDesign?.riskPenalty || -0.10);
+    // Factor 3: Equipment Condition (30% weight)
+    const equipmentContribution = avgEquipment * 0.30;
+    const equipmentDelta = (avgEquipment - 1.0) * 0.30;
     breakdown.push({
-      name: 'Show Difficulty',
-      value: difficultyEffect,
-      max: 0.15,
-      min: -0.20,
-      icon: Zap,
-      description: isWellPrepared ? 'Well-prepared for difficulty!' : 'Need more preparation',
-      color: difficultyEffect >= 0 ? 'text-gold-400' : 'text-red-400'
+      name: 'Equipment Condition',
+      value: equipmentContribution,
+      delta: equipmentDelta,
+      weight: 30,
+      current: avgEquipment,
+      max: 0.30,
+      min: 0,
+      icon: Wrench,
+      description: `${Math.round(avgEquipment * 100)}% condition × 30% weight`,
+      color: avgEquipment >= 0.95 ? 'text-green-400' : avgEquipment >= 0.80 ? 'text-yellow-400' : 'text-red-400'
     });
 
-    // Factor 6: Random Variance (±2%)
-    const variance = 0; // Can't predict random variance
+    // Factor 4: Staff Bonus (1% per staff, max 5%)
     breakdown.push({
-      name: 'Performance Variance',
-      value: variance,
-      max: 0.02,
-      min: -0.02,
-      icon: Activity,
-      description: 'Random day-to-day fluctuation',
-      color: 'text-blue-400'
+      name: 'Staff Bonus',
+      value: staffBonusValue,
+      delta: staffBonusValue, // Always positive
+      weight: null, // Not weight-based
+      current: staffCount,
+      max: 0.05,
+      min: 0,
+      icon: Users,
+      description: `${staffCount} staff member${staffCount !== 1 ? 's' : ''} (+1% each, max 5%)`,
+      color: staffBonusValue > 0 ? 'text-blue-400' : 'text-cream-500/40'
     });
 
     return breakdown;
@@ -260,9 +248,18 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
                 </p>
               </div>
 
+              {/* Formula explanation */}
+              <div className="p-3 bg-charcoal-900/30 rounded-lg mb-2">
+                <p className="text-xs text-cream-500/60">
+                  Multiplier = (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
+                </p>
+              </div>
+
               {multiplierBreakdown.map((factor, index) => {
                 const Icon = factor.icon;
-                const percentage = ((factor.value / factor.max) * 100).toFixed(0);
+                const fillPercentage = factor.weight
+                  ? (factor.current * 100) // For weighted factors, show current value as percentage
+                  : ((factor.value / factor.max) * 100); // For staff bonus, show progress to max
 
                 return (
                   <motion.div
@@ -278,6 +275,9 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
                         <div>
                           <p className="text-sm font-semibold text-cream-100">
                             {factor.name}
+                            {factor.weight && (
+                              <span className="text-cream-500/40 font-normal ml-1">({factor.weight}% weight)</span>
+                            )}
                           </p>
                           <p className="text-xs text-cream-500/60">
                             {factor.description}
@@ -286,27 +286,26 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
                       </div>
                       <div className="text-right">
                         <p className={`text-lg font-bold ${factor.color}`}>
-                          {factor.value >= 0 ? '+' : ''}{(factor.value * 100).toFixed(1)}%
+                          +{(factor.value * 100).toFixed(1)}%
                         </p>
-                        <p className="text-xs text-cream-500/60">
-                          max: {factor.max > 0 ? '+' : ''}{(factor.max * 100).toFixed(0)}%
-                        </p>
+                        {factor.delta < 0 && (
+                          <p className="text-xs text-red-400/60">
+                            ({(factor.delta * 100).toFixed(1)}% from max)
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    {/* Factor Bar */}
+                    {/* Factor Bar - shows how full the contribution is */}
                     <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 via-yellow-500/30 to-green-500/30" />
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{
-                          width: `${Math.abs((factor.value / (factor.max - factor.min)) * 100)}%`,
-                          marginLeft: factor.value < 0 ? 0 : `${((0 - factor.min) / (factor.max - factor.min)) * 100}%`
-                        }}
+                        animate={{ width: `${Math.min(fillPercentage, 100)}%` }}
                         transition={{ duration: 0.5, delay: index * 0.05 }}
                         className={`h-full ${
-                          factor.value >= factor.max * 0.5 ? 'bg-green-500' :
-                          factor.value >= 0 ? 'bg-yellow-500' :
+                          factor.current >= 0.95 ? 'bg-green-500' :
+                          factor.current >= 0.80 ? 'bg-yellow-500' :
+                          factor.current >= 0.70 ? 'bg-orange-500' :
                           'bg-red-500'
                         }`}
                       />
@@ -314,6 +313,19 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
                   </motion.div>
                 );
               })}
+
+              {/* Total row */}
+              <div className="p-4 bg-charcoal-800/50 rounded-lg border border-cream-500/20">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-cream-100">Total Multiplier</span>
+                  <span className={`text-xl font-bold ${multiplier >= 1.0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {multiplier.toFixed(2)}x
+                  </span>
+                </div>
+                <p className="text-xs text-cream-500/40 mt-1">
+                  Clamped to range 0.70x - 1.10x
+                </p>
+              </div>
 
               <div className="p-4 bg-gold-500/10 border-2 border-gold-500/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -323,9 +335,9 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
                   </p>
                 </div>
                 <p className="text-xs text-cream-300 leading-relaxed">
-                  Focus on maintaining high readiness and morale, while choosing a show difficulty
-                  that matches your preparation level. A well-prepared corps with excellent staff
-                  can reach the elite 1.10x multiplier!
+                  Readiness has the biggest impact (40% weight) - keep up with daily rehearsals!
+                  Morale and equipment each contribute 30%. Hire up to 5 staff members for a bonus
+                  +5% to reach the elite 1.10x multiplier!
                 </p>
               </div>
             </motion.div>
