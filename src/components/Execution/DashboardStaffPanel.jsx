@@ -35,11 +35,15 @@ const DashboardStaffPanel = ({ activeCorpsClass }) => {
   // Get unassigned staff available to assign
   const unassignedStaff = ownedStaff.filter(s => !s.assignedTo);
 
-  // Calculate staff bonus for this corps
+  // Calculate staff effectiveness for this corps
+  // Staff provides effectiveness bonus per-caption (0.75-1.00 range)
+  // With good staff: ~3% bonus per staff up to ~8% total
   const calculateStaffBonus = () => {
-    if (assignedToCorps.length === 0) return 0;
-    // Each assigned staff provides approximately 1% bonus, up to 8%
-    return Math.min(assignedToCorps.length, 8);
+    if (assignedToCorps.length === 0) return -2; // No staff = -2% penalty (below 0.80 baseline)
+    // Each assigned staff improves effectiveness by ~3%, up to +8%
+    const effectiveness = Math.min(0.80 + (assignedToCorps.length * 0.03), 1.00);
+    const bonus = (effectiveness - 0.80) * 40; // Convert to percentage impact
+    return Math.round(bonus);
   };
 
   const getCaptionColor = (caption) => {
@@ -117,10 +121,12 @@ const DashboardStaffPanel = ({ activeCorpsClass }) => {
           </div>
           <div className="bg-charcoal-800/50 rounded-lg p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-gold-500" />
-              <span className="text-2xl font-bold text-gold-500">+{calculateStaffBonus()}%</span>
+              <TrendingUp className={`w-4 h-4 ${calculateStaffBonus() >= 0 ? 'text-gold-500' : 'text-red-400'}`} />
+              <span className={`text-2xl font-bold ${calculateStaffBonus() >= 0 ? 'text-gold-500' : 'text-red-400'}`}>
+                {calculateStaffBonus() >= 0 ? '+' : ''}{calculateStaffBonus()}%
+              </span>
             </div>
-            <p className="text-xs text-cream-500/60">Score Bonus</p>
+            <p className="text-xs text-cream-500/60">Score Impact</p>
           </div>
         </div>
 
@@ -205,10 +211,11 @@ const DashboardStaffPanel = ({ activeCorpsClass }) => {
           <div>
             <p className="text-sm font-semibold text-cream-100 mb-2">How Staff Affects Your Score</p>
             <ul className="text-xs text-cream-500/80 space-y-1">
-              <li>Each staff member boosts their caption by ~1%</li>
-              <li>Staff can provide up to +8% total score bonus</li>
-              <li>Assign staff to specific captions for targeted improvements</li>
-              <li>DCI Hall of Fame inductees are based on real legends</li>
+              <li>No staff assigned = <span className="text-red-400">-2% penalty</span> (below baseline)</li>
+              <li>Each staff member improves effectiveness by ~3%</li>
+              <li>Staff effectiveness ranges from -2% to +8% impact on multiplier</li>
+              <li>Staff teaching their specialty caption get +15% effectiveness</li>
+              <li>Staff morale affects their teaching quality</li>
             </ul>
           </div>
         </div>

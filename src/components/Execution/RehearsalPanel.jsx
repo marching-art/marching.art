@@ -3,7 +3,8 @@ import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Check, Clock, Zap, Star, TrendingUp,
-  Users, Music, Target, Sparkles
+  Users, Music, Target, Sparkles, AlertTriangle,
+  Heart, Wrench
 } from 'lucide-react';
 import Portal from '../Portal';
 
@@ -50,11 +51,16 @@ const RehearsalPanel = ({
     return `Available in ${hoursRemaining}h`;
   };
 
-  // Rehearsal benefits
+  // Rehearsal benefits (actual backend values)
   const rehearsalBenefits = [
-    { icon: TrendingUp, label: 'Increases Readiness', value: '+5-10%' },
-    { icon: Zap, label: 'Grants XP', value: '+50 XP' },
-    { icon: Star, label: 'Improves Skills', value: 'Variable' }
+    { icon: TrendingUp, label: 'Readiness', value: '+5%', positive: true },
+    { icon: Zap, label: 'XP', value: '+25', positive: true },
+  ];
+
+  // Rehearsal costs (hidden before - now showing!)
+  const rehearsalCosts = [
+    { icon: Heart, label: 'Morale', value: '-2%', positive: false },
+    { icon: Wrench, label: 'Equipment', value: '-1%', positive: false },
   ];
 
   return (
@@ -118,20 +124,37 @@ const RehearsalPanel = ({
           )}
         </div>
 
-        {/* Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {rehearsalBenefits.map((benefit, index) => {
-            const Icon = benefit.icon;
+        {/* Benefits & Costs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {rehearsalBenefits.map((item, index) => {
+            const Icon = item.icon;
             return (
               <div
-                key={index}
-                className="flex items-center gap-3 p-3 bg-charcoal-900/30 rounded-lg"
+                key={`benefit-${index}`}
+                className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"
               >
-                <Icon className="w-5 h-5 text-gold-500 flex-shrink-0" />
+                <Icon className="w-5 h-5 text-green-500 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-cream-500/60">{benefit.label}</p>
-                  <p className="text-sm font-semibold text-cream-100">
-                    {benefit.value}
+                  <p className="text-xs text-cream-500/60">{item.label}</p>
+                  <p className="text-sm font-semibold text-green-400">
+                    {item.value}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+          {rehearsalCosts.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={`cost-${index}`}
+                className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+              >
+                <Icon className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-cream-500/60">{item.label}</p>
+                  <p className="text-sm font-semibold text-red-400">
+                    {item.value}
                   </p>
                 </div>
               </div>
@@ -177,9 +200,10 @@ const RehearsalPanel = ({
           <div>
             <p className="text-sm font-semibold text-cream-100 mb-1">Pro Tips</p>
             <ul className="text-xs text-cream-500/80 space-y-1">
-              <li>• Daily rehearsals prevent readiness decay</li>
-              <li>• Consecutive rehearsals build stronger momentum</li>
-              <li>• Perfect weekly attendance earns bonus rewards</li>
+              <li>• Readiness maxes at 100% - rehearse daily to reach it</li>
+              <li>• Perfect week (7 rehearsals) earns <span className="text-gold-400">+50 bonus XP</span></li>
+              <li>• Watch your morale - use Morale Boost (100 CC) if it drops too low</li>
+              <li>• Repair equipment regularly to avoid penalties</li>
             </ul>
           </div>
         </div>
