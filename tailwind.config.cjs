@@ -213,9 +213,15 @@ module.exports = {
         'elevation-4': '0 16px 32px rgba(0,0,0,0.16)',
         'elevation-5': '0 24px 48px rgba(0,0,0,0.18)'
       },
-      // Accessibility: Focus ring colors
+      // Accessibility: Focus ring colors (extend with full gold scale)
       ringColor: {
-        gold: '#D4AF37',
+        gold: {
+          DEFAULT: '#D4AF37',
+          400: '#EEDC82',
+          500: '#D4AF37',
+          600: '#BFA132',
+          900: '#4A3F10',
+        },
       },
       ringOffsetColor: {
         cream: '#F4F1E8',
