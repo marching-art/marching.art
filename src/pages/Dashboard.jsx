@@ -307,28 +307,28 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* World Class */}
           <CorpsOverviewCard
-            classType="worldClass"
+            classType="world"
             label="WORLD CLASS"
-            corps={corps?.worldClass}
-            isActive={activeCorpsClass === 'worldClass'}
-            onSwitch={() => handleCorpsSwitch('worldClass')}
+            corps={corps?.world}
+            isActive={activeCorpsClass === 'world'}
+            onSwitch={() => handleCorpsSwitch('world')}
             onRegister={() => {
               setShowRegistration(true);
             }}
-            isUnlocked={profile?.unlockedClasses?.includes('worldClass')}
+            isUnlocked={profile?.unlockedClasses?.includes('world')}
             getCorpsClassName={getCorpsClassName}
           />
           {/* Open Class */}
           <CorpsOverviewCard
-            classType="openClass"
+            classType="open"
             label="OPEN CLASS"
-            corps={corps?.openClass}
-            isActive={activeCorpsClass === 'openClass'}
-            onSwitch={() => handleCorpsSwitch('openClass')}
+            corps={corps?.open}
+            isActive={activeCorpsClass === 'open'}
+            onSwitch={() => handleCorpsSwitch('open')}
             onRegister={() => {
               setShowRegistration(true);
             }}
-            isUnlocked={profile?.unlockedClasses?.includes('openClass')}
+            isUnlocked={profile?.unlockedClasses?.includes('open')}
             getCorpsClassName={getCorpsClassName}
           />
           {/* A Class */}
