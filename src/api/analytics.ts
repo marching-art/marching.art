@@ -46,6 +46,7 @@ function safeLogEvent(eventName: string, eventParams?: Record<string, unknown>):
 // ANALYTICS API
 // =============================================================================
 
+// Export as both analytics and analyticsHelpers for backwards compatibility
 export const analytics = {
   /**
    * Log a page view event
@@ -108,5 +109,8 @@ export const analytics = {
    */
   logEvent: safeLogEvent,
 };
+
+// Backwards-compatible alias
+export const analyticsHelpers = analytics;
 
 export default analytics;
