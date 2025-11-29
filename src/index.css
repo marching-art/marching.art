@@ -49,21 +49,21 @@
   --charcoal-900: #1A1A1A;
   --charcoal-950: #0D0D0D;
 
-  /* Background and text colors - FOREST GREEN THEME */
-  --bg-primary: #0A2214;
-  --bg-secondary: #113321;
-  --bg-tertiary: #1A4A2E;
+  /* Background and text colors - DARK BROWN THEME */
+  --bg-primary: #0D0A08;
+  --bg-secondary: #1A1512;
+  --bg-tertiary: #2A221E;
   --text-primary: #FAF6EA;
   --text-secondary: #E5D396;
   --text-muted: rgba(229, 211, 150, 0.6);
   --border-color: rgba(212, 175, 55, 0.3);
   --border-color-light: rgba(212, 175, 55, 0.15);
 
-  /* Gradients - FOREST GREEN */
+  /* Gradients - DARK BROWN */
   --gradient-gold: linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%);
   --gradient-cream: linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%);
-  --gradient-dark: linear-gradient(135deg, #113321 0%, #0A2214 50%, #061810 100%);
-  --gradient-main: linear-gradient(180deg, #0A2214 0%, #061810 100%);
+  --gradient-dark: linear-gradient(135deg, #1A1512 0%, #0D0A08 50%, #080605 100%);
+  --gradient-main: linear-gradient(180deg, #0D0A08 0%, #080605 100%);
 
   /* Shadows - Gold-tinted for premium feel */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
@@ -72,9 +72,9 @@
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
   --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.5);
 
-  /* Glass effects - Forest green tint */
-  --glass-bg: rgba(17, 51, 33, 0.6);
-  --glass-bg-dark: rgba(10, 34, 20, 0.8);
+  /* Glass effects - Dark brown tint */
+  --glass-bg: rgba(26, 21, 18, 0.6);
+  --glass-bg-dark: rgba(13, 10, 8, 0.8);
   --glass-bg-gold: rgba(212, 175, 55, 0.1);
 }
 
@@ -174,7 +174,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 /* Custom Component Classes */
 @layer components {
-  /* Glass Effect - Forest Green Prestige Theme */
+  /* Glass Effect - Dark Brown Prestige Theme */
   .glass {
     background: var(--glass-bg);
     @apply backdrop-blur-md rounded-xl;
