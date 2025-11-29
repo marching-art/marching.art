@@ -18,7 +18,7 @@
   --transition-slow: 500ms;
 }
 
-/* Dark Mode (Default) */
+/* Dark Mode (Default) - Classic Prestige Theme */
 [data-theme="dark"], :root {
   /* Cream scale - light colors for text in dark mode */
   --cream-50: #FDFBF5;
@@ -36,7 +36,7 @@
   --gold-400: #FFDD73;
   --gold-500: #FFD44D;
 
-  /* Charcoal scale - dark colors for backgrounds in dark mode */
+  /* Charcoal scale - still available for specific uses */
   --charcoal-50: #F5F5F5;
   --charcoal-100: #E8E8E8;
   --charcoal-200: #D1D1D1;
@@ -49,33 +49,33 @@
   --charcoal-900: #1A1A1A;
   --charcoal-950: #0D0D0D;
 
-  /* Background and text colors */
-  --bg-primary: #0D0D0D;
-  --bg-secondary: #1A1A1A;
-  --bg-tertiary: #3B3B3B;
+  /* Background and text colors - FOREST GREEN THEME */
+  --bg-primary: #0A2214;
+  --bg-secondary: #113321;
+  --bg-tertiary: #1A4A2E;
   --text-primary: #FAF6EA;
   --text-secondary: #E5D396;
   --text-muted: rgba(229, 211, 150, 0.6);
-  --border-color: rgba(229, 211, 150, 0.2);
-  --border-color-light: rgba(229, 211, 150, 0.1);
+  --border-color: rgba(212, 175, 55, 0.3);
+  --border-color-light: rgba(212, 175, 55, 0.15);
 
-  /* Gradients */
+  /* Gradients - FOREST GREEN */
   --gradient-gold: linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%);
   --gradient-cream: linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%);
-  --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
-  --gradient-main: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
+  --gradient-dark: linear-gradient(135deg, #113321 0%, #0A2214 50%, #061810 100%);
+  --gradient-main: linear-gradient(180deg, #0A2214 0%, #061810 100%);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.2);
-  --shadow-glow: 0 0 20px rgba(255, 212, 77, 0.5);
+  /* Shadows - Gold-tinted for premium feel */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.5);
 
-  /* Glass effects */
-  --glass-bg: rgba(26, 26, 26, 0.3);
-  --glass-bg-dark: rgba(13, 13, 13, 0.5);
-  --glass-bg-gold: rgba(255, 212, 77, 0.1);
+  /* Glass effects - Forest green tint */
+  --glass-bg: rgba(17, 51, 33, 0.6);
+  --glass-bg-dark: rgba(10, 34, 20, 0.8);
+  --glass-bg-gold: rgba(212, 175, 55, 0.1);
 }
 
 /* Light Mode - Swap cream and charcoal for proper contrast */
@@ -174,22 +174,31 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 /* Custom Component Classes */
 @layer components {
-  /* Glass Effect */
+  /* Glass Effect - Forest Green Prestige Theme */
   .glass {
     background: var(--glass-bg);
-    @apply backdrop-blur-md;
+    @apply backdrop-blur-md rounded-xl;
     border: 1px solid var(--border-color);
   }
 
   .glass-dark {
     background: var(--glass-bg-dark);
-    @apply backdrop-blur-lg;
+    @apply backdrop-blur-lg rounded-xl;
     border: 1px solid var(--border-color-light);
   }
 
   .glass-gold {
     background: var(--glass-bg-gold);
-    @apply backdrop-blur-md border border-gold-800;
+    @apply backdrop-blur-md border border-gold-400/30 rounded-xl;
+  }
+
+  /* Premium Glass - Cream card with gold shadows for main content panels */
+  .glass-premium {
+    @apply bg-cream-100 border border-gold-400/40 rounded-xl shadow-gold-deep;
+  }
+
+  .glass-premium:hover {
+    @apply shadow-gold-lift;
   }
 
   /* Gradient Backgrounds */
