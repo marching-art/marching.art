@@ -7,10 +7,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Classic Prestige Theme - Forest Green, Cream, Gold, Black
+        // Classic Prestige Theme - Dark Brown, Cream, Gold, Black
         forest: {
-          800: '#113321', // Slightly lighter (hover states)
-          900: '#0A2214', // Deepest background green
+          800: '#1A1512', // Slightly lighter (hover states)
+          900: '#0D0A08', // Deepest background (almost black brown)
         },
         cream: {
           50: 'var(--cream-50)',
@@ -225,7 +225,7 @@ module.exports = {
       },
       ringOffsetColor: {
         cream: '#F4F1E8',
-        forest: '#0A2214',
+        forest: '#0D0A08',
       },
       backdropBlur: {
         'xs': '2px'
