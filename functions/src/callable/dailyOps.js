@@ -2,6 +2,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
+const { calculateXPUpdates } = require("../helpers/xpCalculations");
 
 /**
  * Daily Operations Configuration
@@ -58,48 +59,6 @@ const DAILY_OPS_CONFIG = {
 /**
  * Random events that can occur during equipment inspection
  */
-/**
- * Helper to calculate new level and check for class unlocks
- * Level = floor(xp / 1000) + 1
- */
-const calculateXPUpdates = (profileData, xpToAdd) => {
-  const currentXP = profileData.xp || 0;
-  const newXP = currentXP + xpToAdd;
-  const newLevel = Math.floor(newXP / 1000) + 1;
-
-  const updates = {
-    xp: newXP,
-    xpLevel: newLevel
-  };
-
-  // Also update battle pass if active
-  if (profileData.battlePass?.currentSeason) {
-    updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpToAdd);
-  }
-
-  // Check for class unlocks
-  const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
-  let classUnlocked = null;
-
-  if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
-    unlockedClasses.push('aClass');
-    updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'A Class';
-  }
-  if (newLevel >= 5 && !unlockedClasses.includes('open')) {
-    unlockedClasses.push('open');
-    updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'Open Class';
-  }
-  if (newLevel >= 10 && !unlockedClasses.includes('world')) {
-    unlockedClasses.push('world');
-    updates.unlockedClasses = unlockedClasses;
-    classUnlocked = 'World Class';
-  }
-
-  return { updates, newXP, newLevel, classUnlocked };
-};
-
 const INSPECTION_EVENTS = [
   {
     id: 'found_damage',
