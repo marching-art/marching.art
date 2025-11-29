@@ -1,8 +1,8 @@
 // Service Worker for Progressive Web App functionality
 // Provides offline support and improves performance through caching
 
-const CACHE_NAME = 'marching-art-v1';
-const RUNTIME_CACHE = 'marching-art-runtime-v1';
+const CACHE_NAME = 'marching-art-v2';
+const RUNTIME_CACHE = 'marching-art-runtime-v2';
 
 // Assets to cache immediately on install
 const PRECACHE_URLS = [
@@ -74,13 +74,25 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Skip non-GET requests (let browser handle POST, PUT, DELETE, etc.)
   if (request.method !== 'GET') {
     return;
   }
 
   // Skip Chrome extensions
   if (url.protocol === 'chrome-extension:') {
+    return;
+  }
+
+  // Skip Firebase Cloud Functions (let browser handle directly)
+  if (url.hostname.includes('cloudfunctions.net') ||
+      url.hostname.includes('cloudfunctions.googleapis.com')) {
+    return;
+  }
+
+  // Skip Firebase Auth APIs
+  if (url.hostname.includes('identitytoolkit.googleapis.com') ||
+      url.hostname.includes('securetoken.googleapis.com')) {
     return;
   }
 
