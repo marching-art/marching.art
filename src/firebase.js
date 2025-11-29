@@ -1,7 +1,16 @@
 // src/firebase.js
+// =============================================================================
+// LEGACY FIREBASE MODULE - For backwards compatibility
+// =============================================================================
+// This module re-exports from the new consolidated API layer while maintaining
+// backwards compatibility with existing imports. New code should import from
+// '@/api' instead.
+//
+// Migration: import { auth, db, authApi } from '@/api';
+
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
+import {
+  getAuth,
   connectAuthEmulator,
   signInWithEmailAndPassword,
   signInAnonymously,
@@ -16,26 +25,21 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager
 } from 'firebase/firestore';
-import { 
-  getFunctions, 
-  connectFunctionsEmulator 
+import {
+  getFunctions,
+  connectFunctionsEmulator
 } from 'firebase/functions';
-import { 
-  getStorage, 
-  connectStorageEmulator 
+import {
+  getStorage,
+  connectStorageEmulator
 } from 'firebase/storage';
 import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 
-// Firebase configuration from development guidelines
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "marching-art.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "marching-art",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "marching-art.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "278086562126",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:278086562126:web:f7737ee897774c3d9a6e1f",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-H0KE8GJS7M"
-};
+// Import centralized configuration
+import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG } from './config';
+
+// Use centralized Firebase configuration
+const firebaseConfig = FIREBASE_CONFIG;
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -48,7 +52,9 @@ export const db = initializeFirestore(app, {
 });
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
-export const dataNamespace = 'marching-art';
+
+// Use centralized data namespace
+export const dataNamespace = DATA_CONFIG.namespace;
 
 // Initialize analytics only if supported (handles ad blockers gracefully)
 let analyticsInstance = null;
@@ -75,12 +81,13 @@ const safeLogEvent = (eventName, eventParams) => {
 export const analytics = analyticsInstance;
 
 
-// Connect to emulators if in development
-if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
-  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-  connectFirestoreEmulator(db, 'localhost', 8080);
-  connectFunctionsEmulator(functions, 'localhost', 5001);
-  connectStorageEmulator(storage, 'localhost', 9199);
+// Connect to emulators if in development (using centralized config)
+if (DEV_CONFIG.useEmulators) {
+  const { emulators } = DEV_CONFIG;
+  connectAuthEmulator(auth, `http://localhost:${emulators.auth}`, { disableWarnings: true });
+  connectFirestoreEmulator(db, 'localhost', emulators.firestore);
+  connectFunctionsEmulator(functions, 'localhost', emulators.functions);
+  connectStorageEmulator(storage, 'localhost', emulators.storage);
 }
 
 // Auth helpers
@@ -224,28 +231,26 @@ export const analyticsHelpers = {
   }
 };
  
-// Admin helpers
+// Admin helpers (using centralized AUTH_CONFIG)
 export const adminHelpers = {
   // Check if current user is admin
   isAdmin: async () => {
     const user = auth.currentUser;
     if (!user) return false;
- 
-    // Admin UID from firestore path
-    const ADMIN_UID = 'o8vfRCOevjTKBY0k2dISlpiYiIH2';
- 
-    if (user.uid === ADMIN_UID) return true;
- 
+
+    // Check against centralized admin UIDs config
+    if (AUTH_CONFIG.isAdminUid(user.uid)) return true;
+
     // Also check custom claims
     const tokenResult = await user.getIdTokenResult();
     return tokenResult.claims.admin === true;
   },
- 
+
   // Get current user's admin status and token claims
   getCurrentUserClaims: async () => {
     const user = auth.currentUser;
     if (!user) return null;
- 
+
     const tokenResult = await user.getIdTokenResult();
     return tokenResult.claims;
   }

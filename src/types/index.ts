@@ -40,14 +40,55 @@ export interface UserProfile {
   // Stats
   lifetimeStats?: LifetimeStats;
 
-  // Daily challenges
-  dailyChallenges?: DailyChallenges;
+  // Daily challenges (keyed by date string)
+  challenges?: Record<string, DailyChallenge[]>;
+  dailyChallenges?: DailyChallenges; // Legacy/alternative structure
+
+  // Engagement tracking
+  engagement?: EngagementData;
 
   // Achievements
   achievements?: Achievement[];
 
+  // Retired corps history
+  retiredCorps?: RetiredCorps[];
+
   // Settings
   settings?: UserSettings;
+}
+
+export interface RetiredCorps {
+  corpsName: string;
+  corpsClass: CorpsClass;
+  retiredAt: string;
+  finalScore?: number;
+  seasonsPlayed?: number;
+}
+
+export interface EngagementData {
+  loginStreak: number;
+  lastLogin: string | null;
+  totalLogins: number;
+  recentActivity: RecentActivity[];
+  weeklyProgress?: Record<CorpsClass, WeeklyProgressData>;
+}
+
+export interface RecentActivity {
+  type: string;
+  description: string;
+  timestamp: string;
+  xp?: number;
+}
+
+export interface WeeklyProgressData {
+  rehearsalsCompleted?: number;
+  scoreImprovement?: number;
+  rankChange?: number;
+  previous?: {
+    rehearsalsCompleted?: number;
+    scoreImprovement?: number;
+    rankChange?: number;
+  };
 }
 
 export interface LifetimeStats {
@@ -96,8 +137,8 @@ export interface CorpsData {
   // Staff assignments (caption -> staffId)
   assignedStaff?: Record<Caption, string>;
 
-  // Show selections
-  selectedShows?: string[];
+  // Show selections (keyed by week number)
+  selectedShows?: Record<string, string[]>;
 
   // Lineup
   lineup?: Lineup;
@@ -329,11 +370,16 @@ export interface DailyChallenge {
   id: string;
   title: string;
   description: string;
-  xpReward: number;
+  xpReward?: number;
   coinReward?: number;
-  requirement: string;
+  requirement?: string;
   progress?: number;
   target?: number;
+  // Extended properties used by hooks
+  reward?: string;
+  icon?: string;
+  completed?: boolean;
+  action?: () => void;
 }
 
 export interface Achievement {

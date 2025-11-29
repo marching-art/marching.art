@@ -1,16 +1,107 @@
-// src/components/MobileNav.jsx
+// =============================================================================
+// MOBILE NAV COMPONENT (TypeScript)
+// =============================================================================
+// Mobile slide-out navigation menu
+
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown, Sun, Moon
+  ShoppingCart, Crown, Sun, Moon, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useTheme } from '../context/ThemeContext';
 
-const MobileNav = ({ isOpen, setIsOpen }) => {
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export interface MobileNavProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const navSections: NavSection[] = [
+  {
+    title: 'Main',
+    items: [
+      { path: '/dashboard', label: 'Dashboard', icon: Home },
+      { path: '/schedule', label: 'Schedule', icon: Calendar },
+      { path: '/scores', label: 'Scores & Rankings', icon: Trophy },
+    ],
+  },
+  {
+    title: 'Manage',
+    items: [
+      { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
+      { path: '/battlepass', label: 'Battle Pass', icon: Crown },
+    ],
+  },
+  {
+    title: 'Community',
+    items: [
+      { path: '/leagues', label: 'Leagues', icon: Users },
+      { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { path: '/profile', label: 'Profile', icon: User },
+      { path: '/settings', label: 'Settings', icon: Settings },
+      { path: '/how-to-play', label: 'How to Play', icon: HelpCircle },
+    ],
+  },
+];
+
+const menuVariants: Variants = {
+  closed: {
+    x: '100%',
+    transition: {
+      type: 'tween',
+      duration: 0.3,
+    },
+  },
+  open: {
+    x: 0,
+    transition: {
+      type: 'tween',
+      duration: 0.3,
+    },
+  },
+};
+
+const overlayVariants: Variants = {
+  closed: {
+    opacity: 0,
+  },
+  open: {
+    opacity: 1,
+  },
+};
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { toggleTheme, isDark } = useTheme();
@@ -33,71 +124,13 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     };
   }, [isOpen]);
 
-  const navSections = [
-    {
-      title: 'Main',
-      items: [
-        { path: '/dashboard', label: 'Dashboard', icon: Home },
-        { path: '/schedule', label: 'Schedule', icon: Calendar },
-        { path: '/scores', label: 'Scores & Rankings', icon: Trophy }
-      ]
-    },
-    {
-      title: 'Manage',
-      items: [
-        { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
-        { path: '/battlepass', label: 'Battle Pass', icon: Crown }
-      ]
-    },
-    {
-      title: 'Community',
-      items: [
-        { path: '/leagues', label: 'Leagues', icon: Users },
-        { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award }
-      ]
-    },
-    {
-      title: 'Account',
-      items: [
-        { path: '/profile', label: 'Profile', icon: User },
-        { path: '/settings', label: 'Settings', icon: Settings },
-        { path: '/how-to-play', label: 'How to Play', icon: HelpCircle }
-      ]
-    }
-  ];
-
-  const menuVariants = {
-    closed: {
-      x: '100%',
-      transition: {
-        type: 'tween',
-        duration: 0.3
-      }
-    },
-    open: {
-      x: 0,
-      transition: {
-        type: 'tween',
-        duration: 0.3
-      }
-    }
-  };
-
-  const overlayVariants = {
-    closed: {
-      opacity: 0,
-      pointerEvents: 'none'
-    },
-    open: {
-      opacity: 1,
-      pointerEvents: 'auto'
-    }
-  };
-
   return (
     <>
       {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 backdrop-blur-lg z-40 lg:hidden" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color-light)' }}>
+      <header
+        className="fixed top-0 left-0 right-0 h-16 backdrop-blur-lg z-40 lg:hidden"
+        style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color-light)' }}
+      >
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
@@ -149,6 +182,7 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
               transition={{ duration: 0.3 }}
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
             />
 
             {/* Menu Panel */}
