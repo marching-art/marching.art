@@ -86,9 +86,19 @@ export function useChallenges(
       const savedChallenges = profile.challenges || {};
       const todayChallenges = savedChallenges[today];
 
-      // Use saved challenges if they exist
-      if (todayChallenges) {
-        setDailyChallenges(todayChallenges as Challenge[]);
+      // Use saved challenges if they exist (map to Challenge format)
+      if (todayChallenges && todayChallenges.length > 0) {
+        const mappedChallenges: Challenge[] = todayChallenges.map((c) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          progress: c.progress ?? 0,
+          target: c.target ?? 1,
+          reward: c.reward ?? `${c.xpReward || 0} XP`,
+          icon: c.icon ?? 'star',
+          completed: c.completed ?? false,
+        }));
+        setDailyChallenges(mappedChallenges);
         return;
       }
 
@@ -160,10 +170,11 @@ export function useChallenges(
       });
 
       // Schedule challenge
-      if (activeCorps?.selectedShows) {
+      const selectedShows = activeCorps?.selectedShows;
+      if (selectedShows) {
         const totalWeeks = 7;
-        const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
-          (weekKey) => activeCorps.selectedShows?.[weekKey]?.length > 0
+        const weeksWithShows = Object.keys(selectedShows).filter(
+          (weekKey) => selectedShows[weekKey]?.length > 0
         ).length;
         const hasFullSchedule = weeksWithShows >= totalWeeks;
 
@@ -200,21 +211,21 @@ export function useChallenges(
 
   // Calculate weekly progress
   useEffect(() => {
-    if (!profile || !activeCorps || activeCorpsClass === 'soundSport') return;
+    if (!profile || !activeCorps || !activeCorpsClass || activeCorpsClass === 'soundSport') return;
 
     const calculateWeeklyProgressData = () => {
-      const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || {};
-      const previousWeekData = (weekData as { previous?: WeeklyProgress }).previous || {};
+      const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || null;
+      const previousWeekData = weekData?.previous || null;
 
       const rehearsalsThisWeek = executionState?.rehearsalsCompleted || 0;
-      const rehearsalsLastWeek = previousWeekData.rehearsalsCompleted || 0;
+      const rehearsalsLastWeek = previousWeekData?.rehearsalsCompleted || 0;
 
       const currentScore = activeCorps.totalSeasonScore || 0;
-      const previousScore = previousWeekData.scoreImprovement || 0;
+      const previousScore = previousWeekData?.scoreImprovement || 0;
       const scoreImprovement = currentScore - previousScore;
 
       const currentRank = (activeCorps as CorpsData & { rank?: number }).rank || 0;
-      const previousRank = previousWeekData.rankChange || currentRank;
+      const previousRank = previousWeekData?.rankChange || currentRank;
       const rankChange = previousRank - currentRank;
 
       let equipmentMaintained = 0;

@@ -50,8 +50,19 @@ export interface UserProfile {
   // Achievements
   achievements?: Achievement[];
 
+  // Retired corps history
+  retiredCorps?: RetiredCorps[];
+
   // Settings
   settings?: UserSettings;
+}
+
+export interface RetiredCorps {
+  corpsName: string;
+  corpsClass: CorpsClass;
+  retiredAt: string;
+  finalScore?: number;
+  seasonsPlayed?: number;
 }
 
 export interface EngagementData {
@@ -359,11 +370,16 @@ export interface DailyChallenge {
   id: string;
   title: string;
   description: string;
-  xpReward: number;
+  xpReward?: number;
   coinReward?: number;
-  requirement: string;
+  requirement?: string;
   progress?: number;
   target?: number;
+  // Extended properties used by hooks
+  reward?: string;
+  icon?: string;
+  completed?: boolean;
+  action?: () => void;
 }
 
 export interface Achievement {

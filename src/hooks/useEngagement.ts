@@ -89,7 +89,20 @@ export function useEngagement(
         // Already logged in today
         if (lastLoginDate === today) {
           if (profile.engagement) {
-            setEngagementData(profile.engagement as EngagementData);
+            // Map from stored format to local format
+            const storedEngagement = profile.engagement;
+            setEngagementData({
+              loginStreak: storedEngagement.loginStreak,
+              lastLogin: storedEngagement.lastLogin,
+              totalLogins: storedEngagement.totalLogins,
+              recentActivity: (storedEngagement.recentActivity || []).map((a) => ({
+                type: a.type as ActivityItem['type'],
+                message: a.description,
+                timestamp: a.timestamp,
+                icon: 'activity',
+              })),
+              weeklyProgress: [],
+            });
           }
           return;
         }
@@ -106,12 +119,20 @@ export function useEngagement(
           newStreak = currentStreak + 1;
         }
 
+        // Map stored activity to local format
+        const existingActivity: ActivityItem[] = (profile.engagement?.recentActivity || []).map((a) => ({
+          type: a.type as ActivityItem['type'],
+          message: a.description,
+          timestamp: a.timestamp,
+          icon: 'activity',
+        }));
+
         const updatedEngagement: EngagementData = {
           loginStreak: newStreak,
           lastLogin: new Date().toISOString(),
           totalLogins: (profile.engagement?.totalLogins || 0) + 1,
-          recentActivity: profile.engagement?.recentActivity || [],
-          weeklyProgress: profile.engagement?.weeklyProgress || [],
+          recentActivity: existingActivity,
+          weeklyProgress: [],
         };
 
         // Add login activity

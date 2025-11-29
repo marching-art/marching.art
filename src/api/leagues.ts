@@ -56,7 +56,7 @@ export async function getMyLeagues(uid: string): Promise<League[]> {
  */
 export async function getPublicLeagues(
   pageSize = DEFAULT_PAGE_SIZE,
-  lastDoc?: QueryDocumentSnapshot<DocumentData>
+  lastDoc?: unknown
 ): Promise<PaginatedResponse<League>> {
   return withErrorHandling(async () => {
     const leaguesRef = collection(db, paths.leagues());
@@ -68,12 +68,14 @@ export async function getPublicLeagues(
       limit(pageSize)
     );
 
-    if (lastDoc) {
+    // Cast lastDoc to the expected type for pagination
+    const lastDocSnapshot = lastDoc as QueryDocumentSnapshot<DocumentData> | undefined;
+    if (lastDocSnapshot) {
       q = query(
         leaguesRef,
         where('isPublic', '==', true),
         orderBy('createdAt', 'desc'),
-        startAfter(lastDoc),
+        startAfter(lastDocSnapshot),
         limit(pageSize)
       );
     }
