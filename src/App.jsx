@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers, analyticsHelpers } from './firebase';
+import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
 import Navigation from './components/Navigation';
 import MobileNav from './components/MobileNav';
@@ -207,9 +209,10 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AuthContext.Provider value={authContextValue}>
-          <Router>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthContext.Provider value={authContextValue}>
+            <Router>
           {/* Global Components */}
           <Toaster
             position="top-right"
@@ -385,9 +388,10 @@ function App() {
             </div>
           } />
           </Routes>
-        </Router>
-      </AuthContext.Provider>
-      </ThemeProvider>
+          </Router>
+        </AuthContext.Provider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }
