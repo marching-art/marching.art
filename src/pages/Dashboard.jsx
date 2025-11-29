@@ -1,7 +1,11 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Users, Target, Wrench, Zap } from 'lucide-react';
+import {
+  Music, Users, Target, Wrench, Zap, Trophy, Lock, Plus,
+  CheckCircle, AlertTriangle, Eye, Lightbulb, ChevronRight, Square
+} from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -723,9 +727,6 @@ const Dashboard = () => {
  * Corps Overview Card - Shows corps status in the 2x2 grid
  */
 const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegister, isUnlocked, getCorpsClassName }) => {
-  const { Link } = require('react-router-dom');
-  const { Trophy, Lock, Plus, CheckCircle } = require('lucide-react');
-
   if (!isUnlocked) {
     return (
       <div className="bg-cream-200/50 border border-gold-400/20 rounded-lg p-4 opacity-60">
@@ -792,9 +793,6 @@ const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegi
  * Briefing Item - Shows action/review/strategy items in Today's Briefing
  */
 const BriefingItem = ({ type, title, description, onAction, linkTo }) => {
-  const { Link } = require('react-router-dom');
-  const { AlertTriangle, Eye, Lightbulb, ChevronRight, Square } = require('lucide-react');
-
   const typeConfig = {
     action: {
       icon: AlertTriangle,
