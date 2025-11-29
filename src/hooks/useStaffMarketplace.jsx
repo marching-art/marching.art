@@ -1,22 +1,41 @@
 // src/hooks/useStaffMarketplace.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import { queryKeys } from '../lib/queryClient';
+
+// Fetch marketplace staff from backend
+const fetchMarketplaceStaff = async () => {
+  const getMarketplace = httpsCallable(functions, 'getStaffMarketplace');
+  const result = await getMarketplace({});
+  return result.data.staff || [];
+};
 
 export const useStaffMarketplace = (userId) => {
-  const [marketplace, setMarketplace] = useState([]);
+  const queryClient = useQueryClient();
   const [ownedStaff, setOwnedStaff] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(false);
-  const [assigning, setAssigning] = useState(false);
   const [corpsCoin, setCorpsCoin] = useState(0);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Use React Query for marketplace data with caching
+  const {
+    data: marketplace = [],
+    isLoading: marketplaceLoading,
+    refetch: refetchMarketplace,
+  } = useQuery({
+    queryKey: queryKeys.staffMarketplace(),
+    queryFn: fetchMarketplaceStaff,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+  });
 
   // Subscribe to user profile for owned staff and CorpsCoin balance
   useEffect(() => {
     if (!userId) {
-      setLoading(false);
+      setProfileLoading(false);
       return;
     }
 
@@ -27,34 +46,24 @@ export const useStaffMarketplace = (userId) => {
         setOwnedStaff(data.staff || []);
         setCorpsCoin(data.corpsCoin || 0);
       }
-      setLoading(false);
+      setProfileLoading(false);
     });
 
     return () => unsubscribe();
   }, [userId]);
 
-  // Fetch marketplace staff
-  const fetchMarketplace = async (captionFilter = null) => {
-    try {
-      setLoading(true);
-      const getMarketplace = httpsCallable(functions, 'getStaffMarketplace');
-      const result = await getMarketplace({ caption: captionFilter });
-      setMarketplace(result.data.staff || []);
-    } catch (error) {
-      console.error('Error fetching marketplace:', error);
-      toast.error('Failed to load staff marketplace');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Create a Set of owned staff IDs for O(1) lookup
+  const ownedStaffIds = useMemo(() => {
+    return new Set(ownedStaff.map(s => s.staffId));
+  }, [ownedStaff]);
 
-  // Purchase staff member
-  const purchaseStaff = async (staffId) => {
-    try {
-      setPurchasing(true);
+  // Purchase staff mutation with optimistic updates
+  const purchaseMutation = useMutation({
+    mutationFn: async (staffId) => {
       const purchase = httpsCallable(functions, 'purchaseStaff');
-      const result = await purchase({ staffId });
-
+      return purchase({ staffId });
+    },
+    onSuccess: (result) => {
       toast.success(
         <div>
           <p className="font-bold">Staff Acquired!</p>
@@ -62,94 +71,95 @@ export const useStaffMarketplace = (userId) => {
         </div>,
         { duration: 4000 }
       );
-
-      // Refresh marketplace
-      await fetchMarketplace();
-
-      return result.data;
-    } catch (error) {
+      // Invalidate marketplace cache to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffMarketplace() });
+    },
+    onError: (error) => {
       console.error('Error purchasing staff:', error);
       const errorMessage = error.message || 'Failed to purchase staff member';
       toast.error(errorMessage);
-      throw error;
-    } finally {
-      setPurchasing(false);
-    }
-  };
+    },
+  });
 
-  // Assign staff to corps (caption is auto-derived from staff specialty)
-  const assignStaffToCorps = async (staffId, corpsClass) => {
-    try {
-      setAssigning(true);
+  // Assign staff mutation
+  const assignMutation = useMutation({
+    mutationFn: async ({ staffId, corpsClass }) => {
       const assign = httpsCallable(functions, 'assignStaff');
-      const result = await assign({ staffId, corpsClass });
-
+      return assign({ staffId, corpsClass });
+    },
+    onSuccess: (result) => {
       toast.success(
         <div>
           <p className="font-bold">Staff Assigned!</p>
           <p className="text-sm">{result.data.message}</p>
         </div>
       );
-
-      return result.data;
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error assigning staff:', error);
       const errorMessage = error.message || 'Failed to assign staff member';
       toast.error(errorMessage);
-      throw error;
-    } finally {
-      setAssigning(false);
-    }
-  };
+    },
+  });
+
+  // Purchase staff member
+  const purchaseStaff = useCallback(async (staffId) => {
+    return purchaseMutation.mutateAsync(staffId);
+  }, [purchaseMutation]);
+
+  // Assign staff to corps
+  const assignStaffToCorps = useCallback(async (staffId, corpsClass) => {
+    return assignMutation.mutateAsync({ staffId, corpsClass });
+  }, [assignMutation]);
 
   // Unassign staff from corps
-  const unassignStaff = async (staffId) => {
+  const unassignStaff = useCallback(async (staffId) => {
     try {
-      setAssigning(true);
       const assign = httpsCallable(functions, 'assignStaff');
       await assign({ staffId, corpsClass: null });
-
       toast.success('Staff member unassigned');
     } catch (error) {
       console.error('Error unassigning staff:', error);
       toast.error('Failed to unassign staff member');
       throw error;
-    } finally {
-      setAssigning(false);
     }
-  };
+  }, []);
 
-  // Check if user owns a staff member
-  const ownsStaff = (staffId) => {
-    return ownedStaff.some(s => s.staffId === staffId);
-  };
+  // Check if user owns a staff member - O(1) lookup with Set
+  const ownsStaff = useCallback((staffId) => {
+    return ownedStaffIds.has(staffId);
+  }, [ownedStaffIds]);
 
   // Get staff member details
-  const getStaffDetails = (staffId) => {
+  const getStaffDetails = useCallback((staffId) => {
     return ownedStaff.find(s => s.staffId === staffId);
-  };
+  }, [ownedStaff]);
 
   // Get assigned staff for a specific corps/caption
-  const getAssignedStaff = (corpsClass, caption) => {
+  const getAssignedStaff = useCallback((corpsClass, caption) => {
     return ownedStaff.find(
       s => s.assignedTo?.corpsClass === corpsClass && s.assignedTo?.caption === caption
     );
-  };
+  }, [ownedStaff]);
 
   // Get all unassigned staff
-  const getUnassignedStaff = () => {
+  const getUnassignedStaff = useCallback(() => {
     return ownedStaff.filter(s => !s.assignedTo);
-  };
+  }, [ownedStaff]);
 
   // Get staff by caption
-  const getStaffByCaption = (caption) => {
+  const getStaffByCaption = useCallback((caption) => {
     return ownedStaff.filter(s => s.caption === caption);
-  };
+  }, [ownedStaff]);
 
   // Check if user can afford a staff member
-  const canAfford = (cost) => {
+  const canAfford = useCallback((cost) => {
     return corpsCoin >= cost;
-  };
+  }, [corpsCoin]);
+
+  const loading = profileLoading || marketplaceLoading;
+  const purchasing = purchaseMutation.isPending;
+  const assigning = assignMutation.isPending;
 
   return {
     marketplace,
@@ -158,7 +168,7 @@ export const useStaffMarketplace = (userId) => {
     loading,
     purchasing,
     assigning,
-    fetchMarketplace,
+    fetchMarketplace: refetchMarketplace,
     purchaseStaff,
     assignStaffToCorps,
     unassignStaff,
