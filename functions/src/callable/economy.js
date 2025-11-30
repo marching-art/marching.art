@@ -270,7 +270,9 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
       query = query.where("caption", "==", caption);
     }
 
-    const snapshot = await query.limit(50).get();
+    // Increased limit to 500 to fetch all staff in one request (currently ~149 staff)
+    // This allows client-side filtering without multiple API calls
+    const snapshot = await query.limit(500).get();
     const staffList = [];
 
     snapshot.forEach(doc => {

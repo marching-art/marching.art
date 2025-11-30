@@ -1,9 +1,9 @@
 // src/components/Staff/StaffMarketplace.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, DollarSign, Award, Filter, Search, X,
-  ChevronDown, Star, Trophy, Check, Lock, AlertCircle
+  ChevronDown, Star, Trophy, Check, Lock, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
@@ -21,6 +21,34 @@ const CAPTION_OPTIONS = [
   { value: 'P', label: 'Percussion', color: 'bg-red-500', description: 'Battery Instructors' }
 ];
 
+// Debounce hook for search input
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+// Helper functions moved outside component for stability
+const getCaptionColor = (caption) => {
+  const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
+  return option?.color || 'bg-gray-500';
+};
+
+const getCaptionLabel = (caption) => {
+  const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
+  return option?.label || caption;
+};
+
 const StaffMarketplace = () => {
   const { user } = useAuth();
   const {
@@ -28,34 +56,36 @@ const StaffMarketplace = () => {
     corpsCoin,
     loading,
     purchasing,
-    fetchMarketplace,
     purchaseStaff,
     ownsStaff,
-    canAfford
+    canAfford,
+    refreshMarketplace
   } = useStaffMarketplace(user?.uid);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [captionFilter, setCaptionFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, cheapest, expensive
-  const [filteredStaff, setFilteredStaff] = useState([]);
+  const [sortBy, setSortBy] = useState('newest');
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchMarketplace(captionFilter === 'all' ? null : captionFilter);
-  }, [captionFilter]);
+  // Debounce search term (300ms delay)
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  useEffect(() => {
-    filterAndSortStaff();
-  }, [marketplace, searchTerm, sortBy]);
-
-  const filterAndSortStaff = () => {
+  // Memoized filtered and sorted staff list
+  const filteredStaff = useMemo(() => {
     let filtered = [...marketplace];
 
-    // Apply search filter
-    if (searchTerm) {
+    // Apply caption filter
+    if (captionFilter && captionFilter !== 'all') {
+      filtered = filtered.filter(staff => staff.caption === captionFilter);
+    }
+
+    // Apply search filter (using debounced value)
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(staff =>
-        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.biography?.toLowerCase().includes(searchTerm.toLowerCase())
+        staff.name.toLowerCase().includes(searchLower) ||
+        staff.biography?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -75,11 +105,24 @@ const StaffMarketplace = () => {
       }
     });
 
-    setFilteredStaff(filtered);
-  };
+    return filtered;
+  }, [marketplace, captionFilter, debouncedSearchTerm, sortBy]);
 
-  const handlePurchase = async (staff) => {
-    if (ownsStaff(staff.id)) {
+  // Memoized ownership check map for O(1) lookups
+  const ownedStaffMap = useMemo(() => {
+    const map = new Set();
+    // ownsStaff is a function that checks against ownedStaff array
+    // We'll build our own map from marketplace items
+    marketplace.forEach(staff => {
+      if (ownsStaff(staff.id)) {
+        map.add(staff.id);
+      }
+    });
+    return map;
+  }, [marketplace, ownsStaff]);
+
+  const handlePurchase = useCallback(async (staff) => {
+    if (ownedStaffMap.has(staff.id)) {
       toast.error('You already own this staff member');
       return;
     }
@@ -100,17 +143,24 @@ const StaffMarketplace = () => {
     } catch (error) {
       // Error already handled in hook
     }
-  };
+  }, [ownedStaffMap, canAfford, corpsCoin, purchaseStaff]);
 
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshMarketplace();
+      toast.success('Marketplace refreshed');
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshMarketplace]);
 
-  const getCaptionLabel = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.label || caption;
-  };
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setCaptionFilter('all');
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -125,10 +175,20 @@ const StaffMarketplace = () => {
               Recruit legendary DCI Hall of Fame members to boost your corps
             </p>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 rounded-lg border border-gold-500/30">
-            <DollarSign className="w-5 h-5 text-gold-400" />
-            <span className="text-2xl font-bold text-gold-400">{corpsCoin}</span>
-            <span className="text-cream-300 text-sm">CorpsCoin</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing || loading}
+              className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh marketplace"
+            >
+              <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <div className="flex items-center gap-2 px-4 py-2 bg-gold-500/20 rounded-lg border border-gold-500/30">
+              <DollarSign className="w-5 h-5 text-gold-400" />
+              <span className="text-2xl font-bold text-gold-400">{corpsCoin}</span>
+              <span className="text-cream-300 text-sm">CorpsCoin</span>
+            </div>
           </div>
         </div>
 
@@ -193,10 +253,7 @@ const StaffMarketplace = () => {
           </p>
           {(searchTerm || captionFilter !== 'all') && (
             <button
-              onClick={() => {
-                setSearchTerm('');
-                setCaptionFilter('all');
-              }}
+              onClick={handleClearFilters}
               className="btn-outline"
             >
               Clear Filters
@@ -209,11 +266,9 @@ const StaffMarketplace = () => {
             <StaffCard
               key={staff.id}
               staff={staff}
-              owned={ownsStaff(staff.id)}
+              owned={ownedStaffMap.has(staff.id)}
               canAfford={canAfford(staff.baseValue)}
               onPurchase={() => setSelectedStaff(staff)}
-              getCaptionColor={getCaptionColor}
-              getCaptionLabel={getCaptionLabel}
             />
           ))}
         </div>
@@ -222,111 +277,24 @@ const StaffMarketplace = () => {
       {/* Purchase Confirmation Modal */}
       <AnimatePresence>
         {selectedStaff && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-6 w-full max-w-md"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-cream-100">Confirm Purchase</h3>
-                <button
-                  onClick={() => setSelectedStaff(null)}
-                  className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                <div className="flex items-start gap-4 p-4 bg-charcoal-900/50 rounded-lg">
-                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Award className="w-6 h-6 text-gold-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-cream-100 mb-1">{selectedStaff.name}</h4>
-                    <p className="text-sm text-cream-400 mb-2">{selectedStaff.biography}</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white ${getCaptionColor(selectedStaff.caption)}`}>
-                        {selectedStaff.caption}
-                      </span>
-                      <span className="text-xs text-cream-400">
-                        Inducted {selectedStaff.yearInducted}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
-                  <span className="text-cream-300">Purchase Price</span>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-gold-400" />
-                    <span className="text-2xl font-bold text-gold-400">{selectedStaff.baseValue}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
-                  <span className="text-cream-300">Your Balance</span>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-cream-400" />
-                    <span className="text-xl font-bold text-cream-100">{corpsCoin}</span>
-                  </div>
-                </div>
-
-                {canAfford(selectedStaff.baseValue) && (
-                  <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <span className="text-green-400">After Purchase</span>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-green-400" />
-                      <span className="text-xl font-bold text-green-400">
-                        {corpsCoin - selectedStaff.baseValue}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setSelectedStaff(null)}
-                  className="flex-1 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-lg hover:bg-charcoal-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handlePurchase(selectedStaff)}
-                  disabled={purchasing || !canAfford(selectedStaff.baseValue)}
-                  className="flex-1 px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {purchasing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
-                      Purchasing...
-                    </>
-                  ) : !canAfford(selectedStaff.baseValue) ? (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      Insufficient Funds
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="w-4 h-4" />
-                      Purchase
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
+          <PurchaseModal
+            staff={selectedStaff}
+            corpsCoin={corpsCoin}
+            canAfford={canAfford(selectedStaff.baseValue)}
+            purchasing={purchasing}
+            onClose={() => setSelectedStaff(null)}
+            onPurchase={() => handlePurchase(selectedStaff)}
+          />
         )}
       </AnimatePresence>
     </div>
   );
 };
 
-// Staff Card Component
-const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCaptionLabel }) => {
+// Memoized Staff Card Component
+const StaffCard = memo(({ staff, owned, canAfford, onPurchase }) => {
+  const captionColor = getCaptionColor(staff.caption);
+
   return (
     <motion.div
       layout
@@ -335,13 +303,13 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
       className="glass rounded-xl p-4 hover:border-gold-500/50 transition-all group"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 ${getCaptionColor(staff.caption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
-          <Trophy className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
+        <div className={`w-10 h-10 ${captionColor}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <Trophy className={`w-5 h-5 ${captionColor.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-cream-100 mb-1 truncate">{staff.name}</h3>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(staff.caption)}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${captionColor}`}>
               {staff.caption}
             </span>
             <span className="text-xs text-cream-400">'{staff.yearInducted.toString().slice(-2)}</span>
@@ -380,6 +348,115 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
       </div>
     </motion.div>
   );
-};
+});
+
+StaffCard.displayName = 'StaffCard';
+
+// Memoized Purchase Modal Component
+const PurchaseModal = memo(({ staff, corpsCoin, canAfford, purchasing, onClose, onPurchase }) => {
+  const captionColor = getCaptionColor(staff.caption);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-6 w-full max-w-md"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-cream-100">Confirm Purchase</h3>
+          <button
+            onClick={onClose}
+            className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <div className="flex items-start gap-4 p-4 bg-charcoal-900/50 rounded-lg">
+            <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Award className="w-6 h-6 text-gold-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-cream-100 mb-1">{staff.name}</h4>
+              <p className="text-sm text-cream-400 mb-2">{staff.biography}</p>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white ${captionColor}`}>
+                  {staff.caption}
+                </span>
+                <span className="text-xs text-cream-400">
+                  Inducted {staff.yearInducted}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <span className="text-cream-300">Purchase Price</span>
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-gold-400" />
+              <span className="text-2xl font-bold text-gold-400">{staff.baseValue}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
+            <span className="text-cream-300">Your Balance</span>
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-cream-400" />
+              <span className="text-xl font-bold text-cream-100">{corpsCoin}</span>
+            </div>
+          </div>
+
+          {canAfford && (
+            <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <span className="text-green-400">After Purchase</span>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-400" />
+                <span className="text-xl font-bold text-green-400">
+                  {corpsCoin - staff.baseValue}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-lg hover:bg-charcoal-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onPurchase}
+            disabled={purchasing || !canAfford}
+            className="flex-1 px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {purchasing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                Purchasing...
+              </>
+            ) : !canAfford ? (
+              <>
+                <Lock className="w-4 h-4" />
+                Insufficient Funds
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4" />
+                Purchase
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+});
+
+PurchaseModal.displayName = 'PurchaseModal';
 
 export default StaffMarketplace;
