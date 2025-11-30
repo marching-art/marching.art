@@ -254,23 +254,35 @@ const assignStaff = onCall({ cors: true }, async (request) => {
 
 /**
  * List available staff in marketplace (admin creates entries in staff_database)
+ * Fetches all available staff for client-side filtering and caching
  */
 const getStaffMarketplace = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { caption } = request.data; // Optional filter by caption
+  const { caption } = request.data; // Optional filter by caption (kept for backwards compatibility)
   const db = getDb();
 
   try {
-    let query = db.collection("staff_database").where("available", "==", true);
+    // Always fetch all available staff for client-side filtering
+    // This reduces API calls and enables caching on the client
+    let query = db.collection("staff_database")
+      .where("available", "==", true)
+      .orderBy("yearInducted", "desc");
 
+    // If caption filter is provided, use it (for backwards compatibility)
+    // But we recommend fetching all and filtering client-side
     if (caption) {
-      query = query.where("caption", "==", caption);
+      query = db.collection("staff_database")
+        .where("available", "==", true)
+        .where("caption", "==", caption)
+        .orderBy("yearInducted", "desc");
     }
 
-    const snapshot = await query.limit(50).get();
+    // Increased limit to support fetching all staff for client-side caching
+    // With ~150 Hall of Fame members, 200 provides headroom for growth
+    const snapshot = await query.limit(200).get();
     const staffList = [];
 
     snapshot.forEach(doc => {
@@ -283,6 +295,7 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
     return {
       success: true,
       staff: staffList,
+      totalCount: staffList.length,
     };
   } catch (error) {
     logger.error("Error fetching staff marketplace:", error);
