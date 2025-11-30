@@ -32,9 +32,14 @@
   --cream-800: #9E8340;
   --cream-900: #796232;
 
+  /* RGB versions for opacity */
+  --cream-500-rgb: 229, 211, 150;
+  --cream-300-rgb: 240, 228, 192;
+
   /* Gold scale */
   --gold-400: #FFDD73;
   --gold-500: #FFD44D;
+  --gold-300-rgb: 255, 231, 153;
 
   /* Charcoal scale - dark colors for backgrounds in dark mode */
   --charcoal-50: #F5F5F5;
@@ -92,9 +97,14 @@
   --cream-800: #D1D1D1;
   --cream-900: #E8E8E8;
 
+  /* RGB versions for opacity */
+  --cream-500-rgb: 134, 134, 134;
+  --cream-300-rgb: 84, 84, 84;
+
   /* Gold scale - slightly darker for better contrast on light bg */
   --gold-400: #D9A300;
   --gold-500: #B38600;
+  --gold-300-rgb: 179, 134, 0;
 
   /* Charcoal scale - NOW light colors for backgrounds in light mode */
   --charcoal-50: #796232;
@@ -189,7 +199,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .glass-gold {
     background: var(--glass-bg-gold);
-    @apply backdrop-blur-md border border-gold-500/30;
+    @apply backdrop-blur-md;
+    border: 1px solid rgba(255, 212, 77, 0.3);
   }
 
   /* Gradient Backgrounds */
@@ -219,7 +230,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .btn-ghost {
-    @apply btn bg-transparent text-cream-300 hover:bg-cream-500/10;
+    @apply btn bg-transparent text-cream-300;
+  }
+
+  .btn-ghost:hover {
+    background: rgba(var(--cream-500-rgb), 0.1);
   }
   
   /* Cards */
@@ -232,15 +247,21 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .card-premium {
-    @apply card bg-gradient-to-br from-gold-500/20 to-cream-500/20 border-gold-500/30;
+    @apply card bg-gradient-to-br;
+    background-image: linear-gradient(to bottom right, rgba(255, 212, 77, 0.2), rgba(var(--cream-500-rgb), 0.2));
+    border-color: rgba(255, 212, 77, 0.3);
   }
   
   /* Form Elements */
   .input {
-    @apply w-full px-4 py-3.5 rounded-lg focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 transition-all duration-300 min-h-[44px] text-base;
+    @apply w-full px-4 py-3.5 rounded-lg focus:outline-none focus:border-gold-500 focus:ring-2 transition-all duration-300 min-h-[44px] text-base;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
+  }
+
+  .input:focus {
+    --tw-ring-color: rgba(255, 212, 77, 0.2);
   }
 
   .input::placeholder {
@@ -256,9 +277,13 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .checkbox {
-    @apply w-6 h-6 rounded text-gold-500 focus:ring-gold-500/20 cursor-pointer;
+    @apply w-6 h-6 rounded text-gold-500 focus:ring-2 cursor-pointer;
     background: var(--bg-secondary);
     border-color: var(--border-color);
+  }
+
+  .checkbox:focus {
+    --tw-ring-color: rgba(255, 212, 77, 0.2);
   }
 
   .label {
@@ -272,11 +297,15 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .badge-gold {
-    @apply badge bg-gold-500/20 text-gold-300 border border-gold-500/30;
+    @apply badge text-gold-300 border;
+    background: rgba(255, 212, 77, 0.2);
+    border-color: rgba(255, 212, 77, 0.3);
   }
-  
+
   .badge-cream {
-    @apply badge bg-cream-500/20 text-cream-300 border border-cream-500/30;
+    @apply badge text-cream-300 border;
+    background: rgba(var(--cream-500-rgb), 0.2);
+    border-color: rgba(var(--cream-500-rgb), 0.3);
   }
   
   .badge-success {
@@ -308,7 +337,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .spinner {
-    @apply inline-block w-6 h-6 border-2 border-gold-500/20 border-t-gold-500 rounded-full animate-spin;
+    @apply inline-block w-6 h-6 border-2 border-t-gold-500 rounded-full animate-spin;
+    border-color: rgba(255, 212, 77, 0.2);
+    border-top-color: #FFD44D;
   }
   
   /* Dividers */
@@ -321,7 +352,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .divider::before {
-    @apply border-t border-cream-500/20;
+    @apply border-t;
+    border-color: rgba(var(--cream-500-rgb), 0.2);
   }
   
   /* Animations */
@@ -370,11 +402,12 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gold-500/50 rounded-full;
+    @apply rounded-full;
+    background: rgba(255, 212, 77, 0.5);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gold-500/70;
+    background: rgba(255, 212, 77, 0.7);
   }
 }
 
