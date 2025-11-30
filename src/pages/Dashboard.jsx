@@ -690,7 +690,7 @@ const Dashboard = () => {
 
   const subscribeToLeagueRankings = () => {
     // Subscribe to user's league rankings
-    if (profile?.leagues) {
+    if (profile?.leagueIds) {
       // Implementation for league rankings
     }
   };
