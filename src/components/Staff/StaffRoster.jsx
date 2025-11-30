@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Award, Trophy, DollarSign, Calendar, Target,
-  ChevronDown, Filter, Search, X, Link as LinkIcon
+  ChevronDown, Filter, Search, X, Link as LinkIcon, Heart, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
@@ -26,10 +26,12 @@ const StaffRoster = ({ userCorps = {} }) => {
   const {
     ownedStaff,
     loading,
+    corpsCoin,
     getUnassignedStaff,
     getStaffByCaption,
     assignStaffToCorps,
-    unassignStaff
+    unassignStaff,
+    boostStaffMorale
   } = useStaffMarketplace(user?.uid);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +40,9 @@ const StaffRoster = ({ userCorps = {} }) => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [boostingMorale, setBoostingMorale] = useState(false);
+
+  const STAFF_MORALE_BOOST_COST = 150;
 
   // Get list of user's registered corps classes in hierarchy order
   const availableCorpsClasses = Object.keys(userCorps).sort((a, b) => {
@@ -71,6 +76,24 @@ const StaffRoster = ({ userCorps = {} }) => {
       // Error handled in hook
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleBoostMorale = async () => {
+    if (!selectedStaff) return;
+
+    setBoostingMorale(true);
+    try {
+      await boostStaffMorale(selectedStaff.staffId);
+      // Update local state to reflect the morale boost
+      setSelectedStaff(prev => ({
+        ...prev,
+        morale: Math.min((prev.morale || 0.9) + 0.1, 1.0)
+      }));
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setBoostingMorale(false);
     }
   };
 
@@ -346,6 +369,60 @@ const StaffRoster = ({ userCorps = {} }) => {
                   </div>
                 </div>
 
+                {/* Staff Morale Section */}
+                <div className="p-4 bg-charcoal-900/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-pink-400" />
+                      <p className="text-cream-400 text-sm">Staff Morale</p>
+                    </div>
+                    <span className={`text-sm font-bold ${
+                      (selectedStaff.morale || 0.9) >= 0.8 ? 'text-green-400' :
+                      (selectedStaff.morale || 0.9) >= 0.6 ? 'text-yellow-400' :
+                      'text-red-400'
+                    }`}>
+                      {Math.round((selectedStaff.morale || 0.9) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-charcoal-700 rounded-full overflow-hidden mb-3">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        (selectedStaff.morale || 0.9) >= 0.8 ? 'bg-green-500' :
+                        (selectedStaff.morale || 0.9) >= 0.6 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                      style={{ width: `${(selectedStaff.morale || 0.9) * 100}%` }}
+                    />
+                  </div>
+                  {(selectedStaff.morale || 0.9) < 1.0 && (
+                    <button
+                      onClick={handleBoostMorale}
+                      disabled={boostingMorale || corpsCoin < STAFF_MORALE_BOOST_COST}
+                      className="w-full btn-outline text-pink-400 border-pink-500/30 hover:bg-pink-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {boostingMorale ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                          Boosting...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Boost Morale (+10%) - {STAFF_MORALE_BOOST_COST} CC
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {(selectedStaff.morale || 0.9) >= 1.0 && (
+                    <p className="text-xs text-green-400 text-center">Morale is at maximum!</p>
+                  )}
+                  {corpsCoin < STAFF_MORALE_BOOST_COST && (selectedStaff.morale || 0.9) < 1.0 && (
+                    <p className="text-xs text-cream-500/60 text-center mt-1">
+                      Need {STAFF_MORALE_BOOST_COST} CorpsCoin (have {corpsCoin})
+                    </p>
+                  )}
+                </div>
+
                 {selectedStaff.assignedTo ? (
                   <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
@@ -422,6 +499,10 @@ const StaffRoster = ({ userCorps = {} }) => {
 
 // Staff Roster Card Component
 const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) => {
+  const morale = staff.morale || 0.9;
+  const moraleColor = morale >= 0.8 ? 'text-green-400' : morale >= 0.6 ? 'text-yellow-400' : 'text-red-400';
+  const moraleBgColor = morale >= 0.8 ? 'bg-green-500' : morale >= 0.6 ? 'bg-yellow-500' : 'bg-red-500';
+
   return (
     <motion.div
       layout
@@ -445,7 +526,7 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-sm mb-2">
         <div className="flex items-center gap-1 text-cream-400">
           <Trophy className="w-4 h-4" />
           <span>{staff.seasonsCompleted || 0} seasons</span>
@@ -454,6 +535,18 @@ const StaffRosterCard = ({ staff, onClick, getCaptionColor, getCaptionLabel }) =
           <DollarSign className="w-4 h-4" />
           <span className="font-bold">{staff.currentValue || staff.baseValue || 0}</span>
         </div>
+      </div>
+
+      {/* Morale indicator */}
+      <div className="flex items-center gap-2 text-xs">
+        <Heart className={`w-3 h-3 ${moraleColor}`} />
+        <div className="flex-1 h-1.5 bg-charcoal-700 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${moraleBgColor}`}
+            style={{ width: `${morale * 100}%` }}
+          />
+        </div>
+        <span className={`font-medium ${moraleColor}`}>{Math.round(morale * 100)}%</span>
       </div>
 
       {staff.assignedTo && (

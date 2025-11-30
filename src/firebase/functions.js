@@ -20,6 +20,7 @@ export const saveLineup = httpsCallable(functions, 'saveLineup');
 export const selectUserShows = httpsCallable(functions, 'selectUserShows');
 export const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLineup');
 export const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
+export const getLineupAnalytics = httpsCallable(functions, 'getLineupAnalytics');
 
 // ========================================
 // ECONOMY
@@ -39,6 +40,7 @@ export const repairEquipment = httpsCallable(functions, 'repairEquipment');
 export const upgradeEquipment = httpsCallable(functions, 'upgradeEquipment');
 export const setShowDifficulty = httpsCallable(functions, 'setShowDifficulty');
 export const boostMorale = httpsCallable(functions, 'boostMorale');
+export const boostStaffMorale = httpsCallable(functions, 'boostStaffMorale');
 export const getExecutionStatus = httpsCallable(functions, 'getExecutionStatus');
 
 // ========================================
@@ -50,6 +52,7 @@ export const claimBattlePassReward = httpsCallable(functions, 'claimBattlePassRe
 export const getBattlePassProgress = httpsCallable(functions, 'getBattlePassProgress');
 export const getAvailableRewards = httpsCallable(functions, 'getAvailableRewards');
 export const awardXP = httpsCallable(functions, 'awardXP');
+export const dailyXPCheckIn = httpsCallable(functions, 'dailyXPCheckIn');
 
 // ========================================
 // CORPS MANAGEMENT
@@ -57,6 +60,7 @@ export const awardXP = httpsCallable(functions, 'awardXP');
 
 export const retireCorps = httpsCallable(functions, 'retireCorps');
 export const unretireCorps = httpsCallable(functions, 'unretireCorps');
+export const processCorpsDecisions = httpsCallable(functions, 'processCorpsDecisions');
 
 // ========================================
 // LEADERBOARDS
