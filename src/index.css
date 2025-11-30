@@ -376,6 +376,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gold-600;
   }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Custom Animations */
