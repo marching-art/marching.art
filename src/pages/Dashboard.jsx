@@ -299,9 +299,9 @@ const Dashboard = () => {
         activeCorpsClass={activeCorpsClass}
       />
 
-      {/* MY CORPS OVERVIEW - 2x2 Grid */}
-      <div className="glass-premium rounded-xl p-5">
-        <h2 className="text-lg font-semibold text-cream-100 mb-4">
+      {/* MY CORPS OVERVIEW - 2x2 Grid - Cream Card Style */}
+      <div className="card-cream p-5 transition-all duration-300">
+        <h2 className="text-lg font-oswald font-bold text-gold-600 uppercase tracking-wide mb-4">
           My Corps Overview
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -360,25 +360,25 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* TODAY'S BRIEFING Panel */}
-      <div className="glass-premium rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-cream-100 flex items-center gap-2">
+      {/* TODAY'S BRIEFING Panel - Cream Card with Hashmark Texture */}
+      <div className="card-cream hashmark-texture p-5 transition-all duration-300">
+        <div className="flex items-center justify-between mb-4 relative z-10">
+          <h2 className="text-lg font-oswald font-bold text-gold-600 uppercase tracking-wide flex items-center gap-2">
             <Target className="w-5 h-5 text-gold-500" />
             Today's Briefing
           </h2>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-cream-500/60">
+            <span className="text-sm font-montserrat font-medium text-brown-900/70">
               Day {currentWeek ? ((currentWeek - 1) * 7 + new Date().getDay() + 1) : '-'} of 70
             </span>
-            <div className="bg-gold-500 text-charcoal-900 px-3 py-1 rounded-lg text-sm font-bold">
+            <div className="bg-gold-500 text-brown-900 px-3 py-1 rounded-lg text-sm font-bold shadow-md">
               Captions Lock in: {weeksRemaining ? `${weeksRemaining}w` : '-'}
             </div>
           </div>
         </div>
 
         {/* Briefing Items */}
-        <div className="space-y-3">
+        <div className="space-y-3 relative z-10">
           {/* Urgent Action Item */}
           {canRehearseToday && canRehearseToday() && (
             <BriefingItem
@@ -389,6 +389,7 @@ const Dashboard = () => {
                 setActiveTab('daily');
                 rehearse();
               }}
+              isOnCream
             />
           )}
 
@@ -399,6 +400,7 @@ const Dashboard = () => {
               title={`REVIEW: ${recentScores.length} new score recap${recentScores.length > 1 ? 's' : ''} available`}
               description="Check your recent competition scores and recaps."
               linkTo="/scores"
+              isOnCream
             />
           )}
 
@@ -409,6 +411,7 @@ const Dashboard = () => {
               title="STRATEGY: Corps Readiness Below Target"
               description={`Current readiness at ${Math.round((executionState.readiness || 0.75) * 100)}%. Consider additional rehearsals.`}
               onAction={() => setActiveTab('daily')}
+              isOnCream
             />
           )}
 
@@ -419,6 +422,7 @@ const Dashboard = () => {
               title="STRATEGY: Hire More Staff"
               description="Your corps would benefit from additional staff members."
               linkTo="/staff"
+              isOnCream
             />
           )}
         </div>
@@ -725,18 +729,19 @@ const Dashboard = () => {
 
 /**
  * Corps Overview Card - Shows corps status in the 2x2 grid
+ * Updated for Cream Card styling with proper contrast
  */
 const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegister, isUnlocked, getCorpsClassName }) => {
   if (!isUnlocked) {
     return (
-      <div className="glass rounded-lg p-4 opacity-60">
+      <div className="bg-cream-200 rounded-lg p-4 opacity-60 border border-brown-900/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-cream-500/40" />
-            <span className="text-sm font-semibold text-cream-500/40 uppercase">{label}</span>
+            <Lock className="w-4 h-4 text-brown-900/40" />
+            <span className="text-sm font-oswald font-semibold text-brown-900/40 uppercase">{label}</span>
           </div>
         </div>
-        <p className="text-xs text-cream-500/40 mt-2">Unlock by gaining more XP</p>
+        <p className="text-xs text-brown-900/40 mt-2 font-montserrat">Unlock by gaining more XP</p>
       </div>
     );
   }
@@ -745,13 +750,13 @@ const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegi
     return (
       <button
         onClick={onRegister}
-        className="glass border-2 border-dashed border-cream-500/20 rounded-lg p-4 hover:border-gold-500/50 transition-all text-left w-full group"
+        className="bg-cream-200/50 border-2 border-dashed border-gold-500/40 rounded-lg p-4 hover:border-gold-500 hover:bg-cream-200 transition-all text-left w-full group"
       >
         <div className="flex items-center gap-2">
-          <Plus className="w-4 h-4 text-gold-500 group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-semibold text-cream-300 uppercase">{label}</span>
+          <Plus className="w-4 h-4 text-gold-600 group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-oswald font-semibold text-brown-900 uppercase">{label}</span>
         </div>
-        <p className="text-xs text-cream-500/60 mt-2">Click to register a corps</p>
+        <p className="text-xs text-brown-900/60 mt-2 font-montserrat">Click to register a corps</p>
       </button>
     );
   }
@@ -759,30 +764,30 @@ const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegi
   return (
     <button
       onClick={onSwitch}
-      className={`rounded-lg p-4 text-left w-full transition-all ${
+      className={`rounded-lg p-4 text-left w-full transition-all duration-200 ${
         isActive
-          ? 'bg-gold-500 shadow-lg'
-          : 'glass hover:bg-charcoal-800'
+          ? 'bg-gold-500 shadow-lg shadow-gold-500/30 scale-[1.02]'
+          : 'bg-cream-200/60 hover:bg-cream-200 border border-gold-500/20 hover:border-gold-500/50'
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {isActive && <CheckCircle className="w-4 h-4 text-charcoal-900" />}
-          <span className={`text-sm font-semibold uppercase ${isActive ? 'text-charcoal-900' : 'text-cream-300'}`}>
+          {isActive && <CheckCircle className="w-4 h-4 text-brown-900" />}
+          <span className={`text-sm font-oswald font-semibold uppercase ${isActive ? 'text-brown-900' : 'text-brown-900'}`}>
             {label}
           </span>
         </div>
         {corps.rank && (
-          <div className={`flex items-center gap-1 text-xs font-bold ${isActive ? 'text-charcoal-900' : 'text-gold-500'}`}>
+          <div className={`flex items-center gap-1 text-xs font-bold ${isActive ? 'text-brown-900' : 'text-gold-600'}`}>
             <Trophy className="w-3 h-3" />
             #{corps.rank}
           </div>
         )}
       </div>
-      <p className={`text-sm font-medium mt-1 truncate ${isActive ? 'text-charcoal-900' : 'text-cream-100'}`}>
+      <p className={`text-sm font-montserrat font-medium mt-1 truncate ${isActive ? 'text-brown-900' : 'text-brown-900'}`}>
         {corps.corpsName || corps.name}
       </p>
-      <p className={`text-xs mt-1 ${isActive ? 'text-charcoal-900/70' : 'text-cream-500/60'}`}>
+      <p className={`text-xs font-montserrat mt-1 ${isActive ? 'text-brown-900/70' : 'text-brown-900/60'}`}>
         {corps.totalSeasonScore?.toFixed(2) || '0.00'} pts
       </p>
     </button>
@@ -791,29 +796,32 @@ const CorpsOverviewCard = ({ classType, label, corps, isActive, onSwitch, onRegi
 
 /**
  * Briefing Item - Shows action/review/strategy items in Today's Briefing
+ * Updated for Cream Card styling with proper contrast
  */
-const BriefingItem = ({ type, title, description, onAction, linkTo }) => {
+const BriefingItem = ({ type, title, description, onAction, linkTo, isOnCream = false }) => {
+  // Styling adjusted for cream background
   const typeConfig = {
     action: {
       icon: AlertTriangle,
-      iconBg: 'bg-red-500/20',
-      iconColor: 'text-red-400',
-      borderColor: 'border-l-red-500',
-      bgColor: 'bg-red-500/10'
+      iconBg: 'bg-red-600/20',
+      iconColor: 'text-red-600',
+      borderColor: 'border-l-red-600',
+      bgColor: isOnCream ? 'bg-red-100' : 'bg-red-500/10',
+      urgent: true
     },
     review: {
       icon: Eye,
-      iconBg: 'bg-blue-500/20',
-      iconColor: 'text-blue-400',
-      borderColor: 'border-l-blue-500',
-      bgColor: 'bg-blue-500/10'
+      iconBg: 'bg-blue-600/20',
+      iconColor: 'text-blue-700',
+      borderColor: 'border-l-blue-600',
+      bgColor: isOnCream ? 'bg-blue-100' : 'bg-blue-500/10'
     },
     strategy: {
       icon: Lightbulb,
       iconBg: 'bg-amber-500/20',
-      iconColor: 'text-amber-400',
+      iconColor: 'text-amber-700',
       borderColor: 'border-l-amber-500',
-      bgColor: 'bg-amber-500/10'
+      bgColor: isOnCream ? 'bg-amber-100' : 'bg-amber-500/10'
     }
   };
 
@@ -821,17 +829,17 @@ const BriefingItem = ({ type, title, description, onAction, linkTo }) => {
   const Icon = config.icon;
 
   const content = (
-    <div className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${config.borderColor} ${config.bgColor} hover:bg-charcoal-800/50 transition-all cursor-pointer`}>
+    <div className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${config.borderColor} ${config.bgColor} hover:brightness-95 transition-all cursor-pointer ${config.urgent ? 'task-urgent-glow' : ''}`}>
       <div className={`p-2 rounded-lg ${config.iconBg}`}>
         <Icon className={`w-4 h-4 ${config.iconColor}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-cream-100">{title}</p>
-        <p className="text-xs text-cream-500/60 mt-0.5">{description}</p>
+        <p className={`text-sm font-oswald font-semibold ${isOnCream ? 'text-brown-900' : 'text-cream-100'}`}>{title}</p>
+        <p className={`text-xs font-montserrat mt-0.5 ${isOnCream ? 'text-brown-900/60' : 'text-cream-500/60'}`}>{description}</p>
       </div>
       <div className="flex items-center gap-2">
-        <Square className="w-4 h-4 text-cream-500/30" />
-        <ChevronRight className="w-4 h-4 text-cream-500/40" />
+        <Square className={`w-4 h-4 ${isOnCream ? 'text-brown-900/30' : 'text-cream-500/30'}`} />
+        <ChevronRight className={`w-4 h-4 ${isOnCream ? 'text-brown-900/40' : 'text-cream-500/40'}`} />
       </div>
     </div>
   );

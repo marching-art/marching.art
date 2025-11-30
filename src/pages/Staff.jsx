@@ -22,14 +22,20 @@ const Staff = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="card-cream p-4">
+        <h1 className="text-2xl font-oswald font-bold text-gold-600 uppercase tracking-wide">Staff Market</h1>
+        <p className="text-sm font-montserrat text-brown-900/70 mt-1">Hire, manage, and trade staff members for your corps</p>
+      </div>
+
       {/* Tab Navigation */}
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('marketplace')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-oswald font-semibold text-sm md:text-base ${
             activeTab === 'marketplace'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-brown-900 shadow-lg'
+              : 'bg-cream-100 border border-gold-500/40 text-brown-900 hover:border-gold-500'
           }`}
         >
           <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
@@ -37,10 +43,10 @@ const Staff = () => {
         </button>
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-oswald font-semibold text-sm md:text-base ${
             activeTab === 'roster'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-brown-900 shadow-lg'
+              : 'bg-cream-100 border border-gold-500/40 text-brown-900 hover:border-gold-500'
           }`}
         >
           <Users className="w-4 h-4 md:w-5 md:h-5" />
@@ -48,10 +54,10 @@ const Staff = () => {
         </button>
         <button
           onClick={() => setActiveTab('auctions')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-oswald font-semibold text-sm md:text-base ${
             activeTab === 'auctions'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-brown-900 shadow-lg'
+              : 'bg-cream-100 border border-gold-500/40 text-brown-900 hover:border-gold-500'
           }`}
         >
           <Gavel className="w-4 h-4 md:w-5 md:h-5" />

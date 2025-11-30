@@ -7,7 +7,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Classic Prestige Theme - Dark Brown, Cream, Gold, Black
+        // Classic Prestige Theme - Deep Brown, Cream, Gold, Black
+        brown: {
+          900: '#2A1B12', // Deep leather background
+          800: '#3D2B1F', // Lighter brown for hover states/borders
+          700: '#4A3525', // Even lighter brown accent
+        },
         forest: {
           800: '#1A1512', // Slightly lighter (hover states)
           900: '#0D0A08', // Deepest background (almost black brown)

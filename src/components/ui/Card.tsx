@@ -5,7 +5,7 @@ import { motion, HTMLMotionProps } from 'framer-motion';
 // CARD COMPONENT
 // =============================================================================
 
-export type CardVariant = 'default' | 'glass' | 'glass-dark' | 'premium' | 'outlined';
+export type CardVariant = 'default' | 'glass' | 'glass-dark' | 'premium' | 'outlined' | 'cream' | 'cream-outlined' | 'prestige';
 
 export interface CardProps extends HTMLMotionProps<'div'> {
   variant?: CardVariant;
@@ -21,6 +21,10 @@ const variantStyles: Record<CardVariant, string> = {
   'glass-dark': 'glass-dark',
   premium: 'bg-gradient-to-br from-gold-900/20 to-cream-900/10 border border-gold-700/30',
   outlined: 'bg-transparent border border-cream-800',
+  // Classic Prestige Theme Variants
+  cream: 'bg-cream-100 border border-gold-500 shadow-gold-deep',
+  'cream-outlined': 'bg-cream-100/50 border-2 border-dashed border-gold-500/40',
+  prestige: 'bg-brown-900/85 backdrop-blur-lg border border-gold-500/20',
 };
 
 const paddingStyles: Record<string, string> = {
@@ -43,9 +47,16 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     },
     ref
   ) => {
+    // Different hover effects for cream vs dark variants
+    const isCreamVariant = variant === 'cream' || variant === 'cream-outlined';
     const hoverAnimation = hoverable
       ? {
-          whileHover: { y: -4, boxShadow: '0 0 20px rgba(255, 212, 77, 0.3)' },
+          whileHover: {
+            y: -4,
+            boxShadow: isCreamVariant
+              ? '0 14px 20px -4px rgba(74, 63, 16, 0.5), 0 6px 8px -2px rgba(74, 63, 16, 0.25)'
+              : '0 0 20px rgba(255, 212, 77, 0.3)'
+          },
           transition: { duration: 0.2 },
         }
       : {};
@@ -89,10 +100,12 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   subtitle?: string;
   action?: React.ReactNode;
   icon?: React.ReactNode;
+  variant?: 'dark' | 'cream';
 }
 
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
-  ({ title, subtitle, action, icon, className = '', ...props }, ref) => {
+  ({ title, subtitle, action, icon, variant = 'dark', className = '', ...props }, ref) => {
+    const isCream = variant === 'cream';
     return (
       <div
         ref={ref}
@@ -106,9 +119,13 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
             </div>
           )}
           <div>
-            <h3 className="text-lg font-display font-bold text-cream-100">{title}</h3>
+            <h3 className={`text-lg font-oswald font-bold uppercase tracking-wide ${isCream ? 'text-gold-600' : 'text-cream-100'}`}>
+              {title}
+            </h3>
             {subtitle && (
-              <p className="text-sm text-cream-500/70">{subtitle}</p>
+              <p className={`text-sm font-montserrat ${isCream ? 'text-brown-900/70' : 'text-cream-500/70'}`}>
+                {subtitle}
+              </p>
             )}
           </div>
         </div>

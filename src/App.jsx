@@ -102,7 +102,7 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-gradient-main">
+    <div className="min-h-screen bg-prestige-gradient stadium-lights">
       {/* Desktop Navigation */}
       <div className="hidden lg:block">
         <Navigation />
@@ -110,14 +110,14 @@ const Layout = ({ children }) => {
 
       {/* Mobile Navigation */}
       <div className="lg:hidden">
-        <MobileNav 
-          isOpen={mobileMenuOpen} 
-          setIsOpen={setMobileMenuOpen} 
+        <MobileNav
+          isOpen={mobileMenuOpen}
+          setIsOpen={setMobileMenuOpen}
         />
       </div>
 
       {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
+      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0 relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -139,7 +139,7 @@ const Layout = ({ children }) => {
       <BottomNav />
 
       {/* Footer */}
-      <footer className="lg:ml-64 mt-auto mb-20 lg:mb-0">
+      <footer className="lg:ml-64 mt-auto mb-20 lg:mb-0 relative z-10">
         <div className="container-responsive py-8 border-t border-gold-400/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-cream-200/60 text-sm">
