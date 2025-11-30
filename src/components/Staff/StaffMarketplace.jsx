@@ -115,13 +115,15 @@ const StaffMarketplace = () => {
     getFilteredStaff,
     getPaginatedStaff,
     ownsStaff,
-    canAfford
+    canAfford,
+    refreshMarketplace
   } = useStaffMarketplace(user?.uid);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [captionFilter, setCaptionFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Memoized filtered and sorted staff - only recalculates when dependencies change
   const filteredStaff = useMemo(() => {
