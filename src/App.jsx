@@ -17,10 +17,9 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
-const Profile = lazy(() => import('./pages/ProfileNew'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
@@ -264,11 +263,8 @@ function App() {
           {/* Redirect old /hub route to /leagues */}
           <Route path="/hub" element={<Navigate to="/leagues" replace />} />
           
-          <Route path="/leaderboard" element={
-            <Layout>
-              <Leaderboard />
-            </Layout>
-          } />
+          {/* Redirect old /leaderboard route to /scores */}
+          <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
           
           <Route path="/schedule" element={
             <ProtectedRoute>

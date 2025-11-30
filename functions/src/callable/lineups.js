@@ -97,6 +97,9 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
         const currentWeek = Math.ceil(currentDay / 7);
 
         let tradeLimit = 3; // Default
+        // Allow unlimited trades for initial lineup setup (no existing lineup)
+        const isInitialSetup = Object.keys(originalLineup).length === 0;
+        if (isInitialSetup) tradeLimit = Infinity;
         if (seasonData.status === "off-season" && currentWeek === 1) tradeLimit = Infinity;
         if (seasonData.status === "live-season" && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
 

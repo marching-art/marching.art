@@ -86,7 +86,8 @@ const SHOW_DIFFICULTY_PRESETS = {
 };
 
 /**
- * Daily Rehearsal - Improve section readiness
+ * Daily Rehearsal - Improve corps readiness
+ * Full corps rehearsal improves overall readiness
  * Costs: Morale, Equipment wear
  * Gains: Readiness, XP
  */
@@ -95,16 +96,11 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { corpsClass, section } = request.data;
+  const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  if (!corpsClass || !section) {
-    throw new HttpsError("invalid-argument", "Corps class and section required.");
-  }
-
-  const validSections = ['brass', 'percussion', 'guard', 'ensemble'];
-  if (!validSections.includes(section)) {
-    throw new HttpsError("invalid-argument", "Invalid section.");
+  if (!corpsClass) {
+    throw new HttpsError("invalid-argument", "Corps class required.");
   }
 
   const db = getDb();
@@ -135,68 +131,89 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
 
       const execution = profileData.corps[corpsClass].execution;
 
-      // Check cooldown
-      const lastRehearsal = execution.lastRehearsalDay || 0;
-      const currentDay = profileData.currentDay || 1;
+      // Check cooldown - use lastRehearsalDate for better tracking
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      if (currentDay === lastRehearsal) {
-        throw new HttpsError("failed-precondition",
-          "You've already rehearsed today. Come back tomorrow!");
+      if (execution.lastRehearsalDate) {
+        const lastRehearsalValue = execution.lastRehearsalDate;
+        const lastRehearsal = lastRehearsalValue?.toDate
+          ? lastRehearsalValue.toDate()
+          : new Date(lastRehearsalValue);
+        const lastRehearsalDay = new Date(lastRehearsal.getFullYear(), lastRehearsal.getMonth(), lastRehearsal.getDate());
+
+        if (lastRehearsalDay.getTime() === today.getTime()) {
+          throw new HttpsError("failed-precondition",
+            "You've already rehearsed today. Come back tomorrow!");
+        }
       }
 
-      // Calculate improvements
-      const currentReadiness = execution.readiness[section] || 0.75;
+      // Full corps rehearsal - improve overall readiness
+      const currentReadiness = typeof execution.readiness === 'number'
+        ? execution.readiness
+        : (execution.readiness?.overall || 0.75);
       const newReadiness = Math.min(
         currentReadiness + REHEARSAL_CONFIG.readinessGain,
         REHEARSAL_CONFIG.maxReadiness
       );
 
-      const currentMorale = execution.morale[section] || 0.80;
+      const currentMorale = typeof execution.morale === 'number'
+        ? execution.morale
+        : (execution.morale?.overall || 0.80);
       const newMorale = Math.max(0.50, currentMorale - REHEARSAL_CONFIG.moraleCost);
 
-      // Equipment wear (affects relevant equipment)
-      const equipmentMap = {
-        brass: 'instruments',
-        percussion: 'instruments',
-        guard: 'uniforms'
-      };
-      const equipmentType = equipmentMap[section] || 'instruments';
-      const currentEquipment = execution.equipment[equipmentType] || 0.90;
+      // Equipment wear (spread across all equipment)
+      const currentEquipment = execution.equipment?.instruments || execution.equipment || 0.90;
       const newEquipment = Math.max(0.50, currentEquipment - REHEARSAL_CONFIG.equipmentWear);
+
+      // Track weekly rehearsals
+      const currentWeek = Math.ceil((profileData.currentDay || 1) / 7);
+      const lastRehearsalWeek = execution.lastRehearsalWeek || 0;
+      const rehearsalsThisWeek = lastRehearsalWeek === currentWeek
+        ? (execution.rehearsalsThisWeek || 0) + 1
+        : 1;
+
+      // Bonus XP for perfect week (7 rehearsals)
+      let bonusXp = 0;
+      let bonusMessage = null;
+      if (rehearsalsThisWeek === 7) {
+        bonusXp = 50;
+        bonusMessage = "Perfect week! +50 bonus XP";
+      }
 
       // Update execution state
       const updates = {
-        [`corps.${corpsClass}.execution.readiness.${section}`]: newReadiness,
-        [`corps.${corpsClass}.execution.morale.${section}`]: newMorale,
-        [`corps.${corpsClass}.execution.equipment.${equipmentType}`]: newEquipment,
-        [`corps.${corpsClass}.execution.lastRehearsalDay`]: currentDay,
+        [`corps.${corpsClass}.execution.readiness`]: newReadiness,
+        [`corps.${corpsClass}.execution.morale`]: newMorale,
+        [`corps.${corpsClass}.execution.equipment`]: typeof execution.equipment === 'object'
+          ? { ...execution.equipment, instruments: newEquipment }
+          : newEquipment,
+        [`corps.${corpsClass}.execution.lastRehearsalDate`]: admin.firestore.FieldValue.serverTimestamp(),
+        [`corps.${corpsClass}.execution.lastRehearsalWeek`]: currentWeek,
+        [`corps.${corpsClass}.execution.rehearsalsThisWeek`]: rehearsalsThisWeek,
         [`corps.${corpsClass}.execution.rehearsalStreak`]: admin.firestore.FieldValue.increment(1),
       };
 
-      // Award XP (battle pass integration)
+      // Award XP
+      const totalXp = REHEARSAL_CONFIG.xpGain + bonusXp;
       if (profileData.battlePass?.currentSeason) {
-        updates[`battlePass.xp`] = admin.firestore.FieldValue.increment(REHEARSAL_CONFIG.xpGain);
+        updates[`battlePass.xp`] = admin.firestore.FieldValue.increment(totalXp);
       }
 
       transaction.update(profileRef, updates);
 
       return {
         initialized: false,
-        readiness: {
-          before: currentReadiness,
-          after: newReadiness,
-          gain: newReadiness - currentReadiness,
-        },
+        oldReadiness: currentReadiness,
+        newReadiness: newReadiness,
+        readinessGain: newReadiness - currentReadiness,
         morale: {
           before: currentMorale,
           after: newMorale,
         },
-        equipment: {
-          type: equipmentType,
-          before: currentEquipment,
-          after: newEquipment,
-        },
-        xpGained: REHEARSAL_CONFIG.xpGain,
+        rehearsalsThisWeek,
+        xpGained: totalXp,
+        bonusMessage,
       };
     });
 
@@ -204,14 +221,20 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
       return {
         success: true,
         message: result.message,
+        xpGained: 0,
+        newReadiness: 0.75,
       };
     }
 
-    logger.info(`User ${uid} rehearsed ${section} for ${corpsClass}`);
+    logger.info(`User ${uid} completed daily rehearsal for ${corpsClass}`);
     return {
       success: true,
-      message: `${section} rehearsal complete!`,
-      results: result,
+      message: "Rehearsal complete!",
+      xpGained: result.xpGained,
+      newReadiness: result.newReadiness,
+      readinessGain: result.readinessGain,
+      rehearsalsThisWeek: result.rehearsalsThisWeek,
+      bonusMessage: result.bonusMessage,
     };
   } catch (error) {
     logger.error(`Error during rehearsal for user ${uid}:`, error);
@@ -511,7 +534,7 @@ const getExecutionStatus = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Boost Morale - Spend CorpsCoin to improve morale
+ * Boost Morale - Spend CorpsCoin to improve corps morale
  * Used when morale drops from excessive rehearsals
  */
 const boostMorale = onCall({ cors: true }, async (request) => {
@@ -519,16 +542,11 @@ const boostMorale = onCall({ cors: true }, async (request) => {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { corpsClass, section } = request.data;
+  const { corpsClass } = request.data;
   const uid = request.auth.uid;
 
-  if (!corpsClass || !section) {
-    throw new HttpsError("invalid-argument", "Corps class and section required.");
-  }
-
-  const validSections = ['brass', 'percussion', 'guard', 'overall'];
-  if (!validSections.includes(section)) {
-    throw new HttpsError("invalid-argument", "Invalid section.");
+  if (!corpsClass) {
+    throw new HttpsError("invalid-argument", "Corps class required.");
   }
 
   const MORALE_BOOST_COST = 100; // CorpsCoin
@@ -551,7 +569,13 @@ const boostMorale = onCall({ cors: true }, async (request) => {
       }
 
       const execution = profileData.corps[corpsClass].execution;
-      const currentMorale = execution.morale[section] || 0.80;
+      const currentMorale = typeof execution.morale === 'number'
+        ? execution.morale
+        : (execution.morale?.overall || 0.80);
+
+      if (currentMorale >= 1.00) {
+        throw new HttpsError("failed-precondition", "Morale is already at maximum.");
+      }
 
       // Check CorpsCoin balance
       const currentCoin = profileData.corpsCoin || 0;
@@ -565,22 +589,22 @@ const boostMorale = onCall({ cors: true }, async (request) => {
 
       transaction.update(profileRef, {
         corpsCoin: currentCoin - MORALE_BOOST_COST,
-        [`corps.${corpsClass}.execution.morale.${section}`]: newMorale,
+        [`corps.${corpsClass}.execution.morale`]: newMorale,
       });
 
       return {
-        section,
         before: currentMorale,
         after: newMorale,
         cost: MORALE_BOOST_COST,
       };
     });
 
-    logger.info(`User ${uid} boosted morale for ${section} in ${corpsClass}`);
+    logger.info(`User ${uid} boosted morale for ${corpsClass}`);
     return {
       success: true,
-      message: `${section} morale boosted!`,
-      results: result,
+      message: "Corps morale boosted!",
+      newMorale: result.after,
+      cost: result.cost,
     };
   } catch (error) {
     logger.error(`Error boosting morale for user ${uid}:`, error);
