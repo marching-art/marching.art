@@ -1,35 +1,32 @@
 // src/hooks/useStaffMarketplace.js
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
-// Module-level cache for marketplace data
+// Cache configuration
+const CACHE_STALE_TIME = 5 * 60 * 1000; // 5 minutes
+
+// Module-level cache to persist across component remounts
 let marketplaceCache = {
   data: null,
   timestamp: null,
-  promise: null, // For request deduplication
-};
-
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-const isCacheValid = () => {
-  return (
-    marketplaceCache.data &&
-    marketplaceCache.timestamp &&
-    Date.now() - marketplaceCache.timestamp < CACHE_DURATION
-  );
+  promise: null, // For deduplicating concurrent requests
 };
 
 export const useStaffMarketplace = (userId) => {
   const [allStaff, setAllStaff] = useState(marketplaceCache.data || []);
   const [ownedStaff, setOwnedStaff] = useState([]);
-  const [loading, setLoading] = useState(!isCacheValid());
+  const [loading, setLoading] = useState(!marketplaceCache.data);
   const [purchasing, setPurchasing] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [corpsCoin, setCorpsCoin] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
   const mountedRef = useRef(true);
+
+  const ITEMS_PER_PAGE = 12;
 
   // Subscribe to user profile for owned staff and CorpsCoin balance
   useEffect(() => {
@@ -40,14 +37,10 @@ export const useStaffMarketplace = (userId) => {
 
     const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
     const unsubscribe = onSnapshot(profileRef, (doc) => {
-      if (doc.exists()) {
+      if (doc.exists() && mountedRef.current) {
         const data = doc.data();
         setOwnedStaff(data.staff || []);
         setCorpsCoin(data.corpsCoin || 0);
-      }
-      // Only stop initial loading if we have marketplace data cached
-      if (isCacheValid()) {
-        setLoading(false);
       }
     });
 
@@ -62,16 +55,22 @@ export const useStaffMarketplace = (userId) => {
     };
   }, []);
 
-  // Fetch all marketplace staff once on mount (with caching & deduplication)
-  const fetchAllMarketplace = useCallback(async (forceRefresh = false) => {
+  // Check if cache is stale
+  const isCacheStale = useCallback(() => {
+    if (!marketplaceCache.timestamp) return true;
+    return Date.now() - marketplaceCache.timestamp > CACHE_STALE_TIME;
+  }, []);
+
+  // Fetch all marketplace staff (cached)
+  const fetchMarketplace = useCallback(async (forceRefresh = false) => {
     // Return cached data if valid and not forcing refresh
-    if (!forceRefresh && isCacheValid()) {
+    if (!forceRefresh && marketplaceCache.data && !isCacheStale()) {
       setAllStaff(marketplaceCache.data);
       setLoading(false);
       return marketplaceCache.data;
     }
 
-    // Request deduplication - reuse in-flight request
+    // If there's already a request in flight, wait for it
     if (marketplaceCache.promise) {
       try {
         const result = await marketplaceCache.promise;
@@ -81,30 +80,35 @@ export const useStaffMarketplace = (userId) => {
         }
         return result;
       } catch (error) {
-        // Fall through to make a new request
+        // Let subsequent request handle the error
       }
     }
 
     try {
       setLoading(true);
 
-      // Create and store the promise for deduplication
-      const getMarketplace = httpsCallable(functions, 'getStaffMarketplace');
-      marketplaceCache.promise = getMarketplace({}).then(result => {
-        const staffData = result.data.staff || [];
-        // Update cache
-        marketplaceCache.data = staffData;
-        marketplaceCache.timestamp = Date.now();
-        marketplaceCache.promise = null;
-        return staffData;
-      });
+      // Create and store the promise to deduplicate concurrent requests
+      const fetchPromise = (async () => {
+        const getMarketplace = httpsCallable(functions, 'getStaffMarketplace');
+        // Fetch ALL available staff without caption filter for client-side filtering
+        const result = await getMarketplace({ caption: null });
+        return result.data.staff || [];
+      })();
 
-      const staffData = await marketplaceCache.promise;
+      marketplaceCache.promise = fetchPromise;
+      const staffList = await fetchPromise;
+
+      // Update cache
+      marketplaceCache.data = staffList;
+      marketplaceCache.timestamp = Date.now();
+      marketplaceCache.promise = null;
 
       if (mountedRef.current) {
-        setAllStaff(staffData);
+        setAllStaff(staffList);
+        setPage(1);
       }
-      return staffData;
+
+      return staffList;
     } catch (error) {
       console.error('Error fetching marketplace:', error);
       marketplaceCache.promise = null;
@@ -117,20 +121,74 @@ export const useStaffMarketplace = (userId) => {
         setLoading(false);
       }
     }
-  }, []);
+  }, [isCacheStale]);
 
   // Initial fetch on mount
   useEffect(() => {
-    fetchAllMarketplace();
-  }, [fetchAllMarketplace]);
+    fetchMarketplace();
+  }, [fetchMarketplace]);
 
-  // Memoized filter function for caption filtering (client-side)
-  const getFilteredByCaption = useCallback((captionFilter) => {
-    if (!captionFilter || captionFilter === 'all') {
-      return allStaff;
+  // Filter and sort staff (memoized)
+  const getFilteredStaff = useCallback((captionFilter = 'all', searchTerm = '', sortBy = 'newest') => {
+    let filtered = [...allStaff];
+
+    // Apply caption filter
+    if (captionFilter && captionFilter !== 'all') {
+      filtered = filtered.filter(staff => staff.caption === captionFilter);
     }
-    return allStaff.filter(staff => staff.caption === captionFilter);
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(staff =>
+        staff.name.toLowerCase().includes(searchLower) ||
+        staff.biography?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return b.yearInducted - a.yearInducted;
+        case 'oldest':
+          return a.yearInducted - b.yearInducted;
+        case 'cheapest':
+          return a.baseValue - b.baseValue;
+        case 'expensive':
+          return b.baseValue - a.baseValue;
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
   }, [allStaff]);
+
+  // Get paginated staff with load more support
+  const getPaginatedStaff = useCallback((filteredStaff, currentPage) => {
+    const totalItems = filteredStaff.length;
+    const endIndex = currentPage * ITEMS_PER_PAGE;
+    const paginatedItems = filteredStaff.slice(0, endIndex);
+    const hasMoreItems = endIndex < totalItems;
+
+    return {
+      items: paginatedItems,
+      hasMore: hasMoreItems,
+      totalCount: totalItems,
+      loadedCount: paginatedItems.length,
+    };
+  }, []);
+
+  // Load more items
+  const loadMore = useCallback(() => {
+    setPage(prev => prev + 1);
+  }, []);
+
+  // Reset pagination (call when filters change)
+  const resetPagination = useCallback(() => {
+    setPage(1);
+  }, []);
 
   // Purchase staff member
   const purchaseStaff = useCallback(async (staffId) => {
@@ -147,10 +205,9 @@ export const useStaffMarketplace = (userId) => {
         { duration: 4000 }
       );
 
-      // Invalidate cache and refresh marketplace
-      marketplaceCache.data = null;
+      // Invalidate cache to refresh marketplace
       marketplaceCache.timestamp = null;
-      await fetchAllMarketplace(true);
+      await fetchMarketplace(true);
 
       return result.data;
     } catch (error) {
@@ -161,7 +218,7 @@ export const useStaffMarketplace = (userId) => {
     } finally {
       setPurchasing(false);
     }
-  }, [fetchAllMarketplace]);
+  }, [fetchMarketplace]);
 
   // Assign staff to corps caption
   const assignStaffToCorps = useCallback(async (staffId, corpsClass, caption) => {
@@ -205,7 +262,7 @@ export const useStaffMarketplace = (userId) => {
     }
   }, []);
 
-  // Check if user owns a staff member (memoized)
+  // Check if user owns a staff member
   const ownsStaff = useCallback((staffId) => {
     return ownedStaff.some(s => s.staffId === staffId);
   }, [ownedStaff]);
@@ -237,29 +294,47 @@ export const useStaffMarketplace = (userId) => {
     return corpsCoin >= cost;
   }, [corpsCoin]);
 
-  // Force refresh function for manual cache invalidation
-  const refreshMarketplace = useCallback(() => {
-    return fetchAllMarketplace(true);
-  }, [fetchAllMarketplace]);
+  // Invalidate cache (useful for manual refresh)
+  const invalidateCache = useCallback(() => {
+    marketplaceCache.data = null;
+    marketplaceCache.timestamp = null;
+    marketplaceCache.promise = null;
+  }, []);
 
   return {
-    marketplace: allStaff, // Full list for backward compatibility
+    // Data
+    allStaff,
     ownedStaff,
     corpsCoin,
+
+    // Loading states
     loading,
     purchasing,
     assigning,
-    fetchMarketplace: fetchAllMarketplace, // Keep old name for compatibility
-    getFilteredByCaption, // New: efficient client-side filtering
+
+    // Pagination
+    page,
+    hasMore,
+    loadMore,
+    resetPagination,
+
+    // Actions
+    fetchMarketplace,
     purchaseStaff,
     assignStaffToCorps,
     unassignStaff,
+    invalidateCache,
+
+    // Filtering/sorting helpers
+    getFilteredStaff,
+    getPaginatedStaff,
+
+    // Query helpers
     ownsStaff,
     getStaffDetails,
     getAssignedStaff,
     getUnassignedStaff,
     getStaffByCaption,
     canAfford,
-    refreshMarketplace, // New: manual refresh
   };
 };
