@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
   { value: 'all', label: 'All Captions', color: 'bg-gray-500' },

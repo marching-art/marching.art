@@ -19,6 +19,7 @@ import {
   where
 } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
   { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500' },
@@ -414,7 +415,8 @@ const StaffManagement = () => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <Portal>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -559,6 +561,7 @@ const StaffManagement = () => {
               </form>
             </motion.div>
           </div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>

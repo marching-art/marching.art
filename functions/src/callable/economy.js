@@ -156,6 +156,8 @@ const purchaseStaff = onCall({ cors: true }, async (request) => {
         name: staffData.name,
         caption: staffData.caption,
         yearInducted: staffData.yearInducted,
+        biography: staffData.biography || '',
+        baseValue: cost,
         purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
         seasonsCompleted: 0,
         currentValue: cost,

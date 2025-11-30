@@ -2,17 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield, ShoppingCart, Crown, Archive, BarChart3
+  Star, Shield, ShoppingCart, Crown,
+  Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../App';
+import { useTheme } from '../context/ThemeContext';
 import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const Navigation = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [profile, setProfile] = useState(null);
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
@@ -80,14 +83,7 @@ const Navigation = () => {
         },
         {
           path: '/scores',
-          label: 'Scores',
-          icon: Music,
-          badge: null,
-          premium: false
-        },
-        {
-          path: '/leaderboard',
-          label: 'Leaderboard',
+          label: 'Scores & Rankings',
           icon: Trophy,
           badge: null,
           premium: false
@@ -185,7 +181,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} bg-charcoal-950/95 backdrop-blur-lg border-r border-cream-500/10 transition-all duration-300 z-40`}>
+    <nav className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`} style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color-light)' }}>
       <div className="flex flex-col h-full">
         {/* Logo Section */}
         <div className="p-6 border-b border-cream-500/10">
@@ -310,7 +306,31 @@ const Navigation = () => {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-cream-500/10">
+        <div className="p-4 border-t border-cream-500/10 space-y-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+              text-cream-300 hover:bg-gold-500/10 hover:text-gold-500
+              transition-all duration-300
+              ${collapsed ? 'justify-center' : ''}
+            `}
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+            {!collapsed && (
+              <span className="font-medium">
+                {isDark ? 'Light Mode' : 'Dark Mode'}
+              </span>
+            )}
+          </button>
+
+          {/* Sign Out */}
           <button
             onClick={handleSignOut}
             className={`

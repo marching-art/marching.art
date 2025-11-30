@@ -5,6 +5,7 @@ import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 // Compact trend badge for displaying in selection
 const TrendBadge = ({ trend, momentum }) => {
@@ -200,21 +201,22 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-6xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -520,9 +522,10 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
               )}
             </button>
           </div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 

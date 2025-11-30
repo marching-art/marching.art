@@ -3,15 +3,17 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Trophy, Calendar, Music, User, Settings, LogOut,
+  Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown, Archive, BarChart3
+  ShoppingCart, Crown, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../App';
+import { useTheme } from '../context/ThemeContext';
 
 const MobileNav = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { toggleTheme, isDark } = useTheme();
 
   // Close menu on route change
   useEffect(() => {
@@ -37,8 +39,7 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
       items: [
         { path: '/dashboard', label: 'Dashboard', icon: Home },
         { path: '/schedule', label: 'Schedule', icon: Calendar },
-        { path: '/scores', label: 'Scores', icon: Music },
-        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy }
+        { path: '/scores', label: 'Scores & Rankings', icon: Trophy }
       ]
     },
     {
@@ -96,12 +97,12 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
   return (
     <>
       {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-charcoal-950/95 backdrop-blur-lg border-b border-cream-500/10 z-40 lg:hidden">
+      <header className="fixed top-0 left-0 right-0 h-16 backdrop-blur-lg z-40 lg:hidden" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color-light)' }}>
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-gold rounded-lg flex items-center justify-center">
-              <Music className="w-5 h-5 text-charcoal-900" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-lg font-display font-bold text-gradient">
               marching.art
@@ -156,7 +157,8 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
               animate="open"
               exit="closed"
               variants={menuVariants}
-              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-charcoal-950/95 backdrop-blur-lg border-l border-cream-500/10 z-50 lg:hidden overflow-y-auto"
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] backdrop-blur-lg z-50 lg:hidden overflow-y-auto"
+              style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-color-light)' }}
             >
               <div className="flex flex-col h-full">
                 {/* Menu Header */}
@@ -231,7 +233,22 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="p-6 border-t border-cream-500/10">
+                <div className="p-6 border-t border-cream-500/10 space-y-3">
+                  {/* Theme Toggle */}
+                  <button
+                    onClick={toggleTheme}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gold-500/10 text-gold-500 hover:bg-gold-500/20 transition-all duration-300"
+                  >
+                    {isDark ? (
+                      <Sun className="w-5 h-5" />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">
+                      {isDark ? 'Light Mode' : 'Dark Mode'}
+                    </span>
+                  </button>
+
                   {user ? (
                     <button
                       onClick={signOut}

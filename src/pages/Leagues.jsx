@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot, orderBy, limit as firestoreLimit, getDoc } from 'firebase/firestore';
 import {
   createLeague,
   joinLeague,
@@ -21,6 +21,7 @@ import {
   postLeagueMessage
 } from '../firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../components/Portal';
 
 const Leagues = () => {
   const { user } = useAuth();
@@ -174,18 +175,18 @@ const Leagues = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl" />
         <div className="relative p-8 glass rounded-2xl">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-display font-bold text-gradient mb-2">
+              <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
                 Fantasy Leagues
               </h1>
-              <p className="text-cream-300">
+              <p className="text-cream-300 text-sm sm:text-base">
                 Compete head-to-head with other directors in weekly matchups
               </p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Create League
@@ -198,25 +199,27 @@ const Leagues = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('my-leagues')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'my-leagues'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <Trophy className="w-5 h-5" />
-          My Leagues ({myLeagues.length})
+          <Trophy className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">My Leagues</span>
+          <span className="sm:hidden">My</span>
+          <span className="text-xs md:text-sm">({myLeagues.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('discover')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-semibold ${
+          className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'discover'
               ? 'bg-gold-500 text-charcoal-900'
               : 'glass text-cream-300 hover:text-cream-100'
           }`}
         >
-          <Search className="w-5 h-5" />
-          Discover Leagues
+          <Search className="w-4 h-4 md:w-5 md:h-5" />
+          Discover
         </button>
       </div>
 
@@ -586,6 +589,35 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
 
 // Standings Tab
 const StandingsTab = ({ league, standings }) => {
+  const [memberProfiles, setMemberProfiles] = useState({});
+
+  // Fetch member profiles to get displayNames
+  useEffect(() => {
+    const fetchMemberProfiles = async () => {
+      if (!standings?.records) return;
+
+      const uids = Object.keys(standings.records);
+      const profiles = {};
+
+      for (const uid of uids) {
+        try {
+          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
+          const profileDoc = await getDoc(profileRef);
+
+          if (profileDoc.exists()) {
+            profiles[uid] = profileDoc.data();
+          }
+        } catch (error) {
+          console.error(`Error fetching profile for ${uid}:`, error);
+        }
+      }
+
+      setMemberProfiles(profiles);
+    };
+
+    fetchMemberProfiles();
+  }, [standings]);
+
   if (!standings || !standings.records) {
     return (
       <div className="card p-8 text-center">
@@ -606,6 +638,12 @@ const StandingsTab = ({ league, standings }) => {
       // Then by points for
       return b.pointsFor - a.pointsFor;
     });
+
+  // Helper to get director display name
+  const getDirectorName = (uid) => {
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
+  };
 
   return (
     <motion.div
@@ -655,7 +693,7 @@ const StandingsTab = ({ league, standings }) => {
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="font-semibold text-cream-100">Director {record.uid.slice(0, 6)}</span>
+                    <span className="font-semibold text-cream-100">{getDirectorName(record.uid)}</span>
                   </td>
                   <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.wins}</td>
                   <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.losses}</td>
@@ -961,13 +999,14 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
-    >
+    <Portal>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -1143,6 +1182,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
         </div>
       </motion.div>
     </motion.div>
+  </Portal>
   );
 };
 

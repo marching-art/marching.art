@@ -200,7 +200,12 @@ const CorpsHistory = () => {
         className="max-w-7xl mx-auto mb-6"
       >
         <div className="flex gap-2 flex-wrap">
-          {Object.entries(corps).map(([corpsClass, corpsData]) => (
+          {Object.entries(corps)
+            .sort((a, b) => {
+              const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+              return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+            })
+            .map(([corpsClass, corpsData]) => (
             <button
               key={corpsClass}
               onClick={() => setSelectedCorpsClass(corpsClass)}
