@@ -597,10 +597,10 @@ export const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unloc
   };
 
   const availableClasses = [
-    { id: 'soundSport', name: 'SoundSport', level: 'Entry' },
-    { id: 'aClass', name: 'A Class', level: 'Intermediate' },
+    { id: 'world', name: 'World Class', level: 'Elite' },
     { id: 'open', name: 'Open Class', level: 'Advanced' },
-    { id: 'world', name: 'World Class', level: 'Elite' }
+    { id: 'aClass', name: 'A Class', level: 'Intermediate' },
+    { id: 'soundSport', name: 'SoundSport', level: 'Entry' }
   ].filter(cls =>
     cls.id !== currentClass && // Not current class
     unlockedClasses.includes(cls.id) && // User has unlocked it
