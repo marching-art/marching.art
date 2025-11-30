@@ -262,6 +262,28 @@ export const useStaffMarketplace = (userId) => {
     }
   }, []);
 
+  // Boost staff morale
+  const boostStaffMorale = useCallback(async (staffId) => {
+    try {
+      const boost = httpsCallable(functions, 'boostStaffMorale');
+      const result = await boost({ staffId });
+
+      toast.success(
+        <div>
+          <p className="font-bold">Morale Boosted!</p>
+          <p className="text-sm">{result.data.message}</p>
+        </div>
+      );
+
+      return result.data;
+    } catch (error) {
+      console.error('Error boosting staff morale:', error);
+      const errorMessage = error.message || 'Failed to boost staff morale';
+      toast.error(errorMessage);
+      throw error;
+    }
+  }, []);
+
   // Check if user owns a staff member
   const ownsStaff = useCallback((staffId) => {
     return ownedStaff.some(s => s.staffId === staffId);
@@ -323,6 +345,7 @@ export const useStaffMarketplace = (userId) => {
     purchaseStaff,
     assignStaffToCorps,
     unassignStaff,
+    boostStaffMorale,
     invalidateCache,
 
     // Filtering/sorting helpers
