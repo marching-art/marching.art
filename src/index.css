@@ -409,6 +409,85 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 212, 77, 0.7);
   }
+
+  /* Utility classes for opacity backgrounds - to fix JSX opacity modifiers */
+  .bg-cream-500\/10 {
+    background: rgba(var(--cream-500-rgb), 0.1);
+  }
+
+  .bg-cream-500\/20 {
+    background: rgba(var(--cream-500-rgb), 0.2);
+  }
+
+  .bg-gold-500\/10 {
+    background: rgba(255, 212, 77, 0.1);
+  }
+
+  .bg-gold-500\/20 {
+    background: rgba(255, 212, 77, 0.2);
+  }
+
+  .bg-red-500\/10 {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .bg-red-500\/20 {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .text-cream-500\/40 {
+    color: rgba(var(--cream-500-rgb), 0.4);
+  }
+
+  .text-cream-500\/60 {
+    color: rgba(var(--cream-500-rgb), 0.6);
+  }
+
+  .border-cream-500\/10 {
+    border-color: rgba(var(--cream-500-rgb), 0.1);
+  }
+
+  .border-gold-500 {
+    border-color: #FFD44D;
+  }
+
+  .border-r-4 {
+    border-right-width: 4px;
+  }
+
+  .shadow-inner-glow {
+    box-shadow: inset 0 0 20px rgba(255, 212, 77, 0.2);
+  }
+
+  .from-gold-500\/10 {
+    --tw-gradient-from: rgba(255, 212, 77, 0.1);
+    --tw-gradient-to: rgba(255, 212, 77, 0);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .to-cream-500\/10 {
+    --tw-gradient-to: rgba(var(--cream-500-rgb), 0.1);
+  }
+
+  .hover\:bg-cream-500\/10:hover {
+    background: rgba(var(--cream-500-rgb), 0.1);
+  }
+
+  .hover\:bg-gold-500\/10:hover {
+    background: rgba(255, 212, 77, 0.1);
+  }
+
+  .hover\:bg-gold-500\/20:hover {
+    background: rgba(255, 212, 77, 0.2);
+  }
+
+  .hover\:bg-red-500\/10:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .hover\:bg-red-500\/20:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
 }
 
 /* Custom Animations */
