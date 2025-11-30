@@ -279,20 +279,25 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
   const db = getDb();
 
   try {
-    // Fetch all available staff - client will handle filtering/sorting
-    // This allows for better caching since the query doesn't change
-    const snapshot = await db.collection("staff_database")
-      .where("available", "==", true)
-      .get();
+    // Fetch all staff - filter out unavailable ones in code to handle
+    // documents that may not have the 'available' field set
+    const snapshot = await db.collection("staff_database").get();
 
     const staffList = [];
 
     snapshot.forEach(doc => {
-      staffList.push({
-        id: doc.id,
-        ...doc.data(),
-      });
+      const data = doc.data();
+      // Include staff if available is true OR if available field is not set
+      // This ensures we don't miss staff due to missing field
+      if (data.available !== false) {
+        staffList.push({
+          id: doc.id,
+          ...data,
+        });
+      }
     });
+
+    logger.info(`Staff marketplace: returning ${staffList.length} staff members`);
 
     return {
       success: true,
