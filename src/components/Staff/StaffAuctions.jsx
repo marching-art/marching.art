@@ -2,26 +2,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Gavel, DollarSign, Award, Filter, Clock, X,
-  ChevronDown, User, TrendingUp, AlertCircle, RefreshCw
+  Gavel, DollarSign, Award, Clock, X,
+  User, TrendingUp, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { getActiveAuctions, bidOnStaff, completeAuction, cancelAuction } from '../../firebase/functions';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-
-const CAPTION_OPTIONS = [
-  { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
-  { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500' },
-  { value: 'GE2', label: 'General Effect 2', color: 'bg-purple-400' },
-  { value: 'VP', label: 'Visual Performance', color: 'bg-blue-500' },
-  { value: 'VA', label: 'Visual Analysis', color: 'bg-blue-400' },
-  { value: 'CG', label: 'Color Guard', color: 'bg-pink-500' },
-  { value: 'B', label: 'Brass', color: 'bg-yellow-500' },
-  { value: 'MA', label: 'Music Analysis', color: 'bg-green-500' },
-  { value: 'P', label: 'Percussion', color: 'bg-red-500' }
-];
 
 const StaffAuctions = () => {
   const { user } = useAuth();
@@ -156,11 +145,6 @@ const StaffAuctions = () => {
     return `${minutes}m`;
   };
 
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
-
   const isMyAuction = (auction) => auction.sellerId === user?.uid;
   const isHighestBidder = (auction) => auction.currentBidderId === user?.uid;
 
@@ -192,22 +176,47 @@ const StaffAuctions = () => {
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="relative w-full max-w-xs">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400" />
-          <select
-            value={captionFilter}
-            onChange={(e) => setCaptionFilter(e.target.value)}
-            className="w-full pl-10 pr-8 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500 appearance-none cursor-pointer"
-          >
-            {CAPTION_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400 pointer-events-none" />
+        {/* Caption Filter Pills */}
+        <div className="flex flex-wrap gap-2">
+          {CAPTION_OPTIONS.map(option => (
+            <button
+              key={option.value}
+              onClick={() => setCaptionFilter(option.value)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                captionFilter === option.value
+                  ? option.value === 'all'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : `${option.color} text-white`
+                  : 'bg-charcoal-700 text-cream-300 hover:bg-charcoal-600'
+              }`}
+            >
+              {option.value === 'all' ? option.label : option.value}
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between px-2">
+        <p className="text-cream-400 text-sm">
+          {loading ? 'Loading...' : (
+            <>
+              <span className="text-cream-100 font-medium">{auctions.length}</span> active auction{auctions.length !== 1 ? 's' : ''}
+              {captionFilter !== 'all' && (
+                <span> in <span className="font-medium">{getCaptionLabel(captionFilter)}</span></span>
+              )}
+            </>
+          )}
+        </p>
+        {captionFilter !== 'all' && (
+          <button
+            onClick={() => setCaptionFilter('all')}
+            className="text-sm text-gold-400 hover:text-gold-300 flex items-center gap-1"
+          >
+            <X className="w-4 h-4" />
+            Clear filter
+          </button>
+        )}
       </div>
 
       {/* Auctions List */}
@@ -232,7 +241,6 @@ const StaffAuctions = () => {
               key={auction.id}
               auction={auction}
               onClick={() => setSelectedAuction(auction)}
-              getCaptionColor={getCaptionColor}
               getTimeRemaining={getTimeRemaining}
               isMyAuction={isMyAuction(auction)}
               isHighestBidder={isHighestBidder(auction)}
@@ -414,9 +422,10 @@ const StaffAuctions = () => {
 };
 
 // Auction Card Component
-const AuctionCard = ({ auction, onClick, getCaptionColor, getTimeRemaining, isMyAuction, isHighestBidder }) => {
+const AuctionCard = ({ auction, onClick, getTimeRemaining, isMyAuction, isHighestBidder }) => {
   const timeRemaining = getTimeRemaining(auction.endsAt);
   const isEnded = timeRemaining === 'Ended';
+  const captionColor = getCaptionColor(auction.staffCaption);
 
   return (
     <motion.div
@@ -445,13 +454,13 @@ const AuctionCard = ({ auction, onClick, getCaptionColor, getTimeRemaining, isMy
       )}
 
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 ${getCaptionColor(auction.staffCaption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
-          <Award className={`w-5 h-5 ${getCaptionColor(auction.staffCaption).replace('bg-', 'text-')}`} />
+        <div className={`w-10 h-10 ${captionColor}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <Award className={`w-5 h-5 ${captionColor.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-cream-100 mb-1 truncate text-base">{auction.staffName}</h3>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(auction.staffCaption)}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${captionColor}`}>
               {auction.staffCaption}
             </span>
           </div>

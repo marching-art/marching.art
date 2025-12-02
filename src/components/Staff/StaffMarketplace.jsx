@@ -7,20 +7,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
+import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-
-const CAPTION_OPTIONS = [
-  { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
-  { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500', description: 'Directors & Program Coordinators' },
-  { value: 'GE2', label: 'General Effect 2', color: 'bg-purple-400', description: 'Judges & Administrators' },
-  { value: 'VP', label: 'Visual Performance', color: 'bg-blue-500', description: 'Drill Designers' },
-  { value: 'VA', label: 'Visual Analysis', color: 'bg-blue-400', description: 'Visual Analysts' },
-  { value: 'CG', label: 'Color Guard', color: 'bg-pink-500', description: 'Guard Designers' },
-  { value: 'B', label: 'Brass', color: 'bg-yellow-500', description: 'Brass Arrangers' },
-  { value: 'MA', label: 'Music Analysis', color: 'bg-green-500', description: 'Front Ensemble' },
-  { value: 'P', label: 'Percussion', color: 'bg-red-500', description: 'Battery Instructors' }
-];
 
 const StaffMarketplace = () => {
   const { user } = useAuth();
@@ -101,16 +90,6 @@ const StaffMarketplace = () => {
     } catch (error) {
       // Error already handled in hook
     }
-  };
-
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
-
-  const getCaptionLabel = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.label || caption;
   };
 
   return (
@@ -231,8 +210,6 @@ const StaffMarketplace = () => {
               owned={ownsStaff(staff.id)}
               canAfford={canAfford(staff.baseValue)}
               onPurchase={() => setSelectedStaff(staff)}
-              getCaptionColor={getCaptionColor}
-              getCaptionLabel={getCaptionLabel}
             />
           ))}
         </div>
@@ -347,7 +324,9 @@ const StaffMarketplace = () => {
 };
 
 // Staff Card Component
-const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCaptionLabel }) => {
+const StaffCard = ({ staff, owned, canAfford, onPurchase }) => {
+  const captionColor = getCaptionColor(staff.caption);
+
   return (
     <motion.div
       layout
@@ -356,13 +335,13 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
       className="glass rounded-xl p-4 hover:border-gold-500/50 transition-all group"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 ${getCaptionColor(staff.caption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
-          <Trophy className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
+        <div className={`w-10 h-10 ${captionColor}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <Trophy className={`w-5 h-5 ${captionColor.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-cream-100 mb-1 truncate text-base">{staff.name}</h3>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(staff.caption)}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${captionColor}`}>
               {staff.caption}
             </span>
             <span className="text-xs text-cream-400">'{staff.yearInducted.toString().slice(-2)}</span>

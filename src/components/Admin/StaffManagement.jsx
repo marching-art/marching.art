@@ -3,34 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Search, Plus, Edit, Trash2, DollarSign, Award,
-  Filter, X, Check, ChevronDown, AlertCircle
+  X, Check, ChevronDown, AlertCircle
 } from 'lucide-react';
 import { db } from '../../firebase';
 import {
   collection,
   query,
   orderBy,
-  limit,
   getDocs,
   doc,
   setDoc,
   updateDoc,
-  deleteDoc,
-  where
+  deleteDoc
 } from 'firebase/firestore';
+import { CAPTION_OPTIONS_NO_ALL, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-
-const CAPTION_OPTIONS = [
-  { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500' },
-  { value: 'GE2', label: 'General Effect 2', color: 'bg-purple-400' },
-  { value: 'VP', label: 'Visual Performance', color: 'bg-blue-500' },
-  { value: 'VA', label: 'Visual Analysis', color: 'bg-blue-400' },
-  { value: 'CG', label: 'Color Guard', color: 'bg-pink-500' },
-  { value: 'B', label: 'Brass', color: 'bg-yellow-500' },
-  { value: 'MA', label: 'Music Analysis', color: 'bg-green-500' },
-  { value: 'P', label: 'Percussion', color: 'bg-red-500' }
-];
 
 const StaffManagement = () => {
   const [staff, setStaff] = useState([]);
@@ -193,16 +181,6 @@ const StaffManagement = () => {
     }
   };
 
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
-
-  const getCaptionLabel = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.label || caption;
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -300,7 +278,7 @@ const StaffManagement = () => {
             className="pl-10 pr-8 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500 appearance-none cursor-pointer"
           >
             <option value="all">All Captions</option>
-            {CAPTION_OPTIONS.map(option => (
+            {CAPTION_OPTIONS_NO_ALL.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label} ({stats.byCaption[option.value] || 0})
               </option>
@@ -461,7 +439,7 @@ const StaffManagement = () => {
                       required
                       className="w-full px-4 py-2 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
                     >
-                      {CAPTION_OPTIONS.map(option => (
+                      {CAPTION_OPTIONS_NO_ALL.map(option => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
