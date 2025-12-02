@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
  * Displays key actions (rehearsal, readiness, schedule) in a single row.
  */
 // Class order for sorting: World, Open, A, SoundSport
-const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
+const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 const QuickActionsRow = ({
   activeCorps,

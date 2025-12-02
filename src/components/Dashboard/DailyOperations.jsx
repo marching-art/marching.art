@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import { useAuth } from '../../App';
+import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import {
   claimDailyLogin,
   staffCheckin,
@@ -33,6 +35,9 @@ const DailyOperations = ({
   calculateMultiplier,
   onActivityComplete
 }) => {
+  const { user } = useAuth();
+  const { ownedStaff } = useStaffMarketplace(user?.uid);
+
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
   const [opsStatus, setOpsStatus] = useState(null);
@@ -41,8 +46,36 @@ const DailyOperations = ({
   const [showRehearsalAnimation, setShowRehearsalAnimation] = useState(false);
   const [rehearsalResults, setRehearsalResults] = useState(null);
 
-  // Calculate multiplier
-  const multiplier = calculateMultiplier ? calculateMultiplier() : 1.0;
+  // Get staff assigned to this corps from marketplace
+  const assignedStaff = ownedStaff.filter(
+    s => s.assignedTo?.corpsClass === corpsClass
+  );
+
+  // Calculate multiplier using correct staff count from marketplace
+  const calculateMultiplierWithStaff = () => {
+    if (!executionState) return 1.0;
+
+    const { readiness = 0.75, morale = 0.80, equipment = {} } = executionState;
+
+    // Calculate average equipment condition
+    const equipmentValues = Object.entries(equipment)
+      .filter(([k, v]) => typeof v === 'number' && !k.includes('Max'))
+      .map(([, v]) => v);
+    const avgEquipment = equipmentValues.length > 0
+      ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
+      : 0.90;
+
+    // Staff bonus from marketplace assigned staff (max 5%)
+    const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
+
+    // Base calculation: (readiness * 40%) + (morale * 30%) + (equipment * 30%)
+    const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
+
+    // Clamp to 0.70-1.10 range
+    return Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
+  };
+
+  const multiplier = calculateMultiplierWithStaff();
 
   // Fetch daily ops status
   const fetchStatus = useCallback(async () => {
@@ -81,8 +114,8 @@ const DailyOperations = ({
       ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
       : 0.85;
 
-    // Get staff count for bonus calculation
-    const staffCount = Array.isArray(executionState.staff) ? executionState.staff.length : 0;
+    // Get staff count from marketplace assigned staff
+    const staffCount = assignedStaff.length;
 
     return { readiness, morale, equipment: avgEquipment, staffCount };
   };
