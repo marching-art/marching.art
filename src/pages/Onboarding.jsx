@@ -1,9 +1,11 @@
 // src/pages/Onboarding.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, MapPin, Flag, ArrowRight, Check
+  User, MapPin, Flag, ArrowRight, Check,
+  Trophy, Target, Users, Wrench, Star, Zap,
+  Calendar, Music, TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -23,11 +25,11 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
 
   const handleNext = () => {
-    if (step === 1 && !formData.displayName.trim()) {
+    if (step === 2 && !formData.displayName.trim()) {
       toast.error('Please enter your director name');
       return;
     }
-    if (step === 2 && !formData.corpsName.trim()) {
+    if (step === 3 && !formData.corpsName.trim()) {
       toast.error('Please enter a name for your corps');
       return;
     }
@@ -53,7 +55,7 @@ const Onboarding = () => {
         createdAt: new Date(),
         xp: 0,
         xpLevel: 1,
-        corpsCoin: 0,
+        corpsCoin: 100, // Starting bonus!
         unlockedClasses: ['soundSport'],
         staff: [],
         achievements: [],
@@ -67,15 +69,36 @@ const Onboarding = () => {
             name: formData.corpsName.trim(),
             showConcept: formData.showConcept.trim() || 'Untitled Show',
             class: 'soundSport',
-            createdAt: new Date()
+            createdAt: new Date(),
+            execution: {
+              readiness: 0.75,
+              morale: 0.85,
+              equipment: {
+                instruments: 0.90,
+                uniforms: 0.90,
+                props: 0.85
+              }
+            }
           }
         },
+        engagement: {
+          loginStreak: 1,
+          lastLogin: new Date().toISOString(),
+          totalLogins: 1,
+          recentActivity: [{
+            type: 'welcome',
+            message: 'Welcome to marching.art!',
+            timestamp: new Date().toISOString(),
+            icon: 'star'
+          }]
+        },
+        dailyOps: {},
         lastRehearsal: null
       };
 
       await setDoc(profileRef, profileData);
 
-      toast.success('Welcome to marching.art!');
+      toast.success('Welcome to marching.art! Here\'s 100 CorpsCoin to get started!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -88,18 +111,47 @@ const Onboarding = () => {
   const steps = [
     {
       number: 1,
+      title: 'Welcome',
+      icon: Star
+    },
+    {
+      number: 2,
       title: 'Your Name',
       icon: User
     },
     {
-      number: 2,
+      number: 3,
       title: 'Create Corps',
       icon: Flag
     },
     {
-      number: 3,
+      number: 4,
       title: 'Location',
       icon: MapPin
+    }
+  ];
+
+  // Game features for the welcome step
+  const gameFeatures = [
+    {
+      icon: Target,
+      title: 'Daily Operations',
+      description: 'Run rehearsals, manage staff, and maintain equipment every day'
+    },
+    {
+      icon: Users,
+      title: 'Build Your Staff',
+      description: 'Hire legendary instructors to improve your corps performance'
+    },
+    {
+      icon: Trophy,
+      title: 'Compete & Win',
+      description: 'Watch your corps perform and climb the leaderboards'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Level Up',
+      description: 'Earn XP and CorpsCoin to unlock new competition classes'
     }
   ];
 
@@ -153,9 +205,60 @@ const Onboarding = () => {
             </div>
 
             {/* Step Content */}
-            <div className="min-h-[280px]">
-              {/* Step 1: Director Name */}
+            <div className="min-h-[320px]">
+              {/* Step 1: Welcome & Game Overview */}
               {step === 1 && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-500/20 rounded-xl mb-4">
+                      <Star className="w-7 h-7 text-gold-400" />
+                    </div>
+                    <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+                      Welcome to marching.art!
+                    </h2>
+                    <p className="text-cream-400 text-sm">
+                      The fantasy sports game for marching arts enthusiasts
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {gameFeatures.map((feature, idx) => {
+                      const Icon = feature.icon;
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-3 p-3 rounded-lg bg-charcoal-800/50"
+                        >
+                          <div className="p-2 rounded-lg bg-gold-500/20 flex-shrink-0">
+                            <Icon className="w-4 h-4 text-gold-400" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-cream-100">{feature.title}</h4>
+                            <p className="text-xs text-cream-500/70">{feature.description}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-green-400" />
+                      <p className="text-sm text-green-300">
+                        Complete setup to receive <span className="font-bold">100 CorpsCoin</span> bonus!
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Director Name */}
+              {step === 2 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -167,7 +270,7 @@ const Onboarding = () => {
                       <User className="w-7 h-7 text-gold-400" />
                     </div>
                     <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
-                      What's your name?
+                      What's your name, Director?
                     </h2>
                     <p className="text-cream-400 text-sm">
                       This is how other directors will see you
@@ -189,8 +292,8 @@ const Onboarding = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Create Corps */}
-              {step === 2 && (
+              {/* Step 3: Create Corps */}
+              {step === 3 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -236,11 +339,20 @@ const Onboarding = () => {
                       Give your show a theme or title
                     </p>
                   </div>
+
+                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-4 h-4 text-blue-400" />
+                      <p className="text-xs text-blue-300">
+                        You'll start in <span className="font-bold">SoundSport</span> class. Earn CorpsCoin to unlock higher classes!
+                      </p>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Location */}
-              {step === 3 && (
+              {/* Step 4: Location */}
+              {step === 4 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -273,9 +385,24 @@ const Onboarding = () => {
                   </div>
 
                   <div className="p-4 bg-gold-500/10 border border-gold-500/30 rounded-lg">
-                    <p className="text-sm text-gold-300">
-                      You're all set! Click "Complete Setup" to start playing.
+                    <h4 className="font-semibold text-gold-300 mb-2">You're all set!</h4>
+                    <p className="text-sm text-gold-300/80">
+                      Here's what you can do in your first session:
                     </p>
+                    <ul className="mt-2 space-y-1 text-sm text-cream-400">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-green-400" />
+                        Claim your daily login bonus
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-green-400" />
+                        Run your first rehearsal
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-green-400" />
+                        Check out the staff marketplace
+                      </li>
+                    </ul>
                   </div>
                 </motion.div>
               )}
@@ -295,7 +422,7 @@ const Onboarding = () => {
               {step < steps.length ? (
                 <button
                   onClick={handleNext}
-                  disabled={(step === 1 && !formData.displayName.trim()) || (step === 2 && !formData.corpsName.trim())}
+                  disabled={(step === 2 && !formData.displayName.trim()) || (step === 3 && !formData.corpsName.trim())}
                   className="flex-1 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg hover:bg-gold-400 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Continue
@@ -314,7 +441,7 @@ const Onboarding = () => {
                     </>
                   ) : (
                     <>
-                      Complete Setup
+                      Start Playing
                       <Check className="w-5 h-5" />
                     </>
                   )}
@@ -323,7 +450,7 @@ const Onboarding = () => {
             </div>
 
             {/* Skip Link */}
-            {step === 3 && (
+            {step === 4 && (
               <button
                 onClick={handleSubmit}
                 className="w-full mt-4 text-cream-400 hover:text-cream-200 text-sm transition-colors"

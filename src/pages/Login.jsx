@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInAnonymously } = useAuth();
+  const { signIn } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,20 +53,6 @@ const Login = () => {
     }
   };
 
-  const handleAnonymousSignIn = async () => {
-    setLoading(true);
-    try {
-      await signInAnonymously();
-      toast.success('Signed in as guest');
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Anonymous sign in error:', err);
-      setError('Failed to sign in as guest. Please try again');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-main flex items-center justify-center p-4">
       {/* Background Effects */}
@@ -95,7 +81,7 @@ const Login = () => {
             {/* Logo */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden mb-4">
-                <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
+                <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" />
               </div>
               <h1 className="text-3xl font-display font-bold text-gradient">
                 Welcome Back
@@ -199,28 +185,6 @@ const Login = () => {
                 )}
               </button>
             </form>
-
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-cream-500/20" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-charcoal-950 text-cream-500/60">Or continue with</span>
-              </div>
-            </div>
-
-            {/* Alternative Sign In */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleAnonymousSignIn}
-                className="w-full btn-outline"
-                disabled={loading}
-              >
-                Continue as Guest
-              </button>
-            </div>
 
             {/* Sign Up Link */}
             <p className="text-center mt-8 text-cream-500/60">

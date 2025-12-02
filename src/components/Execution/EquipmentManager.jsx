@@ -5,6 +5,7 @@ import {
   Wrench, TrendingUp, AlertCircle, Sparkles,
   ChevronRight, Coins, Star
 } from 'lucide-react';
+import Portal from '../Portal';
 
 const EquipmentManager = ({
   equipment,
@@ -41,6 +42,19 @@ const EquipmentManager = ({
       upgradeCost: 600
     }
   ];
+
+  // Helper to extract equipment data from either flat number or object format
+  const getEquipmentData = (equipmentValue, maxValue) => {
+    if (typeof equipmentValue === 'number') {
+      // Flat number format from backend - calculate level from max value
+      const level = maxValue ? Math.round((maxValue - 1.0) / 0.05) + 1 : 1;
+      return { condition: equipmentValue, level: Math.max(1, level) };
+    }
+    if (typeof equipmentValue === 'object' && equipmentValue !== null) {
+      return { condition: equipmentValue.condition || 0.90, level: equipmentValue.level || 1 };
+    }
+    return { condition: 0.90, level: 1 };
+  };
 
   const getConditionColor = (condition) => {
     if (condition >= 0.85) return 'text-green-500';
@@ -103,9 +117,8 @@ const EquipmentManager = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {equipmentTypes.map((type, index) => {
-            const equipmentData = equipment?.[type.id] || { condition: 1.0, level: 1 };
-            const condition = equipmentData.condition || 1.0;
-            const level = equipmentData.level || 1;
+            const maxValue = equipment?.[`${type.id}Max`];
+            const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
 
             return (
               <motion.div
@@ -171,13 +184,14 @@ const EquipmentManager = ({
       {/* Equipment Detail Modal */}
       <AnimatePresence>
         {selectedEquipment && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedEquipment(null)}
-          >
+          <Portal>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedEquipment(null)}
+            >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -187,9 +201,8 @@ const EquipmentManager = ({
             >
               {(() => {
                 const type = equipmentTypes.find(t => t.id === selectedEquipment);
-                const equipmentData = equipment?.[selectedEquipment] || { condition: 1.0, level: 1 };
-                const condition = equipmentData.condition || 1.0;
-                const level = equipmentData.level || 1;
+                const maxValue = equipment?.[`${selectedEquipment}Max`];
+                const { condition, level } = getEquipmentData(equipment?.[selectedEquipment], maxValue);
 
                 return (
                   <div className="space-y-6">
@@ -292,6 +305,7 @@ const EquipmentManager = ({
               })()}
             </motion.div>
           </motion.div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>

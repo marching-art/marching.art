@@ -92,6 +92,11 @@ match /fantasy_recaps/{docId} {
   allow write: if false; // Backend only
 }
 
+match /season_champions/{docId} {
+  allow read: if true;
+  allow write: if false; // Backend only
+}
+
 match /final_rankings/{docId} {
   allow read: if true;
   allow write: if isAdmin();

@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
   { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
@@ -222,7 +223,8 @@ const StaffMarketplace = () => {
       {/* Purchase Confirmation Modal */}
       <AnimatePresence>
         {selectedStaff && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <Portal>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -319,6 +321,7 @@ const StaffMarketplace = () => {
               </div>
             </motion.div>
           </div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>
@@ -339,7 +342,7 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
           <Trophy className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-cream-100 mb-1 truncate">{staff.name}</h3>
+          <h3 className="font-semibold text-cream-100 mb-1 truncate text-base">{staff.name}</h3>
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(staff.caption)}`}>
               {staff.caption}

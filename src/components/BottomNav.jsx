@@ -9,14 +9,15 @@ const BottomNav = () => {
   const navItems = [
     { path: '/dashboard', label: 'Home', icon: Home },
     { path: '/schedule', label: 'Schedule', icon: Calendar },
-    { path: '/leaderboard', label: 'Ranks', icon: Trophy },
+    { path: '/scores', label: 'Scores', icon: Trophy },
     { path: '/leagues', label: 'Leagues', icon: Users },
     { path: '/profile', label: 'Profile', icon: User }
   ];
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-charcoal-950/95 backdrop-blur-lg border-t border-cream-500/10 z-40 safe-area-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 backdrop-blur-lg z-40 safe-area-bottom"
+      style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color-light)' }}
       aria-label="Mobile navigation"
     >
       <div className="flex items-center justify-around px-2 py-2">

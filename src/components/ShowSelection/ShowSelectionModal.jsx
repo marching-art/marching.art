@@ -5,6 +5,7 @@ import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import Portal from '../Portal';
 
 const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, seasonId, currentSelections = [] }) => {
   const [availableShows, setAvailableShows] = useState([]);
@@ -92,6 +93,13 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
         s => !(s.eventName === showIdentifier.eventName && s.date === showIdentifier.date)
       ));
     } else {
+      // Check if there's already a show selected for the same day
+      const sameDayShow = selectedShows.find(s => s.day === showIdentifier.day);
+      if (sameDayShow) {
+        toast.error(`You already have a show selected on day ${showIdentifier.day}. Corps can only attend one show per day.`);
+        return;
+      }
+
       // Add show if under limit
       if (selectedShows.length < MAX_SHOWS) {
         setSelectedShows([...selectedShows, showIdentifier]);
@@ -129,21 +137,22 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-3xl font-display font-bold text-gradient mb-2">
@@ -283,6 +292,7 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
                 <p className="font-semibold mb-1">Show Selection Rules:</p>
                 <ul className="list-disc list-inside space-y-1 text-cream-500/80">
                   <li>Select up to {MAX_SHOWS} shows per week</li>
+                  <li>Only one show per day - corps cannot be in two places at once</li>
                   <li>Your corps will compete at all selected shows</li>
                   <li>Scores from attended shows contribute to your season total</li>
                   <li>World Championship finals (Days 47-49) automatically enroll all corps</li>
@@ -339,9 +349,10 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
               )}
             </button>
           </div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 

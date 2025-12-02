@@ -24,17 +24,17 @@ import {
   getStorage, 
   connectStorageEmulator 
 } from 'firebase/storage';
-import { getAnalytics, logEvent } from 'firebase/analytics';
+import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 
 // Firebase configuration from development guidelines
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "marching-art.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "marching-art",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "marching-art.firebasestorage.app",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "278086562126",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:278086562126:web:f7737ee897774c3d9a6e1f",
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-H0KE8GJS7M"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "marching-art.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "marching-art",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "marching-art.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "278086562126",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:278086562126:web:f7737ee897774c3d9a6e1f",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-H0KE8GJS7M"
 };
 
 // Initialize Firebase
@@ -48,12 +48,35 @@ export const db = initializeFirestore(app, {
 });
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
-export const analytics = getAnalytics(app);
 export const dataNamespace = 'marching-art';
+
+// Initialize analytics only if supported (handles ad blockers gracefully)
+let analyticsInstance = null;
+isSupported().then(supported => {
+  if (supported) {
+    analyticsInstance = getAnalytics(app);
+  }
+}).catch(() => {
+  // Analytics not supported or blocked
+});
+
+// Safe analytics logging that silently fails when blocked
+const safeLogEvent = (eventName, eventParams) => {
+  if (analyticsInstance) {
+    try {
+      logEvent(analyticsInstance, eventName, eventParams);
+    } catch (e) {
+      // Silently ignore analytics errors (e.g., ad blockers)
+    }
+  }
+};
+
+// Export analytics for backward compatibility (may be null)
+export const analytics = analyticsInstance;
 
 
 // Connect to emulators if in development
-if (process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_EMULATORS === 'true') {
+if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, 'localhost', 8080);
   connectFunctionsEmulator(functions, 'localhost', 5001);
@@ -66,7 +89,7 @@ export const authHelpers = {
   signInWithEmail: async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      logEvent(analytics, 'login', { method: 'email' });
+      safeLogEvent('login', { method: 'email' });
       return userCredential;
     } catch (error) {
       console.error('Error signing in:', error);
@@ -78,7 +101,7 @@ export const authHelpers = {
   signUpWithEmail: async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      logEvent(analytics, 'sign_up', { method: 'email' });
+      safeLogEvent('sign_up', { method: 'email' });
       return userCredential;
     } catch (error) {
       console.error('Error signing up:', error);
@@ -90,7 +113,7 @@ export const authHelpers = {
   signInAnon: async () => {
     try {
       const userCredential = await signInAnonymously(auth);
-      logEvent(analytics, 'login', { method: 'anonymous' });
+      safeLogEvent('login', { method: 'anonymous' });
       return userCredential;
     } catch (error) {
       console.error('Error signing in anonymously:', error);
@@ -102,7 +125,7 @@ export const authHelpers = {
   signInWithToken: async (token) => {
     try {
       const userCredential = await signInWithCustomToken(auth, token);
-      logEvent(analytics, 'login', { method: 'custom_token' });
+      safeLogEvent('login', { method: 'custom_token' });
       return userCredential;
     } catch (error) {
       console.error('Error signing in with custom token:', error);
@@ -114,7 +137,7 @@ export const authHelpers = {
   signOut: async () => {
     try {
       await signOut(auth);
-      logEvent(analytics, 'logout');
+      safeLogEvent('logout');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -181,23 +204,23 @@ export const seasonHelpers = {
 // Analytics helpers
 export const analyticsHelpers = {
   logPageView: (pageName) => {
-    logEvent(analytics, 'page_view', { page_name: pageName });
+    safeLogEvent('page_view', { page_name: pageName });
   },
-  
+
   logButtonClick: (buttonName) => {
-    logEvent(analytics, 'button_click', { button_name: buttonName });
+    safeLogEvent('button_click', { button_name: buttonName });
   },
- 
+
   logCorpsCreated: (corpsClass) => {
-    logEvent(analytics, 'corps_created', { corps_class: corpsClass });
+    safeLogEvent('corps_created', { corps_class: corpsClass });
   },
- 
+
   logLeagueJoined: (leagueId) => {
-    logEvent(analytics, 'league_joined', { league_id: leagueId });
+    safeLogEvent('league_joined', { league_id: leagueId });
   },
- 
+
   logCaptionSelected: (caption, corps) => {
-    logEvent(analytics, 'caption_selected', { caption, corps });
+    safeLogEvent('caption_selected', { caption, corps });
   }
 };
  

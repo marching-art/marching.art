@@ -1,10 +1,11 @@
 // src/components/Execution/RehearsalPanel.jsx
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Check, Clock, Zap, Star, TrendingUp,
   Users, Music, Target, Sparkles
 } from 'lucide-react';
+import Portal from '../Portal';
 
 const RehearsalPanel = ({
   executionState,
@@ -187,12 +188,13 @@ const RehearsalPanel = ({
       {/* Rehearsal Animation & Results */}
       <AnimatePresence>
         {showAnimation && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
+          <Portal>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
             <motion.div
               initial={{ y: 20 }}
               animate={{ y: 0 }}
@@ -261,10 +263,11 @@ const RehearsalPanel = ({
               )}
             </motion.div>
           </motion.div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>
   );
 };
 
-export default RehearsalPanel;
+export default memo(RehearsalPanel);

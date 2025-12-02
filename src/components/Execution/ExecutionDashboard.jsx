@@ -35,11 +35,22 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
     ? Object.values(rawMorale).reduce((sum, v) => sum + v, 0) / Object.values(rawMorale).length
     : rawMorale;
 
-  // Calculate average equipment condition
-  const equipmentConditions = Object.values(equipment).map(e => e.condition || 0);
+  // Helper to extract condition value from either flat number or object format
+  const getConditionValue = (value) => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'object' && value?.condition !== undefined) return value.condition;
+    return 0;
+  };
+
+  // Calculate average equipment condition (handles both flat numbers and objects)
+  // Filter out "Max" keys which store upgrade limits
+  const equipmentConditions = Object.entries(equipment)
+    .filter(([key]) => !key.includes('Max') && !key.includes('bus') && !key.includes('truck'))
+    .map(([, value]) => getConditionValue(value))
+    .filter(v => v > 0);
   const avgEquipment = equipmentConditions.length > 0
     ? equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length
-    : 0;
+    : 0.90;
 
   // Calculate multiplier breakdown factors
   const getMultiplierBreakdown = () => {

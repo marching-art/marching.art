@@ -1,5 +1,5 @@
 // src/components/DailyQuests.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Zap, Trophy, Star, Clock, Gift,
@@ -8,6 +8,7 @@ import {
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import Portal from './Portal';
 
 // Quest definitions - different types of daily challenges
 const QUEST_TEMPLATES = [
@@ -24,21 +25,11 @@ const QUEST_TEMPLATES = [
   {
     id: 'check_scores',
     name: 'Score Scout',
-    description: 'Check the latest scores',
+    description: 'Check scores and rankings',
     icon: 'trophy',
-    xpReward: 25,
-    coinReward: 50,
+    xpReward: 50,
+    coinReward: 100,
     type: 'scores',
-    requirement: 1
-  },
-  {
-    id: 'visit_leaderboard',
-    name: 'Competitor Analysis',
-    description: 'View the leaderboard',
-    icon: 'target',
-    xpReward: 25,
-    coinReward: 50,
-    type: 'leaderboard',
     requirement: 1
   },
   {
@@ -74,13 +65,15 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
   const [showModal, setShowModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
+  const generatingRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
 
+    generatingRef.current = false;
     const questsRef = doc(db, 'artifacts/marching-art/users', userId, 'dailyQuests/today');
 
-    const unsubscribe = onSnapshot(questsRef, async (docSnap) => {
+    const unsubscribe = onSnapshot(questsRef, (docSnap) => {
       const today = new Date().toISOString().split('T')[0];
 
       if (docSnap.exists()) {
@@ -91,16 +84,17 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
           setQuests(data.quests || []);
           setStreak(data.streak || 0);
           setTotalCompleted(data.quests?.filter(q => q.completed).length || 0);
-        } else {
-          // Generate new quests for today
-          await generateDailyQuests(userId, data.streak || 0);
+          setLoading(false);
+        } else if (!generatingRef.current) {
+          // Generate new quests for today (only once)
+          generatingRef.current = true;
+          generateDailyQuests(userId, data.streak || 0);
         }
-      } else {
-        // First time - generate quests
-        await generateDailyQuests(userId, 0);
+      } else if (!generatingRef.current) {
+        // First time - generate quests (only once)
+        generatingRef.current = true;
+        generateDailyQuests(userId, 0);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -268,21 +262,22 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
   const QuestModal = () => (
     <AnimatePresence>
       {showModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setShowModal(false)}
-        >
+        <Portal>
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowModal(false)}
           >
-            <div className="glass-dark rounded-2xl p-6">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="glass-dark rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
@@ -382,9 +377,10 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
                   <p className="text-xs text-cream-300 mt-1">Come back tomorrow for new challenges</p>
                 </motion.div>
               )}
-            </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </Portal>
       )}
     </AnimatePresence>
   );

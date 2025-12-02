@@ -5,53 +5,137 @@
 
 /* CSS Variables for Theme */
 :root {
-  /* Primary Colors */
-  --color-cream: #E5D396;
-  --color-cream-light: #FAF6EA;
-  --color-cream-dark: #C3A54E;
-  
-  --color-gold: #FFD44D;
-  --color-gold-light: #FFF0BF;
-  --color-gold-dark: #D9A300;
-  
-  --color-charcoal: #1A1A1A;
-  --color-charcoal-light: #3B3B3B;
-  --color-charcoal-medium: #545454;
-  
-  /* Gradients */
-  --gradient-gold: linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%);
-  --gradient-cream: linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%);
-  --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.2);
-  --shadow-glow: 0 0 20px rgba(255, 212, 77, 0.5);
-  
   /* Border Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
   --radius-full: 9999px;
-  
+
   /* Transitions */
   --transition-fast: 150ms;
   --transition-base: 250ms;
   --transition-slow: 500ms;
 }
 
-/* Dark Mode Variables */
-[data-theme="dark"] {
-  --color-cream: #C3A54E;
-  --color-cream-light: #E5D396;
-  --color-cream-dark: #9E8340;
-  
-  --color-charcoal: #FAF6EA;
-  --color-charcoal-light: #E5D396;
-  --color-charcoal-medium: #D4BC72;
+/* Dark Mode (Default) */
+[data-theme="dark"], :root {
+  /* Cream scale - light colors for text in dark mode */
+  --cream-50: #FDFBF5;
+  --cream-100: #FAF6EA;
+  --cream-200: #F5EDD5;
+  --cream-300: #F0E4C0;
+  --cream-400: #EADCAB;
+  --cream-500: #E5D396;
+  --cream-600: #D4BC72;
+  --cream-700: #C3A54E;
+  --cream-800: #9E8340;
+  --cream-900: #796232;
+
+  /* Gold scale */
+  --gold-400: #FFDD73;
+  --gold-500: #FFD44D;
+
+  /* Charcoal scale - dark colors for backgrounds in dark mode */
+  --charcoal-50: #F5F5F5;
+  --charcoal-100: #E8E8E8;
+  --charcoal-200: #D1D1D1;
+  --charcoal-300: #B8B8B8;
+  --charcoal-400: #9F9F9F;
+  --charcoal-500: #868686;
+  --charcoal-600: #6D6D6D;
+  --charcoal-700: #545454;
+  --charcoal-800: #3B3B3B;
+  --charcoal-900: #1A1A1A;
+  --charcoal-950: #0D0D0D;
+
+  /* Background and text colors */
+  --bg-primary: #0D0D0D;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #3B3B3B;
+  --text-primary: #FAF6EA;
+  --text-secondary: #E5D396;
+  --text-muted: rgba(229, 211, 150, 0.6);
+  --border-color: rgba(229, 211, 150, 0.2);
+  --border-color-light: rgba(229, 211, 150, 0.1);
+
+  /* Gradients */
+  --gradient-gold: linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%);
+  --gradient-cream: linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%);
+  --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
+  --gradient-main: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 20px rgba(255, 212, 77, 0.5);
+
+  /* Glass effects */
+  --glass-bg: rgba(26, 26, 26, 0.3);
+  --glass-bg-dark: rgba(13, 13, 13, 0.5);
+  --glass-bg-gold: rgba(255, 212, 77, 0.1);
+}
+
+/* Light Mode - Swap cream and charcoal for proper contrast */
+[data-theme="light"] {
+  /* Cream scale - NOW dark colors for text in light mode */
+  --cream-50: #0D0D0D;
+  --cream-100: #1A1A1A;
+  --cream-200: #3B3B3B;
+  --cream-300: #545454;
+  --cream-400: #6D6D6D;
+  --cream-500: #868686;
+  --cream-600: #9F9F9F;
+  --cream-700: #B8B8B8;
+  --cream-800: #D1D1D1;
+  --cream-900: #E8E8E8;
+
+  /* Gold scale - slightly darker for better contrast on light bg */
+  --gold-400: #D9A300;
+  --gold-500: #B38600;
+
+  /* Charcoal scale - NOW light colors for backgrounds in light mode */
+  --charcoal-50: #796232;
+  --charcoal-100: #9E8340;
+  --charcoal-200: #C3A54E;
+  --charcoal-300: #D4BC72;
+  --charcoal-400: #E5D396;
+  --charcoal-500: #EADCAB;
+  --charcoal-600: #F0E4C0;
+  --charcoal-700: #F5EDD5;
+  --charcoal-800: #FAF6EA;
+  --charcoal-900: #FDFBF5;
+  --charcoal-950: #FFFFFF;
+
+  /* Background and text colors */
+  --bg-primary: #FAF6EA;
+  --bg-secondary: #F5EDD5;
+  --bg-tertiary: #E5D396;
+  --text-primary: #1A1A1A;
+  --text-secondary: #3B3B3B;
+  --text-muted: rgba(26, 26, 26, 0.6);
+  --border-color: rgba(26, 26, 26, 0.15);
+  --border-color-light: rgba(26, 26, 26, 0.08);
+
+  /* Gradients */
+  --gradient-gold: linear-gradient(135deg, #D9A300 0%, #B38600 50%, #8A6700 100%);
+  --gradient-cream: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
+  --gradient-dark: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 50%, #E5D396 100%);
+  --gradient-main: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 100%);
+
+  /* Shadows - slightly stronger for light backgrounds */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 30px rgba(0, 0, 0, 0.18);
+  --shadow-glow: 0 0 20px rgba(179, 134, 0, 0.4);
+
+  /* Glass effects */
+  --glass-bg: rgba(250, 246, 234, 0.8);
+  --glass-bg-dark: rgba(245, 237, 213, 0.9);
+  --glass-bg-gold: rgba(179, 134, 0, 0.1);
 }
 
 /* Base Styles */
@@ -68,9 +152,12 @@ html {
 }
 
 body {
-  @apply font-body bg-charcoal-950 text-cream-100;
+  @apply font-body;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
@@ -89,20 +176,25 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 @layer components {
   /* Glass Effect */
   .glass {
-    @apply bg-charcoal-900/30 backdrop-blur-md border border-cream-500/20;
+    background: var(--glass-bg);
+    @apply backdrop-blur-md;
+    border: 1px solid var(--border-color);
   }
-  
+
   .glass-dark {
-    @apply bg-charcoal-950/50 backdrop-blur-lg border border-cream-500/10;
+    background: var(--glass-bg-dark);
+    @apply backdrop-blur-lg;
+    border: 1px solid var(--border-color-light);
   }
-  
+
   .glass-gold {
-    @apply bg-gold-500/10 backdrop-blur-md border border-gold-500/30;
+    background: var(--glass-bg-gold);
+    @apply backdrop-blur-md border border-gold-800;
   }
-  
+
   /* Gradient Backgrounds */
   .bg-gradient-main {
-    background: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
+    background: var(--gradient-main);
   }
   
   .bg-gradient-accent {
@@ -127,7 +219,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .btn-ghost {
-    @apply btn bg-transparent text-cream-300 hover:bg-cream-500/10;
+    @apply btn bg-transparent text-cream-300 hover:bg-cream-900;
   }
   
   /* Cards */
@@ -140,12 +232,19 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .card-premium {
-    @apply card bg-gradient-to-br from-gold-500/20 to-cream-500/20 border-gold-500/30;
+    @apply card bg-gradient-to-br from-gold-900 to-cream-900 border-gold-700;
   }
   
   /* Form Elements */
   .input {
-    @apply w-full px-4 py-3.5 rounded-lg bg-charcoal-900/50 border border-cream-500/20 text-cream-100 placeholder-cream-500/50 focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 transition-all duration-300 min-h-[44px] text-base;
+    @apply w-full px-4 py-3.5 rounded-lg focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-900 transition-all duration-300 min-h-[44px] text-base;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .input::placeholder {
+    color: var(--text-muted);
   }
 
   .select {
@@ -157,11 +256,14 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .checkbox {
-    @apply w-6 h-6 rounded border-cream-500/20 bg-charcoal-900/50 text-gold-500 focus:ring-gold-500/20 cursor-pointer;
+    @apply w-6 h-6 rounded text-gold-500 focus:ring-gold-900 cursor-pointer;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
   }
 
   .label {
-    @apply block text-sm font-medium text-cream-300 mb-2 select-none;
+    @apply block text-sm font-medium mb-2 select-none;
+    color: var(--text-secondary);
   }
   
   /* Badges */
@@ -170,26 +272,27 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .badge-gold {
-    @apply badge bg-gold-500/20 text-gold-300 border border-gold-500/30;
+    @apply badge bg-gold-900 text-gold-300 border border-gold-700;
   }
   
   .badge-cream {
-    @apply badge bg-cream-500/20 text-cream-300 border border-cream-500/30;
+    @apply badge bg-cream-900 text-cream-300 border border-cream-700;
   }
   
   .badge-success {
-    @apply badge bg-green-500/20 text-green-300 border border-green-500/30;
+    @apply badge bg-green-900 text-green-300 border border-green-700;
   }
   
   .badge-danger {
-    @apply badge bg-red-500/20 text-red-300 border border-red-500/30;
+    @apply badge bg-red-900 text-red-300 border border-red-700;
   }
   
   /* Navigation */
   .nav-link {
-    @apply relative px-4 py-2 text-cream-300 font-medium transition-all duration-300 hover:text-gold-500;
+    @apply relative px-4 py-2 font-medium transition-all duration-300 hover:text-gold-500;
+    color: var(--text-secondary);
   }
-  
+
   .nav-link-active {
     @apply nav-link text-gold-500;
   }
@@ -200,11 +303,12 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   
   /* Loading States */
   .skeleton {
-    @apply bg-gradient-to-r from-charcoal-800 via-charcoal-700 to-charcoal-800 animate-shimmer bg-[size:1000px_100%];
+    @apply animate-shimmer bg-[size:1000px_100%];
+    background: linear-gradient(to right, var(--bg-secondary), var(--bg-tertiary), var(--bg-secondary));
   }
   
   .spinner {
-    @apply inline-block w-6 h-6 border-2 border-gold-500/20 border-t-gold-500 rounded-full animate-spin;
+    @apply inline-block w-6 h-6 border-2 border-gold-900 border-t-gold-500 rounded-full animate-spin;
   }
   
   /* Dividers */
@@ -217,7 +321,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   .divider::before {
-    @apply border-t border-cream-500/20;
+    @apply border-t border-cream-900;
   }
   
   /* Animations */
@@ -260,17 +364,17 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     width: 8px;
     height: 8px;
   }
-  
+
   ::-webkit-scrollbar-track {
-    @apply bg-charcoal-900;
+    background: var(--bg-secondary);
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    @apply bg-gold-500/50 rounded-full;
+    @apply bg-gold-700 rounded-full;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gold-500/70;
+    @apply bg-gold-600;
   }
 }
 

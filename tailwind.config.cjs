@@ -1,49 +1,51 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
+    "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
+        // Theme-aware colors using CSS variables
         cream: {
-          50: '#FDFBF5',
-          100: '#FAF6EA',
-          200: '#F5EDD5',
-          300: '#F0E4C0',
-          400: '#EADCAB',
-          500: '#E5D396',
-          DEFAULT: '#E5D396',
-          600: '#D4BC72',
-          700: '#C3A54E',
-          800: '#9E8340',
-          900: '#796232'
+          50: 'var(--cream-50)',
+          100: 'var(--cream-100)',
+          200: 'var(--cream-200)',
+          300: 'var(--cream-300)',
+          400: 'var(--cream-400)',
+          500: 'var(--cream-500)',
+          DEFAULT: 'var(--cream-500)',
+          600: 'var(--cream-600)',
+          700: 'var(--cream-700)',
+          800: 'var(--cream-800)',
+          900: 'var(--cream-900)'
         },
         gold: {
           50: '#FFFDF5',
           100: '#FFF9E6',
           200: '#FFF0BF',
           300: '#FFE799',
-          400: '#FFDD73',
-          500: '#FFD44D',
-          DEFAULT: '#FFD44D',
+          400: 'var(--gold-400)',
+          500: 'var(--gold-500)',
+          DEFAULT: 'var(--gold-500)',
           600: '#FFCA26',
           700: '#FFC100',
           800: '#D9A300',
           900: '#B38600'
         },
         charcoal: {
-          50: '#F5F5F5',
-          100: '#E8E8E8',
-          200: '#D1D1D1',
-          300: '#B8B8B8',
-          400: '#9F9F9F',
-          500: '#868686',
-          600: '#6D6D6D',
-          700: '#545454',
-          800: '#3B3B3B',
-          900: '#1A1A1A',
-          950: '#0D0D0D'
+          50: 'var(--charcoal-50)',
+          100: 'var(--charcoal-100)',
+          200: 'var(--charcoal-200)',
+          300: 'var(--charcoal-300)',
+          400: 'var(--charcoal-400)',
+          500: 'var(--charcoal-500)',
+          600: 'var(--charcoal-600)',
+          700: 'var(--charcoal-700)',
+          800: 'var(--charcoal-800)',
+          900: 'var(--charcoal-900)',
+          950: 'var(--charcoal-950)'
         }
       },
       fontFamily: {

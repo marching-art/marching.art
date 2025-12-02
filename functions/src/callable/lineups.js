@@ -97,6 +97,9 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
         const currentWeek = Math.ceil(currentDay / 7);
 
         let tradeLimit = 3; // Default
+        // Allow unlimited trades for initial lineup setup (no existing lineup)
+        const isInitialSetup = Object.keys(originalLineup).length === 0;
+        if (isInitialSetup) tradeLimit = Infinity;
         if (seasonData.status === "off-season" && currentWeek === 1) tradeLimit = Infinity;
         if (seasonData.status === "live-season" && [1, 2, 3].includes(currentWeek)) tradeLimit = Infinity;
 
@@ -163,6 +166,18 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
 
   if (!corpsClass || !["worldClass", "openClass", "aClass", "soundSport"].includes(corpsClass)) {
     throw new HttpsError("invalid-argument", "Valid corps class is required.");
+  }
+
+  // Validate no two shows on the same day
+  const daysUsed = new Set();
+  for (const show of shows) {
+    if (show.day !== undefined && show.day !== null) {
+      if (daysUsed.has(show.day)) {
+        throw new HttpsError("invalid-argument",
+          `Cannot select multiple shows on day ${show.day}. Corps can only attend one show per day.`);
+      }
+      daysUsed.add(show.day);
+    }
   }
 
   const db = getDb();

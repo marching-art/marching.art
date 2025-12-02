@@ -28,6 +28,11 @@ const {
   purchaseStaff,
   assignStaff,
   getStaffMarketplace,
+  listStaffForAuction,
+  bidOnStaff,
+  completeAuction,
+  getActiveAuctions,
+  cancelAuction,
 } = require("./src/callable/economy");
 const {
   dailyRehearsal,
@@ -46,6 +51,7 @@ const {
 } = require("./src/callable/battlePass");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
+  processCorpsDecisions,
   retireCorps,
   unretireCorps,
 } = require("./src/callable/corps");
@@ -68,6 +74,15 @@ const {
   updateProfile,
   getPublicProfile,
 } = require("./src/callable/profile");
+const {
+  claimDailyLogin,
+  staffCheckin,
+  memberWellnessCheck,
+  equipmentInspection,
+  sectionalRehearsal,
+  showReview,
+  getDailyOpsStatus,
+} = require("./src/callable/dailyOps");
 const {
   startNewOffSeason,
   startNewLiveSeason,
@@ -134,7 +149,13 @@ module.exports = {
   purchaseStaff,
   assignStaff,
   getStaffMarketplace,
+  listStaffForAuction,
+  bidOnStaff,
+  completeAuction,
+  getActiveAuctions,
+  cancelAuction,
   registerCorps,
+  processCorpsDecisions,
   retireCorps,
   unretireCorps,
   dailyRehearsal,
@@ -148,6 +169,13 @@ module.exports = {
   claimBattlePassReward,
   getBattlePassProgress,
   getAvailableRewards,
+  claimDailyLogin,
+  staffCheckin,
+  memberWellnessCheck,
+  equipmentInspection,
+  sectionalRehearsal,
+  showReview,
+  getDailyOpsStatus,
 
   // Scheduled
   seasonScheduler,
