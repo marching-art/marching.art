@@ -5,6 +5,7 @@ import {
   Wrench, TrendingUp, AlertCircle, Sparkles,
   ChevronRight, Coins, Star
 } from 'lucide-react';
+import Portal from '../Portal';
 
 const EquipmentManager = ({
   equipment,
@@ -171,13 +172,14 @@ const EquipmentManager = ({
       {/* Equipment Detail Modal */}
       <AnimatePresence>
         {selectedEquipment && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedEquipment(null)}
-          >
+          <Portal>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedEquipment(null)}
+            >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -292,6 +294,7 @@ const EquipmentManager = ({
               })()}
             </motion.div>
           </motion.div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>

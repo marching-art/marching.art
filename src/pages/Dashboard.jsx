@@ -20,7 +20,7 @@ import {
   ExecutionDashboard,
   RehearsalPanel,
   EquipmentManager,
-  StaffRoster,
+  DashboardStaffPanel,
   ShowDifficultySelector
 } from '../components/Execution';
 import { useExecution } from '../hooks/useExecution';
@@ -37,6 +37,7 @@ import {
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import { useSeason, getSeasonProgress } from '../hooks/useSeason';
+import SeasonSetupWizard from '../components/SeasonSetupWizard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -83,6 +84,8 @@ const Dashboard = () => {
     equipmentMaintained: 0
   });
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [showSeasonSetupWizard, setShowSeasonSetupWizard] = useState(false);
+  const [corpsNeedingSetup, setCorpsNeedingSetup] = useState([]);
 
   // Get the active corps class - use selected or default to first available
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
@@ -211,6 +214,49 @@ const Dashboard = () => {
       };
     }
   }, [user]);
+
+  // Detect corps that need season setup (no lineup set) or corps verification
+  useEffect(() => {
+    if (profile && seasonData && !loading && !seasonLoading) {
+      const needSetup = [];
+      const hasCorps = corps && Object.keys(corps).length > 0;
+      const hasRetiredCorps = profile.retiredCorps && profile.retiredCorps.length > 0;
+      const unlockedClasses = profile.unlockedClasses || ['soundSport'];
+
+      // Check each corps for missing lineup
+      if (corps) {
+        Object.entries(corps).forEach(([classId, corpsData]) => {
+          const hasLineup = corpsData.lineup && Object.keys(corpsData.lineup).length === 8;
+          if (!hasLineup && corpsData.corpsName) {
+            needSetup.push(classId);
+          }
+        });
+      }
+
+      // Check if user has eligible classes they haven't registered for
+      const hasEligibleNewClasses = unlockedClasses.some(classId => {
+        return !corps?.[classId]?.corpsName;
+      });
+
+      // Show wizard if:
+      // 1. Any corps needs lineup setup
+      // 2. User has existing corps that need verification (at season start when no lineups)
+      // 3. User has retired corps they might want to unretire
+      // 4. User has unlocked classes without corps
+      const shouldShowWizard = needSetup.length > 0 ||
+        (hasCorps && needSetup.length > 0) ||
+        (hasRetiredCorps && !hasCorps) ||
+        (hasEligibleNewClasses && !hasCorps && hasRetiredCorps);
+
+      if (shouldShowWizard) {
+        setCorpsNeedingSetup(needSetup);
+        setShowSeasonSetupWizard(true);
+      } else {
+        setCorpsNeedingSetup([]);
+        setShowSeasonSetupWizard(false);
+      }
+    }
+  }, [profile, corps, seasonData, loading, seasonLoading]);
 
   // Track daily login streaks and engagement
   useEffect(() => {
@@ -689,7 +735,7 @@ const Dashboard = () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
-        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
+        [`corps.${activeCorpsClass}.name`]: formData.name,
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
       });
@@ -867,8 +913,28 @@ const Dashboard = () => {
   // Show nothing extra while loading - Suspense fallback handles initial load
   // Data will render when ready
 
+  // Handle wizard completion
+  const handleSeasonSetupComplete = () => {
+    setShowSeasonSetupWizard(false);
+    setCorpsNeedingSetup([]);
+    toast.success('Season setup complete! Time to compete!');
+  };
+
   return (
     <div className="space-y-8">
+      {/* Season Setup Wizard - Shows when corps need lineup setup */}
+      {showSeasonSetupWizard && seasonData && (
+        <SeasonSetupWizard
+          onComplete={handleSeasonSetupComplete}
+          profile={profile}
+          seasonData={seasonData}
+          corpsNeedingSetup={corpsNeedingSetup}
+          existingCorps={corps || {}}
+          retiredCorps={profile?.retiredCorps || []}
+          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+        />
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -928,6 +994,135 @@ const Dashboard = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Quick Actions - Daily Rehearsal prominently displayed */}
+      {activeCorps && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {/* Daily Rehearsal Card */}
+          <button
+            onClick={async () => {
+              if (canRehearseToday()) {
+                const result = await rehearse();
+                if (result.success) {
+                  toast.success(`Rehearsal complete! +${result.data?.xpGained || 25} XP`);
+                }
+              } else {
+                toast('Rehearsal already completed today!', { icon: '✓' });
+              }
+            }}
+            disabled={executionProcessing}
+            className={`p-4 rounded-xl border-2 transition-all text-left ${
+              canRehearseToday()
+                ? 'border-gold-500/50 bg-gradient-to-br from-gold-500/10 to-yellow-500/10 hover:border-gold-500 hover:shadow-lg hover:shadow-gold-500/10 cursor-pointer'
+                : 'border-green-500/30 bg-green-500/5 cursor-default'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  canRehearseToday() ? 'bg-gold-500/20' : 'bg-green-500/20'
+                }`}>
+                  {canRehearseToday() ? (
+                    <Activity className="w-5 h-5 text-gold-500" />
+                  ) : (
+                    <Check className="w-5 h-5 text-green-500" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-cream-100">Daily Rehearsal</p>
+                  <p className="text-xs text-cream-500/60">
+                    {canRehearseToday() ? 'Tap to rehearse!' : 'Completed today'}
+                  </p>
+                </div>
+              </div>
+              {canRehearseToday() && (
+                <span className="px-2 py-1 bg-gold-500/20 rounded-full text-xs font-semibold text-gold-500">
+                  +25 XP
+                </span>
+              )}
+            </div>
+            {executionState?.rehearsalsThisWeek !== undefined && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-cream-500/60">Weekly Progress</span>
+                  <span className="text-cream-300 font-medium">{executionState.rehearsalsThisWeek}/7</span>
+                </div>
+                <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-gold transition-all"
+                    style={{ width: `${(executionState.rehearsalsThisWeek / 7) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Readiness Status Card */}
+          <button
+            onClick={() => setActiveTab('execution')}
+            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-cream-100">Corps Readiness</p>
+                <p className="text-xs text-cream-500/60">View execution stats</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-cream-500/60">Readiness Level</span>
+                <span className={`font-medium ${
+                  (executionState?.readiness || 0.75) >= 0.9 ? 'text-green-400' :
+                  (executionState?.readiness || 0.75) >= 0.7 ? 'text-blue-400' :
+                  'text-orange-400'
+                }`}>
+                  {((executionState?.readiness || 0.75) * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    (executionState?.readiness || 0.75) >= 0.9 ? 'bg-green-500' :
+                    (executionState?.readiness || 0.75) >= 0.7 ? 'bg-blue-500' :
+                    'bg-orange-500'
+                  }`}
+                  style={{ width: `${(executionState?.readiness || 0.75) * 100}%` }}
+                />
+              </div>
+            </div>
+          </button>
+
+          {/* Schedule Quick Link */}
+          <Link
+            to="/schedule"
+            className="p-4 rounded-xl border-2 border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 hover:bg-charcoal-900/50 transition-all text-left"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-cream-100">Week {currentWeek} Schedule</p>
+                <p className="text-xs text-cream-500/60">Select shows to compete</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-cream-500/60">
+                {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} shows selected
+              </span>
+              <ChevronRight className="w-4 h-4 text-cream-500/40" />
+            </div>
+          </Link>
+        </motion.div>
+      )}
 
       {/* Corps Selector - Show only if user has multiple corps */}
       {hasMultipleCorps && (
@@ -1424,7 +1619,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-2">
             <Users className="w-5 h-5 text-gold-500" />
             <span className="text-2xl font-bold text-cream-100">
-              {profile?.leagues?.length || 0}
+              {profile?.leagueIds?.length || 0}
             </span>
           </div>
           <p className="text-sm text-cream-500/60">Active Leagues</p>
@@ -1567,10 +1762,8 @@ const Dashboard = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <StaffRoster
-              staff={executionState?.staff}
-              processing={executionProcessing}
-              corpsCoin={profile?.corpsCoin || 0}
+            <DashboardStaffPanel
+              activeCorpsClass={activeCorpsClass}
             />
           </motion.div>
         )}
@@ -2223,7 +2416,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold text-cream-100 mb-4">
             League Activity
           </h3>
-          {!profile?.leagues || profile.leagues.length === 0 ? (
+          {!profile?.leagueIds || profile.leagueIds.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
               <p className="text-cream-500/60 mb-4">Not in any leagues yet</p>
@@ -2234,7 +2427,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {profile.leagues.slice(0, 3).map((leagueId, index) => (
+              {profile.leagueIds.slice(0, 3).map((leagueId, index) => (
                 <div
                   key={leagueId}
                   className="flex items-center justify-between p-3 bg-charcoal-900/30 rounded-lg hover:bg-charcoal-900/50 transition-colors"

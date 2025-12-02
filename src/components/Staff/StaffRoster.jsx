@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
+import Portal from '../Portal';
 
 const CAPTION_OPTIONS = [
   { value: 'all', label: 'All Captions' },
@@ -38,8 +39,11 @@ const StaffRoster = ({ userCorps = {} }) => {
   const [selectedCorpsClass, setSelectedCorpsClass] = useState('');
   const [assigning, setAssigning] = useState(false);
 
-  // Get list of user's registered corps classes
-  const availableCorpsClasses = Object.keys(userCorps);
+  // Get list of user's registered corps classes in hierarchy order
+  const availableCorpsClasses = Object.keys(userCorps).sort((a, b) => {
+    const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+    return (classOrder[a] ?? 99) - (classOrder[b] ?? 99);
+  });
 
   const handleAssign = async () => {
     if (!selectedStaff || !selectedCorpsClass) return;
@@ -269,7 +273,8 @@ const StaffRoster = ({ userCorps = {} }) => {
       {/* Staff Details Modal */}
       <AnimatePresence>
         {selectedStaff && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <Portal>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -408,6 +413,7 @@ const StaffRoster = ({ userCorps = {} }) => {
               </div>
             </motion.div>
           </div>
+        </Portal>
         )}
       </AnimatePresence>
     </div>

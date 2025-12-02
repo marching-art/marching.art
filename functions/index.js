@@ -46,6 +46,7 @@ const {
 } = require("./src/callable/battlePass");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
+  processCorpsDecisions,
   retireCorps,
   unretireCorps,
 } = require("./src/callable/corps");
@@ -135,6 +136,7 @@ module.exports = {
   assignStaff,
   getStaffMarketplace,
   registerCorps,
+  processCorpsDecisions,
   retireCorps,
   unretireCorps,
   dailyRehearsal,

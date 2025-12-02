@@ -4,6 +4,193 @@ const admin = require("firebase-admin");
 const { logger } = require("firebase-functions/v2");
 
 /**
+ * Process corps decisions during season reset
+ * Handles continue/retire/unretire/new decisions for all classes atomically
+ */
+exports.processCorpsDecisions = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { decisions } = request.data;
+  const uid = request.auth.uid;
+
+  if (!decisions || !Array.isArray(decisions)) {
+    throw new HttpsError("invalid-argument", "Decisions array is required.");
+  }
+
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  const validActions = ["continue", "retire", "unretire", "new", "skip"];
+
+  // Validate all decisions
+  for (const decision of decisions) {
+    if (!decision.corpsClass || !validClasses.includes(decision.corpsClass)) {
+      throw new HttpsError("invalid-argument", `Invalid corps class: ${decision.corpsClass}`);
+    }
+    if (!decision.action || !validActions.includes(decision.action)) {
+      throw new HttpsError("invalid-argument", `Invalid action for ${decision.corpsClass}: ${decision.action}`);
+    }
+    if (decision.action === "new" && (!decision.corpsName || !decision.location)) {
+      throw new HttpsError("invalid-argument", `New corps requires name and location for ${decision.corpsClass}`);
+    }
+    if (decision.action === "unretire" && decision.retiredIndex === undefined) {
+      throw new HttpsError("invalid-argument", `Unretire requires retiredIndex for ${decision.corpsClass}`);
+    }
+  }
+
+  const db = getDb();
+  const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const profileDoc = await transaction.get(userProfileRef);
+      if (!profileDoc.exists) {
+        throw new HttpsError("not-found", "User profile does not exist.");
+      }
+
+      const profileData = profileDoc.data();
+      let updatedCorps = { ...profileData.corps };
+      let updatedRetiredCorps = [...(profileData.retiredCorps || [])];
+      const corpsNeedingSetup = [];
+
+      for (const decision of decisions) {
+        const { corpsClass, action } = decision;
+        const existingCorps = updatedCorps[corpsClass];
+
+        switch (action) {
+          case "continue":
+            // Keep the corps, just reset season data
+            if (existingCorps?.corpsName) {
+              updatedCorps[corpsClass] = {
+                ...existingCorps,
+                lineup: null,
+                lineupKey: null,
+                selectedShows: {},
+                weeklyScores: {},
+                totalSeasonScore: 0
+              };
+              corpsNeedingSetup.push(corpsClass);
+            }
+            break;
+
+          case "retire":
+            // Move corps to retired list
+            if (existingCorps?.corpsName) {
+              const retiredRecord = {
+                corpsClass,
+                corpsName: existingCorps.corpsName,
+                location: existingCorps.location,
+                seasonHistory: existingCorps.seasonHistory || [],
+                weeklyTrades: existingCorps.weeklyTrades || null,
+                totalSeasons: existingCorps.seasonHistory?.length || 0,
+                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
+                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
+                retiredAt: admin.firestore.FieldValue.serverTimestamp()
+              };
+              updatedRetiredCorps.push(retiredRecord);
+              delete updatedCorps[corpsClass];
+            }
+            break;
+
+          case "unretire":
+            // Restore from retired list
+            const retiredRecord = updatedRetiredCorps[decision.retiredIndex];
+            if (!retiredRecord || retiredRecord.corpsClass !== corpsClass) {
+              throw new HttpsError("not-found", `Retired corps not found for ${corpsClass}`);
+            }
+
+            // If there's an existing corps, retire it first
+            if (existingCorps?.corpsName) {
+              const existingRetired = {
+                corpsClass,
+                corpsName: existingCorps.corpsName,
+                location: existingCorps.location,
+                seasonHistory: existingCorps.seasonHistory || [],
+                weeklyTrades: existingCorps.weeklyTrades || null,
+                totalSeasons: existingCorps.seasonHistory?.length || 0,
+                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
+                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
+                retiredAt: admin.firestore.FieldValue.serverTimestamp()
+              };
+              updatedRetiredCorps.push(existingRetired);
+            }
+
+            updatedCorps[corpsClass] = {
+              corpsName: retiredRecord.corpsName,
+              location: retiredRecord.location,
+              seasonHistory: retiredRecord.seasonHistory || [],
+              weeklyTrades: retiredRecord.weeklyTrades || null,
+              lineup: null,
+              lineupKey: null,
+              selectedShows: {},
+              weeklyScores: {},
+              totalSeasonScore: 0
+            };
+            updatedRetiredCorps = updatedRetiredCorps.filter((_, idx) => idx !== decision.retiredIndex);
+            corpsNeedingSetup.push(corpsClass);
+            break;
+
+          case "new":
+            // Retire existing if present, create new corps
+            if (existingCorps?.corpsName) {
+              const existingRetired = {
+                corpsClass,
+                corpsName: existingCorps.corpsName,
+                location: existingCorps.location,
+                seasonHistory: existingCorps.seasonHistory || [],
+                weeklyTrades: existingCorps.weeklyTrades || null,
+                totalSeasons: existingCorps.seasonHistory?.length || 0,
+                bestSeasonScore: Math.max(...(existingCorps.seasonHistory?.map(s => s.totalSeasonScore) || [0])),
+                totalShows: (existingCorps.seasonHistory || []).reduce((sum, s) => sum + (s.showsAttended || 0), 0),
+                retiredAt: admin.firestore.FieldValue.serverTimestamp()
+              };
+              updatedRetiredCorps.push(existingRetired);
+            }
+
+            updatedCorps[corpsClass] = {
+              corpsName: decision.corpsName,
+              location: decision.location,
+              showConcept: decision.showConcept || "",
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              seasonHistory: [],
+              lineup: null,
+              lineupKey: null,
+              selectedShows: {},
+              weeklyScores: {},
+              totalSeasonScore: 0
+            };
+            corpsNeedingSetup.push(corpsClass);
+            break;
+
+          case "skip":
+            // Don't participate in this class this season
+            break;
+        }
+      }
+
+      // Update profile
+      transaction.update(userProfileRef, {
+        corps: updatedCorps,
+        retiredCorps: updatedRetiredCorps
+      });
+
+      return { corpsNeedingSetup };
+    });
+
+    logger.info(`User ${uid} processed corps decisions:`, decisions.map(d => `${d.corpsClass}:${d.action}`));
+    return {
+      success: true,
+      corpsNeedingSetup: result.corpsNeedingSetup,
+      message: "Corps decisions processed successfully!"
+    };
+  } catch (error) {
+    logger.error(`Failed to process corps decisions for user ${uid}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "An error occurred while processing corps decisions.");
+  }
+});
+
+/**
  * Retire a corps - move it from active corps to retired list
  */
 exports.retireCorps = onCall({ cors: true }, async (request) => {

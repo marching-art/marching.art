@@ -5,6 +5,7 @@ import {
   Lock, Sparkles, X, Trash2, Archive, Check,
   Trophy, Star, Crown, Award, Medal, Flame
 } from 'lucide-react';
+import Portal from '../Portal';
 
 // Class Unlock Congratulations Modal Component
 export const ClassUnlockCongratsModal = ({ unlockedClass, onSetup, onDecline, xpLevel }) => {
@@ -38,23 +39,24 @@ export const ClassUnlockCongratsModal = ({ unlockedClass, onSetup, onDecline, xp
   const classInfo = getClassInfo(unlockedClass);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.8, opacity: 0, y: 50 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.8, opacity: 0, y: 50 }}
-        transition={{ type: 'spring', duration: 0.5 }}
-        className="w-full max-w-lg"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       >
-        <div className="glass-premium rounded-2xl p-8 border-2 border-gold-500/30 relative overflow-hidden">
-          {/* Animated background gradient */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${classInfo.color} opacity-10 animate-pulse`} />
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.8, opacity: 0, y: 50 }}
+          transition={{ type: 'spring', duration: 0.5 }}
+          className="w-full max-w-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-premium rounded-2xl p-8 border-2 border-gold-500/30 relative overflow-hidden">
+            {/* Animated background gradient */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${classInfo.color} opacity-10 animate-pulse`} />
 
           <div className="relative z-10">
             {/* Celebration icon */}
@@ -133,8 +135,9 @@ export const ClassUnlockCongratsModal = ({ unlockedClass, onSetup, onDecline, xp
             </motion.div>
           </div>
         </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
@@ -147,20 +150,14 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
     class: defaultClass || 'soundSport'
   });
 
+  // Classes in hierarchy order: World → Open → A → SoundSport
   const classes = [
     {
-      id: 'soundSport',
-      name: 'SoundSport',
-      description: 'Entry level - Perfect for beginners',
-      unlocked: true,
-      color: 'bg-green-500'
-    },
-    {
-      id: 'aClass',
-      name: 'A Class',
-      description: 'Intermediate - Requires Level 3',
-      unlocked: unlockedClasses.includes('aClass'),
-      color: 'bg-blue-500'
+      id: 'world',
+      name: 'World Class',
+      description: 'Elite - Requires Level 10',
+      unlocked: unlockedClasses.includes('world'),
+      color: 'bg-gold-500'
     },
     {
       id: 'open',
@@ -170,11 +167,18 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
       color: 'bg-purple-500'
     },
     {
-      id: 'world',
-      name: 'World Class',
-      description: 'Elite - Requires Level 10',
-      unlocked: unlockedClasses.includes('world'),
-      color: 'bg-gold-500'
+      id: 'aClass',
+      name: 'A Class',
+      description: 'Intermediate - Requires Level 3',
+      unlocked: unlockedClasses.includes('aClass'),
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'soundSport',
+      name: 'SoundSport',
+      description: 'Entry level - Perfect for beginners',
+      unlocked: true,
+      color: 'bg-green-500'
     }
   ];
 
@@ -184,24 +188,25 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-2xl"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
-          <h2 className="text-3xl font-display font-bold text-gradient mb-6">
-            Register Your Corps
-          </h2>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
+            <h2 className="text-3xl font-display font-bold text-gradient mb-6">
+              Register Your Corps
+            </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Corps Name */}
@@ -302,9 +307,10 @@ export const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, def
               </button>
             </div>
           </form>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
@@ -322,25 +328,26 @@ export const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-2xl"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-display font-bold text-gradient">
-              Edit Corps Details
-            </h2>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-display font-bold text-gradient">
+                Edit Corps Details
+              </h2>
             <button onClick={onClose} className="btn-ghost p-2">
               <X className="w-5 h-5" />
             </button>
@@ -408,9 +415,10 @@ export const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
               </button>
             </div>
           </form>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
@@ -428,13 +436,14 @@ const getCorpsClassName = (classId) => {
 // Delete Confirmation Modal Component
 export const DeleteConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -488,21 +497,23 @@ export const DeleteConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass }
             </button>
           </div>
         </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
 // Retire Confirmation Modal Component
 export const RetireConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass, retiring }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -565,8 +576,9 @@ export const RetireConfirmModal = ({ onClose, onConfirm, corpsName, corpsClass, 
             </button>
           </div>
         </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
@@ -603,25 +615,26 @@ export const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unloc
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="glass-dark rounded-2xl p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-display font-bold text-gradient">
-              Move Corps
-            </h2>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="w-full max-w-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="glass-dark rounded-2xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-display font-bold text-gradient">
+                Move Corps
+              </h2>
             <button onClick={onClose} className="btn-ghost p-2">
               <X className="w-5 h-5" />
             </button>
@@ -697,9 +710,10 @@ export const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unloc
               </div>
             </form>
           )}
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 
@@ -756,21 +770,22 @@ export const AchievementModal = ({ onClose, achievements, newAchievement }) => {
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-charcoal-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', duration: 0.5 }}
-        className="glass-premium rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto custom-scrollbar"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-charcoal-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={onClose}
       >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: 'spring', duration: 0.5 }}
+          className="glass-premium rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto custom-scrollbar"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-gold-500 to-yellow-500 p-3 rounded-xl">
@@ -861,7 +876,8 @@ export const AchievementModal = ({ onClose, achievements, newAchievement }) => {
             <p className="text-cream-500/60">No achievements yet. Keep playing to unlock them!</p>
           </div>
         )}
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };

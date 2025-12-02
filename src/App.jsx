@@ -13,13 +13,13 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
-const Profile = lazy(() => import('./pages/ProfileNew'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
@@ -195,33 +195,34 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthContext.Provider value={authContextValue}>
-        <Router>
-        {/* Global Components */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#1A1A1A',
-              color: '#E5D396',
-              border: '1px solid rgba(229, 211, 150, 0.2)',
-              borderRadius: '0.5rem',
-            },
-            success: {
-              iconTheme: {
-                primary: '#FFD44D',
-                secondary: '#1A1A1A',
+      <ThemeProvider>
+        <AuthContext.Provider value={authContextValue}>
+          <Router>
+          {/* Global Components */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '0.5rem',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: '#EF4444',
-                secondary: '#1A1A1A',
+              success: {
+                iconTheme: {
+                  primary: '#FFD44D',
+                  secondary: 'var(--bg-secondary)',
+                },
               },
-            },
-          }}
-        />
+              error: {
+                iconTheme: {
+                  primary: '#EF4444',
+                  secondary: 'var(--bg-secondary)',
+                },
+              },
+            }}
+          />
 
         {/* PWA Install Prompt - shows after user engagement */}
         {user && <PWAInstallPrompt />}
@@ -262,11 +263,8 @@ function App() {
           {/* Redirect old /hub route to /leagues */}
           <Route path="/hub" element={<Navigate to="/leagues" replace />} />
           
-          <Route path="/leaderboard" element={
-            <Layout>
-              <Leaderboard />
-            </Layout>
-          } />
+          {/* Redirect old /leaderboard route to /scores */}
+          <Route path="/leaderboard" element={<Navigate to="/scores" replace />} />
           
           <Route path="/schedule" element={
             <ProtectedRoute>
@@ -374,9 +372,10 @@ function App() {
               </div>
             </div>
           } />
-        </Routes>
-      </Router>
-    </AuthContext.Provider>
+          </Routes>
+        </Router>
+      </AuthContext.Provider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

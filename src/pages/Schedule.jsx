@@ -13,6 +13,7 @@ import { httpsCallable } from 'firebase/functions';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
+import Portal from '../components/Portal';
 
 const Schedule = () => {
   const { user } = useAuth();
@@ -477,24 +478,25 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <Portal>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="glass-dark rounded-2xl p-8 max-w-2xl w-full"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        {/* Header */}
-        <h2 className="text-2xl font-display font-bold text-gradient mb-2">
-          Register Corps for Show
-        </h2>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="glass-dark rounded-2xl p-8 max-w-2xl w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <h2 className="text-2xl font-display font-bold text-gradient mb-2">
+            Register Corps for Show
+          </h2>
         <p className="text-cream-400 mb-6">
           {show.eventName}
         </p>
@@ -570,36 +572,37 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="btn-ghost flex-1"
-            disabled={saving}
-          >
-            <X className="w-4 h-4 mr-2" />
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="btn-primary flex-1"
-            disabled={saving || userCorpsClasses.length === 0}
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Check className="w-5 h-5 mr-2" />
-                Save Registration
-              </>
-            )}
-          </button>
-        </div>
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="btn-ghost flex-1"
+              disabled={saving}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="btn-primary flex-1"
+              disabled={saving || userCorpsClasses.length === 0}
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="w-5 h-5 mr-2" />
+                  Save Registration
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Portal>
   );
 };
 

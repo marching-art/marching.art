@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInAnonymously } = useAuth();
+  const { signIn } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,20 +48,6 @@ const Login = () => {
         default:
           setError('Failed to sign in. Please try again');
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAnonymousSignIn = async () => {
-    setLoading(true);
-    try {
-      await signInAnonymously();
-      toast.success('Signed in as guest');
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Anonymous sign in error:', err);
-      setError('Failed to sign in as guest. Please try again');
     } finally {
       setLoading(false);
     }
@@ -199,28 +185,6 @@ const Login = () => {
                 )}
               </button>
             </form>
-
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-cream-500/20" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-charcoal-950 text-cream-500/60">Or continue with</span>
-              </div>
-            </div>
-
-            {/* Alternative Sign In */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleAnonymousSignIn}
-                className="w-full btn-outline"
-                disabled={loading}
-              >
-                Continue as Guest
-              </button>
-            </div>
 
             {/* Sign Up Link */}
             <p className="text-center mt-8 text-cream-500/60">
