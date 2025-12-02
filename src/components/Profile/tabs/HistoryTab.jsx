@@ -3,7 +3,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { History, Trophy, Calendar, Medal, TrendingUp, CheckCircle, Lock } from 'lucide-react';
 
-const CLASS_ORDER = ['soundSport', 'aClass', 'open', 'world'];
+// Note: unlockedClasses array uses 'open' and 'world' (not 'openClass' and 'worldClass')
+const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
 const CLASS_LEVELS = { soundSport: 1, aClass: 3, open: 5, world: 10 };
 const CLASS_NAMES = { soundSport: 'SoundSport', aClass: 'A Class', open: 'Open Class', world: 'World Class' };
 const CLASS_COLORS = { soundSport: 'green', aClass: 'blue', open: 'purple', world: 'gold' };

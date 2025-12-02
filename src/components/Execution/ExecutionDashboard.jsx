@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Award
 } from 'lucide-react';
 
-const ExecutionDashboard = ({ executionState, multiplier }) => {
+const ExecutionDashboard = ({ executionState, multiplier, assignedStaffCount = 0 }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   if (!executionState) {
@@ -22,8 +22,7 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
     readiness: rawReadiness = 0,
     morale: rawMorale = 0,
     equipment = {},
-    showDesign = {},
-    staff = {}
+    showDesign = {}
   } = executionState;
 
   // Handle both object structure (from Cloud Function) and number structure
@@ -57,7 +56,8 @@ const ExecutionDashboard = ({ executionState, multiplier }) => {
   // Then clamped to 0.70 - 1.10
   const getMultiplierBreakdown = () => {
     const breakdown = [];
-    const staffCount = Array.isArray(staff) ? staff.length : Object.keys(staff || {}).length;
+    // Use assignedStaffCount from marketplace instead of executionState.staff
+    const staffCount = assignedStaffCount;
     const staffBonusValue = Math.min(staffCount * 0.01, 0.05);
 
     // Factor 1: Readiness (40% weight)

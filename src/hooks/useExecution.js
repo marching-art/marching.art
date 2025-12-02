@@ -217,7 +217,8 @@ export const useExecution = (userId, corpsClass) => {
   };
 
   // Calculate current execution multiplier
-  const calculateMultiplier = () => {
+  // Optional staffCount param allows override from marketplace data
+  const calculateMultiplier = (staffCount = null) => {
     if (!executionState) return 1.0;
 
     const { readiness = 0, morale = 0, equipment = {}, staff = [] } = executionState;
@@ -239,8 +240,9 @@ export const useExecution = (userId, corpsClass) => {
       ? equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length
       : 0.90;
 
-    // Staff effectiveness (0.95-1.05 range)
-    const staffBonus = Math.min(staff.length * 0.01, 0.05);
+    // Staff bonus: use provided staffCount if available, otherwise fall back to executionState
+    const effectiveStaffCount = staffCount !== null ? staffCount : staff.length;
+    const staffBonus = Math.min(effectiveStaffCount * 0.01, 0.05);
 
     // Base calculation
     const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
