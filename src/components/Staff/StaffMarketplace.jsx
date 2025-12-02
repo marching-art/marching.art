@@ -48,7 +48,7 @@ const StaffCard = memo(({ staff, owned, canAfford, onPurchase }) => {
           <Trophy className={`w-5 h-5 ${captionColor.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-cream-100 mb-1 truncate">{staff.name}</h3>
+          <h3 className="font-semibold text-cream-100 mb-1 truncate text-base">{staff.name}</h3>
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${captionColor}`}>
               {staff.caption}
