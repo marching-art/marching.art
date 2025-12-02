@@ -107,7 +107,71 @@ const Dashboard = () => {
     if (newAchievement) {
       setShowAchievementModal(true);
     }
-  }, [newAchievement]);
+  }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
+
+  const fetchBattlePassProgress = async () => {
+    try {
+      const result = await getBattlePassProgress();
+      if (result.data && result.data.success) {
+        const progress = result.data.progress;
+        setBattlePassRewards(progress);
+
+        // Count unclaimed rewards
+        let unclaimedCount = 0;
+        for (let level = 1; level <= progress.currentLevel; level++) {
+          // Check free tier
+          if (!progress.claimedRewards?.free?.includes(level)) {
+            unclaimedCount++;
+          }
+          // Check premium tier if user has battle pass
+          if (progress.hasBattlePass && !progress.claimedRewards?.premium?.includes(level)) {
+            unclaimedCount++;
+          }
+        }
+        setUnclaimedRewardsCount(unclaimedCount);
+      }
+    } catch (error) {
+      // Silently handle "no active season" errors - this is expected when no battle pass is configured
+      if (error.message && !error.message.includes('No active battle pass season')) {
+        console.error('Error fetching battle pass progress:', error);
+      }
+      setBattlePassRewards(null);
+      setUnclaimedRewardsCount(0);
+    }
+  };
+
+  const subscribeToLeagueRankings = () => {
+    // Subscribe to user's league rankings
+    if (profile?.leagueIds) {
+      // Implementation for league rankings
+    }
+  };
+
+  const getCorpsClassName = (classId) => {
+    const classNames = {
+      soundSport: 'SoundSport',
+      aClass: 'A Class',
+      open: 'Open Class',
+      world: 'World Class'
+    };
+    return classNames[classId] || classId;
+  };
+
+  const getCorpsClassColor = (classId) => {
+    const colors = {
+      soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
+      aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
+      open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
+      world: 'text-gold-500 bg-gold-500/10 border-gold-500/30'
+    };
+    return colors[classId] || 'text-cream-500 bg-cream-500/10 border-cream-500/30';
+  };
+
+  const handleCorpsSwitch = (classId) => {
+    setSelectedCorpsClass(classId);
+    setShowCorpsSelector(false);
+    toast.success(`Switched to ${getCorpsClassName(classId)}`);
+  };
 
   // Handler functions
   const handleSetupNewClass = () => {

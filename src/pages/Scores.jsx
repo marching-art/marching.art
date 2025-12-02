@@ -10,14 +10,12 @@ import {
   Award,
   Medal,
   ChevronRight,
-  ChevronLeft,
-  ChevronDown as ChevronDownIcon,
+  ChevronDown,
   Star,
   Music,
   Eye,
   Users,
   Crown,
-  ChevronDown,
   BarChart3,
   X
 } from 'lucide-react';
@@ -391,17 +389,11 @@ const Scores = () => {
               <ShowCard key={`day-${selectedDay}-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
             ))}
           </div>
-        ) : availableDays.length > 0 ? (
-          <div className="card p-8 md:p-12 text-center">
-            <Calendar className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
-            <p className="text-lg md:text-xl text-cream-300 mb-2">No shows on Day {selectedDay}</p>
-            <p className="text-sm md:text-base text-cream-500/60">Use the arrows to navigate to other days</p>
-          </div>
-        ) : (
-          <div className="card p-8 md:p-12 text-center">
+        ) : !hasLiveShows && (
+          <div className="card p-6 md:p-12 text-center">
             <Clock className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
-            <p className="text-lg md:text-xl text-cream-300 mb-2">No shows yet</p>
-            <p className="text-sm md:text-base text-cream-500/60">Check back during competition times or view the schedule</p>
+            <p className="text-base md:text-xl text-cream-300 mb-2">No shows this week</p>
+            <p className="text-sm text-cream-500/60 max-w-sm mx-auto">Check back during competition times or view the schedule</p>
           </div>
         )}
       </div>
@@ -436,8 +428,8 @@ const Scores = () => {
         )}
 
         {/* Rankings Sub-tabs */}
-        <div className="border-b border-cream-500/20">
-          <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex justify-center">
+          <div className="flex bg-charcoal-800/50 rounded-lg p-1">
             {rankingsTabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -446,8 +438,8 @@ const Scores = () => {
                   onClick={() => setRankingsTab(tab.id)}
                   className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                     rankingsTab === tab.id
-                      ? 'text-gold-500 border-b-2 border-gold-500'
-                      : 'text-cream-500/60 hover:text-cream-300'
+                      ? 'bg-gold-500 text-charcoal-900 font-medium'
+                      : 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -584,10 +576,10 @@ const Scores = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-12 md:py-20 px-4">
+            <div className="text-center p-6 md:p-12">
               <Trophy className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
               <p className="text-cream-300 text-base md:text-lg font-semibold">No scores recorded yet</p>
-              <p className="text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
+              <p className="text-cream-500/60 text-sm mt-2 max-w-sm mx-auto">
                 {rankingsTab === 'weekly'
                   ? 'Weekly rankings will appear after shows are scored this week'
                   : rankingsTab === 'monthly'
@@ -618,16 +610,16 @@ const Scores = () => {
     return (
       <div className="space-y-6">
         {/* Lifetime View Selector */}
-        <div className="border-b border-cream-500/20">
-          <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="-mx-4 px-4 overflow-x-auto md:mx-0 md:px-0 scrollbar-hide">
+          <div className="flex gap-2 justify-center md:flex-wrap min-w-max md:min-w-0">
             {lifetimeViews.map((view) => (
               <button
                 key={view.id}
                 onClick={() => setLifetimeView(view.id)}
                 className={`px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                   lifetimeView === view.id
-                    ? 'text-gold-500 border-b-2 border-gold-500'
-                    : 'text-cream-500/60 hover:text-cream-300'
+                    ? 'bg-gold-500 text-charcoal-900 font-medium'
+                    : 'bg-charcoal-800/50 text-cream-300 hover:bg-charcoal-800'
                 }`}
               >
                 {view.label}
@@ -732,7 +724,11 @@ const Scores = () => {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-cream-100 font-bold">{entry.lifetimeStats?.[lifetimeView]?.toLocaleString() || '0'}</p>
+                        <p className="text-cream-100 font-bold">
+                          {lifetimeView === 'bestSeasonScore'
+                            ? (entry.lifetimeStats?.bestSeasonScore?.toFixed(2) || '0.00')
+                            : (entry.lifetimeStats?.[lifetimeView]?.toLocaleString() || '0')}
+                        </p>
                         <p className="text-cream-500/60 text-xs">{lifetimeViews.find(v => v.id === lifetimeView)?.label}</p>
                       </div>
                     </div>
@@ -762,10 +758,10 @@ const Scores = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-12 md:py-20 px-4">
+            <div className="text-center p-6 md:p-12">
               <Award className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
               <p className="text-cream-300 text-base md:text-lg font-semibold">No lifetime stats yet</p>
-              <p className="text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
+              <p className="text-cream-500/60 text-sm mt-2 max-w-sm mx-auto">
                 Complete seasons to appear on the lifetime leaderboard
               </p>
             </div>
@@ -880,10 +876,10 @@ const Scores = () => {
             })}
           </div>
         ) : (
-          <div className="card p-8 md:p-12 text-center">
+          <div className="card p-6 md:p-12 text-center">
             <Star className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
-            <p className="text-lg md:text-xl text-cream-300 mb-2">No Recent SoundSport Events</p>
-            <p className="text-sm md:text-base text-cream-500/60">SoundSport event results will appear here when available</p>
+            <p className="text-base md:text-xl text-cream-300 mb-2">No Recent SoundSport Events</p>
+            <p className="text-sm text-cream-500/60 max-w-sm mx-auto">SoundSport event results will appear here when available</p>
           </div>
         )}
       </div>
@@ -908,15 +904,15 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card p-4"
+          className="card p-4 hover:bg-charcoal-800/50 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 rounded-lg">
-              <Calendar className="w-6 h-6 text-blue-500" />
+            <div className="p-2.5 md:p-3 bg-gold-500/10 rounded-lg">
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.recentShows}</p>
-              <p className="text-xs text-cream-500/60">Recent Shows</p>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-cream-100">{stats.showsToday}</p>
+              <p className="text-xs text-cream-500/60">Shows Today</p>
             </div>
           </div>
         </motion.div>
@@ -925,15 +921,15 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card p-4"
+          className="card p-4 hover:bg-charcoal-800/50 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-purple-500" />
+            <div className="p-2.5 md:p-3 bg-blue-500/10 rounded-lg">
+              <Calendar className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.topScore}</p>
-              <p className="text-xs text-cream-500/60">Top Score</p>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-cream-100">{stats.recentShows}</p>
+              <p className="text-xs text-cream-500/60">Recent Shows</p>
             </div>
           </div>
         </motion.div>
@@ -942,14 +938,31 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="card p-4"
+          className="card p-4 hover:bg-charcoal-800/50 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-500/10 rounded-lg">
-              <Award className="w-6 h-6 text-green-500" />
+            <div className="p-2.5 md:p-3 bg-purple-500/10 rounded-lg">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-purple-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.corpsActive}</p>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-cream-100 truncate">{stats.topScore}</p>
+              <p className="text-xs text-cream-500/60">Top Score</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="card p-4 hover:bg-charcoal-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 md:p-3 bg-green-500/10 rounded-lg">
+              <Award className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-cream-100">{stats.corpsActive}</p>
               <p className="text-xs text-cream-500/60">Corps Active</p>
             </div>
           </div>
@@ -958,21 +971,21 @@ const Scores = () => {
 
       {/* Main Tabs */}
       <div className="border-b border-cream-500/20">
-        <div className="flex gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
           {mainTabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                   activeTab === tab.id
                     ? 'text-gold-500 border-b-2 border-gold-500'
                     : 'text-cream-500/60 hover:text-cream-300'
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {tab.name}
+                <span>{tab.name}</span>
               </button>
             );
           })}
@@ -1183,7 +1196,7 @@ const ScoreRow = ({ score, rank }) => {
             <span>V: {visualScore.toFixed(1)}</span>
             <span>M: {musicScore.toFixed(1)}</span>
             {hasDetailedCaptions && (
-              <ChevronDownIcon className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
             )}
           </div>
         )}
