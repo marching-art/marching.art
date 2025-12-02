@@ -35,7 +35,7 @@ export async function getLeaderboard(
   type: LeaderboardType,
   corpsClass: CorpsClass,
   pageSize = DEFAULT_PAGE_SIZE,
-  lastDoc?: QueryDocumentSnapshot<DocumentData>
+  lastDoc?: unknown
 ): Promise<PaginatedResponse<LeaderboardEntry>> {
   return withErrorHandling(async () => {
     // Handle lifetime separately (different structure)
@@ -51,11 +51,13 @@ export async function getLeaderboard(
       limit(pageSize)
     );
 
-    if (lastDoc) {
+    // Cast lastDoc to the expected type for pagination
+    const lastDocSnapshot = lastDoc as QueryDocumentSnapshot<DocumentData> | undefined;
+    if (lastDocSnapshot) {
       q = query(
         leaderboardRef,
         orderBy('score', 'desc'),
-        startAfter(lastDoc),
+        startAfter(lastDocSnapshot),
         limit(pageSize)
       );
     }

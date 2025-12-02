@@ -25,8 +25,9 @@ export function useMyLeagues(uid: string | undefined) {
 export function usePublicLeagues(pageSize = 12) {
   return useInfiniteQuery({
     queryKey: queryKeys.publicLeagues(),
-    queryFn: ({ pageParam }) => leaguesApi.getPublicLeagues(pageSize, pageParam),
-    initialPageParam: undefined,
+    queryFn: ({ pageParam }: { pageParam: unknown }) =>
+      leaguesApi.getPublicLeagues(pageSize, pageParam),
+    initialPageParam: undefined as unknown,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.lastDoc : undefined,
     staleTime: 5 * 60 * 1000,

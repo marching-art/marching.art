@@ -1,23 +1,55 @@
-// src/components/Navigation.jsx
+// =============================================================================
+// NAVIGATION COMPONENT (TypeScript)
+// =============================================================================
+// Desktop sidebar navigation with collapsible menu
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
   Star, Shield, ShoppingCart, Crown,
-  Sun, Moon
+  Sun, Moon, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useTheme } from '../context/ThemeContext';
 import { db, adminHelpers } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 
-const Navigation = () => {
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+  badge: number | null;
+  premium: boolean;
+  badgeColor?: string;
+}
+
+interface NavSection {
+  section: string;
+  items: NavItem[];
+}
+
+interface UserProfile {
+  displayName?: string;
+  xpLevel?: number;
+  xp?: number;
+}
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+const Navigation: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
-  const [profile, setProfile] = useState(null);
+  const { toggleTheme, isDark } = useTheme();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -30,9 +62,9 @@ const Navigation = () => {
     if (user) {
       // Subscribe to profile updates
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const unsubscribe = onSnapshot(profileRef, (doc) => {
-        if (doc.exists()) {
-          setProfile(doc.data());
+      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setProfile(docSnap.data() as UserProfile);
         }
       });
 
@@ -43,7 +75,7 @@ const Navigation = () => {
     }
   }, [user]);
 
-  const navItems = [
+  const navItems: NavSection[] = [
     {
       section: 'Main',
       items: [
@@ -52,23 +84,23 @@ const Navigation = () => {
           label: 'Dashboard',
           icon: Home,
           badge: null,
-          premium: false
+          premium: false,
         },
         {
           path: '/schedule',
           label: 'Schedule',
           icon: Calendar,
           badge: null,
-          premium: false
+          premium: false,
         },
         {
           path: '/scores',
           label: 'Scores & Rankings',
           icon: Trophy,
           badge: null,
-          premium: false
-        }
-      ]
+          premium: false,
+        },
+      ],
     },
     {
       section: 'Manage',
@@ -78,16 +110,16 @@ const Navigation = () => {
           label: 'Staff Market',
           icon: ShoppingCart,
           badge: null,
-          premium: false
+          premium: false,
         },
         {
           path: '/battlepass',
           label: 'Battle Pass',
           icon: Crown,
           badge: null,
-          premium: true
-        }
-      ]
+          premium: true,
+        },
+      ],
     },
     {
       section: 'Community',
@@ -97,16 +129,16 @@ const Navigation = () => {
           label: 'Leagues',
           icon: Users,
           badge: notifications > 0 ? notifications : null,
-          premium: false
+          premium: false,
         },
         {
           path: '/hall-of-champions',
           label: 'Hall of Champions',
           icon: Award,
           badge: null,
-          premium: false
-        }
-      ]
+          premium: false,
+        },
+      ],
     },
     {
       section: 'Account',
@@ -116,24 +148,24 @@ const Navigation = () => {
           label: 'Profile',
           icon: User,
           badge: null,
-          premium: false
+          premium: false,
         },
         {
           path: '/settings',
           label: 'Settings',
           icon: Settings,
           badge: null,
-          premium: false
+          premium: false,
         },
         {
           path: '/how-to-play',
           label: 'How to Play',
           icon: HelpCircle,
           badge: null,
-          premium: false
-        }
-      ]
-    }
+          premium: false,
+        },
+      ],
+    },
   ];
 
   // Add Admin section if user is admin
@@ -146,9 +178,9 @@ const Navigation = () => {
           label: 'Admin Panel',
           icon: Shield,
           badge: null,
-          premium: false
-        }
-      ]
+          premium: false,
+        },
+      ],
     });
   }
 
@@ -161,7 +193,10 @@ const Navigation = () => {
   };
 
   return (
-    <nav className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`} style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color-light)' }}>
+    <nav
+      className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`}
+      style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color-light)' }}
+    >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
         <div className="p-6 border-b border-cream-500/10">
@@ -200,7 +235,7 @@ const Navigation = () => {
                   <div className="w-10 h-10 bg-gradient-cream rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-charcoal-900" />
                   </div>
-                  {profile.xpLevel >= 10 && (
+                  {(profile.xpLevel ?? 0) >= 10 && (
                     <div className="absolute -top-1 -right-1">
                       <Star className="w-4 h-4 text-gold-500" />
                     </div>
@@ -216,9 +251,9 @@ const Navigation = () => {
                         Level {profile.xpLevel || 1}
                       </span>
                       <div className="flex-1 h-1 bg-charcoal-800 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-gold transition-all duration-500"
-                          style={{ width: `${(profile.xp % 1000) / 10}%` }}
+                          style={{ width: `${((profile.xp ?? 0) % 1000) / 10}%` }}
                         />
                       </div>
                     </div>
@@ -249,8 +284,8 @@ const Navigation = () => {
                       to={item.path}
                       className={`
                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group
-                        ${isActive 
-                          ? 'bg-gold-500/20 text-gold-500 shadow-inner-glow' 
+                        ${isActive
+                          ? 'bg-gold-500/20 text-gold-500 shadow-inner-glow'
                           : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
                         }
                         ${collapsed ? 'justify-center' : ''}
