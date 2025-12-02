@@ -20,6 +20,32 @@ import {
 } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
+// Get the "game day" string - resets at 2 AM EST (after scores are posted)
+// This ensures challenges reset after daily score processing
+export const getGameDay = () => {
+  const now = new Date();
+
+  // Convert to EST (UTC-5) or EDT (UTC-4)
+  const estOffset = -5 * 60; // EST is UTC-5
+  const edtOffset = -4 * 60; // EDT is UTC-4
+
+  // Determine if we're in EDT (roughly March-November)
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const jul = new Date(now.getFullYear(), 6, 1);
+  const isDST = now.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+
+  const offset = isDST ? edtOffset : estOffset;
+  const localOffset = now.getTimezoneOffset();
+  const estTime = new Date(now.getTime() + (localOffset - offset) * 60 * 1000);
+
+  // If before 2 AM EST, use previous day
+  if (estTime.getHours() < 2) {
+    estTime.setDate(estTime.getDate() - 1);
+  }
+
+  return estTime.toDateString();
+};
+
 export const useUserStore = create((set, get) => ({
   // State
   user: null,
@@ -213,6 +239,168 @@ export const useUserStore = create((set, get) => ({
       throw error;
     } finally {
       set({ isLoadingAuth: false });
+    }
+  },
+
+  // Complete a daily challenge
+  completeDailyChallenge: async (challengeId) => {
+    const { user, loggedInProfile } = get();
+
+    if (!user || !loggedInProfile) {
+      return false;
+    }
+
+    try {
+      const today = getGameDay(); // Uses 2 AM EST reset time
+      const currentChallenges = loggedInProfile.challenges || {};
+      let todayChallenges = currentChallenges[today] || [];
+
+      // Challenge definitions for creating if not exists
+      const challengeDefinitions = {
+        check_leaderboard: {
+          id: 'check_leaderboard',
+          title: 'Scout the Competition',
+          description: 'Visit the leaderboard page',
+          progress: 1,
+          target: 1,
+          reward: '25 XP',
+          icon: 'trophy',
+          completed: true
+        },
+        maintain_equipment: {
+          id: 'maintain_equipment',
+          title: 'Equipment Care',
+          description: 'Check your equipment status',
+          progress: 1,
+          target: 1,
+          reward: '30 XP',
+          icon: 'wrench',
+          completed: true
+        },
+        staff_meeting: {
+          id: 'staff_meeting',
+          title: 'Staff Meeting',
+          description: 'Visit the staff market',
+          progress: 1,
+          target: 1,
+          reward: '25 XP',
+          icon: 'users',
+          completed: true
+        }
+      };
+
+      // Check if challenge exists
+      const existingChallenge = todayChallenges.find(c => c.id === challengeId);
+
+      let updatedChallenges;
+      let challengeTitle;
+      let challengeReward;
+
+      if (existingChallenge) {
+        // Challenge exists - update it if not already completed
+        if (existingChallenge.completed) {
+          return false; // Already completed
+        }
+
+        updatedChallenges = todayChallenges.map(challenge => {
+          if (challenge.id === challengeId) {
+            return { ...challenge, progress: challenge.target, completed: true };
+          }
+          return challenge;
+        });
+
+        challengeTitle = existingChallenge.title;
+        challengeReward = existingChallenge.reward;
+      } else if (challengeDefinitions[challengeId]) {
+        // Challenge doesn't exist but we have a definition - create it
+        const newChallenge = challengeDefinitions[challengeId];
+        updatedChallenges = [...todayChallenges, newChallenge];
+        challengeTitle = newChallenge.title;
+        challengeReward = newChallenge.reward;
+      } else {
+        // Unknown challenge
+        return false;
+      }
+
+      const profileRef = doc(
+        db,
+        'artifacts',
+        dataNamespace,
+        'users',
+        user.uid,
+        'profile',
+        'data'
+      );
+
+      const newChallengesData = {
+        ...currentChallenges,
+        [today]: updatedChallenges
+      };
+
+      await updateDoc(profileRef, { challenges: newChallengesData });
+
+      set({
+        loggedInProfile: {
+          ...loggedInProfile,
+          challenges: newChallengesData
+        }
+      });
+
+      // Show toast with reward if available (consistent with rehearsal toast)
+      const rewardText = challengeReward ? ` +${challengeReward}` : '';
+      toast.success(`${challengeTitle} complete!${rewardText}`);
+      return true;
+    } catch (error) {
+      console.error('Error completing challenge:', error);
+      return false;
+    }
+  },
+
+  // Save daily challenges to profile
+  saveDailyChallenges: async (challenges) => {
+    const { user, loggedInProfile } = get();
+
+    if (!user || !loggedInProfile) {
+      return false;
+    }
+
+    try {
+      const today = getGameDay(); // Uses 2 AM EST reset time
+      const currentChallenges = loggedInProfile.challenges || {};
+
+      // Don't overwrite if we already have challenges for today
+      if (currentChallenges[today] && currentChallenges[today].length > 0) {
+        return false;
+      }
+
+      const profileRef = doc(
+        db,
+        'artifacts',
+        dataNamespace,
+        'users',
+        user.uid,
+        'profile',
+        'data'
+      );
+
+      const newChallengesData = {
+        ...currentChallenges,
+        [today]: challenges
+      };
+
+      await updateDoc(profileRef, { challenges: newChallengesData });
+
+      set({
+        loggedInProfile: {
+          ...loggedInProfile,
+          challenges: newChallengesData
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error saving challenges:', error);
+      return false;
     }
   },
 

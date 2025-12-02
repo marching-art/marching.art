@@ -1,11 +1,22 @@
 // src/pages/Staff.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Users } from 'lucide-react';
 import { StaffMarketplace, StaffRoster } from '../components/Staff';
+import { useUserStore } from '../store/userStore';
+import { useAuth } from '../App';
 
 const Staff = () => {
   const [activeTab, setActiveTab] = useState('marketplace');
+  const { user } = useAuth();
+  const { loggedInProfile, completeDailyChallenge } = useUserStore();
+
+  // Complete the daily challenge for visiting staff market
+  useEffect(() => {
+    if (user && loggedInProfile && completeDailyChallenge) {
+      completeDailyChallenge('staff_meeting');
+    }
+  }, [user, loggedInProfile, completeDailyChallenge]);
 
   return (
     <div className="space-y-6">

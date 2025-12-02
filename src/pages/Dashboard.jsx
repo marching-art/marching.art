@@ -38,9 +38,11 @@ import {
 import toast from 'react-hot-toast';
 import { useSeason, getSeasonProgress } from '../hooks/useSeason';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
+import { useUserStore, getGameDay } from '../store/userStore';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { saveDailyChallenges, completeDailyChallenge, loggedInProfile } = useUserStore();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [corps, setCorps] = useState(null);
@@ -477,7 +479,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user && profile && activeCorps) {
       const generateChallenges = () => {
-        const today = new Date().toDateString();
+        const today = getGameDay(); // Uses 2 AM EST reset time
         const savedChallenges = profile.challenges || {};
         const todayChallenges = savedChallenges[today];
 
@@ -490,17 +492,23 @@ const Dashboard = () => {
         // Generate new challenges for today
         const challenges = [];
 
+        // Check if rehearsal was done today (using game day)
+        const lastRehearsalDate = executionState?.lastRehearsalDate?.toDate?.();
+        const rehearsedToday = lastRehearsalDate &&
+          new Date(lastRehearsalDate.getTime()).toDateString() === new Date().toDateString() &&
+          new Date().getHours() >= 2; // Only count if after 2 AM EST reset
+
         // Challenge 1: Rehearse with your corps
         if (canRehearseToday && activeCorpsClass !== 'soundSport') {
           challenges.push({
             id: 'rehearse_today',
             title: 'Daily Practice',
             description: 'Complete a rehearsal with your corps',
-            progress: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today ? 1 : 0,
+            progress: rehearsedToday ? 1 : 0,
             target: 1,
             reward: '50 XP',
             icon: 'target',
-            completed: executionState?.lastRehearsalDate?.toDate?.()?.toDateString() === today
+            completed: rehearsedToday
           });
         }
 
@@ -523,22 +531,78 @@ const Dashboard = () => {
           challenges.push({
             id: 'maintain_equipment',
             title: 'Equipment Care',
-            description: 'Keep all equipment above 80% condition',
-            progress: avgCondition >= 80 ? 1 : 0,
+            description: 'Check your equipment status',
+            progress: 0,
             target: 1,
             reward: '30 XP',
             icon: 'wrench',
-            completed: avgCondition >= 80,
+            completed: false,
             action: () => setActiveTab('equipment')
           });
         }
 
+        // Challenge 4: Visit staff market
+        challenges.push({
+          id: 'staff_meeting',
+          title: 'Staff Meeting',
+          description: 'Visit the staff market',
+          progress: 0,
+          target: 1,
+          reward: '25 XP',
+          icon: 'users',
+          completed: false,
+          action: () => setActiveTab('staff')
+        });
+
+        // Challenge 5: Complete season schedule (check if all 7 weeks have shows)
+        if (activeCorps?.selectedShows) {
+          const totalWeeks = 7;
+          const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
+            weekKey => activeCorps.selectedShows[weekKey]?.length > 0
+          ).length;
+          const hasFullSchedule = weeksWithShows >= totalWeeks;
+
+          challenges.push({
+            id: 'schedule_master',
+            title: 'Schedule Master',
+            description: 'Select shows for all 7 weeks',
+            progress: weeksWithShows,
+            target: totalWeeks,
+            reward: '100 XP',
+            icon: 'calendar',
+            completed: hasFullSchedule
+          });
+        }
+
         setDailyChallenges(challenges);
+
+        // Save newly generated challenges to Firestore
+        if (challenges.length > 0) {
+          saveDailyChallenges(challenges);
+        }
       };
 
       generateChallenges();
     }
-  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment]);
+  }, [user, profile, activeCorps, canRehearseToday, executionState?.lastRehearsalDate, executionState?.equipment, saveDailyChallenges]);
+
+  // Sync challenges from store when updated (e.g., from Scores page)
+  useEffect(() => {
+    if (loggedInProfile?.challenges) {
+      const today = getGameDay(); // Uses 2 AM EST reset time
+      const storeChallenges = loggedInProfile.challenges[today];
+      if (storeChallenges && storeChallenges.length > 0) {
+        // Check if any challenges in store are more up-to-date (completed)
+        const hasUpdates = storeChallenges.some((storeChallenge, index) => {
+          const localChallenge = dailyChallenges.find(c => c.id === storeChallenge.id);
+          return localChallenge && !localChallenge.completed && storeChallenge.completed;
+        });
+        if (hasUpdates) {
+          setDailyChallenges(storeChallenges);
+        }
+      }
+    }
+  }, [loggedInProfile?.challenges, dailyChallenges]);
 
   // Calculate weekly progress
   useEffect(() => {
@@ -1377,7 +1441,9 @@ const Dashboard = () => {
             {dailyChallenges.map((challenge) => {
               const Icon = challenge.icon === 'target' ? Target :
                           challenge.icon === 'trophy' ? Trophy :
-                          challenge.icon === 'wrench' ? Wrench : Target;
+                          challenge.icon === 'wrench' ? Wrench :
+                          challenge.icon === 'users' ? Users :
+                          challenge.icon === 'calendar' ? Calendar : Target;
               const progressPercent = (challenge.progress / challenge.target) * 100;
 
               return (
@@ -1681,7 +1747,11 @@ const Dashboard = () => {
             <span className="hidden sm:inline">Execution</span>
           </button>
           <button
-            onClick={() => setActiveTab('equipment')}
+            onClick={() => {
+              setActiveTab('equipment');
+              // Complete equipment challenge when checking equipment status
+              completeDailyChallenge('maintain_equipment');
+            }}
             className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'equipment'
                 ? 'bg-gold-500 text-charcoal-900'
@@ -1692,7 +1762,11 @@ const Dashboard = () => {
             <span className="hidden sm:inline">Equipment</span>
           </button>
           <button
-            onClick={() => setActiveTab('staff')}
+            onClick={() => {
+              setActiveTab('staff');
+              // Complete staff meeting challenge when visiting staff tab
+              completeDailyChallenge('staff_meeting');
+            }}
             className={`px-3 sm:px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === 'staff'
                 ? 'bg-gold-500 text-charcoal-900'

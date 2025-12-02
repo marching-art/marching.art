@@ -280,7 +280,9 @@ async function processAndArchiveOffSeasonScoresLogic() {
             attended = true; // All corps automatically enrolled in championships
         } else {
             const userShows = corps.selectedShows?.[`week${week}`] || [];
-            attended = userShows.some(s => s.eventName === show.eventName && s.date === show.date);
+            // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+            // and eventName should be unique enough within a week
+            attended = userShows.some(s => s.eventName === show.eventName);
         }
 
         if (attended) {

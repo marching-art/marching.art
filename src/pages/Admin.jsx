@@ -457,6 +457,12 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
       icon: RefreshCw,
     },
     {
+      id: 'processLiveSeasonScores',
+      name: 'Process Live Season Scores',
+      description: 'Manually trigger daily live season score processing',
+      icon: RefreshCw,
+    },
+    {
       id: 'createBattlePassSeason',
       name: 'Create Battle Pass Season',
       description: 'Initialize a new battle pass season with rewards',
