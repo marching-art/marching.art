@@ -1,5 +1,5 @@
 // ShowRegistrationModal - Modal for registering corps at shows
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, AlertCircle, Check, X } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
@@ -22,10 +22,12 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // Get sorted corps classes
-  const userCorpsClasses = userProfile?.corps
-    ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
-    : [];
+  // Get sorted corps classes (memoized to prevent useEffect from running on every render)
+  const userCorpsClasses = useMemo(() =>
+    userProfile?.corps
+      ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
+      : []
+  , [userProfile?.corps]);
 
   // Check which corps are already registered
   useEffect(() => {
