@@ -296,10 +296,10 @@ const Scores = () => {
     return (
       <div className="space-y-6">
         {/* Search and Filter Bar */}
-        <div className="card p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="card p-4 md:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {/* Search */}
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-cream-300 mb-2">
                 Search Shows or Corps
               </label>
@@ -451,27 +451,27 @@ const Scores = () => {
                 SoundSport ensembles receive ratings (Gold, Silver, Bronze) based on Overall Impression scoring.
                 Scores are not publicly announced or ranked - the focus is on creative, entertaining performances.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Medal className="w-5 h-5 text-yellow-500" />
-                    <span className="font-semibold text-yellow-500">Gold</span>
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
+                <div className="p-2 md:p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
+                    <span className="font-semibold text-yellow-500 text-sm md:text-base">Gold</span>
                   </div>
-                  <p className="text-xs text-cream-400">90-100 points</p>
+                  <p className="text-xs text-cream-400">90-100</p>
                 </div>
-                <div className="p-3 bg-gray-500/10 border border-gray-400/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Medal className="w-5 h-5 text-gray-400" />
-                    <span className="font-semibold text-gray-400">Silver</span>
+                <div className="p-2 md:p-3 bg-gray-500/10 border border-gray-400/30 rounded-lg">
+                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                    <span className="font-semibold text-gray-400 text-sm md:text-base">Silver</span>
                   </div>
-                  <p className="text-xs text-cream-400">75-89 points</p>
+                  <p className="text-xs text-cream-400">75-89</p>
                 </div>
-                <div className="p-3 bg-orange-500/10 border border-orange-600/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Medal className="w-5 h-5 text-orange-600" />
-                    <span className="font-semibold text-orange-600">Bronze</span>
+                <div className="p-2 md:p-3 bg-orange-500/10 border border-orange-600/30 rounded-lg">
+                  <div className="flex items-center gap-1 md:gap-2 mb-1">
+                    <Medal className="w-4 h-4 md:w-5 md:h-5 text-orange-600" />
+                    <span className="font-semibold text-orange-600 text-sm md:text-base">Bronze</span>
                   </div>
-                  <p className="text-xs text-cream-400">60-74 points</p>
+                  <p className="text-xs text-cream-400">60-74</p>
                 </div>
               </div>
             </div>
@@ -543,7 +543,7 @@ const Scores = () => {
       </motion.div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -615,14 +615,14 @@ const Scores = () => {
 
       {/* Tabs */}
       <div className="border-b border-cream-500/20">
-        <div className="flex gap-1 overflow-x-auto pb-px">
+        <div className="flex gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                   activeTab === tab.id
                     ? 'text-gold-500 border-b-2 border-gold-500'
                     : 'text-cream-500/60 hover:text-cream-300'

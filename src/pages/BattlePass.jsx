@@ -296,19 +296,19 @@ const BattlePass = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: level * 0.01 }}
                 className={`
-                  grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg border-2 transition-all
+                  grid grid-cols-3 gap-2 md:gap-4 p-3 md:p-4 rounded-lg border-2 transition-all
                   ${isUnlocked ? 'border-gold-500/30 bg-gold-500/5' : 'border-charcoal-700 bg-charcoal-900/30 opacity-60'}
                 `}
               >
                 {/* Level Number */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   <div className={`
-                    w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg
+                    w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-sm md:text-lg flex-shrink-0
                     ${isUnlocked ? 'bg-gold-500 text-charcoal-900' : 'bg-charcoal-700 text-cream-500/60'}
                   `}>
                     {level}
                   </div>
-                  <div>
+                  <div className="hidden md:block">
                     <p className="text-xs text-cream-500/60">Level {level}</p>
                     {level % 10 === 0 && (
                       <span className="text-xs text-gold-500 font-semibold flex items-center gap-1">
@@ -363,11 +363,11 @@ const BattlePass = () => {
         <h3 className="text-xl font-display font-bold text-cream-100 mb-4">
           How to Earn XP
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           <XPSourceCard icon={<Zap />} title="Daily Rehearsal" xp={25} />
           <XPSourceCard icon={<Music />} title="Performance" xp={50} />
           <XPSourceCard icon={<Trophy />} title="Trophy Win" xp={100} />
-          <XPSourceCard icon={<Crown />} title="Finals Participation" xp={200} />
+          <XPSourceCard icon={<Crown />} title="Finals" xp={200} />
           <XPSourceCard icon={<Target />} title="Daily Quest" xp={50} />
           <XPSourceCard icon={<Star />} title="Weekly Quest" xp={150} />
         </div>
@@ -474,12 +474,12 @@ const RewardCard = ({
 
 // XP Source Card Component
 const XPSourceCard = ({ icon, title, xp }) => (
-  <div className="flex items-center gap-3 p-3 bg-charcoal-900/30 rounded-lg">
-    <div className="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center text-gold-500">
+  <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-charcoal-900/30 rounded-lg">
+    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gold-500/10 flex items-center justify-center text-gold-500 flex-shrink-0">
       {icon}
     </div>
-    <div className="flex-1">
-      <p className="text-sm font-semibold text-cream-100">{title}</p>
+    <div className="flex-1 min-w-0">
+      <p className="text-xs md:text-sm font-semibold text-cream-100 truncate">{title}</p>
       <p className="text-xs text-gold-500 font-bold">+{xp} XP</p>
     </div>
   </div>

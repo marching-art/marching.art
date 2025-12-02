@@ -100,8 +100,8 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-gold rounded-lg flex items-center justify-center">
-              <Music className="w-5 h-5 text-charcoal-900" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/logo192.png" alt="marching.art logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-lg font-display font-bold text-gradient">
               marching.art

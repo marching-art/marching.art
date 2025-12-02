@@ -1,5 +1,5 @@
 // src/components/DailyQuests.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Zap, Trophy, Star, Clock, Gift,
@@ -74,13 +74,15 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
   const [showModal, setShowModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
+  const generatingRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
 
+    generatingRef.current = false;
     const questsRef = doc(db, 'artifacts/marching-art/users', userId, 'dailyQuests/today');
 
-    const unsubscribe = onSnapshot(questsRef, async (docSnap) => {
+    const unsubscribe = onSnapshot(questsRef, (docSnap) => {
       const today = new Date().toISOString().split('T')[0];
 
       if (docSnap.exists()) {
@@ -91,16 +93,17 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
           setQuests(data.quests || []);
           setStreak(data.streak || 0);
           setTotalCompleted(data.quests?.filter(q => q.completed).length || 0);
-        } else {
-          // Generate new quests for today
-          await generateDailyQuests(userId, data.streak || 0);
+          setLoading(false);
+        } else if (!generatingRef.current) {
+          // Generate new quests for today (only once)
+          generatingRef.current = true;
+          generateDailyQuests(userId, data.streak || 0);
         }
-      } else {
-        // First time - generate quests
-        await generateDailyQuests(userId, 0);
+      } else if (!generatingRef.current) {
+        // First time - generate quests (only once)
+        generatingRef.current = true;
+        generateDailyQuests(userId, 0);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
