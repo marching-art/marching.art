@@ -5,7 +5,8 @@ import {
   Users, Trophy, Plus, Search, Crown, TrendingUp, Award,
   Calendar, X, Check, Shield, Star, AlertCircle, Lock,
   MessageSquare, Settings, ArrowLeftRight, Flame, Target,
-  ChevronDown, ChevronRight, Medal, Zap
+  ChevronDown, ChevronRight, Medal, Zap, MapPin, Music,
+  Eye, Sparkles, CircleDot
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -14,14 +15,22 @@ import {
   createLeague,
   joinLeague,
   leaveLeague,
-  generateMatchups,
-  updateMatchupResults,
   proposeStaffTrade,
   respondToStaffTrade,
   postLeagueMessage
 } from '../firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../components/Portal';
+
+// Placement points - DCI/NASCAR style scoring
+const PLACEMENT_POINTS = {
+  1: 15, 2: 12, 3: 10, 4: 8, 5: 6,
+  6: 5, 7: 4, 8: 3, 9: 2, 10: 1
+};
+
+const getPlacementPoints = (placement) => {
+  return PLACEMENT_POINTS[placement] || 1;
+};
 
 const Leagues = () => {
   const { user } = useAuth();
@@ -178,10 +187,10 @@ const Leagues = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
-                Fantasy Leagues
+                Circuit Leagues
               </h1>
               <p className="text-cream-300 text-sm sm:text-base">
-                Compete head-to-head with other directors in weekly matchups
+                Compete on the tour circuit with other directors throughout the season
               </p>
             </div>
             <button
@@ -463,8 +472,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   }, [league.id]);
 
   const tabs = [
-    { id: 'standings', label: 'Standings', icon: Trophy },
-    { id: 'matchups', label: 'Matchups', icon: Target },
+    { id: 'standings', label: 'Circuit Standings', icon: Trophy },
+    { id: 'tour', label: 'Tour Stops', icon: MapPin },
+    { id: 'awards', label: 'Awards', icon: Award },
     { id: 'trades', label: 'Trades', icon: ArrowLeftRight },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     ...(isCommissioner ? [{ id: 'settings', label: 'Settings', icon: Settings }] : [])
@@ -517,7 +527,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4 md:mt-6">
             <div className="p-4 bg-charcoal-900/50 rounded-lg">
-              <p className="text-xs text-cream-500/60 mb-1">Members</p>
+              <p className="text-xs text-cream-500/60 mb-1">Directors</p>
               <p className="text-2xl font-bold text-cream-100">
                 {league.members?.length || 0}
               </p>
@@ -529,9 +539,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               </p>
             </div>
             <div className="p-4 bg-charcoal-900/50 rounded-lg">
-              <p className="text-xs text-cream-500/60 mb-1">Playoff Teams</p>
+              <p className="text-xs text-cream-500/60 mb-1">Finals Spots</p>
               <p className="text-2xl font-bold text-cream-100">
-                {league.settings?.playoffSize || 4}
+                {league.settings?.finalsSize || 12}
               </p>
             </div>
             <div className="p-4 bg-charcoal-900/50 rounded-lg">
@@ -568,10 +578,13 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
       {/* Tab Content */}
       <AnimatePresence mode="wait">
         {activeTab === 'standings' && (
-          <StandingsTab key="standings" league={league} standings={standings} />
+          <CircuitStandingsTab key="standings" league={league} />
         )}
-        {activeTab === 'matchups' && (
-          <MatchupsTab key="matchups" league={league} isCommissioner={isCommissioner} />
+        {activeTab === 'tour' && (
+          <TourStopsTab key="tour" league={league} />
+        )}
+        {activeTab === 'awards' && (
+          <AwardsTab key="awards" league={league} />
         )}
         {activeTab === 'trades' && (
           <TradesTab key="trades" league={league} trades={trades} userProfile={userProfile} />
@@ -587,63 +600,183 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   );
 };
 
-// Standings Tab
-const StandingsTab = ({ league, standings }) => {
-  const [memberProfiles, setMemberProfiles] = useState({});
+// Circuit Standings Tab - Uses existing game scoring data filtered by league members
+const CircuitStandingsTab = ({ league }) => {
+  const [memberData, setMemberData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tourStopResults, setTourStopResults] = useState([]);
 
-  // Fetch member profiles to get displayNames
   useEffect(() => {
-    const fetchMemberProfiles = async () => {
-      if (!standings?.records) return;
+    const fetchMemberData = async () => {
+      if (!league?.members?.length) return;
+      setLoading(true);
 
-      const uids = Object.keys(standings.records);
-      const profiles = {};
-
-      for (const uid of uids) {
-        try {
+      try {
+        // Fetch all member profiles and their corps data
+        const memberPromises = league.members.map(async (uid) => {
           const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
           const profileDoc = await getDoc(profileRef);
 
-          if (profileDoc.exists()) {
-            profiles[uid] = profileDoc.data();
-          }
-        } catch (error) {
-          console.error(`Error fetching profile for ${uid}:`, error);
-        }
-      }
+          if (!profileDoc.exists()) return null;
 
-      setMemberProfiles(profiles);
+          const profile = profileDoc.data();
+
+          // Get the total season score from their active corps
+          let totalScore = 0;
+          let corpsName = 'Unknown Corps';
+          let corpsClass = null;
+
+          if (profile.corps) {
+            // Find the corps with the highest score or the active one
+            Object.entries(profile.corps).forEach(([cls, data]) => {
+              if (data.totalSeasonScore && data.totalSeasonScore > totalScore) {
+                totalScore = data.totalSeasonScore;
+                corpsName = data.corpsName || data.name || 'Unknown Corps';
+                corpsClass = cls;
+              }
+            });
+          }
+
+          return {
+            uid,
+            displayName: profile.displayName || profile.username || `Director ${uid.slice(0, 6)}`,
+            corpsName,
+            corpsClass,
+            totalSeasonScore: totalScore,
+            // These would be calculated from fantasy_recaps in a real implementation
+            circuitPoints: 0,
+            medals: { gold: 0, silver: 0, bronze: 0 },
+            tourStops: 0,
+            seasonHighScore: 0,
+            averagePlacement: 0
+          };
+        });
+
+        const members = (await Promise.all(memberPromises)).filter(Boolean);
+
+        // Fetch fantasy recaps to calculate circuit standings
+        const seasonRef = doc(db, 'game-settings/season');
+        const seasonDoc = await getDoc(seasonRef);
+
+        if (seasonDoc.exists()) {
+          const seasonData = seasonDoc.data();
+          const recapsRef = doc(db, `fantasy_recaps/${seasonData.seasonUid}`);
+          const recapsDoc = await getDoc(recapsRef);
+
+          if (recapsDoc.exists()) {
+            const recaps = recapsDoc.data().recaps || [];
+            const memberUids = new Set(league.members);
+
+            // Process each week's results
+            const weeklyResults = {};
+
+            recaps.forEach(dayRecap => {
+              const week = Math.ceil(dayRecap.offSeasonDay / 7);
+              if (!weeklyResults[week]) {
+                weeklyResults[week] = {};
+              }
+
+              dayRecap.shows?.forEach(show => {
+                show.results?.forEach(result => {
+                  if (memberUids.has(result.uid)) {
+                    if (!weeklyResults[week][result.uid]) {
+                      weeklyResults[week][result.uid] = {
+                        totalScore: 0,
+                        showCount: 0,
+                        highScore: 0
+                      };
+                    }
+                    weeklyResults[week][result.uid].totalScore += result.totalScore || 0;
+                    weeklyResults[week][result.uid].showCount += 1;
+                    weeklyResults[week][result.uid].highScore = Math.max(
+                      weeklyResults[week][result.uid].highScore,
+                      result.totalScore || 0
+                    );
+                  }
+                });
+              });
+            });
+
+            // Calculate circuit points and medals from weekly rankings
+            const tourStops = [];
+
+            Object.entries(weeklyResults).forEach(([week, weekData]) => {
+              const weekRankings = Object.entries(weekData)
+                .map(([uid, data]) => ({
+                  uid,
+                  weekScore: data.totalScore,
+                  showCount: data.showCount,
+                  highScore: data.highScore
+                }))
+                .sort((a, b) => b.weekScore - a.weekScore);
+
+              tourStops.push({
+                week: parseInt(week),
+                rankings: weekRankings
+              });
+
+              // Award points and medals
+              weekRankings.forEach((ranking, index) => {
+                const member = members.find(m => m.uid === ranking.uid);
+                if (member) {
+                  const placement = index + 1;
+                  member.circuitPoints += getPlacementPoints(placement);
+                  member.tourStops += 1;
+                  member.seasonHighScore = Math.max(member.seasonHighScore, ranking.highScore);
+
+                  if (placement === 1) member.medals.gold += 1;
+                  else if (placement === 2) member.medals.silver += 1;
+                  else if (placement === 3) member.medals.bronze += 1;
+                }
+              });
+            });
+
+            // Calculate average placement
+            members.forEach(member => {
+              if (member.tourStops > 0) {
+                let totalPlacements = 0;
+                tourStops.forEach(stop => {
+                  const ranking = stop.rankings.findIndex(r => r.uid === member.uid);
+                  if (ranking !== -1) {
+                    totalPlacements += ranking + 1;
+                  }
+                });
+                member.averagePlacement = totalPlacements / member.tourStops;
+              }
+            });
+
+            setTourStopResults(tourStops.sort((a, b) => b.week - a.week));
+          }
+        }
+
+        // Sort by circuit points, then by total season score
+        members.sort((a, b) => {
+          if (b.circuitPoints !== a.circuitPoints) return b.circuitPoints - a.circuitPoints;
+          return b.totalSeasonScore - a.totalSeasonScore;
+        });
+
+        setMemberData(members);
+      } catch (error) {
+        console.error('Error fetching member data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchMemberProfiles();
-  }, [standings]);
+    fetchMemberData();
+  }, [league]);
 
-  if (!standings || !standings.records) {
+  if (loading) {
     return (
-      <div className="card p-8 text-center">
-        <p className="text-cream-500/60">No standings data yet</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card p-8 text-center"
+      >
+        <p className="text-cream-500/60">Loading circuit standings...</p>
+      </motion.div>
     );
   }
-
-  const sortedRecords = Object.entries(standings.records)
-    .map(([uid, record]) => ({ uid, ...record }))
-    .sort((a, b) => {
-      // Sort by wins first
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      // Then by win percentage
-      const aWinPct = a.wins / (a.wins + a.losses + a.ties) || 0;
-      const bWinPct = b.wins / (b.wins + b.losses + b.ties) || 0;
-      if (bWinPct !== aWinPct) return bWinPct - aWinPct;
-      // Then by points for
-      return b.pointsFor - a.pointsFor;
-    });
-
-  // Helper to get director display name
-  const getDirectorName = (uid) => {
-    const profile = memberProfiles[uid];
-    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
-  };
 
   return (
     <motion.div
@@ -654,72 +787,85 @@ const StandingsTab = ({ league, standings }) => {
     >
       <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
         <Trophy className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
-        League Standings
+        Circuit Standings
       </h2>
 
       <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
         <table className="w-full">
           <thead>
             <tr className="border-b border-cream-500/20">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-cream-500/60">Rank</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-cream-500/60">Director</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">W</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">L</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">T</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">PCT</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">PF</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">PA</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-cream-500/60">Streak</th>
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Rank</th>
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Director</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">
+                <span className="hidden md:inline">Circuit</span> Pts
+              </th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Medals</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60 hidden md:table-cell">Stops</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60 hidden lg:table-cell">High</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">
+                <span className="hidden md:inline">Season</span> Total
+              </th>
             </tr>
           </thead>
           <tbody>
-            {sortedRecords.map((record, index) => {
-              const winPct = record.wins / (record.wins + record.losses + record.ties) || 0;
-              const isPlayoffSpot = index < (league.settings?.playoffSize || 4);
+            {memberData.map((member, index) => {
+              const isFinalsSpot = index < (league.settings?.finalsSize || 12);
 
               return (
                 <tr
-                  key={record.uid}
+                  key={member.uid}
                   className={`border-b border-cream-500/10 hover:bg-cream-500/5 ${
-                    isPlayoffSpot ? 'bg-green-500/5' : ''
+                    isFinalsSpot ? 'bg-green-500/5' : ''
                   }`}
                 >
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-cream-100">{index + 1}</span>
+                  <td className="py-3 px-2 md:px-4">
+                    <div className="flex items-center gap-1 md:gap-2">
+                      <span className="text-base md:text-lg font-bold text-cream-100">{index + 1}</span>
                       {index === 0 && <Crown className="w-4 h-4 text-gold-500" />}
-                      {index === 1 && <Medal className="w-4 h-4 text-gray-400" />}
-                      {index === 2 && <Medal className="w-4 h-4 text-orange-600" />}
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className="font-semibold text-cream-100">{getDirectorName(record.uid)}</span>
+                  <td className="py-3 px-2 md:px-4">
+                    <div>
+                      <span className="font-semibold text-cream-100 text-sm md:text-base">{member.displayName}</span>
+                      <p className="text-xs text-cream-500/60 hidden md:block">{member.corpsName}</p>
+                    </div>
                   </td>
-                  <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.wins}</td>
-                  <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.losses}</td>
-                  <td className="text-center py-3 px-4 text-cream-100 font-bold">{record.ties}</td>
-                  <td className="text-center py-3 px-4 text-cream-100 font-bold">
-                    {winPct.toFixed(3)}
+                  <td className="text-center py-3 px-2 md:px-4">
+                    <span className="text-base md:text-lg font-bold text-gold-500">{member.circuitPoints}</span>
                   </td>
-                  <td className="text-center py-3 px-4 text-cream-100">
-                    {record.pointsFor.toFixed(1)}
+                  <td className="text-center py-3 px-2 md:px-4">
+                    <div className="flex items-center justify-center gap-0.5 md:gap-1">
+                      {member.medals.gold > 0 && (
+                        <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-yellow-500/20 rounded text-xs">
+                          <Medal className="w-3 h-3 text-yellow-500" />
+                          <span className="text-yellow-500 font-bold">{member.medals.gold}</span>
+                        </div>
+                      )}
+                      {member.medals.silver > 0 && (
+                        <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-gray-400/20 rounded text-xs">
+                          <Medal className="w-3 h-3 text-gray-400" />
+                          <span className="text-gray-400 font-bold">{member.medals.silver}</span>
+                        </div>
+                      )}
+                      {member.medals.bronze > 0 && (
+                        <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-orange-600/20 rounded text-xs">
+                          <Medal className="w-3 h-3 text-orange-600" />
+                          <span className="text-orange-600 font-bold">{member.medals.bronze}</span>
+                        </div>
+                      )}
+                      {member.medals.gold === 0 && member.medals.silver === 0 && member.medals.bronze === 0 && (
+                        <span className="text-cream-500/40 text-xs">—</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="text-center py-3 px-4 text-cream-100">
-                    {record.pointsAgainst.toFixed(1)}
+                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 hidden md:table-cell">
+                    {member.tourStops}
                   </td>
-                  <td className="text-center py-3 px-4">
-                    {record.streakType && record.currentStreak > 0 && (
-                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded ${
-                        record.streakType === 'W'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {record.streakType === 'W' ? <Flame className="w-3 h-3" /> : null}
-                        <span className="text-sm font-bold">
-                          {record.streakType}{record.currentStreak}
-                        </span>
-                      </div>
-                    )}
+                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 hidden lg:table-cell">
+                    {member.seasonHighScore > 0 ? member.seasonHighScore.toFixed(1) : '—'}
+                  </td>
+                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 font-bold text-sm md:text-base">
+                    {member.totalSeasonScore.toFixed(1)}
                   </td>
                 </tr>
               );
@@ -728,11 +874,318 @@ const StandingsTab = ({ league, standings }) => {
         </table>
       </div>
 
-      {league.settings?.playoffSize && (
+      {league.settings?.finalsSize && (
         <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
           <p className="text-sm text-green-400">
             <Star className="w-4 h-4 inline mr-1" />
-            Top {league.settings.playoffSize} teams make the playoffs
+            Top {league.settings.finalsSize || 12} directors advance to League Finals
+          </p>
+        </div>
+      )}
+
+      {/* Scoring Legend */}
+      <div className="mt-6 p-4 bg-charcoal-900/50 rounded-lg">
+        <h4 className="text-sm font-semibold text-cream-300 mb-2">Circuit Points per Tour Stop</h4>
+        <div className="flex flex-wrap gap-2 text-xs text-cream-500/60">
+          <span className="px-2 py-1 bg-gold-500/20 rounded text-gold-500">1st: 15 pts</span>
+          <span className="px-2 py-1 bg-gray-400/20 rounded text-gray-400">2nd: 12 pts</span>
+          <span className="px-2 py-1 bg-orange-600/20 rounded text-orange-600">3rd: 10 pts</span>
+          <span className="px-2 py-1 bg-cream-500/10 rounded">4th: 8 pts</span>
+          <span className="px-2 py-1 bg-cream-500/10 rounded">5th: 6 pts</span>
+          <span className="px-2 py-1 bg-cream-500/10 rounded">6th+: 5-1 pts</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Tour Stops Tab - Shows weekly results filtered to league members
+const TourStopsTab = ({ league }) => {
+  const [tourStops, setTourStops] = useState([]);
+  const [memberProfiles, setMemberProfiles] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [selectedWeek, setSelectedWeek] = useState(null);
+  const [seasonData, setSeasonData] = useState(null);
+
+  useEffect(() => {
+    const fetchTourStops = async () => {
+      if (!league?.members?.length) return;
+      setLoading(true);
+
+      try {
+        // Fetch member profiles
+        const profiles = {};
+        await Promise.all(league.members.map(async (uid) => {
+          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
+          const profileDoc = await getDoc(profileRef);
+          if (profileDoc.exists()) {
+            profiles[uid] = profileDoc.data();
+          }
+        }));
+        setMemberProfiles(profiles);
+
+        // Fetch season data
+        const seasonRef = doc(db, 'game-settings/season');
+        const seasonDoc = await getDoc(seasonRef);
+
+        if (seasonDoc.exists()) {
+          const sData = seasonDoc.data();
+          setSeasonData(sData);
+
+          // Calculate current week
+          const startDate = sData.schedule?.startDate?.toDate();
+          if (startDate) {
+            const now = new Date();
+            const diffInDays = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+            const currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+            setSelectedWeek(currentWeek);
+          }
+
+          // Fetch fantasy recaps
+          const recapsRef = doc(db, `fantasy_recaps/${sData.seasonUid}`);
+          const recapsDoc = await getDoc(recapsRef);
+
+          if (recapsDoc.exists()) {
+            const recaps = recapsDoc.data().recaps || [];
+            const memberUids = new Set(league.members);
+
+            // Group by week
+            const weeklyData = {};
+
+            recaps.forEach(dayRecap => {
+              const week = Math.ceil(dayRecap.offSeasonDay / 7);
+              if (!weeklyData[week]) {
+                weeklyData[week] = {
+                  week,
+                  shows: [],
+                  memberResults: {}
+                };
+              }
+
+              dayRecap.shows?.forEach(show => {
+                const leagueResults = (show.results || []).filter(r => memberUids.has(r.uid));
+                if (leagueResults.length > 0) {
+                  weeklyData[week].shows.push({
+                    eventName: show.eventName,
+                    location: show.location,
+                    day: dayRecap.offSeasonDay,
+                    results: leagueResults.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+                  });
+
+                  // Aggregate member results for the week
+                  leagueResults.forEach(result => {
+                    if (!weeklyData[week].memberResults[result.uid]) {
+                      weeklyData[week].memberResults[result.uid] = {
+                        totalScore: 0,
+                        showCount: 0,
+                        highScore: 0,
+                        geScore: 0,
+                        visualScore: 0,
+                        musicScore: 0
+                      };
+                    }
+                    weeklyData[week].memberResults[result.uid].totalScore += result.totalScore || 0;
+                    weeklyData[week].memberResults[result.uid].showCount += 1;
+                    weeklyData[week].memberResults[result.uid].highScore = Math.max(
+                      weeklyData[week].memberResults[result.uid].highScore,
+                      result.totalScore || 0
+                    );
+                    weeklyData[week].memberResults[result.uid].geScore += result.geScore || 0;
+                    weeklyData[week].memberResults[result.uid].visualScore += result.visualScore || 0;
+                    weeklyData[week].memberResults[result.uid].musicScore += result.musicScore || 0;
+                  });
+                }
+              });
+            });
+
+            // Calculate rankings for each week
+            Object.values(weeklyData).forEach(weekData => {
+              weekData.rankings = Object.entries(weekData.memberResults)
+                .map(([uid, data]) => ({ uid, ...data }))
+                .sort((a, b) => b.totalScore - a.totalScore)
+                .map((item, index) => ({
+                  ...item,
+                  placement: index + 1,
+                  pointsEarned: getPlacementPoints(index + 1)
+                }));
+            });
+
+            setTourStops(Object.values(weeklyData).sort((a, b) => b.week - a.week));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching tour stops:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTourStops();
+  }, [league]);
+
+  const getDirectorName = (uid) => {
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
+  };
+
+  const getCorpsName = (uid) => {
+    const profile = memberProfiles[uid];
+    if (profile?.corps) {
+      const activeCorps = Object.values(profile.corps).find(c => c.corpsName || c.name);
+      return activeCorps?.corpsName || activeCorps?.name || 'Unknown Corps';
+    }
+    return 'Unknown Corps';
+  };
+
+  const getMedalColor = (placement) => {
+    if (placement === 1) return 'text-yellow-500 bg-yellow-500/20';
+    if (placement === 2) return 'text-gray-400 bg-gray-400/20';
+    if (placement === 3) return 'text-orange-600 bg-orange-600/20';
+    return 'text-cream-500/60 bg-cream-500/10';
+  };
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card p-8 text-center"
+      >
+        <p className="text-cream-500/60">Loading tour stops...</p>
+      </motion.div>
+    );
+  }
+
+  const selectedStop = tourStops.find(s => s.week === selectedWeek);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-4"
+    >
+      {/* Week Selector */}
+      <div className="card p-4">
+        <h3 className="text-lg font-bold text-cream-100 mb-3 flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-gold-500" />
+          Tour Schedule
+        </h3>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {[1, 2, 3, 4, 5, 6, 7].map(week => {
+            const hasResults = tourStops.some(s => s.week === week && s.rankings?.length > 0);
+            const isSelected = selectedWeek === week;
+
+            return (
+              <button
+                key={week}
+                onClick={() => setSelectedWeek(week)}
+                className={`flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  isSelected
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : hasResults
+                    ? 'glass text-cream-100 hover:bg-cream-500/10'
+                    : 'glass text-cream-500/40'
+                }`}
+              >
+                <span className="text-sm">Week {week}</span>
+                {hasResults && !isSelected && (
+                  <CircleDot className="w-3 h-3 inline ml-1 text-green-400" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selected Week Results */}
+      {selectedStop && selectedStop.rankings?.length > 0 ? (
+        <div className="card p-6">
+          <h3 className="text-xl font-bold text-cream-100 mb-4 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-gold-500" />
+            Week {selectedStop.week} Results
+          </h3>
+
+          {/* Rankings Table */}
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0 mb-6">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-cream-500/20">
+                  <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Place</th>
+                  <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Director</th>
+                  <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Shows</th>
+                  <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Total</th>
+                  <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60 hidden md:table-cell">High</th>
+                  <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedStop.rankings.map((ranking) => (
+                  <tr key={ranking.uid} className="border-b border-cream-500/10 hover:bg-cream-500/5">
+                    <td className="py-3 px-2 md:px-4">
+                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${getMedalColor(ranking.placement)}`}>
+                        {ranking.placement}
+                      </div>
+                    </td>
+                    <td className="py-3 px-2 md:px-4">
+                      <div>
+                        <span className="font-semibold text-cream-100 text-sm md:text-base">
+                          {getDirectorName(ranking.uid)}
+                        </span>
+                        <p className="text-xs text-cream-500/60 hidden md:block">
+                          {getCorpsName(ranking.uid)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="text-center py-3 px-2 md:px-4 text-cream-100">
+                      {ranking.showCount}
+                    </td>
+                    <td className="text-center py-3 px-2 md:px-4 text-cream-100 font-bold">
+                      {ranking.totalScore.toFixed(1)}
+                    </td>
+                    <td className="text-center py-3 px-2 md:px-4 text-cream-100 hidden md:table-cell">
+                      {ranking.highScore.toFixed(1)}
+                    </td>
+                    <td className="text-center py-3 px-2 md:px-4">
+                      <span className="text-gold-500 font-bold">+{ranking.pointsEarned}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Shows List */}
+          {selectedStop.shows?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-cream-300 mb-3">Shows This Week</h4>
+              <div className="space-y-2">
+                {selectedStop.shows.map((show, idx) => (
+                  <div key={idx} className="p-3 bg-charcoal-900/50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-cream-100 text-sm">{show.eventName}</p>
+                        <p className="text-xs text-cream-500/60 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {show.location}
+                        </p>
+                      </div>
+                      <span className="text-xs text-cream-500/40">Day {show.day}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="card p-12 text-center">
+          <Calendar className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-cream-100 mb-2">
+            No Results Yet
+          </h3>
+          <p className="text-cream-500/60">
+            {selectedWeek ? `Week ${selectedWeek} results will appear after shows are scored` : 'Select a week to view results'}
           </p>
         </div>
       )}
@@ -740,24 +1193,257 @@ const StandingsTab = ({ league, standings }) => {
   );
 };
 
-// Matchups Tab
-const MatchupsTab = ({ league, isCommissioner }) => {
+// Awards Tab - Caption awards and special recognitions
+const AwardsTab = ({ league }) => {
+  const [awards, setAwards] = useState(null);
+  const [memberProfiles, setMemberProfiles] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAwards = async () => {
+      if (!league?.members?.length) return;
+      setLoading(true);
+
+      try {
+        // Fetch member profiles
+        const profiles = {};
+        await Promise.all(league.members.map(async (uid) => {
+          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
+          const profileDoc = await getDoc(profileRef);
+          if (profileDoc.exists()) {
+            profiles[uid] = profileDoc.data();
+          }
+        }));
+        setMemberProfiles(profiles);
+
+        // Fetch season and recaps
+        const seasonRef = doc(db, 'game-settings/season');
+        const seasonDoc = await getDoc(seasonRef);
+
+        if (seasonDoc.exists()) {
+          const seasonData = seasonDoc.data();
+          const recapsRef = doc(db, `fantasy_recaps/${seasonData.seasonUid}`);
+          const recapsDoc = await getDoc(recapsRef);
+
+          if (recapsDoc.exists()) {
+            const recaps = recapsDoc.data().recaps || [];
+            const memberUids = new Set(league.members);
+
+            // Calculate award leaders
+            const leaderboards = {
+              highScore: { uid: null, score: 0, eventName: '' },
+              totalGE: {},
+              totalVisual: {},
+              totalMusic: {},
+              totalScore: {},
+              showsAttended: {}
+            };
+
+            recaps.forEach(dayRecap => {
+              dayRecap.shows?.forEach(show => {
+                show.results?.forEach(result => {
+                  if (!memberUids.has(result.uid)) return;
+
+                  // High score (single show)
+                  if ((result.totalScore || 0) > leaderboards.highScore.score) {
+                    leaderboards.highScore = {
+                      uid: result.uid,
+                      score: result.totalScore,
+                      eventName: show.eventName
+                    };
+                  }
+
+                  // Cumulative scores
+                  if (!leaderboards.totalGE[result.uid]) {
+                    leaderboards.totalGE[result.uid] = 0;
+                    leaderboards.totalVisual[result.uid] = 0;
+                    leaderboards.totalMusic[result.uid] = 0;
+                    leaderboards.totalScore[result.uid] = 0;
+                    leaderboards.showsAttended[result.uid] = 0;
+                  }
+
+                  leaderboards.totalGE[result.uid] += result.geScore || 0;
+                  leaderboards.totalVisual[result.uid] += result.visualScore || 0;
+                  leaderboards.totalMusic[result.uid] += result.musicScore || 0;
+                  leaderboards.totalScore[result.uid] += result.totalScore || 0;
+                  leaderboards.showsAttended[result.uid] += 1;
+                });
+              });
+            });
+
+            // Find leaders for each category
+            const findLeader = (obj) => {
+              const entries = Object.entries(obj);
+              if (entries.length === 0) return null;
+              entries.sort((a, b) => b[1] - a[1]);
+              return { uid: entries[0][0], score: entries[0][1] };
+            };
+
+            setAwards({
+              highScore: leaderboards.highScore,
+              geLeader: findLeader(leaderboards.totalGE),
+              visualLeader: findLeader(leaderboards.totalVisual),
+              musicLeader: findLeader(leaderboards.totalMusic),
+              ironman: findLeader(leaderboards.showsAttended)
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching awards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAwards();
+  }, [league]);
+
+  const getDirectorName = (uid) => {
+    if (!uid) return '—';
+    const profile = memberProfiles[uid];
+    return profile?.displayName || profile?.username || `Director ${uid.slice(0, 6)}`;
+  };
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card p-8 text-center"
+      >
+        <p className="text-cream-500/60">Loading awards...</p>
+      </motion.div>
+    );
+  }
+
+  const awardCards = [
+    {
+      id: 'highScore',
+      title: 'High Score Award',
+      subtitle: 'Highest single-show score',
+      icon: Sparkles,
+      color: 'gold',
+      leader: awards?.highScore?.uid,
+      value: awards?.highScore?.score?.toFixed(1),
+      extra: awards?.highScore?.eventName
+    },
+    {
+      id: 'ge',
+      title: 'GE Excellence',
+      subtitle: 'General Effect leader',
+      icon: Star,
+      color: 'purple',
+      leader: awards?.geLeader?.uid,
+      value: awards?.geLeader?.score?.toFixed(1)
+    },
+    {
+      id: 'visual',
+      title: 'Visual Excellence',
+      subtitle: 'Visual caption leader',
+      icon: Eye,
+      color: 'blue',
+      leader: awards?.visualLeader?.uid,
+      value: awards?.visualLeader?.score?.toFixed(1)
+    },
+    {
+      id: 'music',
+      title: 'Music Excellence',
+      subtitle: 'Music caption leader',
+      icon: Music,
+      color: 'green',
+      leader: awards?.musicLeader?.uid,
+      value: awards?.musicLeader?.score?.toFixed(1)
+    },
+    {
+      id: 'ironman',
+      title: 'Iron Director',
+      subtitle: 'Most shows attended',
+      icon: Flame,
+      color: 'orange',
+      leader: awards?.ironman?.uid,
+      value: awards?.ironman?.score,
+      valueSuffix: ' shows'
+    }
+  ];
+
+  const colorClasses = {
+    gold: 'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30',
+    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
+    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
+    green: 'from-green-500/20 to-green-600/10 border-green-500/30',
+    orange: 'from-orange-500/20 to-orange-600/10 border-orange-500/30'
+  };
+
+  const iconColorClasses = {
+    gold: 'text-yellow-500',
+    purple: 'text-purple-500',
+    blue: 'text-blue-500',
+    green: 'text-green-500',
+    orange: 'text-orange-500'
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="card p-6"
+      className="space-y-4"
     >
-      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6">Weekly Matchups</h2>
-      <p className="text-cream-500/60">Matchup system coming soon...</p>
-      {isCommissioner && (
-        <div className="mt-4">
-          <button className="btn-primary">
-            Generate This Week's Matchups
-          </button>
+      <div className="card p-6">
+        <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
+          <Award className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
+          Season Awards
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {awardCards.map(award => {
+            const Icon = award.icon;
+            return (
+              <div
+                key={award.id}
+                className={`p-4 rounded-xl border bg-gradient-to-br ${colorClasses[award.color]}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-lg bg-charcoal-900/50 ${iconColorClasses[award.color]}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-cream-100">{award.title}</h4>
+                    <p className="text-xs text-cream-500/60 mb-2">{award.subtitle}</p>
+
+                    {award.leader ? (
+                      <div className="mt-2">
+                        <p className="font-semibold text-cream-100 truncate">
+                          {getDirectorName(award.leader)}
+                        </p>
+                        <p className={`text-lg font-bold ${iconColorClasses[award.color]}`}>
+                          {award.value}{award.valueSuffix || ' pts'}
+                        </p>
+                        {award.extra && (
+                          <p className="text-xs text-cream-500/60 truncate">{award.extra}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-cream-500/40 mt-2">No data yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
+
+      {/* Info about awards */}
+      <div className="card p-4 bg-charcoal-900/50">
+        <p className="text-sm text-cream-500/60 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span>
+            Awards are calculated from all shows attended by league members this season.
+            Final awards will be presented at the end of the season.
+          </span>
+        </p>
+      </div>
     </motion.div>
   );
 };
@@ -953,8 +1639,8 @@ const SettingsTab = ({ league }) => {
               <span className="font-bold text-gold-500">{league.settings?.prizePool || 1000}</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
-              <span className="text-cream-300">Playoff Teams</span>
-              <span className="font-bold text-cream-100">{league.settings?.playoffSize || 4}</span>
+              <span className="text-cream-300">Finals Spots</span>
+              <span className="font-bold text-cream-100">{league.settings?.finalsSize || 12}</span>
             </div>
             <div className="flex items-center justify-between p-4 bg-charcoal-900/50 rounded-lg">
               <span className="text-cream-300">Staff Trading</span>
@@ -969,7 +1655,7 @@ const SettingsTab = ({ league }) => {
   );
 };
 
-// Create League Modal (Updated)
+// Create League Modal (Updated for Circuit Format)
 const CreateLeagueModal = ({ onClose, onCreate }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -978,8 +1664,8 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
     maxMembers: 20,
     settings: {
       enableStaffTrading: true,
-      matchupType: 'weekly',
-      playoffSize: 4,
+      scoringFormat: 'circuit', // circuit points based
+      finalsSize: 12,
       prizePool: 1000
     }
   });
@@ -1017,7 +1703,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
         <div className="glass-dark rounded-2xl p-4 md:p-8">
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h2 className="text-2xl md:text-3xl font-display font-bold text-gradient">
-              Create Fantasy League
+              Create Circuit League
             </h2>
             <button
               onClick={onClose}
@@ -1088,22 +1774,25 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               </div>
             </div>
 
-            {/* Playoff Size */}
+            {/* Finals Size */}
             <div>
-              <label className="label">Playoff Teams</label>
+              <label className="label">League Finals Spots</label>
               <select
                 className="input"
-                value={formData.settings.playoffSize}
+                value={formData.settings.finalsSize}
                 onChange={(e) => setFormData({
                   ...formData,
-                  settings: { ...formData.settings, playoffSize: parseInt(e.target.value) }
+                  settings: { ...formData.settings, finalsSize: parseInt(e.target.value) }
                 })}
               >
-                <option value={2}>2 Teams</option>
-                <option value={4}>4 Teams</option>
-                <option value={6}>6 Teams</option>
-                <option value={8}>8 Teams</option>
+                <option value={6}>Top 6</option>
+                <option value={8}>Top 8</option>
+                <option value={12}>Top 12 (DCI Style)</option>
+                <option value={15}>Top 15</option>
               </select>
+              <p className="text-xs text-cream-500/40 mt-1">
+                Directors advancing to league finals week
+              </p>
             </div>
 
             {/* Staff Trading */}
