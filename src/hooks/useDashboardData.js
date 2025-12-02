@@ -550,11 +550,17 @@ export const useDashboardData = () => {
 
         let equipmentMaintained = 0;
         if (executionHook.executionState?.equipment) {
-          const equipmentCount = Object.keys(executionHook.executionState.equipment).length;
-          const wellMaintained = Object.values(executionHook.executionState.equipment).filter(
-            eq => eq.condition >= 80
-          ).length;
-          equipmentMaintained = equipmentCount > 0 ? (wellMaintained / equipmentCount) * 100 : 0;
+          const equipment = executionHook.executionState.equipment;
+          // Equipment values are flat numbers (0.0-1.0), filter out Max keys
+          const equipmentConditions = Object.entries(equipment)
+            .filter(([key, value]) => !key.includes('Max') && typeof value === 'number')
+            .map(([, value]) => value);
+
+          if (equipmentConditions.length > 0) {
+            // Calculate average equipment condition as percentage
+            const avgCondition = equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length;
+            equipmentMaintained = avgCondition * 100;
+          }
         }
 
         const challengesCompleted = dailyChallenges.filter(c => c.completed).length;

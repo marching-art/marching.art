@@ -161,8 +161,8 @@ const DashboardSidebar = ({
                       <span className="text-[10px] text-cream-500/60">Equipment</span>
                     </div>
                     <p className={`text-lg font-bold ${
-                      (weeklyProgress.equipmentMaintained || 0) >= 80 ? 'text-green-400' :
-                      (weeklyProgress.equipmentMaintained || 0) >= 60 ? 'text-yellow-400' : 'text-red-400'
+                      (weeklyProgress.equipmentMaintained || 0) >= 85 ? 'text-green-400' :
+                      (weeklyProgress.equipmentMaintained || 0) >= 70 ? 'text-yellow-400' : 'text-red-400'
                     }`}>
                       {(weeklyProgress.equipmentMaintained || 0).toFixed(0)}%
                     </p>

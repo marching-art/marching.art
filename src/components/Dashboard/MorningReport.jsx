@@ -46,7 +46,10 @@ const MorningReport = ({
     const morale = executionState.morale || 0.80;
     const equipment = executionState.equipment || {};
 
-    const equipmentValues = Object.values(equipment).filter(v => typeof v === 'number');
+    // Filter out Max keys (uniformsMax, instrumentsMax, propsMax) from equipment average
+    const equipmentValues = Object.entries(equipment)
+      .filter(([key, val]) => typeof val === 'number' && !key.includes('Max'))
+      .map(([, val]) => val);
     const avgEquipment = equipmentValues.length > 0
       ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
       : 0.85;
@@ -150,10 +153,10 @@ const MorningReport = ({
     }
   };
 
-  // Get health color and status
+  // Get health color and status (aligned with EquipmentManager thresholds)
   const getHealthDisplay = (value) => {
-    if (value >= 0.8) return { color: 'text-green-400', bg: 'bg-green-500/20', ring: 'ring-green-500/30' };
-    if (value >= 0.6) return { color: 'text-amber-400', bg: 'bg-amber-500/20', ring: 'ring-amber-500/30' };
+    if (value >= 0.85) return { color: 'text-green-400', bg: 'bg-green-500/20', ring: 'ring-green-500/30' };
+    if (value >= 0.70) return { color: 'text-amber-400', bg: 'bg-amber-500/20', ring: 'ring-amber-500/30' };
     return { color: 'text-red-400', bg: 'bg-red-500/20', ring: 'ring-red-500/30' };
   };
 
