@@ -1,16 +1,13 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Users, Target, Wrench, Zap } from 'lucide-react';
+import { Music, Users, Wrench, Zap, ClipboardList } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import {
-  ExecutionDashboard,
-  RehearsalPanel,
   EquipmentManager,
-  DashboardStaffPanel,
-  ShowDifficultySelector
+  DashboardStaffPanel
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -23,14 +20,15 @@ import {
   AchievementModal,
   DashboardHeader,
   DashboardSidebar,
-  QuickActionsRow,
   DashboardCorpsPanel,
   MorningReport,
-  DailyOperations
+  DailyOperations,
+  CommandCenter
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { retireCorps } from '../firebase/functions';
 
 const Dashboard = () => {
@@ -38,6 +36,9 @@ const Dashboard = () => {
 
   // Use centralized dashboard hook
   const dashboardData = useDashboardData();
+
+  // Get assigned staff for CommandCenter
+  const { ownedStaff } = useStaffMarketplace(user?.uid);
 
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
@@ -93,6 +94,11 @@ const Dashboard = () => {
     refreshProfile
   } = dashboardData;
 
+  // Get staff assigned to active corps
+  const assignedStaff = ownedStaff?.filter(
+    s => s.assignedTo?.corpsClass === activeCorpsClass
+  ) || [];
+
   // Show morning report on first visit of the day
   useEffect(() => {
     if (profile && activeCorps) {
@@ -100,7 +106,6 @@ const Dashboard = () => {
       const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
 
       if (lastVisit !== today) {
-        // First visit today - show morning report
         setShowMorningReport(true);
         localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
       }
@@ -108,14 +113,14 @@ const Dashboard = () => {
   }, [profile, activeCorps, user?.uid]);
 
   // Show class unlock congrats when newly unlocked
-  React.useEffect(() => {
+  useEffect(() => {
     if (newlyUnlockedClass) {
       setShowClassUnlockCongrats(true);
     }
   }, [newlyUnlockedClass]);
 
   // Show achievement modal when new achievement
-  React.useEffect(() => {
+  useEffect(() => {
     if (newAchievement) {
       setShowAchievementModal(true);
     }
@@ -169,7 +174,6 @@ const Dashboard = () => {
   // Check for assigned staff when opening retire modal
   const handleOpenRetireModal = async () => {
     try {
-      // Check for staff assigned to this corps
       const result = await retireCorps({ corpsClass: activeCorpsClass, checkOnly: true });
       if (result.data.assignedStaff) {
         setAssignedStaffForRetire(result.data.assignedStaff);
@@ -196,7 +200,6 @@ const Dashboard = () => {
         setShowRetireConfirm(false);
         setAssignedStaffForRetire([]);
       } else if (result.data.needsStaffHandling) {
-        // Staff needs to be handled - this shouldn't happen with the new flow
         setAssignedStaffForRetire(result.data.assignedStaff || []);
         toast.error('Please specify what to do with assigned staff.');
       }
@@ -268,6 +271,16 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
+  // Handle rehearsal from CommandCenter
+  const handleRehearsal = async () => {
+    if (canRehearseToday()) {
+      const result = await rehearse();
+      if (result.success) {
+        toast.success(`Rehearsal complete! +${result.data?.xpGained || 50} XP`);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Season Setup Wizard */}
@@ -283,7 +296,7 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Compact Header */}
+      {/* Streamlined Header - User identity and key stats only */}
       <DashboardHeader
         profile={profile}
         seasonData={seasonData}
@@ -291,68 +304,65 @@ const Dashboard = () => {
         weeksRemaining={weeksRemaining}
         currentWeek={currentWeek}
         engagementData={engagementData}
-        activeCorps={activeCorps}
-        activeCorpsClass={activeCorpsClass}
       />
 
-      {/* Quick Actions Row */}
+      {/* Command Center - Unified corps management hub */}
       {activeCorps && (
-        <QuickActionsRow
+        <CommandCenter
+          profile={profile}
           activeCorps={activeCorps}
           activeCorpsClass={activeCorpsClass}
           executionState={executionState}
-          executionProcessing={executionProcessing}
-          canRehearseToday={canRehearseToday}
-          rehearse={rehearse}
+          canRehearseToday={canRehearseToday()}
+          onRehearsal={handleRehearsal}
+          rehearsalProcessing={executionProcessing}
           currentWeek={currentWeek}
-          onTabChange={setActiveTab}
-          hasMultipleCorps={hasMultipleCorps}
           corps={corps}
+          hasMultipleCorps={hasMultipleCorps}
           onCorpsSwitch={handleCorpsSwitch}
           getCorpsClassName={getCorpsClassName}
-          getCorpsClassColor={getCorpsClassColor}
-          recentScores={recentScores}
+          assignedStaff={assignedStaff}
         />
       )}
 
-      {/* Main Content Layout - Desktop: 2 columns, Mobile: stacked */}
+      {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Main Content Area */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Tab Navigation */}
+          {/* Tab Navigation - Streamlined */}
           {activeCorps && (
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               <button
                 onClick={() => setActiveTab('daily')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'daily'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
+                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
                 }`}
               >
                 <Zap className="w-4 h-4" />
-                Daily Ops
+                Daily Activities
               </button>
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'overview'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
+                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
                 }`}
               >
-                <Music className="w-4 h-4" />
-                Corps
+                <ClipboardList className="w-4 h-4" />
+                Corps Details
               </button>
               <button
                 onClick={() => {
                   setActiveTab('equipment');
                   completeDailyChallenge('maintain_equipment');
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'equipment'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
+                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
                 }`}
               >
                 <Wrench className="w-4 h-4" />
@@ -363,10 +373,10 @@ const Dashboard = () => {
                   setActiveTab('staff');
                   completeDailyChallenge('staff_meeting');
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                   activeTab === 'staff'
-                    ? 'bg-gold-500 text-charcoal-900'
-                    : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
+                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
                 }`}
               >
                 <Users className="w-4 h-4" />
@@ -394,7 +404,6 @@ const Dashboard = () => {
                   calculateMultiplier={calculateMultiplier}
                   onActivityComplete={(type, data) => {
                     completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
-                    // Refresh profile to update XP display in header
                     refreshProfile();
                   }}
                 />
@@ -409,7 +418,6 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-4"
               >
-                {/* Corps Panel */}
                 <DashboardCorpsPanel
                   activeCorps={activeCorps}
                   activeCorpsClass={activeCorpsClass}
@@ -456,11 +464,10 @@ const Dashboard = () => {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar - Hidden on mobile, visible on lg+ */}
+        {/* Sidebar - Desktop only */}
         <div className="hidden lg:block lg:col-span-1">
           <div className="sticky top-4">
             <DashboardSidebar
-              dailyChallenges={dailyChallenges}
               weeklyProgress={weeklyProgress}
               engagementData={engagementData}
               profile={profile}
@@ -468,17 +475,14 @@ const Dashboard = () => {
               activeCorpsClass={activeCorpsClass}
               currentWeek={currentWeek}
               unclaimedRewardsCount={unclaimedRewardsCount}
-              onTabChange={setActiveTab}
-              completeDailyChallenge={completeDailyChallenge}
             />
           </div>
         </div>
       </div>
 
-      {/* Mobile: Challenges Section (shown below main content) */}
+      {/* Mobile: Sidebar content shown below main content */}
       <div className="lg:hidden">
         <DashboardSidebar
-          dailyChallenges={dailyChallenges}
           weeklyProgress={weeklyProgress}
           engagementData={engagementData}
           profile={profile}
@@ -486,8 +490,6 @@ const Dashboard = () => {
           activeCorpsClass={activeCorpsClass}
           currentWeek={currentWeek}
           unclaimedRewardsCount={unclaimedRewardsCount}
-          onTabChange={setActiveTab}
-          completeDailyChallenge={completeDailyChallenge}
         />
       </div>
 
@@ -554,7 +556,7 @@ const Dashboard = () => {
             retiring={retiring}
             assignedStaff={assignedStaffForRetire}
             otherCorps={corps || {}}
-            inLeague={false} // TODO: Check if user is in a league
+            inLeague={false}
           />
         )}
 

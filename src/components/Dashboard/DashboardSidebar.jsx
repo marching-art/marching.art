@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Target, Trophy, Wrench, Users, Calendar, Star,
-  ChevronDown, Sparkles, Flame, Award, Crown, Gift, Activity,
-  TrendingUp, Zap
+  ChevronDown, Sparkles, Award, Crown, Gift, Activity,
+  Zap
 } from 'lucide-react';
 
 /**
- * Sidebar component for desktop - shows weekly progress, stats, and quick links
- * Daily activities are now in the main Daily Ops view
+ * Streamlined sidebar - Weekly progress, activity feed, and quick links
+ * Stats (Level, Coins, Streak) are now only in the header to avoid redundancy
  */
 const DashboardSidebar = ({
   weeklyProgress,
@@ -29,7 +29,7 @@ const DashboardSidebar = ({
 
   return (
     <div className="space-y-3">
-      {/* Battle Pass Notification */}
+      {/* Battle Pass Notification - Priority CTA */}
       {unclaimedRewardsCount > 0 && (
         <Link
           to="/battlepass"
@@ -51,49 +51,7 @@ const DashboardSidebar = ({
         </Link>
       )}
 
-      {/* Login Streak */}
-      {engagementData?.loginStreak > 1 && (
-        <div className="glass rounded-xl p-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/20">
-              <Flame className="w-5 h-5 text-orange-400" />
-            </div>
-            <div className="flex-1">
-              <div className="text-lg font-bold text-orange-400">
-                {engagementData.loginStreak} Days
-              </div>
-              <div className="text-xs text-cream-500/60">Login Streak</div>
-            </div>
-            {engagementData.loginStreak >= 7 && (
-              <Sparkles className="w-4 h-4 text-gold-500" />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Quick Stats */}
-      <div className="glass rounded-xl p-3">
-        <h4 className="text-xs font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <TrendingUp className="w-3 h-3" />
-          Your Stats
-        </h4>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-            <div className="text-lg font-bold text-blue-400">
-              {profile?.xpLevel || 1}
-            </div>
-            <div className="text-[10px] text-cream-500/60">Level</div>
-          </div>
-          <div className="p-2 rounded-lg bg-gold-500/10 border border-gold-500/20 text-center">
-            <div className="text-lg font-bold text-gold-400">
-              {profile?.corpsCoin || 0}
-            </div>
-            <div className="text-[10px] text-cream-500/60">CorpsCoin</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Progress */}
+      {/* Weekly Progress - Primary info for competitive players */}
       {activeCorps && activeCorpsClass !== 'soundSport' && weeklyProgress && (
         <div className="glass rounded-xl overflow-hidden">
           <button
@@ -102,7 +60,7 @@ const DashboardSidebar = ({
           >
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-semibold text-cream-100">Week {currentWeek}</span>
+              <span className="text-sm font-semibold text-cream-100">Week {currentWeek} Progress</span>
             </div>
             <ChevronDown className={`w-4 h-4 text-cream-500/60 transition-transform ${
               expandedSection === 'weekly' ? 'rotate-180' : ''
@@ -185,7 +143,7 @@ const DashboardSidebar = ({
         </div>
       )}
 
-      {/* Recent Activity */}
+      {/* Recent Activity Feed */}
       {engagementData?.recentActivity?.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
           <button
@@ -194,7 +152,7 @@ const DashboardSidebar = ({
           >
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-green-400" />
-              <span className="text-sm font-semibold text-cream-100">Activity</span>
+              <span className="text-sm font-semibold text-cream-100">Recent Activity</span>
             </div>
             <ChevronDown className={`w-4 h-4 text-cream-500/60 transition-transform ${
               expandedSection === 'activity' ? 'rotate-180' : ''
@@ -209,37 +167,47 @@ const DashboardSidebar = ({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="px-3 pb-3 space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="px-3 pb-3 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                   {engagementData.recentActivity.slice(0, 5).map((activity, idx) => (
                     <div
                       key={idx}
                       className="flex items-center gap-2 text-xs text-cream-500/70 p-1.5 bg-charcoal-900/30 rounded"
                     >
-                      {activity.icon === 'flame' && <Flame className="w-3 h-3 text-orange-400 flex-shrink-0" />}
+                      {activity.icon === 'flame' && <span className="text-orange-400">🔥</span>}
                       {activity.icon === 'trophy' && <Trophy className="w-3 h-3 text-gold-500 flex-shrink-0" />}
                       {activity.icon === 'star' && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
                       <span className="flex-1 truncate">{activity.message}</span>
                     </div>
                   ))}
                 </div>
-                {profile?.achievements?.length > 0 && (
-                  <div className="mx-3 mb-3 pt-2 border-t border-cream-500/10">
-                    <div className="flex items-center gap-1.5">
-                      <Award className="w-3 h-3 text-gold-500" />
-                      <span className="text-xs text-gold-400">
-                        {profile.achievements.length} achievements
-                      </span>
-                    </div>
-                  </div>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
 
+      {/* Achievements Summary */}
+      {profile?.achievements?.length > 0 && (
+        <Link
+          to="/profile"
+          className="block glass rounded-xl p-3 hover:bg-cream-500/5 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gold-500/20">
+              <Award className="w-4 h-4 text-gold-500" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-gold-400">
+                {profile.achievements.length} Achievements
+              </div>
+              <div className="text-xs text-cream-500/60">View profile</div>
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Quick Links */}
-      <div className="glass rounded-xl p-3 space-y-2">
+      <div className="glass rounded-xl p-3 space-y-1">
         <h4 className="text-xs font-semibold text-cream-400 uppercase tracking-wider mb-2">
           Quick Links
         </h4>

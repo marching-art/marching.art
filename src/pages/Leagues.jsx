@@ -1,7 +1,7 @@
 // src/pages/Leagues.jsx
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Trophy, Plus, Search, ChevronDown } from 'lucide-react';
+import { Users, Trophy, Plus, Search, ChevronDown, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 
@@ -28,12 +28,16 @@ const Leagues = () => {
 
   // React Query hooks
   const { data: userProfile } = useProfile(user?.uid);
-  const { data: myLeagues = [], isLoading: loadingMyLeagues } = useMyLeagues(user?.uid);
+  const { data: myLeagues = [], isLoading: loadingMyLeagues, error: myLeaguesError, isError: myLeaguesHasError, refetch: refetchMyLeagues } = useMyLeagues(user?.uid);
   const {
     data: publicLeaguesData,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
+    isLoading: loadingPublicLeagues,
+    error: publicLeaguesError,
+    isError: publicLeaguesHasError,
+    refetch: refetchPublicLeagues
   } = usePublicLeagues(12);
 
   // Mutations
@@ -175,7 +179,21 @@ const Leagues = () => {
           >
             {loadingMyLeagues ? (
               <div className="card p-8 text-center">
-                <p className="text-cream-500/60">Loading leagues...</p>
+                <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-cream-500/60">Loading your leagues...</p>
+              </div>
+            ) : myLeaguesHasError ? (
+              <div className="card p-8 text-center">
+                <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-cream-100 mb-2">Error Loading Leagues</h3>
+                <p className="text-cream-500/60 mb-4">{myLeaguesError?.message || 'Something went wrong'}</p>
+                <button
+                  onClick={() => refetchMyLeagues()}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Try Again
+                </button>
               </div>
             ) : myLeagues.length === 0 ? (
               <div className="card p-12 text-center">
@@ -244,7 +262,25 @@ const Leagues = () => {
             </div>
 
             {/* Available Leagues */}
-            {filteredAvailableLeagues.length === 0 ? (
+            {loadingPublicLeagues ? (
+              <div className="card p-8 text-center">
+                <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-cream-500/60">Loading public leagues...</p>
+              </div>
+            ) : publicLeaguesHasError ? (
+              <div className="card p-8 text-center">
+                <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-cream-100 mb-2">Error Loading Leagues</h3>
+                <p className="text-cream-500/60 mb-4">{publicLeaguesError?.message || 'Something went wrong'}</p>
+                <button
+                  onClick={() => refetchPublicLeagues()}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Try Again
+                </button>
+              </div>
+            ) : filteredAvailableLeagues.length === 0 ? (
               <div className="card p-12 text-center">
                 <Search className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-cream-100 mb-2">
