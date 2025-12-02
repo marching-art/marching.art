@@ -285,7 +285,7 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
       query = query.where("caption", "==", caption);
     }
 
-    const snapshot = await query.limit(50).get();
+    const snapshot = await query.get();
     const staffList = [];
 
     snapshot.forEach(doc => {

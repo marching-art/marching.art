@@ -2,25 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingCart, DollarSign, Award, Filter, Search, X,
-  ChevronDown, Star, Trophy, Check, Lock, AlertCircle
+  ShoppingCart, DollarSign, Award, Search, X,
+  ChevronDown, Trophy, Check, Lock, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
+import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-
-const CAPTION_OPTIONS = [
-  { value: 'all', label: 'All Captions', color: 'bg-gray-500' },
-  { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500', description: 'Directors & Program Coordinators' },
-  { value: 'GE2', label: 'General Effect 2', color: 'bg-purple-400', description: 'Judges & Administrators' },
-  { value: 'VP', label: 'Visual Performance', color: 'bg-blue-500', description: 'Drill Designers' },
-  { value: 'VA', label: 'Visual Analysis', color: 'bg-blue-400', description: 'Visual Analysts' },
-  { value: 'CG', label: 'Color Guard', color: 'bg-pink-500', description: 'Guard Designers' },
-  { value: 'B', label: 'Brass', color: 'bg-yellow-500', description: 'Brass Arrangers' },
-  { value: 'MA', label: 'Music Analysis', color: 'bg-green-500', description: 'Front Ensemble' },
-  { value: 'P', label: 'Percussion', color: 'bg-red-500', description: 'Battery Instructors' }
-];
 
 const StaffMarketplace = () => {
   const { user } = useAuth();
@@ -103,16 +92,6 @@ const StaffMarketplace = () => {
     }
   };
 
-  const getCaptionColor = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.color || 'bg-gray-500';
-  };
-
-  const getCaptionLabel = (caption) => {
-    const option = CAPTION_OPTIONS.find(opt => opt.value === caption);
-    return option?.label || caption;
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -133,8 +112,8 @@ const StaffMarketplace = () => {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Search and Sort Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400" />
             <input
@@ -144,22 +123,6 @@ const StaffMarketplace = () => {
               placeholder="Search staff by name..."
               className="w-full pl-10 pr-4 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-500"
             />
-          </div>
-
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400" />
-            <select
-              value={captionFilter}
-              onChange={(e) => setCaptionFilter(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500 appearance-none cursor-pointer"
-            >
-              {CAPTION_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400 pointer-events-none" />
           </div>
 
           <div className="relative">
@@ -176,6 +139,51 @@ const StaffMarketplace = () => {
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400 pointer-events-none" />
           </div>
         </div>
+
+        {/* Caption Filter Pills */}
+        <div className="flex flex-wrap gap-2">
+          {CAPTION_OPTIONS.map(option => (
+            <button
+              key={option.value}
+              onClick={() => setCaptionFilter(option.value)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                captionFilter === option.value
+                  ? option.value === 'all'
+                    ? 'bg-gold-500 text-charcoal-900'
+                    : `${option.color} text-white`
+                  : 'bg-charcoal-700 text-cream-300 hover:bg-charcoal-600'
+              }`}
+            >
+              {option.value === 'all' ? option.label : option.value}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between px-2">
+        <p className="text-cream-400 text-sm">
+          {loading ? 'Loading...' : (
+            <>
+              Showing <span className="text-cream-100 font-medium">{filteredStaff.length}</span> staff member{filteredStaff.length !== 1 ? 's' : ''}
+              {captionFilter !== 'all' && (
+                <span> in <span className="font-medium">{getCaptionLabel(captionFilter)}</span></span>
+              )}
+            </>
+          )}
+        </p>
+        {(searchTerm || captionFilter !== 'all') && (
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setCaptionFilter('all');
+            }}
+            className="text-sm text-gold-400 hover:text-gold-300 flex items-center gap-1"
+          >
+            <X className="w-4 h-4" />
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Staff Grid */}
@@ -187,22 +195,11 @@ const StaffMarketplace = () => {
         <div className="glass rounded-2xl p-12 text-center">
           <AlertCircle className="w-12 h-12 text-cream-400 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-cream-100 mb-2">No Staff Found</h3>
-          <p className="text-cream-400 mb-4">
+          <p className="text-cream-400">
             {searchTerm || captionFilter !== 'all'
-              ? 'Try adjusting your filters'
+              ? 'Try adjusting your search or caption filter above'
               : 'No staff members available at this time'}
           </p>
-          {(searchTerm || captionFilter !== 'all') && (
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setCaptionFilter('all');
-              }}
-              className="btn-outline"
-            >
-              Clear Filters
-            </button>
-          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -213,8 +210,6 @@ const StaffMarketplace = () => {
               owned={ownsStaff(staff.id)}
               canAfford={canAfford(staff.baseValue)}
               onPurchase={() => setSelectedStaff(staff)}
-              getCaptionColor={getCaptionColor}
-              getCaptionLabel={getCaptionLabel}
             />
           ))}
         </div>
@@ -329,7 +324,9 @@ const StaffMarketplace = () => {
 };
 
 // Staff Card Component
-const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCaptionLabel }) => {
+const StaffCard = ({ staff, owned, canAfford, onPurchase }) => {
+  const captionColor = getCaptionColor(staff.caption);
+
   return (
     <motion.div
       layout
@@ -338,13 +335,13 @@ const StaffCard = ({ staff, owned, canAfford, onPurchase, getCaptionColor, getCa
       className="glass rounded-xl p-4 hover:border-gold-500/50 transition-all group"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 ${getCaptionColor(staff.caption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
-          <Trophy className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
+        <div className={`w-10 h-10 ${captionColor}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <Trophy className={`w-5 h-5 ${captionColor.replace('bg-', 'text-')}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-cream-100 mb-1 truncate text-base">{staff.name}</h3>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${getCaptionColor(staff.caption)}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold text-white ${captionColor}`}>
               {staff.caption}
             </span>
             <span className="text-xs text-cream-400">'{staff.yearInducted.toString().slice(-2)}</span>
