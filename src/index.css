@@ -76,6 +76,10 @@
   --glass-bg: rgba(26, 26, 26, 0.3);
   --glass-bg-dark: rgba(13, 13, 13, 0.5);
   --glass-bg-gold: rgba(255, 212, 77, 0.1);
+  --glass-premium-start: rgba(26, 26, 26, 0.95);
+  --glass-premium-end: rgba(13, 13, 13, 0.98);
+  --glass-premium-shadow: rgba(0, 0, 0, 0.5);
+  --glass-premium-inset: rgba(255, 255, 255, 0.05);
 }
 
 /* Light Mode - Swap cream and charcoal for proper contrast */
@@ -136,6 +140,10 @@
   --glass-bg: rgba(250, 246, 234, 0.8);
   --glass-bg-dark: rgba(245, 237, 213, 0.9);
   --glass-bg-gold: rgba(179, 134, 0, 0.1);
+  --glass-premium-start: rgba(250, 246, 234, 0.95);
+  --glass-premium-end: rgba(245, 237, 213, 0.98);
+  --glass-premium-shadow: rgba(0, 0, 0, 0.15);
+  --glass-premium-inset: rgba(0, 0, 0, 0.03);
 }
 
 /* Base Styles */
@@ -193,10 +201,10 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .glass-premium {
-    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(13, 13, 13, 0.98) 100%);
+    background: linear-gradient(135deg, var(--glass-premium-start) 0%, var(--glass-premium-end) 100%);
     @apply backdrop-blur-xl;
     border: 1px solid var(--border-color);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 50px -12px var(--glass-premium-shadow), inset 0 1px 0 var(--glass-premium-inset);
   }
 
   /* Gradient Backgrounds */
