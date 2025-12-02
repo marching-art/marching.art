@@ -316,120 +316,38 @@ const DailyOperations = ({
 
   return (
     <div className="space-y-4">
-      {/* Execution Multiplier & Corps Health */}
-      <div className="glass-premium rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-cream-100">Corps Performance</h3>
-            <p className="text-xs text-cream-500/60">
-              {completionStats.completed}/{completionStats.total} daily tasks complete
-            </p>
+      {/* Daily Progress Summary */}
+      <div className="glass rounded-xl p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gold-500/20">
+              <Zap className="w-5 h-5 text-gold-500" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-cream-100">Daily Progress</h3>
+              <p className="text-xs text-cream-500/60">
+                Complete activities to boost your corps
+              </p>
+            </div>
           </div>
           <div className="text-right">
-            <div className={`text-3xl font-bold ${multiplierStatus.color}`}>
-              {multiplier.toFixed(2)}x
+            <div className="text-2xl font-bold text-gold-500">
+              {completionStats.completed}/{completionStats.total}
             </div>
-            <div className={`text-xs font-medium ${multiplierStatus.color}`}>
-              {multiplierStatus.label}
-            </div>
+            <div className="text-xs text-cream-500/60">complete</div>
           </div>
         </div>
-
-        {/* Multiplier Bar */}
-        <div className="mb-4">
+        {/* Progress Bar */}
+        <div className="mt-3">
           <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min(((multiplier - 0.70) / 0.40) * 100, 100)}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className={`h-full ${multiplierStatus.bg}`}
+              animate={{ width: `${(completionStats.completed / completionStats.total) * 100}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-full bg-gold-500"
             />
           </div>
-          <div className="flex justify-between text-[10px] text-cream-500/40 mt-1">
-            <span>0.70x</span>
-            <span>1.00x</span>
-            <span>1.10x</span>
-          </div>
         </div>
-
-        {/* Health Metrics Row */}
-        <div className="grid grid-cols-3 gap-2">
-          <MetricPill
-            icon={Target}
-            label="Ready"
-            value={metrics.readiness}
-          />
-          <MetricPill
-            icon={Heart}
-            label="Morale"
-            value={metrics.morale}
-          />
-          <MetricPill
-            icon={Wrench}
-            label="Equip"
-            value={metrics.equipment}
-          />
-        </div>
-
-        {/* Expand Breakdown */}
-        <button
-          onClick={() => setShowMultiplierBreakdown(!showMultiplierBreakdown)}
-          className="w-full mt-3 pt-3 border-t border-cream-500/10 flex items-center justify-center gap-2 text-xs text-cream-500/60 hover:text-cream-400 transition-colors"
-        >
-          {showMultiplierBreakdown ? 'Hide Details' : 'Show Multiplier Breakdown'}
-          {showMultiplierBreakdown ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        </button>
-
-        <AnimatePresence>
-          {showMultiplierBreakdown && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pt-3 space-y-2 text-xs">
-                <div className="text-cream-500/60 mb-2">
-                  Formula: (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
-                </div>
-                <BreakdownRowDetailed
-                  label="Readiness"
-                  weight={40}
-                  current={metrics.readiness}
-                  contribution={breakdownData.readiness.value}
-                  delta={breakdownData.readiness.delta}
-                />
-                <BreakdownRowDetailed
-                  label="Morale"
-                  weight={30}
-                  current={metrics.morale}
-                  contribution={breakdownData.morale.value}
-                  delta={breakdownData.morale.delta}
-                />
-                <BreakdownRowDetailed
-                  label="Equipment"
-                  weight={30}
-                  current={metrics.equipment}
-                  contribution={breakdownData.equipment.value}
-                  delta={breakdownData.equipment.delta}
-                />
-                <div className="flex justify-between items-center pt-2 border-t border-cream-500/10">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-3 h-3 text-blue-400" />
-                    <span className="text-cream-500/60">Staff Bonus ({breakdownData.staff.count} staff)</span>
-                  </div>
-                  <span className={breakdownData.staff.value > 0 ? 'text-blue-400' : 'text-cream-500/40'}>
-                    +{(breakdownData.staff.value * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-cream-500/20 font-semibold">
-                  <span className="text-cream-300">Total Multiplier</span>
-                  <span className={multiplierStatus.color}>{multiplier.toFixed(2)}x</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Main Rehearsal */}

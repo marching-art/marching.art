@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { User, Trophy, History, BarChart3, Star, TrendingUp, Calendar, Crown, DollarSign } from 'lucide-react';
+import { User, Trophy, History, BarChart3, Star, TrendingUp, Calendar, Crown, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ const Profile = () => {
   const profileUserId = userId || user?.uid;
 
   // React Query hooks
-  const { data: profile, isLoading: loading } = useProfile(profileUserId);
+  const { data: profile, isLoading: loading, error, isError, refetch } = useProfile(profileUserId);
   const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
   // Calculate streak data
@@ -99,6 +99,23 @@ const Profile = () => {
 
   if (loading) {
     return <LoadingScreen fullScreen={false} />;
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-20">
+        <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-cream-100 mb-2">Error Loading Profile</h2>
+        <p className="text-cream-400 mb-6">{error?.message || 'Something went wrong. Please try again.'}</p>
+        <button
+          onClick={() => refetch()}
+          className="btn-primary inline-flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Try Again
+        </button>
+      </div>
+    );
   }
 
   if (!profile) {
