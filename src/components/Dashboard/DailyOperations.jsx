@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Users, Wrench, Heart, Music, Eye, Flag,
   Drum, Zap, ChevronRight, Play,
-  Coffee, ChevronDown, ChevronUp, Check
+  Coffee, ChevronDown, ChevronUp, Check,
+  TrendingUp, AlertTriangle, CheckCircle, Lightbulb, Activity
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -226,7 +227,11 @@ const DailyOperations = ({
       const result = await showReview({ corpsClass });
       if (result.data.success) {
         toast.success(result.data.message);
-        setShowInsights(result.data.insights);
+        // Store full result data including insights and stats
+        setShowInsights({
+          insights: result.data.insights,
+          stats: result.data.stats
+        });
         fetchStatus();
         if (onActivityComplete) onActivityComplete('review', result.data);
       }
@@ -545,44 +550,226 @@ const DailyOperations = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-charcoal-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-charcoal-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
               onClick={() => setShowInsights(null)}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="glass-premium rounded-xl p-6 max-w-md w-full"
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="glass-premium rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-lg font-semibold text-cream-100 mb-4 flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-blue-400" />
-                  Show Review Insights
-                </h3>
-                <div className="space-y-3">
-                  {showInsights.map((insight, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-lg ${
-                        insight.type === 'success' ? 'bg-green-500/10 border border-green-500/20' :
-                        insight.type === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/20' :
-                        'bg-blue-500/10 border border-blue-500/20'
-                      }`}
-                    >
-                      <p className={`text-sm ${
-                        insight.type === 'success' ? 'text-green-300' :
-                        insight.type === 'warning' ? 'text-yellow-300' :
-                        'text-blue-300'
-                      }`}>
-                        {insight.message}
-                      </p>
-                    </div>
-                  ))}
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-cream-100">Show Review</h3>
+                    <p className="text-xs text-cream-400">Corps Performance Analysis</p>
+                  </div>
                 </div>
+
+                {/* Stats Grid */}
+                {showInsights.stats && (
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {/* Readiness */}
+                    <div className="bg-charcoal-800/50 rounded-xl p-4 border border-charcoal-700/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-cream-400 font-medium">Readiness</span>
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <span className={`text-2xl font-bold ${
+                          showInsights.stats.readiness >= 90 ? 'text-green-400' :
+                          showInsights.stats.readiness >= 70 ? 'text-blue-400' :
+                          showInsights.stats.readiness >= 50 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {showInsights.stats.readiness}
+                        </span>
+                        <span className="text-sm text-cream-500 mb-0.5">%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 bg-charcoal-700 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${showInsights.stats.readiness}%` }}
+                          transition={{ delay: 0.2, duration: 0.8 }}
+                          className={`h-full rounded-full ${
+                            showInsights.stats.readiness >= 90 ? 'bg-green-500' :
+                            showInsights.stats.readiness >= 70 ? 'bg-blue-500' :
+                            showInsights.stats.readiness >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Morale */}
+                    <div className="bg-charcoal-800/50 rounded-xl p-4 border border-charcoal-700/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Heart className="w-4 h-4 text-pink-400" />
+                        <span className="text-xs text-cream-400 font-medium">Morale</span>
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <span className={`text-2xl font-bold ${
+                          showInsights.stats.morale >= 90 ? 'text-green-400' :
+                          showInsights.stats.morale >= 70 ? 'text-pink-400' :
+                          showInsights.stats.morale >= 50 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {showInsights.stats.morale}
+                        </span>
+                        <span className="text-sm text-cream-500 mb-0.5">%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 bg-charcoal-700 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${showInsights.stats.morale}%` }}
+                          transition={{ delay: 0.3, duration: 0.8 }}
+                          className={`h-full rounded-full ${
+                            showInsights.stats.morale >= 90 ? 'bg-green-500' :
+                            showInsights.stats.morale >= 70 ? 'bg-pink-500' :
+                            showInsights.stats.morale >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sectional Focus */}
+                {showInsights.stats?.sectionalFocus && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-cream-200 mb-3 flex items-center gap-2">
+                      <Music className="w-4 h-4 text-purple-400" />
+                      Sectional Practice
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { key: 'music', label: 'Music', icon: Music, color: 'blue' },
+                        { key: 'visual', label: 'Visual', icon: Eye, color: 'purple' },
+                        { key: 'guard', label: 'Guard', icon: Flag, color: 'pink' },
+                        { key: 'percussion', label: 'Battery', icon: Drum, color: 'orange' }
+                      ].map(({ key, label, icon: Icon, color }) => (
+                        <div key={key} className="bg-charcoal-800/30 rounded-lg p-2 text-center border border-charcoal-700/30">
+                          <Icon className={`w-4 h-4 mx-auto mb-1 text-${color}-400`} />
+                          <div className="text-lg font-bold text-cream-100">
+                            {showInsights.stats.sectionalFocus[key] || 0}
+                          </div>
+                          <div className="text-[10px] text-cream-500 leading-tight">{label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Equipment Health */}
+                {showInsights.stats?.equipmentHealth && Object.keys(showInsights.stats.equipmentHealth).length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-cream-200 mb-3 flex items-center gap-2">
+                      <Wrench className="w-4 h-4 text-amber-400" />
+                      Equipment Health
+                    </h4>
+                    <div className="space-y-2">
+                      {Object.entries(showInsights.stats.equipmentHealth).map(([name, value]) => (
+                        <div key={name} className="flex items-center gap-3">
+                          <span className="text-xs text-cream-400 w-24 capitalize truncate">{name}</span>
+                          <div className="flex-1 h-2 bg-charcoal-700 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${value}%` }}
+                              transition={{ delay: 0.4, duration: 0.6 }}
+                              className={`h-full rounded-full ${
+                                value >= 80 ? 'bg-green-500' :
+                                value >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                            />
+                          </div>
+                          <span className={`text-xs font-medium w-10 text-right ${
+                            value >= 80 ? 'text-green-400' :
+                            value >= 60 ? 'text-yellow-400' : 'text-red-400'
+                          }`}>
+                            {value}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Insights */}
+                {showInsights.insights && showInsights.insights.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-cream-200 mb-3 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-yellow-400" />
+                      Insights & Recommendations
+                    </h4>
+                    <div className="space-y-2">
+                      {showInsights.insights.map((insight, idx) => {
+                        const getInsightConfig = (type) => {
+                          switch (type) {
+                            case 'success':
+                              return {
+                                icon: CheckCircle,
+                                bg: 'bg-green-500/10',
+                                border: 'border-green-500/30',
+                                iconColor: 'text-green-400',
+                                textColor: 'text-green-200'
+                              };
+                            case 'warning':
+                              return {
+                                icon: AlertTriangle,
+                                bg: 'bg-yellow-500/10',
+                                border: 'border-yellow-500/30',
+                                iconColor: 'text-yellow-400',
+                                textColor: 'text-yellow-200'
+                              };
+                            case 'tip':
+                              return {
+                                icon: Lightbulb,
+                                bg: 'bg-purple-500/10',
+                                border: 'border-purple-500/30',
+                                iconColor: 'text-purple-400',
+                                textColor: 'text-purple-200'
+                              };
+                            default:
+                              return {
+                                icon: TrendingUp,
+                                bg: 'bg-blue-500/10',
+                                border: 'border-blue-500/30',
+                                iconColor: 'text-blue-400',
+                                textColor: 'text-blue-200'
+                              };
+                          }
+                        };
+                        const config = getInsightConfig(insight.type);
+                        const InsightIcon = config.icon;
+
+                        return (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 * idx }}
+                            className={`flex items-start gap-3 p-3 rounded-lg ${config.bg} border ${config.border}`}
+                          >
+                            <InsightIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${config.iconColor}`} />
+                            <p className={`text-sm ${config.textColor}`}>
+                              {insight.message}
+                            </p>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Close Button */}
                 <button
                   onClick={() => setShowInsights(null)}
-                  className="w-full mt-4 px-4 py-2 bg-charcoal-700 text-cream-100 rounded-lg hover:bg-charcoal-600 transition-colors"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-charcoal-700 to-charcoal-600 text-cream-100 rounded-xl font-medium hover:from-charcoal-600 hover:to-charcoal-500 transition-all duration-200 flex items-center justify-center gap-2"
                 >
+                  <Check className="w-4 h-4" />
                   Got it!
                 </button>
               </motion.div>

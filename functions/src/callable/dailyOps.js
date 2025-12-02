@@ -692,9 +692,28 @@ const showReview = onCall({ cors: true }, async (request) => {
 
       transaction.update(profileRef, updates);
 
+      // Build detailed stats for the modal
+      const stats = {
+        readiness: Math.round(readiness * 100),
+        morale: Math.round(morale * 100),
+        sectionalFocus: {
+          music: sectionalFocus.music || 0,
+          visual: sectionalFocus.visual || 0,
+          guard: sectionalFocus.guard || 0,
+          percussion: sectionalFocus.percussion || 0
+        },
+        equipmentHealth: Object.entries(equipment)
+          .filter(([k, v]) => typeof v === 'number' && !k.includes('Max'))
+          .reduce((acc, [k, v]) => {
+            acc[k] = Math.round(v * 100);
+            return acc;
+          }, {})
+      };
+
       return {
         xpReward,
         insights,
+        stats,
         newXP,
         newLevel,
         classUnlocked
