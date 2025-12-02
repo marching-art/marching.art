@@ -3,7 +3,7 @@
 // =============================================================================
 // Mobile slide-out navigation menu
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useTheme } from '../context/ThemeContext';
+import { db } from '../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 // =============================================================================
 // TYPES
@@ -32,6 +34,12 @@ interface NavItem {
 interface NavSection {
   title: string;
   items: NavItem[];
+}
+
+interface UserProfile {
+  displayName?: string;
+  xpLevel?: number;
+  xp?: number;
 }
 
 // =============================================================================
@@ -105,6 +113,21 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { toggleTheme, isDark } = useTheme();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  // Subscribe to profile updates for XP display
+  useEffect(() => {
+    if (user) {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setProfile(docSnap.data() as UserProfile);
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   // Close menu on route change
   useEffect(() => {
@@ -218,17 +241,27 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                         <div className="w-12 h-12 bg-gradient-cream rounded-full flex items-center justify-center">
                           <User className="w-6 h-6 text-charcoal-900" />
                         </div>
-                        <div className="absolute -top-1 -right-1">
-                          <Star className="w-4 h-4 text-gold-500" />
-                        </div>
+                        {(profile?.xpLevel ?? 0) >= 10 && (
+                          <div className="absolute -top-1 -right-1">
+                            <Star className="w-4 h-4 text-gold-500" />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <p className="font-semibold text-cream-100">
-                          Director
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-cream-100 truncate">
+                          {profile?.displayName || 'Director'}
                         </p>
-                        <p className="text-sm text-cream-500/60">
-                          Level 5 • 2,450 XP
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-cream-500/60">
+                            Level {profile?.xpLevel || 1}
+                          </span>
+                          <div className="flex-1 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-gold transition-all duration-500"
+                              style={{ width: `${((profile?.xp ?? 0) % 1000) / 10}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
