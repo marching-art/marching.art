@@ -169,14 +169,17 @@ const DailyQuests = ({ userId, onQuestComplete }) => {
     const questsRef = doc(db, 'artifacts/marching-art/users', userId, 'dailyQuests/today');
     await updateDoc(questsRef, { quests: updatedQuests });
 
-    // Update user's XP and coins
+    // Update user's XP, level, and coins
     const profileRef = doc(db, 'artifacts/marching-art/users', userId, 'profile/data');
     const profileSnap = await getDoc(profileRef);
 
     if (profileSnap.exists()) {
       const profile = profileSnap.data();
+      const newXP = (profile.xp || 0) + quest.xpReward;
+      const newLevel = Math.floor(newXP / 1000) + 1; // Level = floor(xp / 1000) + 1
       await updateDoc(profileRef, {
-        xp: (profile.xp || 0) + quest.xpReward,
+        xp: newXP,
+        xpLevel: newLevel,
         corpsCoin: (profile.corpsCoin || 0) + quest.coinReward
       });
     }

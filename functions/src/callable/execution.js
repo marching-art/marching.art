@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { getDefaultExecutionState } = require("../helpers/executionMultiplier");
+const { calculateXPUpdates } = require("../helpers/xpCalculations");
 
 /**
  * Rehearsal costs and benefits by section
@@ -194,11 +195,12 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
         [`corps.${corpsClass}.execution.rehearsalStreak`]: admin.firestore.FieldValue.increment(1),
       };
 
-      // Award XP
+      // Award XP - update both profile XP and battle pass XP
       const totalXp = REHEARSAL_CONFIG.xpGain + bonusXp;
-      if (profileData.battlePass?.currentSeason) {
-        updates[`battlePass.xp`] = admin.firestore.FieldValue.increment(totalXp);
-      }
+      const { updates: xpUpdates, newXP, newLevel, classUnlocked } = calculateXPUpdates(profileData, totalXp);
+
+      // Merge XP updates with execution updates
+      Object.assign(updates, xpUpdates);
 
       transaction.update(profileRef, updates);
 
@@ -214,6 +216,9 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
         rehearsalsThisWeek,
         xpGained: totalXp,
         bonusMessage,
+        newXP,
+        newLevel,
+        classUnlocked,
       };
     });
 
@@ -235,6 +240,9 @@ const dailyRehearsal = onCall({ cors: true }, async (request) => {
       readinessGain: result.readinessGain,
       rehearsalsThisWeek: result.rehearsalsThisWeek,
       bonusMessage: result.bonusMessage,
+      newXP: result.newXP,
+      newLevel: result.newLevel,
+      classUnlocked: result.classUnlocked,
     };
   } catch (error) {
     logger.error(`Error during rehearsal for user ${uid}:`, error);
