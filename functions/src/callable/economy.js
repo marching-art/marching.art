@@ -279,7 +279,7 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
   const db = getDb();
 
   try {
-    let query = db.collection("staff_database").where("available", "==", true);
+    let query = db.collection("staff_database");
 
     if (caption) {
       query = query.where("caption", "==", caption);
@@ -289,10 +289,15 @@ const getStaffMarketplace = onCall({ cors: true }, async (request) => {
     const staffList = [];
 
     snapshot.forEach(doc => {
-      staffList.push({
-        id: doc.id,
-        ...doc.data(),
-      });
+      const data = doc.data();
+      // Include staff that are explicitly available OR don't have the field set (legacy data)
+      // Exclude only if available is explicitly set to false
+      if (data.available !== false) {
+        staffList.push({
+          id: doc.id,
+          ...data,
+        });
+      }
     });
 
     return {
