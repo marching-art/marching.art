@@ -285,7 +285,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                             className={`
                               flex items-center gap-3 px-6 py-3 transition-all duration-300
                               ${isActive
-                                ? 'bg-gold-500/20 text-gold-500 border-r-4 border-gold-500'
+                                ? 'bg-charcoal-900 text-gold-500 font-semibold'
                                 : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
                               }
                             `}
