@@ -259,7 +259,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Score Bug - Circular badge for multipliers/scores */
   .score-bug {
     @apply flex flex-col items-center justify-center rounded-full p-4 md:p-6;
-    @apply bg-gradient-to-br from-[#0D0D0D] to-[#1A1A1A] border-4 border-gold-500/50;
+    @apply bg-gradient-to-br from-[#0D0D0D] to-[#1A1A1A] border-4;
+    border-color: rgba(255, 212, 77, 0.5);
     box-shadow: 0 0 30px rgba(255, 212, 77, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.1);
     min-width: 120px;
     min-height: 120px;
@@ -279,7 +280,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .icon-card:hover {
-    @apply border-gold-500/60;
+    border-color: rgba(255, 212, 77, 0.6);
     box-shadow: 0 0 20px rgba(255, 212, 77, 0.2);
     transform: translateY(-2px);
   }
@@ -421,7 +422,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .compact-card:hover {
-    @apply border-gold-500/50;
+    border-color: rgba(255, 212, 77, 0.5);
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
