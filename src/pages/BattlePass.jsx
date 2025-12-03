@@ -425,10 +425,10 @@ const RewardCard = ({
     <div className={`
       relative p-3 rounded-lg border-2 transition-all hover:border-amber-500 dark:hover:border-gold-500
       ${isPremium
-        ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-400/40 dark:border-gold-500/40'
-        : 'bg-white dark:bg-charcoal-900/50 border-cream-200 dark:border-cream-500/20'}
+        ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-400 dark:border-gold-500/40'
+        : 'bg-white dark:bg-charcoal-900/50 border-stone-200 dark:border-cream-500/20'}
       ${canClaim ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20 border-amber-500 dark:border-gold-500' : ''}
-      ${!isUnlocked ? 'bg-stone-100 dark:bg-white/5' : ''}
+      ${!isUnlocked ? 'bg-stone-100 dark:bg-white/5 border-stone-300 dark:border-white/10' : ''}
     `}>
       {/* Locked Overlay */}
       {isLocked && (
