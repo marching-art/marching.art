@@ -843,10 +843,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .card-brutalist:hover {
     transform: translateY(-2px);
-    @apply shadow-md border-amber-500/50 dark:border-gold-500/50;
+    @apply shadow-md border-amber-500/50;
   }
 
   [data-theme="dark"] .card-brutalist:hover {
+    border-color: rgba(255, 212, 77, 0.5);
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
