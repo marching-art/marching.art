@@ -792,7 +792,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   [data-theme="dark"] .card-brutalist:hover {
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
-    @apply border-gold-500/50;
+    border-color: rgba(255, 212, 77, 0.5);
   }
 
   /* Hero Card Variant - For Command Center */
