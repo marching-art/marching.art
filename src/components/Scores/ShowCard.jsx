@@ -29,7 +29,7 @@ const ShowCard = ({ show, onClick, userCorpsNames = [] }) => {
         </div>
       </div>
 
-      {/* Corps Results */}
+      {/* Corps Results - Recap Sheet Style */}
       {show.scores && show.scores.length > 0 && (
         <div className="bg-white dark:bg-charcoal-900/50">
           {show.scores.slice(0, 5).map((score, idx) => {
@@ -37,16 +37,16 @@ const ShowCard = ({ show, onClick, userCorpsNames = [] }) => {
             return (
               <div
                 key={idx}
-                className={`flex items-center justify-between px-4 py-3 border-b border-charcoal-900 dark:border-charcoal-700 last:border-b-0 ${
+                className={`flex items-center justify-between px-4 py-3 border-b-2 border-black dark:border-charcoal-600 ${
                   isMyCorps
                     ? 'bg-yellow-50 dark:bg-yellow-500/10'
                     : ''
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* Rank Badge - Square box with black border */}
-                  <span className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-xs md:text-sm font-bold flex-shrink-0 bg-white dark:bg-charcoal-800 border-2 border-charcoal-900 dark:border-charcoal-600 text-charcoal-900 dark:text-cream-100">
-                    #{idx + 1}
+                  {/* Rank Badge - Solid Black Box (Race Position Indicator) */}
+                  <span className="w-8 h-8 flex items-center justify-center text-xs font-mono font-bold flex-shrink-0 bg-black text-white">
+                    {idx + 1}
                   </span>
                   {/* Corps Name - Uppercase, Bold, Dark Grey */}
                   <span className={`font-bold uppercase text-sm md:text-base truncate ${

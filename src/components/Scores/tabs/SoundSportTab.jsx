@@ -4,12 +4,12 @@ import { Music, Medal } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
 import EmptyState from '../../EmptyState';
 
-// SoundSport rating helper
+// SoundSport rating helper - Brutalist badge styling
 const getSoundSportRating = (score) => {
-  if (score >= 90) return { rating: 'Gold', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30' };
-  if (score >= 75) return { rating: 'Silver', color: 'text-gray-400', bgColor: 'bg-gray-500/10', borderColor: 'border-gray-400/30' };
-  if (score >= 60) return { rating: 'Bronze', color: 'text-orange-600', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-600/30' };
-  return { rating: 'Participation', color: 'text-cream-500', bgColor: 'bg-cream-500/10', borderColor: 'border-cream-500/30' };
+  if (score >= 90) return { rating: 'Gold', color: 'text-black', bgColor: 'bg-primary', borderColor: 'border-black' };
+  if (score >= 75) return { rating: 'Silver', color: 'text-black', bgColor: 'bg-stone-300', borderColor: 'border-black' };
+  if (score >= 60) return { rating: 'Bronze', color: 'text-black', bgColor: 'bg-orange-300', borderColor: 'border-black' };
+  return { rating: 'Participation', color: 'text-black', bgColor: 'bg-white', borderColor: 'border-black' };
 };
 
 // Helper to get rating order for sorting (lower = better)
@@ -45,21 +45,21 @@ const SoundSportTab = ({ loading, allShows }) => {
               Scores are not publicly announced or ranked.
             </p>
             <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
-                <Medal className="w-4 h-4 text-yellow-500" />
-                <span className="font-semibold text-yellow-500 text-xs md:text-sm">Gold</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary border-2 border-black rounded-sm">
+                <Medal className="w-4 h-4 text-black" />
+                <span className="font-bold text-black text-xs md:text-sm">Gold</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-500/10 border border-gray-400/30 rounded-full">
-                <Medal className="w-4 h-4 text-gray-400" />
-                <span className="font-semibold text-gray-400 text-xs md:text-sm">Silver</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-300 border-2 border-black rounded-sm">
+                <Medal className="w-4 h-4 text-black" />
+                <span className="font-bold text-black text-xs md:text-sm">Silver</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 border border-orange-600/30 rounded-full">
-                <Medal className="w-4 h-4 text-orange-600" />
-                <span className="font-semibold text-orange-600 text-xs md:text-sm">Bronze</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-300 border-2 border-black rounded-sm">
+                <Medal className="w-4 h-4 text-black" />
+                <span className="font-bold text-black text-xs md:text-sm">Bronze</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cream-500/10 border border-cream-500/30 rounded-full">
-                <Medal className="w-4 h-4 text-cream-500" />
-                <span className="font-semibold text-cream-500 text-xs md:text-sm">Participation</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-black rounded-sm">
+                <Medal className="w-4 h-4 text-black" />
+                <span className="font-bold text-black text-xs md:text-sm">Participation</span>
               </div>
             </div>
           </div>
@@ -96,13 +96,13 @@ const SoundSportTab = ({ loading, allShows }) => {
                     return (
                       <div
                         key={idx}
-                        className={`p-3 md:p-4 rounded-lg border ${ratingInfo.bgColor} ${ratingInfo.borderColor}`}
+                        className={`p-3 md:p-4 rounded-sm border-2 ${ratingInfo.bgColor} ${ratingInfo.borderColor}`}
                       >
                         <div className="flex items-center gap-2 md:gap-3">
                           <Medal className={`w-5 h-5 md:w-6 md:h-6 flex-shrink-0 ${ratingInfo.color}`} />
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-cream-100 text-sm md:text-base truncate">{score.corps}</p>
-                            <p className={`text-xs md:text-sm font-semibold ${ratingInfo.color}`}>
+                            <p className={`font-bold text-sm md:text-base truncate uppercase ${ratingInfo.color}`}>{score.corps}</p>
+                            <p className={`text-xs md:text-sm font-bold ${ratingInfo.color}`}>
                               {ratingInfo.rating}
                             </p>
                           </div>
