@@ -17,36 +17,47 @@ import { Card } from '../ui/Card';
  * - The dashboard is a HUD, not a filing cabinet
  */
 
-// Animated status bar component
-const StatusBar = memo(({ label, value, icon: Icon, accentColor = 'blue' }) => {
+// HUD-style animated status bar component with traffic light colors and ruler overlay
+const StatusBar = memo(({ label, value, icon: Icon }) => {
   const percentage = Math.round(value * 100);
 
-  const colorMap = {
-    blue: { text: 'text-blue-400', bg: 'bg-blue-500', glow: 'shadow-blue-500/20' },
-    red: { text: 'text-rose-400', bg: 'bg-rose-500', glow: 'shadow-rose-500/20' },
-    orange: { text: 'text-orange-400', bg: 'bg-orange-500', glow: 'shadow-orange-500/20' },
-    green: { text: 'text-green-400', bg: 'bg-green-500', glow: 'shadow-green-500/20' },
-    purple: { text: 'text-purple-400', bg: 'bg-purple-500', glow: 'shadow-purple-500/20' },
+  // Traffic light colors: Low = Red, Mid = Yellow, High = Blue/Green
+  const getTrafficLightColor = (pct) => {
+    if (pct >= 85) return { text: 'text-emerald-400', bg: 'bg-emerald-500', label: 'text-emerald-300' };
+    if (pct >= 70) return { text: 'text-blue-400', bg: 'bg-blue-500', label: 'text-blue-300' };
+    if (pct >= 50) return { text: 'text-yellow-400', bg: 'bg-yellow-500', label: 'text-yellow-300' };
+    return { text: 'text-red-400', bg: 'bg-red-500', label: 'text-red-300' };
   };
 
-  const colors = colorMap[accentColor] || colorMap.blue;
+  const colors = getTrafficLightColor(percentage);
 
   return (
     <div className="group">
-      <div className="flex justify-between items-end mb-1.5">
-        <div className={`flex items-center gap-2 text-xs uppercase tracking-wider font-semibold ${colors.text}`}>
-          <Icon size={12} />
+      {/* Label row */}
+      <div className="flex justify-between items-center mb-2">
+        <div className={`flex items-center gap-2 text-xs uppercase tracking-widest font-bold ${colors.label}`}>
+          <Icon size={14} strokeWidth={2.5} />
           {label}
         </div>
-        <span className="text-white font-mono text-sm font-bold">{percentage}%</span>
       </div>
-      <div className="h-1.5 w-full bg-charcoal-800 rounded-full overflow-hidden">
+      {/* HUD-style progress bar with ruler pattern */}
+      <div className="relative h-6 w-full bg-charcoal-950 border-2 border-charcoal-700 overflow-hidden" style={{ borderRadius: '2px' }}>
+        {/* Ruler pattern overlay */}
+        <div className="absolute inset-0 hud-ruler-pattern opacity-30" />
+        {/* Progress fill */}
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-          className={`h-full ${colors.bg} rounded-full`}
+          className={`absolute inset-y-0 left-0 ${colors.bg}`}
+          style={{ borderRadius: '1px' }}
         />
+        {/* Percentage text inside bar */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="font-mono font-black text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            {percentage}%
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -242,112 +253,126 @@ const CommandCenter = ({
       {/* Main Bento Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-        {/* LEFT: Hero Card - Corps Status & Health (8 cols) */}
+        {/* LEFT: Hero Card - HUD-style Corps Status (8 cols) */}
         <Card variant="premium" padding="none" className="lg:col-span-8 relative overflow-hidden">
           {/* Subtle background decoration */}
           <div className="absolute top-0 right-0 w-48 h-48 opacity-5 pointer-events-none">
             <Trophy size={192} />
           </div>
 
-          <div className="p-5 sm:p-6 relative z-10">
-            {/* Header Row */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-              {/* Corps Identity */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
-                    {getCorpsClassName(activeCorpsClass)}
-                  </span>
-                  {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-400 text-[10px] font-bold">
-                      <Trophy size={10} />
-                      Top 10
-                    </span>
-                  )}
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight mb-1">
-                  {activeCorps.corpsName || activeCorps.name}
-                </h2>
-                {activeCorps.showConcept && (
-                  <p className="text-cream-300 text-sm">
-                    <span className="text-gold-500">Show:</span> "{activeCorps.showConcept}"
-                  </p>
-                )}
-              </div>
+          {/* HUD HEADER - Full-width Corps Name with distinct background */}
+          <div className="hud-header relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className={`px-2.5 py-1 text-[10px] font-black tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`} style={{ borderRadius: '2px' }}>
+                {getCorpsClassName(activeCorpsClass)}
+              </span>
+              <h2 className="text-xl sm:text-2xl font-display font-black text-white dark:text-cream-100 tracking-tight uppercase">
+                {activeCorps.corpsName || activeCorps.name}
+              </h2>
+              {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-gold-500/20 text-gold-400 text-[10px] font-bold" style={{ borderRadius: '2px' }}>
+                  <Trophy size={10} />
+                  TOP 10
+                </span>
+              )}
+            </div>
+            {activeCorps.showConcept && (
+              <p className="hidden sm:block text-cream-400 dark:text-cream-500 text-xs">
+                <span className="text-gold-500 font-semibold">SHOW:</span> "{activeCorps.showConcept}"
+              </p>
+            )}
+          </div>
 
-              {/* Performance Multiplier - The "Big Number" */}
-              <div className="flex-shrink-0 text-right bg-charcoal-950/40 p-3 rounded-xl border border-white/5">
-                <div className="text-[10px] text-cream-500/60 uppercase tracking-widest mb-1">
-                  Performance
-                </div>
-                <div className={`text-4xl sm:text-5xl font-display font-black tabular-nums tracking-tighter ${multiplierStatus.color}`}>
-                  {multiplier.toFixed(2)}x
-                </div>
-                <div className={`text-xs font-semibold ${multiplierStatus.color} flex items-center justify-end gap-1 mt-1`}>
-                  <TrendingUp size={12} />
-                  {multiplierStatus.label}
-                </div>
+          {/* HUD QUADRANT GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 relative z-10">
+
+            {/* QUADRANT 1: Performance Multiplier */}
+            <div className="hud-quadrant p-4 sm:p-5 border-b sm:border-b-0 sm:border-r hud-grid-divider">
+              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-2">
+                PERFORMANCE MULTIPLIER
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className={`text-5xl sm:text-6xl font-display font-black tabular-nums tracking-tighter ${multiplierStatus.color}`}>
+                  {multiplier.toFixed(2)}
+                </span>
+                <span className={`text-2xl font-display font-bold ${multiplierStatus.color}`}>x</span>
+              </div>
+              <div className={`text-xs font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-2`}>
+                <TrendingUp size={14} strokeWidth={2.5} />
+                {multiplierStatus.label}
               </div>
             </div>
 
-            {/* Health Metrics - Always Visible */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              <StatusBar
-                label="Readiness"
-                value={readiness}
-                icon={Target}
-                accentColor="blue"
-              />
-              <StatusBar
-                label="Morale"
-                value={morale}
-                icon={Heart}
-                accentColor="red"
-              />
-              <StatusBar
-                label="Equipment"
-                value={avgEquipment}
-                icon={Wrench}
-                accentColor="orange"
-              />
-            </div>
-
-            {/* Quick Stats Row */}
-            <div className="flex items-center justify-between mt-5 pt-4 border-t border-cream-500/10">
-              <div className="flex items-center gap-4 sm:gap-6">
+            {/* QUADRANT 2: Quick Stats */}
+            <div className="hud-quadrant p-4 sm:p-5 border-b hud-grid-divider">
+              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
+                WEEKLY STATUS
+              </div>
+              <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
-                  <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">This Week</div>
+                  <div className="text-2xl font-mono font-black text-blue-400">{rehearsalsThisWeek}/7</div>
+                  <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Rehearsals</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-purple-400">{showsThisWeek}</div>
-                  <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">Shows</div>
+                  <div className="text-2xl font-mono font-black text-purple-400">{showsThisWeek}</div>
+                  <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Shows</div>
                 </div>
                 {activeCorpsClass !== 'soundSport' && (
                   <div className="text-center">
-                    <div className="text-lg font-bold text-gold-400">
+                    <div className="text-2xl font-mono font-black text-gold-400">
                       {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                     </div>
-                    <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">Score</div>
+                    <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Score</div>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Quick Links */}
-              <div className="flex items-center gap-2">
+            {/* QUADRANT 3: Health Metrics (spans full width on mobile, left side on desktop) */}
+            <div className="hud-quadrant p-4 sm:p-5 sm:col-span-1 border-b sm:border-b-0 sm:border-r hud-grid-divider">
+              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
+                CORPS HEALTH METRICS
+              </div>
+              <div className="space-y-3">
+                <StatusBar
+                  label="Readiness"
+                  value={readiness}
+                  icon={Target}
+                />
+                <StatusBar
+                  label="Morale"
+                  value={morale}
+                  icon={Heart}
+                />
+                <StatusBar
+                  label="Equipment"
+                  value={avgEquipment}
+                  icon={Wrench}
+                />
+              </div>
+            </div>
+
+            {/* QUADRANT 4: Quick Actions */}
+            <div className="hud-quadrant p-4 sm:p-5">
+              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
+                QUICK ACTIONS
+              </div>
+              <div className="flex flex-col gap-2">
                 <Link
                   to="/schedule"
-                  className="p-2 rounded-lg bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-400 hover:text-white transition-colors"
-                  title="View Schedule"
+                  className="flex items-center gap-3 p-3 bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-300 hover:text-white transition-colors border border-charcoal-700/50"
+                  style={{ borderRadius: '2px' }}
                 >
                   <Calendar size={18} />
+                  <span className="text-sm font-semibold uppercase tracking-wide">View Schedule</span>
                 </Link>
                 <Link
                   to="/scores"
-                  className="p-2 rounded-lg bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-400 hover:text-white transition-colors"
-                  title="View Scores"
+                  className="flex items-center gap-3 p-3 bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-300 hover:text-white transition-colors border border-charcoal-700/50"
+                  style={{ borderRadius: '2px' }}
                 >
                   <Trophy size={18} />
+                  <span className="text-sm font-semibold uppercase tracking-wide">View Scores</span>
                 </Link>
               </div>
             </div>

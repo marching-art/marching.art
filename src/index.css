@@ -1429,3 +1429,73 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* ========================================
+   HUD (Heads-Up Display) STYLES
+   For tactical/military dashboard UI
+   ======================================== */
+
+/* Ruler pattern overlay for HUD progress bars */
+.hud-ruler-pattern {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 9%,
+    rgba(255, 255, 255, 0.15) 9%,
+    rgba(255, 255, 255, 0.15) 10%
+  );
+  /* Add minor tick marks */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 9%,
+      rgba(255, 255, 255, 0.25) 9%,
+      rgba(255, 255, 255, 0.25) 10%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 4%,
+      rgba(255, 255, 255, 0.1) 4%,
+      rgba(255, 255, 255, 0.1) 5%
+    );
+}
+
+/* HUD Card Header - distinct header section for corps name */
+.hud-header {
+  background-color: rgba(59, 59, 59, 0.8); /* charcoal-800 with 80% opacity */
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .hud-header {
+  background-color: #e7e5e4; /* stone-200 */
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+/* HUD Quadrant borders */
+.hud-quadrant {
+  position: relative;
+}
+
+.hud-quadrant::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+[data-theme="light"] .hud-quadrant::before {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* HUD Grid divider lines */
+.hud-grid-divider {
+  border-color: rgba(84, 84, 84, 0.5); /* charcoal-700 with 50% opacity */
+}
+
+[data-theme="light"] .hud-grid-divider {
+  border-color: #d6d3d1; /* stone-300 */
+}
