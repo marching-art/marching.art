@@ -1,4 +1,5 @@
 // src/pages/Schedule.jsx
+// Brutalist Architecture - Schedule Page
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AlertCircle, Info } from 'lucide-react';
@@ -7,6 +8,7 @@ import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
 import { useSeasonStore } from '../store/seasonStore';
+import { BrutalistCard, BrutalistHeader, BrutalistTip } from '../components/ui';
 
 // Import modular components
 import {
@@ -159,11 +161,13 @@ const Schedule = () => {
   if (!seasonData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <AlertCircle className="w-16 h-16 text-red-500" />
-        <h2 className="text-2xl font-display font-bold text-cream-100">No Active Season</h2>
-        <p className="text-cream-500/80 text-center max-w-md">
-          There is currently no active season. Please check back later.
-        </p>
+        <BrutalistCard variant="danger" padding="lg" className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-danger mx-auto mb-4" />
+          <BrutalistHeader size="default">No Active Season</BrutalistHeader>
+          <p className="text-text-muted mt-2">
+            There is currently no active season. Please check back later.
+          </p>
+        </BrutalistCard>
       </div>
     );
   }
@@ -208,13 +212,10 @@ const Schedule = () => {
       />
 
       {/* Quick Tip */}
-      <div className="flex-shrink-0 mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-          <span>
-            Each corps can attend up to 4 shows per week. Tap a show to register your corps.
-          </span>
-        </div>
+      <div className="flex-shrink-0 mt-3">
+        <BrutalistTip icon={Info} variant="info">
+          Each corps can attend up to 4 shows per week. Tap a show to register your corps.
+        </BrutalistTip>
       </div>
 
       {/* Registration Modal */}

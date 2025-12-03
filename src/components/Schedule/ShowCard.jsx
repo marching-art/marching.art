@@ -1,8 +1,16 @@
-// ShowCard - Individual show card for schedule (Travel Itinerary Style)
+// ShowCard - Individual show card for schedule (Brutalist Architecture)
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, MapPin, Check, Music, Plus, ExternalLink, Lock } from 'lucide-react';
+import { MapPin, Lock, Music, Plus, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  BrutalistCard,
+  BrutalistHeader,
+  BrutalistButton,
+  BrutalistIconBox,
+  BrutalistStamp,
+  BrutalistDivider,
+  MetricBadge
+} from '../ui';
 
 const ShowCard = ({
   show,
@@ -14,114 +22,91 @@ const ShowCard = ({
 }) => {
   const isRegistered = myCorps.length > 0;
   const isLocked = show.locked || isPast;
-  const isOpen = !isLocked && !isRegistered;
 
-  // Determine card state styling
-  const getCardClasses = () => {
+  // Determine card border state
+  const getBorderState = () => {
+    if (isRegistered && !isLocked) return 'success';
+    return null;
+  };
+
+  // Determine status badge
+  const getStatusBadge = () => {
     if (isLocked) {
-      // Past shows: grayscale with hatched overlay
-      return 'ticket-stub-past';
+      return <MetricBadge variant="muted" size="sm" icon={Lock}>{isPast ? 'Closed' : 'Locked'}</MetricBadge>;
     }
-    if (isRegistered) {
-      // Registered shows: thick green left border
-      return 'ticket-stub-registered';
+    if (show.scoresAvailable) {
+      return <MetricBadge variant="info" size="sm">Scores Available</MetricBadge>;
     }
-    // Open shows: clean white with hard shadow
-    return 'ticket-stub-open';
+    return <MetricBadge variant="success" size="sm">Open</MetricBadge>;
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-      className={`relative flex overflow-hidden ${getCardClasses()}`}
+    <BrutalistCard
+      variant="interactive"
+      padding="none"
+      border={getBorderState()}
+      dimmed={isLocked}
+      animate
+      animateDelay={index * 0.03}
+      className="relative flex overflow-hidden"
     >
-      {/* Hatched Pattern Overlay for Past Shows */}
-      {isLocked && (
-        <div className="absolute inset-0 z-10 pointer-events-none hatched-overlay" />
-      )}
-
-      {/* REGISTERED Stamp Effect for registered cards */}
+      {/* REGISTERED Stamp Effect */}
       {isRegistered && !isLocked && (
-        <div className="absolute top-3 right-3 z-20 transform rotate-12">
-          <div className="px-3 py-1.5 bg-green-600 text-white text-xs font-display font-black uppercase tracking-widest shadow-brutal-sm border-2 border-green-800">
-            REGISTERED
-          </div>
+        <div className="absolute top-3 right-3 z-20">
+          <BrutalistStamp variant="success">Registered</BrutalistStamp>
         </div>
       )}
 
       {/* Left: Date Section */}
       <div className={`flex-shrink-0 w-20 md:w-24 p-3 md:p-4 flex flex-col items-center justify-center ${
         isRegistered && !isLocked
-          ? 'bg-gradient-to-br from-green-500/20 to-green-500/10 dark:from-green-500/30 dark:to-green-500/15'
-          : 'bg-gradient-to-br from-amber-500/10 to-amber-500/5 dark:from-gold-500/20 dark:to-gold-500/10'
+          ? 'bg-green-500/10 dark:bg-green-500/20'
+          : 'bg-primary/10 dark:bg-primary/20'
       }`}>
-        <div className="text-[10px] font-display font-bold uppercase tracking-wider text-slate-600 dark:text-text-muted">
+        <span className="text-[10px] font-display font-bold uppercase tracking-wider text-text-muted">
           {formattedDate.split(' ')[0]}
-        </div>
-        <div className="text-2xl md:text-3xl font-display font-bold text-text-main">
+        </span>
+        <span className="text-2xl md:text-3xl font-display font-bold text-text-main">
           {formattedDate.split(' ')[2]}
-        </div>
-        <div className="text-xs font-display font-medium text-slate-700 dark:text-text-muted">
+        </span>
+        <span className="text-xs font-display font-medium text-text-muted">
           {formattedDate.split(' ')[1]}
-        </div>
+        </span>
       </div>
 
       {/* Dashed Divider */}
-      <div className={`ticket-stub-divider ${
-        isRegistered && !isLocked ? 'border-green-500/50 dark:border-green-400/50' : ''
-      }`} />
+      <BrutalistDivider
+        variant="dashed"
+        className={`w-0 border-l-2 my-0 mx-0 h-auto ${
+          isRegistered && !isLocked ? 'border-green-500/50' : 'border-border-default'
+        }`}
+      />
 
       {/* Right: Show Info */}
       <div className="flex-1 p-3 md:p-4 flex flex-col min-w-0">
         {/* Show Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            {/* CRITICAL: Dark slate text on white cards for high contrast */}
-            <h3 className="font-display font-black text-slate-900 dark:text-white truncate text-sm md:text-base uppercase tracking-tight">
+            <BrutalistHeader size="xs" className="truncate">
               {show.eventName || show.name}
-            </h3>
+            </BrutalistHeader>
             {show.location && (
-              <div className="flex items-center gap-1 mt-1 text-xs text-slate-600 dark:text-stone-400 font-bold truncate">
+              <div className="flex items-center gap-1 mt-1 text-xs text-text-muted font-bold truncate">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{show.location}</span>
               </div>
             )}
           </div>
-          <div className={`p-1.5 rounded-lg flex-shrink-0 ${
-            isLocked
-              ? 'bg-stone-200 dark:bg-surface-highlight'
-              : isRegistered
-              ? 'bg-green-500/20 dark:bg-green-500/20'
-              : 'bg-amber-500/20 dark:bg-gold-500/20'
-          }`}>
-            {isLocked ? (
-              <Lock className="w-4 h-4 text-text-muted" />
-            ) : (
-              <Music className={`w-4 h-4 ${
-                isRegistered ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-gold-500'
-              }`} />
-            )}
-          </div>
+          <BrutalistIconBox
+            icon={isLocked ? Lock : Music}
+            variant={isLocked ? 'muted' : isRegistered ? 'success' : 'primary'}
+            size="sm"
+          />
         </div>
 
         {/* Status Badge */}
         <div className="mb-2">
-          {isLocked ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-500 text-white text-[10px] font-display font-bold uppercase tracking-wider rounded-full">
-              <Lock className="w-3 h-3" />
-              {isPast ? 'Closed' : 'Locked'}
-            </span>
-          ) : show.scoresAvailable ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500 text-white text-[10px] font-display font-bold uppercase tracking-wider rounded-full">
-              Scores Available
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-[10px] font-display font-bold uppercase tracking-wider rounded-full">
-              Open
-            </span>
-          )}
+          {getStatusBadge()}
         </div>
 
         {/* Registered Corps List */}
@@ -129,14 +114,16 @@ const ShowCard = ({
           <div className="mb-2">
             <div className="flex flex-wrap gap-1">
               {myCorps.map((corps, idx) => (
-                <span
+                <MetricBadge
                   key={idx}
-                  className="px-1.5 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded text-xs font-medium border border-green-200 dark:border-green-500/30"
+                  variant="success"
+                  size="sm"
+                  className="bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400"
                 >
                   {corps.corpsName.length > 12
                     ? corps.corpsName.substring(0, 12) + '...'
                     : corps.corpsName}
-                </span>
+                </MetricBadge>
               ))}
             </div>
           </div>
@@ -145,25 +132,26 @@ const ShowCard = ({
         {/* Action Button */}
         <div className="mt-auto pt-2">
           {isPast ? (
-            <Link
-              to="/scores"
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-xs font-display font-bold uppercase tracking-wide bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              View Scores
+            <Link to="/scores">
+              <BrutalistButton variant="solid" size="sm" fullWidth className="bg-blue-500 border-blue-700">
+                <ExternalLink className="w-3.5 h-3.5" />
+                View Scores
+              </BrutalistButton>
             </Link>
           ) : (
-            <button
+            <BrutalistButton
+              variant="solid"
+              size="sm"
+              fullWidth
               onClick={() => onRegister(show)}
-              className="btn-pill w-full text-xs py-2 flex items-center justify-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               {myCorps.length > 0 ? 'Edit Registration' : 'Register Corps'}
-            </button>
+            </BrutalistButton>
           )}
         </div>
       </div>
-    </motion.div>
+    </BrutalistCard>
   );
 };
 
