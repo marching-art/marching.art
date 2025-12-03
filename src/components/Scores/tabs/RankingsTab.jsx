@@ -67,11 +67,11 @@ const RankingsTab = ({
     { id: 'monthly', label: 'Monthly', icon: Star }
   ];
 
-  // Class filters
+  // Class filters with accent colors for selected state
   const classes = [
-    { id: 'world', label: 'World Class' },
-    { id: 'open', label: 'Open Class' },
-    { id: 'a', label: 'A Class' }
+    { id: 'world', label: 'World Class', activeColor: 'bg-blue-500 dark:bg-blue-500' },
+    { id: 'open', label: 'Open Class', activeColor: 'bg-orange-500 dark:bg-orange-500' },
+    { id: 'a', label: 'A Class', activeColor: 'bg-purple-500 dark:bg-purple-500' }
   ];
 
   return (
@@ -97,20 +97,22 @@ const RankingsTab = ({
         </motion.div>
       )}
 
-      {/* Rankings Sub-tabs */}
-      <div className="border-b border-cream-200 dark:border-cream-500/20">
-        <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
-          {rankingsTabs.map((tab) => {
+      {/* Rankings Sub-tabs - Mechanical Segmented Control */}
+      <div className="flex justify-center -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
+          {rankingsTabs.map((tab, index) => {
             const Icon = tab.icon;
+            const isActive = rankingsTab === tab.id;
+            const isLast = index === rankingsTabs.length - 1;
             return (
               <button
                 key={tab.id}
                 onClick={() => setRankingsTab(tab.id)}
-                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
-                  rankingsTab === tab.id
-                    ? 'text-amber-600 dark:text-gold-500 border-b-2 border-amber-600 dark:border-gold-500'
-                    : 'text-slate-500 dark:text-cream-500/60 hover:text-slate-700 dark:hover:text-cream-300'
-                }`}
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 font-bold uppercase tracking-wide transition-all whitespace-nowrap text-xs md:text-sm ${
+                  isActive
+                    ? 'bg-charcoal-900 dark:bg-cream-100 text-gold-400 dark:text-charcoal-900'
+                    : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
+                } ${!isLast ? 'border-r-2 border-charcoal-900 dark:border-cream-100' : ''}`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -120,17 +122,17 @@ const RankingsTab = ({
         </div>
       </div>
 
-      {/* Class Filter */}
+      {/* Class Filter - Mechanical Toggle Switches */}
       <div className="flex justify-center">
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-3 justify-center">
           {classes.map((cls) => (
             <button
               key={cls.id}
               onClick={() => setActiveClass(cls.id)}
-              className={`px-3 md:px-4 py-2 rounded-lg transition-all text-sm ${
+              className={`px-4 md:px-5 py-2 md:py-2.5 border-2 border-charcoal-900 dark:border-cream-100 rounded-sm transition-all text-xs md:text-sm font-bold uppercase tracking-wide ${
                 activeClass === cls.id
-                  ? 'bg-amber-500 dark:bg-cream-100 text-white dark:text-charcoal-900 font-medium'
-                  : 'bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 hover:bg-stone-200 dark:hover:bg-charcoal-800'
+                  ? `${cls.activeColor} text-white`
+                  : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
               }`}
             >
               {cls.label}
