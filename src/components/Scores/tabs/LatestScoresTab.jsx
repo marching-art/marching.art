@@ -10,7 +10,8 @@ const LatestScoresTab = ({
   selectedDay,
   setSelectedDay,
   availableDays,
-  setSelectedShow
+  setSelectedShow,
+  userCorpsNames = []
 }) => {
   // Navigate to previous day (older)
   const goToPreviousDay = () => {
@@ -89,14 +90,14 @@ const LatestScoresTab = ({
         </div>
       )}
 
-      {/* Shows for Selected Day - Wrapped in Card Container */}
+      {/* Shows for Selected Day - Recap Sheet Container */}
       {hasShows ? (
-        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl overflow-hidden">
-          <div className="divide-y divide-cream-200 dark:divide-cream-500/10">
-            {dayShows.map((show, idx) => (
-              <ShowCard key={`day-${selectedDay}-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
-            ))}
-          </div>
+        <div className="space-y-4">
+          {dayShows.map((show, idx) => (
+            <div key={`day-${selectedDay}-${idx}`} className="border-2 border-charcoal-900 dark:border-charcoal-700 rounded-lg overflow-hidden shadow-sm">
+              <ShowCard show={show} onClick={() => setSelectedShow(show)} userCorpsNames={userCorpsNames} />
+            </div>
+          ))}
         </div>
       ) : availableDays.length > 0 ? (
         <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 md:p-12 text-center">

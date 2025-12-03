@@ -44,6 +44,14 @@ const Scores = () => {
   const [selectedShow, setSelectedShow] = useState(null);
   const [stats, setStats] = useState({ recentShows: 0, topScore: '-', corpsActive: 0 });
 
+  // Extract user's corps names for highlighting in the Latest Scores feed
+  const userCorpsNames = React.useMemo(() => {
+    if (!loggedInProfile?.corps) return [];
+    return Object.values(loggedInProfile.corps)
+      .filter(corps => corps?.corpsName)
+      .map(corps => corps.corpsName);
+  }, [loggedInProfile?.corps]);
+
   // Rankings/Leaderboard data
   const [leaderboardData, setLeaderboardData] = useState({
     overall: [],
@@ -408,6 +416,7 @@ const Scores = () => {
               setSelectedDay={setSelectedDay}
               availableDays={availableDays}
               setSelectedShow={setSelectedShow}
+              userCorpsNames={userCorpsNames}
             />
           )}
           {activeTab === 'rankings' && (
