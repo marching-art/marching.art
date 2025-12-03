@@ -52,14 +52,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-cream-300 mb-2"
+            className="block text-sm font-medium text-slate-700 dark:text-cream-300 mb-2"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {LeftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-cream-500">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-cream-500">
               <LeftIcon className={iconSizes[inputSize]} />
             </div>
           )}
@@ -68,14 +68,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={id}
             className={`
               w-full rounded-lg
-              bg-charcoal-800 border
-              text-cream-100 placeholder-cream-600
+              bg-white dark:bg-charcoal-800 border
+              text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
               transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-gold-500/50
+              focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
               disabled:opacity-50 disabled:cursor-not-allowed
               ${hasError
                 ? 'border-red-500 focus:border-red-500'
-                : 'border-cream-900/30 focus:border-gold-500'
+                : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-10' : ''}
@@ -85,14 +85,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {(RightIcon || rightElement) && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-cream-500">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-cream-500">
               {rightElement || (RightIcon && <RightIcon className={iconSizes[inputSize]} />)}
             </div>
           )}
         </div>
         {(helperText || error) && (
           <p
-            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-cream-500'}`}
+            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-slate-500 dark:text-cream-500'}`}
           >
             {error || helperText}
           </p>
@@ -126,7 +126,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-cream-300 mb-2"
+            className="block text-sm font-medium text-slate-700 dark:text-cream-300 mb-2"
           >
             {label}
           </label>
@@ -136,14 +136,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={id}
           className={`
             w-full px-4 py-3 rounded-lg min-h-[120px] resize-none
-            bg-charcoal-800 border
-            text-cream-100 placeholder-cream-600
+            bg-white dark:bg-charcoal-800 border
+            text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-gold-500/50
+            focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-cream-900/30 focus:border-gold-500'
+              : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${className}
           `}
@@ -151,7 +151,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         />
         {(helperText || error) && (
           <p
-            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-cream-500'}`}
+            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-slate-500 dark:text-cream-500'}`}
           >
             {error || helperText}
           </p>
@@ -207,7 +207,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-cream-300 mb-2"
+            className="block text-sm font-medium text-slate-700 dark:text-cream-300 mb-2"
           >
             {label}
           </label>
@@ -217,14 +217,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={id}
           className={`
             w-full rounded-lg appearance-none cursor-pointer
-            bg-charcoal-800 border
-            text-cream-100
+            bg-white dark:bg-charcoal-800 border
+            text-slate-900 dark:text-cream-100
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-gold-500/50
+            focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-cream-900/30 focus:border-gold-500'
+              : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${sizeStyles[selectSize]}
             ${className}
@@ -248,7 +248,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </select>
         {(helperText || error) && (
           <p
-            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-cream-500'}`}
+            className={`mt-1.5 text-sm ${hasError ? 'text-red-400' : 'text-slate-500 dark:text-cream-500'}`}
           >
             {error || helperText}
           </p>

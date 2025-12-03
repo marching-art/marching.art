@@ -16,12 +16,12 @@ export interface CardProps extends HTMLMotionProps<'div'> {
 }
 
 const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-charcoal-800 border border-cream-900/20',
+  default: 'bg-white dark:bg-charcoal-800 border border-stone-200 dark:border-cream-900/20 shadow-sm dark:shadow-none',
   glass: 'glass',
   'glass-dark': 'glass-dark',
-  premium: 'bg-gradient-to-br from-gold-900/20 to-cream-900/10 border border-gold-700/30 shadow-[0_0_30px_-10px_rgba(255,212,77,0.2)]',
-  interactive: 'bg-charcoal-900/60 border border-cream-500/10 hover:border-cream-500/20 hover:bg-charcoal-800/60 transition-all',
-  outlined: 'bg-transparent border border-cream-800',
+  premium: 'bg-gradient-to-br from-amber-500/10 dark:from-gold-900/20 to-stone-100 dark:to-cream-900/10 border border-amber-500/20 dark:border-gold-700/30 shadow-[0_0_30px_-10px_rgba(217,163,0,0.15)] dark:shadow-[0_0_30px_-10px_rgba(255,212,77,0.2)]',
+  interactive: 'bg-white dark:bg-charcoal-900/60 border border-stone-200 dark:border-cream-500/10 hover:border-stone-300 dark:hover:border-cream-500/20 hover:bg-stone-50 dark:hover:bg-charcoal-800/60 transition-all shadow-sm dark:shadow-none',
+  outlined: 'bg-transparent border border-stone-300 dark:border-cream-800',
 };
 
 const paddingStyles: Record<string, string> = {
@@ -107,9 +107,9 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
             </div>
           )}
           <div>
-            <h3 className="text-lg font-display font-bold text-cream-100">{title}</h3>
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-cream-100">{title}</h3>
             {subtitle && (
-              <p className="text-sm text-cream-500/70">{subtitle}</p>
+              <p className="text-sm text-slate-500 dark:text-cream-500/70">{subtitle}</p>
             )}
           </div>
         </div>
@@ -154,7 +154,7 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
     return (
       <div
         ref={ref}
-        className={`mt-4 pt-4 border-t border-cream-900/20 ${className}`}
+        className={`mt-4 pt-4 border-t border-stone-200 dark:border-cream-900/20 ${className}`}
         {...props}
       >
         {children}

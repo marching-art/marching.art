@@ -61,7 +61,7 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
     legendary: {
       border: 'border-amber-500 dark:border-gold-500',
       glow: 'shadow-[0_0_20px_rgba(217,163,0,0.15)] dark:shadow-[0_0_20px_rgba(255,212,77,0.25)]',
-      badge: 'bg-amber-500 dark:bg-gold-500 text-white dark:text-[#0D0D0D]',
+      badge: 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A]',
     },
     rare: {
       border: 'border-blue-500/60',

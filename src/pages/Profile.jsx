@@ -157,7 +157,7 @@ const Profile = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900'
+                  ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A]'
                   : 'bg-stone-200 dark:bg-charcoal-800 text-slate-700 dark:text-cream-300 hover:bg-stone-300 dark:hover:bg-charcoal-700'
               }`}
             >

@@ -140,50 +140,50 @@ const StaffRoster = ({ userCorps = {} }) => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
+          <div className="bg-white dark:bg-charcoal-800/50 border border-stone-200 dark:border-charcoal-700 rounded-lg p-4 shadow-sm dark:shadow-none">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gold-500/20 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-gold-400" />
+              <div className="w-10 h-10 bg-amber-500/20 dark:bg-gold-500/20 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-amber-600 dark:text-gold-400" />
               </div>
               <div>
-                <p className="text-cream-300 text-sm">Total Staff</p>
-                <p className="text-2xl font-bold text-cream-100">{stats.total}</p>
+                <p className="text-slate-500 dark:text-cream-300 text-sm">Total Staff</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.total}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
+          <div className="bg-white dark:bg-charcoal-800/50 border border-stone-200 dark:border-charcoal-700 rounded-lg p-4 shadow-sm dark:shadow-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <LinkIcon className="w-5 h-5 text-green-400" />
+                <LinkIcon className="w-5 h-5 text-green-500 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-cream-300 text-sm">Assigned</p>
-                <p className="text-2xl font-bold text-cream-100">{stats.assigned}</p>
+                <p className="text-slate-500 dark:text-cream-300 text-sm">Assigned</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.assigned}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
+          <div className="bg-white dark:bg-charcoal-800/50 border border-stone-200 dark:border-charcoal-700 rounded-lg p-4 shadow-sm dark:shadow-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-blue-400" />
+                <Trophy className="w-5 h-5 text-blue-500 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-cream-300 text-sm">Unassigned</p>
-                <p className="text-2xl font-bold text-cream-100">{stats.unassigned}</p>
+                <p className="text-slate-500 dark:text-cream-300 text-sm">Unassigned</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.unassigned}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
+          <div className="bg-white dark:bg-charcoal-800/50 border border-stone-200 dark:border-charcoal-700 rounded-lg p-4 shadow-sm dark:shadow-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-purple-400" />
+                <DollarSign className="w-5 h-5 text-purple-500 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-cream-300 text-sm">Total Value</p>
-                <p className="text-2xl font-bold text-cream-100">{stats.totalValue}</p>
+                <p className="text-slate-500 dark:text-cream-300 text-sm">Total Value</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.totalValue}</p>
               </div>
             </div>
           </div>
@@ -192,13 +192,13 @@ const StaffRoster = ({ userCorps = {} }) => {
         {/* Search and Status Filter */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-cream-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name..."
-              className="w-full pl-10 pr-4 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-500"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-charcoal-800 border border-stone-300 dark:border-charcoal-700 rounded-lg text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-400 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500"
             />
           </div>
 
@@ -206,13 +206,13 @@ const StaffRoster = ({ userCorps = {} }) => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500 appearance-none cursor-pointer"
+              className="w-full px-4 py-2 bg-white dark:bg-charcoal-800 border border-stone-300 dark:border-charcoal-700 rounded-lg text-slate-900 dark:text-cream-100 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500 appearance-none cursor-pointer"
             >
               <option value="all">All Staff</option>
               <option value="assigned">Assigned Only</option>
               <option value="unassigned">Unassigned Only</option>
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-cream-400 pointer-events-none" />
           </div>
         </div>
 
@@ -406,7 +406,7 @@ const StaffRoster = ({ userCorps = {} }) => {
                         <select
                           value={selectedCorpsClass}
                           onChange={(e) => setSelectedCorpsClass(e.target.value)}
-                          className="w-full px-4 py-2 mb-3 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                          className="w-full px-4 py-2 mb-3 bg-white dark:bg-charcoal-800 border border-stone-300 dark:border-charcoal-700 rounded-lg text-slate-900 dark:text-cream-100 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500"
                         >
                           <option value="">Select Corps...</option>
                           {availableCorpsClasses.map(corpsClass => {
@@ -479,7 +479,7 @@ const StaffRoster = ({ userCorps = {} }) => {
                                 min="1"
                                 value={auctionMinBid}
                                 onChange={(e) => setAuctionMinBid(Math.max(1, parseInt(e.target.value) || 1))}
-                                className="flex-1 px-3 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                                className="flex-1 px-3 py-2 bg-white dark:bg-charcoal-800 border border-stone-300 dark:border-charcoal-700 rounded-lg text-slate-900 dark:text-cream-100 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500"
                               />
                             </div>
                             <p className="text-xs text-cream-400 mt-1">
@@ -492,7 +492,7 @@ const StaffRoster = ({ userCorps = {} }) => {
                             <select
                               value={auctionDuration}
                               onChange={(e) => setAuctionDuration(parseInt(e.target.value))}
-                              className="w-full px-3 py-2 bg-charcoal-800 border border-charcoal-700 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                              className="w-full px-3 py-2 bg-white dark:bg-charcoal-800 border border-stone-300 dark:border-charcoal-700 rounded-lg text-slate-900 dark:text-cream-100 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500"
                             >
                               <option value={6}>6 hours</option>
                               <option value={12}>12 hours</option>

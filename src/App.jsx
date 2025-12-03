@@ -102,7 +102,7 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-gradient-main">
+    <div className="min-h-screen font-sans transition-colors duration-200 bg-[#FAF6EA] text-[#1A1A1A] dark:bg-[#0D0D0D] dark:text-[#FAF6EA]">
       {/* Desktop Navigation */}
       <div className="hidden lg:block">
         <Navigation />
