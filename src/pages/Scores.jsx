@@ -309,57 +309,60 @@ const Scores = () => {
         </p>
       </motion.div>
 
-      {/* Quick Stats - Horizontal scroll on mobile, grid on desktop */}
-      <div className="flex overflow-x-auto space-x-4 pb-4 md:grid md:grid-cols-3 md:gap-4 md:space-x-0 md:pb-0 md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Stadium Scoreboard Metrics */}
+      <div className="flex overflow-x-auto space-x-4 pb-4 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:pb-0 md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.recentShows}</p>
-              <p className="text-xs text-slate-500 dark:text-cream-500/60">Recent Shows</p>
-            </div>
-          </div>
+          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+            Recent Shows
+          </span>
+          <Calendar className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+            {stats.recentShows}
+          </p>
+          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+            Last 30 Days
+          </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.topScore}</p>
-              <p className="text-xs text-slate-500 dark:text-cream-500/60">Top Score</p>
-            </div>
-          </div>
+          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+            Top Score
+          </span>
+          <TrendingUp className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+            {stats.topScore}
+          </p>
+          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+            Season High
+          </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-              <Award className="w-6 h-6 text-green-600 dark:text-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.corpsActive}</p>
-              <p className="text-xs text-slate-500 dark:text-cream-500/60">Corps Active</p>
-            </div>
-          </div>
+          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+            Corps Active
+          </span>
+          <Award className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+            {stats.corpsActive}
+          </p>
+          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+            This Season
+          </p>
         </motion.div>
       </div>
 
