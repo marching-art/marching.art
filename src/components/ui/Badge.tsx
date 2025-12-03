@@ -14,13 +14,14 @@ export interface BadgeProps {
   className?: string;
 }
 
+// Solid color variants with white text for maximum visibility
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-cream-900/30 text-cream-300 border-cream-800',
-  gold: 'bg-gold-900/30 text-gold-300 border-gold-700',
-  success: 'bg-green-900/30 text-green-300 border-green-700',
-  danger: 'bg-red-900/30 text-red-300 border-red-700',
-  warning: 'bg-yellow-900/30 text-yellow-300 border-yellow-700',
-  info: 'bg-blue-900/30 text-blue-300 border-blue-700',
+  default: 'bg-stone-500 text-white border-stone-600',
+  gold: 'bg-amber-500 text-white border-amber-600',
+  success: 'bg-green-500 text-white border-green-600',
+  danger: 'bg-red-500 text-white border-red-600',
+  warning: 'bg-yellow-500 text-white border-yellow-600',
+  info: 'bg-blue-500 text-white border-blue-600',
 };
 
 const sizeStyles: Record<BadgeSize, string> = {
