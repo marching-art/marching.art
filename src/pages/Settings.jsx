@@ -168,16 +168,16 @@ const Settings = () => {
         checked={checked}
         onChange={onChange}
       />
-      <div className="w-11 h-6 bg-[#3A3A3A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
+      <div className="w-11 h-6 bg-stone-300 dark:bg-[#3A3A3A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 dark:peer-checked:bg-gold-500"></div>
     </label>
   );
 
   // Setting row component
   const SettingRow = ({ title, description, checked, onChange }) => (
-    <div className="flex items-center justify-between p-4 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
+    <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0D0D0D] rounded-lg border border-stone-200 dark:border-[#2A2A2A]">
       <div>
-        <p className="font-display font-medium text-[#FAF6EA]">{title}</p>
-        <p className="text-sm text-[#FAF6EA]/50">{description}</p>
+        <p className="font-display font-medium text-slate-900 dark:text-[#FAF6EA]">{title}</p>
+        <p className="text-sm text-slate-500 dark:text-[#FAF6EA]/50">{description}</p>
       </div>
       <ToggleSwitch checked={checked} onChange={onChange} />
     </div>
@@ -191,8 +191,8 @@ const Settings = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="sports-header text-3xl md:text-4xl text-[#FAF6EA] mb-2">Settings</h1>
-        <p className="text-[#FAF6EA]/50 font-body">Manage your account and preferences</p>
+        <h1 className="sports-header text-3xl md:text-4xl text-slate-900 dark:text-[#FAF6EA] mb-2">Settings</h1>
+        <p className="text-slate-500 dark:text-[#FAF6EA]/50 font-body">Manage your account and preferences</p>
       </motion.div>
 
       {/* Tab Navigation */}
@@ -202,15 +202,15 @@ const Settings = () => {
         transition={{ delay: 0.1 }}
         className="flex justify-center"
       >
-        <div className="bg-[#1A1A1A] rounded-full p-1.5 border border-[#2A2A2A] flex gap-1 overflow-x-auto">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-full p-1.5 border border-stone-200 dark:border-[#2A2A2A] shadow-sm dark:shadow-none flex gap-1 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-display font-medium text-sm transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-gold-500 text-[#0D0D0D]'
-                  : 'text-[#FAF6EA]/60 hover:text-[#FAF6EA]'
+                  ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-[#0D0D0D]'
+                  : 'text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-700 dark:hover:text-[#FAF6EA]'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -227,7 +227,7 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wide mb-6">
               Profile Information
             </h3>
 
@@ -236,7 +236,7 @@ const Settings = () => {
               <div>
                 <label className="form-label">Display Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/30" />
                   <input
                     type="text"
                     className="form-input pl-10"
@@ -246,7 +246,7 @@ const Settings = () => {
                     maxLength={50}
                   />
                 </div>
-                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
+                <p className="text-xs text-slate-500 dark:text-[#FAF6EA]/40 mt-1.5">
                   This is how your name will appear to other players
                 </p>
               </div>
@@ -255,7 +255,7 @@ const Settings = () => {
               <div>
                 <label className="form-label">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/30" />
                   <input
                     type="email"
                     className="form-input pl-10 opacity-60 cursor-not-allowed"
@@ -263,7 +263,7 @@ const Settings = () => {
                     disabled
                   />
                 </div>
-                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
+                <p className="text-xs text-slate-500 dark:text-[#FAF6EA]/40 mt-1.5">
                   Email cannot be changed from settings
                 </p>
               </div>
@@ -279,7 +279,7 @@ const Settings = () => {
                   maxLength={500}
                   rows={4}
                 />
-                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
+                <p className="text-xs text-slate-500 dark:text-[#FAF6EA]/40 mt-1.5">
                   {profileData.bio.length}/500 characters
                 </p>
               </div>
@@ -288,7 +288,7 @@ const Settings = () => {
               <div>
                 <label className="form-label">Location</label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/30" />
                   <input
                     type="text"
                     className="form-input pl-10"
@@ -322,7 +322,7 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wide mb-6">
               Notification Preferences
             </h3>
 
@@ -399,7 +399,7 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wide mb-6">
               Privacy Settings
             </h3>
 
@@ -458,26 +458,26 @@ const Settings = () => {
         >
           {/* Account Info */}
           <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wide mb-6">
               Account Information
             </h3>
 
             <div className="space-y-3">
-              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
-                <span className="text-[#FAF6EA]/50 font-display text-sm">Account Type</span>
-                <span className="text-[#FAF6EA] font-display font-medium">
+              <div className="flex justify-between p-3 bg-stone-50 dark:bg-[#0D0D0D] rounded-lg border border-stone-200 dark:border-[#2A2A2A]">
+                <span className="text-slate-500 dark:text-[#FAF6EA]/50 font-display text-sm">Account Type</span>
+                <span className="text-slate-900 dark:text-[#FAF6EA] font-display font-medium">
                   {user?.isAnonymous ? 'Guest' : 'Registered'}
                 </span>
               </div>
 
-              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
-                <span className="text-[#FAF6EA]/50 font-display text-sm">User ID</span>
-                <span className="text-[#FAF6EA] font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
+              <div className="flex justify-between p-3 bg-stone-50 dark:bg-[#0D0D0D] rounded-lg border border-stone-200 dark:border-[#2A2A2A]">
+                <span className="text-slate-500 dark:text-[#FAF6EA]/50 font-display text-sm">User ID</span>
+                <span className="text-slate-900 dark:text-[#FAF6EA] font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
               </div>
 
-              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
-                <span className="text-[#FAF6EA]/50 font-display text-sm">Joined</span>
-                <span className="text-[#FAF6EA] font-display">
+              <div className="flex justify-between p-3 bg-stone-50 dark:bg-[#0D0D0D] rounded-lg border border-stone-200 dark:border-[#2A2A2A]">
+                <span className="text-slate-500 dark:text-[#FAF6EA]/50 font-display text-sm">Joined</span>
+                <span className="text-slate-900 dark:text-[#FAF6EA] font-display">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
                     : 'Unknown'}
@@ -488,15 +488,15 @@ const Settings = () => {
 
           {/* Sign Out */}
           <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-4">
+            <h3 className="text-lg font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wide mb-4">
               Session
             </h3>
 
             <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-[#FAF6EA]/50 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/50 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[#FAF6EA]/80 font-body">Sign out of your account</p>
-                <p className="text-sm text-[#FAF6EA]/40">
+                <p className="text-slate-700 dark:text-[#FAF6EA]/80 font-body">Sign out of your account</p>
+                <p className="text-sm text-slate-500 dark:text-[#FAF6EA]/40">
                   You'll need to sign in again to access your account
                 </p>
               </div>
@@ -504,7 +504,7 @@ const Settings = () => {
 
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[#3A3A3A] text-[#FAF6EA]/70 hover:border-[#5A5A5A] hover:text-[#FAF6EA] transition-colors font-display font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-stone-300 dark:border-[#3A3A3A] text-slate-600 dark:text-[#FAF6EA]/70 hover:border-stone-400 dark:hover:border-[#5A5A5A] hover:text-slate-800 dark:hover:text-[#FAF6EA] transition-colors font-display font-medium"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -512,16 +512,16 @@ const Settings = () => {
           </div>
 
           {/* Danger Zone */}
-          <div className="form-card border-red-500/30 bg-red-500/5">
-            <h3 className="text-lg font-display font-bold text-red-400 uppercase tracking-wide mb-4">
+          <div className="form-card border-red-500/30 bg-red-50 dark:bg-red-500/5">
+            <h3 className="text-lg font-display font-bold text-red-600 dark:text-red-400 uppercase tracking-wide mb-4">
               Danger Zone
             </h3>
 
             <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[#FAF6EA]/80 font-body">Delete Account</p>
-                <p className="text-sm text-[#FAF6EA]/40">
+                <p className="text-slate-700 dark:text-[#FAF6EA]/80 font-body">Delete Account</p>
+                <p className="text-sm text-slate-500 dark:text-[#FAF6EA]/40">
                   Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
               </div>
@@ -529,7 +529,7 @@ const Settings = () => {
 
             <button
               onClick={() => toast.error('Please contact support to delete your account')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-500/30 text-red-400/80 hover:border-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors font-display font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-500/30 text-red-600 dark:text-red-400/80 hover:border-red-500/50 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors font-display font-medium"
             >
               <Trash2 className="w-4 h-4" />
               Delete Account

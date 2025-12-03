@@ -230,18 +230,27 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply bg-[#1A1A1A] border-[#2A2A2A];
   }
 
-  /* Stadium Banner - Hero gradient with optional overlay */
+  /* Stadium Banner - Hero gradient (Always dark for contrast) */
   .stadium-banner {
     @apply relative overflow-hidden rounded-2xl;
-    background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 50%, #1A1A1A 100%);
+    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
   }
 
   .stadium-banner::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.15) 0%, transparent 50%);
+    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.15) 0%, transparent 50%);
     pointer-events: none;
+  }
+
+  /* Dark Mode: Deeper charcoal gradient */
+  [data-theme="dark"] .stadium-banner {
+    background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 50%, #1A1A1A 100%);
+  }
+
+  [data-theme="dark"] .stadium-banner::before {
+    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.15) 0%, transparent 50%);
   }
 
   /* Silhouette overlay for stadium banner */
@@ -272,17 +281,31 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Icon Card - Action tiles with large background icons */
+  /* Light Mode: White card with gold bottom border */
   .icon-card {
     @apply relative overflow-hidden rounded-xl p-4 md:p-5;
-    @apply bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D];
-    @apply border-2 border-[#2A2A2A];
-    @apply transition-all duration-300 cursor-pointer;
+    @apply bg-white border border-stone-200;
+    @apply transition-all duration-300 cursor-pointer shadow-sm;
+    border-bottom-width: 4px;
+    border-bottom-color: #D9A300;
   }
 
   .icon-card:hover {
+    transform: translateY(-2px);
+    @apply shadow-md;
+  }
+
+  /* Dark Mode: Charcoal card with gold bottom border */
+  [data-theme="dark"] .icon-card {
+    @apply bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D];
+    @apply border-2 border-[#2A2A2A] shadow-none;
+    border-bottom-width: 4px;
+    border-bottom-color: #FFD44D;
+  }
+
+  [data-theme="dark"] .icon-card:hover {
     border-color: rgba(255, 212, 77, 0.6);
     box-shadow: 0 0 20px rgba(255, 212, 77, 0.2);
-    transform: translateY(-2px);
   }
 
   .icon-card-bg {
@@ -305,23 +328,28 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply border border-[#2A2A2A];
   }
 
-  /* Ticket Stub - Schedule card style */
+  /* Ticket Stub - Schedule card style (Light Mode: Paper ticket look) */
   .ticket-stub {
-    @apply bg-white rounded-xl overflow-hidden border border-gray-200 shadow-md;
+    @apply bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm;
     @apply transition-all duration-300;
   }
 
   .ticket-stub:hover {
-    @apply shadow-lg;
+    @apply shadow-md;
     transform: translateY(-2px);
   }
 
+  /* Dark Mode: Charcoal ticket */
   [data-theme="dark"] .ticket-stub {
-    @apply bg-[#1A1A1A] border-[#2A2A2A];
+    @apply bg-[#1A1A1A] border-[#2A2A2A] shadow-none;
+  }
+
+  [data-theme="dark"] .ticket-stub:hover {
+    @apply shadow-lg;
   }
 
   .ticket-stub-divider {
-    @apply border-l-2 border-dashed border-gray-300;
+    @apply border-l-2 border-dashed border-stone-300;
   }
 
   [data-theme="dark"] .ticket-stub-divider {
@@ -341,22 +369,22 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 0 4px 12px rgba(255, 212, 77, 0.4);
   }
 
-  /* Form Card - Constrained form layout */
+  /* Form Card - Constrained form layout (Paper container for Settings) */
   .form-card {
-    @apply max-w-2xl mx-auto bg-white shadow-sm rounded-xl p-6 md:p-8 border border-gray-200;
+    @apply bg-white shadow-md rounded-xl p-6 md:p-8 border border-stone-200;
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A] border-[#2A2A2A];
+    @apply bg-[#1A1A1A] border-[#2A2A2A] shadow-none;
   }
 
   /* Form Input - Tactical Luxury style */
   .form-input {
     @apply w-full px-4 py-3 rounded-lg;
-    @apply bg-gray-50 border border-gray-300;
-    @apply focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400;
+    @apply bg-stone-50 border border-stone-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500;
     @apply transition-all duration-200;
-    color: #1A1A1A;
+    color: #1e293b;
   }
 
   [data-theme="dark"] .form-input {
@@ -364,13 +392,21 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     color: #FAF6EA;
   }
 
+  [data-theme="dark"] .form-input:focus {
+    @apply ring-gold-500 border-gold-500;
+  }
+
   .form-input::placeholder {
-    @apply text-gray-400;
+    @apply text-slate-400;
+  }
+
+  [data-theme="dark"] .form-input::placeholder {
+    @apply text-[#FAF6EA]/30;
   }
 
   .form-label {
     @apply block text-xs font-display font-bold uppercase tracking-wider mb-2;
-    color: #545454;
+    color: #64748b;
   }
 
   [data-theme="dark"] .form-label {
@@ -416,14 +452,24 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Compact Card - For staff marketplace */
+  /* Light Mode: White card with subtle shadow */
   .compact-card {
-    @apply relative bg-[#1A1A1A] rounded-xl overflow-hidden border-2 border-[#2A2A2A];
+    @apply relative bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm;
     @apply transition-all duration-300;
   }
 
   .compact-card:hover {
-    border-color: rgba(255, 212, 77, 0.5);
+    @apply border-amber-500/50 shadow-md;
     transform: translateY(-3px);
+  }
+
+  /* Dark Mode: Charcoal card */
+  [data-theme="dark"] .compact-card {
+    @apply bg-[#1A1A1A] border-2 border-[#2A2A2A] shadow-none;
+  }
+
+  [data-theme="dark"] .compact-card:hover {
+    border-color: rgba(255, 212, 77, 0.5);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 
@@ -727,15 +773,26 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 /* Premium Card - Brutalist Style */
 @layer components {
+  /* Light Mode: White cards on cream bg (Paper on Desk look) */
   .card-brutalist {
-    @apply bg-[#1A1A1A] border-2 border-[#2A2A2A] rounded-xl;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    @apply bg-white border border-stone-200 rounded-xl shadow-sm;
     transition: all 0.2s ease;
   }
 
   .card-brutalist:hover {
     transform: translateY(-2px);
+    @apply shadow-md border-amber-500/50;
+  }
+
+  /* Dark Mode: Charcoal cards */
+  [data-theme="dark"] .card-brutalist {
+    @apply bg-[#1A1A1A] border-2 border-[#2A2A2A];
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  [data-theme="dark"] .card-brutalist:hover {
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+    border-color: rgba(255, 212, 77, 0.5);
   }
 
   /* Hero Card Variant - For Command Center */

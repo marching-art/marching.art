@@ -209,8 +209,8 @@ const Schedule = () => {
 
       {/* Quick Tip */}
       <div className="flex-shrink-0 mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <div className="flex items-center gap-2 text-xs text-cream-400">
-          <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
+        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
           <span>
             Each corps can attend up to 4 shows per week. Tap a show to register your corps.
           </span>

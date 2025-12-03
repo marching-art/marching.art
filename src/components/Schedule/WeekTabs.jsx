@@ -23,8 +23,8 @@ const WeekTabs = ({
       animate={{ opacity: 1, y: 0 }}
       className="flex-shrink-0 mb-4"
     >
-      {/* Dark Toolbar Container */}
-      <div className="bg-[#1A1A1A] rounded-2xl p-2 border border-[#2A2A2A]">
+      {/* Light/Dark Toolbar Container */}
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-2 border border-stone-200 dark:border-[#2A2A2A] shadow-sm dark:shadow-none">
         <div
           ref={weekTabsRef}
           className="flex gap-2 overflow-x-auto scrollbar-hide"
@@ -42,27 +42,27 @@ const WeekTabs = ({
                 onClick={() => onSelectWeek(weekNum)}
                 className={`flex-shrink-0 px-4 py-2.5 rounded-xl transition-all min-w-[90px] ${
                   isSelected
-                    ? 'bg-gold-500 text-[#0D0D0D] shadow-lg'
+                    ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-[#0D0D0D] shadow-lg'
                     : status === 'past'
-                    ? 'bg-[#0D0D0D]/50 text-[#FAF6EA]/40 hover:bg-[#2A2A2A] hover:text-[#FAF6EA]/60'
+                    ? 'bg-stone-100 dark:bg-[#0D0D0D]/50 text-slate-400 dark:text-[#FAF6EA]/40 hover:bg-stone-200 dark:hover:bg-[#2A2A2A] hover:text-slate-500 dark:hover:text-[#FAF6EA]/60'
                     : status === 'current'
-                    ? 'bg-gold-500/20 text-gold-400 hover:bg-gold-500/30'
-                    : 'bg-[#0D0D0D]/50 text-[#FAF6EA]/60 hover:bg-[#2A2A2A] hover:text-[#FAF6EA]'
+                    ? 'bg-amber-500/20 dark:bg-gold-500/20 text-amber-600 dark:text-gold-400 hover:bg-amber-500/30 dark:hover:bg-gold-500/30'
+                    : 'bg-stone-100 dark:bg-[#0D0D0D]/50 text-slate-600 dark:text-[#FAF6EA]/60 hover:bg-stone-200 dark:hover:bg-[#2A2A2A] hover:text-slate-700 dark:hover:text-[#FAF6EA]'
                 }`}
               >
                 <div className="text-center">
                   <div className={`text-[10px] font-display font-bold uppercase tracking-wider mb-0.5 ${
-                    isSelected ? 'text-[#0D0D0D]/70' : ''
+                    isSelected ? 'text-white/70 dark:text-[#0D0D0D]/70' : ''
                   }`}>
                     {status === 'current' ? 'Now' : status === 'past' ? 'Done' : `Week`}
                   </div>
                   <div className={`text-xl font-display font-bold ${
-                    isSelected ? 'text-[#0D0D0D]' : ''
+                    isSelected ? 'text-white dark:text-[#0D0D0D]' : ''
                   }`}>
                     {weekNum}
                   </div>
                   <div className={`text-[10px] mt-0.5 font-display ${
-                    isSelected ? 'text-[#0D0D0D]/70' : 'opacity-60'
+                    isSelected ? 'text-white/70 dark:text-[#0D0D0D]/70' : 'opacity-60'
                   }`}>
                     {weekShows.length} show{weekShows.length !== 1 ? 's' : ''}
                   </div>
@@ -70,8 +70,8 @@ const WeekTabs = ({
                     <div className="mt-1">
                       <span className={`inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full ${
                         isSelected
-                          ? 'bg-[#0D0D0D]/20 text-[#0D0D0D]'
-                          : 'bg-green-500/30 text-green-400'
+                          ? 'bg-white/20 dark:bg-[#0D0D0D]/20 text-white dark:text-[#0D0D0D]'
+                          : 'bg-green-500/30 text-green-600 dark:text-green-400'
                       }`}>
                         {registrations}
                       </span>
