@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import {
   Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, ChevronRight, Play, Check, X, Crown, Flame, Coins,
-  Sparkles, Gift
+  Sparkles, Gift, Edit
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
@@ -688,6 +688,13 @@ const Dashboard = () => {
 
                 {/* Quick Links */}
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCaptionSelection(true)}
+                    className="p-3 rounded-lg bg-amber-100 dark:bg-gold-500/20 border-2 border-amber-400 dark:border-gold-500/50 hover:border-amber-500 dark:hover:border-gold-500 text-amber-600 dark:text-gold-500 hover:text-amber-700 dark:hover:text-gold-400 transition-all"
+                    title="Edit Captions"
+                  >
+                    <Edit size={20} />
+                  </button>
                   <Link
                     to="/schedule"
                     className="p-3 rounded-lg bg-stone-100 dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] hover:border-amber-500/50 dark:hover:border-gold-500/50 text-slate-500 dark:text-[#FAF6EA]/60 hover:text-amber-600 dark:hover:text-gold-500 transition-all"
