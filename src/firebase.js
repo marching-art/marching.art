@@ -8,10 +8,18 @@
 //
 // Migration: import { auth, db, authApi } from '@/api';
 
-import { initializeApp } from 'firebase/app';
+// Import Firebase instances from the consolidated API layer
+// This prevents duplicate initialization of Firebase services
 import {
-  getAuth,
-  connectAuthEmulator,
+  app,
+  auth,
+  db,
+  functions,
+  storage,
+  DATA_NAMESPACE,
+  authApi
+} from './api/client';
+import {
   signInWithEmailAndPassword,
   signInAnonymously,
   signInWithCustomToken,
@@ -19,42 +27,16 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import {
-  initializeFirestore,
-  connectFirestoreEmulator,
-  persistentLocalCache,
-  persistentMultipleTabManager
-} from 'firebase/firestore';
-import {
-  getFunctions,
-  connectFunctionsEmulator
-} from 'firebase/functions';
-import {
-  getStorage,
-  connectStorageEmulator
-} from 'firebase/storage';
 import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 
 // Import centralized configuration
-import { FIREBASE_CONFIG, DATA_CONFIG, AUTH_CONFIG, DEV_CONFIG } from './config';
+import { AUTH_CONFIG } from './config';
 
-// Use centralized Firebase configuration
-const firebaseConfig = FIREBASE_CONFIG;
+// Re-export Firebase instances from the API layer
+export { app, auth, db, functions, storage };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize services
-export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true,
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
-export const functions = getFunctions(app);
-export const storage = getStorage(app);
-
-// Use centralized data namespace
-export const dataNamespace = DATA_CONFIG.namespace;
+// Use centralized data namespace (backwards compatible alias)
+export const dataNamespace = DATA_NAMESPACE;
 
 // Initialize analytics only if supported (handles ad blockers gracefully)
 let analyticsInstance = null;
@@ -79,16 +61,6 @@ const safeLogEvent = (eventName, eventParams) => {
 
 // Export analytics for backward compatibility (may be null)
 export const analytics = analyticsInstance;
-
-
-// Connect to emulators if in development (using centralized config)
-if (DEV_CONFIG.useEmulators) {
-  const { emulators } = DEV_CONFIG;
-  connectAuthEmulator(auth, `http://localhost:${emulators.auth}`, { disableWarnings: true });
-  connectFirestoreEmulator(db, 'localhost', emulators.firestore);
-  connectFunctionsEmulator(functions, 'localhost', emulators.functions);
-  connectStorageEmulator(storage, 'localhost', emulators.storage);
-}
 
 // Auth helpers
 export const authHelpers = {
