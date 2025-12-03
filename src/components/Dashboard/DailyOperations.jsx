@@ -401,53 +401,39 @@ const DailyOperations = ({
       </div>
 
       {/* Daily Activities - Tactical Checklist */}
-      <div className="glass rounded-xl p-4 border border-amber-500/20 dark:border-gold-500/20">
-        <h4 className="text-sm font-display font-bold text-amber-700 dark:text-gold-400 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b border-amber-500/20 dark:border-gold-500/20">
+      <div className="glass p-4 border-2 border-amber-500/30 dark:border-gold-500/30" style={{ borderRadius: '4px' }}>
+        <h4 className="text-sm font-display font-bold text-amber-700 dark:text-gold-400 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b-2 border-amber-500/20 dark:border-gold-500/20">
           <Zap className="w-4 h-4 text-amber-600 dark:text-gold-500" />
           Daily Activities
         </h4>
 
         <div className="space-y-2">
-          <ActivityRow
-            icon={Coffee}
-            title="Login Bonus"
-            reward="+10 XP, +5 CC"
-            available={opsStatus?.loginBonus?.available}
-            loading={processing === 'login'}
-            onClick={handleClaimLogin}
-          />
-          <ActivityRow
-            icon={Users}
-            title="Staff Check-in"
-            reward="+15 XP"
-            available={opsStatus?.staffCheckin?.available}
-            loading={processing === 'staff'}
-            onClick={handleStaffCheckin}
-          />
-          <ActivityRow
-            icon={Heart}
-            title="Member Wellness"
-            reward="+15 XP, +3% morale"
-            available={opsStatus?.memberWellness?.available}
-            loading={processing === 'wellness'}
-            onClick={handleWellnessCheck}
-          />
-          <ActivityRow
-            icon={Wrench}
-            title="Equipment Check"
-            reward="+10 XP, +5 CC"
-            available={opsStatus?.equipmentInspection?.available}
-            loading={processing === 'equipment'}
-            onClick={handleEquipmentInspection}
-          />
-          <ActivityRow
-            icon={Eye}
-            title="Show Review"
-            reward="+20 XP"
-            available={opsStatus?.showReview?.available}
-            loading={processing === 'review'}
-            onClick={handleShowReview}
-          />
+          {/* Determine the first available task to mark as "next" */}
+          {(() => {
+            const activities = [
+              { id: 'login', icon: Coffee, title: 'Login Bonus', reward: '+10 XP, +5 CC', available: opsStatus?.loginBonus?.available, loading: processing === 'login', onClick: handleClaimLogin },
+              { id: 'staff', icon: Users, title: 'Staff Check-in', reward: '+15 XP', available: opsStatus?.staffCheckin?.available, loading: processing === 'staff', onClick: handleStaffCheckin },
+              { id: 'wellness', icon: Heart, title: 'Member Wellness', reward: '+15 XP, +3% morale', available: opsStatus?.memberWellness?.available, loading: processing === 'wellness', onClick: handleWellnessCheck },
+              { id: 'equipment', icon: Wrench, title: 'Equipment Check', reward: '+10 XP, +5 CC', available: opsStatus?.equipmentInspection?.available, loading: processing === 'equipment', onClick: handleEquipmentInspection },
+              { id: 'review', icon: Eye, title: 'Show Review', reward: '+20 XP', available: opsStatus?.showReview?.available, loading: processing === 'review', onClick: handleShowReview },
+            ];
+
+            // Find the first available task
+            const firstAvailableIndex = activities.findIndex(a => a.available);
+
+            return activities.map((activity, index) => (
+              <ActivityRow
+                key={activity.id}
+                icon={activity.icon}
+                title={activity.title}
+                reward={activity.reward}
+                available={activity.available}
+                loading={activity.loading}
+                onClick={activity.onClick}
+                isNextTask={activity.available && index === firstAvailableIndex}
+              />
+            ));
+          })()}
         </div>
       </div>
 
@@ -839,37 +825,69 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
 };
 
 // Activity Row Component - Commander's tactical checklist
-// Available (active): High-contrast yellow accent background as call-to-action
+// isNextTask: Highlighted with pale yellow background as the next action to take
+// Available (not next): Standard clickable row
 // Completed: 50% opacity with strikethrough text
-const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick }) => {
+const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick, isNextTask = false }) => {
+  // Determine styling based on state
+  const getRowStyles = () => {
+    if (!available) {
+      // Completed: dimmed to 50% opacity
+      return 'bg-charcoal-900/20 border-charcoal-800/30 cursor-default opacity-50';
+    }
+    if (isNextTask) {
+      // Next task to complete: prominent highlight with pale yellow background
+      return 'bg-amber-100 dark:bg-amber-500/30 border-amber-400 dark:border-gold-500 hover:bg-amber-200 dark:hover:bg-amber-500/40 cursor-pointer shadow-md shadow-amber-500/20 dark:shadow-gold-500/20';
+    }
+    // Available but not next: standard clickable
+    return 'bg-charcoal-800/30 dark:bg-charcoal-900/50 border-charcoal-700/50 dark:border-charcoal-700/30 hover:bg-charcoal-700/40 dark:hover:bg-charcoal-800/50 hover:border-charcoal-600 cursor-pointer';
+  };
+
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all border-2 ${
-        available
-          ? 'bg-amber-500/20 dark:bg-gold-500/20 border-amber-500/50 dark:border-gold-500/50 hover:bg-amber-500/30 dark:hover:bg-gold-500/30 hover:border-amber-500 dark:hover:border-gold-500 cursor-pointer shadow-sm'
-          : 'bg-charcoal-900/30 border-transparent cursor-default opacity-50'
-      }`}
+      className={`w-full flex items-center gap-3 p-3 transition-all border-2 ${getRowStyles()}`}
+      style={{ borderRadius: '4px' }}
     >
-      <div className={`p-2 rounded-lg ${available ? 'bg-amber-500/30 dark:bg-gold-500/30' : 'bg-green-500/20'}`}>
+      <div className={`p-2 ${
+        !available
+          ? 'bg-green-500/20'
+          : isNextTask
+            ? 'bg-amber-500/40 dark:bg-gold-500/40'
+            : 'bg-charcoal-700/50 dark:bg-charcoal-800/50'
+      }`} style={{ borderRadius: '4px' }}>
         {loading ? (
           <div className="w-4 h-4 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : available ? (
-          <Icon className="w-4 h-4 text-amber-600 dark:text-gold-400" />
+          <Icon className={`w-4 h-4 ${isNextTask ? 'text-amber-700 dark:text-gold-300' : 'text-cream-400 dark:text-cream-500'}`} />
         ) : (
           <Check className="w-4 h-4 text-green-500" />
         )}
       </div>
       <div className="flex-1 text-left">
-        <div className={`text-sm font-medium ${available ? 'text-amber-900 dark:text-gold-300' : 'text-cream-500 line-through'}`}>
+        <div className={`text-sm font-semibold ${
+          !available
+            ? 'text-cream-600 dark:text-cream-600 line-through'
+            : isNextTask
+              ? 'text-amber-900 dark:text-gold-200'
+              : 'text-cream-200 dark:text-cream-300'
+        }`}>
           {title}
         </div>
-        <div className={`text-xs ${available ? 'text-amber-700 dark:text-gold-500/80' : 'text-cream-500/40 line-through'}`}>
+        <div className={`text-xs ${
+          !available
+            ? 'text-cream-500/40 line-through'
+            : isNextTask
+              ? 'text-amber-700 dark:text-gold-400/80'
+              : 'text-cream-500/60 dark:text-cream-500/60'
+        }`}>
           {reward}
         </div>
       </div>
-      {available && <ChevronRight className="w-4 h-4 text-amber-600 dark:text-gold-400" />}
+      {available && (
+        <ChevronRight className={`w-5 h-5 ${isNextTask ? 'text-amber-600 dark:text-gold-400' : 'text-cream-500/40'}`} />
+      )}
     </button>
   );
 };
