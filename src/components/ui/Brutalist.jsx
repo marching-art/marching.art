@@ -20,17 +20,17 @@ export const BrutalistCard = ({
   as: Component = 'div',
   ...props
 }) => {
-  const baseClasses = 'rounded-sm border-2 transition-all duration-200';
+  // BRUTALIST BASE: bg-surface border-2 border-black shadow-hard text-main rounded-sm
+  const baseClasses = 'bg-surface border-2 border-black shadow-hard text-main rounded-sm transition-all duration-200';
 
   const variantClasses = {
-    default: 'bg-white dark:bg-surface-secondary border-stone-900 dark:border-border-default shadow-brutal dark:shadow-brutal-gold',
-    elevated: 'bg-white dark:bg-surface-secondary border-stone-900 dark:border-border-default shadow-brutal-lg dark:shadow-brutal-gold-lg',
-    flat: 'bg-white dark:bg-surface-secondary border-stone-200 dark:border-border-default',
-    accent: 'bg-primary/10 dark:bg-primary/20 border-primary shadow-brutal dark:shadow-brutal-gold',
+    default: 'dark:bg-charcoal-900 dark:border-gold-500 dark:shadow-brutal-gold',
+    elevated: 'shadow-brutal-lg dark:bg-charcoal-900 dark:border-gold-500 dark:shadow-brutal-gold-lg',
+    flat: 'shadow-none border-charcoal-300 dark:bg-charcoal-900 dark:border-charcoal-700',
+    accent: 'bg-primary/10 dark:bg-primary/20 border-primary dark:shadow-brutal-gold',
     interactive: `
-      bg-white dark:bg-surface-secondary border-stone-900 dark:border-border-default
-      shadow-brutal dark:shadow-brutal-gold cursor-pointer
-      hover:shadow-brutal-sm dark:hover:shadow-brutal-gold-sm
+      dark:bg-charcoal-900 dark:border-gold-500 dark:shadow-brutal-gold cursor-pointer
+      hover:shadow-hard-sm dark:hover:shadow-brutal-gold-sm
       hover:translate-x-[2px] hover:translate-y-[2px]
       active:shadow-none active:translate-x-[4px] active:translate-y-[4px]
     `,

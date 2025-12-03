@@ -323,16 +323,16 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
         >
-          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
             Recent Shows
           </span>
-          <Calendar className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+          <Calendar className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
             {stats.recentShows}
           </p>
-          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
             Last 30 Days
           </p>
         </motion.div>
@@ -341,16 +341,16 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
         >
-          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
             Top Score
           </span>
-          <TrendingUp className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+          <TrendingUp className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
             {stats.topScore}
           </p>
-          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
             Season High
           </p>
         </motion.div>
@@ -359,16 +359,16 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-charcoal-900 dark:border-cream-100 shadow-brutal dark:shadow-brutal-gold rounded-lg p-4 relative"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
         >
-          <span className="text-xs font-bold uppercase tracking-widest text-charcoal-700 dark:text-cream-300">
+          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
             Corps Active
           </span>
-          <Award className="w-5 h-5 text-charcoal-900 dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-charcoal-900 dark:text-cream-100 text-center my-4">
+          <Award className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
+          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
             {stats.corpsActive}
           </p>
-          <p className="text-xs font-mono text-slate-500 dark:text-cream-500/60 text-center">
+          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
             This Season
           </p>
         </motion.div>

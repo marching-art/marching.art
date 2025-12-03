@@ -194,8 +194,7 @@ const Navigation: React.FC = () => {
 
   return (
     <nav
-      className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`}
-      style={{ background: 'var(--bg-secondary)', borderRight: '2px solid var(--border-color)' }}
+      className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40 border-r-2 border-black dark:border-gold-500 bg-white dark:bg-charcoal-900`}
     >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
