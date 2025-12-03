@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Star, Crown, Medal, Users, ChevronDown } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
+import EmptyState from '../../EmptyState';
 
 // Helper functions
 const getRankIcon = (rank) => {
@@ -252,17 +253,16 @@ const RankingsTab = ({
             </div>
           </>
         ) : (
-          <div className="text-center py-12 md:py-20 px-4">
-            <Trophy className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/30 mx-auto mb-4" />
-            <p className="text-slate-700 dark:text-cream-300 text-base md:text-lg font-semibold">No scores recorded yet</p>
-            <p className="text-slate-500 dark:text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
-              {rankingsTab === 'weekly'
-                ? 'Weekly rankings will appear after shows are scored this week'
+          <EmptyState
+            title="NO SCORES RECORDED"
+            subtitle={
+              rankingsTab === 'weekly'
+                ? 'Awaiting weekly competition data...'
                 : rankingsTab === 'monthly'
-                ? 'Monthly rankings will appear after shows are scored this month'
-                : 'Rankings will appear after the first shows are scored this season'}
-            </p>
-          </div>
+                ? 'Awaiting monthly competition data...'
+                : 'Waiting for DCI season to commence...'
+            }
+          />
         )}
       </motion.div>
 

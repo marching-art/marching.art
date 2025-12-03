@@ -1,8 +1,9 @@
 // StatsTab - Lifetime statistics leaderboard
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Award, Crown, Medal, Users } from 'lucide-react';
+import { Trophy, Crown, Medal, Users } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
+import EmptyState from '../../EmptyState';
 
 // Lifetime views configuration
 const lifetimeViews = [
@@ -199,13 +200,10 @@ const StatsTab = ({
             </div>
           </>
         ) : (
-          <div className="text-center py-12 md:py-20 px-4">
-            <Award className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
-            <p className="text-cream-300 text-base md:text-lg font-semibold">No lifetime stats yet</p>
-            <p className="text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
-              Complete seasons to appear on the lifetime leaderboard
-            </p>
-          </div>
+          <EmptyState
+            title="NO LIFETIME STATS"
+            subtitle="Complete seasons to appear on the lifetime leaderboard..."
+          />
         )}
       </motion.div>
     </div>

@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Trophy, Crown, Medal, Star, Target, CheckCircle } from 'lucide-react';
+import EmptyState from '../../EmptyState';
 
 const AchievementsTab = ({ profile, milestones }) => {
   return (
@@ -44,11 +45,10 @@ const AchievementsTab = ({ profile, milestones }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Trophy className="w-12 h-12 text-charcoal-600 mx-auto mb-3" />
-            <p className="text-cream-400">No achievements earned yet</p>
-            <p className="text-sm text-cream-500 mt-1">Keep playing to unlock achievements!</p>
-          </div>
+          <EmptyState
+            title="NO ACHIEVEMENTS"
+            subtitle="Keep playing to unlock achievements..."
+          />
         )}
       </div>
 

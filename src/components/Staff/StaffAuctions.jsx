@@ -11,6 +11,7 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import EmptyState from '../EmptyState';
 
 const StaffAuctions = () => {
   const { user } = useAuth();
@@ -225,15 +226,10 @@ const StaffAuctions = () => {
           <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : auctions.length === 0 ? (
-        <div className="glass rounded-2xl p-12 text-center">
-          <Gavel className="w-12 h-12 text-cream-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-cream-100 mb-2">
-            No Active Auctions
-          </h3>
-          <p className="text-cream-400">
-            Check back later or list your own staff for auction
-          </p>
-        </div>
+        <EmptyState
+          title="NO ACTIVE AUCTIONS"
+          subtitle="Check back later or list your own staff for auction..."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {auctions.map((auction) => (

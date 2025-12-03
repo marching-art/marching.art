@@ -1,8 +1,9 @@
 // LatestScoresTab - Day-by-day show scores navigation
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
 import ShowCard from '../ShowCard';
+import EmptyState from '../../EmptyState';
 
 const LatestScoresTab = ({
   loading,
@@ -100,17 +101,15 @@ const LatestScoresTab = ({
           ))}
         </div>
       ) : availableDays.length > 0 ? (
-        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 md:p-12 text-center">
-          <Calendar className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
-          <p className="text-lg md:text-xl text-slate-700 dark:text-cream-300 mb-2">No shows on Day {selectedDay}</p>
-          <p className="text-sm md:text-base text-slate-500 dark:text-cream-500/60">Use the arrows to navigate to other days</p>
-        </div>
+        <EmptyState
+          title="NO SHOWS FOUND"
+          subtitle={`No shows on Day ${selectedDay}. Use arrows to navigate.`}
+        />
       ) : (
-        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 md:p-12 text-center">
-          <Clock className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
-          <p className="text-lg md:text-xl text-slate-700 dark:text-cream-300 mb-2">No shows yet</p>
-          <p className="text-sm md:text-base text-slate-500 dark:text-cream-500/60">Check back during competition times or view the schedule</p>
-        </div>
+        <EmptyState
+          title="NO DATA FOUND"
+          subtitle="Waiting for DCI season to commence..."
+        />
       )}
     </div>
   );

@@ -1,7 +1,8 @@
 // TradesTab - Staff trading functionality within a league
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeftRight, Lock, Plus } from 'lucide-react';
+import { ArrowLeftRight, Plus } from 'lucide-react';
+import EmptyState from '../../EmptyState';
 
 const TradesTab = ({ league, trades, userProfile }) => {
   return (
@@ -17,12 +18,10 @@ const TradesTab = ({ league, trades, userProfile }) => {
       </h2>
 
       {!league.settings?.enableStaffTrading ? (
-        <div className="p-8 text-center">
-          <Lock className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-cream-500/60">
-            Staff trading is disabled in this league
-          </p>
-        </div>
+        <EmptyState
+          title="TRADING DISABLED"
+          subtitle="Staff trading is disabled in this league..."
+        />
       ) : (
         <div className="space-y-4">
           <button className="btn-primary">
@@ -31,10 +30,10 @@ const TradesTab = ({ league, trades, userProfile }) => {
           </button>
 
           {trades.length === 0 ? (
-            <div className="p-8 text-center">
-              <ArrowLeftRight className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-              <p className="text-cream-500/60">No trades yet</p>
-            </div>
+            <EmptyState
+              title="NO TRADES"
+              subtitle="No trades have been proposed yet..."
+            />
           ) : (
             <div className="space-y-3">
               {trades.map(trade => (
