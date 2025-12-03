@@ -44,12 +44,12 @@ export const SelectedWeekHeader = ({
         Week {selectedWeek}
       </h2>
       {weekStatus === 'current' && (
-        <span className="px-3 py-1 bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] rounded-full text-[10px] font-display font-bold uppercase tracking-wider">
+        <span className="px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-display font-bold uppercase tracking-wider shadow-sm">
           Active
         </span>
       )}
       {weekStatus === 'past' && (
-        <span className="px-3 py-1 bg-stone-200 dark:bg-[#2A2A2A] text-slate-500 dark:text-[#FAF6EA]/50 rounded-full text-[10px] font-display font-bold uppercase tracking-wider">
+        <span className="px-3 py-1 bg-stone-500 text-white rounded-full text-[10px] font-display font-bold uppercase tracking-wider shadow-sm">
           Complete
         </span>
       )}
