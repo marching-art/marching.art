@@ -67,15 +67,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={`
-              w-full rounded-lg
-              bg-white dark:bg-charcoal-800 border
+              w-full rounded
+              bg-white dark:bg-charcoal-800 border-2
               text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
               transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
+              focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)]
               disabled:opacity-50 disabled:cursor-not-allowed
               ${hasError
                 ? 'border-red-500 focus:border-red-500'
-                : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
+                : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-10' : ''}
@@ -135,15 +135,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={id}
           className={`
-            w-full px-4 py-3 rounded-lg min-h-[120px] resize-none
-            bg-white dark:bg-charcoal-800 border
+            w-full px-4 py-3 rounded min-h-[120px] resize-none
+            bg-white dark:bg-charcoal-800 border-2
             text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
+            focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)]
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
+              : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${className}
           `}
@@ -216,15 +216,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={`
-            w-full rounded-lg appearance-none cursor-pointer
-            bg-white dark:bg-charcoal-800 border
+            w-full rounded appearance-none cursor-pointer
+            bg-white dark:bg-charcoal-800 border-2
             text-slate-900 dark:text-cream-100
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-gold-500/50
+            focus:outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)]
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-stone-300 dark:border-cream-900/30 focus:border-amber-500 dark:focus:border-gold-500'
+              : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${sizeStyles[selectSize]}
             ${className}
