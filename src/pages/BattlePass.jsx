@@ -277,35 +277,38 @@ const BattlePass = () => {
 
         {/* Horizontal Scrolling Track */}
         <div className="relative">
-          {/* SVG Connection Line */}
-          <svg
-            className="absolute top-12 left-0 w-full h-4 pointer-events-none z-0"
-            preserveAspectRatio="none"
-          >
-            <line
-              x1="0"
-              y1="8"
-              x2="100%"
-              y2="8"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeDasharray="8,4"
-              className="text-stone-300 dark:text-[#3A3A3A]"
-            />
-            <line
-              x1="0"
-              y1="8"
-              x2={`${Math.min(currentLevel * 2, 100)}%`}
-              y2="8"
-              stroke="currentColor"
-              strokeWidth="4"
-              className="text-amber-500 dark:text-gold-500"
-            />
-          </svg>
+          {/* The Track - Thick like a football field yard line */}
+          <div className="absolute top-[52px] left-0 right-0 h-8 z-0">
+            {/* Base track (locked portion) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-stone-300 via-stone-200 to-stone-300 dark:from-charcoal-700 dark:via-charcoal-600 dark:to-charcoal-700 rounded-full border-2 border-stone-400/50 dark:border-charcoal-500">
+              {/* Yard line markings */}
+              <div className="absolute inset-0 flex items-center justify-around px-8 overflow-hidden">
+                {[...Array(25)].map((_, i) => (
+                  <div key={i} className="w-1 h-4 bg-stone-400/40 dark:bg-charcoal-500/60 rounded-full" />
+                ))}
+              </div>
+            </div>
+            {/* Progress fill (unlocked portion) */}
+            <motion.div
+              className="absolute top-0 left-0 h-full bg-gradient-to-b from-green-500 via-green-400 to-green-500 dark:from-green-600 dark:via-green-500 dark:to-green-600 rounded-full border-2 border-green-600/50 dark:border-green-400/50 overflow-hidden"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(currentLevel * 2, 100)}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+            >
+              {/* Field turf texture lines */}
+              <div className="absolute inset-0 flex items-center justify-around px-4">
+                {[...Array(25)].map((_, i) => (
+                  <div key={i} className="w-1 h-5 bg-green-300/40 dark:bg-green-400/30 rounded-full" />
+                ))}
+              </div>
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-transparent" />
+            </motion.div>
+          </div>
 
           {/* Rewards Container */}
           <div className="flex flex-row overflow-x-auto space-x-6 pb-4 pt-2 battle-pass-scroll">
-            {season?.rewards?.slice(0, 50).map((levelReward) => {
+            {season?.rewards?.slice(0, 50).map((levelReward, index) => {
               const level = levelReward.level;
               const isUnlocked = currentLevel >= level;
               const freeReward = levelReward.free;
@@ -317,6 +320,16 @@ const BattlePass = () => {
               const canClaimFree = isUnlocked && !isFreeClaimed;
               const canClaimPremium = isUnlocked && isPremium && !isPremiumClaimed;
 
+              // Determine if this is the next reward (first unclaimed reward at or below current level)
+              const isNextFreeReward = canClaimFree && !season?.rewards?.slice(0, index).some(r =>
+                currentLevel >= r.level && !battlePassData?.claimedRewards?.free?.includes(r.level)
+              );
+              const isNextPremiumReward = canClaimPremium && !season?.rewards?.slice(0, index).some(r =>
+                currentLevel >= r.level && isPremium && !battlePassData?.claimedRewards?.premium?.includes(r.level)
+              );
+              // Or the next level to unlock
+              const isNextLevelToUnlock = !isUnlocked && level === currentLevel + 1;
+
               return (
                 <motion.div
                   key={level}
@@ -325,18 +338,29 @@ const BattlePass = () => {
                   transition={{ delay: level * 0.02 }}
                   className="flex-shrink-0 w-48 md:w-56"
                 >
-                  {/* Level Node */}
-                  <div className="flex flex-col items-center mb-4 relative z-10">
+                  {/* Level Node with Connector */}
+                  <div className="flex flex-col items-center relative z-10">
+                    {/* The Level Circle */}
                     <div className={`
-                      w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-4
+                      w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm border-4 shadow-lg
                       ${isUnlocked
-                        ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] border-amber-400 dark:border-gold-400 shadow-lg'
-                        : 'bg-stone-200 dark:bg-charcoal-700 text-slate-400 dark:text-cream-500/60 border-stone-300 dark:border-charcoal-600'}
+                        ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] border-amber-300 dark:border-gold-300'
+                        : 'bg-stone-300 dark:bg-charcoal-600 text-slate-500 dark:text-cream-500/60 border-stone-400 dark:border-charcoal-500'}
+                      ${isNextLevelToUnlock ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-cream-50 dark:ring-offset-charcoal-800 animate-pulse' : ''}
                     `}>
                       {level}
                     </div>
+
+                    {/* Connector stem to track */}
+                    <div className={`
+                      w-2 h-6 rounded-b-full -mt-1
+                      ${isUnlocked
+                        ? 'bg-gradient-to-b from-amber-500 to-green-500 dark:from-gold-500 dark:to-green-500'
+                        : 'bg-gradient-to-b from-stone-300 to-stone-400 dark:from-charcoal-600 dark:to-charcoal-500'}
+                    `} />
+
                     {level % 10 === 0 && (
-                      <span className="text-[10px] text-amber-600 dark:text-gold-500 font-semibold flex items-center gap-1 mt-1">
+                      <span className="text-[10px] text-amber-600 dark:text-gold-500 font-semibold flex items-center gap-1 mt-2">
                         <Star className="w-3 h-3" />
                         Milestone
                       </span>
@@ -344,7 +368,7 @@ const BattlePass = () => {
                   </div>
 
                   {/* Reward Cards Stack */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 mt-6">
                     {/* Free Reward */}
                     <RewardCard
                       reward={freeReward}
@@ -357,6 +381,7 @@ const BattlePass = () => {
                       getRewardIcon={getRewardIcon}
                       getRarityColor={getRarityColor}
                       getRarityBg={getRarityBg}
+                      isNextReward={isNextFreeReward}
                     />
 
                     {/* Premium Reward */}
@@ -372,6 +397,7 @@ const BattlePass = () => {
                       getRewardIcon={getRewardIcon}
                       getRarityColor={getRarityColor}
                       getRarityBg={getRarityBg}
+                      isNextReward={isNextPremiumReward}
                     />
                   </div>
                 </motion.div>
@@ -416,26 +442,42 @@ const RewardCard = ({
   isPremiumUser,
   getRewardIcon,
   getRarityColor,
-  getRarityBg
+  getRarityBg,
+  isNextReward
 }) => {
-  const isPremium = tier === 'premium';
-  const isLocked = isPremium && !isPremiumUser;
+  const isPremiumTier = tier === 'premium';
+  const isPremiumLocked = isPremiumTier && !isPremiumUser;
+  const isLevelLocked = !isUnlocked;
+  const isLocked = isLevelLocked || isPremiumLocked;
+
+  // Unlocked & Claimed: colorful, full opacity
+  // Locked: greyed out with padlock overlay
+  // Next Reward: pulsing yellow glow
 
   return (
     <div className={`
-      relative p-3 rounded-lg border-2 transition-all hover:border-amber-500 dark:hover:border-gold-500
-      ${isPremium
-        ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-400 dark:border-gold-500/40'
-        : 'bg-white dark:bg-charcoal-900/50 border-stone-200 dark:border-cream-500/20'}
-      ${canClaim ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20 border-amber-500 dark:border-gold-500' : ''}
-      ${!isUnlocked ? 'bg-stone-100 dark:bg-white/5 border-stone-300 dark:border-white/10' : ''}
+      relative p-3 rounded-lg border-2 transition-all
+      ${isLocked
+        ? 'bg-stone-200/80 dark:bg-charcoal-800/60 border-stone-300 dark:border-charcoal-600 opacity-75 grayscale-[30%]'
+        : isPremiumTier
+          ? 'bg-gradient-to-br from-amber-500/20 dark:from-gold-500/20 via-purple-500/10 to-amber-500/20 dark:to-gold-500/20 border-amber-400 dark:border-gold-500/60'
+          : isClaimed
+            ? 'bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-green-500/10 dark:from-green-500/20 dark:via-emerald-500/10 dark:to-green-500/20 border-green-400 dark:border-green-500/60'
+            : 'bg-white dark:bg-charcoal-900/70 border-stone-200 dark:border-cream-500/30'}
+      ${isNextReward ? 'animate-pulse-glow ring-2 ring-yellow-400 ring-offset-2 ring-offset-cream-50 dark:ring-offset-charcoal-800 border-yellow-400 dark:border-yellow-400 shadow-lg shadow-yellow-400/40' : ''}
+      ${canClaim && !isNextReward ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20 border-amber-500 dark:border-gold-500 hover:border-amber-400 dark:hover:border-gold-400' : ''}
+      ${!isLocked && !canClaim ? 'hover:border-amber-500/50 dark:hover:border-gold-500/50' : ''}
     `}>
-      {/* Locked Overlay */}
+      {/* Locked Overlay with Padlock */}
       {isLocked && (
-        <div className="absolute inset-0 bg-stone-100/90 dark:bg-charcoal-900/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-stone-300/60 dark:bg-charcoal-900/70 backdrop-blur-[2px] rounded-lg flex items-center justify-center z-10">
           <div className="text-center">
-            <Lock className="w-5 h-5 text-slate-400 dark:text-cream-500/40 mx-auto mb-1" />
-            <p className="text-[10px] text-slate-500 dark:text-cream-500/60 font-semibold">Premium</p>
+            <div className="w-10 h-10 rounded-full bg-stone-400/80 dark:bg-charcoal-700 flex items-center justify-center mx-auto mb-1 shadow-inner">
+              <Lock className="w-5 h-5 text-stone-600 dark:text-cream-500/50" />
+            </div>
+            <p className="text-[10px] text-stone-600 dark:text-cream-500/60 font-semibold uppercase tracking-wide">
+              {isPremiumLocked ? 'Premium' : 'Locked'}
+            </p>
           </div>
         </div>
       )}
@@ -443,47 +485,60 @@ const RewardCard = ({
       {/* Claimed Badge */}
       {isClaimed && (
         <div className="absolute top-2 right-2 z-20">
-          <div className="bg-green-500 rounded-full p-1">
-            <Check className="w-3 h-3 text-white" />
+          <div className="bg-green-500 rounded-full p-1.5 shadow-md">
+            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-2">
+      {/* Next Reward Badge */}
+      {isNextReward && (
+        <div className="absolute -top-2 -left-2 z-20">
+          <div className="bg-yellow-400 text-yellow-900 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide shadow-md flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            Next
+          </div>
+        </div>
+      )}
+
+      <div className={`flex items-center gap-2 mb-2 ${isLocked ? 'opacity-50' : ''}`}>
         <div className={`
           w-8 h-8 rounded-lg flex items-center justify-center
-          ${getRarityBg(reward?.rarity)} ${getRarityColor(reward?.rarity)}
+          ${isLocked ? 'bg-stone-300 dark:bg-charcoal-700 text-stone-500 dark:text-charcoal-500' : `${getRarityBg(reward?.rarity)} ${getRarityColor(reward?.rarity)}`}
         `}>
           {getRewardIcon(reward?.type)}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] text-slate-400 dark:text-cream-500/60 capitalize truncate">{tier}</p>
-          <p className={`text-xs font-semibold capitalize truncate ${getRarityColor(reward?.rarity)}`}>
+          <p className={`text-xs font-semibold capitalize truncate ${isLocked ? 'text-stone-500 dark:text-charcoal-500' : getRarityColor(reward?.rarity)}`}>
             {reward?.rarity || 'Common'}
           </p>
         </div>
       </div>
 
-      <div className="mb-2">
+      <div className={`mb-2 ${isLocked ? 'opacity-50' : ''}`}>
         {reward?.type === 'corpscoin' ? (
-          <p className="text-slate-900 dark:text-white font-semibold text-sm">
-            {reward.amount} <span className="text-amber-600 dark:text-gold-500">CC</span>
+          <p className={`font-semibold text-sm ${isLocked ? 'text-stone-500 dark:text-charcoal-500' : 'text-slate-900 dark:text-white'}`}>
+            {reward.amount} <span className={isLocked ? 'text-stone-400 dark:text-charcoal-600' : 'text-amber-600 dark:text-gold-500'}>CC</span>
           </p>
         ) : (
-          <p className="text-slate-900 dark:text-white font-semibold text-xs line-clamp-2">
+          <p className={`font-semibold text-xs line-clamp-2 ${isLocked ? 'text-stone-500 dark:text-charcoal-500' : 'text-slate-900 dark:text-white'}`}>
             {reward?.description || reward?.type}
           </p>
         )}
       </div>
 
-      {canClaim && !isLocked && (
+      {canClaim && !isPremiumLocked && (
         <button
           onClick={onClaim}
           disabled={processing}
-          className="w-full bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-charcoal-900 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 hover:bg-slate-800 dark:hover:bg-gold-400 transition-colors"
+          className={`w-full py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors
+            ${isNextReward
+              ? 'bg-yellow-400 text-yellow-900 hover:bg-yellow-300'
+              : 'bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-charcoal-900 hover:bg-slate-800 dark:hover:bg-gold-400'}`}
         >
           {processing ? (
-            <div className="w-3 h-3 border-2 border-amber-500 dark:border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
               <Gift className="w-3 h-3" />
@@ -491,13 +546,6 @@ const RewardCard = ({
             </>
           )}
         </button>
-      )}
-
-      {!isUnlocked && (
-        <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 dark:text-cream-500/40">
-          <Lock className="w-2.5 h-2.5" />
-          Locked
-        </div>
       )}
     </div>
   );
