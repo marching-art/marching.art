@@ -96,7 +96,7 @@ Successfully implemented the foundational gamification and economy systems for m
 #### `getStaffMarketplace()` - Callable Function
 - **Purpose**: Browse available staff for purchase
 - **Filtering**: Optional filter by caption
-- **Limit**: Returns 50 staff per query (for performance)
+- **Limit**: No limit - returns all available staff (efficient Firestore indexing)
 - **Availability**: Only shows `available: true` staff
 
 ---
@@ -264,7 +264,7 @@ registerCorps
 
 ### Optimizations Implemented:
 1. **Transaction Safety**: All CorpsCoin and XP operations use Firestore transactions
-2. **Efficient Queries**: Staff marketplace limited to 50 results
+2. **Efficient Queries**: Staff marketplace and auctions use Firestore composite indexes
 3. **Minimal Reads**: Registration lock check reuses existing season document
 4. **Batch Operations**: CorpsCoin awarding integrated into existing scoring batch
 

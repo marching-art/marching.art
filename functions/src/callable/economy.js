@@ -661,7 +661,7 @@ const getActiveAuctions = onCall({ cors: true }, async (request) => {
       query = query.where("staffCaption", "==", caption);
     }
 
-    const snapshot = await query.orderBy("endsAt", "asc").limit(50).get();
+    const snapshot = await query.orderBy("endsAt", "asc").get();
     const auctions = [];
 
     snapshot.forEach(doc => {
