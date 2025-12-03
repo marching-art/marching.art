@@ -230,28 +230,53 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply bg-[#1A1A1A] border-[#2A2A2A];
   }
 
-  /* Stadium Banner - Hero gradient (Always dark for contrast) */
+  /* Stadium Banner - Hero section */
+  /* Light Mode: White card with gold bottom border (Premium Paper Look) */
   .stadium-banner {
     @apply relative overflow-hidden rounded-2xl;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+    @apply bg-white border border-stone-200 shadow-lg;
+    border-bottom-width: 4px;
+    border-bottom-color: #D9A300;
   }
 
   .stadium-banner::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.15) 0%, transparent 50%);
+    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.08) 0%, transparent 50%);
     pointer-events: none;
   }
 
-  /* Dark Mode: Deeper charcoal gradient */
+  /* Light mode text colors for stadium-banner content */
+  .stadium-banner .text-white { color: #1e293b; }
+  .stadium-banner .text-white\/40, .stadium-banner .text-white\/50, .stadium-banner .text-white\/60 { color: #64748b; }
+  .stadium-banner .text-\[\#FAF6EA\] { color: #1e293b; }
+  .stadium-banner .text-\[\#FAF6EA\]\/40, .stadium-banner .text-\[\#FAF6EA\]\/50, .stadium-banner .text-\[\#FAF6EA\]\/60 { color: #64748b; }
+  .stadium-banner .border-\[\#2A2A2A\] { border-color: #e5e7eb; }
+  .stadium-banner .bg-\[\#1A1A1A\] { background-color: #f8fafc; }
+
+  /* Dark Mode: Deep charcoal gradient (Stadium Night Look) */
   [data-theme="dark"] .stadium-banner {
+    @apply bg-transparent border-none shadow-none;
     background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 50%, #1A1A1A 100%);
+    border-bottom-width: 0;
   }
 
   [data-theme="dark"] .stadium-banner::before {
     background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.15) 0%, transparent 50%);
   }
+
+  /* Reset text colors for dark mode */
+  [data-theme="dark"] .stadium-banner .text-white { color: white; }
+  [data-theme="dark"] .stadium-banner .text-white\/40 { color: rgba(255,255,255,0.4); }
+  [data-theme="dark"] .stadium-banner .text-white\/50 { color: rgba(255,255,255,0.5); }
+  [data-theme="dark"] .stadium-banner .text-white\/60 { color: rgba(255,255,255,0.6); }
+  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\] { color: #FAF6EA; }
+  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/40 { color: rgba(250,246,234,0.4); }
+  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/50 { color: rgba(250,246,234,0.5); }
+  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/60 { color: rgba(250,246,234,0.6); }
+  [data-theme="dark"] .stadium-banner .border-\[\#2A2A2A\] { border-color: #2A2A2A; }
+  [data-theme="dark"] .stadium-banner .bg-\[\#1A1A1A\] { background-color: #1A1A1A; }
 
   /* Silhouette overlay for stadium banner */
   .stadium-overlay {
@@ -266,13 +291,20 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Score Bug - Circular badge for multipliers/scores */
+  /* Light Mode: White badge with gold border */
   .score-bug {
     @apply flex flex-col items-center justify-center rounded-full p-4 md:p-6;
-    @apply bg-gradient-to-br from-[#0D0D0D] to-[#1A1A1A] border-4;
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 0 0 30px rgba(255, 212, 77, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.1);
+    @apply bg-white border-4 shadow-lg;
+    border-color: rgba(217, 163, 0, 0.5);
     min-width: 120px;
     min-height: 120px;
+  }
+
+  /* Dark Mode: Charcoal badge with gold glow */
+  [data-theme="dark"] .score-bug {
+    @apply bg-gradient-to-br from-[#0D0D0D] to-[#1A1A1A] shadow-none;
+    border-color: rgba(255, 212, 77, 0.5);
+    box-shadow: 0 0 30px rgba(255, 212, 77, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.1);
   }
 
   .score-bug-lg {
@@ -357,15 +389,26 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Pill Button - High contrast CTA */
+  /* Light Mode: Charcoal button with Gold text (Premium Paper Look) */
   .btn-pill {
-    @apply px-5 py-2.5 rounded-full font-display font-bold text-sm uppercase tracking-wide;
-    @apply bg-gold-500 text-[#0D0D0D];
+    @apply px-5 py-2.5 rounded-full font-display font-bold text-sm uppercase tracking-wider;
+    @apply bg-slate-900 text-amber-500;
     @apply transition-all duration-300;
-    @apply hover:bg-gold-400 hover:shadow-lg;
+    @apply hover:bg-slate-800 hover:text-amber-400;
   }
 
   .btn-pill:hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dark Mode: Gold button with Charcoal text (Stadium Glow Look) */
+  [data-theme="dark"] .btn-pill {
+    @apply bg-gold-500 text-[#0D0D0D];
+    @apply hover:bg-gold-400;
+  }
+
+  [data-theme="dark"] .btn-pill:hover {
     box-shadow: 0 4px 12px rgba(255, 212, 77, 0.4);
   }
 
@@ -517,8 +560,15 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply px-6 py-3.5 rounded-lg font-display font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 min-h-[44px] flex items-center justify-center gap-2;
   }
   
+  /* Light Mode: Charcoal button with Gold text (Premium Paper Look) */
   .btn-primary {
-    @apply btn bg-gradient-gold text-charcoal-900 shadow-lg hover:shadow-glow;
+    @apply btn bg-slate-900 text-amber-500 shadow-lg;
+    @apply hover:bg-slate-800 hover:text-amber-400;
+  }
+
+  /* Dark Mode: Gold button with Charcoal text (Stadium Glow Look) */
+  [data-theme="dark"] .btn-primary {
+    @apply bg-gradient-gold text-charcoal-900 hover:shadow-glow;
   }
   
   .btn-secondary {
@@ -858,21 +908,38 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Price Tag Button */
+  /* Light Mode: Charcoal button with Gold text */
   .btn-price {
     @apply px-4 py-2 rounded-lg font-display font-bold text-sm uppercase tracking-wide;
-    @apply bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-900;
-    @apply hover:from-gold-400 hover:to-gold-500;
-    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.5);
+    @apply bg-slate-900 text-amber-500;
+    @apply hover:bg-slate-800 hover:text-amber-400;
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.3);
     transition: all 0.15s ease;
   }
 
   .btn-price:hover {
     transform: translateY(-1px);
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.5);
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.3);
   }
 
   .btn-price:disabled {
-    @apply bg-charcoal-700 text-charcoal-400 cursor-not-allowed;
+    @apply bg-stone-300 text-slate-400 cursor-not-allowed;
+    box-shadow: none;
+  }
+
+  /* Dark Mode: Gold button with Charcoal text */
+  [data-theme="dark"] .btn-price {
+    @apply bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-900;
+    @apply hover:from-gold-400 hover:to-gold-500;
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  [data-theme="dark"] .btn-price:hover {
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  [data-theme="dark"] .btn-price:disabled {
+    @apply bg-charcoal-700 text-charcoal-400;
     box-shadow: none;
   }
 
@@ -910,14 +977,23 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Stamp Badge (for registered/owned status) */
+  /* Light Mode: Green ink on paper look */
   .stamp-badge {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(-12deg);
     @apply text-3xl font-display font-black uppercase tracking-widest;
-    @apply text-green-500/30 border-4 border-green-500/30 rounded-lg px-4 py-2;
+    @apply text-green-600 border-4 border-green-600 rounded-lg px-4 py-2;
+    opacity: 0.7;
     pointer-events: none;
+  }
+
+  /* Dark Mode: Glowing green stamp */
+  [data-theme="dark"] .stamp-badge {
+    @apply text-green-400 border-green-400;
+    opacity: 0.5;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
   }
 }
 
@@ -959,4 +1035,44 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 .scroll-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Battle Pass Horizontal Scroll - Thin gold scrollbar */
+.battle-pass-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.battle-pass-scroll::-webkit-scrollbar-track {
+  background: #E5D396;
+  border-radius: 3px;
+}
+
+.battle-pass-scroll::-webkit-scrollbar-thumb {
+  background: #B38600;
+  border-radius: 3px;
+}
+
+.battle-pass-scroll::-webkit-scrollbar-thumb:hover {
+  background: #D9A300;
+}
+
+[data-theme="dark"] .battle-pass-scroll::-webkit-scrollbar-track {
+  background: #1A1A1A;
+}
+
+[data-theme="dark"] .battle-pass-scroll::-webkit-scrollbar-thumb {
+  background: #FFD44D;
+}
+
+[data-theme="dark"] .battle-pass-scroll::-webkit-scrollbar-thumb:hover {
+  background: #FFDD73;
+}
+
+.battle-pass-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #B38600 #E5D396;
+}
+
+[data-theme="dark"] .battle-pass-scroll {
+  scrollbar-color: #FFD44D #1A1A1A;
 }

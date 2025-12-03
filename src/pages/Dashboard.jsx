@@ -41,7 +41,7 @@ import { retireCorps } from '../firebase/functions';
 const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
   const percentage = Math.round(value * 100);
   const colorClasses = {
-    gold: 'bg-gold-500',
+    gold: 'bg-amber-500 dark:bg-gold-500',
     blue: 'bg-blue-500',
     red: 'bg-rose-500',
     orange: 'bg-orange-500',
@@ -53,14 +53,14 @@ const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 text-white" />}
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-white/60">
+          {Icon && <Icon className="w-4 h-4 text-slate-600 dark:text-white" />}
+          <span className="text-xs font-display font-bold uppercase tracking-widest text-slate-500 dark:text-white/60">
             {label}
           </span>
         </div>
-        <span className="text-lg font-mono font-bold text-amber-400">{percentage}%</span>
+        <span className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{percentage}%</span>
       </div>
-      <div className="progress-chunky">
+      <div className="progress-chunky bg-stone-200 dark:bg-[#0D0D0D] border-stone-300 dark:border-[#2A2A2A]">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
@@ -599,32 +599,31 @@ const Dashboard = () => {
                       {getCorpsClassName(activeCorpsClass)}
                     </span>
                     {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wide">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/20 dark:bg-gold-500/20 text-amber-600 dark:text-gold-400 text-[10px] font-bold uppercase tracking-wide">
                         <Crown size={10} />
                         TOP 10
                       </span>
                     )}
                   </div>
-                  <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-[#FAF6EA] mb-2">
+                  <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-slate-900 dark:text-[#FAF6EA] mb-2">
                     {activeCorps.corpsName || activeCorps.name}
                   </h2>
                   {activeCorps.showConcept && (
-                    <p className="text-[#FAF6EA]/50 text-base md:text-lg font-body italic">
-                      <span className="text-gold-500 not-italic">"</span>
+                    <p className="text-slate-500 dark:text-[#FAF6EA]/50 text-base md:text-lg font-body italic">
+                      <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
                       {activeCorps.showConcept}
-                      <span className="text-gold-500 not-italic">"</span>
+                      <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
                     </p>
                   )}
                 </div>
 
                 {/* Performance Multiplier - Score Bug Style */}
                 <div className="flex-shrink-0 flex flex-col items-center">
-                  <div className="score-bug">
-                    <div className="text-[8px] text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
+                  <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-[#0D0D0D] dark:to-[#1A1A1A] border-amber-500/50 dark:border-gold-500/50">
+                    <div className="text-[8px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
                       Multiplier
                     </div>
-                    <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}
-                      style={{ textShadow: '0 0 30px rgba(255, 212, 77, 0.4)' }}>
+                    <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}>
                       {multiplier.toFixed(2)}x
                     </div>
                     <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
@@ -658,27 +657,27 @@ const Dashboard = () => {
               </div>
 
               {/* Quick Stats Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t-2 border-[#2A2A2A]">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t-2 border-stone-200 dark:border-[#2A2A2A]">
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
-                    <div className="text-[10px] text-[#FAF6EA]/40 uppercase tracking-widest font-display">This Week</div>
+                    <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">{rehearsalsThisWeek}/7</div>
+                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">This Week</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-purple-400">{showsThisWeek}</div>
-                    <div className="text-[10px] text-[#FAF6EA]/40 uppercase tracking-widest font-display">Shows</div>
+                    <div className="text-2xl font-mono font-bold text-purple-600 dark:text-purple-400">{showsThisWeek}</div>
+                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <div className="text-center">
-                      <div className="text-2xl font-mono font-bold text-gold-500">
+                      <div className="text-2xl font-mono font-bold text-amber-600 dark:text-gold-500">
                         {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                       </div>
-                      <div className="text-[10px] text-[#FAF6EA]/40 uppercase tracking-widest font-display">Score</div>
+                      <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Score</div>
                     </div>
                   )}
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-[#FAF6EA]/40 uppercase tracking-widest font-display">Staff</div>
+                    <div className="text-2xl font-mono font-bold text-green-600 dark:text-green-400">{assignedStaff.length}/8</div>
+                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Staff</div>
                   </div>
                 </div>
 
@@ -686,14 +685,14 @@ const Dashboard = () => {
                 <div className="flex items-center gap-2">
                   <Link
                     to="/schedule"
-                    className="p-3 rounded-lg bg-[#1A1A1A] border-2 border-[#2A2A2A] hover:border-gold-500/50 text-[#FAF6EA]/60 hover:text-gold-500 transition-all"
+                    className="p-3 rounded-lg bg-stone-100 dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] hover:border-amber-500/50 dark:hover:border-gold-500/50 text-slate-500 dark:text-[#FAF6EA]/60 hover:text-amber-600 dark:hover:text-gold-500 transition-all"
                     title="View Schedule"
                   >
                     <Calendar size={20} />
                   </Link>
                   <Link
                     to="/scores"
-                    className="p-3 rounded-lg bg-[#1A1A1A] border-2 border-[#2A2A2A] hover:border-gold-500/50 text-[#FAF6EA]/60 hover:text-gold-500 transition-all"
+                    className="p-3 rounded-lg bg-stone-100 dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] hover:border-amber-500/50 dark:hover:border-gold-500/50 text-slate-500 dark:text-[#FAF6EA]/60 hover:text-amber-600 dark:hover:text-gold-500 transition-all"
                     title="View Scores"
                   >
                     <Trophy size={20} />

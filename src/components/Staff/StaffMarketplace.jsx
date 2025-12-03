@@ -146,7 +146,7 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
               disabled={!canAfford}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-br-lg rounded-tl-lg font-display font-bold text-sm uppercase tracking-wide transition-all shadow-sm ${
                 canAfford
-                  ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-[#0D0D0D] hover:bg-amber-400 dark:hover:bg-gold-400 shadow-md hover:shadow-lg'
+                  ? 'bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-[#0D0D0D] hover:bg-slate-800 dark:hover:bg-gold-400 shadow-md hover:shadow-lg'
                   : 'bg-stone-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-[#FAF6EA]/40 cursor-not-allowed'
               }`}
             >
@@ -254,28 +254,28 @@ const StaffMarketplace = () => {
   return (
     <div className="space-y-6">
       {/* ======================================================================
-          HEADER: Title & Balance - Stadium Banner Style
+          HEADER: Title & Balance - Stadium Banner Style (Theme Aware)
           ====================================================================== */}
       <div className="stadium-banner p-5 md:p-6">
         <div className="stadium-overlay" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="sports-header text-2xl md:text-3xl text-white">
+            <h1 className="sports-header text-2xl md:text-3xl text-slate-900 dark:text-white">
               Scouting Report
             </h1>
-            <p className="text-white/50 font-body text-sm mt-1">
+            <p className="text-slate-500 dark:text-white/50 font-body text-sm mt-1">
               Recruit Hall of Fame legends to boost your corps
             </p>
           </div>
 
           {/* Balance Display - Score Bug Style */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0D0D0D]/80 border border-amber-500/40 dark:border-gold-500/40 backdrop-blur-sm">
-            <DollarSign className="w-5 h-5 text-amber-400 dark:text-gold-500" />
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-100 dark:bg-[#0D0D0D]/80 border border-amber-500/40 dark:border-gold-500/40 backdrop-blur-sm">
+            <DollarSign className="w-5 h-5 text-amber-600 dark:text-gold-500" />
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl md:text-3xl font-mono font-bold text-amber-400 dark:text-gold-500">
+              <span className="text-2xl md:text-3xl font-mono font-bold text-amber-600 dark:text-gold-500">
                 {corpsCoin.toLocaleString()}
               </span>
-              <span className="text-xs text-white/40 font-display uppercase tracking-wider">CC</span>
+              <span className="text-xs text-slate-400 dark:text-white/40 font-display uppercase tracking-wider">CC</span>
             </div>
           </div>
         </div>
@@ -283,13 +283,13 @@ const StaffMarketplace = () => {
         {/* Search and Sort Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-white/40" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name..."
-              className="w-full pl-12 pr-4 py-3 bg-[#0D0D0D] border-2 border-white/20 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500 font-display transition-colors"
+              className="w-full pl-12 pr-4 py-3 bg-stone-50 dark:bg-[#0D0D0D] border-2 border-stone-300 dark:border-white/20 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500 font-display transition-colors"
             />
           </div>
 
@@ -297,7 +297,7 @@ const StaffMarketplace = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full px-4 py-3 bg-[#0D0D0D] border-2 border-white/20 rounded-xl text-white focus:outline-none focus:border-amber-500 dark:focus:border-gold-500 appearance-none cursor-pointer font-display"
+              className="w-full px-4 py-3 bg-stone-50 dark:bg-[#0D0D0D] border-2 border-stone-300 dark:border-white/20 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 dark:focus:border-gold-500 appearance-none cursor-pointer font-display"
             >
               <option value="newest">Newest Inductees</option>
               <option value="oldest">Oldest Inductees</option>
@@ -305,7 +305,7 @@ const StaffMarketplace = () => {
               <option value="expensive">Highest Price</option>
               <option value="legendary">Legendary First</option>
             </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-white/40 pointer-events-none" />
           </div>
         </div>
 
@@ -318,9 +318,9 @@ const StaffMarketplace = () => {
               className={`px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
                 captionFilter === option.value
                   ? option.value === 'all'
-                    ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
+                    ? 'bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-charcoal-900 border-slate-800 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
                     : `${option.color} text-white border-transparent`
-                  : 'bg-[#1A1A1A] text-white/60 border-white/20 hover:border-amber-500/50 dark:hover:border-gold-500/50 hover:text-white'
+                  : 'bg-stone-100 dark:bg-[#1A1A1A] text-slate-500 dark:text-white/60 border-stone-300 dark:border-white/20 hover:border-amber-500/50 dark:hover:border-gold-500/50 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {option.value === 'all' ? 'All' : option.value}
@@ -506,13 +506,13 @@ const StaffMarketplace = () => {
                     disabled={purchasing || !canAfford(selectedStaff.baseValue)}
                     className={`flex-1 px-4 py-3 rounded-xl font-display font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all ${
                       canAfford(selectedStaff.baseValue)
-                        ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 hover:bg-amber-400 dark:hover:bg-gold-400 shadow-md dark:shadow-brutal-gold'
+                        ? 'bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-charcoal-900 hover:bg-slate-800 dark:hover:bg-gold-400 shadow-md dark:shadow-brutal-gold'
                         : 'bg-stone-200 dark:bg-charcoal-700 text-slate-400 dark:text-charcoal-400 cursor-not-allowed'
                     }`}
                   >
                     {purchasing ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white dark:border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-amber-500 dark:border-charcoal-900 border-t-transparent rounded-full animate-spin" />
                         Processing...
                       </>
                     ) : !canAfford(selectedStaff.baseValue) ? (
