@@ -61,12 +61,12 @@ const ShowCard = ({
           </div>
         </div>
 
-        {/* Registered Corps */}
+        {/* Registered Corps - Ink Stamp Style */}
         {myCorps.length > 0 && (
-          <div className="mb-2 p-2 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg">
-            <div className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400 mb-1">
+          <div className="relative mb-2 p-2 bg-green-50 dark:bg-green-500/10 border-2 border-green-600 dark:border-green-400 rounded-lg transform -rotate-1">
+            <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mb-1">
               <Check className="w-3 h-3" />
-              <span className="font-display font-bold uppercase tracking-wide">Registered</span>
+              <span className="font-display font-bold uppercase tracking-widest">Registered</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {myCorps.map((corps, idx) => (
