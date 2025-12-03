@@ -14,14 +14,14 @@ export interface BadgeProps {
   className?: string;
 }
 
-// Solid color variants with white text for maximum visibility
+// Tactical Brutalist: Solid flat colors, 2px borders, hard shadows
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-stone-500 text-white border-stone-600',
-  gold: 'bg-amber-500 text-white border-amber-600',
-  success: 'bg-green-500 text-white border-green-600',
-  danger: 'bg-red-500 text-white border-red-600',
-  warning: 'bg-yellow-500 text-white border-yellow-600',
-  info: 'bg-blue-500 text-white border-blue-600',
+  default: 'bg-stone-500 text-white border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  gold: 'bg-amber-500 text-charcoal-900 border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  success: 'bg-green-500 text-white border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  danger: 'bg-red-500 text-white border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  warning: 'bg-yellow-500 text-charcoal-900 border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  info: 'bg-blue-500 text-white border-2 border-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
 };
 
 const sizeStyles: Record<BadgeSize, string> = {
@@ -39,7 +39,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={`
-        inline-flex items-center font-semibold rounded-full border
+        inline-flex items-center font-display font-semibold uppercase tracking-tight rounded-sm
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}
@@ -87,8 +87,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     <span
       className={`
         inline-flex items-center gap-2 px-2.5 py-1
-        text-xs font-medium text-cream-300
-        rounded-full bg-charcoal-800 border border-cream-900/20
+        text-xs font-display font-medium uppercase tracking-tight text-cream-300
+        rounded-sm bg-charcoal-800 border-2 border-neutral-900 dark:border-gold-500/30
+        shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)]
         ${className}
       `}
     >
