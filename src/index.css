@@ -323,8 +323,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .icon-card:hover {
-    transform: translateY(-2px);
-    @apply shadow-md;
+    transform: translateY(-4px);
+    @apply shadow-md border-amber-500;
   }
 
   /* Dark Mode: Charcoal card with gold bottom border */
@@ -583,15 +583,38 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply btn bg-transparent text-cream-300 hover:bg-cream-900;
   }
   
-  /* Cards */
+  /* Cards - Light Mode: White with borders/shadows, Dark Mode: Glass effect */
   .card {
-    @apply glass rounded-xl p-6 transition-all duration-300 hover:shadow-xl;
+    @apply bg-white border border-stone-200 shadow-sm rounded-xl p-6 transition-all duration-300;
   }
-  
+
+  [data-theme="dark"] .card {
+    @apply bg-transparent border-0 shadow-none;
+    background: var(--glass-bg);
+    @apply backdrop-blur-md;
+    border: 1px solid var(--border-color);
+  }
+
+  .card:hover {
+    @apply shadow-md border-stone-300;
+  }
+
+  [data-theme="dark"] .card:hover {
+    @apply shadow-xl;
+  }
+
   .card-hover {
-    @apply card hover:transform hover:-translate-y-1 hover:shadow-glow;
+    @apply card;
   }
-  
+
+  .card-hover:hover {
+    @apply -translate-y-1;
+  }
+
+  [data-theme="dark"] .card-hover:hover {
+    @apply shadow-glow;
+  }
+
   .card-premium {
     @apply card bg-gradient-to-br from-gold-900 to-cream-900 border-gold-700;
   }
@@ -712,10 +735,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
   
   /* Gradient Text */
+  /* Light Mode: Use dark charcoal for page headers (crisp contrast on cream) */
+  /* Dark Mode: Use gold gradient (stadium glow effect) */
   .text-gradient {
+    @apply text-slate-900;
+  }
+
+  [data-theme="dark"] .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-gold;
   }
-  
+
   .text-gradient-cream {
     @apply bg-clip-text text-transparent bg-gradient-cream;
   }

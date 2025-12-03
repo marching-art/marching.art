@@ -178,7 +178,7 @@ const QuickActionsRow = ({
             <span className="text-xs font-semibold text-cream-100">Rank</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-gold-500">
+            <span className="text-sm font-bold text-amber-700 dark:text-gold-500">
               {activeCorpsClass === 'soundSport' ? '🎉' : `#${activeCorps?.rank || '-'}`}
             </span>
             {activeCorpsClass !== 'soundSport' && recentScores?.length > 0 && (

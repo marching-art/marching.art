@@ -73,15 +73,18 @@ const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
 };
 
 // Icon Card Component (Tactical Luxury action tiles with large background icons)
+// Enhanced with better hover states and more prominent icons
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled || processing}
-    whileHover={!disabled && !processing ? { scale: 1.02, y: -2 } : {}}
+    whileHover={!disabled && !processing ? { scale: 1.02, y: -4 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3 ${
+    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3
+      hover:border-amber-500 dark:hover:border-gold-500 hover:shadow-md dark:hover:shadow-lg
+      transition-all duration-200 cursor-pointer ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
-    } ${completed ? 'border-green-500/40' : ''}`}
+    } ${completed ? 'border-green-500/40 dark:border-green-500/40' : ''}`}
   >
     {/* Large background icon - subtle watermark */}
     <div className="icon-card-bg flex items-center justify-center">
@@ -90,22 +93,24 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
 
     {/* Content */}
     <div className="relative z-10 flex flex-col items-center gap-2">
-      <div className={`p-3 rounded-xl transition-colors ${
-        completed ? 'bg-green-500/20' : 'bg-amber-500/10 group-hover:bg-amber-500/20 dark:bg-gold-500/10 dark:group-hover:bg-gold-500/20'
+      <div className={`p-3 rounded-xl transition-all duration-200 ${
+        completed
+          ? 'bg-green-500/20'
+          : 'bg-amber-100 dark:bg-gold-500/10 group-hover:bg-amber-200 dark:group-hover:bg-gold-500/20 group-hover:scale-110'
       }`}>
         {processing ? (
           <div className="w-7 h-7 border-3 border-amber-600 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : completed ? (
-          <Check className="w-7 h-7 text-green-500" />
+          <Check className="w-7 h-7 text-green-600 dark:text-green-500" />
         ) : (
-          <Icon className="w-7 h-7 text-amber-600 dark:text-gold-500 transition-colors group-hover:text-amber-500 dark:group-hover:text-gold-400" />
+          <Icon className="w-7 h-7 text-amber-700 dark:text-gold-500 transition-colors group-hover:text-amber-800 dark:group-hover:text-gold-400" />
         )}
       </div>
-      <span className="text-sm font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-amber-600 dark:group-hover:text-gold-400 transition-colors">
+      <span className="text-sm font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-amber-700 dark:group-hover:text-gold-400 transition-colors">
         {label}
       </span>
       {subtitle && (
-        <span className="text-[10px] text-slate-500 dark:text-[#FAF6EA]/50 font-display uppercase tracking-wide">
+        <span className="text-[10px] text-slate-600 dark:text-[#FAF6EA]/50 font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -238,12 +243,12 @@ const Dashboard = () => {
   const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
   const multiplier = Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
 
-  // Get multiplier status
+  // Get multiplier status - Light mode uses dark colors, Dark mode uses bright colors
   const getMultiplierStatus = () => {
-    if (multiplier >= 1.05) return { color: 'text-green-400', bg: 'bg-green-500', label: 'ELITE' };
-    if (multiplier >= 0.95) return { color: 'text-gold-500', bg: 'bg-gold-500', label: 'STRONG' };
-    if (multiplier >= 0.85) return { color: 'text-yellow-400', bg: 'bg-yellow-500', label: 'FAIR' };
-    return { color: 'text-red-400', bg: 'bg-red-500', label: 'WEAK' };
+    if (multiplier >= 1.05) return { color: 'text-green-700 dark:text-green-400', bg: 'bg-green-500', label: 'ELITE' };
+    if (multiplier >= 0.95) return { color: 'text-amber-700 dark:text-gold-500', bg: 'bg-gold-500', label: 'STRONG' };
+    if (multiplier >= 0.85) return { color: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-500', label: 'FAIR' };
+    return { color: 'text-red-700 dark:text-red-400', bg: 'bg-red-500', label: 'WEAK' };
   };
   const multiplierStatus = getMultiplierStatus();
 
