@@ -366,20 +366,22 @@ const Scores = () => {
         </motion.div>
       </div>
 
-      {/* Main Tabs */}
-      <div className="border-b border-cream-500/20">
-        <div className="flex gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
-          {mainTabs.map((tab) => {
+      {/* Main Tabs - Mechanical Segmented Control */}
+      <div className="flex justify-center -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
+          {mainTabs.map((tab, index) => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const isLast = index === mainTabs.length - 1;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
-                  activeTab === tab.id
-                    ? 'text-gold-500 border-b-2 border-gold-500'
-                    : 'text-cream-500/60 hover:text-cream-300'
-                }`}
+                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2.5 md:py-3 font-bold uppercase tracking-wide transition-all whitespace-nowrap text-xs md:text-sm ${
+                  isActive
+                    ? 'bg-charcoal-900 dark:bg-cream-100 text-gold-400 dark:text-charcoal-900'
+                    : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
+                } ${!isLast ? 'border-r-2 border-charcoal-900 dark:border-cream-100' : ''}`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.name}
