@@ -53,12 +53,12 @@ const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 text-[#FAF6EA]" />}
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-[#FAF6EA]/60">
+          {Icon && <Icon className="w-4 h-4 text-white" />}
+          <span className="text-xs font-display font-bold uppercase tracking-widest text-white/60">
             {label}
           </span>
         </div>
-        <span className="text-lg font-mono font-bold text-gold-500">{percentage}%</span>
+        <span className="text-lg font-mono font-bold text-amber-400">{percentage}%</span>
       </div>
       <div className="progress-chunky">
         <motion.div
@@ -85,27 +85,27 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
   >
     {/* Large background icon */}
     <div className="icon-card-bg flex items-center justify-center">
-      <Icon className="w-full h-full text-gold-500" />
+      <Icon className="w-full h-full text-amber-600 dark:text-gold-500" />
     </div>
 
     {/* Content */}
     <div className="relative z-10 flex flex-col items-center gap-2">
       <div className={`p-3 rounded-xl transition-colors ${
-        completed ? 'bg-green-500/20' : 'bg-gold-500/10 group-hover:bg-gold-500/20'
+        completed ? 'bg-green-500/20' : 'bg-amber-500/10 group-hover:bg-amber-500/20 dark:bg-gold-500/10 dark:group-hover:bg-gold-500/20'
       }`}>
         {processing ? (
-          <div className="w-7 h-7 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-3 border-amber-600 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : completed ? (
-          <Check className="w-7 h-7 text-green-400" />
+          <Check className="w-7 h-7 text-green-500" />
         ) : (
-          <Icon className="w-7 h-7 text-gold-500 transition-colors group-hover:text-gold-400" />
+          <Icon className="w-7 h-7 text-amber-600 dark:text-gold-500 transition-colors group-hover:text-amber-500 dark:group-hover:text-gold-400" />
         )}
       </div>
-      <span className="text-sm font-display font-bold text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
+      <span className="text-sm font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-amber-600 dark:group-hover:text-gold-400 transition-colors">
         {label}
       </span>
       {subtitle && (
-        <span className="text-[10px] text-[#FAF6EA]/50 font-display uppercase tracking-wide">
+        <span className="text-[10px] text-slate-500 dark:text-[#FAF6EA]/50 font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -116,11 +116,11 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
 // Quick Stat Card
 const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   const colorClasses = {
-    gold: 'text-gold-500 bg-gold-500/10 border-gold-500/30',
-    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-    orange: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
-    green: 'text-green-400 bg-green-500/10 border-green-500/30'
+    gold: 'text-amber-600 dark:text-gold-500 bg-amber-500/10 dark:bg-gold-500/10 border-amber-500/30 dark:border-gold-500/30',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/30',
+    orange: 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/30',
+    green: 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/30'
   };
 
   const content = (
@@ -132,7 +132,7 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
         <div className={`text-xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`}>
           {value}
         </div>
-        <div className="text-[10px] font-display uppercase tracking-widest text-[#FAF6EA]/40">
+        <div className="text-[10px] font-display uppercase tracking-widest text-slate-500 dark:text-[#FAF6EA]/40">
           {label}
         </div>
       </div>
@@ -470,15 +470,15 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Welcome & Season Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-[#FAF6EA] uppercase tracking-tight truncate">
+            <h1 className="text-2xl md:text-3xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight truncate">
               {profile?.displayName || 'Director'}
             </h1>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-[#FAF6EA]/60 text-sm font-display">
+              <span className="text-slate-500 dark:text-[#FAF6EA]/60 text-sm font-display">
                 {formatSeasonName(seasonData?.name)}
               </span>
               {weeksRemaining && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs font-bold">
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold">
                   <Calendar className="w-3 h-3" />
                   Week {currentWeek} • {weeksRemaining}w left
                 </span>
@@ -491,8 +491,8 @@ const Dashboard = () => {
             {/* Login Streak */}
             {engagementData?.loginStreak > 0 && (
               <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 border-2 border-orange-500/30">
-                <Flame className={`w-5 h-5 ${engagementData.loginStreak >= 7 ? 'text-orange-400 animate-pulse' : 'text-orange-500'}`} />
-                <span className="text-lg font-mono font-bold text-orange-400">
+                <Flame className={`w-5 h-5 ${engagementData.loginStreak >= 7 ? 'text-orange-500 animate-pulse' : 'text-orange-600 dark:text-orange-500'}`} />
+                <span className="text-lg font-mono font-bold text-orange-600 dark:text-orange-400">
                   {engagementData.loginStreak}
                 </span>
               </div>
@@ -501,14 +501,14 @@ const Dashboard = () => {
             {/* XP Level */}
             <Link
               to="/profile"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gold-500/20 border-2 border-gold-500/30 hover:border-gold-500/60 transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border-2 border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
             >
-              <Zap className="w-5 h-5 text-gold-500" />
+              <Zap className="w-5 h-5 text-amber-600 dark:text-gold-500" />
               <div className="flex flex-col">
-                <span className="text-sm font-mono font-bold text-gold-500">LVL {profile?.xpLevel || 1}</span>
-                <div className="w-12 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                <span className="text-sm font-mono font-bold text-amber-600 dark:text-gold-500">LVL {profile?.xpLevel || 1}</span>
+                <div className="w-12 h-1.5 bg-stone-200 dark:bg-charcoal-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gold-500 transition-all duration-500"
+                    className="h-full bg-amber-500 dark:bg-gold-500 transition-all duration-500"
                     style={{ width: `${xpProgress}%` }}
                   />
                 </div>
@@ -518,10 +518,10 @@ const Dashboard = () => {
             {/* CorpsCoin */}
             <Link
               to="/staff"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gold-500/20 border-2 border-gold-500/30 hover:border-gold-500/60 transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border-2 border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
             >
-              <Coins className="w-5 h-5 text-gold-500" />
-              <span className="text-lg font-mono font-bold text-gold-500">
+              <Coins className="w-5 h-5 text-amber-600 dark:text-gold-500" />
+              <span className="text-lg font-mono font-bold text-amber-600 dark:text-gold-500">
                 {(profile?.corpsCoin || 0).toLocaleString()}
               </span>
             </Link>
@@ -530,10 +530,10 @@ const Dashboard = () => {
             {unclaimedRewardsCount > 0 && (
               <Link
                 to="/battlepass"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-gold-500/30 to-purple-500/30 border-2 border-gold-500/50 animate-pulse"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/30 dark:from-gold-500/30 to-purple-500/30 border-2 border-amber-500/50 dark:border-gold-500/50 animate-pulse"
               >
-                <Gift className="w-5 h-5 text-gold-400" />
-                <span className="text-sm font-bold text-gold-400">{unclaimedRewardsCount}</span>
+                <Gift className="w-5 h-5 text-amber-600 dark:text-gold-400" />
+                <span className="text-sm font-bold text-amber-600 dark:text-gold-400">{unclaimedRewardsCount}</span>
               </Link>
             )}
           </div>
@@ -545,7 +545,7 @@ const Dashboard = () => {
           ====================================================================== */}
       {hasMultipleCorps && (
         <div className="flex items-center gap-3 px-1">
-          <Music className="w-5 h-5 text-gold-500 flex-shrink-0" />
+          <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
           <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
             {Object.entries(corps)
               .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
@@ -555,8 +555,8 @@ const Dashboard = () => {
                   onClick={() => handleCorpsSwitch(classId)}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
                     activeCorpsClass === classId
-                      ? 'bg-gold-500 text-charcoal-900 border-gold-400 shadow-brutal-gold'
-                      : 'bg-[#1A1A1A] text-[#FAF6EA]/70 border-[#2A2A2A] hover:text-[#FAF6EA] hover:border-gold-500/50'
+                      ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
+                      : 'bg-white dark:bg-[#1A1A1A] text-slate-600 dark:text-[#FAF6EA]/70 border-stone-200 dark:border-[#2A2A2A] hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:border-amber-500/50 dark:hover:border-gold-500/50'
                   }`}
                 >
                   {corpsData.corpsName || corpsData.name}
@@ -786,35 +786,35 @@ const Dashboard = () => {
           <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link
               to="/scores"
-              className="card-brutalist p-4 flex items-center gap-3 hover:shadow-brutal-gold transition-all"
+              className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Trophy className="w-6 h-6 text-gold-500" />
-              <span className="font-display font-bold text-[#FAF6EA]">Leaderboards</span>
-              <ChevronRight className="w-5 h-5 text-[#FAF6EA]/40 ml-auto" />
+              <Trophy className="w-6 h-6 text-amber-600 dark:text-gold-500" />
+              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Leaderboards</span>
+              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
             </Link>
             <Link
               to="/schedule"
-              className="card-brutalist p-4 flex items-center gap-3 hover:shadow-brutal-gold transition-all"
+              className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Calendar className="w-6 h-6 text-purple-400" />
-              <span className="font-display font-bold text-[#FAF6EA]">Schedule</span>
-              <ChevronRight className="w-5 h-5 text-[#FAF6EA]/40 ml-auto" />
+              <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Schedule</span>
+              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
             </Link>
             <Link
               to="/leagues"
-              className="card-brutalist p-4 flex items-center gap-3 hover:shadow-brutal-gold transition-all"
+              className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Sparkles className="w-6 h-6 text-blue-400" />
-              <span className="font-display font-bold text-[#FAF6EA]">Leagues</span>
-              <ChevronRight className="w-5 h-5 text-[#FAF6EA]/40 ml-auto" />
+              <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Leagues</span>
+              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
             </Link>
             <Link
               to="/battlepass"
-              className="card-brutalist p-4 flex items-center gap-3 hover:shadow-brutal-gold transition-all"
+              className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Crown className="w-6 h-6 text-gold-500" />
-              <span className="font-display font-bold text-[#FAF6EA]">Season Pass</span>
-              <ChevronRight className="w-5 h-5 text-[#FAF6EA]/40 ml-auto" />
+              <Crown className="w-6 h-6 text-amber-600 dark:text-gold-500" />
+              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Season Pass</span>
+              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
             </Link>
           </div>
 
@@ -823,7 +823,7 @@ const Dashboard = () => {
 
       {/* SoundSport Fun Badge */}
       {activeCorpsClass === 'soundSport' && (
-        <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-400">
+        <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
           <Sparkles size={20} />
           <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
         </div>
@@ -842,20 +842,20 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowEquipmentPanel(false)}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-[#0D0D0D] border-l-3 border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-[#0D0D0D] border-b-2 border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-[#FAF6EA] uppercase tracking-tight">Equipment Manager</h2>
+              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Equipment Manager</h2>
                 <button
                   onClick={() => setShowEquipmentPanel(false)}
-                  className="p-2 rounded-lg hover:bg-[#1A1A1A] text-[#FAF6EA]/60 hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -883,20 +883,20 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowStaffPanel(false)}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-[#0D0D0D] border-l-3 border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-[#0D0D0D] border-b-2 border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-[#FAF6EA] uppercase tracking-tight">Staff Roster</h2>
+              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Staff Roster</h2>
                 <button
                   onClick={() => setShowStaffPanel(false)}
-                  className="p-2 rounded-lg hover:bg-[#1A1A1A] text-[#FAF6EA]/60 hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -918,20 +918,20 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowDailyActivities(false)}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-[#0D0D0D] border-l-3 border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-[#0D0D0D] border-b-2 border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-[#FAF6EA] uppercase tracking-tight">Daily Activities</h2>
+              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Daily Activities</h2>
                 <button
                   onClick={() => setShowDailyActivities(false)}
-                  className="p-2 rounded-lg hover:bg-[#1A1A1A] text-[#FAF6EA]/60 hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>

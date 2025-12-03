@@ -15,8 +15,8 @@ const ShowsGrid = ({
   if (shows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Calendar className="w-12 h-12 text-cream-500/30 mb-3" />
-        <p className="text-cream-400">No shows scheduled for Week {selectedWeek}</p>
+        <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+        <p className="text-slate-500 dark:text-slate-400">No shows scheduled for Week {selectedWeek}</p>
       </div>
     );
   }
