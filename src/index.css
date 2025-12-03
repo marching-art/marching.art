@@ -1319,3 +1319,21 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 [data-theme="dark"] .battle-pass-scroll {
   scrollbar-color: #FFD44D #1A1A1A;
 }
+
+/* Battle Pass Pulsing Glow Animation for Next Reward */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px 2px rgba(250, 204, 21, 0.4),
+                0 0 20px 4px rgba(250, 204, 21, 0.2),
+                0 0 30px 6px rgba(250, 204, 21, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(250, 204, 21, 0.6),
+                0 0 30px 8px rgba(250, 204, 21, 0.4),
+                0 0 45px 12px rgba(250, 204, 21, 0.2);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
