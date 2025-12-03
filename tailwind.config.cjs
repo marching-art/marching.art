@@ -110,7 +110,13 @@ module.exports = {
         'elevation-2': '0 4px 8px rgba(0,0,0,0.12)',
         'elevation-3': '0 8px 16px rgba(0,0,0,0.14)',
         'elevation-4': '0 16px 32px rgba(0,0,0,0.16)',
-        'elevation-5': '0 24px 48px rgba(0,0,0,0.18)'
+        'elevation-5': '0 24px 48px rgba(0,0,0,0.18)',
+        // Brutalist shadows
+        'brutal': '4px 4px 0px 0px rgba(0,0,0,1)',
+        'brutal-lg': '6px 6px 0px 0px rgba(0,0,0,1)',
+        'brutal-xl': '8px 8px 0px 0px rgba(0,0,0,1)',
+        'brutal-gold': '4px 4px 0px 0px rgba(255,212,77,1)',
+        'brutal-gold-lg': '6px 6px 0px 0px rgba(255,212,77,1)'
       },
       backdropBlur: {
         'xs': '2px'
