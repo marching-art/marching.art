@@ -69,7 +69,7 @@ const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
       {/* Tactical Progress Track with Tick Marks */}
       <div className="relative">
         {/* Track Background with Grid Pattern */}
-        <div className="h-6 w-full bg-stone-200 dark:bg-[#0D0D0D] rounded-md overflow-hidden border-2 border-stone-300 dark:border-[#2A2A2A] relative">
+        <div className="h-6 w-full bg-stone-200 dark:bg-surface rounded-md overflow-hidden border-2 border-stone-300 dark:border-border-default relative">
           {/* Tick marks overlay - simulates ruler/measurement device */}
           <div className="absolute inset-0 flex">
             {[...Array(10)].map((_, i) => (
@@ -141,11 +141,11 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
           <Icon className="w-7 h-7 text-amber-700 dark:text-gold-500 transition-colors group-hover:text-amber-800 dark:group-hover:text-gold-400" />
         )}
       </div>
-      <span className="text-sm font-display font-bold text-slate-900 dark:text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-amber-700 dark:group-hover:text-gold-400 transition-colors">
+      <span className="text-sm font-display font-bold text-slate-900 dark:text-text-main uppercase tracking-wider text-center group-hover:text-amber-700 dark:group-hover:text-gold-400 transition-colors">
         {label}
       </span>
       {subtitle && (
-        <span className="text-[10px] text-slate-600 dark:text-[#FAF6EA]/50 font-display uppercase tracking-wide">
+        <span className="text-[10px] text-slate-600 dark:text-text-muted font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -172,7 +172,7 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
         <div className={`text-xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`}>
           {value}
         </div>
-        <div className="text-[10px] font-display uppercase tracking-widest text-slate-500 dark:text-[#FAF6EA]/40">
+        <div className="text-[10px] font-display uppercase tracking-widest text-slate-500 dark:text-text-muted">
           {label}
         </div>
       </div>
@@ -633,7 +633,7 @@ const Dashboard = () => {
               {/* ============================================================
                   CORPS STATUS HEADER - Distinct section with bottom border
                   ============================================================ */}
-              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b-2 border-stone-200 dark:border-[#2A2A2A]">
+              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b-2 border-stone-200 dark:border-border-default">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Corps Identity */}
                   <div className="flex-1 min-w-0">
@@ -648,22 +648,22 @@ const Dashboard = () => {
                         </span>
                       )}
                     </div>
-                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-slate-900 dark:text-[#FAF6EA]">
+                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-text-main">
                       {activeCorps.corpsName || activeCorps.name || 'UNSPECIFIED'}
                     </h2>
                     {activeCorps.showConcept && (
-                      <p className="text-slate-500 dark:text-[#FAF6EA]/50 text-sm md:text-base font-body italic mt-1">
-                        <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
+                      <p className="text-text-muted text-sm md:text-base font-body italic mt-1">
+                        <span className="text-primary not-italic">"</span>
                         {activeCorps.showConcept}
-                        <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
+                        <span className="text-primary not-italic">"</span>
                       </p>
                     )}
                   </div>
 
                   {/* Performance Multiplier - Score Bug Style */}
                   <div className="flex-shrink-0 flex flex-col items-center">
-                    <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-[#0D0D0D] dark:to-[#1A1A1A] border-amber-500/50 dark:border-gold-500/50">
-                      <div className="text-[8px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
+                    <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-surface dark:to-surface-secondary border-amber-500/50 dark:border-primary/50">
+                      <div className="text-[8px] text-text-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
                         Multiplier
                       </div>
                       <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}>
@@ -705,27 +705,27 @@ const Dashboard = () => {
               </div>
 
               {/* Quick Stats Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-stone-200/50 dark:border-[#2A2A2A]/50 mt-0">
+              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-stone-200/50 dark:border-border-muted mt-0">
                 <div className="flex items-center gap-6 pt-5">
                   <div className="text-center">
                     <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">{rehearsalsThisWeek}/7</div>
-                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">This Week</div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">This Week</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-mono font-bold text-purple-600 dark:text-purple-400">{showsThisWeek}</div>
-                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Shows</div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <div className="text-center">
-                      <div className="text-2xl font-mono font-bold text-amber-600 dark:text-gold-500">
+                      <div className="text-2xl font-mono font-bold text-primary">
                         {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                       </div>
-                      <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Score</div>
+                      <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Score</div>
                     </div>
                   )}
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-green-600 dark:text-green-400">{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">Staff</div>
+                    <div className="text-2xl font-mono font-bold text-success">{assignedStaff.length}/8</div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Staff</div>
                   </div>
                 </div>
 
@@ -733,21 +733,21 @@ const Dashboard = () => {
                 <div className="flex items-center gap-2 pt-5">
                   <button
                     onClick={() => setShowCaptionSelection(true)}
-                    className="p-3 rounded-lg bg-amber-100 dark:bg-gold-500/20 border-2 border-amber-400 dark:border-gold-500/50 hover:border-amber-500 dark:hover:border-gold-500 text-amber-600 dark:text-gold-500 hover:text-amber-700 dark:hover:text-gold-400 transition-all"
+                    className="p-3 rounded-lg bg-primary-muted border-2 border-primary/50 hover:border-primary text-primary hover:text-primary-hover transition-all"
                     title="Edit Captions"
                   >
                     <Edit size={20} />
                   </button>
                   <Link
                     to="/schedule"
-                    className="p-3 rounded-lg bg-stone-100 dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] hover:border-amber-500/50 dark:hover:border-gold-500/50 text-slate-500 dark:text-[#FAF6EA]/60 hover:text-amber-600 dark:hover:text-gold-500 transition-all"
+                    className="p-3 rounded-lg bg-stone-100 dark:bg-surface-secondary border-2 border-stone-200 dark:border-border-default hover:border-primary/50 text-text-muted hover:text-primary transition-all"
                     title="View Schedule"
                   >
                     <Calendar size={20} />
                   </Link>
                   <Link
                     to="/scores"
-                    className="p-3 rounded-lg bg-stone-100 dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] hover:border-amber-500/50 dark:hover:border-gold-500/50 text-slate-500 dark:text-[#FAF6EA]/60 hover:text-amber-600 dark:hover:text-gold-500 transition-all"
+                    className="p-3 rounded-lg bg-stone-100 dark:bg-surface-secondary border-2 border-stone-200 dark:border-border-default hover:border-primary/50 text-text-muted hover:text-primary transition-all"
                     title="View Scores"
                   >
                     <Trophy size={20} />

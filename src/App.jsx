@@ -102,7 +102,7 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="min-h-screen font-sans transition-colors duration-200 bg-[#FAF6EA] text-[#1A1A1A] dark:bg-[#0D0D0D] dark:text-[#FAF6EA]">
+    <div className="min-h-screen font-sans transition-colors duration-200 bg-surface text-text-main">
       {/* Desktop Navigation */}
       <div className="hidden lg:block">
         <Navigation />
@@ -234,14 +234,14 @@ function App() {
               },
               success: {
                 iconTheme: {
-                  primary: '#FFD44D',
-                  secondary: 'var(--bg-secondary)',
+                  primary: 'var(--color-primary)',
+                  secondary: 'var(--color-surface-secondary)',
                 },
               },
               error: {
                 iconTheme: {
-                  primary: '#EF4444',
-                  secondary: 'var(--bg-secondary)',
+                  primary: 'var(--color-danger)',
+                  secondary: 'var(--color-surface-secondary)',
                 },
               },
             }}

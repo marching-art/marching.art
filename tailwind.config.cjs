@@ -8,6 +8,60 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ===========================================
+        // SEMANTIC DESIGN TOKENS
+        // Use these instead of hardcoded hex values!
+        // ===========================================
+
+        // Primary brand color (Gold/Amber)
+        primary: {
+          DEFAULT: 'var(--color-primary)',
+          hover: 'var(--color-primary-hover)',
+          muted: 'var(--color-primary-muted)',
+        },
+
+        // Surface/Background colors
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          secondary: 'var(--color-surface-secondary)',
+          tertiary: 'var(--color-surface-tertiary)',
+          highlight: 'var(--color-surface-highlight)',
+          overlay: 'var(--color-surface-overlay)',
+        },
+
+        // Text colors
+        'text-main': 'var(--color-text-main)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'text-muted': 'var(--color-text-muted)',
+        'text-inverse': 'var(--color-text-inverse)',
+
+        // Semantic status colors
+        danger: {
+          DEFAULT: 'var(--color-danger)',
+          hover: 'var(--color-danger-hover)',
+          muted: 'var(--color-danger-muted)',
+        },
+        success: {
+          DEFAULT: 'var(--color-success)',
+          hover: 'var(--color-success-hover)',
+          muted: 'var(--color-success-muted)',
+        },
+        warning: {
+          DEFAULT: 'var(--color-warning)',
+          hover: 'var(--color-warning-hover)',
+          muted: 'var(--color-warning-muted)',
+        },
+
+        // Border colors
+        'border-default': 'var(--color-border)',
+        'border-muted': 'var(--color-border-muted)',
+        'border-accent': 'var(--color-border-accent)',
+
+        // ===========================================
+        // RAW COLOR SCALES (for specific use cases)
+        // Prefer semantic tokens above when possible
+        // ===========================================
+
         // Theme-aware colors using CSS variables
         cream: {
           50: 'var(--cream-50)',
@@ -53,12 +107,19 @@ module.exports = {
         'display': ['Oswald', 'Barlow Condensed', 'system-ui', 'sans-serif'],
         'body': ['Inter', 'system-ui', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
-        'data': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace']
+        'data': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
+        // Semantic font aliases
+        'sans': ['Inter', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {
         'tighter': '-0.05em',
         'tight': '-0.025em',
         'brutal': '-0.04em',
+      },
+      borderWidth: {
+        'DEFAULT': '2px',
+        'brutal': '2px',
+        '3': '3px',
       },
       borderRadius: {
         'none': '0',
@@ -125,15 +186,28 @@ module.exports = {
         'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)'
       },
       boxShadow: {
+        // ===========================================
+        // BRUTALIST SHADOW SYSTEM
+        // Hard offset shadows only - no blur!
+        // ===========================================
+
         // Remove all blur shadows - Tactical Brutalist uses only hard offset shadows
         'none': 'none',
-        // Hard offset brutalist shadows (no blur, full opacity)
+
+        // Semantic shadow tokens (use these!)
+        'hard': '4px 4px 0px 0px var(--shadow-color)',
+        'hard-sm': '2px 2px 0px 0px var(--shadow-color)',
+        'hard-lg': '6px 6px 0px 0px var(--shadow-color)',
+        'hard-xl': '8px 8px 0px 0px var(--shadow-color)',
+
+        // Hard offset brutalist shadows - Black (light mode)
         'brutal-xs': '2px 2px 0px 0px rgba(0,0,0,1)',
         'brutal-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
         'brutal': '4px 4px 0px 0px rgba(0,0,0,1)',
         'brutal-md': '4px 4px 0px 0px rgba(0,0,0,1)',
         'brutal-lg': '6px 6px 0px 0px rgba(0,0,0,1)',
         'brutal-xl': '8px 8px 0px 0px rgba(0,0,0,1)',
+
         // Gold variants for dark mode
         'brutal-gold-xs': '2px 2px 0px 0px rgba(255,212,77,1)',
         'brutal-gold-sm': '3px 3px 0px 0px rgba(255,212,77,1)',
@@ -141,9 +215,14 @@ module.exports = {
         'brutal-gold-md': '4px 4px 0px 0px rgba(255,212,77,1)',
         'brutal-gold-lg': '6px 6px 0px 0px rgba(255,212,77,1)',
         'brutal-gold-xl': '8px 8px 0px 0px rgba(255,212,77,1)',
-        // Danger variant
+
+        // Status color variants
         'brutal-danger': '4px 4px 0px 0px rgba(239,68,68,1)',
         'brutal-danger-lg': '6px 6px 0px 0px rgba(239,68,68,1)',
+        'brutal-success': '4px 4px 0px 0px rgba(34,197,94,1)',
+        'brutal-success-lg': '6px 6px 0px 0px rgba(34,197,94,1)',
+        'brutal-warning': '4px 4px 0px 0px rgba(245,158,11,1)',
+        'brutal-warning-lg': '6px 6px 0px 0px rgba(245,158,11,1)',
       },
       backdropBlur: {
         'xs': '2px'

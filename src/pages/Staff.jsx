@@ -23,13 +23,13 @@ const Staff = () => {
   return (
     <div className="space-y-6">
       {/* Tab Navigation - Light/Dark Mode Aware */}
-      <div className="bg-stone-100 dark:bg-[#1A1A1A] rounded-xl p-1.5 border border-stone-200 dark:border-[#2A2A2A] flex gap-1 overflow-x-auto">
+      <div className="bg-stone-100 dark:bg-surface-secondary rounded-xl p-1.5 border border-stone-200 dark:border-border-default flex gap-1 overflow-x-auto">
         <button
           onClick={() => setActiveTab('marketplace')}
           className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'marketplace'
-              ? 'bg-slate-900 text-amber-500 dark:bg-gold-500 dark:text-[#0D0D0D]'
-              : 'text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:bg-stone-200 dark:hover:bg-[#2A2A2A]'
+              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
+              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
           }`}
         >
           <ShoppingCart className="w-4 h-4" />
@@ -39,8 +39,8 @@ const Staff = () => {
           onClick={() => setActiveTab('roster')}
           className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'roster'
-              ? 'bg-slate-900 text-amber-500 dark:bg-gold-500 dark:text-[#0D0D0D]'
-              : 'text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:bg-stone-200 dark:hover:bg-[#2A2A2A]'
+              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
+              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -50,8 +50,8 @@ const Staff = () => {
           onClick={() => setActiveTab('auctions')}
           className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'auctions'
-              ? 'bg-slate-900 text-amber-500 dark:bg-gold-500 dark:text-[#0D0D0D]'
-              : 'text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:bg-stone-200 dark:hover:bg-[#2A2A2A]'
+              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
+              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
           }`}
         >
           <Gavel className="w-4 h-4" />
