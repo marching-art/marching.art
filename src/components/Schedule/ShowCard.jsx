@@ -1,4 +1,4 @@
-// ShowCard - Individual show card for schedule (Tactical Luxury: Ticket Stub Style)
+// ShowCard - Individual show card for schedule (Travel Itinerary Style)
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Check, Music, Plus, ExternalLink, Lock } from 'lucide-react';
@@ -14,23 +14,39 @@ const ShowCard = ({
 }) => {
   const isRegistered = myCorps.length > 0;
   const isLocked = show.locked || isPast;
+  const isOpen = !isLocked && !isRegistered;
+
+  // Determine card state styling
+  const getCardClasses = () => {
+    if (isLocked) {
+      // Past shows: grayscale with hatched overlay
+      return 'ticket-stub-past';
+    }
+    if (isRegistered) {
+      // Registered shows: thick green left border
+      return 'ticket-stub-registered';
+    }
+    // Open shows: clean white with hard shadow
+    return 'ticket-stub-open';
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className={`relative ticket-stub flex overflow-hidden ${
-        isLocked ? 'grayscale opacity-60' : ''
-      } ${
-        isRegistered && !isLocked ? 'border-l-4 border-l-green-500' : ''
-      }`}
+      className={`relative flex overflow-hidden ${getCardClasses()}`}
     >
-      {/* REGISTERED Stamp Overlay for registered cards */}
+      {/* Hatched Pattern Overlay for Past Shows */}
+      {isLocked && (
+        <div className="absolute inset-0 z-10 pointer-events-none hatched-overlay" />
+      )}
+
+      {/* REGISTERED Stamp Effect for registered cards */}
       {isRegistered && !isLocked && (
-        <div className="absolute top-2 right-2 z-20 transform rotate-12">
-          <div className="px-2 py-1 bg-green-500 text-white text-[10px] font-display font-black uppercase tracking-widest rounded shadow-lg">
-            Registered
+        <div className="absolute top-3 right-3 z-20 transform rotate-12">
+          <div className="px-3 py-1.5 bg-green-600 text-white text-xs font-display font-black uppercase tracking-widest shadow-brutal-sm border-2 border-green-800">
+            REGISTERED
           </div>
         </div>
       )}

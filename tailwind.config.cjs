@@ -79,7 +79,8 @@ module.exports = {
         'glow': 'glow 2s ease-in-out infinite alternate',
         'shimmer': 'shimmer 2s linear infinite',
         'spin-slow': 'spin 8s linear infinite',
-        'bounce-slow': 'bounce 2s infinite'
+        'bounce-slow': 'bounce 2s infinite',
+        'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite'
       },
       keyframes: {
         fadeUp: {
@@ -109,6 +110,10 @@ module.exports = {
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' }
+        },
+        pingSlow: {
+          '0%': { transform: 'scale(1)', opacity: '0.5' },
+          '75%, 100%': { transform: 'scale(1.5)', opacity: '0' }
         }
       },
       backgroundImage: {
