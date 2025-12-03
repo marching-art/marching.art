@@ -195,7 +195,7 @@ const Navigation: React.FC = () => {
   return (
     <nav
       className={`fixed left-0 top-0 h-full ${collapsed ? 'w-20' : 'w-64'} backdrop-blur-lg transition-all duration-300 z-40`}
-      style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color-light)' }}
+      style={{ background: 'var(--bg-secondary)', borderRight: '2px solid var(--border-color)' }}
     >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
@@ -285,7 +285,7 @@ const Navigation: React.FC = () => {
                       className={`
                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group
                         ${isActive
-                          ? 'bg-gold-500/20 text-gold-500 shadow-inner-glow'
+                          ? 'bg-charcoal-900 text-gold-500 font-semibold'
                           : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
                         }
                         ${collapsed ? 'justify-center' : ''}
