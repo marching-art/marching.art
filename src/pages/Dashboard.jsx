@@ -83,9 +83,9 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     } ${completed ? 'border-green-500/40' : ''}`}
   >
-    {/* Large background icon */}
+    {/* Large background icon - subtle watermark */}
     <div className="icon-card-bg flex items-center justify-center">
-      <Icon className="w-full h-full text-amber-600 dark:text-gold-500" />
+      <Icon className="w-full h-full text-slate-200 dark:text-white" />
     </div>
 
     {/* Content */}
