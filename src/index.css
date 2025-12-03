@@ -418,7 +418,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A] border-cream-500/20 shadow-lg;
+    @apply bg-[#1A1A1A] shadow-lg;
+    border-color: rgba(250, 246, 234, 0.2);
   }
 
   /* Form Input - Tactical Luxury style */
