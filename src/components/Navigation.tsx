@@ -285,7 +285,7 @@ const Navigation: React.FC = () => {
                       className={`
                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group
                         ${isActive
-                          ? 'bg-charcoal-900 text-gold-500 font-semibold'
+                          ? 'bg-black text-yellow-400 font-bold'
                           : 'text-cream-300 hover:bg-cream-500/10 hover:text-cream-100'
                         }
                         ${collapsed ? 'justify-center' : ''}
