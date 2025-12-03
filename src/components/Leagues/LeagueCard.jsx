@@ -17,35 +17,35 @@ const LeagueCard = ({ league, isMember, onJoin, onClick, userProfile }) => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-bold text-cream-100">{league.name}</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100">{league.name}</h3>
             {!league.isPublic && (
-              <Lock className="w-4 h-4 text-cream-500/60" />
+              <Lock className="w-4 h-4 text-slate-500 dark:text-cream-500/60" />
             )}
             {isCommissioner && (
-              <Crown className="w-4 h-4 text-gold-500" />
+              <Crown className="w-4 h-4 text-amber-600 dark:text-gold-500" />
             )}
           </div>
-          <p className="text-sm text-cream-500/60 line-clamp-2">
+          <p className="text-sm text-slate-500 dark:text-cream-500/60 line-clamp-2">
             {league.description || 'No description provided'}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="p-3 bg-charcoal-900/50 rounded-lg">
-          <p className="text-xs text-cream-500/60 mb-1">Members</p>
+        <div className="p-3 bg-stone-100 dark:bg-charcoal-900/50 rounded-lg">
+          <p className="text-xs text-slate-500 dark:text-cream-500/60 mb-1">Members</p>
           <div className="flex items-center gap-1">
-            <Users className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-bold text-cream-100">
+            <Users className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+            <span className="text-sm font-bold text-slate-900 dark:text-cream-100">
               {memberCount}/{maxMembers}
             </span>
           </div>
         </div>
-        <div className="p-3 bg-charcoal-900/50 rounded-lg">
-          <p className="text-xs text-cream-500/60 mb-1">Prize Pool</p>
+        <div className="p-3 bg-stone-100 dark:bg-charcoal-900/50 rounded-lg">
+          <p className="text-xs text-slate-500 dark:text-cream-500/60 mb-1">Prize Pool</p>
           <div className="flex items-center gap-1">
-            <Trophy className="w-4 h-4 text-gold-500" />
-            <span className="text-sm font-bold text-cream-100">
+            <Trophy className="w-4 h-4 text-amber-600 dark:text-gold-500" />
+            <span className="text-sm font-bold text-slate-900 dark:text-cream-100">
               {league.settings?.prizePool || 1000}
             </span>
           </div>

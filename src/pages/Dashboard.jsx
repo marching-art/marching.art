@@ -555,7 +555,7 @@ const Dashboard = () => {
                   onClick={() => handleCorpsSwitch(classId)}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
                     activeCorpsClass === classId
-                      ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
+                      ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
                       : 'bg-white dark:bg-[#1A1A1A] text-slate-600 dark:text-[#FAF6EA]/70 border-stone-200 dark:border-[#2A2A2A] hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:border-amber-500/50 dark:hover:border-gold-500/50'
                   }`}
                 >

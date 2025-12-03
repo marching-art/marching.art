@@ -160,7 +160,7 @@ const BattlePass = () => {
                   Season Pass
                 </h1>
                 {isPremium && (
-                  <span className="px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wide bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wide bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     Premium
                   </span>
@@ -330,7 +330,7 @@ const BattlePass = () => {
                     <div className={`
                       w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-4
                       ${isUnlocked
-                        ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 border-amber-400 dark:border-gold-400 shadow-lg'
+                        ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] border-amber-400 dark:border-gold-400 shadow-lg'
                         : 'bg-stone-200 dark:bg-charcoal-700 text-slate-400 dark:text-cream-500/60 border-stone-300 dark:border-charcoal-600'}
                     `}>
                       {level}

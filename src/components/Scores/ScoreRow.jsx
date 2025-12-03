@@ -34,10 +34,10 @@ const ScoreRow = ({ score, rank }) => {
   };
 
   return (
-    <div className="bg-charcoal-900/30 rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-charcoal-900/30 border border-stone-200 dark:border-transparent rounded-lg overflow-hidden shadow-sm dark:shadow-none">
       <div
         className={`p-3 md:p-4 transition-colors ${
-          hasDetailedCaptions ? 'cursor-pointer hover:bg-charcoal-900/50' : ''
+          hasDetailedCaptions ? 'cursor-pointer hover:bg-stone-50 dark:hover:bg-charcoal-900/50' : ''
         }`}
         onClick={() => hasDetailedCaptions && setExpanded(!expanded)}
       >
@@ -48,9 +48,9 @@ const ScoreRow = ({ score, rank }) => {
               #{rank}
             </span>
             <div className="min-w-0">
-              <span className="text-cream-100 font-medium text-sm md:text-base truncate block">{score.corps}</span>
+              <span className="text-slate-900 dark:text-cream-100 font-medium text-sm md:text-base truncate block">{score.corps}</span>
               {score.corpsClass && (
-                <span className="text-xs text-cream-500/60">
+                <span className="text-xs text-slate-500 dark:text-cream-500/60">
                   {score.corpsClass}
                 </span>
               )}
@@ -60,22 +60,22 @@ const ScoreRow = ({ score, rank }) => {
             {/* Desktop caption display */}
             <div className="hidden md:flex items-center gap-4 text-sm">
               <div className="text-center">
-                <div className="text-cream-500/60 text-xs">GE</div>
-                <div className="text-cream-100 font-semibold">{geScore.toFixed(3)}</div>
+                <div className="text-slate-500 dark:text-cream-500/60 text-xs">GE</div>
+                <div className="text-slate-900 dark:text-cream-100 font-semibold">{geScore.toFixed(3)}</div>
               </div>
               <div className="text-center">
-                <div className="text-cream-500/60 text-xs flex items-center gap-1">
+                <div className="text-slate-500 dark:text-cream-500/60 text-xs flex items-center gap-1">
                   <Eye className="w-3 h-3" />
                   Visual
                 </div>
-                <div className="text-cream-100 font-semibold">{visualScore.toFixed(3)}</div>
+                <div className="text-slate-900 dark:text-cream-100 font-semibold">{visualScore.toFixed(3)}</div>
               </div>
               <div className="text-center">
-                <div className="text-cream-500/60 text-xs flex items-center gap-1">
+                <div className="text-slate-500 dark:text-cream-500/60 text-xs flex items-center gap-1">
                   <Music className="w-3 h-3" />
                   Music
                 </div>
-                <div className="text-cream-100 font-semibold">{musicScore.toFixed(3)}</div>
+                <div className="text-slate-900 dark:text-cream-100 font-semibold">{musicScore.toFixed(3)}</div>
               </div>
             </div>
             <div className="text-right">
@@ -86,7 +86,7 @@ const ScoreRow = ({ score, rank }) => {
 
         {/* Mobile caption summary */}
         {hasCaptions && (
-          <div className="md:hidden flex items-center justify-end gap-3 mt-2 text-xs text-cream-500/60">
+          <div className="md:hidden flex items-center justify-end gap-3 mt-2 text-xs text-slate-500 dark:text-cream-500/60">
             <span>GE: {geScore.toFixed(1)}</span>
             <span>V: {visualScore.toFixed(1)}</span>
             <span>M: {musicScore.toFixed(1)}</span>
@@ -105,7 +105,7 @@ const ScoreRow = ({ score, rank }) => {
           exit={{ height: 0, opacity: 0 }}
           className="px-3 pb-3 md:px-4 md:pb-4"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 p-3 md:p-4 bg-charcoal-900/50 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 p-3 md:p-4 bg-stone-100 dark:bg-charcoal-900/50 rounded-lg">
             {Object.entries(CAPTION_CATEGORIES).map(([key, caption]) => {
               const value = score.captions[key] || 0;
               const maxValue = caption.weight;
@@ -114,16 +114,16 @@ const ScoreRow = ({ score, rank }) => {
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-cream-500/60">{caption.shortName}</span>
-                    <span className="text-cream-100 font-semibold">{value.toFixed(3)}</span>
+                    <span className="text-slate-500 dark:text-cream-500/60">{caption.shortName}</span>
+                    <span className="text-slate-900 dark:text-cream-100 font-semibold">{value.toFixed(3)}</span>
                   </div>
-                  <div className="h-1.5 md:h-2 bg-charcoal-900 rounded-full overflow-hidden">
+                  <div className="h-1.5 md:h-2 bg-stone-200 dark:bg-charcoal-900 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-gold-500 to-gold-400"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <div className="text-xs text-cream-500/40">of {maxValue}</div>
+                  <div className="text-xs text-slate-400 dark:text-cream-500/40">of {maxValue}</div>
                 </div>
               );
             })}

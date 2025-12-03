@@ -209,7 +209,7 @@ const Settings = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-display font-medium text-sm transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-[#0D0D0D]'
+                  ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A]'
                   : 'text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-700 dark:hover:text-[#FAF6EA]'
               }`}
             >
