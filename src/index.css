@@ -824,19 +824,20 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 /* Premium Card - Brutalist Style */
 @layer components {
   /* Light Mode: White cards on cream bg (Paper on Desk look) */
+  /* Dark Mode: Charcoal cards with gold shadow (Stadium Night look) */
   /* CRITICAL: High contrast text for readability */
   .card-brutalist {
-    /* Backgrounds */
+    /* Background: White in Light Mode, Charcoal in Dark */
     @apply bg-white dark:bg-[#1A1A1A];
 
-    /* Borders */
+    /* Text: Dark Slate in Light Mode, White in Dark (CRITICAL FIX) */
+    @apply text-slate-900 dark:text-white;
+
+    /* Border: Stone in Light, White/5 in Dark */
     @apply border-2 border-stone-200 dark:border-white/5;
 
-    /* Shadows */
-    @apply shadow-[4px_4px_0px_0px_rgba(13,13,13,0.1)] dark:shadow-[4px_4px_0px_0px_#FFD44D];
-
-    /* Typography (CRITICAL FIX - Enforces high contrast text) */
-    @apply text-slate-900 dark:text-white;
+    /* Shadow: Hard Black shadow in Light, Gold in Dark */
+    @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_#FFD44D];
 
     @apply rounded-xl transition-all duration-200;
   }
