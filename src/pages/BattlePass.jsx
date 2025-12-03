@@ -156,11 +156,11 @@ const BattlePass = () => {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
                 <Crown className="w-8 h-8 text-amber-600 dark:text-gold-500" />
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-[#FAF6EA]">
+                <h1 className="text-3xl md:text-4xl font-display font-bold text-text-main">
                   Season Pass
                 </h1>
                 {isPremium && (
-                  <span className="px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wide bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full text-xs font-display font-bold uppercase tracking-wide bg-primary text-text-inverse flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     Premium
                   </span>
