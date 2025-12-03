@@ -1,4 +1,4 @@
-// ShowsGrid - Grid display of shows for a selected week
+// ShowsGrid - Grid display of shows for a selected week (Brutalist Architecture)
 import React from 'react';
 import { motion } from 'framer-motion';
 import ShowCard from './ShowCard';
@@ -28,7 +28,7 @@ const ShowsGrid = ({
       animate={{ opacity: 1, y: 0 }}
       className="flex-1 overflow-y-auto min-h-0"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
         {shows.map((show, index) => {
           const myCorps = getMyCorpsAtShow(show);
           const showDate = getActualDate(show.day);

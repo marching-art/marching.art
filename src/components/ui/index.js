@@ -7,4 +7,7 @@ export {
   BrutalistDivider,
   BrutalistHeader,
   BrutalistIconBox,
+  BrutalistTimeline,
+  BrutalistTip,
+  BrutalistStamp,
 } from './Brutalist';
