@@ -59,22 +59,25 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
   // Rarity-based styling - Gold for Hall of Fame (Legendary), Silver for Rare, Standard for Common
   const rarityStyles = {
     legendary: {
-      border: 'border-[3px] border-amber-500 dark:border-[#FFD44D]',
-      glow: 'shadow-[0_0_12px_rgba(217,163,0,0.3)] dark:shadow-[0_0_12px_rgba(255,212,77,0.4)]',
-      badge: 'bg-amber-500 dark:bg-[#FFD44D] text-[#0D0D0D]',
+      border: 'border-[3px] border-[#D4AF37]',
+      glow: 'shadow-[0_0_12px_rgba(212,175,55,0.4)] dark:shadow-[0_0_16px_rgba(212,175,55,0.5)]',
+      badge: 'bg-[#D4AF37] text-[#0D0D0D]',
       label: 'Hall of Fame',
+      isHallOfFame: true,
     },
     rare: {
-      border: 'border-[3px] border-slate-400 dark:border-slate-300',
-      glow: 'shadow-[0_0_8px_rgba(148,163,184,0.2)]',
+      border: 'border-2 border-[#0D0D0D] dark:border-[#FAF6EA]/60',
+      glow: '',
       badge: 'bg-slate-400 dark:bg-slate-300 text-[#0D0D0D]',
       label: 'Rare',
+      isHallOfFame: false,
     },
     common: {
-      border: 'border-2 border-stone-300 dark:border-[#3A3A3A]',
+      border: 'border-2 border-[#0D0D0D] dark:border-[#3A3A3A]',
       glow: '',
       badge: 'bg-stone-300 dark:bg-[#3A3A3A] text-slate-600 dark:text-[#FAF6EA]/70',
       label: 'Common',
+      isHallOfFame: false,
     }
   };
 
@@ -93,9 +96,9 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
         <CaptionIcon className="w-32 h-32 text-slate-900 dark:text-[#FAF6EA] translate-x-4 translate-y-4" />
       </div>
 
-      {/* Caption Badge - Top Right, High Contrast */}
+      {/* Caption Badge - Top Right, High Contrast Monospace */}
       <div className="absolute top-2 right-2 z-20">
-        <span className={`inline-flex items-center px-2 py-1 text-[10px] font-display font-black uppercase tracking-wider ${roleBadge}`}>
+        <span className="inline-flex items-center px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider bg-[#0D0D0D] text-white border border-[#0D0D0D] dark:border-white/20">
           {staff.caption}
         </span>
       </div>
@@ -121,9 +124,12 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
           </span>
         </div>
 
-        {/* Name */}
-        <h3 className="text-base font-display font-bold text-slate-900 dark:text-white uppercase tracking-wide truncate mb-1">
-          {staff.name}
+        {/* Name - With Star for Hall of Fame */}
+        <h3 className="flex items-center gap-1.5 text-base font-display font-bold text-slate-900 dark:text-white uppercase tracking-wide mb-1">
+          <span className="truncate">{staff.name}</span>
+          {style.isHallOfFame && (
+            <Star className="w-4 h-4 flex-shrink-0 text-[#D4AF37] fill-[#D4AF37]" />
+          )}
         </h3>
 
         {/* Biography - Compact */}
@@ -137,24 +143,26 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
             <span className="text-green-600 dark:text-green-400 font-bold">+{Math.round(staff.baseValue / 100)}%</span> boost
           </div>
 
-          {/* Buy Button - Anchored Bottom Right */}
+          {/* Price Button - Anchored Bottom Right */}
           {owned ? (
-            <div className="flex items-center gap-1 px-2.5 py-1 bg-green-500/20 text-green-600 dark:text-green-400 text-[11px] font-display font-bold uppercase">
-              <Check className="w-3 h-3" />
+            <div className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 text-green-600 dark:text-green-400 text-xs font-mono font-bold uppercase border-2 border-green-500/30">
+              <Check className="w-3.5 h-3.5" />
               Owned
             </div>
           ) : (
             <button
               onClick={onPurchase}
               disabled={!canAfford}
-              className={`flex items-center gap-1 px-3 py-1.5 font-display font-bold text-xs uppercase tracking-wide transition-all ${
+              className={`relative flex items-center gap-1.5 px-4 py-2 font-mono font-bold text-xs uppercase tracking-wide transition-all border-2 ${
                 canAfford
-                  ? 'bg-[#0D0D0D] dark:bg-[#FFD44D] text-[#FFD44D] dark:text-[#0D0D0D] hover:bg-[#1A1A1A] dark:hover:bg-[#FFE066] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,212,77,0.6)]'
-                  : 'bg-stone-300 dark:bg-[#2A2A2A] text-stone-500 dark:text-[#FAF6EA]/30 cursor-not-allowed opacity-60'
+                  ? 'bg-[#0D0D0D] dark:bg-[#FFD44D] text-white dark:text-[#0D0D0D] border-[#0D0D0D] dark:border-[#FFD44D] hover:bg-[#1A1A1A] dark:hover:bg-[#FFE066] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(212,175,55,0.6)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[4px_4px_0px_0px_rgba(212,175,55,0.8)] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                  : 'bg-stone-200 dark:bg-[#2A2A2A] text-stone-400 dark:text-[#FAF6EA]/25 border-stone-300 dark:border-[#3A3A3A] cursor-not-allowed bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.05)_4px,rgba(0,0,0,0.05)_8px)] dark:bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(255,255,255,0.03)_4px,rgba(255,255,255,0.03)_8px)]'
               }`}
             >
-              <span className="font-mono font-bold">$ {staff.baseValue}</span>
-              {canAfford && <ShoppingCart className="w-3 h-3 ml-0.5" />}
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>{staff.baseValue}</span>
+              {canAfford && <ShoppingCart className="w-3.5 h-3.5" />}
+              {!canAfford && <Lock className="w-3 h-3 ml-0.5 opacity-50" />}
             </button>
           )}
         </div>
