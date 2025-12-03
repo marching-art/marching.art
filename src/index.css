@@ -251,7 +251,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .paper-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -284,7 +284,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Deep charcoal with gold hard shadow */
   [data-theme="dark"] .stadium-banner {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border: 2px solid rgba(255, 212, 77, 0.3);
     border-radius: 4px;
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
@@ -331,7 +331,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Charcoal badge with gold hard shadow */
   [data-theme="dark"] .score-bug {
-    @apply bg-[#0D0D0D];
+    background-color: #0D0D0D;
     border-color: rgba(255, 212, 77, 0.5);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -358,7 +358,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .icon-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -384,8 +384,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Toolbar - For navigation elements */
   .dark-toolbar {
-    @apply bg-[#1A1A1A] text-white rounded-full px-4 py-2;
-    @apply border border-[#2A2A2A];
+    background-color: #1A1A1A;
+    color: white;
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    border: 1px solid #2A2A2A;
   }
 
   /* Ticket Stub - Schedule card style - Brutalist */
@@ -404,7 +407,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .ticket-stub {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -442,13 +445,14 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold button with Charcoal text */
   [data-theme="dark"] .btn-pill {
-    @apply bg-gold-500 text-[#0D0D0D];
+    background-color: #FFD44D;
+    color: #0D0D0D;
     border-color: #FFD44D;
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .btn-pill:hover {
-    @apply bg-gold-400;
+    background-color: #FFDD73;
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
@@ -461,7 +465,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -483,7 +487,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-input {
-    @apply bg-[#0D0D0D];
+    background-color: #0D0D0D;
     border-color: rgba(255, 212, 77, 0.3);
     color: #FAF6EA;
   }
@@ -498,7 +502,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-input::placeholder {
-    @apply text-[#FAF6EA]/30;
+    color: rgba(250, 246, 234, 0.3);
   }
 
   .form-label {
@@ -547,7 +551,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .role-badge-brass {
-    @apply bg-yellow-500 text-[#0D0D0D];
+    @apply bg-yellow-500;
+    color: #0D0D0D;
   }
 
   .role-badge-admin {
@@ -570,7 +575,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .compact-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 0.8);
   }
 
@@ -731,7 +736,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -1080,11 +1085,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Light Mode: White cards with black shadow */
   /* Dark Mode: Charcoal cards with gold shadow */
   .card-brutalist {
-    /* Background: White in Light Mode, Charcoal in Dark */
-    @apply bg-white dark:bg-[#1A1A1A];
+    /* Background: White in Light Mode */
+    @apply bg-white;
 
-    /* Text: Dark Slate in Light Mode, White in Dark */
-    @apply text-slate-900 dark:text-white;
+    /* Text: Dark Slate in Light Mode */
+    @apply text-slate-900;
 
     /* STRICT: 2px solid border-neutral-900 */
     border: 2px solid #171717;
@@ -1097,6 +1102,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .card-brutalist {
+    background-color: #1A1A1A;
+    color: white;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -1115,14 +1122,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Light Mode: White card with black hard shadow */
   /* Dark Mode: Deep charcoal with gold hard shadow */
   .card-hero {
-    @apply bg-white dark:bg-[#0D0D0D] relative overflow-hidden;
-    @apply text-slate-900 dark:text-white;
+    @apply bg-white relative overflow-hidden;
+    @apply text-slate-900;
     border: 2px solid #171717;
     border-radius: 4px;
     box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card-hero {
+    background-color: #0D0D0D;
+    color: white;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -1143,9 +1152,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Light Mode: White tiles with black hard shadow */
   /* Dark Mode: Charcoal tiles with gold hard shadow */
   .tile-action {
-    @apply aspect-square bg-white dark:bg-[#1A1A1A] p-4;
+    @apply aspect-square bg-white p-4;
     @apply flex flex-col items-center justify-center gap-2 cursor-pointer;
-    @apply text-slate-900 dark:text-white;
+    @apply text-slate-900;
     border: 2px solid #171717;
     border-radius: 4px;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
@@ -1153,17 +1162,20 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .tile-action {
+    background-color: #1A1A1A;
+    color: white;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .tile-action:hover {
-    @apply bg-amber-500 dark:bg-gold-500;
+    @apply bg-amber-500;
     transform: translateY(-3px);
     box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .tile-action:hover {
+    background-color: #FFD44D;
     border-color: rgba(255, 212, 77, 0.6);
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -1180,8 +1192,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Light Mode: White cards with black hard shadow */
   /* Dark Mode: Charcoal cards with gold hard shadow */
   .card-tcg {
-    @apply bg-white dark:bg-[#1A1A1A] overflow-hidden relative;
-    @apply text-slate-900 dark:text-white;
+    @apply bg-white overflow-hidden relative;
+    @apply text-slate-900;
     border: 2px solid #171717;
     border-radius: 4px;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
@@ -1189,6 +1201,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .card-tcg {
+    background-color: #1A1A1A;
+    color: white;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -1214,7 +1228,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .rarity-common {
-    @apply border-[#3A3A3A];
+    border-color: #3A3A3A;
   }
 
   /* Price Tag Button - Tactical Brutalist: Flat solid colors, hard shadows */
@@ -1259,7 +1273,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Chunky Progress Bar - Tactical Brutalist */
   .progress-chunky {
-    @apply h-4 w-full bg-[#0D0D0D] overflow-hidden;
+    @apply h-4 w-full overflow-hidden;
+    background-color: #0D0D0D;
     border: 2px solid #171717;
     border-radius: 4px;
   }
