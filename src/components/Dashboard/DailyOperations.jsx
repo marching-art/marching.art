@@ -400,10 +400,10 @@ const DailyOperations = ({
         </button>
       </div>
 
-      {/* Daily Activities */}
-      <div className="glass rounded-xl p-4">
-        <h4 className="text-sm font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-gold-500" />
+      {/* Daily Activities - Tactical Checklist */}
+      <div className="glass rounded-xl p-4 border border-amber-500/20 dark:border-gold-500/20">
+        <h4 className="text-sm font-display font-bold text-amber-700 dark:text-gold-400 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b border-amber-500/20 dark:border-gold-500/20">
+          <Zap className="w-4 h-4 text-amber-600 dark:text-gold-500" />
           Daily Activities
         </h4>
 
@@ -453,11 +453,11 @@ const DailyOperations = ({
 
       {/* Sectional Rehearsals */}
       {opsStatus?.sectionalRehearsals && (
-        <div className="glass rounded-xl p-4">
-          <h4 className="text-sm font-semibold text-cream-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <div className="glass rounded-xl p-4 border border-blue-500/20">
+          <h4 className="text-sm font-display font-bold text-blue-300 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b border-blue-500/20">
             <Target className="w-4 h-4 text-blue-400" />
             Sectional Rehearsals
-            <span className="text-xs font-normal text-cream-500/60">(+2% readiness each)</span>
+            <span className="text-xs font-normal text-blue-400/60">(+2% readiness each)</span>
           </h4>
 
           <div className="grid grid-cols-4 gap-2">
@@ -838,46 +838,52 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
   );
 };
 
-// Activity Row Component
+// Activity Row Component - Commander's tactical checklist
+// Available (active): High-contrast yellow accent background as call-to-action
+// Completed: 50% opacity with strikethrough text
 const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick }) => {
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all border-2 ${
         available
-          ? 'bg-charcoal-800/50 hover:bg-charcoal-800 cursor-pointer'
-          : 'bg-charcoal-900/30 cursor-default opacity-60'
+          ? 'bg-amber-500/20 dark:bg-gold-500/20 border-amber-500/50 dark:border-gold-500/50 hover:bg-amber-500/30 dark:hover:bg-gold-500/30 hover:border-amber-500 dark:hover:border-gold-500 cursor-pointer shadow-sm'
+          : 'bg-charcoal-900/30 border-transparent cursor-default opacity-50'
       }`}
     >
-      <div className={`p-2 rounded-lg ${available ? 'bg-gold-500/20' : 'bg-green-500/20'}`}>
+      <div className={`p-2 rounded-lg ${available ? 'bg-amber-500/30 dark:bg-gold-500/30' : 'bg-green-500/20'}`}>
         {loading ? (
-          <div className="w-4 h-4 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : available ? (
-          <Icon className="w-4 h-4 text-gold-500" />
+          <Icon className="w-4 h-4 text-amber-600 dark:text-gold-400" />
         ) : (
           <Check className="w-4 h-4 text-green-500" />
         )}
       </div>
       <div className="flex-1 text-left">
-        <div className="text-sm font-medium text-cream-100">{title}</div>
-        <div className="text-xs text-cream-500/60">{reward}</div>
+        <div className={`text-sm font-medium ${available ? 'text-amber-900 dark:text-gold-300' : 'text-cream-500 line-through'}`}>
+          {title}
+        </div>
+        <div className={`text-xs ${available ? 'text-amber-700 dark:text-gold-500/80' : 'text-cream-500/40 line-through'}`}>
+          {reward}
+        </div>
       </div>
-      {available && <ChevronRight className="w-4 h-4 text-cream-500/40" />}
+      {available && <ChevronRight className="w-4 h-4 text-amber-600 dark:text-gold-400" />}
     </button>
   );
 };
 
-// Sectional Button Component
+// Sectional Button Component - Tactical grid buttons
 const SectionalButton = ({ icon: Icon, label, available, loading, onClick }) => {
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
+      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all border-2 ${
         available
-          ? 'bg-charcoal-800/50 hover:bg-charcoal-800 cursor-pointer'
-          : 'bg-charcoal-900/30 cursor-default opacity-60'
+          ? 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 hover:border-blue-500/50 cursor-pointer'
+          : 'bg-charcoal-900/30 border-transparent cursor-default opacity-50'
       }`}
     >
       {loading ? (
@@ -887,7 +893,7 @@ const SectionalButton = ({ icon: Icon, label, available, loading, onClick }) => 
       ) : (
         <Check className="w-5 h-5 text-green-500" />
       )}
-      <span className="text-xs text-cream-400">{label}</span>
+      <span className={`text-xs ${available ? 'text-blue-300' : 'text-cream-500/50 line-through'}`}>{label}</span>
     </button>
   );
 };

@@ -37,8 +37,8 @@ import { retireCorps } from '../firebase/functions';
 // BRUTALIST DESIGN COMPONENTS
 // ============================================================================
 
-// Chunky Progress Bar Component
-const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
+// Tactical Metric Gauge Component - Commander's measurement display
+const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
   const percentage = Math.round(value * 100);
   const colorClasses = {
     gold: 'bg-amber-500 dark:bg-gold-500',
@@ -49,24 +49,59 @@ const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
     purple: 'bg-purple-500'
   };
 
+  const textColorClasses = {
+    gold: 'text-amber-700 dark:text-gold-500',
+    blue: 'text-blue-700 dark:text-blue-400',
+    red: 'text-rose-700 dark:text-rose-400',
+    orange: 'text-orange-700 dark:text-orange-400',
+    green: 'text-green-700 dark:text-green-400',
+    purple: 'text-purple-700 dark:text-purple-400'
+  };
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 text-slate-600 dark:text-white" />}
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-slate-500 dark:text-white/60">
-            {label}
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-slate-600 dark:text-white/70" />}
+        <span className="text-xs font-display font-bold uppercase tracking-widest text-slate-500 dark:text-white/60">
+          {label}
+        </span>
+      </div>
+      {/* Tactical Progress Track with Tick Marks */}
+      <div className="relative">
+        {/* Track Background with Grid Pattern */}
+        <div className="h-6 w-full bg-stone-200 dark:bg-[#0D0D0D] rounded-md overflow-hidden border-2 border-stone-300 dark:border-[#2A2A2A] relative">
+          {/* Tick marks overlay - simulates ruler/measurement device */}
+          <div className="absolute inset-0 flex">
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 border-r border-stone-300/50 dark:border-white/10 last:border-r-0"
+              />
+            ))}
+          </div>
+          {/* Major tick marks at 25%, 50%, 75% */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute left-1/4 top-0 bottom-0 w-0.5 bg-stone-400/30 dark:bg-white/20" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-stone-400/50 dark:bg-white/30" />
+            <div className="absolute left-3/4 top-0 bottom-0 w-0.5 bg-stone-400/30 dark:bg-white/20" />
+          </div>
+          {/* Progress Fill */}
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className={`h-full rounded-sm ${colorClasses[color]} relative`}
+          >
+            {/* Inner shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+          </motion.div>
+        </div>
+        {/* Percentage Display - Inside track on right side */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+          <span className={`font-mono font-bold text-sm ${percentage > 80 ? 'text-white dark:text-charcoal-900' : textColorClasses[color]} drop-shadow-sm`}>
+            {percentage}%
           </span>
         </div>
-        <span className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400">{percentage}%</span>
-      </div>
-      <div className="progress-chunky bg-stone-200 dark:bg-[#0D0D0D] border-stone-300 dark:border-[#2A2A2A]">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className={`progress-chunky-fill ${colorClasses[color]}`}
-        />
       </div>
     </div>
   );
@@ -584,7 +619,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-8 stadium-banner p-6 md:p-8"
+            className="lg:col-span-8 stadium-banner p-0 overflow-hidden"
           >
             {/* Stadium overlay silhouette */}
             <div className="stadium-overlay" />
@@ -595,75 +630,83 @@ const Dashboard = () => {
             </div>
 
             <div className="relative z-10">
-              {/* Corps Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                {/* Corps Identity */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`px-3 py-1.5 rounded-md text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
-                      {getCorpsClassName(activeCorpsClass)}
-                    </span>
-                    {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/20 dark:bg-gold-500/20 text-amber-600 dark:text-gold-400 text-[10px] font-bold uppercase tracking-wide">
-                        <Crown size={10} />
-                        TOP 10
+              {/* ============================================================
+                  CORPS STATUS HEADER - Distinct section with bottom border
+                  ============================================================ */}
+              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b-2 border-stone-200 dark:border-[#2A2A2A]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* Corps Identity */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-3 py-1.5 rounded-md text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                        {getCorpsClassName(activeCorpsClass)}
                       </span>
+                      {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/20 dark:bg-gold-500/20 text-amber-600 dark:text-gold-400 text-[10px] font-bold uppercase tracking-wide">
+                          <Crown size={10} />
+                          TOP 10
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-slate-900 dark:text-[#FAF6EA]">
+                      {activeCorps.corpsName || activeCorps.name || 'UNSPECIFIED'}
+                    </h2>
+                    {activeCorps.showConcept && (
+                      <p className="text-slate-500 dark:text-[#FAF6EA]/50 text-sm md:text-base font-body italic mt-1">
+                        <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
+                        {activeCorps.showConcept}
+                        <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
+                      </p>
                     )}
                   </div>
-                  <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-slate-900 dark:text-[#FAF6EA] mb-2">
-                    {activeCorps.corpsName || activeCorps.name}
-                  </h2>
-                  {activeCorps.showConcept && (
-                    <p className="text-slate-500 dark:text-[#FAF6EA]/50 text-base md:text-lg font-body italic">
-                      <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
-                      {activeCorps.showConcept}
-                      <span className="text-amber-600 dark:text-gold-500 not-italic">"</span>
-                    </p>
-                  )}
-                </div>
 
-                {/* Performance Multiplier - Score Bug Style */}
-                <div className="flex-shrink-0 flex flex-col items-center">
-                  <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-[#0D0D0D] dark:to-[#1A1A1A] border-amber-500/50 dark:border-gold-500/50">
-                    <div className="text-[8px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
-                      Multiplier
-                    </div>
-                    <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}>
-                      {multiplier.toFixed(2)}x
-                    </div>
-                    <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
-                      <TrendingUp size={12} />
-                      {multiplierStatus.label}
+                  {/* Performance Multiplier - Score Bug Style */}
+                  <div className="flex-shrink-0 flex flex-col items-center">
+                    <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-[#0D0D0D] dark:to-[#1A1A1A] border-amber-500/50 dark:border-gold-500/50">
+                      <div className="text-[8px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
+                        Multiplier
+                      </div>
+                      <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}>
+                        {multiplier.toFixed(2)}x
+                      </div>
+                      <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
+                        <TrendingUp size={12} />
+                        {multiplierStatus.label}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Health Metrics - Chunky Progress Bars */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <ChunkyProgressBar
-                  value={readiness}
-                  color="blue"
-                  label="Readiness"
-                  icon={Target}
-                />
-                <ChunkyProgressBar
-                  value={morale}
-                  color="red"
-                  label="Morale"
-                  icon={Heart}
-                />
-                <ChunkyProgressBar
-                  value={avgEquipment}
-                  color="orange"
-                  label="Equipment"
-                  icon={Wrench}
-                />
+              {/* ============================================================
+                  EXECUTION METRICS - Tactical Gauge Section
+                  ============================================================ */}
+              <div className="px-6 md:px-8 py-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <TacticalMetricGauge
+                    value={readiness}
+                    color="blue"
+                    label="Readiness"
+                    icon={Target}
+                  />
+                  <TacticalMetricGauge
+                    value={morale}
+                    color="red"
+                    label="Morale"
+                    icon={Heart}
+                  />
+                  <TacticalMetricGauge
+                    value={avgEquipment}
+                    color="orange"
+                    label="Equipment"
+                    icon={Wrench}
+                  />
+                </div>
               </div>
 
               {/* Quick Stats Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t-2 border-stone-200 dark:border-[#2A2A2A]">
-                <div className="flex items-center gap-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-stone-200/50 dark:border-[#2A2A2A]/50 mt-0">
+                <div className="flex items-center gap-6 pt-5">
                   <div className="text-center">
                     <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">{rehearsalsThisWeek}/7</div>
                     <div className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 uppercase tracking-widest font-display">This Week</div>
@@ -687,7 +730,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Quick Links */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-5">
                   <button
                     onClick={() => setShowCaptionSelection(true)}
                     className="p-3 rounded-lg bg-amber-100 dark:bg-gold-500/20 border-2 border-amber-400 dark:border-gold-500/50 hover:border-amber-500 dark:hover:border-gold-500 text-amber-600 dark:text-gold-500 hover:text-amber-700 dark:hover:text-gold-400 transition-all"
