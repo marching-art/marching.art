@@ -883,31 +883,53 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Hero Card Variant - For Command Center */
+  /* Light Mode: White card with black shadow */
+  /* Dark Mode: Deep charcoal with gold accents */
   .card-hero {
-    @apply bg-[#0D0D0D] border-3 border-[#2A2A2A] rounded-2xl relative overflow-hidden;
+    @apply bg-white dark:bg-[#0D0D0D] border-3 border-stone-200 dark:border-[#2A2A2A] rounded-2xl relative overflow-hidden;
+    @apply text-slate-900 dark:text-white;
     box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  [data-theme="dark"] .card-hero {
+    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 0.5);
   }
 
   .card-hero::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.1) 0%, transparent 60%);
+    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.05) 0%, transparent 60%);
     pointer-events: none;
   }
 
+  [data-theme="dark"] .card-hero::before {
+    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.1) 0%, transparent 60%);
+  }
+
   /* Action Tile - Square interactive cards */
+  /* Light Mode: White tiles with black shadow (Paper on Desk look) */
+  /* Dark Mode: Charcoal tiles with gold shadow (Stadium Night look) */
   .tile-action {
-    @apply aspect-square bg-[#1A1A1A] border-2 border-[#2A2A2A] rounded-xl p-4;
+    @apply aspect-square bg-white dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] rounded-xl p-4;
     @apply flex flex-col items-center justify-center gap-2 cursor-pointer;
+    @apply text-slate-900 dark:text-white;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
     transition: all 0.2s ease;
   }
 
+  [data-theme="dark"] .tile-action {
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+  }
+
   .tile-action:hover {
-    @apply bg-gold-500 border-gold-400;
+    @apply bg-amber-500 dark:bg-gold-500 border-amber-400 dark:border-gold-400;
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 0.5);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  [data-theme="dark"] .tile-action:hover {
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 0.8);
   }
 
   .tile-action:hover .tile-icon {
@@ -919,14 +941,25 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Trading Card - TCG Style */
+  /* Light Mode: White cards with black shadow */
+  /* Dark Mode: Charcoal cards with gold shadow */
   .card-tcg {
-    @apply bg-[#1A1A1A] border-2 rounded-xl overflow-hidden relative;
+    @apply bg-white dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden relative;
+    @apply text-slate-900 dark:text-white;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
     transition: all 0.25s ease;
   }
 
+  [data-theme="dark"] .card-tcg {
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+  }
+
   .card-tcg:hover {
     transform: translateY(-4px) scale(1.02);
+    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  [data-theme="dark"] .card-tcg:hover {
     box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 0.8);
   }
 
