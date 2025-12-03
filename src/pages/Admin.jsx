@@ -110,17 +110,17 @@ const Admin = () => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-2xl p-8"
+        className="bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-cream-500/20 shadow-sm dark:shadow-none rounded-2xl p-8"
       >
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-gold-500/20 rounded-xl">
-            <Shield className="w-8 h-8 text-gold-500" />
+          <div className="p-3 bg-amber-500/20 dark:bg-gold-500/20 rounded-xl border border-amber-500/20 dark:border-gold-500/20">
+            <Shield className="w-8 h-8 text-amber-600 dark:text-gold-500" />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-gradient">
+            <h1 className="text-3xl font-display font-bold text-charcoal-950 dark:text-cream-100">
               Admin Panel
             </h1>
-            <p className="text-cream-500">System Management & Administration</p>
+            <p className="text-slate-500 dark:text-cream-500">System Management & Administration</p>
           </div>
         </div>
       </motion.div>

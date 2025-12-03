@@ -81,16 +81,16 @@ const RankingsTab = ({
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-gradient-to-r from-gold-500/20 to-gold-400/10 border border-gold-500/30 rounded-lg p-4 md:p-6"
+          className="bg-gradient-to-r from-amber-500/20 dark:from-gold-500/20 to-amber-400/10 dark:to-gold-400/10 border border-amber-500/30 dark:border-gold-500/30 rounded-xl shadow-sm p-4 md:p-6"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gold-500/20 flex items-center justify-center">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-amber-500/20 dark:bg-gold-500/20 flex items-center justify-center">
                 {getRankIcon(userRank)}
               </div>
               <div>
-                <p className="text-cream-400 text-xs md:text-sm">Your Current Rank</p>
-                <p className="text-xl md:text-2xl font-bold text-cream-100">#{userRank}</p>
+                <p className="text-slate-500 dark:text-cream-400 text-xs md:text-sm">Your Current Rank</p>
+                <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-cream-100">#{userRank}</p>
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const RankingsTab = ({
       )}
 
       {/* Rankings Sub-tabs */}
-      <div className="border-b border-cream-500/20">
+      <div className="border-b border-cream-200 dark:border-cream-500/20">
         <div className="flex justify-center gap-1 overflow-x-auto pb-px -mx-4 px-4 md:mx-0 md:px-0">
           {rankingsTabs.map((tab) => {
             const Icon = tab.icon;
@@ -108,8 +108,8 @@ const RankingsTab = ({
                 onClick={() => setRankingsTab(tab.id)}
                 className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 font-medium transition-all whitespace-nowrap text-sm md:text-base ${
                   rankingsTab === tab.id
-                    ? 'text-gold-500 border-b-2 border-gold-500'
-                    : 'text-cream-500/60 hover:text-cream-300'
+                    ? 'text-amber-600 dark:text-gold-500 border-b-2 border-amber-600 dark:border-gold-500'
+                    : 'text-slate-500 dark:text-cream-500/60 hover:text-slate-700 dark:hover:text-cream-300'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -129,8 +129,8 @@ const RankingsTab = ({
               onClick={() => setActiveClass(cls.id)}
               className={`px-3 md:px-4 py-2 rounded-lg transition-all text-sm ${
                 activeClass === cls.id
-                  ? 'bg-cream-100 text-charcoal-900 font-medium'
-                  : 'bg-charcoal-800/50 text-cream-300 hover:bg-charcoal-800'
+                  ? 'bg-amber-500 dark:bg-cream-100 text-white dark:text-charcoal-900 font-medium'
+                  : 'bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 hover:bg-stone-200 dark:hover:bg-charcoal-800'
               }`}
             >
               {cls.label}
@@ -139,13 +139,13 @@ const RankingsTab = ({
         </div>
       </div>
 
-      {/* Leaderboard Table/Cards */}
+      {/* Leaderboard Table/Cards - Wrapped in Card Container */}
       <motion.div
         key={`${rankingsTab}-${activeClass}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-charcoal-800/30 rounded-lg overflow-hidden"
+        className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl overflow-hidden"
       >
         {loading ? (
           <LoadingScreen fullScreen={false} />
@@ -154,25 +154,25 @@ const RankingsTab = ({
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-stone-100 dark:bg-charcoal-900/50 border-b border-stone-300 dark:border-cream-500/10">
+                <thead className="bg-cream-100 dark:bg-charcoal-900/50 border-b border-cream-200 dark:border-cream-500/10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Rank</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Player</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Corps</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-slate-600 dark:text-cream-400">Score</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-slate-600 dark:text-cream-400">Trophies</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-charcoal-700 dark:text-cream-400">Rank</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-charcoal-700 dark:text-cream-400">Player</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-charcoal-700 dark:text-cream-400">Corps</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-charcoal-700 dark:text-cream-400">Score</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-charcoal-700 dark:text-cream-400">Trophies</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-cream-200 dark:divide-cream-500/10">
                   {currentData.map((entry, idx) => (
                     <tr
                       key={entry.id}
-                      className={`border-b border-stone-200 dark:border-cream-500/10 hover:bg-stone-100 dark:hover:bg-charcoal-800/50 transition-colors ${
+                      className={`hover:bg-cream-50 dark:hover:bg-charcoal-800/50 transition-colors ${
                         loggedInProfile?.username === entry.username
                           ? 'bg-amber-50 dark:bg-gold-500/5'
                           : idx % 2 === 0
                           ? 'bg-white dark:bg-transparent'
-                          : 'bg-stone-50 dark:bg-charcoal-900/20'
+                          : 'bg-cream-50/50 dark:bg-charcoal-900/20'
                       }`}
                     >
                       <td className="px-6 py-4">
@@ -251,9 +251,9 @@ const RankingsTab = ({
           </>
         ) : (
           <div className="text-center py-12 md:py-20 px-4">
-            <Trophy className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
-            <p className="text-cream-300 text-base md:text-lg font-semibold">No scores recorded yet</p>
-            <p className="text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
+            <Trophy className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/30 mx-auto mb-4" />
+            <p className="text-slate-700 dark:text-cream-300 text-base md:text-lg font-semibold">No scores recorded yet</p>
+            <p className="text-slate-500 dark:text-cream-500/60 text-sm mt-2 max-w-md mx-auto">
               {rankingsTab === 'weekly'
                 ? 'Weekly rankings will appear after shows are scored this week'
                 : rankingsTab === 'monthly'
@@ -270,7 +270,7 @@ const RankingsTab = ({
           <button
             onClick={loadMoreLeaderboard}
             disabled={loadingMore}
-            className="flex items-center gap-2 px-5 py-2.5 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors text-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 rounded-lg hover:bg-stone-200 dark:hover:bg-charcoal-800 transition-colors text-sm disabled:opacity-50 border border-cream-200 dark:border-cream-500/20"
           >
             <ChevronDown className={`w-4 h-4 ${loadingMore ? 'animate-bounce' : ''}`} />
             {loadingMore ? 'Loading...' : 'Load More'}

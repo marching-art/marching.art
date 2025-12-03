@@ -301,10 +301,10 @@ const Scores = () => {
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-display font-bold text-gradient mb-4">
+        <h1 className="text-4xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-4">
           Scores & Rankings
         </h1>
-        <p className="text-cream-300">
+        <p className="text-slate-600 dark:text-cream-300">
           Results, player rankings, and performance statistics
         </p>
       </motion.div>
@@ -315,15 +315,15 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="card p-4"
+          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 rounded-lg">
-              <Calendar className="w-6 h-6 text-blue-500" />
+            <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.recentShows}</p>
-              <p className="text-xs text-cream-500/60">Recent Shows</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.recentShows}</p>
+              <p className="text-xs text-slate-500 dark:text-cream-500/60">Recent Shows</p>
             </div>
           </div>
         </motion.div>
@@ -332,15 +332,15 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card p-4"
+          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-purple-500" />
+            <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.topScore}</p>
-              <p className="text-xs text-cream-500/60">Top Score</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.topScore}</p>
+              <p className="text-xs text-slate-500 dark:text-cream-500/60">Top Score</p>
             </div>
           </div>
         </motion.div>
@@ -349,15 +349,15 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="card p-4"
+          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-500/10 rounded-lg">
-              <Award className="w-6 h-6 text-green-500" />
+            <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+              <Award className="w-6 h-6 text-green-600 dark:text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-cream-100">{stats.corpsActive}</p>
-              <p className="text-xs text-cream-500/60">Corps Active</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-cream-100">{stats.corpsActive}</p>
+              <p className="text-xs text-slate-500 dark:text-cream-500/60">Corps Active</p>
             </div>
           </div>
         </motion.div>
