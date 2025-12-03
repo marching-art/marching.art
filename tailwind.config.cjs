@@ -52,7 +52,8 @@ module.exports = {
       fontFamily: {
         'display': ['Oswald', 'Barlow Condensed', 'system-ui', 'sans-serif'],
         'body': ['Inter', 'system-ui', 'sans-serif'],
-        'mono': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace']
+        'mono': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
+        'data': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace']
       },
       letterSpacing: {
         'tighter': '-0.05em',
@@ -63,10 +64,10 @@ module.exports = {
         'none': '0',
         'sm': '4px',
         'DEFAULT': '4px',
-        'md': '6px',
-        'lg': '8px',
-        'xl': '8px',
-        '2xl': '8px',
+        'md': '4px',
+        'lg': '4px',
+        'xl': '4px',
+        '2xl': '4px',
         'full': '9999px',
       },
       animation: {
@@ -119,20 +120,25 @@ module.exports = {
         'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)'
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(255, 212, 77, 0.5)',
-        'glow-lg': '0 0 40px rgba(255, 212, 77, 0.6)',
-        'inner-glow': 'inset 0 0 20px rgba(255, 212, 77, 0.2)',
-        'elevation-1': '0 2px 4px rgba(0,0,0,0.1)',
-        'elevation-2': '0 4px 8px rgba(0,0,0,0.12)',
-        'elevation-3': '0 8px 16px rgba(0,0,0,0.14)',
-        'elevation-4': '0 16px 32px rgba(0,0,0,0.16)',
-        'elevation-5': '0 24px 48px rgba(0,0,0,0.18)',
-        // Brutalist shadows
+        // Remove all blur shadows - Tactical Brutalist uses only hard offset shadows
+        'none': 'none',
+        // Hard offset brutalist shadows (no blur, full opacity)
+        'brutal-xs': '2px 2px 0px 0px rgba(0,0,0,1)',
+        'brutal-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
         'brutal': '4px 4px 0px 0px rgba(0,0,0,1)',
+        'brutal-md': '4px 4px 0px 0px rgba(0,0,0,1)',
         'brutal-lg': '6px 6px 0px 0px rgba(0,0,0,1)',
         'brutal-xl': '8px 8px 0px 0px rgba(0,0,0,1)',
+        // Gold variants for dark mode
+        'brutal-gold-xs': '2px 2px 0px 0px rgba(255,212,77,1)',
+        'brutal-gold-sm': '3px 3px 0px 0px rgba(255,212,77,1)',
         'brutal-gold': '4px 4px 0px 0px rgba(255,212,77,1)',
-        'brutal-gold-lg': '6px 6px 0px 0px rgba(255,212,77,1)'
+        'brutal-gold-md': '4px 4px 0px 0px rgba(255,212,77,1)',
+        'brutal-gold-lg': '6px 6px 0px 0px rgba(255,212,77,1)',
+        'brutal-gold-xl': '8px 8px 0px 0px rgba(255,212,77,1)',
+        // Danger variant
+        'brutal-danger': '4px 4px 0px 0px rgba(239,68,68,1)',
+        'brutal-danger-lg': '6px 6px 0px 0px rgba(239,68,68,1)',
       },
       backdropBlur: {
         'xs': '2px'

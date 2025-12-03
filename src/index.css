@@ -5,11 +5,11 @@
 
 /* CSS Variables for Theme */
 :root {
-  /* Border Radius - Brutalist: minimal rounding */
+  /* Border Radius - Tactical Brutalist: structural corners, not bubbles */
   --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -17,15 +17,21 @@
   --transition-base: 250ms;
   --transition-slow: 500ms;
 
-  /* Brutalist Shadows - Hard offset, no blur */
+  /* Tactical Brutalist Shadows - Hard offset ONLY, zero blur, full opacity */
+  --shadow-brutal-xs: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-sm: 3px 3px 0px 0px rgba(0, 0, 0, 1);
   --shadow-brutal: 4px 4px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
   --shadow-brutal-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-xl: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-gold-xs: 2px 2px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-brutal-gold-sm: 3px 3px 0px 0px rgba(255, 212, 77, 1);
   --shadow-brutal-gold: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   --shadow-brutal-gold-lg: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-brutal-gold-xl: 8px 8px 0px 0px rgba(255, 212, 77, 1);
 
-  /* Border Width */
+  /* Strict Border Width - All functional elements use 2px */
   --border-width: 2px;
+  --border-color-strict: #171717; /* neutral-900 */
 }
 
 /* Dark Mode (Default) */
@@ -75,21 +81,20 @@
   --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
   --gradient-main: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
 
-  /* Shadows - Brutalist: Hard offset, no blur */
-  --shadow-sm: 2px 2px 0px 0px rgba(255, 212, 77, 0.8);
+  /* Shadows - Tactical Brutalist: Hard offset ONLY, zero blur, full opacity */
+  --shadow-sm: 2px 2px 0px 0px rgba(255, 212, 77, 1);
   --shadow-md: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   --shadow-lg: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   --shadow-xl: 8px 8px 0px 0px rgba(255, 212, 77, 1);
-  --shadow-glow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
 
-  /* Glass effects */
-  --glass-bg: rgba(26, 26, 26, 0.3);
-  --glass-bg-dark: rgba(13, 13, 13, 0.5);
-  --glass-bg-gold: rgba(255, 212, 77, 0.1);
-  --glass-premium-start: rgba(26, 26, 26, 0.95);
-  --glass-premium-end: rgba(13, 13, 13, 0.98);
-  --glass-premium-shadow: rgba(0, 0, 0, 0.5);
-  --glass-premium-inset: rgba(255, 255, 255, 0.05);
+  /* Brutalist panels - solid backgrounds, no glass blur */
+  --glass-bg: rgba(26, 26, 26, 0.95);
+  --glass-bg-dark: rgba(13, 13, 13, 0.98);
+  --glass-bg-gold: rgba(255, 212, 77, 0.15);
+  --glass-premium-start: rgba(26, 26, 26, 1);
+  --glass-premium-end: rgba(13, 13, 13, 1);
+  --glass-premium-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  --glass-premium-inset: none;
 }
 
 /* Light Mode - Swap cream and charcoal for proper contrast */
@@ -139,21 +144,20 @@
   --gradient-dark: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 50%, #E5D396 100%);
   --gradient-main: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 100%);
 
-  /* Shadows - Brutalist: Hard black offset for light mode */
-  --shadow-sm: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
+  /* Shadows - Tactical Brutalist: Hard black offset, full opacity */
+  --shadow-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
   --shadow-md: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   --shadow-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   --shadow-xl: 8px 8px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-glow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
 
-  /* Glass effects */
-  --glass-bg: rgba(250, 246, 234, 0.8);
-  --glass-bg-dark: rgba(245, 237, 213, 0.9);
-  --glass-bg-gold: rgba(179, 134, 0, 0.1);
-  --glass-premium-start: rgba(250, 246, 234, 0.95);
-  --glass-premium-end: rgba(245, 237, 213, 0.98);
-  --glass-premium-shadow: rgba(0, 0, 0, 0.15);
-  --glass-premium-inset: rgba(0, 0, 0, 0.03);
+  /* Brutalist panels - solid backgrounds, no glass blur */
+  --glass-bg: rgba(250, 246, 234, 0.98);
+  --glass-bg-dark: rgba(245, 237, 213, 0.98);
+  --glass-bg-gold: rgba(179, 134, 0, 0.15);
+  --glass-premium-start: rgba(250, 246, 234, 1);
+  --glass-premium-end: rgba(245, 237, 213, 1);
+  --glass-premium-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --glass-premium-inset: none;
 }
 
 /* Base Styles */
@@ -207,9 +211,9 @@ body {
   opacity: 0.4;
 }
 
-/* Typography - Brutalist: Tight tracking for aggressive headlines */
+/* Typography Architecture - Tactical Brutalist: Tight tracking, uppercase headers */
 h1, h2, h3, h4, h5, h6 {
-  @apply font-display font-bold;
+  @apply font-display font-bold uppercase;
   letter-spacing: -0.04em;
 }
 
@@ -219,6 +223,12 @@ h3 { @apply text-3xl md:text-4xl lg:text-5xl; }
 h4 { @apply text-2xl md:text-3xl lg:text-4xl; }
 h5 { @apply text-xl md:text-2xl lg:text-3xl; }
 h6 { @apply text-lg md:text-xl lg:text-2xl; }
+
+/* Section headers - explicit uppercase with tight tracking */
+.section-header {
+  @apply font-display font-bold uppercase tracking-tight;
+  letter-spacing: -0.04em;
+}
 
 /* Custom Component Classes */
 @layer components {
@@ -241,18 +251,19 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .paper-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Stadium Banner - Hero section */
-  /* Light Mode: White card with gold bottom border (Premium Paper Look) */
+  /* Stadium Banner - Hero section - Tactical Brutalist */
+  /* Light Mode: White card with hard shadow */
   .stadium-banner {
-    @apply relative overflow-hidden rounded-2xl;
-    @apply bg-white border border-stone-200 shadow-lg;
-    border-bottom-width: 4px;
-    border-bottom-color: #D9A300;
+    @apply relative overflow-hidden;
+    @apply bg-white;
+    border: 2px solid #171717;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .stadium-banner::before {
@@ -271,11 +282,12 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   .stadium-banner .border-\[\#2A2A2A\] { border-color: #e5e7eb; }
   .stadium-banner .bg-\[\#1A1A1A\] { background-color: #f8fafc; }
 
-  /* Dark Mode: Deep charcoal gradient (Stadium Night Look) */
+  /* Dark Mode: Deep charcoal with gold hard shadow */
   [data-theme="dark"] .stadium-banner {
-    @apply bg-transparent border-none shadow-none;
-    background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 50%, #1A1A1A 100%);
-    border-bottom-width: 0;
+    background-color: #1A1A1A;
+    border: 2px solid rgba(255, 212, 77, 0.3);
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .stadium-banner::before {
@@ -306,21 +318,22 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background-size: cover;
   }
 
-  /* Score Bug - Circular badge for multipliers/scores */
-  /* Light Mode: White badge with gold border */
+  /* Score Bug - Circular badge for multipliers/scores - Brutalist */
+  /* Light Mode: White badge with hard shadow */
   .score-bug {
     @apply flex flex-col items-center justify-center rounded-full p-4 md:p-6;
-    @apply bg-white border-4 shadow-lg;
-    border-color: rgba(217, 163, 0, 0.5);
+    @apply bg-white;
+    border: 4px solid #171717;
     min-width: 120px;
     min-height: 120px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
-  /* Dark Mode: Charcoal badge with gold glow */
+  /* Dark Mode: Charcoal badge with gold hard shadow */
   [data-theme="dark"] .score-bug {
-    @apply bg-gradient-to-br from-[#0D0D0D] to-[#1A1A1A] shadow-none;
+    background-color: #0D0D0D;
     border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 0 0 30px rgba(255, 212, 77, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .score-bug-lg {
@@ -345,7 +358,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .icon-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -371,8 +384,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Toolbar - For navigation elements */
   .dark-toolbar {
-    @apply bg-[#1A1A1A] text-white rounded-full px-4 py-2;
-    @apply border border-[#2A2A2A];
+    background-color: #1A1A1A;
+    color: white;
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    border: 1px solid #2A2A2A;
   }
 
   /* Ticket Stub - Schedule card style - Brutalist */
@@ -391,7 +407,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .ticket-stub {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -429,13 +445,14 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold button with Charcoal text */
   [data-theme="dark"] .btn-pill {
-    @apply bg-gold-500 text-[#0D0D0D];
+    background-color: #FFD44D;
+    color: #0D0D0D;
     border-color: #FFD44D;
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .btn-pill:hover {
-    @apply bg-gold-400;
+    background-color: #FFDD73;
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
@@ -448,7 +465,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -470,7 +487,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-input {
-    @apply bg-[#0D0D0D];
+    background-color: #0D0D0D;
     border-color: rgba(255, 212, 77, 0.3);
     color: #FAF6EA;
   }
@@ -485,7 +502,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .form-input::placeholder {
-    @apply text-[#FAF6EA]/30;
+    color: rgba(250, 246, 234, 0.3);
   }
 
   .form-label {
@@ -534,7 +551,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .role-badge-brass {
-    @apply bg-yellow-500 text-[#0D0D0D];
+    @apply bg-yellow-500;
+    color: #0D0D0D;
   }
 
   .role-badge-admin {
@@ -557,7 +575,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .compact-card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 0.8);
   }
 
@@ -570,29 +588,49 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply absolute bottom-3 right-3;
   }
 
-  /* Glass Effect */
+  /* Tactical Brutalist Panels - NO blur, solid backgrounds, hard shadows */
   .glass {
     background: var(--glass-bg);
-    @apply backdrop-blur-md;
-    border: 1px solid var(--border-color);
+    border: 2px solid #171717;
+    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+  }
+
+  [data-theme="dark"] .glass {
+    border-color: rgba(255, 212, 77, 0.3);
   }
 
   .glass-dark {
     background: var(--glass-bg-dark);
-    @apply backdrop-blur-lg;
-    border: 1px solid var(--border-color-light);
+    border: 2px solid #171717;
+    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+  }
+
+  [data-theme="dark"] .glass-dark {
+    border-color: rgba(255, 212, 77, 0.3);
   }
 
   .glass-gold {
     background: var(--glass-bg-gold);
-    @apply backdrop-blur-md border border-gold-800;
+    border: 2px solid #B38600;
+    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+  }
+
+  [data-theme="dark"] .glass-gold {
+    border-color: rgba(255, 212, 77, 0.5);
   }
 
   .glass-premium {
     background: linear-gradient(135deg, var(--glass-premium-start) 0%, var(--glass-premium-end) 100%);
-    @apply backdrop-blur-xl;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 25px 50px -12px var(--glass-premium-shadow), inset 0 1px 0 var(--glass-premium-inset);
+    border: 2px solid #171717;
+    border-radius: 4px;
+    box-shadow: var(--glass-premium-shadow);
+  }
+
+  [data-theme="dark"] .glass-premium {
+    border-color: rgba(255, 212, 77, 0.5);
   }
 
   /* Gradient Backgrounds */
@@ -698,7 +736,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   [data-theme="dark"] .card {
-    @apply bg-[#1A1A1A];
+    background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
@@ -824,7 +862,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     border-color: #f87171;
   }
 
-  /* Monospace Numbers - For scores, currency, XP, dates */
+  /* Monospace Numbers - For ALL numerical values: scores, currency, XP, dates */
+  /* TYPOGRAPHY ARCHITECTURE: All data should use monospace for clarity */
   .font-data {
     font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
     font-variant-numeric: tabular-nums;
@@ -840,6 +879,25 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .text-currency {
     @apply font-data font-semibold;
+  }
+
+  .text-xp {
+    @apply font-data font-bold;
+  }
+
+  .text-date {
+    @apply font-data font-medium text-sm;
+  }
+
+  .text-stat {
+    @apply font-data font-bold;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Force monospace on elements with data-* attributes */
+  [data-numerical], [data-score], [data-currency], [data-xp], [data-date] {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
   
   /* Navigation */
@@ -1023,28 +1081,36 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 /* Premium Card - Brutalist Style */
 @layer components {
-  /* Light Mode: White cards on cream bg (Paper on Desk look) */
-  /* Dark Mode: Charcoal cards with gold shadow (Stadium Night look) */
-  /* CRITICAL: High contrast text for readability */
+  /* Tactical Brutalist Card - 2px border-neutral-900, 4px radius, hard shadows */
+  /* Light Mode: White cards with black shadow */
+  /* Dark Mode: Charcoal cards with gold shadow */
   .card-brutalist {
-    /* Background: White in Light Mode, Charcoal in Dark */
-    @apply bg-white dark:bg-[#1A1A1A];
+    /* Background: White in Light Mode */
+    @apply bg-white;
 
-    /* Text: Dark Slate in Light Mode, White in Dark (CRITICAL FIX) */
-    @apply text-slate-900 dark:text-white;
+    /* Text: Dark Slate in Light Mode */
+    @apply text-slate-900;
 
-    /* Border: Stone in Light, White/5 in Dark */
-    @apply border-2 border-stone-200 dark:border-white/5;
+    /* STRICT: 2px solid border-neutral-900 */
+    border: 2px solid #171717;
+    border-radius: 4px;
 
-    /* Shadow: Hard Black shadow in Light, Gold in Dark */
-    @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_#FFD44D];
+    /* Hard shadow - no blur */
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
 
-    @apply rounded-xl transition-all duration-200;
+    @apply transition-all duration-200;
+  }
+
+  [data-theme="dark"] .card-brutalist {
+    background-color: #1A1A1A;
+    color: white;
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card-brutalist:hover {
     transform: translateY(-2px);
-    @apply shadow-md border-amber-500/50;
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card-brutalist:hover {
@@ -1052,17 +1118,22 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Hero Card Variant - For Command Center */
-  /* Light Mode: White card with black shadow */
-  /* Dark Mode: Deep charcoal with gold accents */
+  /* Hero Card Variant - For Command Center - Tactical Brutalist */
+  /* Light Mode: White card with black hard shadow */
+  /* Dark Mode: Deep charcoal with gold hard shadow */
   .card-hero {
-    @apply bg-white dark:bg-[#0D0D0D] border-3 border-stone-200 dark:border-[#2A2A2A] rounded-2xl relative overflow-hidden;
-    @apply text-slate-900 dark:text-white;
+    @apply bg-white relative overflow-hidden;
+    @apply text-slate-900;
+    border: 2px solid #171717;
+    border-radius: 4px;
     box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card-hero {
-    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 0.5);
+    background-color: #0D0D0D;
+    color: white;
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card-hero::before {
@@ -1077,29 +1148,36 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.1) 0%, transparent 60%);
   }
 
-  /* Action Tile - Square interactive cards */
-  /* Light Mode: White tiles with black shadow (Paper on Desk look) */
-  /* Dark Mode: Charcoal tiles with gold shadow (Stadium Night look) */
+  /* Action Tile - Square interactive cards - Tactical Brutalist */
+  /* Light Mode: White tiles with black hard shadow */
+  /* Dark Mode: Charcoal tiles with gold hard shadow */
   .tile-action {
-    @apply aspect-square bg-white dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] rounded-xl p-4;
+    @apply aspect-square bg-white p-4;
     @apply flex flex-col items-center justify-center gap-2 cursor-pointer;
-    @apply text-slate-900 dark:text-white;
+    @apply text-slate-900;
+    border: 2px solid #171717;
+    border-radius: 4px;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
     transition: all 0.2s ease;
   }
 
   [data-theme="dark"] .tile-action {
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+    background-color: #1A1A1A;
+    color: white;
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .tile-action:hover {
-    @apply bg-amber-500 dark:bg-gold-500 border-amber-400 dark:border-gold-400;
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 0.5);
+    @apply bg-amber-500;
+    transform: translateY(-3px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .tile-action:hover {
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 0.8);
+    background-color: #FFD44D;
+    border-color: rgba(255, 212, 77, 0.6);
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .tile-action:hover .tile-icon {
@@ -1110,27 +1188,33 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply text-charcoal-900;
   }
 
-  /* Trading Card - TCG Style */
-  /* Light Mode: White cards with black shadow */
-  /* Dark Mode: Charcoal cards with gold shadow */
+  /* Trading Card - TCG Style - Tactical Brutalist */
+  /* Light Mode: White cards with black hard shadow */
+  /* Dark Mode: Charcoal cards with gold hard shadow */
   .card-tcg {
-    @apply bg-white dark:bg-[#1A1A1A] border-2 border-stone-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden relative;
-    @apply text-slate-900 dark:text-white;
+    @apply bg-white overflow-hidden relative;
+    @apply text-slate-900;
+    border: 2px solid #171717;
+    border-radius: 4px;
     box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
     transition: all 0.25s ease;
   }
 
   [data-theme="dark"] .card-tcg {
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+    background-color: #1A1A1A;
+    color: white;
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card-tcg:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card-tcg:hover {
-    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 0.8);
+    border-color: rgba(255, 212, 77, 0.5);
+    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
   }
 
   /* Rarity Borders */
@@ -1144,22 +1228,24 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .rarity-common {
-    @apply border-[#3A3A3A];
+    border-color: #3A3A3A;
   }
 
-  /* Price Tag Button */
+  /* Price Tag Button - Tactical Brutalist: Flat solid colors, hard shadows */
   /* Light Mode: Charcoal button with Gold text */
   .btn-price {
-    @apply px-4 py-2 rounded-lg font-display font-bold text-sm uppercase tracking-wide;
+    @apply px-4 py-2 font-display font-bold text-sm uppercase tracking-wide;
     @apply bg-slate-900 text-amber-500;
-    @apply hover:bg-slate-800 hover:text-amber-400;
-    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.3);
+    border: 2px solid #171717;
+    border-radius: 4px;
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 1);
     transition: all 0.15s ease;
   }
 
   .btn-price:hover {
-    transform: translateY(-1px);
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.3);
+    @apply bg-slate-800 text-amber-400;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .btn-price:disabled {
@@ -1167,29 +1253,39 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: none;
   }
 
-  /* Dark Mode: Gold button with Charcoal text */
+  /* Dark Mode: Solid Gold button with Charcoal text - NO gradients */
   [data-theme="dark"] .btn-price {
-    @apply bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-900;
-    @apply hover:from-gold-400 hover:to-gold-500;
-    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.5);
+    @apply bg-gold-500 text-charcoal-900;
+    border-color: #FFD44D;
+    box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .btn-price:hover {
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.5);
+    @apply bg-gold-400;
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .btn-price:disabled {
     @apply bg-charcoal-700 text-charcoal-400;
+    border-color: transparent;
     box-shadow: none;
   }
 
-  /* Chunky Progress Bar */
+  /* Chunky Progress Bar - Tactical Brutalist */
   .progress-chunky {
-    @apply h-4 w-full bg-[#0D0D0D] rounded-lg overflow-hidden border-2 border-[#2A2A2A];
+    @apply h-4 w-full overflow-hidden;
+    background-color: #0D0D0D;
+    border: 2px solid #171717;
+    border-radius: 4px;
+  }
+
+  [data-theme="dark"] .progress-chunky {
+    border-color: rgba(255, 212, 77, 0.3);
   }
 
   .progress-chunky-fill {
-    @apply h-full rounded-md transition-all duration-500 ease-out;
+    @apply h-full transition-all duration-500 ease-out;
+    border-radius: 2px;
   }
 
   /* Glowing Multiplier Number */
@@ -1240,15 +1336,15 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 }
 
-/* Animations for Brutalist Design */
+/* Animations for Tactical Brutalist Design - Hard shadows only */
 @keyframes pulse-legendary {
   0%, 100% {
     border-color: #FFD44D;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1), 0 0 20px rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
   50% {
     border-color: #FFCA26;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1), 0 0 40px rgba(255, 212, 77, 0.6);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 }
 
@@ -1320,17 +1416,13 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   scrollbar-color: #FFD44D #1A1A1A;
 }
 
-/* Battle Pass Pulsing Glow Animation for Next Reward */
+/* Battle Pass Pulsing Animation - Tactical Brutalist: hard shadow offset animation */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 10px 2px rgba(250, 204, 21, 0.4),
-                0 0 20px 4px rgba(250, 204, 21, 0.2),
-                0 0 30px 6px rgba(250, 204, 21, 0.1);
+    box-shadow: 4px 4px 0px 0px rgba(250, 204, 21, 1);
   }
   50% {
-    box-shadow: 0 0 15px 4px rgba(250, 204, 21, 0.6),
-                0 0 30px 8px rgba(250, 204, 21, 0.4),
-                0 0 45px 12px rgba(250, 204, 21, 0.2);
+    box-shadow: 6px 6px 0px 0px rgba(250, 204, 21, 1);
   }
 }
 

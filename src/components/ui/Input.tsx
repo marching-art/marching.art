@@ -67,7 +67,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={`
-              w-full rounded
+              w-full rounded-sm
               bg-white dark:bg-charcoal-800 border-2
               text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
               transition-all duration-200
@@ -75,7 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               disabled:opacity-50 disabled:cursor-not-allowed
               ${hasError
                 ? 'border-red-500 focus:border-red-500'
-                : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
+                : 'border-neutral-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
               }
               ${sizeStyles[inputSize]}
               ${LeftIcon ? 'pl-10' : ''}
@@ -135,7 +135,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={id}
           className={`
-            w-full px-4 py-3 rounded min-h-[120px] resize-none
+            w-full px-4 py-3 rounded-sm min-h-[120px] resize-none
             bg-white dark:bg-charcoal-800 border-2
             text-slate-900 dark:text-cream-100 placeholder-slate-400 dark:placeholder-cream-600
             transition-all duration-200
@@ -143,7 +143,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
+              : 'border-neutral-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${className}
           `}
@@ -216,7 +216,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={`
-            w-full rounded appearance-none cursor-pointer
+            w-full rounded-sm appearance-none cursor-pointer
             bg-white dark:bg-charcoal-800 border-2
             text-slate-900 dark:text-cream-100
             transition-all duration-200
@@ -224,7 +224,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             disabled:opacity-50 disabled:cursor-not-allowed
             ${hasError
               ? 'border-red-500 focus:border-red-500'
-              : 'border-slate-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
+              : 'border-neutral-900 dark:border-gold-500/30 focus:border-amber-500 dark:focus:border-gold-500'
             }
             ${sizeStyles[selectSize]}
             ${className}
