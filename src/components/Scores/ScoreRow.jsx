@@ -26,11 +26,12 @@ const ScoreRow = ({ score, rank }) => {
   // Check if we have any caption data to show
   const hasCaptions = geScore > 0 || visualScore > 0 || musicScore > 0;
 
-  const getRankColor = (rank) => {
-    if (rank === 1) return 'text-yellow-500';
-    if (rank === 2) return 'text-gray-400';
-    if (rank === 3) return 'text-orange-600';
-    return 'text-cream-500/60';
+  // Rank styling: Use gold backgrounds with dark text for contrast (No Gold Text Rule)
+  const getRankStyle = (rank) => {
+    if (rank === 1) return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-800 dark:text-yellow-400 px-2 py-0.5 rounded';
+    if (rank === 2) return 'bg-slate-200 dark:bg-gray-500/20 text-slate-700 dark:text-gray-400 px-2 py-0.5 rounded';
+    if (rank === 3) return 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded';
+    return 'text-slate-500 dark:text-cream-500/60';
   };
 
   return (
@@ -44,7 +45,7 @@ const ScoreRow = ({ score, rank }) => {
         {/* Main row */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <span className={`text-sm md:text-lg font-bold w-6 md:w-8 flex-shrink-0 ${getRankColor(rank)}`}>
+            <span className={`text-sm md:text-lg font-bold flex-shrink-0 ${getRankStyle(rank)}`}>
               #{rank}
             </span>
             <div className="min-w-0">
@@ -79,7 +80,7 @@ const ScoreRow = ({ score, rank }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xl md:text-2xl font-bold text-gold-500">{score.score.toFixed(3)}</div>
+              <div className="text-xl md:text-2xl font-bold text-slate-900 dark:text-gold-500">{score.score.toFixed(3)}</div>
             </div>
           </div>
         </div>

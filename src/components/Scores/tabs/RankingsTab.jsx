@@ -8,27 +8,39 @@ import LoadingScreen from '../../LoadingScreen';
 const getRankIcon = (rank) => {
   switch (rank) {
     case 1:
-      return <Crown className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />;
+      return (
+        <span className="inline-flex items-center gap-1 bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 px-2 py-1 rounded">
+          <Crown className="w-4 h-4 md:w-5 md:h-5" />
+        </span>
+      );
     case 2:
-      return <Trophy className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />;
+      return (
+        <span className="inline-flex items-center gap-1 bg-slate-200 dark:bg-gray-500/20 text-slate-600 dark:text-gray-400 px-2 py-1 rounded">
+          <Trophy className="w-4 h-4 md:w-5 md:h-5" />
+        </span>
+      );
     case 3:
-      return <Medal className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />;
+      return (
+        <span className="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-1 rounded">
+          <Medal className="w-4 h-4 md:w-5 md:h-5" />
+        </span>
+      );
     default:
-      return <span className="text-cream-300 font-bold">#{rank}</span>;
+      return <span className="text-slate-600 dark:text-cream-300 font-bold">#{rank}</span>;
   }
 };
 
 const getRankBgColor = (rank) => {
   switch (rank) {
     case 1:
-      return 'bg-gradient-to-r from-yellow-400/20 to-yellow-500/10 border-yellow-400/30';
+      return 'bg-amber-50 dark:bg-gradient-to-r dark:from-yellow-400/20 dark:to-yellow-500/10 border-amber-300 dark:border-yellow-400/30';
     case 2:
-      return 'bg-gradient-to-r from-gray-400/20 to-gray-500/10 border-gray-400/30';
+      return 'bg-slate-100 dark:bg-gradient-to-r dark:from-gray-400/20 dark:to-gray-500/10 border-slate-300 dark:border-gray-400/30';
     case 3:
-      return 'bg-gradient-to-r from-orange-400/20 to-orange-500/10 border-orange-400/30';
+      return 'bg-orange-50 dark:bg-gradient-to-r dark:from-orange-400/20 dark:to-orange-500/10 border-orange-300 dark:border-orange-400/30';
     default:
-      if (rank <= 10) return 'bg-charcoal-800/30 border-cream-500/20';
-      return 'bg-charcoal-900/30 border-cream-500/10';
+      if (rank <= 10) return 'bg-stone-100 dark:bg-charcoal-800/30 border-stone-300 dark:border-cream-500/20';
+      return 'bg-stone-50 dark:bg-charcoal-900/30 border-stone-200 dark:border-cream-500/10';
   }
 };
 
@@ -142,21 +154,25 @@ const RankingsTab = ({
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-charcoal-900/50 border-b border-cream-500/10">
+                <thead className="bg-stone-100 dark:bg-charcoal-900/50 border-b border-stone-300 dark:border-cream-500/10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-400">Rank</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-400">Player</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-cream-400">Corps</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-400">Score</th>
-                    <th className="px-6 py-4 text-right text-sm font-medium text-cream-400">Trophies</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Rank</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Player</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-cream-400">Corps</th>
+                    <th className="px-6 py-4 text-right text-sm font-medium text-slate-600 dark:text-cream-400">Score</th>
+                    <th className="px-6 py-4 text-right text-sm font-medium text-slate-600 dark:text-cream-400">Trophies</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-cream-500/10">
-                  {currentData.map((entry) => (
+                <tbody>
+                  {currentData.map((entry, idx) => (
                     <tr
                       key={entry.id}
-                      className={`hover:bg-charcoal-800/50 transition-colors ${
-                        loggedInProfile?.username === entry.username ? 'bg-gold-500/5' : ''
+                      className={`border-b border-stone-200 dark:border-cream-500/10 hover:bg-stone-100 dark:hover:bg-charcoal-800/50 transition-colors ${
+                        loggedInProfile?.username === entry.username
+                          ? 'bg-amber-50 dark:bg-gold-500/5'
+                          : idx % 2 === 0
+                          ? 'bg-white dark:bg-transparent'
+                          : 'bg-stone-50 dark:bg-charcoal-900/20'
                       }`}
                     >
                       <td className="px-6 py-4">
@@ -166,25 +182,25 @@ const RankingsTab = ({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-charcoal-800 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-cream-400" />
+                          <div className="w-10 h-10 rounded-full bg-stone-200 dark:bg-charcoal-800 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-slate-500 dark:text-cream-400" />
                           </div>
                           <div>
-                            <p className="text-cream-100 font-medium">{entry.username}</p>
-                            <p className="text-cream-500/60 text-sm">{entry.userTitle || 'Rookie'}</p>
+                            <p className="text-slate-900 dark:text-cream-100 font-medium">{entry.username}</p>
+                            <p className="text-slate-500 dark:text-cream-500/60 text-sm">{entry.userTitle || 'Rookie'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-cream-300">{entry.corpsName || 'No Corps'}</p>
+                        <p className="text-slate-700 dark:text-cream-300">{entry.corpsName || 'No Corps'}</p>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <p className="text-cream-100 font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
+                        <p className="text-slate-900 dark:text-cream-100 font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Trophy className="w-4 h-4 text-gold-500" />
-                          <span className="text-cream-100">{entry.trophies || 0}</span>
+                          <Trophy className="w-4 h-4 text-amber-600 dark:text-gold-500" />
+                          <span className="text-slate-900 dark:text-cream-100">{entry.trophies || 0}</span>
                         </div>
                       </td>
                     </tr>
@@ -202,7 +218,7 @@ const RankingsTab = ({
                   animate={{ opacity: 1, y: 0 }}
                   className={`rounded-lg p-3 border transition-all ${
                     getRankBgColor(entry.rank)
-                  } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-gold-500' : ''}`}
+                  } ${loggedInProfile?.username === entry.username ? 'ring-2 ring-amber-500 dark:ring-gold-500' : ''}`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -210,22 +226,22 @@ const RankingsTab = ({
                         {getRankIcon(entry.rank)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-cream-100 font-semibold text-sm truncate">{entry.username}</p>
-                        <p className="text-cream-500/60 text-xs">{entry.userTitle || 'Rookie'}</p>
+                        <p className="text-slate-900 dark:text-cream-100 font-semibold text-sm truncate">{entry.username}</p>
+                        <p className="text-slate-500 dark:text-cream-500/60 text-xs">{entry.userTitle || 'Rookie'}</p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-cream-100 font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
-                      <p className="text-cream-500/60 text-xs">Score</p>
+                      <p className="text-slate-900 dark:text-cream-100 font-bold">{entry.score?.toFixed(2) || '0.00'}</p>
+                      <p className="text-slate-500 dark:text-cream-500/60 text-xs">Score</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-cream-400 min-w-0">
+                    <div className="flex items-center gap-1.5 text-slate-600 dark:text-cream-400 min-w-0">
                       <Users className="w-3.5 h-3.5 flex-shrink-0" />
                       <span className="truncate">{entry.corpsName || 'No Corps'}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-cream-300 flex-shrink-0">
-                      <Trophy className="w-3.5 h-3.5 text-gold-500" />
+                    <div className="flex items-center gap-1 text-slate-700 dark:text-cream-300 flex-shrink-0">
+                      <Trophy className="w-3.5 h-3.5 text-amber-600 dark:text-gold-500" />
                       <span className="font-semibold">{entry.trophies || 0}</span>
                     </div>
                   </div>
