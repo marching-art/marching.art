@@ -68,11 +68,11 @@ const RankingsTab = ({
     { id: 'monthly', label: 'Monthly', icon: Star }
   ];
 
-  // Class filters with accent colors for selected state
+  // Class filters - Brutalist toggle style
   const classes = [
-    { id: 'world', label: 'World Class', activeColor: 'bg-blue-500 dark:bg-blue-500' },
-    { id: 'open', label: 'Open Class', activeColor: 'bg-orange-500 dark:bg-orange-500' },
-    { id: 'a', label: 'A Class', activeColor: 'bg-purple-500 dark:bg-purple-500' }
+    { id: 'world', label: 'World Class' },
+    { id: 'open', label: 'Open Class' },
+    { id: 'a', label: 'A Class' }
   ];
 
   return (
@@ -123,16 +123,16 @@ const RankingsTab = ({
         </div>
       </div>
 
-      {/* Class Filter - Mechanical Toggle Switches */}
+      {/* Class Filter - Brutalist Toggle Buttons */}
       <div className="flex justify-center">
         <div className="flex flex-wrap gap-3 justify-center">
           {classes.map((cls) => (
             <button
               key={cls.id}
               onClick={() => setActiveClass(cls.id)}
-              className={`px-4 md:px-5 py-2 md:py-2.5 border-2 border-charcoal-900 dark:border-cream-100 rounded-sm transition-all text-xs md:text-sm font-bold uppercase tracking-wide ${
+              className={`px-4 md:px-5 py-2 md:py-2.5 border-2 border-black dark:border-cream-100 rounded-sm transition-all text-xs md:text-sm font-bold uppercase tracking-wide ${
                 activeClass === cls.id
-                  ? `${cls.activeColor} text-white`
+                  ? 'bg-black dark:bg-cream-100 text-gold-400 dark:text-charcoal-900'
                   : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
               }`}
             >
