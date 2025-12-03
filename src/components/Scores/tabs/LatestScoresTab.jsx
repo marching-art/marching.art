@@ -59,17 +59,17 @@ const LatestScoresTab = ({
             disabled={!canGoBack}
             className={`p-2 rounded-lg transition-all ${
               canGoBack
-                ? 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
-                : 'text-cream-500/30 cursor-not-allowed'
+                ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
+                : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
             }`}
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
 
           <div className="text-center min-w-[200px]">
-            <p className="text-xl md:text-2xl font-bold text-cream-100">Day {selectedDay}</p>
+            <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-cream-100">Day {selectedDay}</p>
             {selectedDayDate && (
-              <p className="text-sm text-cream-500/60">{selectedDayDate}</p>
+              <p className="text-sm text-slate-500 dark:text-cream-500/60">{selectedDayDate}</p>
             )}
           </div>
 
@@ -78,8 +78,8 @@ const LatestScoresTab = ({
             disabled={!canGoForward}
             className={`p-2 rounded-lg transition-all ${
               canGoForward
-                ? 'text-cream-300 hover:text-cream-100 hover:bg-charcoal-800/50'
-                : 'text-cream-500/30 cursor-not-allowed'
+                ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
+                : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
             }`}
           >
             <ChevronRight className="w-6 h-6" />
@@ -87,24 +87,26 @@ const LatestScoresTab = ({
         </div>
       )}
 
-      {/* Shows for Selected Day */}
+      {/* Shows for Selected Day - Wrapped in Card Container */}
       {hasShows ? (
-        <div className="space-y-4">
-          {dayShows.map((show, idx) => (
-            <ShowCard key={`day-${selectedDay}-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
-          ))}
+        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl overflow-hidden">
+          <div className="divide-y divide-cream-200 dark:divide-cream-500/10">
+            {dayShows.map((show, idx) => (
+              <ShowCard key={`day-${selectedDay}-${idx}`} show={show} onClick={() => setSelectedShow(show)} />
+            ))}
+          </div>
         </div>
       ) : availableDays.length > 0 ? (
-        <div className="card p-8 md:p-12 text-center">
-          <Calendar className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-lg md:text-xl text-cream-300 mb-2">No shows on Day {selectedDay}</p>
-          <p className="text-sm md:text-base text-cream-500/60">Use the arrows to navigate to other days</p>
+        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 md:p-12 text-center">
+          <Calendar className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
+          <p className="text-lg md:text-xl text-slate-700 dark:text-cream-300 mb-2">No shows on Day {selectedDay}</p>
+          <p className="text-sm md:text-base text-slate-500 dark:text-cream-500/60">Use the arrows to navigate to other days</p>
         </div>
       ) : (
-        <div className="card p-8 md:p-12 text-center">
-          <Clock className="w-12 h-12 md:w-16 md:h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-lg md:text-xl text-cream-300 mb-2">No shows yet</p>
-          <p className="text-sm md:text-base text-cream-500/60">Check back during competition times or view the schedule</p>
+        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 md:p-12 text-center">
+          <Clock className="w-12 h-12 md:w-16 md:h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
+          <p className="text-lg md:text-xl text-slate-700 dark:text-cream-300 mb-2">No shows yet</p>
+          <p className="text-sm md:text-base text-slate-500 dark:text-cream-500/60">Check back during competition times or view the schedule</p>
         </div>
       )}
     </div>

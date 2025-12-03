@@ -6,8 +6,8 @@ import { ChevronRight } from 'lucide-react';
 const ShowCard = ({ show, onClick }) => {
   return (
     <motion.div
-      whileHover={{ scale: 1.005 }}
-      className="card p-4 md:p-6 cursor-pointer"
+      whileHover={{ scale: 1.002 }}
+      className="p-4 md:p-6 cursor-pointer hover:bg-cream-50 dark:hover:bg-charcoal-800/30 transition-colors"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3 mb-3 md:mb-4">
@@ -24,12 +24,12 @@ const ShowCard = ({ show, onClick }) => {
       </div>
 
       {show.scores && show.scores.length > 0 && (
-        <div className="border border-stone-200 dark:border-transparent rounded-lg overflow-hidden">
+        <div className="border border-cream-200 dark:border-cream-500/10 rounded-lg overflow-hidden">
           {show.scores.slice(0, 3).map((score, idx) => (
             <div
               key={idx}
-              className={`flex items-center justify-between p-2.5 md:p-3 border-b border-stone-200 dark:border-cream-500/10 last:border-b-0 ${
-                idx % 2 === 0 ? 'bg-stone-50 dark:bg-charcoal-900/30' : 'bg-white dark:bg-charcoal-900/20'
+              className={`flex items-center justify-between p-2.5 md:p-3 border-b border-cream-200 dark:border-cream-500/10 last:border-b-0 hover:bg-cream-50 dark:hover:bg-charcoal-800/50 transition-colors ${
+                idx % 2 === 0 ? 'bg-cream-100/50 dark:bg-charcoal-900/30' : 'bg-white dark:bg-charcoal-900/20'
               }`}
             >
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -42,11 +42,11 @@ const ShowCard = ({ show, onClick }) => {
                 </span>
                 <span className="text-slate-900 dark:text-cream-100 font-medium text-sm md:text-base truncate">{score.corps}</span>
               </div>
-              <span className="text-slate-900 dark:text-gold-500 font-bold text-base md:text-lg flex-shrink-0">{score.score.toFixed(3)}</span>
+              <span className="text-amber-700 dark:text-gold-500 font-bold text-base md:text-lg flex-shrink-0">{score.score.toFixed(3)}</span>
             </div>
           ))}
           {show.scores.length > 3 && (
-            <button className="w-full py-2 text-xs md:text-sm text-slate-500 dark:text-cream-500/60 hover:text-slate-700 dark:hover:text-cream-300 flex items-center justify-center gap-1 bg-stone-100 dark:bg-transparent">
+            <button className="w-full py-2 text-xs md:text-sm text-slate-500 dark:text-cream-500/60 hover:text-slate-700 dark:hover:text-cream-300 flex items-center justify-center gap-1 bg-cream-100 dark:bg-charcoal-900/40 hover:bg-cream-200 dark:hover:bg-charcoal-800/50 transition-colors">
               View all {show.scores.length} corps
               <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>

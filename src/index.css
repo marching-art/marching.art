@@ -414,11 +414,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   /* Form Card - Constrained form layout (Paper container for Settings) */
   .form-card {
-    @apply bg-white shadow-md rounded-xl p-6 md:p-8 border border-stone-200;
+    @apply bg-white shadow-md rounded-xl p-6 md:p-8 border border-cream-300;
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A] border-[#2A2A2A] shadow-none;
+    @apply bg-[#1A1A1A] border-cream-500/20 shadow-lg;
   }
 
   /* Form Input - Tactical Luxury style */

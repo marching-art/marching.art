@@ -423,11 +423,11 @@ const RewardCard = ({
 
   return (
     <div className={`
-      relative p-3 rounded-lg border-2 transition-all
+      relative p-3 rounded-lg border-2 transition-all hover:border-amber-500 dark:hover:border-gold-500
       ${isPremium
-        ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-500/30 dark:border-gold-500/30'
-        : 'bg-white dark:bg-charcoal-900/50 border-stone-200 dark:border-white/10'}
-      ${canClaim ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20' : ''}
+        ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-400/40 dark:border-gold-500/40'
+        : 'bg-white dark:bg-charcoal-900/50 border-cream-200 dark:border-cream-500/20'}
+      ${canClaim ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20 border-amber-500 dark:border-gold-500' : ''}
       ${!isUnlocked ? 'bg-stone-100 dark:bg-white/5' : ''}
     `}>
       {/* Locked Overlay */}
@@ -505,8 +505,8 @@ const RewardCard = ({
 
 // XP Source Card Component
 const XPSourceCard = ({ icon, title, xp }) => (
-  <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-stone-100 dark:bg-charcoal-900/30 rounded-lg border border-stone-200 dark:border-transparent">
-    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-amber-500/10 dark:bg-gold-500/10 flex items-center justify-center text-amber-600 dark:text-gold-500 flex-shrink-0">
+  <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-white dark:bg-charcoal-900/30 rounded-lg border border-cream-200 dark:border-cream-500/20 hover:border-amber-400 dark:hover:border-gold-500 transition-colors shadow-sm">
+    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-amber-500/10 dark:bg-gold-500/10 flex items-center justify-center text-amber-600 dark:text-gold-500 flex-shrink-0 border border-amber-500/20 dark:border-gold-500/20">
       {icon}
     </div>
     <div className="flex-1 min-w-0">

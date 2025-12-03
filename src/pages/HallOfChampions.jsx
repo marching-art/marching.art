@@ -82,8 +82,8 @@ const HallOfChampions = () => {
     <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="text-center">
-          <h1 className="text-5xl font-display font-bold text-gradient mb-4">Hall of Champions</h1>
-          <p className="text-xl text-cream-300">Celebrating excellence in marching.art fantasy drum corps</p>
+          <h1 className="text-5xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-4">Hall of Champions</h1>
+          <p className="text-xl text-slate-600 dark:text-cream-300">Celebrating excellence in marching.art fantasy drum corps</p>
         </div>
       </motion.div>
 
@@ -97,8 +97,8 @@ const HallOfChampions = () => {
               onClick={() => setSelectedClass(classKey)}
               className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
                 selectedClass === classKey
-                  ? `bg-${config.color}-500/20 border-2 border-${config.color}-500 text-${config.color}-400`
-                  : 'bg-charcoal-800 border-2 border-charcoal-700 text-cream-300 hover:border-cream-500'
+                  ? `bg-${config.color}-500/20 border-2 border-${config.color}-500 text-${config.color}-600 dark:text-${config.color}-400`
+                  : 'bg-stone-100 dark:bg-charcoal-800 border-2 border-stone-300 dark:border-charcoal-700 text-slate-600 dark:text-cream-300 hover:border-slate-400 dark:hover:border-cream-500'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -109,10 +109,10 @@ const HallOfChampions = () => {
       </div>
 
       {seasons.length === 0 ? (
-        <div className="card p-12 text-center">
-          <Trophy className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-cream-300 mb-2">No Champions Yet</p>
-          <p className="text-cream-500/60">Champions will be crowned at the end of each season</p>
+        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
+          <Trophy className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
+          <p className="text-xl text-slate-700 dark:text-cream-300 mb-2">No Champions Yet</p>
+          <p className="text-slate-500 dark:text-cream-500/60">Champions will be crowned at the end of each season</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -129,13 +129,13 @@ const HallOfChampions = () => {
                   className="space-y-4"
                 >
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-6 h-6 text-gold-500" />
-                    <h2 className="text-3xl font-display font-bold text-cream-100">
+                    <Calendar className="w-6 h-6 text-amber-600 dark:text-gold-500" />
+                    <h2 className="text-3xl font-display font-bold text-charcoal-950 dark:text-cream-100">
                       {formatSeasonName(season.seasonName)}
                     </h2>
                   </div>
-                  <div className="card p-6 text-center">
-                    <p className="text-cream-500/60">No {CLASS_CONFIG[selectedClass]?.name} champions for this season</p>
+                  <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-6 text-center">
+                    <p className="text-slate-500 dark:text-cream-500/60">No {CLASS_CONFIG[selectedClass]?.name} champions for this season</p>
                   </div>
                 </motion.div>
               );
@@ -151,11 +151,11 @@ const HallOfChampions = () => {
               >
                 {/* Season Header */}
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-6 h-6 text-gold-500" />
-                  <h2 className="text-3xl font-display font-bold text-cream-100">
+                  <Calendar className="w-6 h-6 text-amber-600 dark:text-gold-500" />
+                  <h2 className="text-3xl font-display font-bold text-charcoal-950 dark:text-cream-100">
                     {formatSeasonName(season.seasonName)}
                   </h2>
-                  <span className="text-sm text-cream-500/60 bg-charcoal-800 px-3 py-1 rounded-full">
+                  <span className="text-sm text-slate-500 dark:text-cream-500/60 bg-stone-100 dark:bg-charcoal-800 px-3 py-1 rounded-full">
                     {CLASS_CONFIG[selectedClass]?.name}
                   </span>
                 </div>

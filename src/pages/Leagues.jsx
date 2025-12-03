@@ -118,13 +118,13 @@ const Leagues = () => {
         className="relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl" />
-        <div className="relative p-8 glass rounded-2xl">
+        <div className="relative p-8 bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-transparent rounded-2xl shadow-sm dark:shadow-none">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-4xl font-display font-bold text-gradient mb-2">
+              <h1 className="text-2xl sm:text-4xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-2">
                 Circuit Leagues
               </h1>
-              <p className="text-cream-300 text-sm sm:text-base">
+              <p className="text-slate-600 dark:text-cream-300 text-sm sm:text-base">
                 Compete on the tour circuit with other directors throughout the season
               </p>
             </div>
@@ -145,8 +145,8 @@ const Leagues = () => {
           onClick={() => setActiveTab('my-leagues')}
           className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'my-leagues'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900'
+              : 'bg-stone-100 dark:bg-transparent dark:glass text-slate-600 dark:text-cream-300 hover:bg-stone-200 dark:hover:text-cream-100'
           }`}
         >
           <Trophy className="w-4 h-4 md:w-5 md:h-5" />
@@ -158,8 +158,8 @@ const Leagues = () => {
           onClick={() => setActiveTab('discover')}
           className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
             activeTab === 'discover'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900'
+              : 'bg-stone-100 dark:bg-transparent dark:glass text-slate-600 dark:text-cream-300 hover:bg-stone-200 dark:hover:text-cream-100'
           }`}
         >
           <Search className="w-4 h-4 md:w-5 md:h-5" />
@@ -178,15 +178,15 @@ const Leagues = () => {
             className="space-y-4"
           >
             {loadingMyLeagues ? (
-              <div className="card p-8 text-center">
-                <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-cream-500/60">Loading your leagues...</p>
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 text-center">
+                <div className="w-8 h-8 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-cream-500/60">Loading your leagues...</p>
               </div>
             ) : myLeaguesHasError ? (
-              <div className="card p-8 text-center">
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 text-center">
                 <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-cream-100 mb-2">Error Loading Leagues</h3>
-                <p className="text-cream-500/60 mb-4">{myLeaguesError?.message || 'Something went wrong'}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">Error Loading Leagues</h3>
+                <p className="text-slate-500 dark:text-cream-500/60 mb-4">{myLeaguesError?.message || 'Something went wrong'}</p>
                 <button
                   onClick={() => refetchMyLeagues()}
                   className="btn-primary inline-flex items-center gap-2"
@@ -196,12 +196,12 @@ const Leagues = () => {
                 </button>
               </div>
             ) : myLeagues.length === 0 ? (
-              <div className="card p-12 text-center">
-                <Users className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-cream-100 mb-2">
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
+                <Users className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">
                   You're not in any leagues yet
                 </h3>
-                <p className="text-cream-500/60 mb-6">
+                <p className="text-slate-500 dark:text-cream-500/60 mb-6">
                   Join a public league or create your own to compete with other directors
                 </p>
                 <div className="flex gap-3 justify-center">
@@ -248,30 +248,30 @@ const Leagues = () => {
             className="space-y-4"
           >
             {/* Search Bar */}
-            <div className="card p-4">
+            <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cream-500/60" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-cream-500/60" />
                 <input
                   type="text"
                   placeholder="Search leagues..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-charcoal-900/50 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                  className="w-full pl-10 pr-4 py-3 bg-cream-50 dark:bg-charcoal-900/50 border border-cream-200 dark:border-cream-500/20 rounded-lg text-slate-900 dark:text-cream-100 focus:outline-none focus:border-amber-500 dark:focus:border-gold-500"
                 />
               </div>
             </div>
 
             {/* Available Leagues */}
             {loadingPublicLeagues ? (
-              <div className="card p-8 text-center">
-                <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-cream-500/60">Loading public leagues...</p>
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 text-center">
+                <div className="w-8 h-8 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-cream-500/60">Loading public leagues...</p>
               </div>
             ) : publicLeaguesHasError ? (
-              <div className="card p-8 text-center">
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 text-center">
                 <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-cream-100 mb-2">Error Loading Leagues</h3>
-                <p className="text-cream-500/60 mb-4">{publicLeaguesError?.message || 'Something went wrong'}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">Error Loading Leagues</h3>
+                <p className="text-slate-500 dark:text-cream-500/60 mb-4">{publicLeaguesError?.message || 'Something went wrong'}</p>
                 <button
                   onClick={() => refetchPublicLeagues()}
                   className="btn-primary inline-flex items-center gap-2"
@@ -281,12 +281,12 @@ const Leagues = () => {
                 </button>
               </div>
             ) : filteredAvailableLeagues.length === 0 ? (
-              <div className="card p-12 text-center">
-                <Search className="w-16 h-16 text-cream-500/40 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-cream-100 mb-2">
+              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
+                <Search className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">
                   No leagues found
                 </h3>
-                <p className="text-cream-500/60">
+                <p className="text-slate-500 dark:text-cream-500/60">
                   Try adjusting your search or create your own league
                 </p>
               </div>
@@ -316,7 +316,7 @@ const Leagues = () => {
                     <button
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
-                      className="flex items-center gap-2 px-6 py-3 bg-charcoal-800/50 text-cream-300 rounded-lg hover:bg-charcoal-800 transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-6 py-3 bg-stone-100 dark:bg-charcoal-800/50 text-slate-600 dark:text-cream-300 rounded-lg hover:bg-stone-200 dark:hover:bg-charcoal-800 transition-colors disabled:opacity-50 border border-cream-200 dark:border-cream-500/20"
                     >
                       <ChevronDown className={`w-4 h-4 ${isFetchingNextPage ? 'animate-bounce' : ''}`} />
                       {isFetchingNextPage ? 'Loading...' : 'Load More Leagues'}
