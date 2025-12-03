@@ -13,7 +13,7 @@ const ShowCard = ({ show, onClick }) => {
       <div className="flex items-start justify-between gap-3 mb-3 md:mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base md:text-xl font-semibold text-slate-900 dark:text-cream-100 truncate">{show.eventName}</h3>
+            <h3 className="text-base md:text-xl font-bold uppercase text-slate-900 dark:text-white truncate">{show.eventName}</h3>
           </div>
           <p className="text-xs md:text-sm text-slate-500 dark:text-cream-500/60 truncate">{show.location}</p>
         </div>
@@ -33,20 +33,25 @@ const ShowCard = ({ show, onClick }) => {
               }`}
             >
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <span className={`text-xs md:text-sm font-bold flex-shrink-0 px-1.5 py-0.5 rounded ${
-                  idx === 0 ? 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400' :
-                  idx === 1 ? 'bg-slate-200 dark:bg-gray-500/20 text-slate-600 dark:text-gray-400' :
-                  'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-500'
+                {/* Rank Badges - Distinct styling for each placement */}
+                <span className={`text-xs md:text-sm font-bold flex-shrink-0 px-2 py-0.5 rounded ${
+                  idx === 0
+                    ? 'bg-gold-100 dark:bg-yellow-500/20 text-gold-700 dark:text-yellow-400 border border-gold-300 dark:border-yellow-500/30'
+                    : idx === 1
+                    ? 'bg-slate-100 dark:bg-gray-500/20 text-slate-700 dark:text-gray-400 border border-slate-200 dark:border-gray-500/30'
+                    : 'bg-orange-50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-500 border border-orange-200 dark:border-orange-500/30'
                 }`}>
                   #{idx + 1}
                 </span>
-                <span className="text-slate-900 dark:text-cream-100 font-medium text-sm md:text-base truncate">{score.corps}</span>
+                {/* Corps Name - High contrast text */}
+                <span className="text-slate-900 dark:text-white font-bold text-sm md:text-base truncate">{score.corps}</span>
               </div>
-              <span className="text-amber-700 dark:text-gold-500 font-bold text-base md:text-lg flex-shrink-0">{score.score.toFixed(3)}</span>
+              {/* Score - Gold accent */}
+              <span className="text-gold-600 dark:text-gold-400 font-mono font-bold text-base md:text-lg flex-shrink-0">{score.score.toFixed(3)}</span>
             </div>
           ))}
           {show.scores.length > 3 && (
-            <button className="w-full py-2 text-xs md:text-sm text-slate-500 dark:text-cream-500/60 hover:text-slate-700 dark:hover:text-cream-300 flex items-center justify-center gap-1 bg-cream-100 dark:bg-charcoal-900/40 hover:bg-cream-200 dark:hover:bg-charcoal-800/50 transition-colors">
+            <button className="w-full py-2 text-xs md:text-sm text-slate-600 dark:text-cream-500/60 hover:text-slate-900 dark:hover:text-cream-300 font-medium flex items-center justify-center gap-1 bg-cream-100 dark:bg-charcoal-900/40 hover:bg-cream-200 dark:hover:bg-charcoal-800/50 transition-colors">
               View all {show.scores.length} corps
               <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </button>

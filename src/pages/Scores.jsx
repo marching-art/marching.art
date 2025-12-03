@@ -301,7 +301,7 @@ const Scores = () => {
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-4xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-4">
+        <h1 className="!text-3xl md:!text-5xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100 mb-4">
           Scores & Rankings
         </h1>
         <p className="text-slate-600 dark:text-cream-300">
@@ -309,13 +309,13 @@ const Scores = () => {
         </p>
       </motion.div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
+      {/* Quick Stats - Horizontal scroll on mobile, grid on desktop */}
+      <div className="flex overflow-x-auto space-x-4 pb-4 md:grid md:grid-cols-3 md:gap-4 md:space-x-0 md:pb-0 md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
@@ -332,7 +332,7 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
@@ -349,7 +349,7 @@ const Scores = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
+          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-4"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">

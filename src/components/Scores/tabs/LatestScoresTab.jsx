@@ -51,39 +51,41 @@ const LatestScoresTab = ({
 
   return (
     <div className="space-y-6">
-      {/* Day Navigation */}
+      {/* Day Navigation Toolbar */}
       {availableDays.length > 0 && (
-        <div className="flex items-center justify-center gap-4">
-          <button
-            onClick={goToPreviousDay}
-            disabled={!canGoBack}
-            className={`p-2 rounded-lg transition-all ${
-              canGoBack
-                ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
-                : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
-            }`}
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+        <div className="bg-white dark:bg-white/5 border-y border-stone-200 dark:border-white/10 py-4 -mx-4 px-4 md:-mx-6 md:px-6">
+          <div className="flex items-center justify-between max-w-md mx-auto">
+            <button
+              onClick={goToPreviousDay}
+              disabled={!canGoBack}
+              className={`p-2 rounded-lg transition-all ${
+                canGoBack
+                  ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
+                  : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
 
-          <div className="text-center min-w-[200px]">
-            <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-cream-100">Day {selectedDay}</p>
-            {selectedDayDate && (
-              <p className="text-sm text-slate-500 dark:text-cream-500/60">{selectedDayDate}</p>
-            )}
+            <div className="text-center min-w-[200px]">
+              <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-cream-100">Day {selectedDay}</p>
+              {selectedDayDate && (
+                <p className="text-sm text-slate-500 dark:text-cream-500/60">{selectedDayDate}</p>
+              )}
+            </div>
+
+            <button
+              onClick={goToNextDay}
+              disabled={!canGoForward}
+              className={`p-2 rounded-lg transition-all ${
+                canGoForward
+                  ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
+                  : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
+              }`}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
-
-          <button
-            onClick={goToNextDay}
-            disabled={!canGoForward}
-            className={`p-2 rounded-lg transition-all ${
-              canGoForward
-                ? 'text-slate-600 dark:text-cream-300 hover:text-slate-900 dark:hover:text-cream-100 hover:bg-stone-100 dark:hover:bg-charcoal-800/50'
-                : 'text-slate-300 dark:text-cream-500/30 cursor-not-allowed'
-            }`}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
         </div>
       )}
 
