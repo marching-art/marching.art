@@ -510,11 +510,11 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Welcome & Season Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight truncate">
+            <h1 className="text-2xl md:text-3xl font-display font-black text-text-main uppercase tracking-tight truncate">
               {profile?.displayName || 'Director'}
             </h1>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-slate-500 dark:text-[#FAF6EA]/60 text-sm font-display">
+              <span className="text-text-muted text-sm font-display">
                 {formatSeasonName(seasonData?.name)}
               </span>
               {weeksRemaining && (
@@ -595,8 +595,8 @@ const Dashboard = () => {
                   onClick={() => handleCorpsSwitch(classId)}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
                     activeCorpsClass === classId
-                      ? 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A] border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
-                      : 'bg-white dark:bg-[#1A1A1A] text-slate-600 dark:text-[#FAF6EA]/70 border-stone-200 dark:border-[#2A2A2A] hover:text-slate-900 dark:hover:text-[#FAF6EA] hover:border-amber-500/50 dark:hover:border-gold-500/50'
+                      ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
+                      : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
                   }`}
                 >
                   {corpsData.corpsName || corpsData.name}
@@ -842,33 +842,33 @@ const Dashboard = () => {
               to="/scores"
               className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Trophy className="w-6 h-6 text-amber-600 dark:text-gold-500" />
-              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Leaderboards</span>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
+              <Trophy className="w-6 h-6 text-primary" />
+              <span className="font-display font-bold text-text-main">Leaderboards</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/schedule"
               className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
               <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Schedule</span>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
+              <span className="font-display font-bold text-text-main">Schedule</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/leagues"
               className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
               <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Leagues</span>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
+              <span className="font-display font-bold text-text-main">Leagues</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/battlepass"
               className="card-brutalist p-4 flex items-center gap-3 transition-all"
             >
-              <Crown className="w-6 h-6 text-amber-600 dark:text-gold-500" />
-              <span className="font-display font-bold text-slate-900 dark:text-[#FAF6EA]">Season Pass</span>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-[#FAF6EA]/40 ml-auto" />
+              <Crown className="w-6 h-6 text-primary" />
+              <span className="font-display font-bold text-text-main">Season Pass</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
             </Link>
           </div>
 
@@ -903,13 +903,13 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Equipment Manager</h2>
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Equipment Manager</h2>
                 <button
                   onClick={() => setShowEquipmentPanel(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -944,13 +944,13 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Staff Roster</h2>
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Staff Roster</h2>
                 <button
                   onClick={() => setShowStaffPanel(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -979,13 +979,13 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-[#0D0D0D] border-l border-stone-200 dark:border-l-3 dark:border-[#2A2A2A] z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-[#0D0D0D] border-b border-stone-200 dark:border-b-2 dark:border-[#2A2A2A] p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase tracking-tight">Daily Activities</h2>
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Daily Activities</h2>
                 <button
                   onClick={() => setShowDailyActivities(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#1A1A1A] text-slate-500 dark:text-[#FAF6EA]/60 hover:text-slate-900 dark:hover:text-[#FAF6EA] transition-colors"
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>

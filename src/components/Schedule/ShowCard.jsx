@@ -57,13 +57,13 @@ const ShowCard = ({
           ? 'bg-gradient-to-br from-green-500/20 to-green-500/10 dark:from-green-500/30 dark:to-green-500/15'
           : 'bg-gradient-to-br from-amber-500/10 to-amber-500/5 dark:from-gold-500/20 dark:to-gold-500/10'
       }`}>
-        <div className="text-[10px] font-display font-bold uppercase tracking-wider text-slate-600 dark:text-[#FAF6EA]/50">
+        <div className="text-[10px] font-display font-bold uppercase tracking-wider text-slate-600 dark:text-text-muted">
           {formattedDate.split(' ')[0]}
         </div>
-        <div className="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-[#FAF6EA]">
+        <div className="text-2xl md:text-3xl font-display font-bold text-text-main">
           {formattedDate.split(' ')[2]}
         </div>
-        <div className="text-xs font-display font-medium text-slate-700 dark:text-[#FAF6EA]/60">
+        <div className="text-xs font-display font-medium text-slate-700 dark:text-text-muted">
           {formattedDate.split(' ')[1]}
         </div>
       </div>
@@ -91,13 +91,13 @@ const ShowCard = ({
           </div>
           <div className={`p-1.5 rounded-lg flex-shrink-0 ${
             isLocked
-              ? 'bg-stone-200 dark:bg-[#3A3A3A]'
+              ? 'bg-stone-200 dark:bg-surface-highlight'
               : isRegistered
               ? 'bg-green-500/20 dark:bg-green-500/20'
               : 'bg-amber-500/20 dark:bg-gold-500/20'
           }`}>
             {isLocked ? (
-              <Lock className="w-4 h-4 text-slate-400 dark:text-[#FAF6EA]/40" />
+              <Lock className="w-4 h-4 text-text-muted" />
             ) : (
               <Music className={`w-4 h-4 ${
                 isRegistered ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-gold-500'
