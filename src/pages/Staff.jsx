@@ -22,39 +22,39 @@ const Staff = () => {
 
   return (
     <div className="space-y-6">
-      {/* Tab Navigation */}
-      <div className="flex gap-2">
+      {/* Tab Navigation - Dark Toolbar Style */}
+      <div className="bg-[#1A1A1A] rounded-xl p-1.5 border border-[#2A2A2A] flex gap-1 overflow-x-auto">
         <button
           onClick={() => setActiveTab('marketplace')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'marketplace'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-[#0D0D0D]'
+              : 'text-[#FAF6EA]/60 hover:text-[#FAF6EA] hover:bg-[#2A2A2A]'
           }`}
         >
-          <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
-          <span className="hidden sm:inline">Staff </span>Marketplace
+          <ShoppingCart className="w-4 h-4" />
+          <span className="hidden sm:inline">Staff </span>Market
         </button>
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'roster'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-[#0D0D0D]'
+              : 'text-[#FAF6EA]/60 hover:text-[#FAF6EA] hover:bg-[#2A2A2A]'
           }`}
         >
-          <Users className="w-4 h-4 md:w-5 md:h-5" />
+          <Users className="w-4 h-4" />
           <span className="hidden sm:inline">My </span>Roster
         </button>
         <button
           onClick={() => setActiveTab('auctions')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
+          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
             activeTab === 'auctions'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'glass text-cream-300 hover:text-cream-100'
+              ? 'bg-gold-500 text-[#0D0D0D]'
+              : 'text-[#FAF6EA]/60 hover:text-[#FAF6EA] hover:bg-[#2A2A2A]'
           }`}
         >
-          <Gavel className="w-4 h-4 md:w-5 md:h-5" />
+          <Gavel className="w-4 h-4" />
           Auctions
         </button>
       </div>

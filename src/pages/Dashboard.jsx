@@ -72,32 +72,44 @@ const ChunkyProgressBar = ({ value, color = 'gold', label, icon: Icon }) => {
   );
 };
 
-// Action Tile Component (Square interactive tiles)
-const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
+// Icon Card Component (Tactical Luxury action tiles with large background icons)
+const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled || processing}
-    whileHover={!disabled && !processing ? { scale: 1.02, y: -3 } : {}}
+    whileHover={!disabled && !processing ? { scale: 1.02, y: -2 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`tile-action group ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${completed ? 'border-green-500/50' : ''}`}
+    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3 ${
+      disabled ? 'opacity-50 cursor-not-allowed' : ''
+    } ${completed ? 'border-green-500/40' : ''}`}
   >
-    <div className={`p-3 rounded-xl transition-colors ${completed ? 'bg-green-500/20' : 'bg-gold-500/10 group-hover:bg-transparent'}`}>
-      {processing ? (
-        <div className="w-8 h-8 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
-      ) : completed ? (
-        <Check className="w-8 h-8 text-green-500" />
-      ) : (
-        <Icon className="w-8 h-8 tile-icon text-gold-500 transition-colors" />
+    {/* Large background icon */}
+    <div className="icon-card-bg flex items-center justify-center">
+      <Icon className="w-full h-full text-gold-500" />
+    </div>
+
+    {/* Content */}
+    <div className="relative z-10 flex flex-col items-center gap-2">
+      <div className={`p-3 rounded-xl transition-colors ${
+        completed ? 'bg-green-500/20' : 'bg-gold-500/10 group-hover:bg-gold-500/20'
+      }`}>
+        {processing ? (
+          <div className="w-7 h-7 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
+        ) : completed ? (
+          <Check className="w-7 h-7 text-green-400" />
+        ) : (
+          <Icon className="w-7 h-7 text-gold-500 transition-colors group-hover:text-gold-400" />
+        )}
+      </div>
+      <span className="text-sm font-display font-bold text-[#FAF6EA] uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
+        {label}
+      </span>
+      {subtitle && (
+        <span className="text-[10px] text-[#FAF6EA]/50 font-display uppercase tracking-wide">
+          {subtitle}
+        </span>
       )}
     </div>
-    <span className="tile-label text-sm font-display font-bold text-[#FAF6EA] transition-colors text-center">
-      {label}
-    </span>
-    {subtitle && (
-      <span className="text-[10px] text-[#FAF6EA]/40 group-hover:text-charcoal-900/60 transition-colors">
-        {subtitle}
-      </span>
-    )}
   </motion.button>
 );
 
@@ -561,58 +573,64 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 
           {/* ================================================================
-              HERO CARD: Corps Status (spans 8 columns on desktop)
+              HERO CARD: Stadium Banner with Score Bug
               ================================================================ */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-8 card-hero p-6 md:p-8"
+            className="lg:col-span-8 stadium-banner p-6 md:p-8"
           >
+            {/* Stadium overlay silhouette */}
+            <div className="stadium-overlay" />
+
             {/* Watermark Trophy */}
-            <div className="absolute top-4 right-4 opacity-5 pointer-events-none">
-              <Trophy className="w-48 h-48" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+              <Trophy className="w-64 h-64 md:w-80 md:h-80" />
             </div>
 
             <div className="relative z-10">
               {/* Corps Header */}
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 {/* Corps Identity */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className={`px-3 py-1 rounded text-[10px] font-display font-black tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                    <span className={`px-3 py-1.5 rounded-md text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
                       {getCorpsClassName(activeCorpsClass)}
                     </span>
                     {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 text-gold-400 text-[10px] font-bold">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wide">
                         <Crown size={10} />
                         TOP 10
                       </span>
                     )}
                   </div>
-                  <h2 className="text-massive text-4xl md:text-5xl lg:text-6xl text-[#FAF6EA] mb-2">
+                  <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-[#FAF6EA] mb-2">
                     {activeCorps.corpsName || activeCorps.name}
                   </h2>
                   {activeCorps.showConcept && (
-                    <p className="text-[#FAF6EA]/60 text-lg font-display">
-                      <span className="text-gold-500">"</span>
+                    <p className="text-[#FAF6EA]/50 text-base md:text-lg font-body italic">
+                      <span className="text-gold-500 not-italic">"</span>
                       {activeCorps.showConcept}
-                      <span className="text-gold-500">"</span>
+                      <span className="text-gold-500 not-italic">"</span>
                     </p>
                   )}
                 </div>
 
-                {/* Performance Multiplier - THE BIG NUMBER */}
-                <div className="flex-shrink-0 text-center md:text-right bg-[#0D0D0D] p-6 rounded-2xl border-2 border-[#2A2A2A]">
-                  <div className="text-[10px] text-[#FAF6EA]/40 uppercase tracking-[0.3em] font-display font-bold mb-2">
-                    PERFORMANCE
-                  </div>
-                  <div className={`text-5xl md:text-6xl lg:text-7xl font-display font-black tabular-nums tracking-tighter ${multiplierStatus.color} multiplier-glow`}>
-                    {multiplier.toFixed(2)}x
-                  </div>
-                  <div className={`text-sm font-display font-bold ${multiplierStatus.color} flex items-center justify-center md:justify-end gap-2 mt-2`}>
-                    <TrendingUp size={16} />
-                    {multiplierStatus.label}
+                {/* Performance Multiplier - Score Bug Style */}
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <div className="score-bug">
+                    <div className="text-[8px] text-[#FAF6EA]/40 uppercase tracking-[0.25em] font-display font-bold mb-1">
+                      Multiplier
+                    </div>
+                    <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}
+                      style={{ textShadow: '0 0 30px rgba(255, 212, 77, 0.4)' }}>
+                      {multiplier.toFixed(2)}x
+                    </div>
+                    <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
+                      <TrendingUp size={12} />
+                      {multiplierStatus.label}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -688,9 +706,9 @@ const Dashboard = () => {
           {/* ================================================================
               ACTION TILES GRID (spans 4 columns on desktop)
               ================================================================ */}
-          <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+          <div className="lg:col-span-4 grid grid-cols-2 gap-3 md:gap-4">
             {/* Daily Rehearsal */}
-            <ActionTile
+            <IconCard
               icon={Music}
               label="Rehearse"
               subtitle="+5% Ready"
@@ -701,7 +719,7 @@ const Dashboard = () => {
             />
 
             {/* Staff Panel */}
-            <ActionTile
+            <IconCard
               icon={Users}
               label="Staff"
               subtitle={`${assignedStaff.length}/8 Assigned`}
@@ -712,7 +730,7 @@ const Dashboard = () => {
             />
 
             {/* Equipment Panel */}
-            <ActionTile
+            <IconCard
               icon={Wrench}
               label="Equipment"
               subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
@@ -723,7 +741,7 @@ const Dashboard = () => {
             />
 
             {/* Daily Activities */}
-            <ActionTile
+            <IconCard
               icon={Zap}
               label="Activities"
               subtitle="Daily Tasks"

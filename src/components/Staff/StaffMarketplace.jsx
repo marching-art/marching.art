@@ -36,7 +36,21 @@ const getRarity = (baseValue) => {
 };
 
 // ============================================================================
-// TRADING CARD COMPONENT - TCG Style Staff Card
+// ROLE BADGE COLORS - Map caption to colored badges
+// ============================================================================
+const ROLE_BADGE_STYLES = {
+  GE1: 'bg-purple-500 text-white',    // Program Coordinator
+  GE2: 'bg-purple-400 text-white',    // Admin
+  VP: 'bg-blue-500 text-white',       // Visual Performance
+  VA: 'bg-blue-400 text-white',       // Visual Analysis
+  CG: 'bg-pink-500 text-white',       // Color Guard
+  B: 'bg-yellow-500 text-[#0D0D0D]',  // Brass
+  MA: 'bg-teal-500 text-white',       // Music Analysis
+  P: 'bg-orange-500 text-white',      // Percussion
+};
+
+// ============================================================================
+// COMPACT TRADING CARD COMPONENT - Tactical Luxury Style
 // ============================================================================
 const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
   const rarity = getRarity(staff.baseValue);
@@ -45,125 +59,99 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
   // Rarity-based styling
   const rarityStyles = {
     legendary: {
-      border: 'rarity-legendary',
-      glow: 'shadow-[0_0_30px_rgba(255,212,77,0.3)]',
-      badge: 'bg-gradient-to-r from-gold-400 to-gold-600 text-charcoal-900',
-      badgeText: 'LEGENDARY'
+      border: 'border-gold-500',
+      glow: 'shadow-[0_0_20px_rgba(255,212,77,0.25)]',
+      badge: 'bg-gold-500 text-[#0D0D0D]',
     },
     rare: {
-      border: 'rarity-rare',
+      border: 'border-blue-500/60',
       glow: '',
       badge: 'bg-blue-500 text-white',
-      badgeText: 'RARE'
     },
     common: {
-      border: 'rarity-common',
+      border: 'border-[#3A3A3A]',
       glow: '',
-      badge: 'bg-charcoal-600 text-[#FAF6EA]/60',
-      badgeText: 'COMMON'
+      badge: 'bg-[#3A3A3A] text-[#FAF6EA]/70',
     }
   };
 
   const style = rarityStyles[rarity];
+  const roleBadge = ROLE_BADGE_STYLES[staff.caption] || 'bg-gray-500 text-white';
 
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`card-tcg ${style.border} ${style.glow} group`}
+      className={`compact-card ${style.border} ${style.glow} group min-h-[180px]`}
     >
-      {/* Watermark Icon */}
-      <div className="watermark-icon">
-        <CaptionIcon className="w-32 h-32 text-[#FAF6EA]" />
+      {/* Watermark Icon - Larger, positioned better */}
+      <div className="absolute right-0 bottom-0 opacity-[0.06] pointer-events-none overflow-hidden">
+        <CaptionIcon className="w-40 h-40 text-[#FAF6EA] translate-x-6 translate-y-6" />
       </div>
 
-      {/* Owned Stamp */}
+      {/* Owned Overlay */}
       {owned && (
-        <div className="stamp-badge">OWNED</div>
+        <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center z-10 pointer-events-none">
+          <div className="bg-green-500/90 text-[#0D0D0D] px-4 py-2 rounded-lg font-display font-bold uppercase tracking-wider text-sm transform -rotate-6">
+            Owned
+          </div>
+        </div>
       )}
 
-      {/* Card Content */}
-      <div className="relative z-10 p-5">
-        {/* Header Row: Name & Rarity Badge */}
-        <div className="flex items-start justify-between gap-2 mb-4">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-display font-black text-[#FAF6EA] uppercase tracking-tight truncate">
-              {staff.name}
-            </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase tracking-wider text-white ${getCaptionColor(staff.caption)}`}>
-                {staff.caption}
-              </span>
-              <span className="text-[10px] text-[#FAF6EA]/40 font-mono">
-                HOF '{staff.yearInducted?.toString().slice(-2) || '??'}
-              </span>
-            </div>
-          </div>
-          <span className={`px-2 py-1 rounded text-[8px] font-display font-black uppercase tracking-widest ${style.badge}`}>
-            {style.badgeText}
+      {/* Card Content - Compact Padding */}
+      <div className="relative z-10 p-4 flex flex-col h-full">
+        {/* Header: Rarity + Year */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className={`px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase tracking-widest ${style.badge}`}>
+            {rarity}
+          </span>
+          <span className="text-[10px] text-[#FAF6EA]/40 font-mono">
+            HOF {staff.yearInducted || '----'}
           </span>
         </div>
 
-        {/* Biography */}
-        <p className="text-sm text-[#FAF6EA]/60 mb-4 line-clamp-2 font-body">
+        {/* Name - White, Bold */}
+        <h3 className="text-lg font-display font-bold text-white uppercase tracking-wide truncate mb-1">
+          {staff.name}
+        </h3>
+
+        {/* Role Badge - Colored */}
+        <div className="mb-3">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-display font-bold uppercase tracking-wide ${roleBadge}`}>
+            {getCaptionLabel(staff.caption).split(' ')[0]}
+          </span>
+        </div>
+
+        {/* Biography - Compact */}
+        <p className="text-xs text-[#FAF6EA]/50 mb-4 line-clamp-2 font-body flex-1">
           {staff.biography || 'A legendary member of the DCI Hall of Fame.'}
         </p>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-y border-[#2A2A2A]">
-          <div className="text-center">
-            <div className="text-lg font-mono font-bold text-gold-500">
-              +{Math.round(staff.baseValue / 100)}%
-            </div>
-            <div className="text-[8px] text-[#FAF6EA]/40 uppercase tracking-widest">Boost</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-mono font-bold text-blue-400">
-              {getCaptionLabel(staff.caption).split(' ')[0]}
-            </div>
-            <div className="text-[8px] text-[#FAF6EA]/40 uppercase tracking-widest">Role</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-mono font-bold text-purple-400">
-              {staff.yearInducted || '----'}
-            </div>
-            <div className="text-[8px] text-[#FAF6EA]/40 uppercase tracking-widest">Year</div>
-          </div>
-        </div>
-
-        {/* Price Tag / Buy Button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-gold-500" />
-            <span className="text-2xl font-mono font-black text-gold-500">
-              {staff.baseValue}
-            </span>
-            <span className="text-[10px] text-[#FAF6EA]/40 uppercase">CC</span>
+        {/* Bottom Row: Boost + Price Anchor */}
+        <div className="flex items-end justify-between mt-auto">
+          <div className="text-xs text-[#FAF6EA]/50 font-display">
+            <span className="text-green-400 font-bold">+{Math.round(staff.baseValue / 100)}%</span> boost
           </div>
 
+          {/* Price Tag - Anchored */}
           {owned ? (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 border-2 border-green-500/30 text-green-400">
-              <Check className="w-5 h-5" />
-              <span className="text-sm font-display font-bold uppercase">Owned</span>
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-display font-bold">
+              <Check className="w-3.5 h-3.5" />
+              Owned
             </div>
           ) : (
             <button
               onClick={onPurchase}
               disabled={!canAfford}
-              className={`btn-price ${!canAfford ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-bold text-xs uppercase tracking-wide transition-all ${
+                canAfford
+                  ? 'bg-gold-500 text-[#0D0D0D] hover:bg-gold-400 shadow-md hover:shadow-lg'
+                  : 'bg-[#2A2A2A] text-[#FAF6EA]/40 cursor-not-allowed'
+              }`}
             >
-              {canAfford ? (
-                <>
-                  <ShoppingCart className="w-4 h-4 inline mr-1" />
-                  Buy Now
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 inline mr-1" />
-                  Locked
-                </>
-              )}
+              <DollarSign className="w-3.5 h-3.5" />
+              <span className="font-mono font-bold">{staff.baseValue}</span>
             </button>
           )}
         </div>
@@ -266,27 +254,28 @@ const StaffMarketplace = () => {
   return (
     <div className="space-y-6">
       {/* ======================================================================
-          HEADER: Title & Balance
+          HEADER: Title & Balance - Stadium Banner Style
           ====================================================================== */}
-      <div className="card-brutalist p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="stadium-banner p-5 md:p-6">
+        <div className="stadium-overlay" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-display font-black text-[#FAF6EA] uppercase tracking-tight">
-              The Scouting Report
+            <h1 className="sports-header text-2xl md:text-3xl text-[#FAF6EA]">
+              Scouting Report
             </h1>
-            <p className="text-[#FAF6EA]/60 font-display mt-1">
-              Recruit legendary DCI Hall of Fame members to boost your corps
+            <p className="text-[#FAF6EA]/50 font-body text-sm mt-1">
+              Recruit Hall of Fame legends to boost your corps
             </p>
           </div>
 
-          {/* Balance Display */}
-          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-[#0D0D0D] border-2 border-gold-500/30">
-            <DollarSign className="w-6 h-6 text-gold-500" />
-            <div>
-              <span className="text-3xl font-mono font-black text-gold-500">
+          {/* Balance Display - Score Bug Style */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0D0D0D]/80 border border-gold-500/40 backdrop-blur-sm">
+            <DollarSign className="w-5 h-5 text-gold-500" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl md:text-3xl font-mono font-bold text-gold-500">
                 {corpsCoin.toLocaleString()}
               </span>
-              <span className="text-sm text-[#FAF6EA]/40 ml-2 uppercase tracking-widest">CorpsCoin</span>
+              <span className="text-xs text-[#FAF6EA]/40 font-display uppercase tracking-wider">CC</span>
             </div>
           </div>
         </div>
