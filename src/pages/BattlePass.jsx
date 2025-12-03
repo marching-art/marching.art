@@ -426,8 +426,9 @@ const RewardCard = ({
       relative p-3 rounded-lg border-2 transition-all
       ${isPremium
         ? 'bg-gradient-to-br from-amber-500/10 dark:from-gold-500/10 to-purple-500/10 border-amber-500/30 dark:border-gold-500/30'
-        : 'bg-stone-100 dark:bg-charcoal-900/50 border-stone-200 dark:border-charcoal-700'}
+        : 'bg-white dark:bg-charcoal-900/50 border-stone-200 dark:border-white/10'}
       ${canClaim ? 'ring-2 ring-amber-500 dark:ring-gold-500 ring-offset-2 ring-offset-white dark:ring-offset-charcoal-900 shadow-lg shadow-amber-500/20 dark:shadow-gold-500/20' : ''}
+      ${!isUnlocked && !isPremium ? 'bg-stone-100 dark:bg-white/5' : ''}
     `}>
       {/* Locked Overlay */}
       {isLocked && (
@@ -465,11 +466,11 @@ const RewardCard = ({
 
       <div className="mb-2">
         {reward?.type === 'corpscoin' ? (
-          <p className="text-slate-900 dark:text-cream-100 font-semibold text-sm">
+          <p className="text-slate-900 dark:text-white font-semibold text-sm">
             {reward.amount} <span className="text-amber-600 dark:text-gold-500">CC</span>
           </p>
         ) : (
-          <p className="text-slate-900 dark:text-cream-100 font-semibold text-xs line-clamp-2">
+          <p className="text-slate-900 dark:text-white font-semibold text-xs line-clamp-2">
             {reward?.description || reward?.type}
           </p>
         )}

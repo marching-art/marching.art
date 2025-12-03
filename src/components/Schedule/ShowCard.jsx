@@ -23,13 +23,13 @@ const ShowCard = ({
     >
       {/* Left: Date Section */}
       <div className="flex-shrink-0 w-20 md:w-24 p-3 md:p-4 flex flex-col items-center justify-center bg-gradient-to-br from-amber-500/10 to-amber-500/5 dark:from-gold-500/20 dark:to-gold-500/10">
-        <div className="text-[10px] font-display font-bold uppercase tracking-wider text-slate-500 dark:text-[#FAF6EA]/50">
+        <div className="text-[10px] font-display font-bold uppercase tracking-wider text-slate-600 dark:text-[#FAF6EA]/50">
           {formattedDate.split(' ')[0]}
         </div>
-        <div className="text-2xl md:text-3xl font-display font-bold text-slate-800 dark:text-[#FAF6EA]">
+        <div className="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-[#FAF6EA]">
           {formattedDate.split(' ')[2]}
         </div>
-        <div className="text-xs font-display font-medium text-slate-600 dark:text-[#FAF6EA]/60">
+        <div className="text-xs font-display font-medium text-slate-700 dark:text-[#FAF6EA]/60">
           {formattedDate.split(' ')[1]}
         </div>
       </div>
@@ -42,11 +42,12 @@ const ShowCard = ({
         {/* Show Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-display font-bold text-slate-800 dark:text-[#FAF6EA] truncate text-sm md:text-base uppercase tracking-wide">
+            {/* CRITICAL: Dark slate text on white cards for high contrast */}
+            <h3 className="font-display font-black text-slate-900 dark:text-white truncate text-sm md:text-base uppercase tracking-tight">
               {show.eventName || show.name}
             </h3>
             {show.location && (
-              <div className="flex items-center gap-1 mt-1 text-xs text-slate-500 dark:text-[#FAF6EA]/50 truncate">
+              <div className="flex items-center gap-1 mt-1 text-xs text-slate-600 dark:text-stone-400 font-bold truncate">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{show.location}</span>
               </div>
