@@ -105,8 +105,8 @@ const Profile = () => {
     return (
       <div className="text-center py-20">
         <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-cream-100 mb-2">Error Loading Profile</h2>
-        <p className="text-cream-400 mb-6">{error?.message || 'Something went wrong. Please try again.'}</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-cream-100 mb-2">Error Loading Profile</h2>
+        <p className="text-slate-500 dark:text-cream-400 mb-6">{error?.message || 'Something went wrong. Please try again.'}</p>
         <button
           onClick={() => refetch()}
           className="btn-primary inline-flex items-center gap-2"
@@ -121,9 +121,9 @@ const Profile = () => {
   if (!profile) {
     return (
       <div className="text-center py-20">
-        <User className="w-16 h-16 text-cream-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-cream-100 mb-2">Profile Not Found</h2>
-        <p className="text-cream-400">This profile doesn't exist or hasn't been set up yet.</p>
+        <User className="w-16 h-16 text-slate-400 dark:text-cream-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-cream-100 mb-2">Profile Not Found</h2>
+        <p className="text-slate-500 dark:text-cream-400">This profile doesn't exist or hasn't been set up yet.</p>
       </div>
     );
   }
@@ -157,8 +157,8 @@ const Profile = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-gold-500 text-charcoal-900'
-                  : 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
+                  ? 'bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900'
+                  : 'bg-stone-200 dark:bg-charcoal-800 text-slate-700 dark:text-cream-300 hover:bg-stone-300 dark:hover:bg-charcoal-700'
               }`}
             >
               <Icon className="w-4 h-4" />
