@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { History, Trophy, Calendar, Medal, TrendingUp, CheckCircle, Lock } from 'lucide-react';
+import EmptyState from '../../EmptyState';
 
 // Note: unlockedClasses array uses 'open' and 'world' (not 'openClass' and 'worldClass')
 const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
@@ -77,11 +78,10 @@ const HistoryTab = ({ profile, seasonHistory }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <History className="w-12 h-12 text-charcoal-600 mx-auto mb-3" />
-            <p className="text-cream-400">No season history yet</p>
-            <p className="text-sm text-cream-500 mt-1">Complete seasons to build your history!</p>
-          </div>
+          <EmptyState
+            title="NO HISTORY YET"
+            subtitle="Complete seasons to build your history..."
+          />
         )}
       </div>
 

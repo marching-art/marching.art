@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
 import { postLeagueMessage } from '../../../firebase/functions';
 import toast from 'react-hot-toast';
+import EmptyState from '../../EmptyState';
 
 const ChatTab = ({ league, messages, userProfile }) => {
   const [newMessage, setNewMessage] = useState('');
@@ -41,9 +42,10 @@ const ChatTab = ({ league, messages, userProfile }) => {
         {/* Messages */}
         <div className="h-64 md:h-96 overflow-y-auto space-y-3 p-4 bg-charcoal-900/50 rounded-lg">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-cream-500/60">No messages yet. Start the conversation!</p>
-            </div>
+            <EmptyState
+              title="NO MESSAGES"
+              subtitle="Start the conversation..."
+            />
           ) : (
             messages.map(msg => (
               <div

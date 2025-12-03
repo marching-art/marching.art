@@ -1,7 +1,8 @@
 // SoundSportTab - SoundSport ratings display
 import React from 'react';
-import { Music, Medal, Star } from 'lucide-react';
+import { Music, Medal } from 'lucide-react';
 import LoadingScreen from '../../LoadingScreen';
+import EmptyState from '../../EmptyState';
 
 // SoundSport rating helper
 const getSoundSportRating = (score) => {
@@ -115,11 +116,10 @@ const SoundSportTab = ({ loading, allShows }) => {
           })}
         </div>
       ) : (
-        <div className="card p-8 md:p-12 text-center">
-          <Star className="w-12 h-12 md:w-16 md:h-16 text-cream-500/30 mx-auto mb-4" />
-          <p className="text-lg md:text-xl text-cream-300 mb-2">No Recent SoundSport Events</p>
-          <p className="text-sm md:text-base text-cream-500/60">SoundSport event results will appear here when available</p>
-        </div>
+        <EmptyState
+          title="NO SOUNDSPORT EVENTS"
+          subtitle="SoundSport event results will appear here when available..."
+        />
       )}
     </div>
   );

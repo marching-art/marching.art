@@ -10,6 +10,7 @@ import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import { listStaffForAuction } from '../../firebase/functions';
 import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import Portal from '../Portal';
+import EmptyState from '../EmptyState';
 
 const StaffRoster = ({ userCorps = {} }) => {
   const { user } = useAuth();
@@ -265,22 +266,12 @@ const StaffRoster = ({ userCorps = {} }) => {
           <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredStaff.length === 0 ? (
-        <div className="glass rounded-2xl p-12 text-center">
-          <Users className="w-12 h-12 text-cream-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-cream-100 mb-2">
-            {ownedStaff.length === 0 ? 'No Staff Members Yet' : 'No Staff Found'}
-          </h3>
-          <p className="text-cream-400">
-            {ownedStaff.length === 0
-              ? 'Visit the Staff Marketplace to recruit your first staff member'
-              : 'Try adjusting your filters above'}
-          </p>
-          {ownedStaff.length === 0 && (
-            <a href="/staff" className="btn-primary inline-block mt-4">
-              Browse Marketplace
-            </a>
-          )}
-        </div>
+        <EmptyState
+          title={ownedStaff.length === 0 ? 'NO STAFF MEMBERS' : 'NO RESULTS'}
+          subtitle={ownedStaff.length === 0
+            ? 'Visit the Staff Marketplace to recruit your first staff member...'
+            : 'Try adjusting your filters above...'}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStaff.map((staff) => (

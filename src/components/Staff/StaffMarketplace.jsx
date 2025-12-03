@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, DollarSign, Award, Search, X,
-  ChevronDown, Trophy, Check, Lock, AlertCircle,
+  ChevronDown, Trophy, Check, Lock,
   Music, Eye, Flag, Drum, Sparkles, Star, Crown
 } from 'lucide-react';
 import { useAuth } from '../../App';
@@ -13,6 +13,7 @@ import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import EmptyState from '../EmptyState';
 
 // ============================================================================
 // CAPTION ICONS MAPPING - For watermarks on cards
@@ -389,17 +390,12 @@ const StaffMarketplace = () => {
           <div className="w-16 h-16 border-4 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredStaff.length === 0 ? (
-        <div className="card-brutalist p-12 text-center">
-          <AlertCircle className="w-16 h-16 text-slate-300 dark:text-[#FAF6EA]/30 mx-auto mb-4" />
-          <h3 className="text-2xl font-display font-black text-slate-900 dark:text-[#FAF6EA] uppercase mb-2">
-            No Staff Found
-          </h3>
-          <p className="text-slate-500 dark:text-[#FAF6EA]/60 font-display">
-            {searchTerm || captionFilter !== 'all'
-              ? 'Try adjusting your search or filter'
-              : 'No staff members available at this time'}
-          </p>
-        </div>
+        <EmptyState
+          title="NO STAFF FOUND"
+          subtitle={searchTerm || captionFilter !== 'all'
+            ? 'Try adjusting your search or filter...'
+            : 'No staff members available at this time...'}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStaff.map((staff) => (

@@ -1,10 +1,11 @@
 // src/pages/HallOfChampions.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Award, Calendar, Crown, Users } from 'lucide-react';
+import { Trophy, Award, Calendar, Crown } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
+import EmptyState from '../components/EmptyState';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', color: 'gold', icon: Crown },
@@ -109,11 +110,10 @@ const HallOfChampions = () => {
       </div>
 
       {seasons.length === 0 ? (
-        <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
-          <Trophy className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
-          <p className="text-xl text-slate-700 dark:text-cream-300 mb-2">No Champions Yet</p>
-          <p className="text-slate-500 dark:text-cream-500/60">Champions will be crowned at the end of each season</p>
-        </div>
+        <EmptyState
+          title="NO CHAMPIONS YET"
+          subtitle="Champions will be crowned at the end of each season..."
+        />
       ) : (
         <div className="space-y-8">
           {seasons.map((season, index) => {
@@ -134,9 +134,10 @@ const HallOfChampions = () => {
                       {formatSeasonName(season.seasonName)}
                     </h2>
                   </div>
-                  <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-6 text-center">
-                    <p className="text-slate-500 dark:text-cream-500/60">No {CLASS_CONFIG[selectedClass]?.name} champions for this season</p>
-                  </div>
+                  <EmptyState
+                    title="NO CHAMPIONS RECORDED"
+                    subtitle={`No ${CLASS_CONFIG[selectedClass]?.name} champions for this season...`}
+                  />
                 </motion.div>
               );
             }
