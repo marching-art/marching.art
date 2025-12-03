@@ -1,4 +1,4 @@
-// src/pages/Settings.jsx
+// src/pages/Settings.jsx (Tactical Luxury: Centered Form Card Layout)
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -91,7 +91,7 @@ const Settings = () => {
       });
 
       if (result.data.success) {
-        toast.success('Profile updated successfully!', { icon: '✓' });
+        toast.success('Profile updated successfully!');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -108,7 +108,7 @@ const Settings = () => {
       await updateDoc(profileRef, {
         'settings': notificationSettings
       });
-      toast.success('Notification settings saved!', { icon: '✓' });
+      toast.success('Notification settings saved!');
     } catch (error) {
       console.error('Error saving notification settings:', error);
       toast.error('Failed to save notification settings');
@@ -124,7 +124,7 @@ const Settings = () => {
       await updateDoc(profileRef, {
         'privacy': privacySettings
       });
-      toast.success('Privacy settings saved!', { icon: '✓' });
+      toast.success('Privacy settings saved!');
     } catch (error) {
       console.error('Error saving privacy settings:', error);
       toast.error('Failed to save privacy settings');
@@ -145,29 +145,54 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="h-8 w-48 bg-charcoal-800 rounded animate-pulse" />
-        <div className="h-64 bg-charcoal-800 rounded animate-pulse" />
+      <div className="max-w-2xl mx-auto space-y-6 p-4">
+        <div className="h-8 w-48 bg-[#2A2A2A] rounded animate-pulse" />
+        <div className="h-96 bg-[#1A1A1A] rounded-xl animate-pulse" />
       </div>
     );
   }
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'notifications', label: 'Alerts', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
     { id: 'account', label: 'Account', icon: Lock }
   ];
 
+  // Toggle switch component
+  const ToggleSwitch = ({ checked, onChange }) => (
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        className="sr-only peer"
+        checked={checked}
+        onChange={onChange}
+      />
+      <div className="w-11 h-6 bg-[#3A3A3A] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
+    </label>
+  );
+
+  // Setting row component
+  const SettingRow = ({ title, description, checked, onChange }) => (
+    <div className="flex items-center justify-between p-4 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
+      <div>
+        <p className="font-display font-medium text-[#FAF6EA]">{title}</p>
+        <p className="text-sm text-[#FAF6EA]/50">{description}</p>
+      </div>
+      <ToggleSwitch checked={checked} onChange={onChange} />
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="text-center"
       >
-        <h1 className="text-4xl font-display font-bold text-gradient mb-4">Settings</h1>
-        <p className="text-cream-300">Manage your account and preferences</p>
+        <h1 className="sports-header text-3xl md:text-4xl text-[#FAF6EA] mb-2">Settings</h1>
+        <p className="text-[#FAF6EA]/50 font-body">Manage your account and preferences</p>
       </motion.div>
 
       {/* Tab Navigation */}
@@ -175,22 +200,24 @@ const Settings = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex gap-2 overflow-x-auto pb-2"
+        className="flex justify-center"
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+        <div className="bg-[#1A1A1A] rounded-full p-1.5 border border-[#2A2A2A] flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-display font-medium text-sm transition-all whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'bg-gold-500 text-[#0D0D0D]'
+                  : 'text-[#FAF6EA]/60 hover:text-[#FAF6EA]'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Profile Settings */}
@@ -198,72 +225,73 @@ const Settings = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
         >
-          <div className="card">
-            <h3 className="text-lg font-semibold text-cream-100 mb-6">Profile Information</h3>
+          <div className="form-card">
+            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+              Profile Information
+            </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Display Name */}
               <div>
-                <label className="label">Display Name</label>
+                <label className="form-label">Display Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-500/40" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
                   <input
                     type="text"
-                    className="input pl-10"
+                    className="form-input pl-10"
                     placeholder="Your display name"
                     value={profileData.displayName}
                     onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
                     maxLength={50}
                   />
                 </div>
-                <p className="text-xs text-cream-500/40 mt-1">
+                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
                   This is how your name will appear to other players
                 </p>
               </div>
 
               {/* Email (read-only) */}
               <div>
-                <label className="label">Email Address</label>
+                <label className="form-label">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-500/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
                   <input
                     type="email"
-                    className="input pl-10 bg-charcoal-900/50 cursor-not-allowed"
+                    className="form-input pl-10 opacity-60 cursor-not-allowed"
                     value={user?.email || 'Anonymous'}
                     disabled
                   />
                 </div>
-                <p className="text-xs text-cream-500/40 mt-1">
+                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
                   Email cannot be changed from settings
                 </p>
               </div>
 
               {/* Bio */}
               <div>
-                <label className="label">Bio</label>
+                <label className="form-label">Bio</label>
                 <textarea
-                  className="textarea"
+                  className="form-input resize-none min-h-[100px]"
                   placeholder="Tell us about yourself..."
                   value={profileData.bio}
                   onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                   maxLength={500}
                   rows={4}
                 />
-                <p className="text-xs text-cream-500/40 mt-1">
+                <p className="text-xs text-[#FAF6EA]/40 mt-1.5">
                   {profileData.bio.length}/500 characters
                 </p>
               </div>
 
               {/* Location */}
               <div>
-                <label className="label">Location</label>
+                <label className="form-label">Location</label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cream-500/40" />
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FAF6EA]/30" />
                   <input
                     type="text"
-                    className="input pl-10"
+                    className="form-input pl-10"
                     placeholder="City, State/Country"
                     value={profileData.location}
                     onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
@@ -273,13 +301,13 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-8">
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
@@ -292,115 +320,71 @@ const Settings = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
         >
-          <div className="card">
-            <h3 className="text-lg font-semibold text-cream-100 mb-6">Notification Preferences</h3>
+          <div className="form-card">
+            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+              Notification Preferences
+            </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Email Notifications</p>
-                  <p className="text-sm text-cream-500/60">Receive email updates about your account</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notificationSettings.emailNotifications}
-                    onChange={(e) => setNotificationSettings({
-                      ...notificationSettings,
-                      emailNotifications: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+            <div className="space-y-3">
+              <SettingRow
+                title="Email Notifications"
+                description="Receive email updates about your account"
+                checked={notificationSettings.emailNotifications}
+                onChange={(e) => setNotificationSettings({
+                  ...notificationSettings,
+                  emailNotifications: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Show Reminders</p>
-                  <p className="text-sm text-cream-500/60">Get reminded about upcoming shows</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notificationSettings.showReminders}
-                    onChange={(e) => setNotificationSettings({
-                      ...notificationSettings,
-                      showReminders: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="Show Reminders"
+                description="Get reminded about upcoming shows"
+                checked={notificationSettings.showReminders}
+                onChange={(e) => setNotificationSettings({
+                  ...notificationSettings,
+                  showReminders: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">League Updates</p>
-                  <p className="text-sm text-cream-500/60">Notifications about your leagues</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notificationSettings.leagueUpdates}
-                    onChange={(e) => setNotificationSettings({
-                      ...notificationSettings,
-                      leagueUpdates: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="League Updates"
+                description="Notifications about your leagues"
+                checked={notificationSettings.leagueUpdates}
+                onChange={(e) => setNotificationSettings({
+                  ...notificationSettings,
+                  leagueUpdates: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Battle Pass Rewards</p>
-                  <p className="text-sm text-cream-500/60">Alerts when new rewards are available</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notificationSettings.battlePassRewards}
-                    onChange={(e) => setNotificationSettings({
-                      ...notificationSettings,
-                      battlePassRewards: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="Battle Pass Rewards"
+                description="Alerts when new rewards are available"
+                checked={notificationSettings.battlePassRewards}
+                onChange={(e) => setNotificationSettings({
+                  ...notificationSettings,
+                  battlePassRewards: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Weekly Recap</p>
-                  <p className="text-sm text-cream-500/60">Weekly summary of your performance</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notificationSettings.weeklyRecap}
-                    onChange={(e) => setNotificationSettings({
-                      ...notificationSettings,
-                      weeklyRecap: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="Weekly Recap"
+                description="Weekly summary of your performance"
+                checked={notificationSettings.weeklyRecap}
+                onChange={(e) => setNotificationSettings({
+                  ...notificationSettings,
+                  weeklyRecap: e.target.checked
+                })}
+              />
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-8">
               <button
                 onClick={handleSaveNotifications}
                 disabled={saving}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Preferences'}
               </button>
             </div>
@@ -413,77 +397,51 @@ const Settings = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
         >
-          <div className="card">
-            <h3 className="text-lg font-semibold text-cream-100 mb-6">Privacy Settings</h3>
+          <div className="form-card">
+            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+              Privacy Settings
+            </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Public Profile</p>
-                  <p className="text-sm text-cream-500/60">Allow others to view your profile</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={privacySettings.publicProfile}
-                    onChange={(e) => setPrivacySettings({
-                      ...privacySettings,
-                      publicProfile: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+            <div className="space-y-3">
+              <SettingRow
+                title="Public Profile"
+                description="Allow others to view your profile"
+                checked={privacySettings.publicProfile}
+                onChange={(e) => setPrivacySettings({
+                  ...privacySettings,
+                  publicProfile: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Show Location</p>
-                  <p className="text-sm text-cream-500/60">Display your location on your profile</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={privacySettings.showLocation}
-                    onChange={(e) => setPrivacySettings({
-                      ...privacySettings,
-                      showLocation: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="Show Location"
+                description="Display your location on your profile"
+                checked={privacySettings.showLocation}
+                onChange={(e) => setPrivacySettings({
+                  ...privacySettings,
+                  showLocation: e.target.checked
+                })}
+              />
 
-              <div className="flex items-center justify-between p-4 bg-charcoal-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium text-cream-100">Show Statistics</p>
-                  <p className="text-sm text-cream-500/60">Display your stats and achievements</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={privacySettings.showStats}
-                    onChange={(e) => setPrivacySettings({
-                      ...privacySettings,
-                      showStats: e.target.checked
-                    })}
-                  />
-                  <div className="w-11 h-6 bg-charcoal-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-500"></div>
-                </label>
-              </div>
+              <SettingRow
+                title="Show Statistics"
+                description="Display your stats and achievements"
+                checked={privacySettings.showStats}
+                onChange={(e) => setPrivacySettings({
+                  ...privacySettings,
+                  showStats: e.target.checked
+                })}
+              />
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-8">
               <button
                 onClick={handleSavePrivacy}
                 disabled={saving}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Privacy Settings'}
               </button>
             </div>
@@ -496,28 +454,30 @@ const Settings = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-4"
         >
           {/* Account Info */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-cream-100 mb-6">Account Information</h3>
+          <div className="form-card">
+            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-6">
+              Account Information
+            </h3>
 
             <div className="space-y-3">
-              <div className="flex justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                <span className="text-cream-500/60">Account Type</span>
-                <span className="text-cream-100 font-medium">
+              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
+                <span className="text-[#FAF6EA]/50 font-display text-sm">Account Type</span>
+                <span className="text-[#FAF6EA] font-display font-medium">
                   {user?.isAnonymous ? 'Guest' : 'Registered'}
                 </span>
               </div>
 
-              <div className="flex justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                <span className="text-cream-500/60">User ID</span>
-                <span className="text-cream-100 font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
+              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
+                <span className="text-[#FAF6EA]/50 font-display text-sm">User ID</span>
+                <span className="text-[#FAF6EA] font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
               </div>
 
-              <div className="flex justify-between p-3 bg-charcoal-900/30 rounded-lg">
-                <span className="text-cream-500/60">Joined</span>
-                <span className="text-cream-100">
+              <div className="flex justify-between p-3 bg-[#0D0D0D] rounded-lg border border-[#2A2A2A]">
+                <span className="text-[#FAF6EA]/50 font-display text-sm">Joined</span>
+                <span className="text-[#FAF6EA] font-display">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
                     : 'Unknown'}
@@ -527,14 +487,16 @@ const Settings = () => {
           </div>
 
           {/* Sign Out */}
-          <div className="card border border-cream-500/20">
-            <h3 className="text-lg font-semibold text-cream-100 mb-6">Session</h3>
+          <div className="form-card">
+            <h3 className="text-lg font-display font-bold text-[#FAF6EA] uppercase tracking-wide mb-4">
+              Session
+            </h3>
 
-            <div className="flex items-start gap-3 mb-6">
-              <AlertCircle className="w-5 h-5 text-cream-500/60 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 mb-5">
+              <AlertCircle className="w-5 h-5 text-[#FAF6EA]/50 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-cream-300 mb-2">Sign out of your account</p>
-                <p className="text-sm text-cream-500/60">
+                <p className="text-[#FAF6EA]/80 font-body">Sign out of your account</p>
+                <p className="text-sm text-[#FAF6EA]/40">
                   You'll need to sign in again to access your account
                 </p>
               </div>
@@ -542,22 +504,24 @@ const Settings = () => {
 
             <button
               onClick={handleSignOut}
-              className="btn-outline w-full justify-center"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[#3A3A3A] text-[#FAF6EA]/70 hover:border-[#5A5A5A] hover:text-[#FAF6EA] transition-colors font-display font-medium"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="w-4 h-4" />
               Sign Out
             </button>
           </div>
 
           {/* Danger Zone */}
-          <div className="card border border-red-500/30 bg-red-500/5">
-            <h3 className="text-lg font-semibold text-red-400 mb-6">Danger Zone</h3>
+          <div className="form-card border-red-500/30 bg-red-500/5">
+            <h3 className="text-lg font-display font-bold text-red-400 uppercase tracking-wide mb-4">
+              Danger Zone
+            </h3>
 
-            <div className="flex items-start gap-3 mb-6">
+            <div className="flex items-start gap-3 mb-5">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-cream-300 mb-2">Delete Account</p>
-                <p className="text-sm text-cream-500/60">
+                <p className="text-[#FAF6EA]/80 font-body">Delete Account</p>
+                <p className="text-sm text-[#FAF6EA]/40">
                   Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
               </div>
@@ -565,9 +529,9 @@ const Settings = () => {
 
             <button
               onClick={() => toast.error('Please contact support to delete your account')}
-              className="btn-ghost w-full justify-center text-red-400 border-red-500/30 hover:bg-red-500/10"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-500/30 text-red-400/80 hover:border-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors font-display font-medium"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="w-4 h-4" />
               Delete Account
             </button>
           </div>
