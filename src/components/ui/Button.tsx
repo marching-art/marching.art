@@ -20,12 +20,13 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
   children: React.ReactNode;
 }
 
+// Brutalist variant styles with hard shadows and 2px borders
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-gradient-gold text-charcoal-900 shadow-lg hover:shadow-glow',
-  secondary: 'bg-charcoal-800 text-cream-100 border border-cream-800 hover:bg-charcoal-700',
-  outline: 'border-2 border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-charcoal-900',
-  ghost: 'bg-transparent text-cream-300 hover:bg-cream-900/20',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
+  primary: 'bg-gold-500 text-charcoal-900 border-2 border-gold-500 shadow-[4px_4px_0px_0px_rgba(255,212,77,1)] hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]',
+  secondary: 'bg-charcoal-800 text-cream-100 border-2 border-cream-800/30 shadow-[4px_4px_0px_0px_rgba(255,212,77,0.5)] hover:bg-charcoal-700 hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,0.5)]',
+  outline: 'border-2 border-gold-500 text-gold-500 shadow-[4px_4px_0px_0px_rgba(255,212,77,0.5)] hover:bg-gold-500 hover:text-charcoal-900 hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]',
+  ghost: 'bg-transparent text-cream-300 border-2 border-transparent hover:bg-cream-900/20',
+  danger: 'bg-red-600 text-white border-2 border-red-600 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:bg-red-700 hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -66,10 +67,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         className={`
           inline-flex items-center justify-center gap-2
-          rounded-lg font-display font-semibold
+          rounded font-display font-semibold
           transition-all duration-200
           focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-charcoal-900
-          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
           ${variantStyles[variant]}
           ${sizeStyles[size]}
           ${fullWidth ? 'w-full' : ''}

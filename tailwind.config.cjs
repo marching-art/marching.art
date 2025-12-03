@@ -52,7 +52,22 @@ module.exports = {
       fontFamily: {
         'display': ['Oswald', 'Barlow Condensed', 'system-ui', 'sans-serif'],
         'body': ['Inter', 'system-ui', 'sans-serif'],
-        'mono': ['Fira Code', 'monospace']
+        'mono': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace']
+      },
+      letterSpacing: {
+        'tighter': '-0.05em',
+        'tight': '-0.025em',
+        'brutal': '-0.04em',
+      },
+      borderRadius: {
+        'none': '0',
+        'sm': '4px',
+        'DEFAULT': '4px',
+        'md': '6px',
+        'lg': '8px',
+        'xl': '8px',
+        '2xl': '8px',
+        'full': '9999px',
       },
       animation: {
         'fade-up': 'fadeUp 0.5s ease-out',

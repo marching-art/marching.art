@@ -115,17 +115,18 @@ export const Modal: React.FC<ModalProps> = ({
             animate="visible"
             exit="exit"
             className={`
-              glass-dark rounded-2xl w-full overflow-hidden
+              bg-charcoal-900 border-2 border-gold-500/30 rounded w-full overflow-hidden
+              shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]
               ${sizeStyles[size]}
             `}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between p-6 border-b border-cream-900/20">
+              <div className="flex items-center justify-between p-6 border-b-2 border-gold-500/20">
                 <div className="flex items-center gap-3">
                   {icon && (
-                    <div className="bg-gradient-to-br from-gold-500 to-gold-600 p-2.5 rounded-lg">
+                    <div className="bg-gold-500 p-2.5 rounded border-2 border-gold-500">
                       {icon}
                     </div>
                   )}
@@ -159,7 +160,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-6 border-t border-cream-900/20 flex justify-end gap-3">
+              <div className="p-6 border-t-2 border-gold-500/20 flex justify-end gap-3">
                 {footer}
               </div>
             )}
@@ -212,7 +213,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg text-cream-300 hover:bg-cream-900/20 transition-colors"
+            className="px-4 py-2 rounded border-2 border-cream-800/30 text-cream-300 hover:bg-cream-900/20 transition-colors font-display font-semibold"
           >
             {cancelText}
           </button>
@@ -220,11 +221,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              px-4 py-2 rounded-lg font-semibold transition-colors
+              px-4 py-2 rounded font-display font-semibold transition-all border-2
               ${variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-gradient-gold text-charcoal-900 hover:shadow-glow'}
-              disabled:opacity-50
+                ? 'bg-red-600 text-white border-red-600 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)]'
+                : 'bg-gold-500 text-charcoal-900 border-gold-500 shadow-[4px_4px_0px_0px_rgba(255,212,77,1)] hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]'}
+              disabled:opacity-50 disabled:shadow-none
             `}
           >
             {isLoading ? 'Loading...' : confirmText}

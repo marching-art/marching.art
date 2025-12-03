@@ -1,21 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* CSS Variables for Theme */
 :root {
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  /* Border Radius - Brutalist: minimal rounding */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
   --radius-full: 9999px;
 
   /* Transitions */
   --transition-fast: 150ms;
   --transition-base: 250ms;
   --transition-slow: 500ms;
+
+  /* Brutalist Shadows - Hard offset, no blur */
+  --shadow-brutal: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-brutal-gold: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-brutal-gold-lg: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+
+  /* Border Width */
+  --border-width: 2px;
 }
 
 /* Dark Mode (Default) */
@@ -65,12 +75,12 @@
   --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
   --gradient-main: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.2);
-  --shadow-glow: 0 0 20px rgba(255, 212, 77, 0.5);
+  /* Shadows - Brutalist: Hard offset, no blur */
+  --shadow-sm: 2px 2px 0px 0px rgba(255, 212, 77, 0.8);
+  --shadow-md: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-lg: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-xl: 8px 8px 0px 0px rgba(255, 212, 77, 1);
+  --shadow-glow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
 
   /* Glass effects */
   --glass-bg: rgba(26, 26, 26, 0.3);
@@ -129,12 +139,12 @@
   --gradient-dark: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 50%, #E5D396 100%);
   --gradient-main: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 100%);
 
-  /* Shadows - slightly stronger for light backgrounds */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 30px rgba(0, 0, 0, 0.18);
-  --shadow-glow: 0 0 20px rgba(179, 134, 0, 0.4);
+  /* Shadows - Brutalist: Hard black offset for light mode */
+  --shadow-sm: 2px 2px 0px 0px rgba(0, 0, 0, 0.8);
+  --shadow-md: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-xl: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+  --shadow-glow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
 
   /* Glass effects */
   --glass-bg: rgba(250, 246, 234, 0.8);
@@ -197,9 +207,10 @@ body {
   opacity: 0.4;
 }
 
-/* Typography */
+/* Typography - Brutalist: Tight tracking for aggressive headlines */
 h1, h2, h3, h4, h5, h6 {
-  @apply font-display font-bold tracking-tight;
+  @apply font-display font-bold;
+  letter-spacing: -0.04em;
 }
 
 h1 { @apply text-5xl md:text-6xl lg:text-7xl; }
@@ -221,13 +232,18 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply max-w-7xl mx-auto p-4 md:p-6 relative z-10;
   }
 
-  /* Paper Card - White/Light card on any background */
+  /* Paper Card - White/Light card on any background - Brutalist style */
   .paper-card {
-    @apply bg-white shadow-lg rounded-xl p-6 md:p-8 border border-gray-200;
+    @apply bg-white p-6 md:p-8;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .paper-card {
-    @apply bg-[#1A1A1A] border-[#2A2A2A];
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   /* Stadium Banner - Hero section */
@@ -312,32 +328,31 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     min-height: 140px;
   }
 
-  /* Icon Card - Action tiles with large background icons */
-  /* Light Mode: White card with gold bottom border */
+  /* Icon Card - Action tiles with large background icons - Brutalist */
   .icon-card {
-    @apply relative overflow-hidden rounded-xl p-4 md:p-5;
-    @apply bg-white border border-stone-200;
-    @apply transition-all duration-300 cursor-pointer shadow-sm;
-    border-bottom-width: 4px;
-    border-bottom-color: #D9A300;
+    @apply relative overflow-hidden p-4 md:p-5;
+    @apply bg-white;
+    @apply transition-all duration-200 cursor-pointer;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .icon-card:hover {
-    transform: translateY(-4px);
-    @apply shadow-md border-amber-500;
+    transform: translateY(-3px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
-  /* Dark Mode: Charcoal card with gold bottom border */
+  /* Dark Mode: Gold shadow */
   [data-theme="dark"] .icon-card {
-    @apply bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D];
-    @apply border-2 border-[#2A2A2A] shadow-none;
-    border-bottom-width: 4px;
-    border-bottom-color: #FFD44D;
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .icon-card:hover {
-    border-color: rgba(255, 212, 77, 0.6);
-    box-shadow: 0 0 20px rgba(255, 212, 77, 0.2);
+    border-color: rgba(255, 212, 77, 0.5);
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .icon-card-bg {
@@ -360,84 +375,109 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply border border-[#2A2A2A];
   }
 
-  /* Ticket Stub - Schedule card style (Light Mode: Paper ticket look) */
+  /* Ticket Stub - Schedule card style - Brutalist */
   .ticket-stub {
-    @apply bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm;
-    @apply transition-all duration-300;
+    @apply bg-white overflow-hidden;
+    @apply transition-all duration-200;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .ticket-stub:hover {
-    @apply shadow-md;
     transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
-  /* Dark Mode: Charcoal ticket */
+  /* Dark Mode: Gold shadow */
   [data-theme="dark"] .ticket-stub {
-    @apply bg-[#1A1A1A] border-[#2A2A2A] shadow-none;
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .ticket-stub:hover {
-    @apply shadow-lg;
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .ticket-stub-divider {
-    @apply border-l-2 border-dashed border-stone-300;
+    @apply border-l-2 border-dashed;
+    border-color: #1A1A1A;
   }
 
   [data-theme="dark"] .ticket-stub-divider {
-    @apply border-[#3A3A3A];
+    border-color: rgba(255, 212, 77, 0.3);
   }
 
-  /* Pill Button - High contrast CTA */
-  /* Light Mode: Charcoal button with Gold text (Premium Paper Look) */
+  /* Pill Button - High contrast CTA - Brutalist */
+  /* Light Mode: Charcoal button with Gold text */
   .btn-pill {
-    @apply px-5 py-2.5 rounded-full font-display font-bold text-sm uppercase tracking-wider;
+    @apply px-5 py-2.5 font-display font-bold text-sm uppercase;
     @apply bg-slate-900 text-amber-500;
-    @apply transition-all duration-300;
-    @apply hover:bg-slate-800 hover:text-amber-400;
+    @apply transition-all duration-200;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .btn-pill:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    @apply bg-slate-800 text-amber-400;
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
-  /* Dark Mode: Gold button with Charcoal text (Stadium Glow Look) */
+  /* Dark Mode: Gold button with Charcoal text */
   [data-theme="dark"] .btn-pill {
     @apply bg-gold-500 text-[#0D0D0D];
-    @apply hover:bg-gold-400;
+    border-color: #FFD44D;
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .btn-pill:hover {
-    box-shadow: 0 4px 12px rgba(255, 212, 77, 0.4);
+    @apply bg-gold-400;
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Form Card - Constrained form layout (Paper container for Settings) */
+  /* Form Card - Brutalist container for Settings */
   .form-card {
-    @apply bg-white shadow-md rounded-xl p-6 md:p-8 border border-cream-300;
+    @apply bg-white p-6 md:p-8;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .form-card {
-    @apply bg-[#1A1A1A] shadow-lg;
-    border-color: rgba(250, 246, 234, 0.2);
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Form Input - Tactical Luxury style */
+  /* Form Input - Brutalist style */
   .form-input {
-    @apply w-full px-4 py-3 rounded-lg;
-    @apply bg-stone-50 border border-stone-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500;
+    @apply w-full px-4 py-3;
+    @apply bg-stone-50;
+    @apply focus:outline-none;
     @apply transition-all duration-200;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
     color: #1e293b;
   }
 
+  .form-input:focus {
+    border-color: #D9A300;
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+  }
+
   [data-theme="dark"] .form-input {
-    @apply bg-[#0D0D0D] border-[#3A3A3A];
+    @apply bg-[#0D0D0D];
+    border-color: rgba(255, 212, 77, 0.3);
     color: #FAF6EA;
   }
 
   [data-theme="dark"] .form-input:focus {
-    @apply ring-gold-500 border-gold-500;
+    border-color: #FFD44D;
+    box-shadow: 2px 2px 0px 0px rgba(255, 212, 77, 0.5);
   }
 
   .form-input::placeholder {
@@ -449,7 +489,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .form-label {
-    @apply block text-xs font-display font-bold uppercase tracking-wider mb-2;
+    @apply block text-xs font-display font-bold uppercase mb-2;
+    letter-spacing: 0.05em;
     color: #64748b;
   }
 
@@ -457,18 +498,23 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     color: #9F9F9F;
   }
 
-  /* Sports Header - Condensed font for headlines */
+  /* Sports Header - Condensed font for headlines - Brutalist tight tracking */
   .sports-header {
-    @apply font-display font-bold uppercase tracking-wider;
+    @apply font-display font-bold uppercase;
+    letter-spacing: -0.04em;
   }
 
   .sports-header-lg {
     @apply text-3xl md:text-4xl lg:text-5xl;
+    letter-spacing: -0.04em;
   }
 
-  /* Role Badge - Colored badges for staff roles */
+  /* Role Badge - Colored badges for staff roles - Brutalist */
   .role-badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-display font-bold uppercase tracking-wide;
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-display font-bold uppercase;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
   }
 
   .role-badge-visual {
@@ -495,26 +541,30 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply bg-green-500 text-white;
   }
 
-  /* Compact Card - For staff marketplace */
-  /* Light Mode: White card with subtle shadow */
+  /* Compact Card - For staff marketplace - Brutalist */
   .compact-card {
-    @apply relative bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm;
-    @apply transition-all duration-300;
+    @apply relative bg-white overflow-hidden;
+    @apply transition-all duration-200;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   .compact-card:hover {
-    @apply border-amber-500/50 shadow-md;
     transform: translateY(-3px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
-  /* Dark Mode: Charcoal card */
+  /* Dark Mode: Gold shadow */
   [data-theme="dark"] .compact-card {
-    @apply bg-[#1A1A1A] border-2 border-[#2A2A2A] shadow-none;
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   [data-theme="dark"] .compact-card:hover {
     border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
   /* Price Anchor - Positioned price tag */
@@ -556,76 +606,159 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background: var(--gradient-gold);
   }
   
-  /* Buttons */
+  /* Buttons - Brutalist: Hard shadows, 2px borders, minimal radius */
   .btn {
-    @apply px-6 py-3.5 rounded-lg font-display font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 min-h-[44px] flex items-center justify-center gap-2;
-  }
-  
-  /* Light Mode: Charcoal button with Gold text (Premium Paper Look) */
-  .btn-primary {
-    @apply btn bg-slate-900 text-amber-500 shadow-lg;
-    @apply hover:bg-slate-800 hover:text-amber-400;
+    @apply px-6 py-3.5 font-display font-semibold transition-all duration-200 min-h-[44px] flex items-center justify-center gap-2;
+    border-radius: 4px;
+    border: 2px solid currentColor;
   }
 
-  /* Dark Mode: Gold button with Charcoal text (Stadium Glow Look) */
+  .btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  /* Light Mode: Charcoal button with Gold text - Brutalist */
+  .btn-primary {
+    @apply btn bg-slate-900 text-amber-500;
+    border-color: #1A1A1A;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  .btn-primary:hover {
+    @apply bg-slate-800 text-amber-400;
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  /* Dark Mode: Gold button with Charcoal text - Brutalist */
   [data-theme="dark"] .btn-primary {
-    @apply bg-gradient-gold text-charcoal-900 hover:shadow-glow;
+    @apply bg-gold-500 text-charcoal-900;
+    border-color: #FFD44D;
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
-  
+
+  [data-theme="dark"] .btn-primary:hover {
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  }
+
   .btn-secondary {
-    @apply btn bg-gradient-cream text-charcoal-900 shadow-lg hover:shadow-xl;
+    @apply btn bg-cream-100 text-charcoal-900;
+    border-color: #1A1A1A;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
-  
+
+  .btn-secondary:hover {
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  [data-theme="dark"] .btn-secondary {
+    @apply bg-charcoal-800 text-cream-100;
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+  }
+
   .btn-outline {
-    @apply btn border-2 border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-charcoal-900;
+    @apply btn bg-transparent;
+    border: 2px solid;
+    @apply border-gold-500 text-gold-500;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
-  
+
+  .btn-outline:hover {
+    @apply bg-gold-500 text-charcoal-900;
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  [data-theme="dark"] .btn-outline {
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 0.5);
+  }
+
+  [data-theme="dark"] .btn-outline:hover {
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  }
+
   .btn-ghost {
-    @apply btn bg-transparent text-cream-300 hover:bg-cream-900;
+    @apply btn bg-transparent text-cream-300;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-cream-900/20;
+    box-shadow: none;
   }
   
-  /* Cards - Light Mode: White with borders/shadows, Dark Mode: Glass effect */
+  /* Cards - Brutalist: 2px borders, hard shadows, minimal radius */
   .card {
-    @apply bg-white border border-stone-200 shadow-sm rounded-xl p-6 transition-all duration-300;
+    @apply bg-white p-6 transition-all duration-200;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card {
-    @apply bg-transparent border-0 shadow-none;
-    background: var(--glass-bg);
-    @apply backdrop-blur-md;
-    border: 1px solid var(--border-color);
+    @apply bg-[#1A1A1A];
+    border-color: rgba(255, 212, 77, 0.3);
+    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card:hover {
-    @apply shadow-md border-stone-300;
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card:hover {
-    @apply shadow-xl;
+    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card-hover {
-    @apply card;
+    @apply card cursor-pointer;
   }
 
   .card-hover:hover {
-    @apply -translate-y-1;
+    transform: translateY(-4px);
+    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
   }
 
   [data-theme="dark"] .card-hover:hover {
-    @apply shadow-glow;
+    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
   }
 
   .card-premium {
-    @apply card bg-gradient-to-br from-gold-900 to-cream-900 border-gold-700;
+    @apply card;
+    @apply bg-gradient-to-br from-amber-50 to-cream-100;
+    border-color: #D9A300;
+  }
+
+  [data-theme="dark"] .card-premium {
+    @apply bg-gradient-to-br from-charcoal-900 to-charcoal-800;
+    border-color: #FFD44D;
   }
   
-  /* Form Elements */
+  /* Form Elements - Brutalist: 2px borders, minimal radius */
   .input {
-    @apply w-full px-4 py-3.5 rounded-lg focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-900 transition-all duration-300 min-h-[44px] text-base;
+    @apply w-full px-4 py-3.5 focus:outline-none transition-all duration-200 min-h-[44px] text-base;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
     color: var(--text-primary);
+  }
+
+  .input:focus {
+    border-color: #FFD44D;
+    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
+  }
+
+  [data-theme="dark"] .input {
+    border-color: rgba(255, 212, 77, 0.3);
+  }
+
+  [data-theme="dark"] .input:focus {
+    border-color: #FFD44D;
+    box-shadow: 2px 2px 0px 0px rgba(255, 212, 77, 0.5);
   }
 
   .input::placeholder {
@@ -641,9 +774,19 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .checkbox {
-    @apply w-6 h-6 rounded text-gold-500 focus:ring-gold-900 cursor-pointer;
+    @apply w-6 h-6 text-gold-500 cursor-pointer;
     background: var(--bg-secondary);
-    border-color: var(--border-color);
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
+  }
+
+  [data-theme="dark"] .checkbox {
+    border-color: rgba(255, 212, 77, 0.3);
+  }
+
+  .checkbox:checked {
+    @apply bg-gold-500;
+    border-color: #FFD44D;
   }
 
   .label {
@@ -651,25 +794,49 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     color: var(--text-secondary);
   }
   
-  /* Badges */
+  /* Badges - Brutalist: 2px border, minimal radius */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center px-3 py-1 text-xs font-semibold;
+    border: 2px solid currentColor;
+    border-radius: 4px;
   }
-  
+
   .badge-gold {
-    @apply badge bg-gold-900 text-gold-300 border border-gold-700;
+    @apply badge bg-gold-900/20 text-gold-500;
+    border-color: #FFD44D;
   }
-  
+
   .badge-cream {
-    @apply badge bg-cream-900 text-cream-300 border border-cream-700;
+    @apply badge bg-cream-900/20 text-cream-300;
+    border-color: currentColor;
   }
-  
+
   .badge-success {
-    @apply badge bg-green-900 text-green-300 border border-green-700;
+    @apply badge bg-green-900/20 text-green-400;
+    border-color: #4ade80;
   }
-  
+
   .badge-danger {
-    @apply badge bg-red-900 text-red-300 border border-red-700;
+    @apply badge bg-red-900/20 text-red-400;
+    border-color: #f87171;
+  }
+
+  /* Monospace Numbers - For scores, currency, XP, dates */
+  .font-data {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-data {
+    @apply font-data font-medium;
+  }
+
+  .text-score {
+    @apply font-data font-bold tracking-tight;
+  }
+
+  .text-currency {
+    @apply font-data font-semibold;
   }
   
   /* Navigation */
@@ -1037,13 +1204,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     pointer-events: none;
   }
 
-  /* Massive Typography */
+  /* Massive Typography - Brutalist tight tracking */
   .text-massive {
-    @apply font-display font-black uppercase tracking-tight leading-none;
+    @apply font-display font-black uppercase leading-none;
+    letter-spacing: -0.04em;
   }
 
   .text-stats {
-    @apply font-mono font-bold tabular-nums;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+    @apply font-bold;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Stamp Badge (for registered/owned status) */

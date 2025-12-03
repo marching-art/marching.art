@@ -15,13 +15,14 @@ export interface CardProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;
 }
 
+// Brutalist variant styles with hard shadows and 2px borders
 const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-white dark:bg-charcoal-800 border border-stone-200 dark:border-cream-900/20 shadow-sm dark:shadow-none',
-  glass: 'glass',
-  'glass-dark': 'glass-dark',
-  premium: 'bg-gradient-to-br from-amber-500/10 dark:from-gold-900/20 to-stone-100 dark:to-cream-900/10 border border-amber-500/20 dark:border-gold-700/30 shadow-[0_0_30px_-10px_rgba(217,163,0,0.15)] dark:shadow-[0_0_30px_-10px_rgba(255,212,77,0.2)]',
-  interactive: 'bg-white dark:bg-charcoal-900/60 border border-stone-200 dark:border-cream-500/10 hover:border-stone-300 dark:hover:border-cream-500/20 hover:bg-stone-50 dark:hover:bg-charcoal-800/60 transition-all shadow-sm dark:shadow-none',
-  outlined: 'bg-transparent border border-stone-300 dark:border-cream-800',
+  default: 'bg-white dark:bg-charcoal-800 border-2 border-slate-900 dark:border-gold-500/30 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,1)]',
+  glass: 'glass border-2 border-slate-900/20 dark:border-gold-500/20',
+  'glass-dark': 'glass-dark border-2 border-slate-900/20 dark:border-gold-500/20',
+  premium: 'bg-gradient-to-br from-amber-50 dark:from-gold-900/20 to-cream-100 dark:to-cream-900/10 border-2 border-amber-600 dark:border-gold-500 shadow-[4px_4px_0px_0px_rgba(217,163,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,1)]',
+  interactive: 'bg-white dark:bg-charcoal-900/60 border-2 border-slate-900 dark:border-gold-500/30 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)] transition-all',
+  outlined: 'bg-transparent border-2 border-slate-900 dark:border-gold-500/50',
 };
 
 const paddingStyles: Record<string, string> = {
@@ -44,9 +45,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     },
     ref
   ) => {
+    // Brutalist hover animation with hard shadow offset
     const hoverAnimation = hoverable
       ? {
-          whileHover: { y: -4, boxShadow: '0 0 20px rgba(255, 212, 77, 0.3)' },
+          whileHover: { y: -4 },
           transition: { duration: 0.2 },
         }
       : {};
@@ -63,11 +65,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         {...hoverAnimation}
         {...pressAnimation}
         className={`
-          rounded-xl
-          transition-all duration-300
+          rounded
+          transition-all duration-200
           ${variantStyles[variant]}
           ${paddingStyles[padding]}
-          ${hoverable ? 'cursor-pointer hover:shadow-xl' : ''}
+          ${hoverable ? 'cursor-pointer hover:-translate-y-1' : ''}
           ${pressable ? 'cursor-pointer' : ''}
           ${className}
         `.trim()}
@@ -154,7 +156,7 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
     return (
       <div
         ref={ref}
-        className={`mt-4 pt-4 border-t border-stone-200 dark:border-cream-900/20 ${className}`}
+        className={`mt-4 pt-4 border-t-2 border-slate-900/20 dark:border-gold-500/20 ${className}`}
         {...props}
       >
         {children}
