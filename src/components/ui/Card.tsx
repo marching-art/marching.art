@@ -5,7 +5,7 @@ import { motion, HTMLMotionProps } from 'framer-motion';
 // CARD COMPONENT
 // =============================================================================
 
-export type CardVariant = 'default' | 'glass' | 'glass-dark' | 'premium' | 'outlined';
+export type CardVariant = 'default' | 'glass' | 'glass-dark' | 'premium' | 'interactive' | 'outlined';
 
 export interface CardProps extends HTMLMotionProps<'div'> {
   variant?: CardVariant;
@@ -19,7 +19,8 @@ const variantStyles: Record<CardVariant, string> = {
   default: 'bg-charcoal-800 border border-cream-900/20',
   glass: 'glass',
   'glass-dark': 'glass-dark',
-  premium: 'bg-gradient-to-br from-gold-900/20 to-cream-900/10 border border-gold-700/30',
+  premium: 'bg-gradient-to-br from-gold-900/20 to-cream-900/10 border border-gold-700/30 shadow-[0_0_30px_-10px_rgba(255,212,77,0.2)]',
+  interactive: 'bg-charcoal-900/60 border border-cream-500/10 hover:border-cream-500/20 hover:bg-charcoal-800/60 transition-all',
   outlined: 'bg-transparent border border-cream-800',
 };
 

@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Users, Wrench, Zap, ClipboardList } from 'lucide-react';
+import { ChevronDown, ChevronUp, Zap, ClipboardList, X } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -52,8 +52,15 @@ const Dashboard = () => {
   const [retiring, setRetiring] = useState(false);
   const [showMorningReport, setShowMorningReport] = useState(false);
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState('daily');
+  // New: Slide-out panel states for Equipment and Staff
+  const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
+  const [showStaffPanel, setShowStaffPanel] = useState(false);
+
+  // Expandable sections state
+  const [expandedSections, setExpandedSections] = useState({
+    dailyOps: true,
+    corpsDetails: false
+  });
 
   // Destructure commonly used values
   const {
@@ -306,7 +313,7 @@ const Dashboard = () => {
         engagementData={engagementData}
       />
 
-      {/* Command Center - Unified corps management hub */}
+      {/* Command Center - Unified corps management HUD */}
       {activeCorps && (
         <CommandCenter
           profile={profile}
@@ -322,146 +329,125 @@ const Dashboard = () => {
           onCorpsSwitch={handleCorpsSwitch}
           getCorpsClassName={getCorpsClassName}
           assignedStaff={assignedStaff}
+          onOpenEquipmentModal={() => {
+            setShowEquipmentPanel(true);
+            completeDailyChallenge('maintain_equipment');
+          }}
+          onOpenStaffModal={() => {
+            setShowStaffPanel(true);
+            completeDailyChallenge('staff_meeting');
+          }}
         />
       )}
 
-      {/* Main Content Layout */}
+      {/* Main Content Layout - Unified HUD approach, no tabs */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Main Content Area */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Tab Navigation - Streamlined */}
+
+          {/* Daily Operations - Collapsible Section */}
           {activeCorps && (
-            <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+            <div className="glass rounded-xl overflow-hidden">
               <button
-                onClick={() => setActiveTab('daily')}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'daily'
-                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
-                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
-                }`}
+                onClick={() => setExpandedSections(prev => ({ ...prev, dailyOps: !prev.dailyOps }))}
+                className="w-full flex items-center justify-between p-4 hover:bg-cream-500/5 transition-colors"
               >
-                <Zap className="w-4 h-4" />
-                Daily Activities
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gold-500/20">
+                    <Zap className="w-4 h-4 text-gold-500" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-cream-100">Daily Activities</h3>
+                    <p className="text-xs text-cream-500/60">Complete activities to boost your corps</p>
+                  </div>
+                </div>
+                {expandedSections.dailyOps ? (
+                  <ChevronUp className="w-5 h-5 text-cream-500/60" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-cream-500/60" />
+                )}
               </button>
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'overview'
-                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
-                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
-                }`}
-              >
-                <ClipboardList className="w-4 h-4" />
-                Corps Details
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('equipment');
-                  completeDailyChallenge('maintain_equipment');
-                }}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'equipment'
-                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
-                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
-                }`}
-              >
-                <Wrench className="w-4 h-4" />
-                Equipment
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('staff');
-                  completeDailyChallenge('staff_meeting');
-                }}
-                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                  activeTab === 'staff'
-                    ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
-                    : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-800'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                Staff
-              </button>
+              <AnimatePresence>
+                {expandedSections.dailyOps && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4">
+                      <DailyOperations
+                        corpsClass={activeCorpsClass}
+                        profile={profile}
+                        executionState={executionState}
+                        canRehearseToday={canRehearseToday()}
+                        onRehearsal={rehearse}
+                        rehearsalProcessing={executionProcessing}
+                        calculateMultiplier={calculateMultiplier}
+                        onActivityComplete={(type, data) => {
+                          completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
+                          refreshProfile();
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
-          {/* Tab Content */}
-          <AnimatePresence mode="wait">
-            {activeTab === 'daily' && activeCorps && (
-              <motion.div
-                key="daily"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+          {/* Corps Details - Collapsible Section */}
+          {activeCorps && (
+            <div className="glass rounded-xl overflow-hidden">
+              <button
+                onClick={() => setExpandedSections(prev => ({ ...prev, corpsDetails: !prev.corpsDetails }))}
+                className="w-full flex items-center justify-between p-4 hover:bg-cream-500/5 transition-colors"
               >
-                <DailyOperations
-                  corpsClass={activeCorpsClass}
-                  profile={profile}
-                  executionState={executionState}
-                  canRehearseToday={canRehearseToday()}
-                  onRehearsal={rehearse}
-                  rehearsalProcessing={executionProcessing}
-                  calculateMultiplier={calculateMultiplier}
-                  onActivityComplete={(type, data) => {
-                    completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
-                    refreshProfile();
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === 'overview' && (
-              <motion.div
-                key="overview"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
-              >
-                <DashboardCorpsPanel
-                  activeCorps={activeCorps}
-                  activeCorpsClass={activeCorpsClass}
-                  profile={profile}
-                  currentWeek={currentWeek}
-                  getCorpsClassName={getCorpsClassName}
-                  onShowCaptionSelection={() => setShowCaptionSelection(true)}
-                  onShowEditCorps={() => setShowEditCorps(true)}
-                  onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-                  onShowMoveCorps={() => setShowMoveCorps(true)}
-                  onShowRetireConfirm={handleOpenRetireModal}
-                  onShowRegistration={() => setShowRegistration(true)}
-                />
-              </motion.div>
-            )}
-
-            {activeCorps && activeTab === 'equipment' && (
-              <motion.div
-                key="equipment"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <EquipmentManager
-                  equipment={executionState?.equipment}
-                  onRepair={repairEquipment}
-                  onUpgrade={upgradeEquipment}
-                  processing={executionProcessing}
-                  corpsCoin={profile?.corpsCoin || 0}
-                />
-              </motion.div>
-            )}
-
-            {activeCorps && activeTab === 'staff' && (
-              <motion.div
-                key="staff"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <ClipboardList className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-cream-100">Corps Details</h3>
+                    <p className="text-xs text-cream-500/60">Manage lineup, schedule, and corps info</p>
+                  </div>
+                </div>
+                {expandedSections.corpsDetails ? (
+                  <ChevronUp className="w-5 h-5 text-cream-500/60" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-cream-500/60" />
+                )}
+              </button>
+              <AnimatePresence>
+                {expandedSections.corpsDetails && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4">
+                      <DashboardCorpsPanel
+                        activeCorps={activeCorps}
+                        activeCorpsClass={activeCorpsClass}
+                        profile={profile}
+                        currentWeek={currentWeek}
+                        getCorpsClassName={getCorpsClassName}
+                        onShowCaptionSelection={() => setShowCaptionSelection(true)}
+                        onShowEditCorps={() => setShowEditCorps(true)}
+                        onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+                        onShowMoveCorps={() => setShowMoveCorps(true)}
+                        onShowRetireConfirm={handleOpenRetireModal}
+                        onShowRegistration={() => setShowRegistration(true)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Sidebar - Desktop only */}
@@ -492,6 +478,86 @@ const Dashboard = () => {
           unclaimedRewardsCount={unclaimedRewardsCount}
         />
       </div>
+
+      {/* Equipment Slide-out Panel */}
+      <AnimatePresence>
+        {showEquipmentPanel && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEquipmentPanel(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            {/* Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-900 border-l border-cream-500/10 z-50 overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-charcoal-900/95 backdrop-blur-sm border-b border-cream-500/10 p-4 flex items-center justify-between z-10">
+                <h2 className="text-lg font-bold text-cream-100">Equipment Manager</h2>
+                <button
+                  onClick={() => setShowEquipmentPanel(false)}
+                  className="p-2 rounded-lg hover:bg-cream-500/10 text-cream-400 hover:text-cream-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4">
+                <EquipmentManager
+                  equipment={executionState?.equipment}
+                  onRepair={repairEquipment}
+                  onUpgrade={upgradeEquipment}
+                  processing={executionProcessing}
+                  corpsCoin={profile?.corpsCoin || 0}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Staff Slide-out Panel */}
+      <AnimatePresence>
+        {showStaffPanel && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowStaffPanel(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            {/* Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-900 border-l border-cream-500/10 z-50 overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-charcoal-900/95 backdrop-blur-sm border-b border-cream-500/10 p-4 flex items-center justify-between z-10">
+                <h2 className="text-lg font-bold text-cream-100">Staff Roster</h2>
+                <button
+                  onClick={() => setShowStaffPanel(false)}
+                  className="p-2 rounded-lg hover:bg-cream-500/10 text-cream-400 hover:text-cream-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4">
+                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <AnimatePresence>

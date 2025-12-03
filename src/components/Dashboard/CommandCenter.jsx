@@ -1,17 +1,148 @@
 // src/components/Dashboard/CommandCenter.jsx
-import React, { useState, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { memo } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Target, Heart, Wrench, Users, Play, Check, ChevronDown, ChevronUp,
-  Zap, Calendar, Trophy, Music, TrendingUp, Sparkles
+  Target, Heart, Wrench, Users, Play, Check, ChevronRight,
+  Trophy, Music, TrendingUp, Sparkles, AlertCircle, Calendar
 } from 'lucide-react';
+import { Card } from '../ui/Card';
 
 /**
- * CommandCenter - Unified corps management dashboard
- * Consolidates corps performance, health metrics, and primary actions
- * Eliminates redundancy by being the SINGLE source of corps status info
+ * CommandCenter - Unified corps management HUD
+ *
+ * Design Philosophy: "Surface Status, Drill for Detail"
+ * - All critical metrics visible at a glance (no tabs!)
+ * - Action cards link to modals/pages for deep management
+ * - The dashboard is a HUD, not a filing cabinet
  */
+
+// Animated status bar component
+const StatusBar = memo(({ label, value, icon: Icon, accentColor = 'blue' }) => {
+  const percentage = Math.round(value * 100);
+
+  const colorMap = {
+    blue: { text: 'text-blue-400', bg: 'bg-blue-500', glow: 'shadow-blue-500/20' },
+    red: { text: 'text-rose-400', bg: 'bg-rose-500', glow: 'shadow-rose-500/20' },
+    orange: { text: 'text-orange-400', bg: 'bg-orange-500', glow: 'shadow-orange-500/20' },
+    green: { text: 'text-green-400', bg: 'bg-green-500', glow: 'shadow-green-500/20' },
+    purple: { text: 'text-purple-400', bg: 'bg-purple-500', glow: 'shadow-purple-500/20' },
+  };
+
+  const colors = colorMap[accentColor] || colorMap.blue;
+
+  return (
+    <div className="group">
+      <div className="flex justify-between items-end mb-1.5">
+        <div className={`flex items-center gap-2 text-xs uppercase tracking-wider font-semibold ${colors.text}`}>
+          <Icon size={12} />
+          {label}
+        </div>
+        <span className="text-white font-mono text-sm font-bold">{percentage}%</span>
+      </div>
+      <div className="h-1.5 w-full bg-charcoal-800 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+          className={`h-full ${colors.bg} rounded-full`}
+        />
+      </div>
+    </div>
+  );
+});
+
+StatusBar.displayName = 'StatusBar';
+
+// Action card component for the right column
+const ActionCard = memo(({
+  icon: Icon,
+  iconColor,
+  borderColor,
+  title,
+  subtitle,
+  warning,
+  actionLabel,
+  actionVariant = 'chevron', // 'button' | 'chevron'
+  onAction,
+  disabled = false,
+  processing = false
+}) => {
+  const borderColorClass = {
+    blue: 'border-l-blue-500',
+    orange: 'border-l-orange-500',
+    purple: 'border-l-purple-500',
+    green: 'border-l-green-500',
+    gold: 'border-l-gold-500',
+  }[borderColor] || 'border-l-cream-500';
+
+  const iconColorClass = {
+    blue: 'text-blue-400',
+    orange: 'text-orange-400',
+    purple: 'text-purple-400',
+    green: 'text-green-400',
+    gold: 'text-gold-400',
+  }[iconColor] || 'text-cream-400';
+
+  return (
+    <Card
+      variant="interactive"
+      padding="sm"
+      className={`flex items-center justify-between border-l-4 ${borderColorClass} ${disabled ? 'opacity-50' : ''}`}
+    >
+      <div className="flex-1 min-w-0">
+        <h3 className="text-white font-bold text-sm flex items-center gap-2">
+          <Icon size={16} className={iconColorClass} />
+          <span className="truncate">{title}</span>
+        </h3>
+        {warning ? (
+          <p className="text-xs text-orange-400 mt-1 flex items-center gap-1">
+            <AlertCircle size={10} />
+            {warning}
+          </p>
+        ) : subtitle ? (
+          <p className="text-xs text-cream-500/60 mt-1">{subtitle}</p>
+        ) : null}
+      </div>
+
+      {actionVariant === 'button' ? (
+        <button
+          onClick={onAction}
+          disabled={disabled || processing}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
+            disabled
+              ? 'bg-green-500/20 text-green-400 cursor-default'
+              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
+          }`}
+        >
+          {processing ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : disabled ? (
+            <>
+              <Check size={14} />
+              Done
+            </>
+          ) : (
+            <>
+              <Play size={14} />
+              {actionLabel || 'Start'}
+            </>
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={onAction}
+          className="text-cream-400 hover:text-white hover:bg-white/5 p-2 rounded-full transition-colors"
+        >
+          <ChevronRight size={20} />
+        </button>
+      )}
+    </Card>
+  );
+});
+
+ActionCard.displayName = 'ActionCard';
+
 const CommandCenter = ({
   profile,
   activeCorps,
@@ -25,10 +156,11 @@ const CommandCenter = ({
   hasMultipleCorps,
   onCorpsSwitch,
   getCorpsClassName,
-  assignedStaff = []
+  assignedStaff = [],
+  // New props for unified HUD
+  onOpenEquipmentModal,
+  onOpenStaffModal,
 }) => {
-  const [showBreakdown, setShowBreakdown] = useState(false);
-
   if (!activeCorps) return null;
 
   // Calculate metrics
@@ -53,295 +185,224 @@ const CommandCenter = ({
 
   // Get multiplier status
   const getMultiplierStatus = () => {
-    if (multiplier >= 1.05) return { color: 'text-green-500', bg: 'bg-green-500', label: 'Excellent', gradient: 'from-green-500 to-emerald-600' };
-    if (multiplier >= 0.95) return { color: 'text-blue-500', bg: 'bg-blue-500', label: 'Good', gradient: 'from-blue-500 to-cyan-600' };
-    if (multiplier >= 0.85) return { color: 'text-yellow-500', bg: 'bg-yellow-500', label: 'Fair', gradient: 'from-yellow-500 to-orange-500' };
-    return { color: 'text-red-500', bg: 'bg-red-500', label: 'Needs Work', gradient: 'from-red-500 to-orange-600' };
+    if (multiplier >= 1.05) return { color: 'text-green-400', label: 'Excellent' };
+    if (multiplier >= 0.95) return { color: 'text-blue-400', label: 'Good' };
+    if (multiplier >= 0.85) return { color: 'text-yellow-400', label: 'Fair' };
+    return { color: 'text-red-400', label: 'Needs Work' };
   };
 
   const multiplierStatus = getMultiplierStatus();
   const rehearsalsThisWeek = executionState?.rehearsalsThisWeek ?? 0;
   const showsThisWeek = activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0;
+  const equipmentNeedsRepair = avgEquipment < 0.85;
+  const staffSlotsFilled = assignedStaff.length;
+  const maxStaffSlots = 8;
 
   // Class order for sorting
   const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+  // Class badge colors
+  const classColors = {
+    worldClass: 'bg-gold-500 text-charcoal-900',
+    openClass: 'bg-purple-500 text-white',
+    aClass: 'bg-blue-500 text-white',
+    soundSport: 'bg-green-500 text-white',
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-premium rounded-2xl overflow-hidden"
+      className="space-y-4"
     >
-      {/* Corps Selector Header */}
+      {/* Corps Selector - Only show if multiple corps */}
       {hasMultipleCorps && (
-        <div className="px-4 py-3 border-b border-cream-500/10 bg-charcoal-900/30">
-          <div className="flex items-center gap-3">
-            <Music className="w-4 h-4 text-gold-500" />
-            <div className="flex-1 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-              {Object.entries(corps)
-                .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                .map(([classId, corpsData]) => (
-                  <button
-                    key={classId}
-                    onClick={() => onCorpsSwitch(classId)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      activeCorpsClass === classId
-                        ? 'bg-gold-500 text-charcoal-900'
-                        : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-700'
-                    }`}
-                  >
-                    {corpsData.corpsName || corpsData.name}
-                  </button>
-                ))}
-            </div>
+        <div className="flex items-center gap-3 px-1">
+          <Music className="w-4 h-4 text-gold-500 flex-shrink-0" />
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+            {Object.entries(corps)
+              .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+              .map(([classId, corpsData]) => (
+                <button
+                  key={classId}
+                  onClick={() => onCorpsSwitch(classId)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    activeCorpsClass === classId
+                      ? 'bg-gold-500 text-charcoal-900'
+                      : 'bg-charcoal-800/60 text-cream-500/70 hover:text-cream-100 hover:bg-charcoal-700'
+                  }`}
+                >
+                  {corpsData.corpsName || corpsData.name}
+                </button>
+              ))}
           </div>
         </div>
       )}
 
-      {/* Main Command Center Content */}
-      <div className="p-4 sm:p-5">
-        {/* Corps Name & Primary Metrics Row */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
-          {/* Corps Identity */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl sm:text-2xl font-bold text-cream-100 truncate">
-                {activeCorps.corpsName || activeCorps.name}
-              </h2>
-              {activeCorpsClass !== 'soundSport' && activeCorps.rank && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-500 text-xs font-semibold">
-                  <Trophy className="w-3 h-3" />
-                  #{activeCorps.rank}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-cream-500/60">
-              {getCorpsClassName(activeCorpsClass)} • Week {currentWeek}
-            </p>
+      {/* Main Bento Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        {/* LEFT: Hero Card - Corps Status & Health (8 cols) */}
+        <Card variant="premium" padding="none" className="lg:col-span-8 relative overflow-hidden">
+          {/* Subtle background decoration */}
+          <div className="absolute top-0 right-0 w-48 h-48 opacity-5 pointer-events-none">
+            <Trophy size={192} />
           </div>
 
-          {/* Performance Multiplier Badge */}
-          <div className="flex-shrink-0 text-center sm:text-right">
-            <div className={`text-4xl sm:text-5xl font-bold ${multiplierStatus.color}`}>
-              {multiplier.toFixed(2)}x
-            </div>
-            <div className={`text-xs font-semibold ${multiplierStatus.color} flex items-center justify-center sm:justify-end gap-1`}>
-              <TrendingUp className="w-3 h-3" />
-              {multiplierStatus.label}
-            </div>
-          </div>
-        </div>
-
-        {/* Performance Bar */}
-        <div className="mb-5">
-          <div className="w-full h-3 bg-charcoal-800 rounded-full overflow-hidden relative">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(((multiplier - 0.70) / 0.40) * 100, 100)}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className={`h-full bg-gradient-to-r ${multiplierStatus.gradient}`}
-            />
-            {/* 1.0x marker */}
-            <div className="absolute top-0 bottom-0 left-[75%] w-px bg-cream-500/30" />
-          </div>
-          <div className="flex justify-between text-[10px] text-cream-500/40 mt-1 px-0.5">
-            <span>0.70x</span>
-            <span>1.00x</span>
-            <span>1.10x</span>
-          </div>
-        </div>
-
-        {/* Health Metrics Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <HealthMetric
-            icon={Target}
-            label="Readiness"
-            value={readiness}
-            description="Corps preparation level"
-          />
-          <HealthMetric
-            icon={Heart}
-            label="Morale"
-            value={morale}
-            description="Member satisfaction"
-          />
-          <HealthMetric
-            icon={Wrench}
-            label="Equipment"
-            value={avgEquipment}
-            description="Gear condition"
-          />
-        </div>
-
-        {/* Expandable Breakdown */}
-        <button
-          onClick={() => setShowBreakdown(!showBreakdown)}
-          className="w-full flex items-center justify-center gap-2 py-2 text-xs text-cream-500/60 hover:text-cream-400 transition-colors border-t border-cream-500/10"
-        >
-          {showBreakdown ? 'Hide Breakdown' : 'View Multiplier Breakdown'}
-          {showBreakdown ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-        </button>
-
-        <AnimatePresence>
-          {showBreakdown && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pt-3 space-y-2 text-xs">
-                <div className="text-cream-500/50 mb-2 text-center">
-                  (Readiness × 40%) + (Morale × 30%) + (Equipment × 30%) + Staff Bonus
-                </div>
-                <BreakdownRow label="Readiness" value={readiness} weight={40} />
-                <BreakdownRow label="Morale" value={morale} weight={30} />
-                <BreakdownRow label="Equipment" value={avgEquipment} weight={30} />
-                <div className="flex justify-between items-center pt-2 border-t border-cream-500/10">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-3 h-3 text-blue-400" />
-                    <span className="text-cream-500/60">Staff Bonus ({assignedStaff.length} assigned)</span>
-                  </div>
-                  <span className={staffBonus > 0 ? 'text-blue-400 font-semibold' : 'text-cream-500/40'}>
-                    +{(staffBonus * 100).toFixed(1)}%
+          <div className="p-5 sm:p-6 relative z-10">
+            {/* Header Row */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+              {/* Corps Identity */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                    {getCorpsClassName(activeCorpsClass)}
                   </span>
+                  {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-400 text-[10px] font-bold">
+                      <Trophy size={10} />
+                      Top 10
+                    </span>
+                  )}
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-cream-500/20 font-semibold">
-                  <span className="text-cream-300">Total Multiplier</span>
-                  <span className={multiplierStatus.color}>{multiplier.toFixed(2)}x</span>
+                <h2 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight mb-1">
+                  {activeCorps.corpsName || activeCorps.name}
+                </h2>
+                {activeCorps.showConcept && (
+                  <p className="text-cream-300 text-sm">
+                    <span className="text-gold-500">Show:</span> "{activeCorps.showConcept}"
+                  </p>
+                )}
+              </div>
+
+              {/* Performance Multiplier - The "Big Number" */}
+              <div className="flex-shrink-0 text-right bg-charcoal-950/40 p-3 rounded-xl border border-white/5">
+                <div className="text-[10px] text-cream-500/60 uppercase tracking-widest mb-1">
+                  Performance
+                </div>
+                <div className={`text-4xl sm:text-5xl font-display font-black tabular-nums tracking-tighter ${multiplierStatus.color}`}>
+                  {multiplier.toFixed(2)}x
+                </div>
+                <div className={`text-xs font-semibold ${multiplierStatus.color} flex items-center justify-end gap-1 mt-1`}>
+                  <TrendingUp size={12} />
+                  {multiplierStatus.label}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Quick Actions Footer */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        {/* Rehearsal Button */}
-        <button
-          onClick={onRehearsal}
-          disabled={!canRehearseToday || rehearsalProcessing}
-          className={`col-span-2 sm:col-span-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-            canRehearseToday
-              ? 'bg-gold-500 text-charcoal-900 hover:bg-gold-400'
-              : 'bg-green-500/20 text-green-500 cursor-default'
-          }`}
-        >
-          {rehearsalProcessing ? (
-            <div className="w-5 h-5 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
-          ) : canRehearseToday ? (
-            <>
-              <Play className="w-4 h-4" />
-              <span>Rehearse</span>
-            </>
-          ) : (
-            <>
-              <Check className="w-4 h-4" />
-              <span>Done</span>
-            </>
-          )}
-        </button>
-
-        {/* Rehearsal Progress */}
-        <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-charcoal-800/50">
-          <div className="text-lg font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
-          <div className="text-[10px] text-cream-500/60">This Week</div>
-        </div>
-
-        {/* Shows This Week */}
-        <Link
-          to="/schedule"
-          className="flex flex-col items-center justify-center p-2 rounded-xl bg-charcoal-800/50 hover:bg-charcoal-700/50 transition-colors"
-        >
-          <div className="text-lg font-bold text-purple-400">{showsThisWeek}</div>
-          <div className="text-[10px] text-cream-500/60">Shows</div>
-        </Link>
-
-        {/* Score/Rank */}
-        {activeCorpsClass !== 'soundSport' ? (
-          <Link
-            to="/scores"
-            className="flex flex-col items-center justify-center p-2 rounded-xl bg-charcoal-800/50 hover:bg-charcoal-700/50 transition-colors"
-          >
-            <div className="text-lg font-bold text-gold-500">
-              {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
             </div>
-            <div className="text-[10px] text-cream-500/60">Score</div>
-          </Link>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-charcoal-800/50">
-            <Sparkles className="w-5 h-5 text-gold-500" />
-            <div className="text-[10px] text-cream-500/60">For Fun!</div>
+
+            {/* Health Metrics - Always Visible */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <StatusBar
+                label="Readiness"
+                value={readiness}
+                icon={Target}
+                accentColor="blue"
+              />
+              <StatusBar
+                label="Morale"
+                value={morale}
+                icon={Heart}
+                accentColor="red"
+              />
+              <StatusBar
+                label="Equipment"
+                value={avgEquipment}
+                icon={Wrench}
+                accentColor="orange"
+              />
+            </div>
+
+            {/* Quick Stats Row */}
+            <div className="flex items-center justify-between mt-5 pt-4 border-t border-cream-500/10">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
+                  <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">This Week</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-400">{showsThisWeek}</div>
+                  <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">Shows</div>
+                </div>
+                {activeCorpsClass !== 'soundSport' && (
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gold-400">
+                      {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                    </div>
+                    <div className="text-[10px] text-cream-500/60 uppercase tracking-wider">Score</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Links */}
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/schedule"
+                  className="p-2 rounded-lg bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-400 hover:text-white transition-colors"
+                  title="View Schedule"
+                >
+                  <Calendar size={18} />
+                </Link>
+                <Link
+                  to="/scores"
+                  className="p-2 rounded-lg bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-400 hover:text-white transition-colors"
+                  title="View Scores"
+                >
+                  <Trophy size={18} />
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
+        </Card>
+
+        {/* RIGHT: Action Cards Column (4 cols) */}
+        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+
+          {/* Primary Action: Daily Rehearsal */}
+          <ActionCard
+            icon={Music}
+            iconColor="blue"
+            borderColor="blue"
+            title="Daily Rehearsal"
+            subtitle="+5% Readiness • +50 XP"
+            actionVariant="button"
+            actionLabel="Start"
+            onAction={onRehearsal}
+            disabled={!canRehearseToday}
+            processing={rehearsalProcessing}
+          />
+
+          {/* Equipment Status */}
+          <ActionCard
+            icon={Wrench}
+            iconColor="orange"
+            borderColor="orange"
+            title="Equipment"
+            subtitle={equipmentNeedsRepair ? undefined : `${Math.round(avgEquipment * 100)}% Condition`}
+            warning={equipmentNeedsRepair ? 'Repairs needed' : undefined}
+            onAction={onOpenEquipmentModal}
+          />
+
+          {/* Staff Management */}
+          <ActionCard
+            icon={Users}
+            iconColor="purple"
+            borderColor="purple"
+            title="Staff Roster"
+            subtitle={`${staffSlotsFilled}/${maxStaffSlots} Assigned • +${Math.round(staffBonus * 100)}% Bonus`}
+            onAction={onOpenStaffModal}
+          />
+        </div>
       </div>
+
+      {/* SoundSport Fun Badge */}
+      {activeCorpsClass === 'soundSport' && (
+        <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
+          <Sparkles size={16} />
+          <span>SoundSport is non-competitive - just have fun!</span>
+        </div>
+      )}
     </motion.div>
   );
 };
-
-// Health Metric Component
-const HealthMetric = memo(({ icon: Icon, label, value, description }) => {
-  const percentage = Math.round(value * 100);
-
-  const getColor = () => {
-    if (percentage >= 85) return { text: 'text-green-400', bg: 'bg-green-500', border: 'border-green-500/30' };
-    if (percentage >= 70) return { text: 'text-yellow-400', bg: 'bg-yellow-500', border: 'border-yellow-500/30' };
-    return { text: 'text-red-400', bg: 'bg-red-500', border: 'border-red-500/30' };
-  };
-
-  const colors = getColor();
-
-  return (
-    <div className={`p-3 rounded-xl bg-charcoal-800/40 border ${colors.border}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className={`w-4 h-4 ${colors.text}`} />
-        <span className="text-xs font-medium text-cream-300">{label}</span>
-      </div>
-      <div className={`text-2xl font-bold ${colors.text}`}>
-        {percentage}%
-      </div>
-      <div className="mt-2 h-1.5 bg-charcoal-900 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className={`h-full ${colors.bg} rounded-full`}
-        />
-      </div>
-    </div>
-  );
-});
-
-HealthMetric.displayName = 'HealthMetric';
-
-// Breakdown Row Component
-const BreakdownRow = memo(({ label, value, weight }) => {
-  const percentage = Math.round(value * 100);
-  const contribution = (value * weight / 100).toFixed(1);
-  const isAtMax = value >= 0.99;
-  const deficit = isAtMax ? 0 : ((1 - value) * weight).toFixed(1);
-
-  return (
-    <div className="flex justify-between items-center">
-      <div className="flex items-center gap-2">
-        <span className="text-cream-500/60">{label}</span>
-        <span className="text-cream-500/40">({percentage}% × {weight}%)</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={isAtMax ? 'text-green-400 font-semibold' : percentage >= 85 ? 'text-yellow-400' : 'text-red-400'}>
-          {contribution}%
-        </span>
-        {!isAtMax && deficit > 0 && (
-          <span className="text-red-400/50 text-[10px]">
-            (-{deficit}%)
-          </span>
-        )}
-      </div>
-    </div>
-  );
-});
-
-BreakdownRow.displayName = 'BreakdownRow';
 
 export default memo(CommandCenter);
