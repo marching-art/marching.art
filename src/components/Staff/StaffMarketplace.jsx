@@ -36,17 +36,17 @@ const getRarity = (baseValue) => {
 };
 
 // ============================================================================
-// ROLE BADGE COLORS - Map caption to colored badges
+// ROLE BADGE COLORS - High-contrast solid badges
 // ============================================================================
 const ROLE_BADGE_STYLES = {
-  GE1: 'bg-purple-500 text-white',    // Program Coordinator
-  GE2: 'bg-purple-400 text-white',    // Admin
-  VP: 'bg-blue-500 text-white',       // Visual Performance
-  VA: 'bg-blue-400 text-white',       // Visual Analysis
-  CG: 'bg-pink-500 text-white',       // Color Guard
-  B: 'bg-yellow-500 text-[#0D0D0D]',  // Brass
-  MA: 'bg-teal-500 text-white',       // Music Analysis
-  P: 'bg-orange-500 text-white',      // Percussion
+  GE1: 'bg-[#0D0D0D] text-[#FFD44D]',    // Program Coordinator - Black/Gold
+  GE2: 'bg-[#FFD44D] text-[#0D0D0D]',    // Admin - Gold/Black
+  VP: 'bg-[#0D0D0D] text-white',          // Visual Performance - Black/White
+  VA: 'bg-white text-[#0D0D0D] border border-[#0D0D0D]', // Visual Analysis - White/Black
+  CG: 'bg-[#0D0D0D] text-[#FF69B4]',     // Color Guard - Black/Pink
+  B: 'bg-[#FFD44D] text-[#0D0D0D]',      // Brass - Gold/Black
+  MA: 'bg-[#0D0D0D] text-[#4ADE80]',     // Music Analysis - Black/Green
+  P: 'bg-[#0D0D0D] text-[#FB923C]',      // Percussion - Black/Orange
 };
 
 // ============================================================================
@@ -56,102 +56,105 @@ const StaffTradingCard = ({ staff, owned, canAfford, onPurchase }) => {
   const rarity = getRarity(staff.baseValue);
   const CaptionIcon = CAPTION_ICONS[staff.caption] || Award;
 
-  // Rarity-based styling for light/dark
+  // Rarity-based styling - Gold for Hall of Fame (Legendary), Silver for Rare, Standard for Common
   const rarityStyles = {
     legendary: {
-      border: 'border-amber-500 dark:border-gold-500',
-      glow: 'shadow-[0_0_20px_rgba(217,163,0,0.15)] dark:shadow-[0_0_20px_rgba(255,212,77,0.25)]',
-      badge: 'bg-amber-500 dark:bg-gold-500 text-[#1A1A1A]',
+      border: 'border-[3px] border-amber-500 dark:border-[#FFD44D]',
+      glow: 'shadow-[0_0_12px_rgba(217,163,0,0.3)] dark:shadow-[0_0_12px_rgba(255,212,77,0.4)]',
+      badge: 'bg-amber-500 dark:bg-[#FFD44D] text-[#0D0D0D]',
+      label: 'Hall of Fame',
     },
     rare: {
-      border: 'border-blue-500/60',
-      glow: '',
-      badge: 'bg-blue-500 text-white',
+      border: 'border-[3px] border-slate-400 dark:border-slate-300',
+      glow: 'shadow-[0_0_8px_rgba(148,163,184,0.2)]',
+      badge: 'bg-slate-400 dark:bg-slate-300 text-[#0D0D0D]',
+      label: 'Rare',
     },
     common: {
-      border: 'border-stone-200 dark:border-[#3A3A3A]',
+      border: 'border-2 border-stone-300 dark:border-[#3A3A3A]',
       glow: '',
-      badge: 'bg-stone-200 dark:bg-[#3A3A3A] text-slate-600 dark:text-[#FAF6EA]/70',
+      badge: 'bg-stone-300 dark:bg-[#3A3A3A] text-slate-600 dark:text-[#FAF6EA]/70',
+      label: 'Common',
     }
   };
 
   const style = rarityStyles[rarity];
-  const roleBadge = ROLE_BADGE_STYLES[staff.caption] || 'bg-gray-500 text-white';
+  const roleBadge = ROLE_BADGE_STYLES[staff.caption] || 'bg-[#0D0D0D] text-white';
 
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`compact-card ${style.border} ${style.glow} group min-h-[180px]`}
+      className={`compact-card ${style.border} ${style.glow} group relative`}
     >
-      {/* Watermark Icon - Larger, positioned better */}
-      <div className="absolute right-0 bottom-0 opacity-[0.04] dark:opacity-[0.06] pointer-events-none overflow-hidden">
-        <CaptionIcon className="w-40 h-40 text-slate-900 dark:text-[#FAF6EA] translate-x-6 translate-y-6" />
+      {/* Watermark Icon - Subtle background */}
+      <div className="absolute right-0 bottom-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none overflow-hidden">
+        <CaptionIcon className="w-32 h-32 text-slate-900 dark:text-[#FAF6EA] translate-x-4 translate-y-4" />
+      </div>
+
+      {/* Caption Badge - Top Right, High Contrast */}
+      <div className="absolute top-2 right-2 z-20">
+        <span className={`inline-flex items-center px-2 py-1 text-[10px] font-display font-black uppercase tracking-wider ${roleBadge}`}>
+          {staff.caption}
+        </span>
       </div>
 
       {/* Owned Overlay */}
       {owned && (
         <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center z-10 pointer-events-none">
-          <div className="bg-green-500/90 text-white dark:text-[#0D0D0D] px-4 py-2 rounded-lg font-display font-bold uppercase tracking-wider text-sm transform -rotate-6">
+          <div className="bg-green-500/90 text-white dark:text-[#0D0D0D] px-3 py-1.5 rounded font-display font-bold uppercase tracking-wider text-xs transform -rotate-6">
             Owned
           </div>
         </div>
       )}
 
-      {/* Card Content - Compact Padding */}
-      <div className="relative z-10 p-4 flex flex-col h-full">
+      {/* Card Content - Compressed Padding */}
+      <div className="relative z-10 p-3 flex flex-col h-full min-h-[140px]">
         {/* Header: Rarity + Year */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className={`px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase tracking-widest ${style.badge}`}>
-            {rarity}
+        <div className="flex items-center gap-2 mb-1.5 pr-14">
+          <span className={`px-1.5 py-0.5 rounded text-[8px] font-display font-bold uppercase tracking-widest ${style.badge}`}>
+            {style.label}
           </span>
-          <span className="text-[10px] text-slate-400 dark:text-[#FAF6EA]/40 font-mono">
-            HOF {staff.yearInducted || '----'}
+          <span className="text-[9px] text-slate-400 dark:text-[#FAF6EA]/40 font-mono">
+            {staff.yearInducted || '----'}
           </span>
         </div>
 
-        {/* Name - Dark in light mode, White in dark */}
-        <h3 className="text-lg font-display font-bold text-slate-900 dark:text-white uppercase tracking-wide truncate mb-1">
+        {/* Name */}
+        <h3 className="text-base font-display font-bold text-slate-900 dark:text-white uppercase tracking-wide truncate mb-1">
           {staff.name}
         </h3>
 
-        {/* Role Badge - Colored */}
-        <div className="mb-3">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-display font-bold uppercase tracking-wide ${roleBadge}`}>
-            {getCaptionLabel(staff.caption).split(' ')[0]}
-          </span>
-        </div>
-
         {/* Biography - Compact */}
-        <p className="text-xs text-slate-500 dark:text-[#FAF6EA]/50 mb-4 line-clamp-2 font-body flex-1">
+        <p className="text-[11px] text-slate-500 dark:text-[#FAF6EA]/50 line-clamp-2 font-body flex-1 mb-2">
           {staff.biography || 'A legendary member of the DCI Hall of Fame.'}
         </p>
 
-        {/* Bottom Row: Boost + Price Anchor */}
-        <div className="flex items-end justify-between mt-auto">
-          <div className="text-xs text-slate-500 dark:text-[#FAF6EA]/50 font-display">
+        {/* Bottom Row: Boost + Buy Button */}
+        <div className="flex items-end justify-between mt-auto pt-1">
+          <div className="text-[11px] text-slate-500 dark:text-[#FAF6EA]/50 font-display">
             <span className="text-green-600 dark:text-green-400 font-bold">+{Math.round(staff.baseValue / 100)}%</span> boost
           </div>
 
-          {/* Price Tag - Anchored with sticker style */}
+          {/* Buy Button - Anchored Bottom Right */}
           {owned ? (
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/20 text-green-600 dark:text-green-400 text-xs font-display font-bold">
-              <Check className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-green-500/20 text-green-600 dark:text-green-400 text-[11px] font-display font-bold uppercase">
+              <Check className="w-3 h-3" />
               Owned
             </div>
           ) : (
             <button
               onClick={onPurchase}
               disabled={!canAfford}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-br-lg rounded-tl-lg font-display font-bold text-sm uppercase tracking-wide transition-all shadow-sm ${
+              className={`flex items-center gap-1 px-3 py-1.5 font-display font-bold text-xs uppercase tracking-wide transition-all ${
                 canAfford
-                  ? 'bg-slate-900 dark:bg-gold-500 text-amber-500 dark:text-[#0D0D0D] hover:bg-slate-800 dark:hover:bg-gold-400 shadow-md hover:shadow-lg'
-                  : 'bg-stone-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-[#FAF6EA]/40 cursor-not-allowed'
+                  ? 'bg-[#0D0D0D] dark:bg-[#FFD44D] text-[#FFD44D] dark:text-[#0D0D0D] hover:bg-[#1A1A1A] dark:hover:bg-[#FFE066] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,212,77,0.5)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,212,77,0.6)]'
+                  : 'bg-stone-300 dark:bg-[#2A2A2A] text-stone-500 dark:text-[#FAF6EA]/30 cursor-not-allowed opacity-60'
               }`}
             >
-              <DollarSign className="w-3.5 h-3.5" />
-              <span className="font-mono font-bold">{staff.baseValue}</span>
+              <span className="font-mono font-bold">$ {staff.baseValue}</span>
+              {canAfford && <ShoppingCart className="w-3 h-3 ml-0.5" />}
             </button>
           )}
         </div>

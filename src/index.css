@@ -542,29 +542,27 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* Compact Card - For staff marketplace - Brutalist */
+  /* Border colors are now controlled dynamically via Tailwind classes for rarity */
   .compact-card {
     @apply relative bg-white overflow-hidden;
     @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
     border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.9);
   }
 
   .compact-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-2px);
+    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.9);
   }
 
   /* Dark Mode: Gold shadow */
   [data-theme="dark"] .compact-card {
     @apply bg-[#1A1A1A];
-    border-color: rgba(255, 212, 77, 0.3);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+    box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 0.8);
   }
 
   [data-theme="dark"] .compact-card:hover {
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+    box-shadow: 5px 5px 0px 0px rgba(255, 212, 77, 0.9);
   }
 
   /* Price Anchor - Positioned price tag */
