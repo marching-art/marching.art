@@ -27,6 +27,11 @@ export {
   // Glass Box Multiplier - Interactive breakdown popover/drawer
   MultiplierGlassBox,
   MultiplierGlassBoxLarge,
+  // Segmented Metric Bars - Split-signal Readiness/Morale display
+  SegmentedMetricBar,
+  ClusterBar,
+  DualClusterDisplay,
+  InlineMiniSegments,
 } from './TransparentGameplay';
 export { default as StaffEffectivenessPanel } from './TransparentGameplay/StaffEffectivenessPanel';
 export { default as SynergyVisualization } from './TransparentGameplay/SynergyVisualization';

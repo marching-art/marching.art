@@ -709,6 +709,14 @@ export {
   MultiplierGlassBoxLarge,
 } from './MultiplierGlassBox';
 
+// Re-export Segmented Metric Bars for split-signal display
+export {
+  SegmentedMetricBar,
+  ClusterBar,
+  DualClusterDisplay,
+  InlineMiniSegments,
+} from './SegmentedMetricBar';
+
 export default {
   CircularProgressRing,
   SectionGauges,

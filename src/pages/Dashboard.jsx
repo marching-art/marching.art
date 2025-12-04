@@ -23,6 +23,9 @@ import {
   StaffEffectivenessTooltip,
   // Glass Box Multiplier - Interactive breakdown
   MultiplierGlassBoxLarge,
+  // Segmented Metric Bars - Split-signal display
+  SegmentedMetricBar,
+  ClusterBar,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -652,15 +655,12 @@ const Dashboard = () => {
               </div>
 
               {/* ============================================================
-                  EXECUTION METRICS - Tactical Gauge Section with Hover Insights
+                  EXECUTION METRICS - Split-Signal Segmented Bars (B/P/G/E)
                   ============================================================ */}
               <div className="px-6 md:px-8 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <TacticalGaugeWithInsight
-                    value={readiness}
-                    color="blue"
-                    label="Readiness"
-                    icon={Target}
+                  {/* Readiness - 4 Segment Cluster Bar */}
+                  <ClusterBar
                     type="readiness"
                     sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
                       brass: readiness,
@@ -669,11 +669,8 @@ const Dashboard = () => {
                       ensemble: readiness
                     }}
                   />
-                  <TacticalGaugeWithInsight
-                    value={morale}
-                    color="red"
-                    label="Morale"
-                    icon={Heart}
+                  {/* Morale - 4 Segment Cluster Bar */}
+                  <ClusterBar
                     type="morale"
                     sections={typeof executionState?.morale === 'object' ? executionState.morale : {
                       brass: morale,
@@ -682,6 +679,7 @@ const Dashboard = () => {
                       overall: morale
                     }}
                   />
+                  {/* Equipment - Single Gauge (no subsections) */}
                   <TacticalGaugeWithInsight
                     value={avgEquipment}
                     color="orange"
