@@ -18,7 +18,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
 
 // Lazy load pages for better performance
-const Dashboard = lazy(() => import('./pages/DashboardCommandCenter'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Scores = lazy(() => import('./pages/Scores'));
 const Profile = lazy(() => import('./pages/Profile'));

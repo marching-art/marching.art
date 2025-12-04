@@ -1,13 +1,14 @@
 // src/pages/Dashboard.jsx
-// UI/UX Overhaul: "Cockpit" Layout - Fixed-height HUD with 3-column grid
-// Sidebar | Main HUD | Context Panel (380px)
+// ARCHITECTURE FIX: Single Source of Truth - Fixed-Height Game HUD
+// Bento Grid Layout: 100vh viewport with TopBar + 2-column grid (Cockpit | Context Panel)
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, ChevronRight, Play, Check, X, Crown, Flame, Coins,
-  Sparkles, Gift, Edit, BarChart3, Settings
+  Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
+  CheckCircle, Circle, ArrowUp, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
@@ -50,10 +51,92 @@ import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { retireCorps } from '../firebase/functions';
 
 // ============================================================================
-// STADIUM HUD DESIGN COMPONENTS
+// FIXED-HEIGHT HUD COMPONENTS
 // Night Mode aesthetic with glassmorphism and neon gold accents
-// TacticalGaugeWithInsight imported from TransparentGameplay (Phase 3)
 // ============================================================================
+
+// TopBar Component - Fixed height header with user stats
+const TopBar = ({ profile, seasonData, weeksRemaining, currentWeek, formatSeasonName, engagementData, unclaimedRewardsCount }) => {
+  const xpProgress = ((profile?.xp || 0) % 1000) / 10;
+
+  return (
+    <div className="shrink-0 bg-surface-secondary border-b border-border-default">
+      <div className="px-4 py-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Welcome & Season Info */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-2xl font-display font-black text-text-main uppercase tracking-tight truncate">
+              {profile?.displayName || 'Director'}
+            </h1>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-text-muted text-sm font-display">
+                {formatSeasonName(seasonData?.name)}
+              </span>
+              {weeksRemaining && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold">
+                  <Calendar className="w-3 h-3" />
+                  Week {currentWeek} • {weeksRemaining}w left
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Stats Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Login Streak */}
+            {engagementData?.loginStreak > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30">
+                <Flame className={`w-4 h-4 ${engagementData.loginStreak >= 7 ? 'text-orange-500 animate-pulse' : 'text-orange-500'}`} />
+                <span className="text-sm font-mono font-bold text-orange-600 dark:text-orange-400">
+                  {engagementData.loginStreak}
+                </span>
+              </div>
+            )}
+
+            {/* XP Level */}
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
+            >
+              <Zap className="w-4 h-4 text-amber-600 dark:text-gold-500" />
+              <div className="flex flex-col">
+                <span className="text-xs font-mono font-bold text-amber-600 dark:text-gold-500">LVL {profile?.xpLevel || 1}</span>
+                <div className="w-10 h-1 bg-stone-200 dark:bg-charcoal-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 dark:bg-gold-500 transition-all duration-500"
+                    style={{ width: `${xpProgress}%` }}
+                  />
+                </div>
+              </div>
+            </Link>
+
+            {/* CorpsCoin */}
+            <Link
+              to="/staff"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
+            >
+              <Coins className="w-4 h-4 text-amber-600 dark:text-gold-500" />
+              <span className="text-sm font-mono font-bold text-amber-600 dark:text-gold-500">
+                {(profile?.corpsCoin || 0).toLocaleString()}
+              </span>
+            </Link>
+
+            {/* Battle Pass Rewards */}
+            {unclaimedRewardsCount > 0 && (
+              <Link
+                to="/battlepass"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/30 dark:from-gold-500/30 to-purple-500/30 border border-amber-500/50 dark:border-gold-500/50 animate-pulse"
+              >
+                <Gift className="w-4 h-4 text-amber-600 dark:text-gold-400" />
+                <span className="text-xs font-bold text-amber-600 dark:text-gold-400">{unclaimedRewardsCount}</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Stadium HUD Action Tile - Responsive, fills grid cell
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
@@ -62,35 +145,35 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
     disabled={disabled || processing}
     whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group min-h-[100px] lg:min-h-[120px] flex flex-col items-center justify-center gap-2 lg:gap-3 p-3 lg:p-4 ${
+    className={`icon-card group min-h-[90px] flex flex-col items-center justify-center gap-2 p-3 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     } ${completed ? 'border-green-500/40' : ''}`}
   >
-    {/* Large background icon - subtle watermark with neon glow on hover */}
+    {/* Large background icon */}
     <div className="icon-card-bg flex items-center justify-center">
       <Icon className="w-full h-full text-white/80" />
     </div>
 
     {/* Content */}
-    <div className="relative z-10 flex flex-col items-center gap-1 lg:gap-2">
-      <div className={`p-2 lg:p-3 rounded-xl transition-all duration-300 ${
+    <div className="relative z-10 flex flex-col items-center gap-1">
+      <div className={`p-2 rounded-xl transition-all duration-300 ${
         completed
           ? 'bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
           : 'bg-gold-500/10 group-hover:bg-gold-500/20 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(250,204,21,0.3)]'
       }`}>
         {processing ? (
-          <div className="w-5 h-5 lg:w-7 lg:h-7 border-2 lg:border-3 border-gold-500 border-t-transparent rounded-full animate-spin" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.4)' }} />
+          <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : completed ? (
-          <Check className="w-5 h-5 lg:w-7 lg:h-7 text-green-500" style={{ filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
+          <Check className="w-5 h-5 text-green-500" />
         ) : (
-          <Icon className="w-5 h-5 lg:w-7 lg:h-7 text-gold-400 transition-all group-hover:text-gold-300" style={{ filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' }} />
+          <Icon className="w-5 h-5 text-gold-400 transition-all group-hover:text-gold-300" />
         )}
       </div>
-      <span className="text-xs lg:text-sm font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
+      <span className="text-xs font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
         {label}
       </span>
       {subtitle && (
-        <span className="text-[9px] lg:text-[10px] text-cream-muted font-display uppercase tracking-wide">
+        <span className="text-[9px] text-cream-muted font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -98,7 +181,7 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
   </motion.button>
 );
 
-// Stadium HUD Quick Stat Card - Responsive glass panel
+// Quick Stat Card
 const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   const colorClasses = {
     gold: 'text-gold-400 bg-gold-500/10 border-gold-500/30',
@@ -108,24 +191,16 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
     green: 'text-green-400 bg-green-500/10 border-green-500/30'
   };
 
-  const glowStyles = {
-    gold: { filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' },
-    blue: { filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))' },
-    purple: { filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))' },
-    orange: { filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.5))' },
-    green: { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' }
-  };
-
   const content = (
-    <div className={`glass-card p-4 lg:p-5 flex items-center lg:flex-col lg:items-start gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
-      <div className={`p-2 lg:p-3 rounded-xl border flex-shrink-0 ${colorClasses[color]}`}>
-        <Icon className={`w-5 h-5 lg:w-6 lg:h-6 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
+    <div className={`glass-card p-3 flex items-center gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
+      <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClasses[color]}`}>
+        <Icon className={`w-4 h-4 ${colorClasses[color].split(' ')[0]}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className={`text-xl lg:text-2xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 10px currentColor' }}>
+        <div className={`text-lg font-mono font-bold ${colorClasses[color].split(' ')[0]}`}>
           {value}
         </div>
-        <div className="text-[10px] lg:text-xs font-display uppercase tracking-widest text-cream-muted">
+        <div className="text-[10px] font-display uppercase tracking-widest text-cream-muted">
           {label}
         </div>
       </div>
@@ -134,6 +209,17 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
 
   return to ? <Link to={to} className="block">{content}</Link> : content;
 };
+
+// Class colors for badges
+const classColors = {
+  worldClass: 'bg-gold-500 text-charcoal-900',
+  openClass: 'bg-purple-500 text-white',
+  aClass: 'bg-blue-500 text-white',
+  soundSport: 'bg-green-500 text-white',
+};
+
+// Class order for sorting
+const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 // ===========================================================================
 // MAIN DASHBOARD COMPONENT
@@ -171,7 +257,7 @@ const Dashboard = () => {
   const [showExecutionInsights, setShowExecutionInsights] = useState(false);
 
   // Context Panel tab state (desktop right column)
-  const [contextPanelTab, setContextPanelTab] = useState('insights'); // 'insights' | 'staff' | 'equipment'
+  const [contextPanelTab, setContextPanelTab] = useState('insights');
 
   // Destructure commonly used values
   const {
@@ -237,30 +323,12 @@ const Dashboard = () => {
   const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
   const multiplier = Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
 
-  // Get multiplier status - Light mode uses dark colors, Dark mode uses bright colors
-  const getMultiplierStatus = () => {
-    if (multiplier >= 1.05) return { color: 'text-green-700 dark:text-green-400', bg: 'bg-green-500', label: 'ELITE' };
-    if (multiplier >= 0.95) return { color: 'text-amber-700 dark:text-gold-500', bg: 'bg-gold-500', label: 'STRONG' };
-    if (multiplier >= 0.85) return { color: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-500', label: 'FAIR' };
-    return { color: 'text-red-700 dark:text-red-400', bg: 'bg-red-500', label: 'WEAK' };
-  };
-  const multiplierStatus = getMultiplierStatus();
-
   const rehearsalsThisWeek = executionState?.rehearsalsThisWeek ?? 0;
   const showsThisWeek = activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0;
   const equipmentNeedsRepair = avgEquipment < 0.85;
-  const xpProgress = ((profile?.xp || 0) % 1000) / 10;
 
-  // Class colors for badges
-  const classColors = {
-    worldClass: 'bg-gold-500 text-charcoal-900',
-    openClass: 'bg-purple-500 text-white',
-    aClass: 'bg-blue-500 text-white',
-    soundSport: 'bg-green-500 text-white',
-  };
-
-  // Class order for sorting
-  const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+  // Track assigned staff for retirement flow
+  const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
 
   // Show morning report on first visit of the day
   useEffect(() => {
@@ -330,9 +398,6 @@ const Dashboard = () => {
       toast.error('Failed to delete corps. Please try again.');
     }
   };
-
-  // Track assigned staff for retirement flow
-  const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
 
   const handleOpenRetireModal = async () => {
     try {
@@ -433,7 +498,7 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
-  // Handle rehearsal from CommandCenter
+  // Handle rehearsal
   const handleRehearsal = async () => {
     if (canRehearseToday()) {
       const result = await rehearse();
@@ -443,8 +508,12 @@ const Dashboard = () => {
     }
   };
 
+  // ============================================================================
+  // RENDER: BENTO GRID LAYOUT - 100vh Fixed-Height HUD
+  // ============================================================================
+
   return (
-    <div className="dashboard-cockpit h-full flex flex-col lg:grid lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] gap-0 lg:gap-0 overflow-hidden relative z-10">
+    <div className="h-screen w-full bg-surface overflow-hidden flex flex-col">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -459,215 +528,128 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          TOP BAR: User Identity & Quick Stats (spans full width)
+          TOP BAR (Fixed Height)
           ====================================================================== */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="lg:col-span-2 card-brutalist p-4 m-4 mb-0 lg:m-4 lg:mb-0"
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Welcome & Season Info */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-text-main uppercase tracking-tight truncate">
-              {profile?.displayName || 'Director'}
-            </h1>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-text-muted text-sm font-display">
-                {formatSeasonName(seasonData?.name)}
-              </span>
-              {weeksRemaining && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold">
-                  <Calendar className="w-3 h-3" />
-                  Week {currentWeek} • {weeksRemaining}w left
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Stats Row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Login Streak */}
-            {engagementData?.loginStreak > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 border-2 border-orange-500/30">
-                <Flame className={`w-5 h-5 ${engagementData.loginStreak >= 7 ? 'text-orange-500 animate-pulse' : 'text-orange-600 dark:text-orange-500'}`} />
-                <span className="text-lg font-mono font-bold text-orange-600 dark:text-orange-400">
-                  {engagementData.loginStreak}
-                </span>
-              </div>
-            )}
-
-            {/* XP Level */}
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border-2 border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
-            >
-              <Zap className="w-5 h-5 text-amber-600 dark:text-gold-500" />
-              <div className="flex flex-col">
-                <span className="text-sm font-mono font-bold text-amber-600 dark:text-gold-500">LVL {profile?.xpLevel || 1}</span>
-                <div className="w-12 h-1.5 bg-stone-200 dark:bg-charcoal-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500 dark:bg-gold-500 transition-all duration-500"
-                    style={{ width: `${xpProgress}%` }}
-                  />
-                </div>
-              </div>
-            </Link>
-
-            {/* CorpsCoin */}
-            <Link
-              to="/staff"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border-2 border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
-            >
-              <Coins className="w-5 h-5 text-amber-600 dark:text-gold-500" />
-              <span className="text-lg font-mono font-bold text-amber-600 dark:text-gold-500">
-                {(profile?.corpsCoin || 0).toLocaleString()}
-              </span>
-            </Link>
-
-            {/* Battle Pass Rewards */}
-            {unclaimedRewardsCount > 0 && (
-              <Link
-                to="/battlepass"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/30 dark:from-gold-500/30 to-purple-500/30 border-2 border-amber-500/50 dark:border-gold-500/50 animate-pulse"
-              >
-                <Gift className="w-5 h-5 text-amber-600 dark:text-gold-400" />
-                <span className="text-sm font-bold text-amber-600 dark:text-gold-400">{unclaimedRewardsCount}</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      </motion.div>
+      <TopBar
+        profile={profile}
+        seasonData={seasonData}
+        weeksRemaining={weeksRemaining}
+        currentWeek={currentWeek}
+        formatSeasonName={formatSeasonName}
+        engagementData={engagementData}
+        unclaimedRewardsCount={unclaimedRewardsCount}
+      />
 
       {/* ======================================================================
-          MAIN HUD AREA (Left Column on Desktop)
+          MAIN CONTENT GRID (Fills remaining height)
+          Mobile: Single column | Desktop: 2-column grid [1fr 380px]
           ====================================================================== */}
-      <div className="flex-1 lg:row-start-2 lg:col-start-1 overflow-y-auto p-4 pt-2 space-y-4">
-        {/* Corps Selector (if multiple) */}
-        {hasMultipleCorps && (
-          <div className="flex items-center gap-3">
-            <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
-            <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
-              {Object.entries(corps)
-                .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                .map(([classId, corpsData]) => (
-                  <button
-                    key={classId}
-                    onClick={() => handleCorpsSwitch(classId)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
-                      activeCorpsClass === classId
-                        ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
-                        : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
-                    }`}
-                  >
-                    {corpsData.corpsName || corpsData.name}
-                  </button>
-                ))}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] overflow-hidden">
+
+        {/* ================================================================
+            CENTER COLUMN: The Cockpit (Scrollable internally)
+            ================================================================ */}
+        <div className="h-full overflow-y-auto p-4 space-y-4">
+
+          {/* Corps Selector (if multiple) */}
+          {hasMultipleCorps && (
+            <div className="flex items-center gap-3">
+              <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
+                {Object.entries(corps)
+                  .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+                  .map(([classId, corpsData]) => (
+                    <button
+                      key={classId}
+                      onClick={() => handleCorpsSwitch(classId)}
+                      className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
+                        activeCorpsClass === classId
+                          ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md'
+                          : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
+                      }`}
+                    >
+                      {corpsData.corpsName || corpsData.name}
+                    </button>
+                  ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ======================================================================
-            MAIN HUD CONTENT
-            ====================================================================== */}
-        {activeCorps && (
-          <div className="space-y-4">
-
-          {/* ================================================================
-              HERO CARD: Stadium Banner with Score Bug
-              Mobile: Full width, auto height | Desktop: 8 cols, fills row
-              ================================================================ */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="order-1 lg:col-span-8 lg:row-span-1 stadium-banner p-0 overflow-hidden flex flex-col min-h-[280px] lg:min-h-0"
-          >
-            {/* Stadium overlay silhouette */}
-            <div className="stadium-overlay" />
-
-            {/* Watermark Trophy */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-              <Trophy className="w-64 h-64 md:w-80 md:h-80" />
-            </div>
-
-            <div className="relative z-10">
+          {activeCorps && (
+            <>
               {/* ============================================================
-                  CORPS STATUS HEADER - Stadium HUD with glowing elements
+                  1. HEADER ROW: Corps Name + MultiplierGlassBoxLarge
                   ============================================================ */}
-              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b border-white/10">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="stadium-banner p-6 rounded-xl"
+              >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Corps Identity */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1.5 rounded-lg text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                      <span className={`px-3 py-1 rounded-lg text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
                         {getCorpsClassName(activeCorpsClass)}
                       </span>
                       {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wide" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.2)' }}>
-                          <Crown size={10} style={{ filter: 'drop-shadow(0 0 4px rgba(250, 204, 21, 0.6))' }} />
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase">
+                          <Crown size={10} />
                           TOP 10
                         </span>
                       )}
+                      <button
+                        onClick={() => setShowEditCorps(true)}
+                        className="p-1 rounded hover:bg-white/10 text-cream-muted hover:text-gold-400 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
                     </div>
-                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-cream">
-                      {activeCorps.corpsName || activeCorps.name || 'UNSPECIFIED'}
+                    <h2 className="sports-header text-2xl md:text-3xl lg:text-4xl text-cream">
+                      {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
                     </h2>
                     {activeCorps.showConcept && (
-                      <p className="text-cream-muted text-sm md:text-base font-body italic mt-1">
-                        <span className="text-gold-400 not-italic">"</span>
-                        {activeCorps.showConcept}
-                        <span className="text-gold-400 not-italic">"</span>
+                      <p className="text-cream-muted text-sm font-body italic mt-1">
+                        "{activeCorps.showConcept}"
                       </p>
                     )}
                   </div>
 
-                  {/* Performance Multiplier - Glass Box with interactive breakdown */}
+                  {/* Performance Multiplier - Glass Box */}
                   <div className="flex-shrink-0 flex flex-col items-center">
                     <MultiplierGlassBoxLarge
                       multiplier={multiplier}
                       breakdown={{
-                        // Factor 1: Readiness (±12%) - (sectionReadiness - 0.80) * 0.60
                         readiness: (readiness - 0.80) * 0.60,
-                        // Factor 2: Staff (±8%) - (staffEffectiveness - 0.80) * 0.40
                         staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
-                        // Factor 3: Equipment (0 to -5%) - (equipmentHealth - 1.00) * 0.50
                         equipment: (avgEquipment - 1.00) * 0.50,
-                        // Factor 4: Travel Condition (-3% if bus+truck < 140%)
                         travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
-                        // Factor 5: Morale (±8%) - (sectionMorale - 0.75) * 0.32
                         morale: (morale - 0.75) * 0.32,
-                        // Factor 6: Show Difficulty (±15%) - ceiling bonus or risk penalty
                         showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
                           ? (executionState?.showDesign?.ceilingBonus || 0.08)
                           : (executionState?.showDesign?.riskPenalty || -0.10),
-                        // Factor 7: Championship Pressure (Days 47-49, ±2%)
-                        ...(profile?.currentDay >= 47 && profile?.currentDay <= 49 ? { championshipPressure: (morale - 0.80) * 0.10 } : {}),
-                        // Factor 8: Fatigue (Days 35-49, 0 to -5%)
-                        ...(profile?.currentDay > 35 ? { fatigue: -0.05 * ((profile.currentDay - 35) / 14) } : {}),
                       }}
                       currentDay={profile?.currentDay || 1}
                       showDifficulty={executionState?.showDesign}
                       avgReadiness={readiness}
                     />
-                    {/* Link to full insights panel */}
                     <button
                       onClick={() => setShowExecutionInsights(true)}
-                      className="mt-2 text-[9px] text-cream-muted hover:text-gold-400 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                      className="mt-2 text-[9px] text-cream-muted hover:text-gold-400 uppercase tracking-wider flex items-center gap-1 transition-colors lg:hidden"
                     >
                       <ChevronRight size={10} />
                       Full Analysis
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* ============================================================
-                  EXECUTION METRICS - Split-Signal Segmented Bars (B/P/G/E)
+                  2. VITALS ROW: ClusterBar (Readiness), ClusterBar (Morale), TacticalGauge (Equip)
                   ============================================================ */}
-              <div className="px-6 md:px-8 py-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Readiness - 4 Segment Cluster Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Readiness - 4 Segment Cluster Bar */}
+                <div className="glass-card p-4 rounded-xl">
                   <ClusterBar
                     type="readiness"
                     sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
@@ -677,7 +659,9 @@ const Dashboard = () => {
                       ensemble: readiness
                     }}
                   />
-                  {/* Morale - 4 Segment Cluster Bar */}
+                </div>
+                {/* Morale - 4 Segment Cluster Bar */}
+                <div className="glass-card p-4 rounded-xl">
                   <ClusterBar
                     type="morale"
                     sections={typeof executionState?.morale === 'object' ? executionState.morale : {
@@ -687,7 +671,9 @@ const Dashboard = () => {
                       overall: morale
                     }}
                   />
-                  {/* Equipment - Single Gauge (no subsections) */}
+                </div>
+                {/* Equipment - Single Gauge */}
+                <div className="glass-card p-4 rounded-xl">
                   <TacticalGaugeWithInsight
                     value={avgEquipment}
                     color="orange"
@@ -699,16 +685,16 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Row - Stadium HUD with glowing numbers + Hover Insights */}
-              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-white/10 mt-0">
-                <div className="flex items-center gap-6 pt-5">
+              {/* Quick Stats Row */}
+              <div className="flex flex-wrap items-center gap-4 px-2">
+                <div className="flex items-center gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-blue-400" style={{ textShadow: '0 0 10px rgba(96, 165, 250, 0.5)' }}>{rehearsalsThisWeek}/7</div>
-                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">This Week</div>
+                    <div className="text-xl font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">This Week</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-purple-400" style={{ textShadow: '0 0 10px rgba(192, 132, 252, 0.5)' }}>{showsThisWeek}</div>
-                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Shows</div>
+                    <div className="text-xl font-mono font-bold text-purple-400">{showsThisWeek}</div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <ScoreBreakdownTooltip
@@ -718,10 +704,10 @@ const Dashboard = () => {
                       finalScore={(activeCorps.totalSeasonScore || 0) * multiplier + (executionState?.synergyBonus || 0)}
                     >
                       <div className="text-center cursor-help hover:scale-105 transition-transform">
-                        <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
+                        <div className="text-xl font-mono font-bold text-gold-400">
                           {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                         </div>
-                        <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
+                        <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Score</div>
                       </div>
                     </ScoreBreakdownTooltip>
                   )}
@@ -730,329 +716,316 @@ const Dashboard = () => {
                     totalImpact={assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04}
                   >
                     <div className="text-center cursor-help hover:scale-105 transition-transform">
-                      <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
-                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
+                      <div className="text-xl font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
+                      <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Staff</div>
                     </div>
                   </StaffEffectivenessTooltip>
-                  {/* Difficulty Confidence Badge - Risk/Reward indicator */}
+                  {/* Difficulty Confidence Badge */}
                   <ConfidenceBadge
                     currentDifficulty={executionState?.showDesign || 'moderate'}
                     currentReadiness={readiness}
                     onClick={() => setShowExecutionInsights(true)}
                   />
                 </div>
+              </div>
 
-                {/* Quick Links - Glass buttons with glow */}
-                <div className="flex items-center gap-2 pt-5">
-                  <button
-                    onClick={() => setShowCaptionSelection(true)}
-                    className="p-3 rounded-lg bg-gold-500/10 border border-gold-500/40 hover:border-gold-500 text-gold-400 hover:text-gold-300 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.3)]"
-                    title="Edit Captions"
-                  >
-                    <Edit size={20} />
-                  </button>
-                  <Link
-                    to="/schedule"
-                    className="p-3 rounded-lg bg-white/5 border border-white/15 hover:border-gold-500/50 text-cream-muted hover:text-gold-400 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]"
-                    title="View Schedule"
-                  >
-                    <Calendar size={20} />
-                  </Link>
-                  <Link
-                    to="/scores"
-                    className="p-3 rounded-lg bg-white/5 border border-white/15 hover:border-gold-500/50 text-cream-muted hover:text-gold-400 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]"
-                    title="View Scores"
-                  >
-                    <Trophy size={20} />
-                  </Link>
+              {/* ============================================================
+                  3. ACTION GRID: Rehearse, Staff, Equipment, Activities
+                  ============================================================ */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {/* Daily Rehearsal */}
+                <IconCard
+                  icon={Music}
+                  label="Rehearse"
+                  subtitle="+5% Ready"
+                  onClick={handleRehearsal}
+                  disabled={!canRehearseToday()}
+                  processing={executionProcessing}
+                  completed={!canRehearseToday()}
+                />
+
+                {/* Staff Panel */}
+                <IconCard
+                  icon={Users}
+                  label="Staff"
+                  subtitle={`${assignedStaff.length}/8 Assigned`}
+                  onClick={() => {
+                    setShowStaffPanel(true);
+                    completeDailyChallenge('staff_meeting');
+                  }}
+                />
+
+                {/* Equipment Panel */}
+                <IconCard
+                  icon={Wrench}
+                  label="Equipment"
+                  subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
+                  onClick={() => {
+                    setShowEquipmentPanel(true);
+                    completeDailyChallenge('maintain_equipment');
+                  }}
+                />
+
+                {/* Daily Activities */}
+                <IconCard
+                  icon={Zap}
+                  label="Activities"
+                  subtitle="Daily Tasks"
+                  onClick={() => setShowDailyActivities(true)}
+                />
+              </div>
+
+              {/* ============================================================
+                  4. STATS ROW: Weekly Progress
+                  ============================================================ */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <QuickStatCard
+                  icon={Target}
+                  label="Rehearsals"
+                  value={`+${weeklyProgress?.rehearsalsCompleted || 0}`}
+                  color="blue"
+                />
+                <QuickStatCard
+                  icon={Trophy}
+                  label="Score Change"
+                  value={`${(weeklyProgress?.scoreImprovement || 0) >= 0 ? '+' : ''}${(weeklyProgress?.scoreImprovement || 0).toFixed(1)}`}
+                  color={(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'green' : 'orange'}
+                />
+                <QuickStatCard
+                  icon={TrendingUp}
+                  label="Rank Change"
+                  value={`${(weeklyProgress?.rankChange || 0) > 0 ? '↑' : (weeklyProgress?.rankChange || 0) < 0 ? '↓' : '→'}${Math.abs(weeklyProgress?.rankChange || 0)}`}
+                  color={(weeklyProgress?.rankChange || 0) > 0 ? 'green' : (weeklyProgress?.rankChange || 0) < 0 ? 'orange' : 'blue'}
+                />
+                <QuickStatCard
+                  icon={Users}
+                  label="Staff Market"
+                  value="Browse"
+                  color="purple"
+                  to="/staff"
+                />
+              </div>
+
+              {/* ============================================================
+                  5. QUICK LINKS ROW
+                  ============================================================ */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Link
+                  to="/scores"
+                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                >
+                  <div className="p-2 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
+                    <Trophy className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-display font-bold text-text-main text-sm truncate">Leaderboards</span>
+                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
+                </Link>
+                <Link
+                  to="/schedule"
+                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                >
+                  <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/30 flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="font-display font-bold text-text-main text-sm truncate">Schedule</span>
+                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
+                </Link>
+                <Link
+                  to="/leagues"
+                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                >
+                  <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="font-display font-bold text-text-main text-sm truncate">Leagues</span>
+                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
+                </Link>
+                <Link
+                  to="/battlepass"
+                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
+                >
+                  <div className="p-2 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
+                    <Crown className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-display font-bold text-text-main text-sm truncate">Season Pass</span>
+                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
+                </Link>
+              </div>
+
+              {/* SoundSport Fun Badge */}
+              {activeCorpsClass === 'soundSport' && (
+                <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
+                  <Sparkles size={20} />
+                  <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
                 </div>
+              )}
+            </>
+          )}
+
+          {/* No Corps State */}
+          {!activeCorps && !showSeasonSetupWizard && (
+            <div className="flex-1 flex items-center justify-center py-20">
+              <div className="text-center">
+                <Music className="w-16 h-16 mx-auto mb-4 text-text-muted opacity-50" />
+                <h2 className="text-xl font-display font-bold text-text-main mb-2">No Corps Registered</h2>
+                <p className="text-text-muted mb-4">Create your first corps to begin your journey!</p>
+                <button
+                  onClick={() => setShowRegistration(true)}
+                  className="btn-primary"
+                >
+                  Register Corps
+                </button>
               </div>
             </div>
-          </motion.div>
-
-          {/* ================================================================
-              ACTION TILES GRID
-              Mobile: 2x2 grid, auto height | Desktop: 4 cols, fills row
-              ================================================================ */}
-          <div className="order-2 lg:col-span-4 lg:row-span-1 grid grid-cols-2 gap-3 lg:gap-4 auto-rows-fr">
-              {/* Daily Rehearsal */}
-              <IconCard
-                icon={Music}
-                label="Rehearse"
-                subtitle="+5% Ready"
-                onClick={handleRehearsal}
-                disabled={!canRehearseToday()}
-                processing={executionProcessing}
-                completed={!canRehearseToday()}
-              />
-
-              {/* Staff Panel */}
-              <IconCard
-                icon={Users}
-                label="Staff"
-                subtitle={`${assignedStaff.length}/8 Assigned`}
-                onClick={() => {
-                  setShowStaffPanel(true);
-                  completeDailyChallenge('staff_meeting');
-                }}
-              />
-
-              {/* Equipment Panel */}
-              <IconCard
-                icon={Wrench}
-                label="Equipment"
-                subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
-                onClick={() => {
-                  setShowEquipmentPanel(true);
-                  completeDailyChallenge('maintain_equipment');
-                }}
-              />
-
-            {/* Daily Activities */}
-            <IconCard
-              icon={Zap}
-              label="Activities"
-              subtitle="Daily Tasks"
-              onClick={() => setShowDailyActivities(true)}
-            />
-          </div>
-
-          {/* ================================================================
-              STATS ROW: Weekly Progress
-              Mobile: 2x2 grid | Desktop: 4 cols, auto height
-              ================================================================ */}
-          <div className="order-3 lg:col-span-12 lg:row-span-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-            <QuickStatCard
-              icon={Target}
-              label="Rehearsals"
-              value={`+${weeklyProgress?.rehearsalsCompleted || 0}`}
-              color="blue"
-            />
-            <QuickStatCard
-              icon={Trophy}
-              label="Score Change"
-              value={`${(weeklyProgress?.scoreImprovement || 0) >= 0 ? '+' : ''}${(weeklyProgress?.scoreImprovement || 0).toFixed(1)}`}
-              color={(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'green' : 'orange'}
-            />
-            <QuickStatCard
-              icon={TrendingUp}
-              label="Rank Change"
-              value={`${(weeklyProgress?.rankChange || 0) > 0 ? '↑' : (weeklyProgress?.rankChange || 0) < 0 ? '↓' : '→'}${Math.abs(weeklyProgress?.rankChange || 0)}`}
-              color={(weeklyProgress?.rankChange || 0) > 0 ? 'green' : (weeklyProgress?.rankChange || 0) < 0 ? 'orange' : 'blue'}
-            />
-            <QuickStatCard
-              icon={Users}
-              label="Staff Market"
-              value="Browse"
-              color="purple"
-              to="/staff"
-            />
-          </div>
-
-          {/* ================================================================
-              QUICK LINKS ROW
-              Mobile: 2x2 grid | Desktop: 4 cols, auto height
-              ================================================================ */}
-          <div className="order-4 lg:col-span-12 lg:row-span-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-            <Link
-              to="/scores"
-              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
-            >
-              <div className="p-2 lg:p-3 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
-                <Trophy className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
-              </div>
-              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Leaderboards</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-            </Link>
-            <Link
-              to="/schedule"
-              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
-            >
-              <div className="p-2 lg:p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 flex-shrink-0">
-                <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Schedule</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-            </Link>
-            <Link
-              to="/leagues"
-              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
-            >
-              <div className="p-2 lg:p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex-shrink-0">
-                <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Leagues</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-            </Link>
-            <Link
-              to="/battlepass"
-              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
-            >
-              <div className="p-2 lg:p-3 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
-                <Crown className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
-              </div>
-              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Season Pass</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-            </Link>
-          </div>
-
-          </div>
-        )}
-
-        {/* SoundSport Fun Badge */}
-        {activeCorpsClass === 'soundSport' && (
-          <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
-            <Sparkles size={20} />
-            <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
-          </div>
-        )}
-      </div>
-
-      {/* ======================================================================
-          CONTEXT PANEL (Right Column - Desktop Only, 380px fixed)
-          Contains: Execution Insights, Staff Panel, Equipment Manager
-          ====================================================================== */}
-      <div className="hidden lg:flex lg:flex-col lg:row-start-2 lg:col-start-2 border-l border-stone-200 dark:border-border-default bg-white dark:bg-surface overflow-hidden">
-        {/* Context Panel Tabs */}
-        <div className="flex border-b border-stone-200 dark:border-border-default">
-          <button
-            onClick={() => setContextPanelTab('insights')}
-            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-              contextPanelTab === 'insights'
-                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Insights
-            </div>
-          </button>
-          <button
-            onClick={() => setContextPanelTab('staff')}
-            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-              contextPanelTab === 'staff'
-                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Users className="w-4 h-4" />
-              Staff
-            </div>
-          </button>
-          <button
-            onClick={() => setContextPanelTab('equipment')}
-            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-              contextPanelTab === 'equipment'
-                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Wrench className="w-4 h-4" />
-              Equip
-            </div>
-          </button>
+          )}
         </div>
 
-        {/* Context Panel Content */}
-        <div className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            {contextPanelTab === 'insights' && (
-              <motion.div
-                key="insights"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="p-4 space-y-4"
-              >
-                {/* Difficulty Confidence Meter */}
-                <div className="glass-dark rounded-xl p-4">
-                  <DifficultyConfidenceMeter
-                    currentDifficulty={executionState?.showDesign || 'moderate'}
-                    currentReadiness={typeof readiness === 'number' ? readiness : 0.75}
-                    currentDay={profile?.currentDay || 1}
-                    showSelector={false}
-                    compact={true}
-                  />
-                </div>
+        {/* ================================================================
+            RIGHT COLUMN: Context Panel (Fixed Width 380px, Scrollable internally)
+            Hidden on mobile - use slide-out panels instead
+            ================================================================ */}
+        <div className="hidden lg:flex flex-col h-full border-l border-border-default bg-surface-secondary overflow-hidden">
+          {/* Context Panel Tabs */}
+          <div className="flex border-b border-border-default shrink-0">
+            <button
+              onClick={() => setContextPanelTab('insights')}
+              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+                contextPanelTab === 'insights'
+                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Insights
+              </div>
+            </button>
+            <button
+              onClick={() => setContextPanelTab('staff')}
+              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+                contextPanelTab === 'staff'
+                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Users className="w-4 h-4" />
+                Staff
+              </div>
+            </button>
+            <button
+              onClick={() => setContextPanelTab('equipment')}
+              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+                contextPanelTab === 'equipment'
+                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Wrench className="w-4 h-4" />
+                Equip
+              </div>
+            </button>
+          </div>
 
-                {/* Section Readiness Breakdown */}
-                <div className="glass-dark rounded-xl p-4">
-                  <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
-                    Section Readiness
-                  </h4>
-                  <SegmentedMetricBar
-                    type="readiness"
-                    sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
-                      brass: readiness || 0.75,
-                      percussion: readiness || 0.75,
-                      guard: readiness || 0.75,
-                      ensemble: readiness || 0.75
-                    }}
-                    compact={true}
-                  />
-                </div>
-
-                {/* Section Morale Breakdown */}
-                <div className="glass-dark rounded-xl p-4">
-                  <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
-                    Section Morale
-                  </h4>
-                  <SegmentedMetricBar
-                    type="morale"
-                    sections={typeof executionState?.morale === 'object' ? executionState.morale : {
-                      brass: morale || 0.80,
-                      percussion: morale || 0.80,
-                      guard: morale || 0.80,
-                      overall: morale || 0.80
-                    }}
-                    compact={true}
-                  />
-                </div>
-
-                {/* View Full Analysis Button */}
-                <button
-                  onClick={() => setShowExecutionInsights(true)}
-                  className="w-full py-3 px-4 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-colors font-display font-bold uppercase text-xs tracking-wider flex items-center justify-center gap-2"
+          {/* Context Panel Content */}
+          <div className="flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              {contextPanelTab === 'insights' && (
+                <motion.div
+                  key="insights"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-4 space-y-4"
                 >
-                  <BarChart3 className="w-4 h-4" />
-                  Full Analysis Panel
-                </button>
-              </motion.div>
-            )}
+                  {/* Difficulty Confidence Meter */}
+                  <div className="glass-dark rounded-xl p-4">
+                    <DifficultyConfidenceMeter
+                      currentDifficulty={executionState?.showDesign || 'moderate'}
+                      currentReadiness={typeof readiness === 'number' ? readiness : 0.75}
+                      currentDay={profile?.currentDay || 1}
+                      showSelector={false}
+                      compact={true}
+                    />
+                  </div>
 
-            {contextPanelTab === 'staff' && (
-              <motion.div
-                key="staff"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="p-4"
-              >
-                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
-              </motion.div>
-            )}
+                  {/* Section Readiness Breakdown */}
+                  <div className="glass-dark rounded-xl p-4">
+                    <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
+                      Section Readiness
+                    </h4>
+                    <SegmentedMetricBar
+                      type="readiness"
+                      sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
+                        brass: readiness || 0.75,
+                        percussion: readiness || 0.75,
+                        guard: readiness || 0.75,
+                        ensemble: readiness || 0.75
+                      }}
+                      compact={true}
+                    />
+                  </div>
 
-            {contextPanelTab === 'equipment' && (
-              <motion.div
-                key="equipment"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="p-4"
-              >
-                <EquipmentManager
-                  equipment={executionState?.equipment}
-                  onRepair={repairEquipment}
-                  onUpgrade={upgradeEquipment}
-                  processing={executionProcessing}
-                  corpsCoin={profile?.corpsCoin || 0}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {/* Section Morale Breakdown */}
+                  <div className="glass-dark rounded-xl p-4">
+                    <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
+                      Section Morale
+                    </h4>
+                    <SegmentedMetricBar
+                      type="morale"
+                      sections={typeof executionState?.morale === 'object' ? executionState.morale : {
+                        brass: morale || 0.80,
+                        percussion: morale || 0.80,
+                        guard: morale || 0.80,
+                        overall: morale || 0.80
+                      }}
+                      compact={true}
+                    />
+                  </div>
+
+                  {/* View Full Analysis Button */}
+                  <button
+                    onClick={() => setShowExecutionInsights(true)}
+                    className="w-full py-3 px-4 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-colors font-display font-bold uppercase text-xs tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Full Analysis Panel
+                  </button>
+                </motion.div>
+              )}
+
+              {contextPanelTab === 'staff' && (
+                <motion.div
+                  key="staff"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-4"
+                >
+                  <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
+                </motion.div>
+              )}
+
+              {contextPanelTab === 'equipment' && (
+                <motion.div
+                  key="equipment"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-4"
+                >
+                  <EquipmentManager
+                    equipment={executionState?.equipment}
+                    onRepair={repairEquipment}
+                    onUpgrade={upgradeEquipment}
+                    processing={executionProcessing}
+                    corpsCoin={profile?.corpsCoin || 0}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -1076,9 +1049,9 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Equipment Manager</h2>
                 <button
                   onClick={() => setShowEquipmentPanel(false)}
@@ -1117,9 +1090,9 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Staff Roster</h2>
                 <button
                   onClick={() => setShowStaffPanel(false)}
@@ -1152,9 +1125,9 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-b-2 dark:border-border-default p-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Daily Activities</h2>
                 <button
                   onClick={() => setShowDailyActivities(false)}
@@ -1183,7 +1156,7 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Execution Insights Panel - Transparent Gameplay */}
+      {/* Execution Insights Panel */}
       <AnimatePresence>
         {showExecutionInsights && (
           <>
@@ -1199,7 +1172,7 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-hidden"
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-hidden"
             >
               <ExecutionInsightsPanel
                 executionState={executionState}
@@ -1219,7 +1192,6 @@ const Dashboard = () => {
                 assignedStaff={assignedStaff}
                 activeCorpsClass={activeCorpsClass}
                 onBoostStaffMorale={async (staffId) => {
-                  // Call boost staff morale function
                   try {
                     const { boostStaffMorale } = await import('../api/functions');
                     await boostStaffMorale({ staffId });
