@@ -26,7 +26,16 @@ module.exports = {
         error: '#ef4444',
 
         // ===========================================
-        // LEGACY COLOR SCALES (for backwards compatibility)
+        // STADIUM HUD DESIGN SYSTEM TOKENS
+        // Night Mode Stadium Aesthetic
+        // ===========================================
+
+        // The Foundation - Deep background layers
+        'stadium-black': '#0a0a0a',      // Deepest background layer
+        'stadium-charcoal': '#171717',   // Slightly lighter secondary backgrounds
+
+        // ===========================================
+        // COLOR SCALES
         // ===========================================
         cream: {
           50: '#FDFBF7',
@@ -35,7 +44,8 @@ module.exports = {
           300: '#E5D396',
           400: '#D4C078',
           500: '#C3A54E',
-          DEFAULT: '#C3A54E',
+          DEFAULT: '#F5F5DC',            // Primary body text (softer than pure white)
+          muted: 'rgba(245, 245, 220, 0.6)', // Secondary labels, inactive states
           600: '#A38A3F',
           700: '#836F32',
           800: '#635426',
@@ -46,10 +56,10 @@ module.exports = {
           100: '#FFF9E6',
           200: '#FFF0BF',
           300: '#FFE799',
-          400: '#FFD44D',
-          500: '#FFD700',
-          DEFAULT: '#FFD700',
-          600: '#FFCA26',
+          400: '#FACC15',                // Brightest, glowing elements
+          500: '#EAB308',                // Standard buttons/accents
+          DEFAULT: '#EAB308',
+          600: '#CA8A04',                // Darker borders/depth
           700: '#FFC100',
           800: '#D9A300',
           900: '#B38600'
@@ -83,7 +93,15 @@ module.exports = {
       boxShadow: {
         // STADIUM HUD GLOW SHADOWS - Soft golden glows for premium sports feel
         'none': 'none',
-        // Golden Glow - Primary CTA and emphasis shadows
+
+        // ===========================================
+        // GOLD GLOW SHADOWS (Stadium HUD Design Guide)
+        // ===========================================
+        'gold-glow-sm': '0 0 10px rgba(234, 179, 8, 0.3)',   // Subtle highlights
+        'gold-glow-md': '0 0 15px rgba(234, 179, 8, 0.4)',   // Primary buttons, active cards
+        'gold-glow-lg': '0 0 25px rgba(234, 179, 8, 0.6)',   // Major achievements, hover states
+
+        // Legacy glow aliases (for backwards compatibility)
         'glow-sm': '0 0 10px rgba(234, 179, 8, 0.2)',
         'glow': '0 0 15px rgba(234, 179, 8, 0.3)',
         'glow-md': '0 0 20px rgba(234, 179, 8, 0.35)',
