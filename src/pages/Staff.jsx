@@ -59,18 +59,19 @@ const Staff = () => {
         })}
       </div>
 
-      {/* Tab Content - Fills remaining space */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-1 min-h-0 flex flex-col overflow-hidden"
-      >
-        {activeTab === 'marketplace' && <StaffMarketplace />}
-        {activeTab === 'roster' && <StaffRoster userCorps={corps || {}} />}
-        {activeTab === 'auctions' && <StaffAuctions />}
-      </motion.div>
+      {/* Tab Content - Fills remaining space with internal scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activeTab === 'marketplace' && <StaffMarketplace />}
+          {activeTab === 'roster' && <StaffRoster userCorps={corps || {}} />}
+          {activeTab === 'auctions' && <StaffAuctions />}
+        </motion.div>
+      </div>
     </div>
   );
 };

@@ -136,53 +136,57 @@ const Profile = () => {
   ];
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-6">
-      {/* Header */}
-      <ProfileHeader
-        profile={profile}
-        isOwnProfile={isOwnProfile}
-        onSave={handleSave}
-        saving={saving}
-        xpProgress={xpProgress}
-        currentStreak={currentStreak}
-      />
+    <div className="flex flex-col flex-1 min-h-0 gap-4 lg:gap-5">
+      {/* Header - Compact on desktop */}
+      <div className="flex-shrink-0">
+        <ProfileHeader
+          profile={profile}
+          isOwnProfile={isOwnProfile}
+          onSave={handleSave}
+          saving={saving}
+          xpProgress={xpProgress}
+          currentStreak={currentStreak}
+        />
+      </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      {/* Tab Navigation - Compact */}
+      <div className="flex-shrink-0 flex gap-2 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap text-sm ${
                 activeTab === tab.id
                   ? 'bg-primary text-text-inverse'
                   : 'bg-stone-200 dark:bg-charcoal-800 text-slate-700 dark:text-cream-300 hover:bg-stone-300 dark:hover:bg-charcoal-700'
               }`}
             >
               <Icon className="w-4 h-4" />
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'overview' && (
-          <OverviewTab profile={profile} milestones={milestones} />
-        )}
-        {activeTab === 'achievements' && (
-          <AchievementsTab profile={profile} milestones={milestones} />
-        )}
-        {activeTab === 'history' && (
-          <HistoryTab profile={profile} seasonHistory={seasonHistory} />
-        )}
-        {activeTab === 'stats' && (
-          <StatsTab profile={profile} />
-        )}
-      </AnimatePresence>
+      {/* Tab Content - Fills remaining space with internal scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <OverviewTab profile={profile} milestones={milestones} />
+          )}
+          {activeTab === 'achievements' && (
+            <AchievementsTab profile={profile} milestones={milestones} />
+          )}
+          {activeTab === 'history' && (
+            <HistoryTab profile={profile} seasonHistory={seasonHistory} />
+          )}
+          {activeTab === 'stats' && (
+            <StatsTab profile={profile} />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

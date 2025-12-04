@@ -180,48 +180,56 @@ const Schedule = () => {
   const weekStatus = getWeekStatus(selectedWeek);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      {/* Page Header */}
-      <SchedulePageHeader
-        totalShows={allShows.length}
-        currentWeek={currentWeek}
-      />
+    <div className="flex flex-col flex-1 min-h-0 gap-3 lg:gap-4">
+      {/* Page Header - Compact */}
+      <div className="flex-shrink-0">
+        <SchedulePageHeader
+          totalShows={allShows.length}
+          currentWeek={currentWeek}
+        />
+      </div>
 
-      {/* Week Tabs */}
-      <WeekTabs
-        selectedWeek={selectedWeek}
-        currentWeek={currentWeek}
-        onSelectWeek={setSelectedWeek}
-        allShows={allShows}
-        getWeekRegistrationCount={getWeekRegistrationCount}
-      />
+      {/* Week Tabs - Compact */}
+      <div className="flex-shrink-0">
+        <WeekTabs
+          selectedWeek={selectedWeek}
+          currentWeek={currentWeek}
+          onSelectWeek={setSelectedWeek}
+          allShows={allShows}
+          getWeekRegistrationCount={getWeekRegistrationCount}
+        />
+      </div>
 
-      {/* Selected Week Header */}
-      <SelectedWeekHeader
-        selectedWeek={selectedWeek}
-        weekStatus={weekStatus}
-        onPrevWeek={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
-        onNextWeek={() => setSelectedWeek(Math.min(7, selectedWeek + 1))}
-      />
+      {/* Selected Week Header - Compact */}
+      <div className="flex-shrink-0">
+        <SelectedWeekHeader
+          selectedWeek={selectedWeek}
+          weekStatus={weekStatus}
+          onPrevWeek={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
+          onNextWeek={() => setSelectedWeek(Math.min(7, selectedWeek + 1))}
+        />
+      </div>
 
-      {/* Shows Grid */}
-      <ShowsGrid
-        shows={selectedWeekShows}
-        selectedWeek={selectedWeek}
-        getActualDate={getActualDate}
-        formatDateCompact={formatDateCompact}
-        getMyCorpsAtShow={getMyCorpsAtShow}
-        onRegisterCorps={handleRegisterCorps}
-      />
+      {/* Shows Grid - Fills remaining space with internal scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+        <ShowsGrid
+          shows={selectedWeekShows}
+          selectedWeek={selectedWeek}
+          getActualDate={getActualDate}
+          formatDateCompact={formatDateCompact}
+          getMyCorpsAtShow={getMyCorpsAtShow}
+          onRegisterCorps={handleRegisterCorps}
+        />
+      </div>
 
-      {/* Quick Tip - Stadium HUD */}
-      <div className="flex-shrink-0 mt-3">
-        <div className="bg-black/30 backdrop-blur-sm border border-yellow-500/10 rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
+      {/* Quick Tip - Stadium HUD - Fixed at bottom */}
+      <div className="flex-shrink-0">
+        <div className="bg-black/30 backdrop-blur-sm border border-yellow-500/10 rounded-xl px-3 lg:px-4 py-2 lg:py-3 flex items-center gap-3">
+          <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
+            <Zap className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
           </div>
-          <p className="text-sm text-yellow-50/70">
-            Each corps can attend up to <span className="text-yellow-400 font-medium">4 shows</span> per week. Tap a show to register your corps.
+          <p className="text-xs lg:text-sm text-yellow-50/70">
+            Each corps can attend up to <span className="text-yellow-400 font-medium">4 shows</span> per week. Tap a show to register.
           </p>
         </div>
       </div>
