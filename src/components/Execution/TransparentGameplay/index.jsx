@@ -703,6 +703,12 @@ export {
   TacticalGaugeWithInsight,
 } from './HoverInsights';
 
+// Re-export Glass Box Multiplier for interactive breakdown
+export {
+  MultiplierGlassBox,
+  MultiplierGlassBoxLarge,
+} from './MultiplierGlassBox';
+
 export default {
   CircularProgressRing,
   SectionGauges,

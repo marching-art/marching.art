@@ -24,6 +24,9 @@ export {
   ScoreBreakdownTooltip,
   MultiplierFactorPills,
   TacticalGaugeWithInsight,
+  // Glass Box Multiplier - Interactive breakdown popover/drawer
+  MultiplierGlassBox,
+  MultiplierGlassBoxLarge,
 } from './TransparentGameplay';
 export { default as StaffEffectivenessPanel } from './TransparentGameplay/StaffEffectivenessPanel';
 export { default as SynergyVisualization } from './TransparentGameplay/SynergyVisualization';

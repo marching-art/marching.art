@@ -21,6 +21,8 @@ import {
   MultiplierFactorPills,
   ScoreBreakdownTooltip,
   StaffEffectivenessTooltip,
+  // Glass Box Multiplier - Interactive breakdown
+  MultiplierGlassBoxLarge,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -609,43 +611,43 @@ const Dashboard = () => {
                     )}
                   </div>
 
-                  {/* Performance Multiplier - Glowing Score Bug (Clickable for insights) */}
-                  <button
-                    onClick={() => setShowExecutionInsights(true)}
-                    className="flex-shrink-0 flex flex-col items-center group cursor-pointer"
-                  >
-                    <div className="score-bug relative transition-transform group-hover:scale-105">
-                      {/* "View Details" hint */}
-                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[9px] text-gold-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
-                          <ChevronRight size={10} /> View Breakdown
-                        </span>
-                      </div>
-                      <div className="text-[8px] text-cream-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
-                        Multiplier
-                      </div>
-                      <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums text-gold-400`} style={{ textShadow: '0 0 20px rgba(250, 204, 21, 0.5)' }}>
-                        {multiplier.toFixed(2)}x
-                      </div>
-                      <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
-                        <TrendingUp size={12} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />
-                        {multiplierStatus.label}
-                      </div>
-                      {/* Compact Multiplier Factor Pills */}
-                      <div className="mt-2">
-                        <MultiplierFactorPills
-                          breakdown={{
-                            readiness: (readiness - 0.75) * 0.48,
-                            morale: (morale - 0.80) * 0.32,
-                            equipment: (avgEquipment - 0.90) * 0.20,
-                            staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
-                            showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
-                          }}
-                          compact={true}
-                        />
-                      </div>
-                    </div>
-                  </button>
+                  {/* Performance Multiplier - Glass Box with interactive breakdown */}
+                  <div className="flex-shrink-0 flex flex-col items-center">
+                    <MultiplierGlassBoxLarge
+                      multiplier={multiplier}
+                      breakdown={{
+                        // Factor 1: Readiness (±12%) - (sectionReadiness - 0.80) * 0.60
+                        readiness: (readiness - 0.80) * 0.60,
+                        // Factor 2: Staff (±8%) - (staffEffectiveness - 0.80) * 0.40
+                        staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                        // Factor 3: Equipment (0 to -5%) - (equipmentHealth - 1.00) * 0.50
+                        equipment: (avgEquipment - 1.00) * 0.50,
+                        // Factor 4: Travel Condition (-3% if bus+truck < 140%)
+                        travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                        // Factor 5: Morale (±8%) - (sectionMorale - 0.75) * 0.32
+                        morale: (morale - 0.75) * 0.32,
+                        // Factor 6: Show Difficulty (±15%) - ceiling bonus or risk penalty
+                        showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
+                          ? (executionState?.showDesign?.ceilingBonus || 0.08)
+                          : (executionState?.showDesign?.riskPenalty || -0.10),
+                        // Factor 7: Championship Pressure (Days 47-49, ±2%)
+                        ...(profile?.currentDay >= 47 && profile?.currentDay <= 49 ? { championshipPressure: (morale - 0.80) * 0.10 } : {}),
+                        // Factor 8: Fatigue (Days 35-49, 0 to -5%)
+                        ...(profile?.currentDay > 35 ? { fatigue: -0.05 * ((profile.currentDay - 35) / 14) } : {}),
+                      }}
+                      currentDay={profile?.currentDay || 1}
+                      showDifficulty={executionState?.showDesign}
+                      avgReadiness={readiness}
+                    />
+                    {/* Link to full insights panel */}
+                    <button
+                      onClick={() => setShowExecutionInsights(true)}
+                      className="mt-2 text-[9px] text-cream-muted hover:text-gold-400 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                    >
+                      <ChevronRight size={10} />
+                      Full Analysis
+                    </button>
+                  </div>
                 </div>
               </div>
 
