@@ -144,7 +144,8 @@ module.exports = {
         'shimmer': 'shimmer 2s linear infinite',
         'spin-slow': 'spin 8s linear infinite',
         'bounce-slow': 'bounce 2s infinite',
-        'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite'
+        'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'hazard': 'hazardScroll 1s linear infinite',
       },
       keyframes: {
         fadeUp: {
@@ -178,6 +179,10 @@ module.exports = {
         pingSlow: {
           '0%': { transform: 'scale(1)', opacity: '0.5' },
           '75%, 100%': { transform: 'scale(1.5)', opacity: '0' }
+        },
+        hazardScroll: {
+          '0%': { backgroundPosition: '0 0' },
+          '100%': { backgroundPosition: '20px 0' }
         }
       },
       backgroundImage: {
@@ -186,7 +191,8 @@ module.exports = {
         'gradient-gold': 'linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%)',
         'gradient-cream': 'linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%)',
-        'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)'
+        'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)',
+        'hazard-stripe': 'repeating-linear-gradient(45deg, #FFD700, #FFD700 10px, #000000 10px, #000000 20px)',
       },
       backdropBlur: {
         'xs': '2px'

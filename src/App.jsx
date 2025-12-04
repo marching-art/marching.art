@@ -8,8 +8,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers, analyticsHelpers } from './firebase';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
-import Navigation from './components/Navigation';
-import MobileNav from './components/MobileNav';
+import GamingHeader from './components/GamingHeader';
 import BottomNav from './components/BottomNav';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
@@ -91,33 +90,20 @@ const ProtectedRoute = ({ children }) => {
 
 // Layout Component
 const Layout = ({ children }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     // Log page views
     analyticsHelpers.logPageView(location.pathname);
-    // Close mobile menu on route change
-    setMobileMenuOpen(false);
   }, [location]);
 
   return (
     <div className="min-h-screen font-sans transition-colors duration-200 bg-surface text-text-main">
-      {/* Desktop Navigation */}
-      <div className="hidden lg:block">
-        <Navigation />
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className="lg:hidden">
-        <MobileNav 
-          isOpen={mobileMenuOpen} 
-          setIsOpen={setMobileMenuOpen} 
-        />
-      </div>
+      {/* Global Gaming Header - Top Navigation */}
+      <GamingHeader />
 
       {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0">
+      <main className="min-h-screen pb-20 lg:pb-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -126,7 +112,7 @@ const Layout = ({ children }) => {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
-            className="container-responsive py-8"
+            className="container-responsive py-6"
           >
             <Suspense fallback={<LoadingScreen />}>
               {children}
@@ -139,7 +125,7 @@ const Layout = ({ children }) => {
       <BottomNav />
 
       {/* Footer */}
-      <footer className="lg:ml-64 mt-auto mb-20 lg:mb-0">
+      <footer className="mt-auto mb-20 lg:mb-0">
         <div className="container-responsive py-8 border-t border-cream-500/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-cream-500/60 text-sm">
