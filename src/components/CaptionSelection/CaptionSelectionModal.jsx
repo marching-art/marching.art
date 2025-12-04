@@ -78,35 +78,57 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   }
 
   useEffect(() => {
-    fetchAvailableCorps();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seasonId]);
+    let cancelled = false;
 
-  const fetchAvailableCorps = async () => {
-    try {
-      setLoading(true);
-      const corpsDataRef = doc(db, 'dci-data', seasonId);
-      const corpsDataSnap = await getDoc(corpsDataRef);
-
-      if (corpsDataSnap.exists()) {
-        const data = corpsDataSnap.data();
-        const corps = data.corpsValues || [];
-
-        // Sort by points (highest to lowest) for better UX
-        corps.sort((a, b) => b.points - a.points);
-        setAvailableCorps(corps);
-      } else {
-        toast.error('No corps data available for this season');
-        setAvailableCorps([]);
+    const fetchAvailableCorps = async () => {
+      // Validate seasonId before attempting fetch
+      if (!seasonId) {
+        console.error('CaptionSelectionModal: seasonId is missing or invalid');
+        if (!cancelled) {
+          toast.error('Season data not available. Please try again.');
+          setAvailableCorps([]);
+          setLoading(false);
+        }
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching available corps:', error);
-      toast.error('Failed to load corps data');
-      setAvailableCorps([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        setLoading(true);
+        const corpsDataRef = doc(db, 'dci-data', seasonId);
+        const corpsDataSnap = await getDoc(corpsDataRef);
+
+        if (cancelled) return;
+
+        if (corpsDataSnap.exists()) {
+          const data = corpsDataSnap.data();
+          const corps = data.corpsValues || [];
+
+          // Sort by points (highest to lowest) for better UX
+          corps.sort((a, b) => b.points - a.points);
+          setAvailableCorps(corps);
+        } else {
+          console.error(`CaptionSelectionModal: No document found at dci-data/${seasonId}`);
+          toast.error('No corps data available for this season');
+          setAvailableCorps([]);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error fetching available corps:', error);
+        toast.error('Failed to load corps data');
+        setAvailableCorps([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchAvailableCorps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [seasonId]);
 
   // Calculate total points from current selections
   const calculateTotalPoints = () => {
