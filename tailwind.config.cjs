@@ -81,25 +81,42 @@ module.exports = {
         'primary-muted': 'rgba(255, 215, 0, 0.2)',
       },
       boxShadow: {
-        // THE BRUTALIST SHADOW - This is non-negotiable
+        // STADIUM HUD GLOW SHADOWS - Soft golden glows for premium sports feel
+        'none': 'none',
+        // Golden Glow - Primary CTA and emphasis shadows
+        'glow-sm': '0 0 10px rgba(234, 179, 8, 0.2)',
+        'glow': '0 0 15px rgba(234, 179, 8, 0.3)',
+        'glow-md': '0 0 20px rgba(234, 179, 8, 0.35)',
+        'glow-lg': '0 0 25px rgba(234, 179, 8, 0.4)',
+        'glow-xl': '0 0 35px rgba(234, 179, 8, 0.5)',
+        // Hover glow states (intensified)
+        'glow-hover': '0 0 25px rgba(234, 179, 8, 0.5)',
+        'glow-hover-lg': '0 0 35px rgba(234, 179, 8, 0.6)',
+        // Glass panel shadows - subtle depth
+        'glass': '0 4px 30px rgba(0, 0, 0, 0.3)',
+        'glass-lg': '0 8px 40px rgba(0, 0, 0, 0.4)',
+        // Card shadows with subtle glow
+        'card': '0 4px 20px rgba(0, 0, 0, 0.25), 0 0 10px rgba(234, 179, 8, 0.1)',
+        'card-hover': '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(234, 179, 8, 0.2)',
+        // Status glow variants
+        'glow-success': '0 0 15px rgba(34, 197, 94, 0.4)',
+        'glow-danger': '0 0 15px rgba(239, 68, 68, 0.4)',
+        'glow-warning': '0 0 15px rgba(245, 158, 11, 0.4)',
+        // Legacy brutalist shadows (deprecated - kept for backwards compatibility)
         'hard': '4px 4px 0px 0px #000000',
         'hard-sm': '2px 2px 0px 0px #000000',
-        'none': 'none',
-        // Hard offset brutalist shadows - Black (light mode)
         'brutal-xs': '2px 2px 0px 0px #000000',
         'brutal-sm': '3px 3px 0px 0px #000000',
         'brutal': '4px 4px 0px 0px #000000',
         'brutal-md': '4px 4px 0px 0px #000000',
         'brutal-lg': '6px 6px 0px 0px #000000',
         'brutal-xl': '8px 8px 0px 0px #000000',
-        // Gold variants for dark mode
         'brutal-gold-xs': '2px 2px 0px 0px #FFD700',
         'brutal-gold-sm': '3px 3px 0px 0px #FFD700',
         'brutal-gold': '4px 4px 0px 0px #FFD700',
         'brutal-gold-md': '4px 4px 0px 0px #FFD700',
         'brutal-gold-lg': '6px 6px 0px 0px #FFD700',
         'brutal-gold-xl': '8px 8px 0px 0px #FFD700',
-        // Status color variants
         'brutal-danger': '4px 4px 0px 0px #ef4444',
         'brutal-danger-lg': '6px 6px 0px 0px #ef4444',
         'brutal-success': '4px 4px 0px 0px #22c55e',
@@ -113,12 +130,13 @@ module.exports = {
       },
       borderRadius: {
         'none': '0',
-        'sm': '4px', // Slight rounding only
-        DEFAULT: '4px',
-        'md': '4px',
-        'lg': '4px',
-        'xl': '4px',
-        '2xl': '4px',
+        'sm': '6px',
+        DEFAULT: '8px',
+        'md': '10px',
+        'lg': '12px',
+        'xl': '16px',        // Glassmorphism panels
+        '2xl': '20px',       // Large hero cards
+        '3xl': '24px',       // Extra large elements
         'full': '9999px',
       },
       fontFamily: {
@@ -193,9 +211,21 @@ module.exports = {
         'gradient-dark': 'linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%)',
         'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)',
         'hazard-stripe': 'repeating-linear-gradient(45deg, #FFD700, #FFD700 10px, #000000 10px, #000000 20px)',
+        // STADIUM HUD - Stadium lights atmospheric backgrounds
+        'stadium-lights': 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(234, 179, 8, 0.15) 0%, transparent 50%)',
+        'stadium-lights-subtle': 'radial-gradient(ellipse 100% 60% at 50% -10%, rgba(234, 179, 8, 0.08) 0%, transparent 40%)',
+        'stadium-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 212, 77, 0.2) 0%, transparent 60%)',
+        // Glass panel gradient overlays
+        'glass-shine': 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
+        'glass-border': 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
       },
       backdropBlur: {
-        'xs': '2px'
+        'xs': '2px',
+        'sm': '4px',
+        DEFAULT: '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '24px',
       }
     },
   },
