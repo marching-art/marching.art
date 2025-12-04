@@ -79,43 +79,47 @@ const QuickActionsRow = ({
         </div>
       )}
 
-      {/* Quick Actions Grid */}
+      {/* Quick Actions Grid - Dark glass tiles with neon icons */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Daily Rehearsal */}
         <button
           onClick={handleRehearsal}
           disabled={executionProcessing}
-          className={`p-3 rounded-lg border transition-all text-left ${
+          className={`action-tile text-left ${
             canRehearseToday()
-              ? 'border-gold-500/50 bg-gold-500/10 hover:border-gold-500 hover:bg-gold-500/20'
-              : 'border-green-500/30 bg-green-500/5'
+              ? '!border-yellow-500/30'
+              : '!border-green-500/20'
           }`}
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            {canRehearseToday() ? (
-              <Activity className="w-4 h-4 text-gold-500" />
-            ) : (
-              <Check className="w-4 h-4 text-green-500" />
-            )}
-            <span className="text-xs font-semibold text-cream-100">Rehearsal</span>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              canRehearseToday() ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-green-500/20 border border-green-500/30'
+            }`}>
+              {canRehearseToday() ? (
+                <Activity className="w-4 h-4 icon-neon-gold" />
+              ) : (
+                <Check className="w-4 h-4 text-green-400" />
+              )}
+            </div>
+            <span className="text-xs font-semibold text-yellow-50">Rehearsal</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-cream-500/60">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-yellow-50/50">
               {canRehearseToday() ? 'Ready!' : 'Done'}
             </span>
             {canRehearseToday() && (
-              <span className="text-[10px] text-gold-500 font-semibold">+25 XP</span>
+              <span className="text-[10px] text-yellow-400 font-semibold">+25 XP</span>
             )}
           </div>
           {executionState?.rehearsalsThisWeek !== undefined && (
-            <div className="mt-1.5">
-              <div className="h-1 bg-charcoal-800 rounded-full overflow-hidden">
+            <div>
+              <div className="progress-glow !h-1.5">
                 <div
-                  className="h-full bg-gradient-gold transition-all"
+                  className="progress-glow-fill"
                   style={{ width: `${(executionState.rehearsalsThisWeek / 7) * 100}%` }}
                 />
               </div>
-              <span className="text-[10px] text-cream-500/40">{executionState.rehearsalsThisWeek}/7 this week</span>
+              <span className="text-[10px] text-yellow-50/40 mt-1 block">{executionState.rehearsalsThisWeek}/7 this week</span>
             </div>
           )}
         </button>
@@ -123,28 +127,27 @@ const QuickActionsRow = ({
         {/* Corps Readiness */}
         <button
           onClick={() => onTabChange('execution')}
-          className="p-3 rounded-lg border border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 transition-all text-left"
+          className="action-tile text-left"
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Target className={`w-4 h-4 ${
-              readinessPercent >= 90 ? 'text-green-400' :
-              readinessPercent >= 70 ? 'text-blue-400' : 'text-orange-400'
-            }`} />
-            <span className="text-xs font-semibold text-cream-100">Readiness</span>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center">
+              <Target className="w-4 h-4 icon-neon-gold" />
+            </div>
+            <span className="text-xs font-semibold text-yellow-50">Readiness</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className={`text-sm font-bold ${
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-lg font-bold ${
               readinessPercent >= 90 ? 'text-green-400' :
               readinessPercent >= 70 ? 'text-blue-400' : 'text-orange-400'
             }`}>
               {readinessPercent.toFixed(0)}%
             </span>
           </div>
-          <div className="mt-1.5 h-1 bg-charcoal-800 rounded-full overflow-hidden">
+          <div className="progress-glow !h-1.5">
             <div
-              className={`h-full transition-all ${
-                readinessPercent >= 90 ? 'bg-green-500' :
-                readinessPercent >= 70 ? 'bg-blue-500' : 'bg-orange-500'
+              className={`progress-glow-fill ${
+                readinessPercent >= 90 ? 'status-excellent' :
+                readinessPercent >= 70 ? 'status-good' : 'status-warning'
               }`}
               style={{ width: `${readinessPercent}%` }}
             />
@@ -154,35 +157,39 @@ const QuickActionsRow = ({
         {/* Schedule */}
         <Link
           to="/schedule"
-          className="p-3 rounded-lg border border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 transition-all text-left"
+          className="action-tile text-left"
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Calendar className="w-4 h-4 text-purple-400" />
-            <span className="text-xs font-semibold text-cream-100">Week {currentWeek}</span>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center">
+              <Calendar className="w-4 h-4 icon-neon-gold" />
+            </div>
+            <span className="text-xs font-semibold text-yellow-50">Week {currentWeek}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-cream-500/60">
+            <span className="text-[10px] text-yellow-50/50">
               {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} shows
             </span>
-            <ChevronRight className="w-3 h-3 text-cream-500/40" />
+            <ChevronRight className="w-4 h-4 text-yellow-50/40" />
           </div>
         </Link>
 
-        {/* Quick Stats (Desktop) / Leaderboard Link (Mobile) */}
+        {/* Leaderboard / Rank */}
         <Link
           to="/leaderboard"
-          className="p-3 rounded-lg border border-cream-500/10 bg-charcoal-900/30 hover:border-cream-500/30 transition-all text-left"
+          className="action-tile text-left"
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Trophy className="w-4 h-4 text-gold-500" />
-            <span className="text-xs font-semibold text-cream-100">Rank</span>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center">
+              <Trophy className="w-4 h-4 icon-neon-gold" />
+            </div>
+            <span className="text-xs font-semibold text-yellow-50">Rank</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-amber-700 dark:text-gold-500">
+            <span className="text-lg font-bold score-glow">
               {activeCorpsClass === 'soundSport' ? '🎉' : `#${activeCorps?.rank || '-'}`}
             </span>
             {activeCorpsClass !== 'soundSport' && recentScores?.length > 0 && (
-              <span className="text-[10px] text-cream-500/40">
+              <span className="text-[10px] text-yellow-50/40">
                 {recentScores[0]?.totalScore?.toFixed(1) || '-'}
               </span>
             )}

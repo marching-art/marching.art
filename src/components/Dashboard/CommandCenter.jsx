@@ -17,47 +17,40 @@ import { Card } from '../ui/Card';
  * - The dashboard is a HUD, not a filing cabinet
  */
 
-// HUD-style animated status bar component with traffic light colors and ruler overlay
+// HUD-style animated status bar component with glowing light trail effect
 const StatusBar = memo(({ label, value, icon: Icon }) => {
   const percentage = Math.round(value * 100);
 
-  // Traffic light colors: Low = Red, Mid = Yellow, High = Blue/Green
-  const getTrafficLightColor = (pct) => {
-    if (pct >= 85) return { text: 'text-emerald-400', bg: 'bg-emerald-500', label: 'text-emerald-300' };
-    if (pct >= 70) return { text: 'text-blue-400', bg: 'bg-blue-500', label: 'text-blue-300' };
-    if (pct >= 50) return { text: 'text-yellow-400', bg: 'bg-yellow-500', label: 'text-yellow-300' };
-    return { text: 'text-red-400', bg: 'bg-red-500', label: 'text-red-300' };
+  // Status colors: Low = Red, Mid = Yellow, High = Blue/Green
+  const getStatusClass = (pct) => {
+    if (pct >= 85) return { label: 'text-emerald-400', fill: 'status-excellent' };
+    if (pct >= 70) return { label: 'text-blue-400', fill: 'status-good' };
+    if (pct >= 50) return { label: 'text-yellow-400', fill: 'status-warning' };
+    return { label: 'text-red-400', fill: 'status-danger' };
   };
 
-  const colors = getTrafficLightColor(percentage);
+  const status = getStatusClass(percentage);
 
   return (
     <div className="group">
       {/* Label row */}
       <div className="flex justify-between items-center mb-2">
-        <div className={`flex items-center gap-2 text-xs uppercase tracking-widest font-bold ${colors.label}`}>
-          <Icon size={14} strokeWidth={2.5} />
+        <div className={`flex items-center gap-2 text-xs uppercase tracking-widest font-bold ${status.label}`}>
+          <Icon size={14} strokeWidth={2.5} className="icon-neon-gold" />
           {label}
         </div>
+        <span className={`font-mono font-bold text-sm ${status.label}`}>
+          {percentage}%
+        </span>
       </div>
-      {/* HUD-style progress bar with ruler pattern */}
-      <div className="relative h-6 w-full bg-charcoal-950 border-2 border-charcoal-700 overflow-hidden" style={{ borderRadius: '2px' }}>
-        {/* Ruler pattern overlay */}
-        <div className="absolute inset-0 hud-ruler-pattern opacity-30" />
-        {/* Progress fill */}
+      {/* Glowing progress bar with light trail effect */}
+      <div className="progress-glow">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-          className={`absolute inset-y-0 left-0 ${colors.bg}`}
-          style={{ borderRadius: '1px' }}
+          className={`progress-glow-fill ${status.fill}`}
         />
-        {/* Percentage text inside bar */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-mono font-black text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-            {percentage}%
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -65,11 +58,10 @@ const StatusBar = memo(({ label, value, icon: Icon }) => {
 
 StatusBar.displayName = 'StatusBar';
 
-// Action card component for the right column
+// Action card component for the right column - Dark glass with neon gold icons
 const ActionCard = memo(({
   icon: Icon,
   iconColor,
-  borderColor,
   title,
   subtitle,
   warning,
@@ -79,55 +71,44 @@ const ActionCard = memo(({
   disabled = false,
   processing = false
 }) => {
-  const borderColorClass = {
-    blue: 'border-l-blue-500',
-    orange: 'border-l-orange-500',
-    purple: 'border-l-purple-500',
-    green: 'border-l-green-500',
-    gold: 'border-l-gold-500',
-  }[borderColor] || 'border-l-cream-500';
-
-  const iconColorClass = {
-    blue: 'text-blue-400',
-    orange: 'text-orange-400',
-    purple: 'text-purple-400',
-    green: 'text-green-400',
-    gold: 'text-gold-400',
-  }[iconColor] || 'text-cream-400';
-
   return (
-    <Card
-      variant="interactive"
-      padding="sm"
-      className={`flex items-center justify-between border-l-4 ${borderColorClass} ${disabled ? 'opacity-50' : ''}`}
+    <div
+      onClick={actionVariant === 'chevron' ? onAction : undefined}
+      className={`action-tile cursor-pointer flex items-center justify-between ${disabled ? 'opacity-50 cursor-default' : ''}`}
     >
-      <div className="flex-1 min-w-0">
-        <h3 className="text-white font-bold text-sm flex items-center gap-2">
-          <Icon size={16} className={iconColorClass} />
-          <span className="truncate">{title}</span>
-        </h3>
-        {warning ? (
-          <p className="text-xs text-orange-400 mt-1 flex items-center gap-1">
-            <AlertCircle size={10} />
-            {warning}
-          </p>
-        ) : subtitle ? (
-          <p className="text-xs text-cream-500/60 mt-1">{subtitle}</p>
-        ) : null}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Glowing icon container */}
+        <div className="w-10 h-10 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
+          <Icon size={20} className="icon-neon-gold" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-yellow-50 font-bold text-sm truncate">{title}</h3>
+          {warning ? (
+            <p className="text-xs text-orange-400 mt-0.5 flex items-center gap-1">
+              <AlertCircle size={10} />
+              {warning}
+            </p>
+          ) : subtitle ? (
+            <p className="text-xs text-yellow-50/50 mt-0.5">{subtitle}</p>
+          ) : null}
+        </div>
       </div>
 
       {actionVariant === 'button' ? (
         <button
-          onClick={onAction}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction?.();
+          }}
           disabled={disabled || processing}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 flex-shrink-0 ${
             disabled
-              ? 'bg-green-500/20 text-green-400 cursor-default'
-              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/30'
+              ? 'bg-green-500/20 text-green-400 cursor-default border border-green-500/30'
+              : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:shadow-[0_0_25px_rgba(234,179,8,0.5)]'
           }`}
         >
           {processing ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
           ) : disabled ? (
             <>
               <Check size={14} />
@@ -141,14 +122,11 @@ const ActionCard = memo(({
           )}
         </button>
       ) : (
-        <button
-          onClick={onAction}
-          className="text-cream-400 hover:text-white hover:bg-white/5 p-2 rounded-full transition-colors"
-        >
-          <ChevronRight size={20} />
-        </button>
+        <div className="w-8 h-8 rounded-full bg-black/30 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-yellow-500/30">
+          <ChevronRight size={18} className="text-yellow-50/60" />
+        </div>
       )}
-    </Card>
+    </div>
   );
 });
 
@@ -286,43 +264,92 @@ const CommandCenter = ({
           {/* HUD QUADRANT GRID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 relative z-10">
 
-            {/* QUADRANT 1: Performance Multiplier */}
+            {/* QUADRANT 1: Performance Multiplier - Ring Gauge */}
             <div className="hud-quadrant p-4 sm:p-5 border-b sm:border-b-0 sm:border-r hud-grid-divider">
-              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-2">
+              <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
                 PERFORMANCE MULTIPLIER
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-5xl sm:text-6xl font-display font-black tabular-nums tracking-tighter ${multiplierStatus.color}`}>
-                  {multiplier.toFixed(2)}
-                </span>
-                <span className={`text-2xl font-display font-bold ${multiplierStatus.color}`}>x</span>
-              </div>
-              <div className={`text-xs font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-2`}>
-                <TrendingUp size={14} strokeWidth={2.5} />
-                {multiplierStatus.label}
+              <div className="flex items-center gap-4">
+                {/* Ring Gauge SVG */}
+                <div className="ring-gauge">
+                  <svg viewBox="0 0 120 120" className="w-full h-full">
+                    <defs>
+                      <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#FFD44D" />
+                        <stop offset="50%" stopColor="#EAB308" />
+                        <stop offset="100%" stopColor="#FFD44D" />
+                      </linearGradient>
+                    </defs>
+                    {/* Background circle */}
+                    <circle cx="60" cy="60" r="50" className="ring-gauge-bg" />
+                    {/* Glow effect circle */}
+                    <circle
+                      cx="60" cy="60" r="50"
+                      className="ring-gauge-glow"
+                      strokeDasharray={`${((multiplier - 0.70) / 0.40) * 314} 314`}
+                    />
+                    {/* Progress circle */}
+                    <circle
+                      cx="60" cy="60" r="50"
+                      className="ring-gauge-fill"
+                      strokeDasharray={`${((multiplier - 0.70) / 0.40) * 314} 314`}
+                    />
+                  </svg>
+                  {/* Center value */}
+                  <div className="ring-gauge-value">
+                    <span className="score-glow text-3xl tracking-tighter">
+                      {multiplier.toFixed(2)}
+                    </span>
+                    <span className="text-yellow-400 text-sm font-bold">×</span>
+                  </div>
+                </div>
+                {/* Status label */}
+                <div className="flex flex-col gap-1">
+                  <div className={`text-sm font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1`}>
+                    <TrendingUp size={16} strokeWidth={2.5} className="icon-neon-gold" />
+                    {multiplierStatus.label}
+                  </div>
+                  <p className="text-[10px] text-cream-500/50">
+                    Based on readiness, morale & equipment
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* QUADRANT 2: Quick Stats */}
+            {/* QUADRANT 2: Quick Stats with Massive Glowing Score */}
             <div className="hud-quadrant p-4 sm:p-5 border-b hud-grid-divider">
               <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
                 WEEKLY STATUS
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <div className="text-2xl font-mono font-black text-blue-400">{rehearsalsThisWeek}/7</div>
-                  <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Rehearsals</div>
+              <div className="flex items-center justify-between gap-2">
+                {/* Rehearsals & Shows */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <Music size={18} className="text-blue-400" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-mono font-black text-blue-400">{rehearsalsThisWeek}/7</div>
+                      <div className="text-[9px] text-cream-500/50 uppercase tracking-wider">Rehearsals</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Calendar size={18} className="text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-mono font-black text-purple-400">{showsThisWeek}</div>
+                      <div className="text-[9px] text-cream-500/50 uppercase tracking-wider">Shows</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-mono font-black text-purple-400">{showsThisWeek}</div>
-                  <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Shows</div>
-                </div>
+                {/* Massive Glowing Score */}
                 {activeCorpsClass !== 'soundSport' && (
-                  <div className="text-center">
-                    <div className="text-2xl font-mono font-black text-gold-400">
+                  <div className="text-right">
+                    <div className="text-[9px] text-cream-500/50 uppercase tracking-wider mb-1">Season Score</div>
+                    <div className="score-glow text-4xl sm:text-5xl tracking-tight">
                       {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                     </div>
-                    <div className="text-[9px] text-cream-500/60 uppercase tracking-wider font-semibold">Score</div>
                   </div>
                 )}
               </div>
@@ -352,7 +379,7 @@ const CommandCenter = ({
               </div>
             </div>
 
-            {/* QUADRANT 4: Quick Actions */}
+            {/* QUADRANT 4: Quick Actions - Dark glass tiles with neon icons */}
             <div className="hud-quadrant p-4 sm:p-5">
               <div className="text-[10px] text-cream-500/60 uppercase tracking-widest font-bold mb-3">
                 QUICK ACTIONS
@@ -360,19 +387,23 @@ const CommandCenter = ({
               <div className="flex flex-col gap-2">
                 <Link
                   to="/schedule"
-                  className="flex items-center gap-3 p-3 bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-300 hover:text-white transition-colors border border-charcoal-700/50"
-                  style={{ borderRadius: '2px' }}
+                  className="action-tile flex items-center gap-3 !p-3"
                 >
-                  <Calendar size={18} />
-                  <span className="text-sm font-semibold uppercase tracking-wide">View Schedule</span>
+                  <div className="w-9 h-9 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center">
+                    <Calendar size={18} className="icon-neon-gold" />
+                  </div>
+                  <span className="text-sm font-semibold text-yellow-50 uppercase tracking-wide">View Schedule</span>
+                  <ChevronRight size={16} className="ml-auto text-yellow-50/40" />
                 </Link>
                 <Link
                   to="/scores"
-                  className="flex items-center gap-3 p-3 bg-charcoal-800/50 hover:bg-charcoal-700/50 text-cream-300 hover:text-white transition-colors border border-charcoal-700/50"
-                  style={{ borderRadius: '2px' }}
+                  className="action-tile flex items-center gap-3 !p-3"
                 >
-                  <Trophy size={18} />
-                  <span className="text-sm font-semibold uppercase tracking-wide">View Scores</span>
+                  <div className="w-9 h-9 rounded-lg bg-black/40 border border-yellow-500/20 flex items-center justify-center">
+                    <Trophy size={18} className="icon-neon-gold" />
+                  </div>
+                  <span className="text-sm font-semibold text-yellow-50 uppercase tracking-wide">View Scores</span>
+                  <ChevronRight size={16} className="ml-auto text-yellow-50/40" />
                 </Link>
               </div>
             </div>
@@ -385,8 +416,6 @@ const CommandCenter = ({
           {/* Primary Action: Daily Rehearsal */}
           <ActionCard
             icon={Music}
-            iconColor="blue"
-            borderColor="blue"
             title="Daily Rehearsal"
             subtitle="+5% Readiness • +50 XP"
             actionVariant="button"
@@ -399,8 +428,6 @@ const CommandCenter = ({
           {/* Equipment Status */}
           <ActionCard
             icon={Wrench}
-            iconColor="orange"
-            borderColor="orange"
             title="Equipment"
             subtitle={equipmentNeedsRepair ? undefined : `${Math.round(avgEquipment * 100)}% Condition`}
             warning={equipmentNeedsRepair ? 'Repairs needed' : undefined}
@@ -410,8 +437,6 @@ const CommandCenter = ({
           {/* Staff Management */}
           <ActionCard
             icon={Users}
-            iconColor="purple"
-            borderColor="purple"
             title="Staff Roster"
             subtitle={`${staffSlotsFilled}/${maxStaffSlots} Assigned • +${Math.round(staffBonus * 100)}% Bonus`}
             onAction={onOpenStaffModal}
