@@ -97,14 +97,14 @@ const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
   );
 };
 
-// Stadium HUD Action Tile - Neon gold glass tile with glowing icon
+// Stadium HUD Action Tile - Fills available space proportionally
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled || processing}
     whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3 ${
+    className={`icon-card group h-full min-h-[140px] flex flex-col items-center justify-center gap-3 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     } ${completed ? 'border-green-500/40' : ''}`}
   >
@@ -140,7 +140,7 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
   </motion.button>
 );
 
-// Stadium HUD Quick Stat Card - Glass panel with glowing value
+// Stadium HUD Quick Stat Card - Larger, fills available height proportionally
 const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   const colorClasses = {
     gold: 'text-gold-400 bg-gold-500/10 border-gold-500/30',
@@ -151,23 +151,23 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   };
 
   const glowStyles = {
-    gold: { filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' },
-    blue: { filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))' },
-    purple: { filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))' },
-    orange: { filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.5))' },
-    green: { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' }
+    gold: { filter: 'drop-shadow(0 0 8px rgba(250, 204, 21, 0.5))' },
+    blue: { filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' },
+    purple: { filter: 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.5))' },
+    orange: { filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 0.5))' },
+    green: { filter: 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.5))' }
   };
 
   const content = (
-    <div className={`glass-card p-4 flex items-center gap-3 ${to ? 'cursor-pointer' : ''}`}>
-      <div className={`p-2 rounded-lg border ${colorClasses[color]}`}>
-        <Icon className={`w-5 h-5 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
+    <div className={`glass-card h-full p-5 flex flex-col justify-center gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
+      <div className={`p-3 rounded-xl border w-fit ${colorClasses[color]}`}>
+        <Icon className={`w-7 h-7 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className={`text-xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 10px currentColor' }}>
+      <div className="flex-1 flex flex-col justify-center min-w-0">
+        <div className={`text-3xl lg:text-4xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 12px currentColor' }}>
           {value}
         </div>
-        <div className="text-[10px] font-display uppercase tracking-widest text-cream-muted">
+        <div className="text-xs font-display uppercase tracking-widest text-cream-muted mt-1">
           {label}
         </div>
       </div>
@@ -602,20 +602,21 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          MAIN BENTO GRID LAYOUT - Fills available viewport space
+          MAIN BENTO GRID LAYOUT - Proportional scaling across all elements
           ====================================================================== */}
       {activeCorps && (
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-4 lg:grid-rows-[1fr_auto_auto]">
-
-          {/* ================================================================
-              HERO CARD: Stadium Banner with Score Bug
-              ================================================================ */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-8 stadium-banner p-0 overflow-hidden flex flex-col min-h-[320px] lg:min-h-0"
-          >
+        <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-5">
+          {/* ROW 1: Hero Card + Action Tiles - Takes ~55% of available space */}
+          <div className="flex-[55] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
+            {/* ================================================================
+                HERO CARD: Stadium Banner with Score Bug
+                ================================================================ */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="lg:col-span-8 stadium-banner p-0 overflow-hidden flex flex-col"
+            >
             {/* Stadium overlay silhouette */}
             <div className="stadium-overlay" />
 
@@ -752,56 +753,55 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ================================================================
-              ACTION TILES GRID (spans 4 columns on desktop)
-              ================================================================ */}
-          <div className="lg:col-span-4 grid grid-cols-2 gap-3 content-start auto-rows-min">
-            {/* Daily Rehearsal */}
-            <IconCard
-              icon={Music}
-              label="Rehearse"
-              subtitle="+5% Ready"
-              onClick={handleRehearsal}
-              disabled={!canRehearseToday()}
-              processing={executionProcessing}
-              completed={!canRehearseToday()}
-            />
+            {/* ================================================================
+                ACTION TILES GRID (spans 4 columns on desktop)
+                ================================================================ */}
+            <div className="lg:col-span-4 grid grid-cols-2 gap-3 lg:gap-4 content-stretch">
+              {/* Daily Rehearsal */}
+              <IconCard
+                icon={Music}
+                label="Rehearse"
+                subtitle="+5% Ready"
+                onClick={handleRehearsal}
+                disabled={!canRehearseToday()}
+                processing={executionProcessing}
+                completed={!canRehearseToday()}
+              />
 
-            {/* Staff Panel */}
-            <IconCard
-              icon={Users}
-              label="Staff"
-              subtitle={`${assignedStaff.length}/8 Assigned`}
-              onClick={() => {
-                setShowStaffPanel(true);
-                completeDailyChallenge('staff_meeting');
-              }}
-            />
+              {/* Staff Panel */}
+              <IconCard
+                icon={Users}
+                label="Staff"
+                subtitle={`${assignedStaff.length}/8 Assigned`}
+                onClick={() => {
+                  setShowStaffPanel(true);
+                  completeDailyChallenge('staff_meeting');
+                }}
+              />
 
-            {/* Equipment Panel */}
-            <IconCard
-              icon={Wrench}
-              label="Equipment"
-              subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
-              onClick={() => {
-                setShowEquipmentPanel(true);
-                completeDailyChallenge('maintain_equipment');
-              }}
-            />
+              {/* Equipment Panel */}
+              <IconCard
+                icon={Wrench}
+                label="Equipment"
+                subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
+                onClick={() => {
+                  setShowEquipmentPanel(true);
+                  completeDailyChallenge('maintain_equipment');
+                }}
+              />
 
-            {/* Daily Activities */}
-            <IconCard
-              icon={Zap}
-              label="Activities"
-              subtitle="Daily Tasks"
-              onClick={() => setShowDailyActivities(true)}
-            />
+              {/* Daily Activities */}
+              <IconCard
+                icon={Zap}
+                label="Activities"
+                subtitle="Daily Tasks"
+                onClick={() => setShowDailyActivities(true)}
+              />
+            </div>
           </div>
 
-          {/* ================================================================
-              SECONDARY ROW: Weekly Progress & Quick Stats
-              ================================================================ */}
-          <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ROW 2: Weekly Progress Stats - Takes ~25% of available space */}
+          <div className="flex-[25] min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
             <QuickStatCard
               icon={Target}
               label="Rehearsals"
@@ -829,41 +829,47 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* ================================================================
-              QUICK LINKS ROW
-              ================================================================ */}
-          <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ROW 3: Quick Links - Takes ~20% of available space */}
+          <div className="flex-[20] min-h-0 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-5">
             <Link
               to="/scores"
-              className="card-brutalist p-4 flex items-center gap-3 transition-all"
+              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
             >
-              <Trophy className="w-6 h-6 text-primary" />
-              <span className="font-display font-bold text-text-main">Leaderboards</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
+              <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/30">
+                <Trophy className="w-7 h-7 text-primary" />
+              </div>
+              <span className="font-display font-bold text-text-main text-lg">Leaderboards</span>
+              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/schedule"
-              className="card-brutalist p-4 flex items-center gap-3 transition-all"
+              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
             >
-              <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              <span className="font-display font-bold text-text-main">Schedule</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
+              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
+                <Calendar className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="font-display font-bold text-text-main text-lg">Schedule</span>
+              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/leagues"
-              className="card-brutalist p-4 flex items-center gap-3 transition-all"
+              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
             >
-              <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              <span className="font-display font-bold text-text-main">Leagues</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
+              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                <Sparkles className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="font-display font-bold text-text-main text-lg">Leagues</span>
+              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
             </Link>
             <Link
               to="/battlepass"
-              className="card-brutalist p-4 flex items-center gap-3 transition-all"
+              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
             >
-              <Crown className="w-6 h-6 text-primary" />
-              <span className="font-display font-bold text-text-main">Season Pass</span>
-              <ChevronRight className="w-5 h-5 text-text-muted ml-auto" />
+              <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/30">
+                <Crown className="w-7 h-7 text-primary" />
+              </div>
+              <span className="font-display font-bold text-text-main text-lg">Season Pass</span>
+              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
             </Link>
           </div>
 
