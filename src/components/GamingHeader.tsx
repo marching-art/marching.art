@@ -142,32 +142,33 @@ const GamingHeader: React.FC = () => {
 
   return (
     <>
-      {/* Main Header - Glassmorphism Stadium HUD */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-md border-b border-white/10">
-        {/* Golden accent line at top */}
-        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+      {/* Main Header - Sleek Dark Glass Navigation */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
+        {/* Subtle golden gradient line at top */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
 
         <div className="h-16 px-4 lg:px-6">
           <div className="flex items-center justify-between h-full max-w-[1920px] mx-auto">
-            {/* Left Section - Logo */}
+            {/* Left Section - Glowing Gold Logo */}
             <Link to="/dashboard" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/20 group-hover:border-yellow-500/50 transition-all group-hover:shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.25)] group-hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] transition-all duration-300">
                   <img
                     src="/logo192.webp"
                     alt="marching.art"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+                {/* Pulsing indicator */}
+                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.8)] animate-pulse" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-display font-bold tracking-tight">
-                  <span className="text-yellow-400">marching</span>
-                  <span className="text-yellow-50">.art</span>
+                <h1 className="text-xl font-display font-bold tracking-tight drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">
+                  <span className="text-yellow-400">Marching</span>
+                  <span className="text-yellow-50/90">.art</span>
                 </h1>
                 {seasonData && (
-                  <p className="text-[10px] text-yellow-50/50 uppercase tracking-wider -mt-1">
+                  <p className="text-[10px] text-yellow-50/40 uppercase tracking-wider -mt-1">
                     {seasonData.name?.replace(/_/g, ' ') || 'Fantasy Drum Corps'}
                   </p>
                 )}
@@ -185,25 +186,30 @@ const GamingHeader: React.FC = () => {
                     key={item.path}
                     to={item.path}
                     className={`
-                      relative flex items-center gap-2 px-4 py-2 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                      relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
                       transition-all duration-300 group
                       ${active
-                        ? 'text-yellow-400 bg-yellow-500/10 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
-                        : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
+                        ? 'text-yellow-400'
+                        : 'text-yellow-50/80 hover:text-yellow-50'
                       }
                     `}
                   >
-                    <Icon className={`w-4 h-4 ${active ? 'text-yellow-400' : 'text-yellow-50/50 group-hover:text-yellow-50/70'}`} />
-                    <span>{item.label}</span>
+                    <Icon className={`w-4 h-4 transition-all duration-300 ${active ? 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]' : 'text-yellow-50/60 group-hover:text-yellow-50/80'}`} />
+                    <span className={active ? 'drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]' : ''}>{item.label}</span>
+                    {/* Active under-glow indicator */}
                     {active && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"
+                        className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6),0_0_20px_rgba(234,179,8,0.3)]"
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
                     )}
+                    {/* Hover indicator for inactive links */}
+                    {!active && (
+                      <div className="absolute -bottom-1 left-3 right-3 h-[2px] rounded-full bg-yellow-50/0 group-hover:bg-yellow-50/20 transition-all duration-300" />
+                    )}
                     {item.label === 'Season Pass' && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_6px_rgba(234,179,8,0.6)]" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.7)] animate-pulse" />
                     )}
                   </Link>
                 );
@@ -281,36 +287,55 @@ const GamingHeader: React.FC = () => {
               </div>
             </nav>
 
-            {/* Right Section - Player Status */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* CorpsCoin Balance */}
+            {/* Right Section - Player Stats HUD */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Glowing Game Stats Module */}
               {profile && (
-                <Link
-                  to="/profile"
-                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg hover:border-yellow-500/30 hover:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all duration-300 group"
-                >
-                  <Coins className="w-4 h-4 text-yellow-400" />
-                  <span className="font-data font-bold text-yellow-400 text-sm shadow-[0_0_10px_rgba(234,179,8,0.3)]">
-                    {(profile.corpsCoin || 0).toLocaleString()}
-                  </span>
-                </Link>
-              )}
-
-              {/* XP Level Badge */}
-              {profile && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg">
-                  <Zap className="w-4 h-4 text-yellow-50/70" />
-                  <div className="flex flex-col">
-                    <span className="font-data font-bold text-yellow-50 text-xs leading-none">
-                      LVL {profile.xpLevel || 1}
-                    </span>
-                    <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden mt-0.5">
+                <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.3)]">
+                  {/* Level Stat */}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-[0_0_15px_rgba(234,179,8,0.25)] transition-all duration-300 group"
+                  >
+                    <div className="relative">
+                      <Zap className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
+                      <div className="absolute inset-0 animate-ping opacity-30">
+                        <Zap className="w-4 h-4 text-yellow-400" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-[9px] text-yellow-50/50 uppercase tracking-wider leading-none">Level</span>
+                      <span className="font-data font-bold text-yellow-400 text-sm leading-none drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
+                        {profile.xpLevel || 1}
+                      </span>
+                    </div>
+                    {/* XP micro progress */}
+                    <div className="w-12 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
                       <div
-                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)] transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-300 shadow-[0_0_8px_rgba(234,179,8,0.6)] transition-all duration-500"
                         style={{ width: `${xpProgress}%` }}
                       />
                     </div>
-                  </div>
+                  </Link>
+
+                  {/* Divider */}
+                  <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+
+                  {/* Currency Stat */}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-yellow-500/15 to-amber-600/10 border border-yellow-500/15 hover:border-yellow-500/40 hover:shadow-[0_0_15px_rgba(234,179,8,0.25)] transition-all duration-300 group"
+                  >
+                    <div className="relative">
+                      <Coins className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-[9px] text-yellow-50/50 uppercase tracking-wider leading-none">Corps Coin</span>
+                      <span className="font-data font-bold text-yellow-400 text-sm leading-none drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
+                        {(profile.corpsCoin || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </Link>
                 </div>
               )}
 
@@ -322,17 +347,19 @@ const GamingHeader: React.FC = () => {
                     setProfileDropdownOpen(!profileDropdownOpen);
                     setMoreDropdownOpen(false);
                   }}
-                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/5 transition-all duration-300"
+                  className="flex items-center gap-2 p-1.5 rounded-xl bg-black/30 border border-white/10 hover:border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 group"
                 >
                   <div className="relative">
-                    <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center border border-yellow-500/50 shadow-[0_0_12px_rgba(234,179,8,0.3)]">
+                    <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center border border-yellow-500/40 shadow-[0_0_15px_rgba(234,179,8,0.35)] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300">
                       <User className="w-5 h-5 text-slate-900" />
                     </div>
                     {(profile?.xpLevel ?? 0) >= 10 && (
-                      <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
+                      <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]" />
                     )}
+                    {/* Online indicator */}
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-950 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-yellow-50/60 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-yellow-50/60 transition-transform duration-300 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 <AnimatePresence>
