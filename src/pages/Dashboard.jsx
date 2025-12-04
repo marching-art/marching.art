@@ -15,7 +15,12 @@ import {
   EquipmentManager,
   DashboardStaffPanel,
   ExecutionInsightsPanel,
-  SectionGauges
+  SectionGauges,
+  // HUD Hover Insights - Phase 3 Transparent Gameplay
+  TacticalGaugeWithInsight,
+  MultiplierFactorPills,
+  ScoreBreakdownTooltip,
+  StaffEffectivenessTooltip,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -38,66 +43,8 @@ import { retireCorps } from '../firebase/functions';
 // ============================================================================
 // STADIUM HUD DESIGN COMPONENTS
 // Night Mode aesthetic with glassmorphism and neon gold accents
+// TacticalGaugeWithInsight imported from TransparentGameplay (Phase 3)
 // ============================================================================
-
-// Stadium HUD Metric Gauge - Glowing progress bar with light trail effect
-const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
-  const percentage = Math.round(value * 100);
-
-  // Stadium HUD color mapping for progress fill
-  const fillColorClasses = {
-    gold: 'progress-glow-fill',
-    blue: 'progress-glow-fill status-good',
-    red: 'progress-glow-fill status-danger',
-    orange: 'progress-glow-fill status-warning',
-    green: 'progress-glow-fill status-excellent',
-    purple: 'progress-glow-fill status-good'
-  };
-
-  const textColorClasses = {
-    gold: 'text-gold-400',
-    blue: 'text-blue-400',
-    red: 'text-rose-400',
-    orange: 'text-orange-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400'
-  };
-
-  const iconColorClasses = {
-    gold: 'text-gold-500',
-    blue: 'text-blue-400',
-    red: 'text-rose-400',
-    orange: 'text-orange-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400'
-  };
-
-  return (
-    <div className="space-y-3">
-      {/* Label with neon icon */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className={`w-4 h-4 ${iconColorClasses[color]}`} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />}
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-cream-muted">
-            {label}
-          </span>
-        </div>
-        <span className={`font-mono font-bold text-lg ${textColorClasses[color]}`} style={{ textShadow: '0 0 10px currentColor' }}>
-          {percentage}%
-        </span>
-      </div>
-      {/* Stadium HUD Progress Bar with Gold Light Trail */}
-      <div className="progress-glow h-3">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className={fillColorClasses[color]}
-        />
-      </div>
-    </div>
-  );
-};
 
 // Stadium HUD Action Tile - Responsive, fills grid cell
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
@@ -684,38 +631,67 @@ const Dashboard = () => {
                         <TrendingUp size={12} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />
                         {multiplierStatus.label}
                       </div>
+                      {/* Compact Multiplier Factor Pills */}
+                      <div className="mt-2">
+                        <MultiplierFactorPills
+                          breakdown={{
+                            readiness: (readiness - 0.75) * 0.48,
+                            morale: (morale - 0.80) * 0.32,
+                            equipment: (avgEquipment - 0.90) * 0.20,
+                            staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                            showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
+                          }}
+                          compact={true}
+                        />
+                      </div>
                     </div>
                   </button>
                 </div>
               </div>
 
               {/* ============================================================
-                  EXECUTION METRICS - Tactical Gauge Section
+                  EXECUTION METRICS - Tactical Gauge Section with Hover Insights
                   ============================================================ */}
               <div className="px-6 md:px-8 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <TacticalMetricGauge
+                  <TacticalGaugeWithInsight
                     value={readiness}
                     color="blue"
                     label="Readiness"
                     icon={Target}
+                    type="readiness"
+                    sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
+                      brass: readiness,
+                      percussion: readiness,
+                      guard: readiness,
+                      ensemble: readiness
+                    }}
                   />
-                  <TacticalMetricGauge
+                  <TacticalGaugeWithInsight
                     value={morale}
                     color="red"
                     label="Morale"
                     icon={Heart}
+                    type="morale"
+                    sections={typeof executionState?.morale === 'object' ? executionState.morale : {
+                      brass: morale,
+                      percussion: morale,
+                      guard: morale,
+                      overall: morale
+                    }}
                   />
-                  <TacticalMetricGauge
+                  <TacticalGaugeWithInsight
                     value={avgEquipment}
                     color="orange"
                     label="Equipment"
                     icon={Wrench}
+                    type="equipment"
+                    equipment={executionState?.equipment}
                   />
                 </div>
               </div>
 
-              {/* Quick Stats Row - Stadium HUD with glowing numbers */}
+              {/* Quick Stats Row - Stadium HUD with glowing numbers + Hover Insights */}
               <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-white/10 mt-0">
                 <div className="flex items-center gap-6 pt-5">
                   <div className="text-center">
@@ -727,17 +703,29 @@ const Dashboard = () => {
                     <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
-                    <div className="text-center">
-                      <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
-                        {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                    <ScoreBreakdownTooltip
+                      baseScore={activeCorps.totalSeasonScore || 0}
+                      multiplier={multiplier}
+                      synergyBonus={executionState?.synergyBonus || 0}
+                      finalScore={(activeCorps.totalSeasonScore || 0) * multiplier + (executionState?.synergyBonus || 0)}
+                    >
+                      <div className="text-center cursor-help hover:scale-105 transition-transform">
+                        <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
+                          {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                        </div>
+                        <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
                       </div>
-                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
-                    </div>
+                    </ScoreBreakdownTooltip>
                   )}
-                  <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
-                  </div>
+                  <StaffEffectivenessTooltip
+                    assignedStaff={assignedStaff}
+                    totalImpact={assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04}
+                  >
+                    <div className="text-center cursor-help hover:scale-105 transition-transform">
+                      <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
+                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
+                    </div>
+                  </StaffEffectivenessTooltip>
                 </div>
 
                 {/* Quick Links - Glass buttons with glow */}

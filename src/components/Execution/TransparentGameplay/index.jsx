@@ -692,6 +692,17 @@ export const CaptionEquipmentMap = ({ equipment }) => {
   );
 };
 
+// Re-export HoverInsights for HUD integration
+export {
+  HoverTooltip,
+  SectionBreakdownTooltip,
+  EquipmentBreakdownTooltip,
+  StaffEffectivenessTooltip,
+  ScoreBreakdownTooltip,
+  MultiplierFactorPills,
+  TacticalGaugeWithInsight,
+} from './HoverInsights';
+
 export default {
   CircularProgressRing,
   SectionGauges,

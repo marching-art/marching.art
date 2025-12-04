@@ -16,6 +16,14 @@ export {
   RateIndicator,
   TemporalEffectsBar,
   CaptionEquipmentMap,
+  // HUD Hover Insights
+  HoverTooltip,
+  SectionBreakdownTooltip,
+  EquipmentBreakdownTooltip,
+  StaffEffectivenessTooltip,
+  ScoreBreakdownTooltip,
+  MultiplierFactorPills,
+  TacticalGaugeWithInsight,
 } from './TransparentGameplay';
 export { default as StaffEffectivenessPanel } from './TransparentGameplay/StaffEffectivenessPanel';
 export { default as SynergyVisualization } from './TransparentGameplay/SynergyVisualization';
