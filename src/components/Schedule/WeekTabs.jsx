@@ -1,7 +1,7 @@
-// WeekTabs - Week navigation for schedule (Brutalist Timeline)
+// WeekTabs - Week navigation for schedule (Stadium HUD Timeline)
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BrutalistCard, BrutalistTimeline } from '../ui';
+import { BrutalistTimeline } from '../ui';
 
 const WeekTabs = ({
   selectedWeek,
@@ -31,12 +31,16 @@ const WeekTabs = ({
       animate={{ opacity: 1, y: 0 }}
       className="flex-shrink-0 mb-6"
     >
-      <BrutalistCard variant="flat" padding="default">
+      {/* Glass panel container for timeline */}
+      <div className="glass-panel p-4 md:p-6">
+        <div className="text-[10px] text-yellow-50/50 uppercase tracking-widest font-bold mb-4 text-center">
+          Season Timeline
+        </div>
         <BrutalistTimeline
           items={timelineItems}
-          className="overflow-x-auto scrollbar-hide"
+          className="overflow-x-auto scrollbar-hide px-2"
         />
-      </BrutalistCard>
+      </div>
     </motion.div>
   );
 };

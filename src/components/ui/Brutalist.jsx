@@ -306,33 +306,33 @@ export const BrutalistIconBox = ({
 
 // =============================================================================
 // BRUTALIST TIMELINE
-// Connected badge-based timeline for week/step navigation
+// Glowing gold rail with illuminated nodes - Stadium HUD style
 // =============================================================================
 export const BrutalistTimeline = ({
   items, // Array of { id, label, status: 'active' | 'complete' | 'upcoming', badge?, onClick }
   className = '',
 }) => {
+  // Calculate progress width based on active/complete items
+  const activeIndex = items.findIndex(item => item.status === 'active');
+  const lastCompleteIndex = items.reduce((acc, item, idx) =>
+    item.status === 'complete' ? idx : acc, -1);
+  const progressIndex = activeIndex >= 0 ? activeIndex : lastCompleteIndex;
+  const progressWidth = progressIndex >= 0
+    ? ((progressIndex + 0.5) / (items.length - 1)) * 100
+    : 0;
+
   return (
-    <div className={`relative flex items-center justify-between ${className}`}>
-      {/* Connecting line */}
-      <div className="absolute top-1/2 left-0 right-0 h-1 bg-stone-300 dark:bg-surface-tertiary -translate-y-1/2 z-0" />
+    <div className={`relative flex items-center justify-between py-2 ${className}`}>
+      {/* Glowing gold rail - background track */}
+      <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 z-0 timeline-rail" />
 
-      {/* Progress line for completed items */}
-      {(() => {
-        const lastCompleteIndex = items.reduce((acc, item, idx) =>
-          item.status === 'complete' ? idx : acc, -1);
-        const progressWidth = lastCompleteIndex >= 0
-          ? ((lastCompleteIndex + 0.5) / (items.length - 1)) * 100
-          : 0;
-        return (
-          <div
-            className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-0 transition-all duration-300"
-            style={{ width: `${progressWidth}%` }}
-          />
-        );
-      })()}
+      {/* Glowing gold rail - progress fill */}
+      <div
+        className="absolute top-1/2 left-0 -translate-y-1/2 z-0 timeline-rail-glow"
+        style={{ width: `${progressWidth}%` }}
+      />
 
-      {items.map((item, index) => {
+      {items.map((item) => {
         const isActive = item.status === 'active';
         const isComplete = item.status === 'complete';
 
@@ -340,37 +340,32 @@ export const BrutalistTimeline = ({
           <button
             key={item.id}
             onClick={() => item.onClick?.(item.id)}
-            className={`
-              relative z-10 flex flex-col items-center transition-all duration-200
-              ${isActive ? 'scale-110' : 'hover:scale-105'}
-            `}
+            className="relative z-10 flex flex-col items-center group"
           >
-            {/* Timeline Node - Using MetricBadge style */}
+            {/* Timeline Node */}
             <div className={`
-              flex items-center justify-center rounded-full font-display font-black transition-all duration-200
+              timeline-node font-display
               ${isActive
-                ? 'w-14 h-14 md:w-16 md:h-16 bg-primary text-text-inverse shadow-brutal dark:shadow-brutal-gold ring-4 ring-primary/30'
+                ? 'timeline-node-active w-14 h-14 md:w-16 md:h-16 text-xl md:text-2xl'
                 : isComplete
-                ? 'w-10 h-10 md:w-12 md:h-12 bg-stone-400 dark:bg-surface-tertiary text-white dark:text-text-muted'
-                : 'w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-surface border-2 border-stone-300 dark:border-border-default text-text-muted'
+                ? 'timeline-node-complete w-10 h-10 md:w-12 md:h-12 text-sm md:text-base'
+                : 'timeline-node-upcoming w-10 h-10 md:w-12 md:h-12 text-sm md:text-base group-hover:border-yellow-500/30'
               }
             `}>
-              <span className={isActive ? 'text-xl md:text-2xl' : 'text-sm md:text-base'}>
-                {item.label}
-              </span>
+              {item.label}
             </div>
 
             {/* Status Label */}
             <div className={`mt-2 text-[10px] font-display font-bold uppercase tracking-wider ${
-              isActive ? 'text-primary' : 'text-text-muted'
+              isActive ? 'text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]' : 'text-yellow-50/50'
             }`}>
               {isActive ? 'Active' : isComplete ? 'Done' : 'Week'}
             </div>
 
-            {/* Badge Count */}
+            {/* Badge Count - glowing indicator */}
             {item.badge > 0 && (
               <div className="mt-1">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-green-500 text-white">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-yellow-500 text-slate-900 shadow-[0_0_8px_rgba(234,179,8,0.5)]">
                   {item.badge}
                 </span>
               </div>

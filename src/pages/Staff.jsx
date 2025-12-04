@@ -1,4 +1,5 @@
 // src/pages/Staff.jsx
+// Stadium HUD Style - Staff Market Page
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Users, Gavel } from 'lucide-react';
@@ -20,43 +21,42 @@ const Staff = () => {
     }
   }, [user, loggedInProfile, completeDailyChallenge]);
 
+  const tabs = [
+    { id: 'marketplace', label: 'Market', fullLabel: 'Staff Market', icon: ShoppingCart },
+    { id: 'roster', label: 'Roster', fullLabel: 'My Roster', icon: Users },
+    { id: 'auctions', label: 'Auctions', fullLabel: 'Auctions', icon: Gavel },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Tab Navigation - Light/Dark Mode Aware */}
-      <div className="bg-stone-100 dark:bg-surface-secondary rounded-xl p-1.5 border border-stone-200 dark:border-border-default flex gap-1 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('marketplace')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
-            activeTab === 'marketplace'
-              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
-              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
-          }`}
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span className="hidden sm:inline">Staff </span>Market
-        </button>
-        <button
-          onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
-            activeTab === 'roster'
-              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
-              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span className="hidden sm:inline">My </span>Roster
-        </button>
-        <button
-          onClick={() => setActiveTab('auctions')}
-          className={`flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-medium text-sm ${
-            activeTab === 'auctions'
-              ? 'bg-slate-900 text-amber-500 dark:bg-primary dark:text-text-inverse'
-              : 'text-text-muted hover:text-text-main hover:bg-stone-200 dark:hover:bg-surface-tertiary'
-          }`}
-        >
-          <Gavel className="w-4 h-4" />
-          Auctions
-        </button>
+      {/* Tab Navigation - Stadium HUD Glass Style */}
+      <div className="glass-panel p-1.5 flex gap-1 overflow-x-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-semibold text-sm uppercase tracking-wide ${
+                isActive
+                  ? 'text-yellow-400'
+                  : 'text-yellow-50/60 hover:text-yellow-50 hover:bg-white/5'
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? 'icon-neon-gold' : ''}`} />
+              <span className="hidden sm:inline">{tab.fullLabel}</span>
+              <span className="sm:hidden">{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="staffTab"
+                  className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Content */}
