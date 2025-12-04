@@ -372,6 +372,150 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply max-w-7xl mx-auto p-4 md:p-6 relative z-10;
   }
 
+  /* ========================================
+     STADIUM HUD DESIGN SYSTEM COMPONENTS
+     "Night Mode Stadium" Aesthetic
+     ======================================== */
+
+  /* Glass Panel - Standard container for content modules (Stadium HUD)
+   * Content never sits directly on the background. It resides in
+   * semi-transparent "glass" modules that provide depth.
+   */
+  .glass-panel {
+    @apply bg-black/40 backdrop-blur-md border border-white/10 rounded-xl shadow-lg p-6;
+  }
+
+  .glass-panel-sm {
+    @apply bg-black/40 backdrop-blur-md border border-white/10 rounded-lg shadow-md p-4;
+  }
+
+  .glass-panel-lg {
+    @apply bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl p-8;
+  }
+
+  /* Primary Action Button - Stadium HUD Style
+   * Buttons should feel like physical, glowing interface elements.
+   * Solid Gold background with Black text for maximum contrast.
+   */
+  .btn-primary-hud {
+    @apply bg-gold-500 text-black font-bold uppercase px-6 py-3 rounded-lg;
+    @apply shadow-gold-glow-md hover:shadow-gold-glow-lg;
+    @apply hover:-translate-y-0.5 transition-all duration-200;
+    @apply active:translate-y-0 active:shadow-gold-glow-sm;
+  }
+
+  .btn-primary-hud-sm {
+    @apply bg-gold-500 text-black font-bold uppercase px-4 py-2 rounded-lg text-sm;
+    @apply shadow-gold-glow-sm hover:shadow-gold-glow-md;
+    @apply hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  .btn-primary-hud-lg {
+    @apply bg-gold-500 text-black font-bold uppercase px-8 py-4 rounded-xl text-lg;
+    @apply shadow-gold-glow-md hover:shadow-gold-glow-lg;
+    @apply hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  /* Secondary Button - Glass Style */
+  .btn-secondary-hud {
+    @apply bg-white/10 backdrop-blur-sm text-cream font-semibold uppercase px-6 py-3 rounded-lg;
+    @apply border border-white/20 hover:border-gold-500/50;
+    @apply hover:bg-white/15 hover:shadow-gold-glow-sm;
+    @apply transition-all duration-200;
+  }
+
+  /* Data Display - Scoreboard Style
+   * Labels: Small, uppercase, cream muted color
+   * Values: Massive, athletic font, gold color
+   */
+  .data-label {
+    @apply text-sm uppercase tracking-wider;
+    color: rgba(245, 245, 220, 0.6);
+  }
+
+  .data-value {
+    @apply text-5xl font-display font-bold tracking-tight text-gold-400;
+  }
+
+  .data-value-sm {
+    @apply text-3xl font-display font-bold tracking-tight text-gold-400;
+  }
+
+  .data-value-lg {
+    @apply text-6xl font-display font-bold tracking-tight text-gold-400;
+  }
+
+  .data-value-xl {
+    @apply text-7xl font-display font-bold tracking-tight text-gold-400;
+  }
+
+  /* Data Display Container - Vertical Stack */
+  .data-stack {
+    @apply flex flex-col;
+  }
+
+  .data-stack .data-label {
+    @apply mb-1;
+  }
+
+  /* Stadium HUD Background Wrapper
+   * The application should not have a flat black background.
+   * It requires atmospheric lighting.
+   */
+  .stadium-bg {
+    @apply min-h-screen bg-stadium-black text-cream;
+    background-image: radial-gradient(ellipse at top, var(--tw-gradient-stops));
+    --tw-gradient-from: #0f172a;
+    --tw-gradient-to: #000000;
+    --tw-gradient-stops: var(--tw-gradient-from), #0a0a0a, var(--tw-gradient-to);
+  }
+
+  /* Pulse Animation for Attention Items
+   * Things that need action should have a slow, subtle gold pulse.
+   */
+  .pulse-attention {
+    @apply animate-pulse;
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4);
+    animation: pulseAttention 2s infinite;
+  }
+
+  @keyframes pulseAttention {
+    0% {
+      box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(234, 179, 8, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(234, 179, 8, 0);
+    }
+  }
+
+  /* Interactive Tile - Hover to lift effect */
+  .tile-interactive {
+    @apply transition-all duration-150;
+  }
+
+  .tile-interactive:hover {
+    @apply -translate-y-1;
+  }
+
+  /* Glow Border Animation */
+  .glow-border-pulse {
+    animation: glowBorderPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glowBorderPulse {
+    0%, 100% {
+      border-color: rgba(234, 179, 8, 0.3);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+    }
+    50% {
+      border-color: rgba(234, 179, 8, 0.6);
+      box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);
+    }
+  }
+
   /* Paper Card - White/Light card on any background - Brutalist style */
   .paper-card {
     @apply bg-white p-6 md:p-8;
