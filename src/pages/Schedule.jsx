@@ -1,14 +1,13 @@
 // src/pages/Schedule.jsx
-// Brutalist Architecture - Schedule Page
+// Night Mode Stadium HUD - Schedule Page
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { AlertCircle, Info } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertCircle, Info, Zap } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
 import { useSeasonStore } from '../store/seasonStore';
-import { BrutalistCard, BrutalistHeader, BrutalistTip } from '../components/ui';
 
 // Import modular components
 import {
@@ -161,13 +160,17 @@ const Schedule = () => {
   if (!seasonData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <BrutalistCard variant="danger" padding="lg" className="text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-danger mx-auto mb-4" />
-          <BrutalistHeader size="default">No Active Season</BrutalistHeader>
-          <p className="text-text-muted mt-2">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-black/40 backdrop-blur-md border border-red-500/20 rounded-2xl p-8 text-center max-w-md"
+        >
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4 drop-shadow-[0_0_12px_rgba(239,68,68,0.5)]" />
+          <h2 className="text-2xl font-display font-bold text-yellow-50 uppercase tracking-wide">No Active Season</h2>
+          <p className="text-yellow-50/50 mt-2">
             There is currently no active season. Please check back later.
           </p>
-        </BrutalistCard>
+        </motion.div>
       </div>
     );
   }
@@ -211,11 +214,16 @@ const Schedule = () => {
         onRegisterCorps={handleRegisterCorps}
       />
 
-      {/* Quick Tip */}
+      {/* Quick Tip - Stadium HUD */}
       <div className="flex-shrink-0 mt-3">
-        <BrutalistTip icon={Info} variant="info">
-          Each corps can attend up to 4 shows per week. Tap a show to register your corps.
-        </BrutalistTip>
+        <div className="bg-black/30 backdrop-blur-sm border border-yellow-500/10 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
+            <Zap className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
+          </div>
+          <p className="text-sm text-yellow-50/70">
+            Each corps can attend up to <span className="text-yellow-400 font-medium">4 shows</span> per week. Tap a show to register your corps.
+          </p>
+        </div>
       </div>
 
       {/* Registration Modal */}
