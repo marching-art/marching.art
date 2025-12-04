@@ -64,7 +64,7 @@ export const useDashboardData = () => {
   const activeCorpsClass = selectedCorpsClass || (corps ? Object.keys(corps)[0] : null);
   const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
-  const { currentWeek } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1 };
+  const { currentWeek, currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1, currentDay: 1 };
 
   // Use execution hook
   const executionHook = useExecution(user?.uid, activeCorpsClass);
@@ -731,6 +731,7 @@ export const useDashboardData = () => {
     seasonLoading,
     weeksRemaining,
     currentWeek,
+    currentDay,
     formatSeasonName,
 
     // Battle pass
