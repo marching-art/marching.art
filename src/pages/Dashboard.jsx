@@ -1,12 +1,13 @@
 // src/pages/Dashboard.jsx
-// UI/UX Overhaul: "Refined Brutalism meets Luxury Sports Analytics"
+// UI/UX Overhaul: "Cockpit" Layout - Fixed-height HUD with 3-column grid
+// Sidebar | Main HUD | Context Panel (380px)
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, ChevronRight, Play, Check, X, Crown, Flame, Coins,
-  Sparkles, Gift, Edit
+  Sparkles, Gift, Edit, BarChart3, Settings
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, analyticsHelpers } from '../firebase';
@@ -28,6 +29,7 @@ import {
   ClusterBar,
   // Difficulty Confidence Meter - Risk/Reward visualization
   ConfidenceBadge,
+  DifficultyConfidenceMeter,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -158,7 +160,7 @@ const Dashboard = () => {
   const [retiring, setRetiring] = useState(false);
   const [showMorningReport, setShowMorningReport] = useState(false);
 
-  // Slide-out panel states
+  // Slide-out panel states (mobile only)
   const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
   const [showStaffPanel, setShowStaffPanel] = useState(false);
 
@@ -167,6 +169,9 @@ const Dashboard = () => {
 
   // Execution Insights panel (Transparent Gameplay)
   const [showExecutionInsights, setShowExecutionInsights] = useState(false);
+
+  // Context Panel tab state (desktop right column)
+  const [contextPanelTab, setContextPanelTab] = useState('insights'); // 'insights' | 'staff' | 'equipment'
 
   // Destructure commonly used values
   const {
@@ -439,7 +444,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4 relative z-10">
+    <div className="dashboard-cockpit h-full flex flex-col lg:grid lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] gap-0 lg:gap-0 overflow-hidden relative z-10">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -454,12 +459,12 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          TOP BAR: User Identity & Quick Stats
+          TOP BAR: User Identity & Quick Stats (spans full width)
           ====================================================================== */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card-brutalist p-4"
+        className="lg:col-span-2 card-brutalist p-4 m-4 mb-0 lg:m-4 lg:mb-0"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Welcome & Season Info */}
@@ -535,37 +540,38 @@ const Dashboard = () => {
       </motion.div>
 
       {/* ======================================================================
-          CORPS SELECTOR (if multiple corps)
+          MAIN HUD AREA (Left Column on Desktop)
           ====================================================================== */}
-      {hasMultipleCorps && (
-        <div className="flex items-center gap-3 px-1">
-          <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
-          <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
-            {Object.entries(corps)
-              .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-              .map(([classId, corpsData]) => (
-                <button
-                  key={classId}
-                  onClick={() => handleCorpsSwitch(classId)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
-                    activeCorpsClass === classId
-                      ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
-                      : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
-                  }`}
-                >
-                  {corpsData.corpsName || corpsData.name}
-                </button>
-              ))}
+      <div className="flex-1 lg:row-start-2 lg:col-start-1 overflow-y-auto p-4 pt-2 space-y-4">
+        {/* Corps Selector (if multiple) */}
+        {hasMultipleCorps && (
+          <div className="flex items-center gap-3">
+            <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
+            <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
+              {Object.entries(corps)
+                .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+                .map(([classId, corpsData]) => (
+                  <button
+                    key={classId}
+                    onClick={() => handleCorpsSwitch(classId)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
+                      activeCorpsClass === classId
+                        ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md dark:shadow-brutal-gold'
+                        : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
+                    }`}
+                  >
+                    {corpsData.corpsName || corpsData.name}
+                  </button>
+                ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ======================================================================
-          MAIN BENTO GRID LAYOUT - Responsive scaling for all viewports
-          Mobile: Stacked scrollable | Desktop: Viewport-filling grid
-          ====================================================================== */}
-      {activeCorps && (
-        <div className="flex flex-col lg:grid lg:grid-cols-12 lg:grid-rows-[1fr_auto_auto] gap-4 lg:gap-5 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+        {/* ======================================================================
+            MAIN HUD CONTENT
+            ====================================================================== */}
+        {activeCorps && (
+          <div className="space-y-4">
 
           {/* ================================================================
               HERO CARD: Stadium Banner with Score Bug
@@ -890,19 +896,168 @@ const Dashboard = () => {
             </Link>
           </div>
 
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* SoundSport Fun Badge */}
-      {activeCorpsClass === 'soundSport' && (
-        <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
-          <Sparkles size={20} />
-          <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
-        </div>
-      )}
+        {/* SoundSport Fun Badge */}
+        {activeCorpsClass === 'soundSport' && (
+          <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
+            <Sparkles size={20} />
+            <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
+          </div>
+        )}
+      </div>
 
       {/* ======================================================================
-          SLIDE-OUT PANELS
+          CONTEXT PANEL (Right Column - Desktop Only, 380px fixed)
+          Contains: Execution Insights, Staff Panel, Equipment Manager
+          ====================================================================== */}
+      <div className="hidden lg:flex lg:flex-col lg:row-start-2 lg:col-start-2 border-l border-stone-200 dark:border-border-default bg-white dark:bg-surface overflow-hidden">
+        {/* Context Panel Tabs */}
+        <div className="flex border-b border-stone-200 dark:border-border-default">
+          <button
+            onClick={() => setContextPanelTab('insights')}
+            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+              contextPanelTab === 'insights'
+                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Insights
+            </div>
+          </button>
+          <button
+            onClick={() => setContextPanelTab('staff')}
+            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+              contextPanelTab === 'staff'
+                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Users className="w-4 h-4" />
+              Staff
+            </div>
+          </button>
+          <button
+            onClick={() => setContextPanelTab('equipment')}
+            className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+              contextPanelTab === 'equipment'
+                ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface-secondary'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Wrench className="w-4 h-4" />
+              Equip
+            </div>
+          </button>
+        </div>
+
+        {/* Context Panel Content */}
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {contextPanelTab === 'insights' && (
+              <motion.div
+                key="insights"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-4 space-y-4"
+              >
+                {/* Difficulty Confidence Meter */}
+                <div className="glass-dark rounded-xl p-4">
+                  <DifficultyConfidenceMeter
+                    currentDifficulty={executionState?.showDesign || 'moderate'}
+                    currentReadiness={typeof readiness === 'number' ? readiness : 0.75}
+                    currentDay={profile?.currentDay || 1}
+                    showSelector={false}
+                    compact={true}
+                  />
+                </div>
+
+                {/* Section Readiness Breakdown */}
+                <div className="glass-dark rounded-xl p-4">
+                  <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
+                    Section Readiness
+                  </h4>
+                  <SegmentedMetricBar
+                    type="readiness"
+                    sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
+                      brass: readiness || 0.75,
+                      percussion: readiness || 0.75,
+                      guard: readiness || 0.75,
+                      ensemble: readiness || 0.75
+                    }}
+                    compact={true}
+                  />
+                </div>
+
+                {/* Section Morale Breakdown */}
+                <div className="glass-dark rounded-xl p-4">
+                  <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
+                    Section Morale
+                  </h4>
+                  <SegmentedMetricBar
+                    type="morale"
+                    sections={typeof executionState?.morale === 'object' ? executionState.morale : {
+                      brass: morale || 0.80,
+                      percussion: morale || 0.80,
+                      guard: morale || 0.80,
+                      overall: morale || 0.80
+                    }}
+                    compact={true}
+                  />
+                </div>
+
+                {/* View Full Analysis Button */}
+                <button
+                  onClick={() => setShowExecutionInsights(true)}
+                  className="w-full py-3 px-4 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-colors font-display font-bold uppercase text-xs tracking-wider flex items-center justify-center gap-2"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Full Analysis Panel
+                </button>
+              </motion.div>
+            )}
+
+            {contextPanelTab === 'staff' && (
+              <motion.div
+                key="staff"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-4"
+              >
+                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
+              </motion.div>
+            )}
+
+            {contextPanelTab === 'equipment' && (
+              <motion.div
+                key="equipment"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-4"
+              >
+                <EquipmentManager
+                  equipment={executionState?.equipment}
+                  onRepair={repairEquipment}
+                  onUpgrade={upgradeEquipment}
+                  processing={executionProcessing}
+                  corpsCoin={profile?.corpsCoin || 0}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ======================================================================
+          SLIDE-OUT PANELS (Mobile Only)
           ====================================================================== */}
 
       {/* Equipment Panel */}
