@@ -142,32 +142,32 @@ const GamingHeader: React.FC = () => {
 
   return (
     <>
-      {/* Main Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-charcoal-950 border-b-2 border-gold-500/30">
-        {/* Hazard stripe accent at very top */}
-        <div className="h-1 w-full bg-hazard-stripe animate-hazard" />
+      {/* Main Header - Glassmorphism Stadium HUD */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-md border-b border-white/10">
+        {/* Golden accent line at top */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
 
         <div className="h-16 px-4 lg:px-6">
           <div className="flex items-center justify-between h-full max-w-[1920px] mx-auto">
             {/* Left Section - Logo */}
             <Link to="/dashboard" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="w-10 h-10 rounded overflow-hidden border-2 border-gold-500/50 group-hover:border-gold-500 transition-colors">
+                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/20 group-hover:border-yellow-500/50 transition-all group-hover:shadow-[0_0_15px_rgba(234,179,8,0.3)]">
                   <img
                     src="/logo192.webp"
                     alt="marching.art"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gold-500 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-display font-bold tracking-tight">
-                  <span className="text-gold-500">marching</span>
-                  <span className="text-cream-100">.art</span>
+                  <span className="text-yellow-400">marching</span>
+                  <span className="text-yellow-50">.art</span>
                 </h1>
                 {seasonData && (
-                  <p className="text-[10px] text-cream-500/60 uppercase tracking-wider -mt-1">
+                  <p className="text-[10px] text-yellow-50/50 uppercase tracking-wider -mt-1">
                     {seasonData.name?.replace(/_/g, ' ') || 'Fantasy Drum Corps'}
                   </p>
                 )}
@@ -185,25 +185,25 @@ const GamingHeader: React.FC = () => {
                     key={item.path}
                     to={item.path}
                     className={`
-                      relative flex items-center gap-2 px-4 py-2 rounded font-display font-semibold text-sm uppercase tracking-wide
-                      transition-all duration-200 group
+                      relative flex items-center gap-2 px-4 py-2 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                      transition-all duration-300 group
                       ${active
-                        ? 'text-gold-500 bg-gold-500/10'
-                        : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5'
+                        ? 'text-yellow-400 bg-yellow-500/10 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+                        : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
                       }
                     `}
                   >
-                    <Icon className={`w-4 h-4 ${active ? 'text-gold-500' : 'text-cream-500 group-hover:text-cream-300'}`} />
+                    <Icon className={`w-4 h-4 ${active ? 'text-yellow-400' : 'text-yellow-50/50 group-hover:text-yellow-50/70'}`} />
                     <span>{item.label}</span>
                     {active && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute bottom-0 left-2 right-2 h-0.5 bg-gold-500"
+                        className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
                     )}
                     {item.label === 'Season Pass' && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold-500 rounded-full animate-pulse" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_6px_rgba(234,179,8,0.6)]" />
                     )}
                   </Link>
                 );
@@ -218,9 +218,9 @@ const GamingHeader: React.FC = () => {
                     setProfileDropdownOpen(false);
                   }}
                   className={`
-                    flex items-center gap-1 px-3 py-2 rounded font-display font-semibold text-sm uppercase tracking-wide
-                    transition-all duration-200
-                    ${moreDropdownOpen ? 'text-gold-500 bg-gold-500/10' : 'text-cream-400 hover:text-cream-100'}
+                    flex items-center gap-1 px-3 py-2 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                    transition-all duration-300
+                    ${moreDropdownOpen ? 'text-yellow-400 bg-yellow-500/10' : 'text-yellow-50/60 hover:text-yellow-50'}
                   `}
                 >
                   <span>More</span>
@@ -234,7 +234,7 @@ const GamingHeader: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full right-0 mt-2 w-56 py-2 bg-charcoal-900 border-2 border-gold-500/30 rounded shadow-brutal-gold"
+                      className="absolute top-full right-0 mt-2 w-56 py-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
                     >
                       {moreNavItems.map((item) => {
                         const Icon = item.icon;
@@ -244,10 +244,10 @@ const GamingHeader: React.FC = () => {
                             to={item.path}
                             className={`
                               flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-colors
+                              transition-all duration-200
                               ${isActive(item.path)
-                                ? 'text-gold-500 bg-gold-500/10'
-                                : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5'
+                                ? 'text-yellow-400 bg-yellow-500/10'
+                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
                               }
                             `}
                           >
@@ -258,15 +258,15 @@ const GamingHeader: React.FC = () => {
                       })}
                       {isAdmin && (
                         <>
-                          <div className="my-2 border-t border-cream-500/10" />
+                          <div className="my-2 border-t border-white/10" />
                           <Link
                             to="/admin"
                             className={`
                               flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-colors
+                              transition-all duration-200
                               ${isActive('/admin')
-                                ? 'text-gold-500 bg-gold-500/10'
-                                : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5'
+                                ? 'text-yellow-400 bg-yellow-500/10'
+                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
                               }
                             `}
                           >
@@ -287,10 +287,10 @@ const GamingHeader: React.FC = () => {
               {profile && (
                 <Link
                   to="/profile"
-                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-charcoal-900 border border-gold-500/30 rounded hover:border-gold-500/50 transition-colors group"
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg hover:border-yellow-500/30 hover:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all duration-300 group"
                 >
-                  <Coins className="w-4 h-4 text-gold-500" />
-                  <span className="font-data font-bold text-gold-500 text-sm">
+                  <Coins className="w-4 h-4 text-yellow-400" />
+                  <span className="font-data font-bold text-yellow-400 text-sm shadow-[0_0_10px_rgba(234,179,8,0.3)]">
                     {(profile.corpsCoin || 0).toLocaleString()}
                   </span>
                 </Link>
@@ -298,15 +298,15 @@ const GamingHeader: React.FC = () => {
 
               {/* XP Level Badge */}
               {profile && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-charcoal-900 border border-cream-500/20 rounded">
-                  <Zap className="w-4 h-4 text-cream-400" />
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg">
+                  <Zap className="w-4 h-4 text-yellow-50/70" />
                   <div className="flex flex-col">
-                    <span className="font-data font-bold text-cream-100 text-xs leading-none">
+                    <span className="font-data font-bold text-yellow-50 text-xs leading-none">
                       LVL {profile.xpLevel || 1}
                     </span>
-                    <div className="w-16 h-1 bg-charcoal-700 rounded-full overflow-hidden mt-0.5">
+                    <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden mt-0.5">
                       <div
-                        className="h-full bg-gradient-to-r from-gold-500 to-gold-400 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)] transition-all duration-500"
                         style={{ width: `${xpProgress}%` }}
                       />
                     </div>
@@ -322,17 +322,17 @@ const GamingHeader: React.FC = () => {
                     setProfileDropdownOpen(!profileDropdownOpen);
                     setMoreDropdownOpen(false);
                   }}
-                  className="flex items-center gap-2 p-1 rounded hover:bg-cream-500/5 transition-colors"
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/5 transition-all duration-300"
                 >
                   <div className="relative">
-                    <div className="w-9 h-9 bg-gradient-to-br from-gold-500 to-gold-600 rounded flex items-center justify-center border-2 border-gold-500/50">
-                      <User className="w-5 h-5 text-charcoal-900" />
+                    <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center border border-yellow-500/50 shadow-[0_0_12px_rgba(234,179,8,0.3)]">
+                      <User className="w-5 h-5 text-slate-900" />
                     </div>
                     {(profile?.xpLevel ?? 0) >= 10 && (
-                      <Star className="absolute -top-1 -right-1 w-4 h-4 text-gold-500 fill-gold-500" />
+                      <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
                     )}
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-cream-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-yellow-50/60 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 <AnimatePresence>
@@ -342,20 +342,20 @@ const GamingHeader: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full right-0 mt-2 w-64 py-2 bg-charcoal-900 border-2 border-gold-500/30 rounded shadow-brutal-gold"
+                      className="absolute top-full right-0 mt-2 w-64 py-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
                     >
                       {/* User Info */}
-                      <div className="px-4 py-3 border-b border-cream-500/10">
-                        <p className="font-semibold text-cream-100 truncate">
+                      <div className="px-4 py-3 border-b border-white/10">
+                        <p className="font-semibold text-yellow-50 truncate">
                           {profile?.displayName || 'Director'}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-cream-500">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-yellow-50/60">
                           <span className="flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-gold-500" />
+                            <Zap className="w-3 h-3 text-yellow-400" />
                             Level {profile?.xpLevel || 1}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Coins className="w-3 h-3 text-gold-500" />
+                          <span className="flex items-center gap-1 text-yellow-400">
+                            <Coins className="w-3 h-3" />
                             {(profile?.corpsCoin || 0).toLocaleString()}
                           </span>
                         </div>
@@ -370,10 +370,10 @@ const GamingHeader: React.FC = () => {
                             to={item.path}
                             className={`
                               flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-colors
+                              transition-all duration-200
                               ${isActive(item.path)
-                                ? 'text-gold-500 bg-gold-500/10'
-                                : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5'
+                                ? 'text-yellow-400 bg-yellow-500/10'
+                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
                               }
                             `}
                           >
@@ -383,12 +383,12 @@ const GamingHeader: React.FC = () => {
                         );
                       })}
 
-                      <div className="my-2 border-t border-cream-500/10" />
+                      <div className="my-2 border-t border-white/10" />
 
                       {/* Theme Toggle */}
                       <button
                         onClick={toggleTheme}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-cream-300 hover:text-cream-100 hover:bg-cream-500/5 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 transition-all duration-200"
                       >
                         {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -397,7 +397,7 @@ const GamingHeader: React.FC = () => {
                       {/* Sign Out */}
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Sign Out</span>
@@ -410,10 +410,10 @@ const GamingHeader: React.FC = () => {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded hover:bg-cream-500/10 transition-colors"
+                className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-all duration-300"
                 aria-label="Open menu"
               >
-                <Menu className="w-6 h-6 text-cream-300" />
+                <Menu className="w-6 h-6 text-yellow-50/80" />
               </button>
             </div>
           </div>
@@ -431,50 +431,50 @@ const GamingHeader: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 z-50 lg:hidden"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 lg:hidden"
             />
 
-            {/* Menu Panel */}
+            {/* Menu Panel - Glassmorphism */}
             <motion.nav
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-charcoal-950 z-50 lg:hidden overflow-y-auto"
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-slate-950/95 backdrop-blur-xl border-l border-white/10 z-50 lg:hidden overflow-y-auto"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
-                <h2 className="text-xl font-display font-bold text-cream-100">Menu</h2>
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <h2 className="text-xl font-display font-bold text-yellow-50">Menu</h2>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded hover:bg-cream-500/10 transition-colors"
+                  className="p-2 rounded-lg hover:bg-white/10 transition-all duration-300"
                 >
-                  <X className="w-5 h-5 text-cream-300" />
+                  <X className="w-5 h-5 text-yellow-50/80" />
                 </button>
               </div>
 
               {/* User Info */}
               {profile && (
-                <div className="p-4 border-b border-cream-500/10">
+                <div className="p-4 border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-gold-500 to-gold-600 rounded flex items-center justify-center">
-                        <User className="w-6 h-6 text-charcoal-900" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                        <User className="w-6 h-6 text-slate-900" />
                       </div>
                       {(profile.xpLevel ?? 0) >= 10 && (
-                        <Star className="absolute -top-1 -right-1 w-4 h-4 text-gold-500 fill-gold-500" />
+                        <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-cream-100 truncate">
+                      <p className="font-semibold text-yellow-50 truncate">
                         {profile.displayName || 'Director'}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-xs">
-                        <span className="flex items-center gap-1 text-cream-500">
-                          <Zap className="w-3 h-3 text-gold-500" />
+                        <span className="flex items-center gap-1 text-yellow-50/60">
+                          <Zap className="w-3 h-3 text-yellow-400" />
                           Level {profile.xpLevel || 1}
                         </span>
-                        <span className="flex items-center gap-1 text-gold-500 font-data font-bold">
+                        <span className="flex items-center gap-1 text-yellow-400 font-data font-bold">
                           <Coins className="w-3 h-3" />
                           {(profile.corpsCoin || 0).toLocaleString()}
                         </span>
@@ -484,13 +484,13 @@ const GamingHeader: React.FC = () => {
 
                   {/* XP Progress Bar */}
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-cream-500 mb-1">
+                    <div className="flex justify-between text-xs text-yellow-50/60 mb-1">
                       <span>XP Progress</span>
                       <span className="font-data">{Math.round(xpProgress)}%</span>
                     </div>
-                    <div className="h-2 bg-charcoal-800 rounded overflow-hidden">
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-gold-500 to-gold-400 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)] transition-all duration-500"
                         style={{ width: `${xpProgress}%` }}
                       />
                     </div>
@@ -502,7 +502,7 @@ const GamingHeader: React.FC = () => {
               <div className="py-4">
                 {/* Main Nav */}
                 <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-cream-500/40 uppercase tracking-wider">
+                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
                     Main
                   </h3>
                   {mainNavItems.map((item) => {
@@ -513,10 +513,10 @@ const GamingHeader: React.FC = () => {
                         key={item.path}
                         to={item.path}
                         className={`
-                          flex items-center gap-3 px-4 py-3 transition-colors
+                          flex items-center gap-3 px-4 py-3 transition-all duration-200
                           ${active
-                            ? 'text-gold-500 bg-gold-500/10 border-l-4 border-gold-500'
-                            : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5 border-l-4 border-transparent'
+                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]'
+                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
                           }
                         `}
                       >
@@ -529,7 +529,7 @@ const GamingHeader: React.FC = () => {
 
                 {/* More Nav */}
                 <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-cream-500/40 uppercase tracking-wider">
+                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
                     More
                   </h3>
                   {moreNavItems.map((item) => {
@@ -540,10 +540,10 @@ const GamingHeader: React.FC = () => {
                         key={item.path}
                         to={item.path}
                         className={`
-                          flex items-center gap-3 px-4 py-3 transition-colors
+                          flex items-center gap-3 px-4 py-3 transition-all duration-200
                           ${active
-                            ? 'text-gold-500 bg-gold-500/10 border-l-4 border-gold-500'
-                            : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5 border-l-4 border-transparent'
+                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]'
+                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
                           }
                         `}
                       >
@@ -556,10 +556,10 @@ const GamingHeader: React.FC = () => {
                     <Link
                       to="/admin"
                       className={`
-                        flex items-center gap-3 px-4 py-3 transition-colors
+                        flex items-center gap-3 px-4 py-3 transition-all duration-200
                         ${isActive('/admin')
-                          ? 'text-gold-500 bg-gold-500/10 border-l-4 border-gold-500'
-                          : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5 border-l-4 border-transparent'
+                          ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
+                          : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
                         }
                       `}
                     >
@@ -571,7 +571,7 @@ const GamingHeader: React.FC = () => {
 
                 {/* Account Nav */}
                 <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-cream-500/40 uppercase tracking-wider">
+                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
                     Account
                   </h3>
                   {accountNavItems.map((item) => {
@@ -582,10 +582,10 @@ const GamingHeader: React.FC = () => {
                         key={item.path}
                         to={item.path}
                         className={`
-                          flex items-center gap-3 px-4 py-3 transition-colors
+                          flex items-center gap-3 px-4 py-3 transition-all duration-200
                           ${active
-                            ? 'text-gold-500 bg-gold-500/10 border-l-4 border-gold-500'
-                            : 'text-cream-300 hover:text-cream-100 hover:bg-cream-500/5 border-l-4 border-transparent'
+                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
+                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
                           }
                         `}
                       >
@@ -598,11 +598,11 @@ const GamingHeader: React.FC = () => {
               </div>
 
               {/* Bottom Actions */}
-              <div className="p-4 border-t border-cream-500/10 space-y-3">
+              <div className="p-4 border-t border-white/10 space-y-3">
                 {/* Theme Toggle */}
                 <button
                   onClick={toggleTheme}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded bg-cream-500/10 text-cream-300 hover:text-cream-100 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 text-yellow-50/80 hover:text-yellow-50 hover:bg-white/15 transition-all duration-300"
                 >
                   {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                   <span className="font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -611,7 +611,7 @@ const GamingHeader: React.FC = () => {
                 {/* Sign Out */}
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded bg-red-500/10 text-red-400 hover:text-red-300 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-all duration-300"
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Sign Out</span>
@@ -620,10 +620,10 @@ const GamingHeader: React.FC = () => {
 
               {/* Season Info */}
               {seasonData && (
-                <div className="p-4 border-t border-cream-500/10 bg-gradient-to-r from-gold-500/10 to-transparent">
+                <div className="p-4 border-t border-white/10 bg-gradient-to-r from-yellow-500/10 to-transparent">
                   <div className="text-center">
-                    <p className="text-xs text-cream-500/60 uppercase tracking-wider">Current Season</p>
-                    <p className="text-lg font-display font-bold text-gold-500 mt-1 capitalize">
+                    <p className="text-xs text-yellow-50/50 uppercase tracking-wider">Current Season</p>
+                    <p className="text-lg font-display font-bold text-yellow-400 mt-1 capitalize drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">
                       {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
                     </p>
                   </div>
