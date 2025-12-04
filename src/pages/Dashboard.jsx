@@ -13,7 +13,9 @@ import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import {
   EquipmentManager,
-  DashboardStaffPanel
+  DashboardStaffPanel,
+  ExecutionInsightsPanel,
+  SectionGauges
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -208,6 +210,9 @@ const Dashboard = () => {
 
   // Daily activities panel
   const [showDailyActivities, setShowDailyActivities] = useState(false);
+
+  // Execution Insights panel (Transparent Gameplay)
+  const [showExecutionInsights, setShowExecutionInsights] = useState(false);
 
   // Destructure commonly used values
   const {
@@ -657,9 +662,18 @@ const Dashboard = () => {
                     )}
                   </div>
 
-                  {/* Performance Multiplier - Glowing Score Bug */}
-                  <div className="flex-shrink-0 flex flex-col items-center">
-                    <div className="score-bug">
+                  {/* Performance Multiplier - Glowing Score Bug (Clickable for insights) */}
+                  <button
+                    onClick={() => setShowExecutionInsights(true)}
+                    className="flex-shrink-0 flex flex-col items-center group cursor-pointer"
+                  >
+                    <div className="score-bug relative transition-transform group-hover:scale-105">
+                      {/* "View Details" hint */}
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[9px] text-gold-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
+                          <ChevronRight size={10} /> View Breakdown
+                        </span>
+                      </div>
                       <div className="text-[8px] text-cream-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
                         Multiplier
                       </div>
@@ -671,7 +685,7 @@ const Dashboard = () => {
                         {multiplierStatus.label}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -1013,6 +1027,58 @@ const Dashboard = () => {
                   }}
                 />
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Execution Insights Panel - Transparent Gameplay */}
+      <AnimatePresence>
+        {showExecutionInsights && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowExecutionInsights(false)}
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-hidden"
+            >
+              <ExecutionInsightsPanel
+                executionState={executionState}
+                multiplierBreakdown={{
+                  readiness: (executionState?.readiness || 0.75) - 0.75 > 0 ? ((executionState?.readiness || 0.75) - 0.75) * 0.48 : ((executionState?.readiness || 0.75) - 0.75) * 0.48,
+                  morale: (executionState?.morale || 0.80) - 0.80 > 0 ? ((executionState?.morale || 0.80) - 0.80) * 0.32 : ((executionState?.morale || 0.80) - 0.80) * 0.32,
+                  equipment: ((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90 > 0 ? (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20 : (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20,
+                  staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                  showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
+                  travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                }}
+                finalMultiplier={multiplier}
+                currentDay={profile?.currentDay || 1}
+                showDifficulty={executionState?.showDesign || 'moderate'}
+                showConcept={activeCorps?.showConcept}
+                lineup={activeCorps?.lineup}
+                assignedStaff={assignedStaff}
+                activeCorpsClass={activeCorpsClass}
+                onBoostStaffMorale={async (staffId) => {
+                  // Call boost staff morale function
+                  try {
+                    const { boostStaffMorale } = await import('../api/functions');
+                    await boostStaffMorale({ staffId });
+                    refreshProfile();
+                  } catch (error) {
+                    console.error('Failed to boost staff morale:', error);
+                  }
+                }}
+                onClose={() => setShowExecutionInsights(false)}
+              />
             </motion.div>
           </>
         )}
