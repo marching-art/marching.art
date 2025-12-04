@@ -97,14 +97,14 @@ const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
   );
 };
 
-// Stadium HUD Action Tile - Fills available space proportionally
+// Stadium HUD Action Tile - Responsive, fills grid cell
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled || processing}
     whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group h-full min-h-[140px] flex flex-col items-center justify-center gap-3 ${
+    className={`icon-card group min-h-[100px] lg:min-h-[120px] flex flex-col items-center justify-center gap-2 lg:gap-3 p-3 lg:p-4 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
     } ${completed ? 'border-green-500/40' : ''}`}
   >
@@ -114,25 +114,25 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
     </div>
 
     {/* Content */}
-    <div className="relative z-10 flex flex-col items-center gap-2">
-      <div className={`p-3 rounded-xl transition-all duration-300 ${
+    <div className="relative z-10 flex flex-col items-center gap-1 lg:gap-2">
+      <div className={`p-2 lg:p-3 rounded-xl transition-all duration-300 ${
         completed
           ? 'bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
           : 'bg-gold-500/10 group-hover:bg-gold-500/20 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(250,204,21,0.3)]'
       }`}>
         {processing ? (
-          <div className="w-7 h-7 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.4)' }} />
+          <div className="w-5 h-5 lg:w-7 lg:h-7 border-2 lg:border-3 border-gold-500 border-t-transparent rounded-full animate-spin" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.4)' }} />
         ) : completed ? (
-          <Check className="w-7 h-7 text-green-500" style={{ filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
+          <Check className="w-5 h-5 lg:w-7 lg:h-7 text-green-500" style={{ filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
         ) : (
-          <Icon className="w-7 h-7 text-gold-400 transition-all group-hover:text-gold-300" style={{ filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' }} />
+          <Icon className="w-5 h-5 lg:w-7 lg:h-7 text-gold-400 transition-all group-hover:text-gold-300" style={{ filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' }} />
         )}
       </div>
-      <span className="text-sm font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors" style={{ textShadow: '0 0 0 transparent', transition: 'text-shadow 0.3s' }}>
+      <span className="text-xs lg:text-sm font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
         {label}
       </span>
       {subtitle && (
-        <span className="text-[10px] text-cream-muted font-display uppercase tracking-wide">
+        <span className="text-[9px] lg:text-[10px] text-cream-muted font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -140,7 +140,7 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
   </motion.button>
 );
 
-// Stadium HUD Quick Stat Card - Larger, fills available height proportionally
+// Stadium HUD Quick Stat Card - Responsive glass panel
 const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   const colorClasses = {
     gold: 'text-gold-400 bg-gold-500/10 border-gold-500/30',
@@ -151,30 +151,30 @@ const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   };
 
   const glowStyles = {
-    gold: { filter: 'drop-shadow(0 0 8px rgba(250, 204, 21, 0.5))' },
-    blue: { filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' },
-    purple: { filter: 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.5))' },
-    orange: { filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 0.5))' },
-    green: { filter: 'drop-shadow(0 0 8px rgba(34, 197, 94, 0.5))' }
+    gold: { filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' },
+    blue: { filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))' },
+    purple: { filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))' },
+    orange: { filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.5))' },
+    green: { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' }
   };
 
   const content = (
-    <div className={`glass-card h-full p-5 flex flex-col justify-center gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
-      <div className={`p-3 rounded-xl border w-fit ${colorClasses[color]}`}>
-        <Icon className={`w-7 h-7 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
+    <div className={`glass-card p-4 lg:p-5 flex items-center lg:flex-col lg:items-start gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
+      <div className={`p-2 lg:p-3 rounded-xl border flex-shrink-0 ${colorClasses[color]}`}>
+        <Icon className={`w-5 h-5 lg:w-6 lg:h-6 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
       </div>
-      <div className="flex-1 flex flex-col justify-center min-w-0">
-        <div className={`text-3xl lg:text-4xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 12px currentColor' }}>
+      <div className="flex-1 min-w-0">
+        <div className={`text-xl lg:text-2xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 10px currentColor' }}>
           {value}
         </div>
-        <div className="text-xs font-display uppercase tracking-widest text-cream-muted mt-1">
+        <div className="text-[10px] lg:text-xs font-display uppercase tracking-widest text-cream-muted">
           {label}
         </div>
       </div>
     </div>
   );
 
-  return to ? <Link to={to}>{content}</Link> : content;
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 };
 
 // ============================================================================
@@ -602,21 +602,22 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          MAIN BENTO GRID LAYOUT - Proportional scaling across all elements
+          MAIN BENTO GRID LAYOUT - Responsive scaling for all viewports
+          Mobile: Stacked scrollable | Desktop: Viewport-filling grid
           ====================================================================== */}
       {activeCorps && (
-        <div className="flex-1 min-h-0 flex flex-col gap-4 lg:gap-5">
-          {/* ROW 1: Hero Card + Action Tiles - Takes ~55% of available space */}
-          <div className="flex-[55] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-            {/* ================================================================
-                HERO CARD: Stadium Banner with Score Bug
-                ================================================================ */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="lg:col-span-8 stadium-banner p-0 overflow-hidden flex flex-col"
-            >
+        <div className="flex flex-col lg:grid lg:grid-cols-12 lg:grid-rows-[1fr_auto_auto] gap-4 lg:gap-5 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+
+          {/* ================================================================
+              HERO CARD: Stadium Banner with Score Bug
+              Mobile: Full width, auto height | Desktop: 8 cols, fills row
+              ================================================================ */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="order-1 lg:col-span-8 lg:row-span-1 stadium-banner p-0 overflow-hidden flex flex-col min-h-[280px] lg:min-h-0"
+          >
             {/* Stadium overlay silhouette */}
             <div className="stadium-overlay" />
 
@@ -753,10 +754,11 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-            {/* ================================================================
-                ACTION TILES GRID (spans 4 columns on desktop)
-                ================================================================ */}
-            <div className="lg:col-span-4 grid grid-cols-2 gap-3 lg:gap-4 content-stretch">
+          {/* ================================================================
+              ACTION TILES GRID
+              Mobile: 2x2 grid, auto height | Desktop: 4 cols, fills row
+              ================================================================ */}
+          <div className="order-2 lg:col-span-4 lg:row-span-1 grid grid-cols-2 gap-3 lg:gap-4 auto-rows-fr">
               {/* Daily Rehearsal */}
               <IconCard
                 icon={Music}
@@ -790,18 +792,20 @@ const Dashboard = () => {
                 }}
               />
 
-              {/* Daily Activities */}
-              <IconCard
-                icon={Zap}
-                label="Activities"
-                subtitle="Daily Tasks"
-                onClick={() => setShowDailyActivities(true)}
-              />
-            </div>
+            {/* Daily Activities */}
+            <IconCard
+              icon={Zap}
+              label="Activities"
+              subtitle="Daily Tasks"
+              onClick={() => setShowDailyActivities(true)}
+            />
           </div>
 
-          {/* ROW 2: Weekly Progress Stats - Takes ~25% of available space */}
-          <div className="flex-[25] min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+          {/* ================================================================
+              STATS ROW: Weekly Progress
+              Mobile: 2x2 grid | Desktop: 4 cols, auto height
+              ================================================================ */}
+          <div className="order-3 lg:col-span-12 lg:row-span-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
             <QuickStatCard
               icon={Target}
               label="Rehearsals"
@@ -829,47 +833,50 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* ROW 3: Quick Links - Takes ~20% of available space */}
-          <div className="flex-[20] min-h-0 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-5">
+          {/* ================================================================
+              QUICK LINKS ROW
+              Mobile: 2x2 grid | Desktop: 4 cols, auto height
+              ================================================================ */}
+          <div className="order-4 lg:col-span-12 lg:row-span-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
             <Link
               to="/scores"
-              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
+              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
             >
-              <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/30">
-                <Trophy className="w-7 h-7 text-primary" />
+              <div className="p-2 lg:p-3 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
+                <Trophy className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
               </div>
-              <span className="font-display font-bold text-text-main text-lg">Leaderboards</span>
-              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
+              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Leaderboards</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
             </Link>
             <Link
               to="/schedule"
-              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
+              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
             >
-              <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
-                <Calendar className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 lg:p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 flex-shrink-0">
+                <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <span className="font-display font-bold text-text-main text-lg">Schedule</span>
-              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
+              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Schedule</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
             </Link>
             <Link
               to="/leagues"
-              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
+              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
             >
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
-                <Sparkles className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 lg:p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex-shrink-0">
+                <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="font-display font-bold text-text-main text-lg">Leagues</span>
-              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
+              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Leagues</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
             </Link>
             <Link
               to="/battlepass"
-              className="card-brutalist p-5 flex items-center gap-4 transition-all hover:scale-[1.02]"
+              className="card-brutalist p-4 lg:p-5 flex items-center gap-3 lg:gap-4 transition-all hover:scale-[1.02]"
             >
-              <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/30">
-                <Crown className="w-7 h-7 text-primary" />
+              <div className="p-2 lg:p-3 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
+                <Crown className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
               </div>
-              <span className="font-display font-bold text-text-main text-lg">Season Pass</span>
-              <ChevronRight className="w-6 h-6 text-text-muted ml-auto" />
+              <span className="font-display font-bold text-text-main text-sm lg:text-base truncate">Season Pass</span>
+              <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
             </Link>
           </div>
 
