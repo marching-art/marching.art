@@ -316,7 +316,7 @@ const NavItem = ({ icon: Icon, label, to, active, badge }) => (
 // ============================================================================
 
 // Mobile-specific compact status bar row
-const MobileStatusRow = ({ seasonData, weeksRemaining, currentWeek, profile, engagementData, formatSeasonName }) => {
+const MobileStatusRow = ({ seasonData, weeksRemaining, currentWeek, profile, formatSeasonName }) => {
   const xpProgress = ((profile?.xp || 0) % 1000) / 10;
 
   return (
@@ -324,7 +324,7 @@ const MobileStatusRow = ({ seasonData, weeksRemaining, currentWeek, profile, eng
       {/* Row 1: Season & Time | Level & Coins */}
       <div className="flex items-center justify-between gap-2 text-[11px]">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-cream-muted truncate font-display">
+          <span className="text-cream font-display font-medium truncate">
             {formatSeasonName(seasonData?.name)}
           </span>
           {weeksRemaining && (
@@ -335,24 +335,17 @@ const MobileStatusRow = ({ seasonData, weeksRemaining, currentWeek, profile, eng
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Login Streak */}
-          {engagementData?.loginStreak > 0 && (
-            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-500/30">
-              <Flame className={`w-3 h-3 ${engagementData.loginStreak >= 7 ? 'text-orange-400 animate-pulse' : 'text-orange-500'}`} />
-              <span className="font-mono font-bold text-orange-400">{engagementData.loginStreak}</span>
-            </div>
-          )}
-          {/* Level */}
+          {/* Level with progress bar */}
           <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 border border-gold-500/30">
             <Zap className="w-3 h-3 text-gold-500" />
             <span className="font-mono font-bold text-gold-400">Lv.{profile?.xpLevel || 1}</span>
-            <div className="w-6 h-1 bg-charcoal-800 rounded-full overflow-hidden">
+            <div className="w-10 h-1 bg-charcoal-800 rounded-full overflow-hidden">
               <div className="h-full bg-gold-500" style={{ width: `${xpProgress}%` }} />
             </div>
           </div>
           {/* Coins */}
           <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gold-500/20 border border-gold-500/30">
-            <Coins className="w-3 h-3 text-gold-500" />
+            <Trophy className="w-3 h-3 text-gold-500" />
             <span className="font-mono font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
           </div>
         </div>
@@ -752,7 +745,6 @@ const DashboardCommandCenter = () => {
         weeksRemaining={weeksRemaining}
         currentWeek={currentWeek}
         profile={profile}
-        engagementData={engagementData}
         formatSeasonName={formatSeasonName}
       />
 
@@ -774,12 +766,12 @@ const DashboardCommandCenter = () => {
         <div className="flex items-center justify-between gap-4">
           {/* Season & Time */}
           <div className="flex items-center gap-3">
-            <span className="text-sm font-display text-cream-muted">
+            <span className="text-sm font-display text-cream font-medium">
               {formatSeasonName(seasonData?.name)}
             </span>
             {weeksRemaining && (
               <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-mono">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-3.5 h-3.5" />
                 Wk {currentWeek} • {weeksRemaining}w left
               </span>
             )}
@@ -787,39 +779,23 @@ const DashboardCommandCenter = () => {
 
           {/* User Stats */}
           <div className="flex items-center gap-2">
-            {/* Login Streak */}
-            {engagementData?.loginStreak > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-orange-500/20 border border-orange-500/30">
-                <Flame className={`w-4 h-4 ${engagementData.loginStreak >= 7 ? 'text-orange-400 animate-pulse' : 'text-orange-500'}`} />
-                <span className="text-sm font-mono font-bold text-orange-400">{engagementData.loginStreak}</span>
-              </div>
-            )}
-
-            {/* XP Level */}
-            <Link to="/profile" className="flex items-center gap-2 px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 hover:border-gold-500/60 transition-all">
+            {/* XP Level with progress bar */}
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-gold-500/20 border border-gold-500/30">
               <Zap className="w-4 h-4 text-gold-500" />
               <span className="text-sm font-mono font-bold text-gold-400">Lv.{profile?.xpLevel || 1}</span>
-              <div className="w-10 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+              <div className="w-16 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
                 <div className="h-full bg-gold-500 transition-all" style={{ width: `${xpProgress}%` }} />
               </div>
-            </Link>
+            </div>
 
-            {/* CorpsCoin */}
-            <Link to="/staff" className="flex items-center gap-1.5 px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 hover:border-gold-500/60 transition-all">
-              <Coins className="w-4 h-4 text-gold-500" />
+            {/* Corps Coins */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gold-500/20 border border-gold-500/30">
+              <Trophy className="w-4 h-4 text-gold-500" />
               <span className="text-sm font-mono font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
-            </Link>
-
-            {/* Battle Pass Rewards */}
-            {unclaimedRewardsCount > 0 && (
-              <Link to="/battlepass" className="flex items-center gap-1 px-2 py-1 rounded bg-gradient-to-r from-gold-500/30 to-purple-500/30 border border-gold-500/50 animate-pulse">
-                <Gift className="w-4 h-4 text-gold-400" />
-                <span className="text-sm font-bold text-gold-400">{unclaimedRewardsCount}</span>
-              </Link>
-            )}
+            </div>
 
             {/* Director Name */}
-            <div className="pl-2 border-l border-white/10">
+            <div className="pl-3 border-l border-white/10">
               <span className="text-sm font-display font-bold text-cream uppercase tracking-wide">
                 {profile?.displayName || 'Director'}
               </span>
