@@ -34,118 +34,105 @@ import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { retireCorps } from '../firebase/functions';
 
 // ============================================================================
-// BRUTALIST DESIGN COMPONENTS
+// STADIUM HUD DESIGN COMPONENTS
+// Night Mode aesthetic with glassmorphism and neon gold accents
 // ============================================================================
 
-// Tactical Metric Gauge Component - Commander's measurement display
+// Stadium HUD Metric Gauge - Glowing progress bar with light trail effect
 const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
   const percentage = Math.round(value * 100);
-  const colorClasses = {
-    gold: 'bg-amber-500 dark:bg-gold-500',
-    blue: 'bg-blue-500',
-    red: 'bg-rose-500',
-    orange: 'bg-orange-500',
-    green: 'bg-green-500',
-    purple: 'bg-purple-500'
+
+  // Stadium HUD color mapping for progress fill
+  const fillColorClasses = {
+    gold: 'progress-glow-fill',
+    blue: 'progress-glow-fill status-good',
+    red: 'progress-glow-fill status-danger',
+    orange: 'progress-glow-fill status-warning',
+    green: 'progress-glow-fill status-excellent',
+    purple: 'progress-glow-fill status-good'
   };
 
   const textColorClasses = {
-    gold: 'text-amber-700 dark:text-gold-500',
-    blue: 'text-blue-700 dark:text-blue-400',
-    red: 'text-rose-700 dark:text-rose-400',
-    orange: 'text-orange-700 dark:text-orange-400',
-    green: 'text-green-700 dark:text-green-400',
-    purple: 'text-purple-700 dark:text-purple-400'
+    gold: 'text-gold-400',
+    blue: 'text-blue-400',
+    red: 'text-rose-400',
+    orange: 'text-orange-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400'
+  };
+
+  const iconColorClasses = {
+    gold: 'text-gold-500',
+    blue: 'text-blue-400',
+    red: 'text-rose-400',
+    orange: 'text-orange-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400'
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-slate-600 dark:text-white/70" />}
-        <span className="text-xs font-display font-bold uppercase tracking-widest text-slate-500 dark:text-white/60">
-          {label}
-        </span>
-      </div>
-      {/* Tactical Progress Track with Tick Marks */}
-      <div className="relative">
-        {/* Track Background with Grid Pattern */}
-        <div className="h-6 w-full bg-stone-200 dark:bg-surface rounded-md overflow-hidden border-2 border-stone-300 dark:border-border-default relative">
-          {/* Tick marks overlay - simulates ruler/measurement device */}
-          <div className="absolute inset-0 flex">
-            {[...Array(10)].map((_, i) => (
-              <div
-                key={i}
-                className="flex-1 border-r border-stone-300/50 dark:border-white/10 last:border-r-0"
-              />
-            ))}
-          </div>
-          {/* Major tick marks at 25%, 50%, 75% */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute left-1/4 top-0 bottom-0 w-0.5 bg-stone-400/30 dark:bg-white/20" />
-            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-stone-400/50 dark:bg-white/30" />
-            <div className="absolute left-3/4 top-0 bottom-0 w-0.5 bg-stone-400/30 dark:bg-white/20" />
-          </div>
-          {/* Progress Fill */}
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percentage}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            className={`h-full rounded-sm ${colorClasses[color]} relative`}
-          >
-            {/* Inner shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-          </motion.div>
-        </div>
-        {/* Percentage Display - Inside track on right side */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
-          <span className={`font-mono font-bold text-sm ${percentage > 80 ? 'text-white dark:text-charcoal-900' : textColorClasses[color]} drop-shadow-sm`}>
-            {percentage}%
+    <div className="space-y-3">
+      {/* Label with neon icon */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className={`w-4 h-4 ${iconColorClasses[color]}`} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />}
+          <span className="text-xs font-display font-bold uppercase tracking-widest text-cream-muted">
+            {label}
           </span>
         </div>
+        <span className={`font-mono font-bold text-lg ${textColorClasses[color]}`} style={{ textShadow: '0 0 10px currentColor' }}>
+          {percentage}%
+        </span>
+      </div>
+      {/* Stadium HUD Progress Bar with Gold Light Trail */}
+      <div className="progress-glow h-3">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className={fillColorClasses[color]}
+        />
       </div>
     </div>
   );
 };
 
-// Icon Card Component (Tactical Luxury action tiles with large background icons)
-// Enhanced with better hover states and more prominent icons
+// Stadium HUD Action Tile - Neon gold glass tile with glowing icon
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled || processing}
-    whileHover={!disabled && !processing ? { scale: 1.02, y: -4 } : {}}
+    whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
     whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3
-      hover:border-amber-500 dark:hover:border-gold-500 hover:shadow-md dark:hover:shadow-lg
-      transition-all duration-200 cursor-pointer ${
+    className={`icon-card group aspect-square flex flex-col items-center justify-center gap-3 ${
       disabled ? 'opacity-50 cursor-not-allowed' : ''
-    } ${completed ? 'border-green-500/40 dark:border-green-500/40' : ''}`}
+    } ${completed ? 'border-green-500/40' : ''}`}
   >
-    {/* Large background icon - subtle watermark */}
+    {/* Large background icon - subtle watermark with neon glow on hover */}
     <div className="icon-card-bg flex items-center justify-center">
-      <Icon className="w-full h-full text-slate-200 dark:text-white" />
+      <Icon className="w-full h-full text-white/80" />
     </div>
 
     {/* Content */}
     <div className="relative z-10 flex flex-col items-center gap-2">
-      <div className={`p-3 rounded-xl transition-all duration-200 ${
+      <div className={`p-3 rounded-xl transition-all duration-300 ${
         completed
-          ? 'bg-green-500/20'
-          : 'bg-amber-100 dark:bg-gold-500/10 group-hover:bg-amber-200 dark:group-hover:bg-gold-500/20 group-hover:scale-110'
+          ? 'bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+          : 'bg-gold-500/10 group-hover:bg-gold-500/20 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(250,204,21,0.3)]'
       }`}>
         {processing ? (
-          <div className="w-7 h-7 border-3 border-amber-600 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.4)' }} />
         ) : completed ? (
-          <Check className="w-7 h-7 text-green-600 dark:text-green-500" />
+          <Check className="w-7 h-7 text-green-500" style={{ filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
         ) : (
-          <Icon className="w-7 h-7 text-amber-700 dark:text-gold-500 transition-colors group-hover:text-amber-800 dark:group-hover:text-gold-400" />
+          <Icon className="w-7 h-7 text-gold-400 transition-all group-hover:text-gold-300" style={{ filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' }} />
         )}
       </div>
-      <span className="text-sm font-display font-bold text-slate-900 dark:text-text-main uppercase tracking-wider text-center group-hover:text-amber-700 dark:group-hover:text-gold-400 transition-colors">
+      <span className="text-sm font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors" style={{ textShadow: '0 0 0 transparent', transition: 'text-shadow 0.3s' }}>
         {label}
       </span>
       {subtitle && (
-        <span className="text-[10px] text-slate-600 dark:text-text-muted font-display uppercase tracking-wide">
+        <span className="text-[10px] text-cream-muted font-display uppercase tracking-wide">
           {subtitle}
         </span>
       )}
@@ -153,26 +140,34 @@ const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, 
   </motion.button>
 );
 
-// Quick Stat Card
+// Stadium HUD Quick Stat Card - Glass panel with glowing value
 const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
   const colorClasses = {
-    gold: 'text-amber-600 dark:text-gold-500 bg-amber-500/10 dark:bg-gold-500/10 border-amber-500/30 dark:border-gold-500/30',
-    blue: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/30',
-    orange: 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/30',
-    green: 'text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/30'
+    gold: 'text-gold-400 bg-gold-500/10 border-gold-500/30',
+    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
+    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
+    orange: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+    green: 'text-green-400 bg-green-500/10 border-green-500/30'
+  };
+
+  const glowStyles = {
+    gold: { filter: 'drop-shadow(0 0 6px rgba(250, 204, 21, 0.5))' },
+    blue: { filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))' },
+    purple: { filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))' },
+    orange: { filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.5))' },
+    green: { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' }
   };
 
   const content = (
-    <div className={`card-brutalist p-4 flex items-center gap-3 ${to ? 'cursor-pointer' : ''}`}>
+    <div className={`glass-card p-4 flex items-center gap-3 ${to ? 'cursor-pointer' : ''}`}>
       <div className={`p-2 rounded-lg border ${colorClasses[color]}`}>
-        <Icon className={`w-5 h-5 ${colorClasses[color].split(' ')[0]}`} />
+        <Icon className={`w-5 h-5 ${colorClasses[color].split(' ')[0]}`} style={glowStyles[color]} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className={`text-xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`}>
+        <div className={`text-xl font-mono font-bold ${colorClasses[color].split(' ')[0]}`} style={{ textShadow: '0 0 10px currentColor' }}>
           {value}
         </div>
-        <div className="text-[10px] font-display uppercase tracking-widest text-slate-500 dark:text-text-muted">
+        <div className="text-[10px] font-display uppercase tracking-widest text-cream-muted">
           {label}
         </div>
       </div>
@@ -631,46 +626,46 @@ const Dashboard = () => {
 
             <div className="relative z-10">
               {/* ============================================================
-                  CORPS STATUS HEADER - Distinct section with bottom border
+                  CORPS STATUS HEADER - Stadium HUD with glowing elements
                   ============================================================ */}
-              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b-2 border-stone-200 dark:border-border-default">
+              <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b border-white/10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Corps Identity */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1.5 rounded-md text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                      <span className={`px-3 py-1.5 rounded-lg text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
                         {getCorpsClassName(activeCorpsClass)}
                       </span>
                       {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/20 dark:bg-gold-500/20 text-amber-600 dark:text-gold-400 text-[10px] font-bold uppercase tracking-wide">
-                          <Crown size={10} />
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase tracking-wide" style={{ boxShadow: '0 0 10px rgba(250, 204, 21, 0.2)' }}>
+                          <Crown size={10} style={{ filter: 'drop-shadow(0 0 4px rgba(250, 204, 21, 0.6))' }} />
                           TOP 10
                         </span>
                       )}
                     </div>
-                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-text-main">
+                    <h2 className="sports-header text-3xl md:text-4xl lg:text-5xl text-cream">
                       {activeCorps.corpsName || activeCorps.name || 'UNSPECIFIED'}
                     </h2>
                     {activeCorps.showConcept && (
-                      <p className="text-text-muted text-sm md:text-base font-body italic mt-1">
-                        <span className="text-primary not-italic">"</span>
+                      <p className="text-cream-muted text-sm md:text-base font-body italic mt-1">
+                        <span className="text-gold-400 not-italic">"</span>
                         {activeCorps.showConcept}
-                        <span className="text-primary not-italic">"</span>
+                        <span className="text-gold-400 not-italic">"</span>
                       </p>
                     )}
                   </div>
 
-                  {/* Performance Multiplier - Score Bug Style */}
+                  {/* Performance Multiplier - Glowing Score Bug */}
                   <div className="flex-shrink-0 flex flex-col items-center">
-                    <div className="score-bug bg-white dark:bg-gradient-to-br dark:from-surface dark:to-surface-secondary border-amber-500/50 dark:border-primary/50">
-                      <div className="text-[8px] text-text-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
+                    <div className="score-bug">
+                      <div className="text-[8px] text-cream-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
                         Multiplier
                       </div>
-                      <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums ${multiplierStatus.color}`}>
+                      <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums text-gold-400`} style={{ textShadow: '0 0 20px rgba(250, 204, 21, 0.5)' }}>
                         {multiplier.toFixed(2)}x
                       </div>
                       <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
-                        <TrendingUp size={12} />
+                        <TrendingUp size={12} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />
                         {multiplierStatus.label}
                       </div>
                     </div>
@@ -704,50 +699,50 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-stone-200/50 dark:border-border-muted mt-0">
+              {/* Quick Stats Row - Stadium HUD with glowing numbers */}
+              <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-white/10 mt-0">
                 <div className="flex items-center gap-6 pt-5">
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">{rehearsalsThisWeek}/7</div>
-                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">This Week</div>
+                    <div className="text-2xl font-mono font-bold text-blue-400" style={{ textShadow: '0 0 10px rgba(96, 165, 250, 0.5)' }}>{rehearsalsThisWeek}/7</div>
+                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">This Week</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-purple-600 dark:text-purple-400">{showsThisWeek}</div>
-                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Shows</div>
+                    <div className="text-2xl font-mono font-bold text-purple-400" style={{ textShadow: '0 0 10px rgba(192, 132, 252, 0.5)' }}>{showsThisWeek}</div>
+                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <div className="text-center">
-                      <div className="text-2xl font-mono font-bold text-primary">
+                      <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
                         {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                       </div>
-                      <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Score</div>
+                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
                     </div>
                   )}
                   <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-success">{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Staff</div>
+                    <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
+                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
                   </div>
                 </div>
 
-                {/* Quick Links */}
+                {/* Quick Links - Glass buttons with glow */}
                 <div className="flex items-center gap-2 pt-5">
                   <button
                     onClick={() => setShowCaptionSelection(true)}
-                    className="p-3 rounded-lg bg-primary-muted border-2 border-primary/50 hover:border-primary text-primary hover:text-primary-hover transition-all"
+                    className="p-3 rounded-lg bg-gold-500/10 border border-gold-500/40 hover:border-gold-500 text-gold-400 hover:text-gold-300 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.3)]"
                     title="Edit Captions"
                   >
                     <Edit size={20} />
                   </button>
                   <Link
                     to="/schedule"
-                    className="p-3 rounded-lg bg-stone-100 dark:bg-surface-secondary border-2 border-stone-200 dark:border-border-default hover:border-primary/50 text-text-muted hover:text-primary transition-all"
+                    className="p-3 rounded-lg bg-white/5 border border-white/15 hover:border-gold-500/50 text-cream-muted hover:text-gold-400 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]"
                     title="View Schedule"
                   >
                     <Calendar size={20} />
                   </Link>
                   <Link
                     to="/scores"
-                    className="p-3 rounded-lg bg-stone-100 dark:bg-surface-secondary border-2 border-stone-200 dark:border-border-default hover:border-primary/50 text-text-muted hover:text-primary transition-all"
+                    className="p-3 rounded-lg bg-white/5 border border-white/15 hover:border-gold-500/50 text-cream-muted hover:text-gold-400 transition-all hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]"
                     title="View Scores"
                   >
                     <Trophy size={20} />

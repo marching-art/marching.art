@@ -9,11 +9,10 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Calendar, ShoppingCart, Users, Crown,
   User, Menu, ChevronDown, Coins, Zap,
-  Trophy, Settings, LogOut, Sun, Moon, HelpCircle,
+  Trophy, Settings, LogOut, HelpCircle,
   Award, Shield, X, Star
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { useTheme } from '../context/ThemeContext';
 import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -67,7 +66,6 @@ const accountNavItems: NavItem[] = [
 const GamingHeader: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
@@ -412,15 +410,6 @@ const GamingHeader: React.FC = () => {
 
                       <div className="my-2 border-t border-white/10" />
 
-                      {/* Theme Toggle */}
-                      <button
-                        onClick={toggleTheme}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 transition-all duration-200"
-                      >
-                        {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                        <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                      </button>
-
                       {/* Sign Out */}
                       <button
                         onClick={handleSignOut}
@@ -626,15 +615,6 @@ const GamingHeader: React.FC = () => {
 
               {/* Bottom Actions */}
               <div className="p-4 border-t border-white/10 space-y-3">
-                {/* Theme Toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 text-yellow-50/80 hover:text-yellow-50 hover:bg-white/15 transition-all duration-300"
-                >
-                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  <span className="font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
-
                 {/* Sign Out */}
                 <button
                   onClick={handleSignOut}

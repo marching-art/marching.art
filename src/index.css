@@ -4,17 +4,21 @@
 @tailwind utilities;
 
 /* ===========================================
-   DESIGN SYSTEM TOKENS
-   Brutalist Design Language
+   NIGHT MODE STADIUM HUD DESIGN SYSTEM
+   Single Dark Theme - "Always Night at the Stadium"
    =========================================== */
 
-/* CSS Variables for Theme */
+/* CSS Variables - Single Dark Mode Only */
 :root {
-  /* Border Radius - Tactical Brutalist: structural corners, not bubbles */
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
+  /* ===========================================
+     GLASSMORPHISM BORDER RADIUS
+     Soft, premium rounded corners for glass panels
+     =========================================== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -22,244 +26,167 @@
   --transition-base: 250ms;
   --transition-slow: 500ms;
 
-  /* Tactical Brutalist Shadows - Hard offset ONLY, zero blur, full opacity */
-  --shadow-brutal-xs: 2px 2px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal-sm: 3px 3px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal: 4px 4px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal-xl: 8px 8px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-brutal-gold-xs: 2px 2px 0px 0px rgba(255, 212, 77, 1);
-  --shadow-brutal-gold-sm: 3px 3px 0px 0px rgba(255, 212, 77, 1);
-  --shadow-brutal-gold: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  --shadow-brutal-gold-lg: 6px 6px 0px 0px rgba(255, 212, 77, 1);
-  --shadow-brutal-gold-xl: 8px 8px 0px 0px rgba(255, 212, 77, 1);
+  /* ===========================================
+     GOLDEN GLOW SHADOWS
+     Soft, atmospheric lighting effects
+     =========================================== */
+  --shadow-glow-sm: 0 0 10px rgba(234, 179, 8, 0.3);
+  --shadow-glow-md: 0 0 15px rgba(234, 179, 8, 0.4);
+  --shadow-glow-lg: 0 0 25px rgba(234, 179, 8, 0.5);
+  --shadow-glow-xl: 0 0 35px rgba(234, 179, 8, 0.6);
 
-  /* Strict Border Width - All functional elements use 2px */
-  --border-width: 2px;
-  --border-color-strict: #171717; /* neutral-900 */
+  /* Glass panel shadows */
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.3);
+  --shadow-glass-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glass-glow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(234, 179, 8, 0.15);
 
   /* ===========================================
      SEMANTIC COLOR TOKENS
-     Use these via Tailwind classes!
-     e.g., bg-surface, text-text-main, border-border-default
+     Night Mode Stadium Aesthetic
      =========================================== */
 
-  /* Primary (Gold/Amber) - The brand accent color */
-  --color-primary: #FFD44D;
-  --color-primary-hover: #FFDD73;
-  --color-primary-muted: rgba(255, 212, 77, 0.15);
+  /* Primary (Electric Gold) - Action & Value highlights */
+  --color-primary: #FACC15;
+  --color-primary-hover: #FDE047;
+  --color-primary-muted: rgba(250, 204, 21, 0.15);
 
   /* Danger (Red) */
   --color-danger: #EF4444;
-  --color-danger-hover: #DC2626;
+  --color-danger-hover: #F87171;
   --color-danger-muted: rgba(239, 68, 68, 0.15);
 
   /* Success (Green) */
   --color-success: #22C55E;
-  --color-success-hover: #16A34A;
+  --color-success-hover: #4ADE80;
   --color-success-muted: rgba(34, 197, 94, 0.15);
 
   /* Warning (Amber) */
   --color-warning: #F59E0B;
-  --color-warning-hover: #D97706;
+  --color-warning-hover: #FBBF24;
   --color-warning-muted: rgba(245, 158, 11, 0.15);
 
-  /* Shadow color for theme-aware shadows */
-  --shadow-color: rgba(0, 0, 0, 1);
+  /* Shadow color for glow effects */
+  --shadow-color: rgba(234, 179, 8, 0.3);
 }
 
 /* ===========================================
-   STADIUM HUD DARK MODE (Default)
-   "Night Mode Stadium" Aesthetic
+   NIGHT MODE STADIUM - THE ONLY MODE
+   Deep charcoal base with warm stadium lighting
    =========================================== */
-[data-theme="dark"], :root {
-  /* Cream scale - Primary text colors (high readability) */
-  --cream-50: #FFFFF5;    /* Near white - maximum readability */
-  --cream-100: #FEFCF3;   /* Primary body text */
-  --cream-200: #FAF6EA;
-  --cream-300: #F5EDD5;
-  --cream-400: #F0E4C0;
-  --cream-500: #EADCAB;
-  --cream-600: #D4BC72;
-  --cream-700: #C3A54E;
-  --cream-800: #9E8340;
-  --cream-900: #796232;
-
-  /* Gold scale - Accent and emphasis */
-  --gold-300: #FFE99A;
-  --gold-400: #FFD44D;    /* Primary gold accent */
-  --gold-500: #EAB308;    /* CTA glow color */
-  --gold-600: #CA8A04;
-
-  /* Charcoal/Slate scale - Backgrounds */
-  --charcoal-50: #F5F5F5;
-  --charcoal-100: #E8E8E8;
-  --charcoal-200: #D1D1D1;
-  --charcoal-300: #B8B8B8;
-  --charcoal-400: #9F9F9F;
-  --charcoal-500: #868686;
-  --charcoal-600: #6D6D6D;
-  --charcoal-700: #545454;
-  --charcoal-800: #3B3B3B;
-  --charcoal-900: #1A1A1A;
-  --charcoal-950: #020617;  /* Slate-950 - Stadium night sky */
+:root, [data-theme="dark"] {
+  /* ===========================================
+     COLOR PALETTE - CREAM (Body Text/Labels)
+     Softer than pure white for dark backgrounds
+     =========================================== */
+  --cream-50: #FEFDF8;    /* Near white */
+  --cream-100: #FDF9ED;   /* Primary body text - F5F5DC equivalent */
+  --cream-200: #FAF3DC;
+  --cream-300: #F5ECCC;
+  --cream-400: #F0E4BB;
+  --cream-500: #EADCAB;   /* Secondary labels */
+  --cream-600: #D4C48A;
+  --cream-700: #BEAC6A;
+  --cream-800: #A8944A;
+  --cream-900: #7A6C36;
 
   /* ===========================================
-     SEMANTIC TOKENS - STADIUM HUD DARK MODE
+     COLOR PALETTE - ELECTRIC GOLD (Action/Data)
+     Vibrant gold for scores, CTAs, active elements
      =========================================== */
+  --gold-50: #FFFEF5;
+  --gold-100: #FFFBEB;
+  --gold-200: #FEF3C7;
+  --gold-300: #FDE68A;
+  --gold-400: #FACC15;    /* Primary Electric Gold - scores, currency, active nav */
+  --gold-500: #EAB308;    /* CTA buttons, glow effects */
+  --gold-600: #CA8A04;
+  --gold-700: #A16207;
+  --gold-800: #854D0E;
+  --gold-900: #713F12;
 
-  /* Surface colors (backgrounds) - Deep charcoal base */
-  --color-surface: #020617;           /* slate-950 - Main page background */
-  --color-surface-secondary: #0f172a; /* slate-900 */
-  --color-surface-tertiary: #1e293b;  /* slate-800 */
-  --color-surface-highlight: #334155; /* slate-700 */
-  --color-surface-overlay: rgba(2, 6, 23, 0.95);
+  /* ===========================================
+     COLOR PALETTE - CHARCOAL (Backgrounds)
+     Deep, atmospheric stadium night
+     =========================================== */
+  --charcoal-700: #374151;
+  --charcoal-800: #1F2937;
+  --charcoal-900: #111827;
+  --charcoal-950: #0A0A0A;  /* Base background - deep charcoal */
 
-  /* Text colors - Cream hierarchy */
-  --color-text-main: #FEFCF3;         /* Cream - Primary text */
-  --color-text-secondary: #fef9c3;    /* yellow-100 - Secondary */
-  --color-text-muted: rgba(254, 252, 243, 0.6);  /* Muted cream */
-  --color-text-inverse: #020617;
-  --color-text-gold: #FFD44D;         /* Gold for critical data */
+  /* ===========================================
+     SEMANTIC SURFACE COLORS
+     =========================================== */
+  --color-surface: #0A0A0A;           /* Deep charcoal base */
+  --color-surface-secondary: #111827; /* Slightly elevated */
+  --color-surface-tertiary: #1F2937;  /* Card backgrounds */
+  --color-surface-highlight: #374151; /* Hover states */
+  --color-surface-overlay: rgba(10, 10, 10, 0.95);
 
-  /* Border colors - Subtle glass borders */
-  --color-border: rgba(255, 255, 255, 0.1);       /* Glass border */
+  /* ===========================================
+     SEMANTIC TEXT COLORS
+     Cream hierarchy for readability
+     =========================================== */
+  --color-text-main: #F5F5DC;         /* Primary cream - body text */
+  --color-text-secondary: #EADCAB;    /* Secondary cream - labels */
+  --color-text-muted: rgba(245, 245, 220, 0.6);  /* Muted cream */
+  --color-text-inverse: #0A0A0A;
+  --color-text-gold: #FACC15;         /* Electric Gold - data highlights */
+
+  /* ===========================================
+     SEMANTIC BORDER COLORS
+     Glass panel borders - thin and subtle
+     =========================================== */
+  --color-border: rgba(255, 255, 255, 0.1);       /* Default glass border */
   --color-border-muted: rgba(255, 255, 255, 0.05);
-  --color-border-accent: rgba(234, 179, 8, 0.5);  /* Gold accent border */
-  --color-border-glow: rgba(234, 179, 8, 0.3);
+  --color-border-accent: rgba(250, 204, 21, 0.5); /* Gold accent */
+  --color-border-glow: rgba(250, 204, 21, 0.3);
 
-  /* Shadow color */
-  --shadow-color: rgba(234, 179, 8, 0.3);
+  /* ===========================================
+     STADIUM LIGHTS - Atmospheric Background
+     Warm gold gradient from top center
+     =========================================== */
+  --stadium-lights: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(250, 204, 21, 0.15) 0%, transparent 50%);
+  --stadium-glow: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(250, 204, 21, 0.12) 0%, transparent 60%);
 
-  /* Stadium Lights Background Gradient */
-  --stadium-lights: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(234, 179, 8, 0.12) 0%, transparent 50%);
-  --stadium-glow: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 212, 77, 0.15) 0%, transparent 60%);
-
-  /* Legacy tokens (deprecated - use semantic tokens) */
-  --bg-primary: #020617;
-  --bg-secondary: #0f172a;
-  --bg-tertiary: #1e293b;
-  --text-primary: #FEFCF3;
-  --text-secondary: #fef9c3;
-  --text-muted: rgba(254, 252, 243, 0.6);
+  /* Legacy tokens for backwards compatibility */
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1F2937;
+  --text-primary: #F5F5DC;
+  --text-secondary: #EADCAB;
+  --text-muted: rgba(245, 245, 220, 0.6);
   --border-color: rgba(255, 255, 255, 0.1);
   --border-color-light: rgba(255, 255, 255, 0.05);
 
   /* Gradients */
-  --gradient-gold: linear-gradient(135deg, #FFD44D 0%, #EAB308 50%, #CA8A04 100%);
-  --gradient-cream: linear-gradient(135deg, #FEFCF3 0%, #fef9c3 50%, #fde047 100%);
-  --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-  --gradient-main: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  --gradient-gold: linear-gradient(135deg, #FACC15 0%, #EAB308 50%, #CA8A04 100%);
+  --gradient-cream: linear-gradient(135deg, #F5F5DC 0%, #EADCAB 50%, #D4C48A 100%);
+  --gradient-dark: linear-gradient(135deg, #111827 0%, #1F2937 50%, #374151 100%);
+  --gradient-main: linear-gradient(180deg, #0A0A0A 0%, #111827 100%);
 
-  /* Stadium HUD Shadows - Soft golden glows */
-  --shadow-sm: 0 0 10px rgba(234, 179, 8, 0.2);
-  --shadow-md: 0 0 15px rgba(234, 179, 8, 0.3);
-  --shadow-lg: 0 0 25px rgba(234, 179, 8, 0.4);
-  --shadow-xl: 0 0 35px rgba(234, 179, 8, 0.5);
+  /* Golden Glow Shadows */
+  --shadow-sm: 0 0 10px rgba(250, 204, 21, 0.2);
+  --shadow-md: 0 0 15px rgba(250, 204, 21, 0.3);
+  --shadow-lg: 0 0 25px rgba(250, 204, 21, 0.4);
+  --shadow-xl: 0 0 35px rgba(250, 204, 21, 0.5);
 
-  /* Glassmorphism Panels */
+  /* ===========================================
+     GLASSMORPHISM PANEL STYLES
+     Semi-transparent with backdrop blur
+     =========================================== */
   --glass-bg: rgba(0, 0, 0, 0.4);
   --glass-bg-dark: rgba(0, 0, 0, 0.6);
-  --glass-bg-gold: rgba(234, 179, 8, 0.1);
+  --glass-bg-light: rgba(0, 0, 0, 0.25);
+  --glass-bg-gold: rgba(250, 204, 21, 0.08);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-premium-start: rgba(15, 23, 42, 0.8);
-  --glass-premium-end: rgba(2, 6, 23, 0.9);
-  --glass-premium-shadow: 0 0 30px rgba(234, 179, 8, 0.2);
+  --glass-border-glow: rgba(250, 204, 21, 0.2);
+  --glass-premium-start: rgba(17, 24, 39, 0.8);
+  --glass-premium-end: rgba(10, 10, 10, 0.9);
+  --glass-premium-shadow: 0 0 30px rgba(250, 204, 21, 0.2);
   --glass-premium-inset: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Light Mode - Swap cream and charcoal for proper contrast */
-[data-theme="light"] {
-  /* Cream scale - NOW dark colors for text in light mode */
-  --cream-50: #0D0D0D;
-  --cream-100: #1A1A1A;
-  --cream-200: #3B3B3B;
-  --cream-300: #545454;
-  --cream-400: #6D6D6D;
-  --cream-500: #868686;
-  --cream-600: #9F9F9F;
-  --cream-700: #B8B8B8;
-  --cream-800: #D1D1D1;
-  --cream-900: #E8E8E8;
-
-  /* Gold scale - slightly darker for better contrast on light bg */
-  --gold-400: #D9A300;
-  --gold-500: #B38600;
-
-  /* Charcoal scale - NOW light colors for backgrounds in light mode */
-  --charcoal-50: #796232;
-  --charcoal-100: #9E8340;
-  --charcoal-200: #C3A54E;
-  --charcoal-300: #D4BC72;
-  --charcoal-400: #E5D396;
-  --charcoal-500: #EADCAB;
-  --charcoal-600: #F0E4C0;
-  --charcoal-700: #F5EDD5;
-  --charcoal-800: #FAF6EA;
-  --charcoal-900: #FDFBF5;
-  --charcoal-950: #FFFFFF;
-
-  /* ===========================================
-     SEMANTIC TOKENS - LIGHT MODE
-     =========================================== */
-
-  /* Surface colors (backgrounds) */
-  --color-surface: #FAF6EA;
-  --color-surface-secondary: #F5EDD5;
-  --color-surface-tertiary: #E5D396;
-  --color-surface-highlight: #EADCAB;
-  --color-surface-overlay: rgba(250, 246, 234, 0.95);
-
-  /* Text colors */
-  --color-text-main: #1A1A1A;
-  --color-text-secondary: #3B3B3B;
-  --color-text-muted: rgba(26, 26, 26, 0.5);
-  --color-text-inverse: #FAF6EA;
-
-  /* Border colors */
-  --color-border: #1A1A1A;
-  --color-border-muted: rgba(26, 26, 26, 0.15);
-  --color-border-accent: #D9A300;
-
-  /* Shadow color (black for light mode) */
-  --shadow-color: rgba(0, 0, 0, 1);
-
-  /* Primary color adjustments for light mode (darker gold for contrast) */
-  --color-primary: #D9A300;
-  --color-primary-hover: #B38600;
-  --color-primary-muted: rgba(217, 163, 0, 0.15);
-
-  /* Legacy background and text colors (deprecated - use semantic tokens) */
-  --bg-primary: #FAF6EA;
-  --bg-secondary: #F5EDD5;
-  --bg-tertiary: #E5D396;
-  --text-primary: #1A1A1A;
-  --text-secondary: #3B3B3B;
-  --text-muted: rgba(26, 26, 26, 0.6);
-  --border-color: rgba(26, 26, 26, 0.15);
-  --border-color-light: rgba(26, 26, 26, 0.08);
-
-  /* Gradients */
-  --gradient-gold: linear-gradient(135deg, #D9A300 0%, #B38600 50%, #8A6700 100%);
-  --gradient-cream: linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%);
-  --gradient-dark: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 50%, #E5D396 100%);
-  --gradient-main: linear-gradient(135deg, #FAF6EA 0%, #F5EDD5 100%);
-
-  /* Shadows - Tactical Brutalist: Hard black offset, full opacity */
-  --shadow-sm: 2px 2px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-md: 4px 4px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-lg: 6px 6px 0px 0px rgba(0, 0, 0, 1);
-  --shadow-xl: 8px 8px 0px 0px rgba(0, 0, 0, 1);
-
-  /* Brutalist panels - solid backgrounds, no glass blur */
-  --glass-bg: rgba(250, 246, 234, 0.98);
-  --glass-bg-dark: rgba(245, 237, 213, 0.98);
-  --glass-bg-gold: rgba(179, 134, 0, 0.15);
-  --glass-premium-start: rgba(250, 246, 234, 1);
-  --glass-premium-end: rgba(245, 237, 213, 1);
-  --glass-premium-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
-  --glass-premium-inset: none;
-}
+/* Light mode has been removed - single dark mode only */
 
 /* Base Styles */
 * {
@@ -276,40 +203,42 @@ html {
 
 body {
   @apply font-body;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: #0A0A0A;
+  color: #F5F5DC;
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===========================================
-   STADIUM HUD - Atmospheric Background
-   Creates the "stadium lights" glow effect
+   STADIUM LIGHTS - Atmospheric Background Effect
+   Warm gold gradient emanating from top center
+   Creates the effect of overhead stadium lighting
    =========================================== */
-[data-theme="dark"] body::before {
+body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: -1;
   background:
-    radial-gradient(ellipse 100% 60% at 50% -5%, rgba(234, 179, 8, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 40% at 30% 10%, rgba(234, 179, 8, 0.06) 0%, transparent 40%),
-    radial-gradient(ellipse 80% 40% at 70% 10%, rgba(234, 179, 8, 0.06) 0%, transparent 40%);
+    /* Primary stadium light - large warm glow from top center */
+    radial-gradient(ellipse 120% 70% at 50% -10%, rgba(250, 204, 21, 0.15) 0%, transparent 50%),
+    /* Secondary side lights for depth */
+    radial-gradient(ellipse 60% 40% at 20% 5%, rgba(250, 204, 21, 0.08) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 40% at 80% 5%, rgba(250, 204, 21, 0.08) 0%, transparent 40%);
 }
 
-/* Stadium field ambient glow at bottom */
-[data-theme="dark"] body::after {
+/* Stadium field ambient glow at bottom - very subtle */
+body::after {
   content: '';
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40%;
+  height: 30%;
   pointer-events: none;
   z-index: -1;
-  background: radial-gradient(ellipse 120% 80% at 50% 100%, rgba(234, 179, 8, 0.03) 0%, transparent 60%);
+  background: radial-gradient(ellipse 140% 80% at 50% 100%, rgba(250, 204, 21, 0.04) 0%, transparent 60%);
 }
 
 /* Tactical Luxury: Premium Paper/Tactical Map Background */
@@ -530,55 +459,45 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Stadium Banner - Hero section - Tactical Brutalist */
-  /* Light Mode: White card with hard shadow */
+  /* ===========================================
+     STADIUM BANNER - HERO CARD (Stadium HUD)
+     Premium glass panel with atmospheric gold glow
+     =========================================== */
   .stadium-banner {
     @apply relative overflow-hidden;
-    @apply bg-white;
-    border: 2px solid #171717;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(10, 10, 10, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    border-radius: 20px;
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(234, 179, 8, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
+  /* Stadium lights glow from top */
   .stadium-banner::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.08) 0%, transparent 50%);
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(250, 204, 21, 0.15) 0%, transparent 60%),
+      linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Inner edge highlight */
+  .stadium-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     pointer-events: none;
   }
 
-  /* Light mode text colors for stadium-banner content */
-  .stadium-banner .text-white { color: #1e293b; }
-  .stadium-banner .text-white\/40, .stadium-banner .text-white\/50, .stadium-banner .text-white\/60 { color: #64748b; }
-  .stadium-banner .text-\[\#FAF6EA\] { color: #1e293b; }
-  .stadium-banner .text-\[\#FAF6EA\]\/40, .stadium-banner .text-\[\#FAF6EA\]\/50, .stadium-banner .text-\[\#FAF6EA\]\/60 { color: #64748b; }
-  .stadium-banner .border-\[\#2A2A2A\] { border-color: #e5e7eb; }
-  .stadium-banner .bg-\[\#1A1A1A\] { background-color: #f8fafc; }
-
-  /* Dark Mode: Deep charcoal with gold hard shadow */
-  [data-theme="dark"] .stadium-banner {
-    background-color: #1A1A1A;
-    border: 2px solid rgba(255, 212, 77, 0.3);
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .stadium-banner::before {
-    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.15) 0%, transparent 50%);
-  }
-
-  /* Reset text colors for dark mode */
-  [data-theme="dark"] .stadium-banner .text-white { color: white; }
-  [data-theme="dark"] .stadium-banner .text-white\/40 { color: rgba(255,255,255,0.4); }
-  [data-theme="dark"] .stadium-banner .text-white\/50 { color: rgba(255,255,255,0.5); }
-  [data-theme="dark"] .stadium-banner .text-white\/60 { color: rgba(255,255,255,0.6); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\] { color: #FAF6EA; }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/40 { color: rgba(250,246,234,0.4); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/50 { color: rgba(250,246,234,0.5); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/60 { color: rgba(250,246,234,0.6); }
-  [data-theme="dark"] .stadium-banner .border-\[\#2A2A2A\] { border-color: #2A2A2A; }
-  [data-theme="dark"] .stadium-banner .bg-\[\#1A1A1A\] { background-color: #1A1A1A; }
 
   /* Silhouette overlay for stadium banner */
   .stadium-overlay {
@@ -592,68 +511,121 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background-size: cover;
   }
 
-  /* Score Bug - Circular badge for multipliers/scores - Brutalist */
-  /* Light Mode: White badge with hard shadow */
+  /* ===========================================
+     SCORE BUG - Glowing circular badge (Stadium HUD)
+     Premium data display with gold glow
+     =========================================== */
   .score-bug {
     @apply flex flex-col items-center justify-center rounded-full p-4 md:p-6;
-    @apply bg-white;
-    border: 4px solid #171717;
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 10, 10, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(250, 204, 21, 0.4);
     min-width: 120px;
     min-height: 120px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow:
+      0 0 30px rgba(234, 179, 8, 0.25),
+      0 4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
   }
 
-  /* Dark Mode: Charcoal badge with gold hard shadow */
-  [data-theme="dark"] .score-bug {
-    background-color: #0D0D0D;
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  /* Inner glow effect */
+  .score-bug::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 30%, rgba(250, 204, 21, 0.1) 0%, transparent 60%);
+    pointer-events: none;
   }
 
   .score-bug-lg {
     min-width: 140px;
     min-height: 140px;
+    border-width: 3px;
+    box-shadow:
+      0 0 40px rgba(234, 179, 8, 0.3),
+      0 6px 30px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
-  /* Icon Card - Action tiles with large background icons - Brutalist */
+  /* ===========================================
+     ICON CARD - Neon Gold Glass Tiles (Stadium HUD)
+     Interactive action tiles with glass effect
+     =========================================== */
   .icon-card {
     @apply relative overflow-hidden p-4 md:p-5;
-    @apply bg-white;
-    @apply transition-all duration-200 cursor-pointer;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    @apply transition-all duration-300 cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .icon-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-4px);
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 25px rgba(234, 179, 8, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  /* Dark Mode: Gold shadow */
-  [data-theme="dark"] .icon-card {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.3);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  .icon-card:active {
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 15px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(234, 179, 8, 0.15);
   }
 
-  [data-theme="dark"] .icon-card:hover {
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  /* Glass shine overlay */
+  .icon-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
+    transition: opacity 0.3s ease;
   }
 
+  .icon-card:hover::before {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, transparent 50%);
+  }
+
+  /* Background icon - neon gold on hover */
   .icon-card-bg {
     position: absolute;
     right: -10%;
     bottom: -20%;
     width: 60%;
     height: 120%;
-    opacity: 0.08;
+    opacity: 0.05;
     pointer-events: none;
+    transition: all 0.3s ease;
   }
 
   .icon-card:hover .icon-card-bg {
-    opacity: 0.15;
+    opacity: 0.12;
+    filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.3));
+  }
+
+  /* Neon icon styling within icon-card */
+  .icon-card .icon-neon {
+    color: rgba(250, 204, 21, 0.8);
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4));
+    transition: all 0.3s ease;
+  }
+
+  .icon-card:hover .icon-neon {
+    color: #FACC15;
+    filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.6));
   }
 
   /* Dark Toolbar - For navigation elements */
@@ -665,85 +637,112 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     border: 1px solid #2A2A2A;
   }
 
-  /* Ticket Stub - Schedule card style - Travel Itinerary */
+  /* ===========================================
+     TICKET STUBS - Schedule Event Cards (Stadium HUD)
+     Glass panels with status-based glows
+     =========================================== */
 
   /* Base ticket stub styles */
   .ticket-stub-base {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
   }
 
-  /* OPEN Shows - White bg with hard black drop-shadow (encourages clicking) */
+  /* OPEN Shows - Glass with gold glow pulse (encourages clicking) */
   .ticket-stub-open {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200 cursor-pointer;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    @apply overflow-hidden;
+    @apply transition-all duration-300 cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(234, 179, 8, 0.15);
+    position: relative;
+  }
+
+  .ticket-stub-open::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
   .ticket-stub-open:hover {
-    transform: translateY(-3px) translateX(-2px);
-    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-4px);
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 35px rgba(234, 179, 8, 0.25);
   }
 
-  [data-theme="dark"] .ticket-stub-open {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub-open:hover {
-    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  /* REGISTERED Shows - Thick green left border */
+  /* REGISTERED Shows - Glass with neon green accent */
   .ticket-stub-registered {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-left: 8px solid #16a34a;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(22, 163, 74, 0.8);
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-left: 4px solid #22c55e;
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(34, 197, 94, 0.15);
+    position: relative;
+  }
+
+  .ticket-stub-registered::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
   .ticket-stub-registered:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0px 0px rgba(22, 163, 74, 0.9);
+    transform: translateY(-3px);
+    box-shadow:
+      0 6px 25px rgba(0, 0, 0, 0.35),
+      0 0 25px rgba(34, 197, 94, 0.2);
   }
 
-  [data-theme="dark"] .ticket-stub-registered {
-    background-color: #1A1A1A;
-    border-color: rgba(22, 163, 74, 0.5);
-    border-left-color: #22c55e;
-    box-shadow: 4px 4px 0px 0px rgba(34, 197, 94, 1);
+  /* Neon "REGISTERED" badge */
+  .badge-registered {
+    @apply inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
   }
 
-  [data-theme="dark"] .ticket-stub-registered:hover {
-    box-shadow: 6px 6px 0px 0px rgba(34, 197, 94, 1);
-  }
-
-  /* PAST Shows - Grayscale with hatched pattern overlay */
+  /* PAST Shows - Muted glass with subtle dimming */
   .ticket-stub-past {
-    @apply bg-stone-100 overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #a8a29e;
-    border-radius: 4px;
-    box-shadow: 3px 3px 0px 0px rgba(168, 162, 158, 0.6);
-    filter: grayscale(100%);
-    opacity: 0.75;
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0.6;
   }
 
   .ticket-stub-past:hover {
-    opacity: 0.9;
-  }
-
-  [data-theme="dark"] .ticket-stub-past {
-    background-color: #1A1A1A;
-    border-color: #3A3A3A;
-    box-shadow: 3px 3px 0px 0px rgba(58, 58, 58, 0.8);
+    opacity: 0.75;
+    background: rgba(0, 0, 0, 0.35);
   }
 
   /* Hatched diagonal pattern overlay for past shows */
@@ -752,52 +751,34 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
       -45deg,
       transparent,
       transparent 4px,
-      rgba(120, 113, 108, 0.15) 4px,
-      rgba(120, 113, 108, 0.15) 8px
+      rgba(255, 255, 255, 0.04) 4px,
+      rgba(255, 255, 255, 0.04) 8px
     );
   }
 
-  [data-theme="dark"] .hatched-overlay {
-    background: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 4px,
-      rgba(255, 255, 255, 0.08) 4px,
-      rgba(255, 255, 255, 0.08) 8px
-    );
-  }
-
-  /* Legacy ticket-stub class for backwards compatibility */
+  /* Legacy ticket-stub class */
   .ticket-stub {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
   .ticket-stub:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.3);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub:hover {
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+    transform: translateY(-3px);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow:
+      0 6px 25px rgba(0, 0, 0, 0.35),
+      0 0 15px rgba(234, 179, 8, 0.1);
   }
 
   .ticket-stub-divider {
-    @apply border-l-2 border-dashed;
-    border-color: #1A1A1A;
-  }
-
-  [data-theme="dark"] .ticket-stub-divider {
-    border-color: rgba(255, 212, 77, 0.3);
+    @apply border-l border-dashed;
+    border-color: rgba(255, 255, 255, 0.15);
   }
 
   /* Pill Button - Compact CTA with golden glow */
@@ -815,18 +796,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   .btn-pill:hover {
     background: linear-gradient(135deg, #FFDD73 0%, #FFD44D 100%);
     transform: translateY(-2px);
-    box-shadow: 0 0 25px rgba(234, 179, 8, 0.5);
-  }
-
-  [data-theme="light"] .btn-pill {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #FFD44D;
-    border-color: rgba(0, 0, 0, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  }
-
-  [data-theme="light"] .btn-pill:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.5);
   }
 
   /* Form Card - Glass container for Settings */
@@ -840,12 +810,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
   }
 
-  [data-theme="light"] .form-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-
   /* Form Input - Glass style with glow focus */
   .form-input {
     @apply w-full px-4 py-3;
@@ -854,42 +818,23 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    color: #FEFCF3;
+    color: #F5F5DC;
   }
 
   .form-input:focus {
-    border-color: rgba(234, 179, 8, 0.5);
-    box-shadow: 0 0 15px rgba(234, 179, 8, 0.2);
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.2);
     background: rgba(0, 0, 0, 0.4);
   }
 
-  [data-theme="light"] .form-input {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.15);
-    color: #1e293b;
-  }
-
-  [data-theme="light"] .form-input:focus {
-    border-color: rgba(179, 134, 0, 0.5);
-    box-shadow: 0 0 10px rgba(179, 134, 0, 0.1);
-  }
-
   .form-input::placeholder {
-    color: rgba(254, 252, 243, 0.4);
-  }
-
-  [data-theme="light"] .form-input::placeholder {
-    color: rgba(30, 41, 59, 0.4);
+    color: rgba(245, 245, 220, 0.4);
   }
 
   .form-label {
     @apply block text-xs font-display font-bold uppercase mb-2;
     letter-spacing: 0.08em;
-    color: rgba(254, 252, 243, 0.7);
-  }
-
-  [data-theme="light"] .form-label {
-    color: rgba(30, 41, 59, 0.7);
+    color: rgba(245, 245, 220, 0.7);
   }
 
   /* Sports Header - Condensed font for headlines - Brutalist tight tracking */
@@ -936,33 +881,80 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply bg-green-500 text-white;
   }
 
-  /* Compact Card - For staff marketplace - Brutalist */
-  /* Border colors are now controlled dynamically via Tailwind classes for rarity */
+  /* ===========================================
+     COMPACT CARD - Staff Marketplace (Stadium HUD)
+     Glass tiles with gold rim-light effect
+     =========================================== */
   .compact-card {
-    @apply relative bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border-radius: 4px;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.9);
+    @apply relative overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .compact-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.9);
+    transform: translateY(-4px);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(234, 179, 8, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  /* Dark Mode: Gold shadow */
-  [data-theme="dark"] .compact-card {
-    background-color: #1A1A1A;
-    box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 0.8);
+  /* Glass shine overlay */
+  .compact-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
-  [data-theme="dark"] .compact-card:hover {
-    box-shadow: 5px 5px 0px 0px rgba(255, 212, 77, 0.9);
+  /* Gold rim-light effect for portraits */
+  .compact-card .portrait-glow {
+    position: relative;
   }
 
-  /* Price Anchor - Positioned price tag */
+  .compact-card .portrait-glow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.4) 0%, rgba(234, 179, 8, 0.2) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .compact-card:hover .portrait-glow::after {
+    opacity: 1;
+  }
+
+  /* Price Anchor - Glowing price button */
   .price-anchor {
     @apply absolute bottom-3 right-3;
+  }
+
+  .price-button {
+    @apply px-3 py-1.5 font-mono font-bold text-sm rounded-lg;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.2) 0%, rgba(234, 179, 8, 0.1) 100%);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    color: #FACC15;
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .price-button:hover {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.3) 0%, rgba(234, 179, 8, 0.2) 100%);
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.4);
+    transform: scale(1.05);
   }
 
   /* ===========================================
@@ -1076,21 +1068,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
   }
 
-  [data-theme="dark"] .glass {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  [data-theme="light"] .glass-panel,
-  [data-theme="light"] .glass-card,
-  [data-theme="light"] .glass-premium,
-  [data-theme="light"] .glass-gold,
-  [data-theme="light"] .glass-dark,
-  [data-theme="light"] .glass {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-
   /* Gradient Backgrounds */
   .bg-gradient-main {
     background: var(--gradient-main);
@@ -1137,19 +1114,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .btn-primary:active {
-    box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
-  }
-
-  /* Light mode primary button */
-  [data-theme="light"] .btn-primary {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #FFD44D;
-    border-color: rgba(0, 0, 0, 0.2);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  [data-theme="light"] .btn-primary:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
   }
 
   /* Secondary Button - Subtle glass style */
@@ -1166,13 +1131,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 10px rgba(234, 179, 8, 0.1);
-  }
-
-  [data-theme="light"] .btn-secondary {
-    background: rgba(0, 0, 0, 0.05);
-    color: #1e293b;
-    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 10px rgba(250, 204, 21, 0.1);
   }
 
   /* Outline Button - Gold border with glow */
@@ -1184,19 +1143,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .btn-outline:hover {
-    background: rgba(234, 179, 8, 0.1);
-    border-color: rgba(234, 179, 8, 0.8);
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
-  }
-
-  [data-theme="light"] .btn-outline {
-    color: #B38600;
-    border-color: rgba(179, 134, 0, 0.5);
-    box-shadow: none;
-  }
-
-  [data-theme="light"] .btn-outline:hover {
-    background: rgba(179, 134, 0, 0.1);
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.8);
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
   }
 
   /* Ghost Button - Minimal style */
@@ -1209,18 +1158,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .btn-ghost:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: #FEFCF3;
+    color: #F5F5DC;
   }
 
-  [data-theme="light"] .btn-ghost {
-    color: rgba(30, 41, 59, 0.7);
-  }
-
-  [data-theme="light"] .btn-ghost:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #1e293b;
-  }
-  
   /* ===========================================
      STADIUM HUD - CARDS WITH GLASSMORPHISM
      Premium frosted glass card style
@@ -1242,17 +1182,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
       0 4px 30px rgba(0, 0, 0, 0.3),
       0 0 15px rgba(234, 179, 8, 0.1);
     transform: translateY(-2px);
-  }
-
-  [data-theme="light"] .card {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-  }
-
-  [data-theme="light"] .card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
   }
 
   .card-hover {
@@ -1280,39 +1209,25 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .card-premium:hover {
-    border-color: rgba(234, 179, 8, 0.4);
+    border-color: rgba(250, 204, 21, 0.4);
     box-shadow:
       0 8px 40px rgba(0, 0, 0, 0.35),
-      0 0 30px rgba(234, 179, 8, 0.25);
+      0 0 30px rgba(250, 204, 21, 0.25);
   }
 
-  [data-theme="light"] .card-premium {
-    background: linear-gradient(135deg, rgba(255, 251, 235, 0.95) 0%, rgba(254, 249, 195, 0.9) 100%);
-    border-color: rgba(179, 134, 0, 0.3);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Form Elements - Brutalist: 2px borders, minimal radius */
+  /* Form Elements - Glassmorphism style */
   .input {
     @apply w-full px-4 py-3.5 focus:outline-none transition-all duration-200 min-h-[44px] text-base;
-    background: var(--bg-secondary);
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #F5F5DC;
   }
 
   .input:focus {
-    border-color: #FFD44D;
-    box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 1);
-  }
-
-  [data-theme="dark"] .input {
-    border-color: rgba(255, 212, 77, 0.3);
-  }
-
-  [data-theme="dark"] .input:focus {
-    border-color: #FFD44D;
-    box-shadow: 2px 2px 0px 0px rgba(255, 212, 77, 0.5);
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.2);
+    background: rgba(0, 0, 0, 0.4);
   }
 
   .input::placeholder {
@@ -1622,20 +1537,8 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     border-color: rgba(255, 255, 255, 0.12);
     box-shadow:
       0 4px 30px rgba(0, 0, 0, 0.3),
-      0 0 15px rgba(234, 179, 8, 0.1);
+      0 0 15px rgba(250, 204, 21, 0.1);
     transform: translateY(-2px);
-  }
-
-  [data-theme="light"] .card-brutalist {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-    color: #1e293b;
-  }
-
-  [data-theme="light"] .card-brutalist:hover {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
   }
 
   /* Hero Card - Large premium glass panel with golden accent */
@@ -1665,21 +1568,10 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .card-hero:hover {
-    border-color: rgba(234, 179, 8, 0.2);
+    border-color: rgba(250, 204, 21, 0.2);
     box-shadow:
       0 12px 50px rgba(0, 0, 0, 0.45),
-      0 0 50px rgba(234, 179, 8, 0.15);
-  }
-
-  [data-theme="light"] .card-hero {
-    background: linear-gradient(135deg, rgba(255, 251, 235, 0.95) 0%, rgba(254, 249, 195, 0.9) 100%);
-    border-color: rgba(179, 134, 0, 0.2);
-    box-shadow: 0 8px 35px rgba(0, 0, 0, 0.1);
-    color: #1e293b;
-  }
-
-  [data-theme="light"] .card-hero::before {
-    background: radial-gradient(ellipse at top right, rgba(179, 134, 0, 0.08) 0%, transparent 60%);
+      0 0 50px rgba(250, 204, 21, 0.15);
   }
 
   /* Action Tile - Interactive glass squares */
@@ -1710,23 +1602,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .tile-action:hover .tile-label {
-    color: #FFD44D;
-  }
-
-  [data-theme="light"] .tile-action {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(0, 0, 0, 0.08);
-    color: #1e293b;
-  }
-
-  [data-theme="light"] .tile-action:hover {
-    background: rgba(255, 251, 235, 0.95);
-    border-color: rgba(179, 134, 0, 0.3);
-  }
-
-  [data-theme="light"] .tile-action:hover .tile-icon,
-  [data-theme="light"] .tile-action:hover .tile-label {
-    color: #B38600;
+    color: #FACC15;
   }
 
   /* Trading Card - TCG Style glass card */
@@ -1747,18 +1623,7 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     border-color: rgba(255, 255, 255, 0.15);
     box-shadow:
       0 8px 35px rgba(0, 0, 0, 0.35),
-      0 0 20px rgba(234, 179, 8, 0.15);
-  }
-
-  [data-theme="light"] .card-tcg {
-    background: rgba(255, 255, 255, 0.92);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    color: #1e293b;
-  }
-
-  [data-theme="light"] .card-tcg:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      0 0 20px rgba(250, 204, 21, 0.15);
   }
 
   /* Rarity Borders */
@@ -1794,27 +1659,10 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .btn-price:disabled {
     background: rgba(255, 255, 255, 0.1);
-    color: rgba(254, 252, 243, 0.4);
+    color: rgba(245, 245, 220, 0.4);
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: none;
     cursor: not-allowed;
-  }
-
-  [data-theme="light"] .btn-price {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #FFD44D;
-    border-color: rgba(0, 0, 0, 0.2);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  [data-theme="light"] .btn-price:hover {
-    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.2);
-  }
-
-  [data-theme="light"] .btn-price:disabled {
-    background: rgba(0, 0, 0, 0.1);
-    color: rgba(30, 41, 59, 0.4);
-    border-color: rgba(0, 0, 0, 0.08);
   }
 
   /* Progress Bar - Stadium HUD style with glow */
@@ -1827,19 +1675,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .progress-chunky-fill {
     @apply h-full transition-all duration-500 ease-out;
-    background: linear-gradient(90deg, #FFD44D 0%, #EAB308 100%);
+    background: linear-gradient(90deg, #FACC15 0%, #EAB308 100%);
     border-radius: 9999px;
-    box-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
-  }
-
-  [data-theme="light"] .progress-chunky {
-    background: rgba(0, 0, 0, 0.08);
-    border-color: rgba(0, 0, 0, 0.1);
-  }
-
-  [data-theme="light"] .progress-chunky-fill {
-    background: linear-gradient(90deg, #B38600 0%, #D9A300 100%);
-    box-shadow: none;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
   }
 
   /* Glowing Multiplier Number */
@@ -2018,14 +1856,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 /* HUD Card Header - distinct header section for corps name */
 .hud-header {
-  background-color: rgba(59, 59, 59, 0.8); /* charcoal-800 with 80% opacity */
+  background-color: rgba(0, 0, 0, 0.4);
   padding: 0.75rem 1rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="light"] .hud-header {
-  background-color: #e7e5e4; /* stone-200 */
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* HUD Quadrant borders */
@@ -2041,17 +1874,9 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   pointer-events: none;
 }
 
-[data-theme="light"] .hud-quadrant::before {
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
 /* HUD Grid divider lines */
 .hud-grid-divider {
-  border-color: rgba(84, 84, 84, 0.5); /* charcoal-700 with 50% opacity */
-}
-
-[data-theme="light"] .hud-grid-divider {
-  border-color: #d6d3d1; /* stone-300 */
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ========================================
@@ -2434,37 +2259,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 @keyframes scoreGlow {
   0% {
     text-shadow:
-      0 0 10px rgba(234, 179, 8, 0.5),
-      0 0 20px rgba(234, 179, 8, 0.3),
-      0 0 40px rgba(234, 179, 8, 0.2);
+      0 0 10px rgba(250, 204, 21, 0.5),
+      0 0 20px rgba(250, 204, 21, 0.3),
+      0 0 40px rgba(250, 204, 21, 0.2);
   }
   100% {
     text-shadow:
-      0 0 15px rgba(234, 179, 8, 0.7),
-      0 0 30px rgba(234, 179, 8, 0.5),
-      0 0 60px rgba(234, 179, 8, 0.3);
+      0 0 15px rgba(250, 204, 21, 0.7),
+      0 0 30px rgba(250, 204, 21, 0.5),
+      0 0 60px rgba(250, 204, 21, 0.3);
   }
-}
-
-[data-theme="light"] .action-tile {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .action-tile:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(179, 134, 0, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .icon-neon-gold {
-  color: #B38600;
-  filter: none;
-}
-
-[data-theme="light"] .score-glow {
-  color: #B38600;
-  text-shadow: none;
 }
 
 /* ===========================================
@@ -2655,35 +2459,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 }
 
-/* Light mode adjustments */
-[data-theme="light"] .timeline-rail {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .timeline-node-upcoming {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.15);
-  color: rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="light"] .timeline-node-complete {
-  background: #e7e5e4;
-  border-color: rgba(179, 134, 0, 0.4);
-  color: #B38600;
-}
-
-[data-theme="light"] .event-card {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .neon-badge-registered {
-  background: rgba(179, 134, 0, 0.1);
-  color: #B38600;
-  text-shadow: none;
-  box-shadow: none;
-}
-
 /* ===========================================
    STADIUM HUD - STAFF MARKET CARDS
    Dark glass tiles with gold accents
@@ -2845,18 +2620,4 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     0 4px 8px rgba(0, 0, 0, 0.3),
     0 0 15px rgba(34, 197, 94, 0.3);
   animation: none;
-}
-
-/* Light mode adjustments */
-[data-theme="light"] .staff-card {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .gold-rim-light::before {
-  opacity: 0.8;
-}
-
-[data-theme="light"] .gold-rim-light::after {
-  opacity: 0.3;
 }

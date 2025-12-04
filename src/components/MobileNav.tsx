@@ -9,10 +9,9 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown, Sun, Moon, LucideIcon
+  ShoppingCart, Crown, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { useTheme } from '../context/ThemeContext';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -112,7 +111,6 @@ const overlayVariants: Variants = {
 const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // Subscribe to profile updates for XP display
@@ -301,21 +299,6 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
 
                 {/* Bottom Actions */}
                 <div className="p-6 border-t border-cream-500/10 space-y-3">
-                  {/* Theme Toggle */}
-                  <button
-                    onClick={toggleTheme}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gold-500/10 text-gold-500 hover:bg-gold-500/20 transition-all duration-300"
-                  >
-                    {isDark ? (
-                      <Sun className="w-5 h-5" />
-                    ) : (
-                      <Moon className="w-5 h-5" />
-                    )}
-                    <span className="font-medium">
-                      {isDark ? 'Light Mode' : 'Dark Mode'}
-                    </span>
-                  </button>
-
                   {user ? (
                     <button
                       onClick={signOut}
