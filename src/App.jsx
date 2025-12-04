@@ -88,7 +88,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Layout Component
+// Layout Component - Fullscreen HUD Dashboard Layout
 const Layout = ({ children }) => {
   const location = useLocation();
 
@@ -98,12 +98,12 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="min-h-screen font-sans transition-colors duration-200 bg-surface text-text-main">
+    <div className="h-screen flex flex-col font-sans transition-colors duration-200 bg-surface text-text-main overflow-hidden">
       {/* Global Gaming Header - Top Navigation */}
       <GamingHeader />
 
-      {/* Main Content */}
-      <main className="min-h-screen pb-20 lg:pb-8">
+      {/* Main Content - Fills remaining viewport height */}
+      <main className="flex-1 flex flex-col min-h-0 pt-16 pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -112,10 +112,12 @@ const Layout = ({ children }) => {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
-            className="container-responsive py-6"
+            className="flex-1 flex flex-col min-h-0 overflow-hidden"
           >
             <Suspense fallback={<LoadingScreen />}>
-              {children}
+              <div className="flex-1 flex flex-col min-h-0 container-responsive py-4 overflow-y-auto hud-scroll">
+                {children}
+              </div>
             </Suspense>
           </motion.div>
         </AnimatePresence>
@@ -123,28 +125,6 @@ const Layout = ({ children }) => {
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />
-
-      {/* Footer */}
-      <footer className="mt-auto mb-20 lg:mb-0">
-        <div className="container-responsive py-8 border-t border-cream-500/20">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-cream-500/60 text-sm">
-              © 2025 marching.art - The Ultimate Fantasy Drum Corps Game
-            </p>
-            <div className="flex gap-6">
-              <a href="/privacy" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
-                Privacy
-              </a>
-              <a href="/terms" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
-                Terms
-              </a>
-              <a href="/support" className="text-cream-500/60 hover:text-gold-500 text-sm transition-colors">
-                Support
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

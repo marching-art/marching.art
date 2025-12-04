@@ -28,9 +28,9 @@ const Staff = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0 gap-4">
       {/* Tab Navigation - Stadium HUD Glass Style */}
-      <div className="glass-panel p-1.5 flex gap-1 overflow-x-auto">
+      <div className="glass-panel p-1.5 flex gap-1 overflow-x-auto flex-shrink-0">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -59,12 +59,13 @@ const Staff = () => {
         })}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - Fills remaining space */}
       <motion.div
         key={activeTab}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         {activeTab === 'marketplace' && <StaffMarketplace />}
         {activeTab === 'roster' && <StaffRoster userCorps={corps || {}} />}

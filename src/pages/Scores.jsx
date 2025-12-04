@@ -306,9 +306,9 @@ const Scores = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col flex-1 min-h-0 gap-6">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex-shrink-0">
         <h1 className="!text-3xl md:!text-5xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100 mb-4">
           Scores & Rankings
         </h1>
@@ -399,7 +399,7 @@ const Scores = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - Fills remaining space */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -407,6 +407,7 @@ const Scores = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.2 }}
+          className="flex-1 min-h-0 flex flex-col"
         >
           {activeTab === 'latest' && (
             <LatestScoresTab

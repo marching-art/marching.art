@@ -480,7 +480,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6 relative z-10">
+    <div className="flex flex-col flex-1 min-h-0 gap-4 relative z-10">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -602,10 +602,10 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          MAIN BENTO GRID LAYOUT
+          MAIN BENTO GRID LAYOUT - Fills available viewport space
           ====================================================================== */}
       {activeCorps && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-4 lg:grid-rows-[1fr_auto_auto]">
 
           {/* ================================================================
               HERO CARD: Stadium Banner with Score Bug
@@ -614,7 +614,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-8 stadium-banner p-0 overflow-hidden"
+            className="lg:col-span-8 stadium-banner p-0 overflow-hidden flex flex-col min-h-[320px] lg:min-h-0"
           >
             {/* Stadium overlay silhouette */}
             <div className="stadium-overlay" />
@@ -755,7 +755,7 @@ const Dashboard = () => {
           {/* ================================================================
               ACTION TILES GRID (spans 4 columns on desktop)
               ================================================================ */}
-          <div className="lg:col-span-4 grid grid-cols-2 gap-3 md:gap-4">
+          <div className="lg:col-span-4 grid grid-cols-2 gap-3 content-start auto-rows-min">
             {/* Daily Rehearsal */}
             <IconCard
               icon={Music}
