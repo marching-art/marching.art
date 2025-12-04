@@ -4,91 +4,106 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+  // Single dark mode - always active via data-theme="dark"
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // PURE BLACK & WHITE for maximum contrast
+        // ===========================================
+        // NIGHT MODE STADIUM HUD DESIGN SYSTEM
+        // Single dark theme - "Always night at the stadium"
+        // ===========================================
+
+        // BASE COLORS
         black: '#000000',
         white: '#FFFFFF',
-        // BRAND COLORS
-        primary: '#FFD700', // Gold/Yellow
-        'primary-content': '#000000', // Text on primary must be black
-        // SURFACE COLORS (The Paper)
-        background: '#FDFBF7', // The beige background
-        surface: '#FFFFFF',    // Cards must be white
-        'surface-highlight': '#F2F0E9',
-        // TEXT COLORS
-        main: '#000000',       // Main text is PURE BLACK
-        muted: '#525252',      // Secondary text is dark grey (no light greys)
-        // STATUS
+
+        // PRIMARY (Electric Gold) - For actions and data highlights
+        primary: '#FACC15',
+        'primary-content': '#0A0A0A',
+
+        // SURFACE COLORS - Deep charcoal base
+        background: '#0A0A0A',
+        surface: '#111827',
+        'surface-highlight': '#1F2937',
+
+        // TEXT COLORS - Cream hierarchy
+        main: '#F5F5DC',
+        muted: 'rgba(245, 245, 220, 0.6)',
+
+        // STATUS COLORS
         success: '#22c55e',
         error: '#ef4444',
 
         // ===========================================
-        // STADIUM HUD DESIGN SYSTEM TOKENS
-        // Night Mode Stadium Aesthetic
+        // STADIUM HUD FOUNDATION
+        // Deep atmospheric backgrounds
         // ===========================================
-
-        // The Foundation - Deep background layers
-        'stadium-black': '#0a0a0a',      // Deepest background layer
-        'stadium-charcoal': '#171717',   // Slightly lighter secondary backgrounds
+        'stadium-black': '#0A0A0A',
+        'stadium-charcoal': '#111827',
 
         // ===========================================
         // COLOR SCALES
         // ===========================================
+
+        // CREAM SCALE - Body text and labels (softer than pure white)
         cream: {
-          50: '#FDFBF7',
-          100: '#FAF6EA',
-          200: '#F2F0E9',
-          300: '#E5D396',
-          400: '#D4C078',
-          500: '#C3A54E',
-          DEFAULT: '#F5F5DC',            // Primary body text (softer than pure white)
-          muted: 'rgba(245, 245, 220, 0.6)', // Secondary labels, inactive states
-          600: '#A38A3F',
-          700: '#836F32',
-          800: '#635426',
-          900: '#43391A'
+          50: '#FEFDF8',
+          100: '#FDF9ED',
+          200: '#FAF3DC',
+          300: '#F5ECCC',
+          400: '#F0E4BB',
+          500: '#EADCAB',
+          DEFAULT: '#F5F5DC',            // Primary body text
+          muted: 'rgba(245, 245, 220, 0.6)', // Secondary labels
+          600: '#D4C48A',
+          700: '#BEAC6A',
+          800: '#A8944A',
+          900: '#7A6C36'
         },
+
+        // GOLD SCALE - Electric Gold for data highlights and CTAs
         gold: {
-          50: '#FFFDF5',
-          100: '#FFF9E6',
-          200: '#FFF0BF',
-          300: '#FFE799',
-          400: '#FACC15',                // Brightest, glowing elements
-          500: '#EAB308',                // Standard buttons/accents
-          DEFAULT: '#EAB308',
-          600: '#CA8A04',                // Darker borders/depth
-          700: '#FFC100',
-          800: '#D9A300',
-          900: '#B38600'
+          50: '#FFFEF5',
+          100: '#FFFBEB',
+          200: '#FEF3C7',
+          300: '#FDE68A',
+          400: '#FACC15',                // Primary Electric Gold
+          500: '#EAB308',                // CTA buttons, glow effects
+          DEFAULT: '#FACC15',
+          600: '#CA8A04',
+          700: '#A16207',
+          800: '#854D0E',
+          900: '#713F12'
         },
+
+        // CHARCOAL SCALE - Deep atmospheric backgrounds
         charcoal: {
-          50: '#F5F5F5',
-          100: '#E5E5E5',
-          200: '#D4D4D4',
-          300: '#A3A3A3',
-          400: '#737373',
-          500: '#525252',
-          600: '#404040',
-          700: '#262626',
-          800: '#171717',
-          900: '#0A0A0A',
-          950: '#000000'
+          50: '#F9FAFB',
+          100: '#F3F4F6',
+          200: '#E5E7EB',
+          300: '#D1D5DB',
+          400: '#9CA3AF',
+          500: '#6B7280',
+          600: '#4B5563',
+          700: '#374151',
+          800: '#1F2937',
+          900: '#111827',
+          950: '#0A0A0A'
         },
-        // Semantic aliases for backwards compatibility
-        'text-main': '#000000',
-        'text-secondary': '#525252',
-        'text-muted': '#525252',
-        'text-inverse': '#FFFFFF',
+
+        // Semantic aliases for single dark mode
+        'text-main': '#F5F5DC',
+        'text-secondary': '#EADCAB',
+        'text-muted': 'rgba(245, 245, 220, 0.6)',
+        'text-inverse': '#0A0A0A',
         danger: '#ef4444',
         warning: '#f59e0b',
-        'border-default': '#000000',
-        'border-muted': '#525252',
-        'surface-secondary': '#FFFFFF',
-        'surface-tertiary': '#F2F0E9',
-        'primary-muted': 'rgba(255, 215, 0, 0.2)',
+        'border-default': 'rgba(255, 255, 255, 0.1)',
+        'border-muted': 'rgba(255, 255, 255, 0.05)',
+        'surface-secondary': '#111827',
+        'surface-tertiary': '#1F2937',
+        'primary-muted': 'rgba(250, 204, 21, 0.15)',
       },
       boxShadow: {
         // STADIUM HUD GLOW SHADOWS - Soft golden glows for premium sports feel

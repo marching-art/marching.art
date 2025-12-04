@@ -8,11 +8,9 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield, ShoppingCart, Crown,
-  Sun, Moon, LucideIcon
+  Star, Shield, ShoppingCart, Crown, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { useTheme } from '../context/ThemeContext';
 import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -48,7 +46,6 @@ interface UserProfile {
 const Navigation: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
@@ -321,29 +318,6 @@ const Navigation: React.FC = () => {
 
         {/* Bottom Actions */}
         <div className="p-4 border-t border-cream-500/10 space-y-2">
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-              text-cream-300 hover:bg-gold-500/10 hover:text-gold-500
-              transition-all duration-300
-              ${collapsed ? 'justify-center' : ''}
-            `}
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDark ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-            {!collapsed && (
-              <span className="font-medium">
-                {isDark ? 'Light Mode' : 'Dark Mode'}
-              </span>
-            )}
-          </button>
-
           {/* Sign Out */}
           <button
             onClick={handleSignOut}

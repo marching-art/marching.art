@@ -1,5 +1,11 @@
 // src/context/ThemeContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// =============================================================================
+// THEME CONTEXT - SINGLE DARK MODE
+// =============================================================================
+// The application uses a single "Night Mode Stadium HUD" aesthetic.
+// No light mode toggle is provided - it's always night time at the stadium.
+
+import React, { createContext, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -12,32 +18,20 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    // Check localStorage first
-    const savedTheme = localStorage.getItem('marching-art-theme');
-    if (savedTheme) {
-      return savedTheme;
-    }
-    // Default to dark mode
-    return 'dark';
-  });
-
   useEffect(() => {
-    // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme);
-    // Save to localStorage
-    localStorage.setItem('marching-art-theme', theme);
-  }, [theme]);
+    // Always apply dark theme - this is the only mode
+    document.documentElement.setAttribute('data-theme', 'dark');
+    // Clear any old theme preference from localStorage
+    localStorage.removeItem('marching-art-theme');
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
+  // Provide a stable context value - theme is always dark
   const value = {
-    theme,
-    setTheme,
-    toggleTheme,
-    isDark: theme === 'dark'
+    theme: 'dark',
+    isDark: true,
+    // These are provided for backwards compatibility but do nothing
+    setTheme: () => {},
+    toggleTheme: () => {},
   };
 
   return (
