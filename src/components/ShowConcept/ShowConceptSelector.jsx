@@ -88,7 +88,7 @@ const ShowConceptSelector = ({
       const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
       await saveShowConcept({
         corpsClass,
-        concept: { theme, musicSource, drillStyle }
+        showConcept: { theme, musicSource, drillStyle }
       });
 
       toast.success('Show concept saved! Synergy bonuses will apply to your scores.');
