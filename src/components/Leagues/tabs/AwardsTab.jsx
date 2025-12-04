@@ -1,4 +1,4 @@
-// AwardsTab - Caption awards and special recognitions for league members
+// AwardsTab - Caption awards and special recognitions for league members (Stadium HUD)
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, Star, Eye, Music, Flame, Sparkles, AlertCircle } from 'lucide-react';
@@ -120,9 +120,9 @@ const AwardsTab = ({ league }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-8 text-center"
+        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center"
       >
-        <p className="text-cream-500/60">Loading awards...</p>
+        <p className="text-yellow-50/60">Loading awards...</p>
       </motion.div>
     );
   }
@@ -133,7 +133,7 @@ const AwardsTab = ({ league }) => {
       title: 'High Score Award',
       subtitle: 'Highest single-show score',
       icon: Sparkles,
-      color: 'gold',
+      color: 'yellow',
       leader: awards?.highScore?.uid,
       value: awards?.highScore?.score?.toFixed(1),
       extra: awards?.highScore?.eventName
@@ -178,19 +178,11 @@ const AwardsTab = ({ league }) => {
   ];
 
   const colorClasses = {
-    gold: 'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30',
-    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-    green: 'from-green-500/20 to-green-600/10 border-green-500/30',
-    orange: 'from-orange-500/20 to-orange-600/10 border-orange-500/30'
-  };
-
-  const iconColorClasses = {
-    gold: 'text-yellow-500',
-    purple: 'text-purple-500',
-    blue: 'text-blue-500',
-    green: 'text-green-500',
-    orange: 'text-orange-500'
+    yellow: { border: 'border-yellow-500/30', bg: 'from-yellow-500/20 to-yellow-600/10', text: 'text-yellow-400', glow: 'drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]' },
+    purple: { border: 'border-purple-500/30', bg: 'from-purple-500/20 to-purple-600/10', text: 'text-purple-400', glow: 'drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]' },
+    blue: { border: 'border-blue-500/30', bg: 'from-blue-500/20 to-blue-600/10', text: 'text-blue-400', glow: 'drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]' },
+    green: { border: 'border-green-500/30', bg: 'from-green-500/20 to-green-600/10', text: 'text-green-400', glow: 'drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]' },
+    orange: { border: 'border-orange-500/30', bg: 'from-orange-500/20 to-orange-600/10', text: 'text-orange-400', glow: 'drop-shadow-[0_0_6px_rgba(251,146,60,0.5)]' }
   };
 
   return (
@@ -200,42 +192,43 @@ const AwardsTab = ({ league }) => {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-4"
     >
-      <div className="card p-6">
-        <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-6 flex items-center gap-2">
-          <Award className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
+      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <h2 className="text-xl md:text-2xl font-display font-bold text-yellow-50 mb-6 flex items-center gap-2">
+          <Award className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
           Season Awards
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {awardCards.map(award => {
             const Icon = award.icon;
+            const colors = colorClasses[award.color];
             return (
               <div
                 key={award.id}
-                className={`p-4 rounded-xl border bg-gradient-to-br ${colorClasses[award.color]}`}
+                className={`p-4 rounded-xl border bg-gradient-to-br ${colors.bg} ${colors.border} shadow-[0_0_15px_rgba(0,0,0,0.2)]`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg bg-charcoal-900/50 ${iconColorClasses[award.color]}`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`p-2 rounded-lg bg-black/30 ${colors.text}`}>
+                    <Icon className={`w-5 h-5 ${colors.glow}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-cream-100">{award.title}</h4>
-                    <p className="text-xs text-cream-500/60 mb-2">{award.subtitle}</p>
+                    <h4 className="font-display font-bold text-yellow-50">{award.title}</h4>
+                    <p className="text-xs text-yellow-50/50 mb-2">{award.subtitle}</p>
 
                     {award.leader ? (
                       <div className="mt-2">
-                        <p className="font-semibold text-cream-100 truncate">
+                        <p className="font-display font-semibold text-yellow-50 truncate">
                           {getDirectorName(award.leader)}
                         </p>
-                        <p className={`text-lg font-bold ${iconColorClasses[award.color]}`}>
+                        <p className={`text-lg font-display font-bold ${colors.text} ${colors.glow}`}>
                           {award.value}{award.valueSuffix || ' pts'}
                         </p>
                         {award.extra && (
-                          <p className="text-xs text-cream-500/60 truncate">{award.extra}</p>
+                          <p className="text-xs text-yellow-50/40 truncate">{award.extra}</p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-cream-500/40 mt-2">No data yet</p>
+                      <p className="text-sm text-yellow-50/30 mt-2">No data yet</p>
                     )}
                   </div>
                 </div>
@@ -246,9 +239,9 @@ const AwardsTab = ({ league }) => {
       </div>
 
       {/* Info about awards */}
-      <div className="card p-4 bg-charcoal-900/50">
-        <p className="text-sm text-cream-500/60 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+      <div className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl p-4">
+        <p className="text-sm text-yellow-50/50 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-400/50" />
           <span>
             Awards are calculated from all shows attended by league members this season.
             Final awards will be presented at the end of the season.
