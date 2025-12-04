@@ -32,6 +32,11 @@ export {
   ClusterBar,
   DualClusterDisplay,
   InlineMiniSegments,
+  // Difficulty Confidence Meter - Risk/Reward visualization
+  DifficultyConfidenceMeter,
+  ConfidenceBadge,
+  MiniRiskIndicator,
+  DIFFICULTY_PRESETS,
 } from './TransparentGameplay';
 export { default as StaffEffectivenessPanel } from './TransparentGameplay/StaffEffectivenessPanel';
 export { default as SynergyVisualization } from './TransparentGameplay/SynergyVisualization';

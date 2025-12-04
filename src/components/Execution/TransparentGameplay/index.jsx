@@ -717,6 +717,14 @@ export {
   InlineMiniSegments,
 } from './SegmentedMetricBar';
 
+// Re-export Difficulty Confidence Meter for risk/reward visualization
+export {
+  DifficultyConfidenceMeter,
+  ConfidenceBadge,
+  MiniRiskIndicator,
+  DIFFICULTY_PRESETS,
+} from './DifficultyConfidenceMeter';
+
 export default {
   CircularProgressRing,
   SectionGauges,

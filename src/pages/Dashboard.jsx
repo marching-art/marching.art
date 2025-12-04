@@ -26,6 +26,8 @@ import {
   // Segmented Metric Bars - Split-signal display
   SegmentedMetricBar,
   ClusterBar,
+  // Difficulty Confidence Meter - Risk/Reward visualization
+  ConfidenceBadge,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -726,6 +728,12 @@ const Dashboard = () => {
                       <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
                     </div>
                   </StaffEffectivenessTooltip>
+                  {/* Difficulty Confidence Badge - Risk/Reward indicator */}
+                  <ConfidenceBadge
+                    currentDifficulty={executionState?.showDesign || 'moderate'}
+                    currentReadiness={readiness}
+                    onClick={() => setShowExecutionInsights(true)}
+                  />
                 </div>
 
                 {/* Quick Links - Glass buttons with glow */}
