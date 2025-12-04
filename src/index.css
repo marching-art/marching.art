@@ -459,55 +459,45 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
   }
 
-  /* Stadium Banner - Hero section - Tactical Brutalist */
-  /* Light Mode: White card with hard shadow */
+  /* ===========================================
+     STADIUM BANNER - HERO CARD (Stadium HUD)
+     Premium glass panel with atmospheric gold glow
+     =========================================== */
   .stadium-banner {
     @apply relative overflow-hidden;
-    @apply bg-white;
-    border: 2px solid #171717;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(10, 10, 10, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    border-radius: 20px;
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(234, 179, 8, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
+  /* Stadium lights glow from top */
   .stadium-banner::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, rgba(217, 163, 0, 0.08) 0%, transparent 50%);
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(250, 204, 21, 0.15) 0%, transparent 60%),
+      linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Inner edge highlight */
+  .stadium-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     pointer-events: none;
   }
 
-  /* Light mode text colors for stadium-banner content */
-  .stadium-banner .text-white { color: #1e293b; }
-  .stadium-banner .text-white\/40, .stadium-banner .text-white\/50, .stadium-banner .text-white\/60 { color: #64748b; }
-  .stadium-banner .text-\[\#FAF6EA\] { color: #1e293b; }
-  .stadium-banner .text-\[\#FAF6EA\]\/40, .stadium-banner .text-\[\#FAF6EA\]\/50, .stadium-banner .text-\[\#FAF6EA\]\/60 { color: #64748b; }
-  .stadium-banner .border-\[\#2A2A2A\] { border-color: #e5e7eb; }
-  .stadium-banner .bg-\[\#1A1A1A\] { background-color: #f8fafc; }
-
-  /* Dark Mode: Deep charcoal with gold hard shadow */
-  [data-theme="dark"] .stadium-banner {
-    background-color: #1A1A1A;
-    border: 2px solid rgba(255, 212, 77, 0.3);
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .stadium-banner::before {
-    background: radial-gradient(ellipse at top right, rgba(255, 212, 77, 0.15) 0%, transparent 50%);
-  }
-
-  /* Reset text colors for dark mode */
-  [data-theme="dark"] .stadium-banner .text-white { color: white; }
-  [data-theme="dark"] .stadium-banner .text-white\/40 { color: rgba(255,255,255,0.4); }
-  [data-theme="dark"] .stadium-banner .text-white\/50 { color: rgba(255,255,255,0.5); }
-  [data-theme="dark"] .stadium-banner .text-white\/60 { color: rgba(255,255,255,0.6); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\] { color: #FAF6EA; }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/40 { color: rgba(250,246,234,0.4); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/50 { color: rgba(250,246,234,0.5); }
-  [data-theme="dark"] .stadium-banner .text-\[\#FAF6EA\]\/60 { color: rgba(250,246,234,0.6); }
-  [data-theme="dark"] .stadium-banner .border-\[\#2A2A2A\] { border-color: #2A2A2A; }
-  [data-theme="dark"] .stadium-banner .bg-\[\#1A1A1A\] { background-color: #1A1A1A; }
 
   /* Silhouette overlay for stadium banner */
   .stadium-overlay {
@@ -521,68 +511,121 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background-size: cover;
   }
 
-  /* Score Bug - Circular badge for multipliers/scores - Brutalist */
-  /* Light Mode: White badge with hard shadow */
+  /* ===========================================
+     SCORE BUG - Glowing circular badge (Stadium HUD)
+     Premium data display with gold glow
+     =========================================== */
   .score-bug {
     @apply flex flex-col items-center justify-center rounded-full p-4 md:p-6;
-    @apply bg-white;
-    border: 4px solid #171717;
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 10, 10, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(250, 204, 21, 0.4);
     min-width: 120px;
     min-height: 120px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    box-shadow:
+      0 0 30px rgba(234, 179, 8, 0.25),
+      0 4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
   }
 
-  /* Dark Mode: Charcoal badge with gold hard shadow */
-  [data-theme="dark"] .score-bug {
-    background-color: #0D0D0D;
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  /* Inner glow effect */
+  .score-bug::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 30%, rgba(250, 204, 21, 0.1) 0%, transparent 60%);
+    pointer-events: none;
   }
 
   .score-bug-lg {
     min-width: 140px;
     min-height: 140px;
+    border-width: 3px;
+    box-shadow:
+      0 0 40px rgba(234, 179, 8, 0.3),
+      0 6px 30px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
-  /* Icon Card - Action tiles with large background icons - Brutalist */
+  /* ===========================================
+     ICON CARD - Neon Gold Glass Tiles (Stadium HUD)
+     Interactive action tiles with glass effect
+     =========================================== */
   .icon-card {
     @apply relative overflow-hidden p-4 md:p-5;
-    @apply bg-white;
-    @apply transition-all duration-200 cursor-pointer;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    @apply transition-all duration-300 cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .icon-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-4px);
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 25px rgba(234, 179, 8, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  /* Dark Mode: Gold shadow */
-  [data-theme="dark"] .icon-card {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.3);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
+  .icon-card:active {
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 15px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(234, 179, 8, 0.15);
   }
 
-  [data-theme="dark"] .icon-card:hover {
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+  /* Glass shine overlay */
+  .icon-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
+    transition: opacity 0.3s ease;
   }
 
+  .icon-card:hover::before {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, transparent 50%);
+  }
+
+  /* Background icon - neon gold on hover */
   .icon-card-bg {
     position: absolute;
     right: -10%;
     bottom: -20%;
     width: 60%;
     height: 120%;
-    opacity: 0.08;
+    opacity: 0.05;
     pointer-events: none;
+    transition: all 0.3s ease;
   }
 
   .icon-card:hover .icon-card-bg {
-    opacity: 0.15;
+    opacity: 0.12;
+    filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.3));
+  }
+
+  /* Neon icon styling within icon-card */
+  .icon-card .icon-neon {
+    color: rgba(250, 204, 21, 0.8);
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4));
+    transition: all 0.3s ease;
+  }
+
+  .icon-card:hover .icon-neon {
+    color: #FACC15;
+    filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.6));
   }
 
   /* Dark Toolbar - For navigation elements */
@@ -594,85 +637,112 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     border: 1px solid #2A2A2A;
   }
 
-  /* Ticket Stub - Schedule card style - Travel Itinerary */
+  /* ===========================================
+     TICKET STUBS - Schedule Event Cards (Stadium HUD)
+     Glass panels with status-based glows
+     =========================================== */
 
   /* Base ticket stub styles */
   .ticket-stub-base {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
   }
 
-  /* OPEN Shows - White bg with hard black drop-shadow (encourages clicking) */
+  /* OPEN Shows - Glass with gold glow pulse (encourages clicking) */
   .ticket-stub-open {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200 cursor-pointer;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+    @apply overflow-hidden;
+    @apply transition-all duration-300 cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(234, 179, 8, 0.15);
+    position: relative;
+  }
+
+  .ticket-stub-open::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
   .ticket-stub-open:hover {
-    transform: translateY(-3px) translateX(-2px);
-    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-4px);
+    border-color: rgba(250, 204, 21, 0.5);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 35px rgba(234, 179, 8, 0.25);
   }
 
-  [data-theme="dark"] .ticket-stub-open {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.5);
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub-open:hover {
-    box-shadow: 8px 8px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  /* REGISTERED Shows - Thick green left border */
+  /* REGISTERED Shows - Glass with neon green accent */
   .ticket-stub-registered {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-left: 8px solid #16a34a;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(22, 163, 74, 0.8);
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-left: 4px solid #22c55e;
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(34, 197, 94, 0.15);
+    position: relative;
+  }
+
+  .ticket-stub-registered::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
   .ticket-stub-registered:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0px 0px rgba(22, 163, 74, 0.9);
+    transform: translateY(-3px);
+    box-shadow:
+      0 6px 25px rgba(0, 0, 0, 0.35),
+      0 0 25px rgba(34, 197, 94, 0.2);
   }
 
-  [data-theme="dark"] .ticket-stub-registered {
-    background-color: #1A1A1A;
-    border-color: rgba(22, 163, 74, 0.5);
-    border-left-color: #22c55e;
-    box-shadow: 4px 4px 0px 0px rgba(34, 197, 94, 1);
+  /* Neon "REGISTERED" badge */
+  .badge-registered {
+    @apply inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
   }
 
-  [data-theme="dark"] .ticket-stub-registered:hover {
-    box-shadow: 6px 6px 0px 0px rgba(34, 197, 94, 1);
-  }
-
-  /* PAST Shows - Grayscale with hatched pattern overlay */
+  /* PAST Shows - Muted glass with subtle dimming */
   .ticket-stub-past {
-    @apply bg-stone-100 overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #a8a29e;
-    border-radius: 4px;
-    box-shadow: 3px 3px 0px 0px rgba(168, 162, 158, 0.6);
-    filter: grayscale(100%);
-    opacity: 0.75;
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0.6;
   }
 
   .ticket-stub-past:hover {
-    opacity: 0.9;
-  }
-
-  [data-theme="dark"] .ticket-stub-past {
-    background-color: #1A1A1A;
-    border-color: #3A3A3A;
-    box-shadow: 3px 3px 0px 0px rgba(58, 58, 58, 0.8);
+    opacity: 0.75;
+    background: rgba(0, 0, 0, 0.35);
   }
 
   /* Hatched diagonal pattern overlay for past shows */
@@ -681,52 +751,34 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
       -45deg,
       transparent,
       transparent 4px,
-      rgba(120, 113, 108, 0.15) 4px,
-      rgba(120, 113, 108, 0.15) 8px
+      rgba(255, 255, 255, 0.04) 4px,
+      rgba(255, 255, 255, 0.04) 8px
     );
   }
 
-  [data-theme="dark"] .hatched-overlay {
-    background: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 4px,
-      rgba(255, 255, 255, 0.08) 4px,
-      rgba(255, 255, 255, 0.08) 8px
-    );
-  }
-
-  /* Legacy ticket-stub class for backwards compatibility */
+  /* Legacy ticket-stub class */
   .ticket-stub {
-    @apply bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border: 2px solid #1A1A1A;
-    border-radius: 4px;
-    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+    @apply overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
   .ticket-stub:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub {
-    background-color: #1A1A1A;
-    border-color: rgba(255, 212, 77, 0.3);
-    box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  [data-theme="dark"] .ticket-stub:hover {
-    box-shadow: 6px 6px 0px 0px rgba(255, 212, 77, 1);
+    transform: translateY(-3px);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow:
+      0 6px 25px rgba(0, 0, 0, 0.35),
+      0 0 15px rgba(234, 179, 8, 0.1);
   }
 
   .ticket-stub-divider {
-    @apply border-l-2 border-dashed;
-    border-color: #1A1A1A;
-  }
-
-  [data-theme="dark"] .ticket-stub-divider {
-    border-color: rgba(255, 212, 77, 0.3);
+    @apply border-l border-dashed;
+    border-color: rgba(255, 255, 255, 0.15);
   }
 
   /* Pill Button - Compact CTA with golden glow */
@@ -829,33 +881,80 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply bg-green-500 text-white;
   }
 
-  /* Compact Card - For staff marketplace - Brutalist */
-  /* Border colors are now controlled dynamically via Tailwind classes for rarity */
+  /* ===========================================
+     COMPACT CARD - Staff Marketplace (Stadium HUD)
+     Glass tiles with gold rim-light effect
+     =========================================== */
   .compact-card {
-    @apply relative bg-white overflow-hidden;
-    @apply transition-all duration-200;
-    border-radius: 4px;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.9);
+    @apply relative overflow-hidden;
+    @apply transition-all duration-300;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .compact-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.9);
+    transform: translateY(-4px);
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(234, 179, 8, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  /* Dark Mode: Gold shadow */
-  [data-theme="dark"] .compact-card {
-    background-color: #1A1A1A;
-    box-shadow: 3px 3px 0px 0px rgba(255, 212, 77, 0.8);
+  /* Glass shine overlay */
+  .compact-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
-  [data-theme="dark"] .compact-card:hover {
-    box-shadow: 5px 5px 0px 0px rgba(255, 212, 77, 0.9);
+  /* Gold rim-light effect for portraits */
+  .compact-card .portrait-glow {
+    position: relative;
   }
 
-  /* Price Anchor - Positioned price tag */
+  .compact-card .portrait-glow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.4) 0%, rgba(234, 179, 8, 0.2) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .compact-card:hover .portrait-glow::after {
+    opacity: 1;
+  }
+
+  /* Price Anchor - Glowing price button */
   .price-anchor {
     @apply absolute bottom-3 right-3;
+  }
+
+  .price-button {
+    @apply px-3 py-1.5 font-mono font-bold text-sm rounded-lg;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.2) 0%, rgba(234, 179, 8, 0.1) 100%);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    color: #FACC15;
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .price-button:hover {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.3) 0%, rgba(234, 179, 8, 0.2) 100%);
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.4);
+    transform: scale(1.05);
   }
 
   /* ===========================================
