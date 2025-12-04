@@ -1,4 +1,4 @@
-// CircuitStandingsTab - League standings based on circuit points
+// CircuitStandingsTab - League standings based on circuit points (Stadium HUD)
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Crown, Medal, Star } from 'lucide-react';
@@ -177,9 +177,9 @@ const CircuitStandingsTab = ({ league }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-8 text-center"
+        className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center"
       >
-        <p className="text-cream-500/60">Loading circuit standings...</p>
+        <p className="text-yellow-50/60">Loading circuit standings...</p>
       </motion.div>
     );
   }
@@ -189,26 +189,26 @@ const CircuitStandingsTab = ({ league }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="card p-6"
+      className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6"
     >
-      <h2 className="text-xl md:text-2xl font-bold text-cream-100 mb-4 md:mb-6 flex items-center gap-2">
-        <Trophy className="w-5 h-5 md:w-6 md:h-6 text-gold-500" />
+      <h2 className="text-xl md:text-2xl font-display font-bold text-yellow-50 mb-4 md:mb-6 flex items-center gap-2">
+        <Trophy className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
         Circuit Standings
       </h2>
 
       <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-cream-500/20">
-              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Rank</th>
-              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Director</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">
+            <tr className="border-b border-white/10">
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Rank</th>
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Director</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">
                 <span className="hidden md:inline">Circuit</span> Pts
               </th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">Medals</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60 hidden md:table-cell">Stops</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60 hidden lg:table-cell">High</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-semibold text-cream-500/60">
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Medals</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50 hidden md:table-cell">Stops</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50 hidden lg:table-cell">High</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">
                 <span className="hidden md:inline">Season</span> Total
               </th>
             </tr>
@@ -220,31 +220,31 @@ const CircuitStandingsTab = ({ league }) => {
               return (
                 <tr
                   key={member.uid}
-                  className={`border-b border-cream-500/10 hover:bg-cream-500/5 ${
+                  className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
                     isFinalsSpot ? 'bg-green-500/5' : ''
                   }`}
                 >
                   <td className="py-3 px-2 md:px-4">
                     <div className="flex items-center gap-1 md:gap-2">
-                      <span className="text-base md:text-lg font-bold text-cream-100">{index + 1}</span>
-                      {index === 0 && <Crown className="w-4 h-4 text-gold-500" />}
+                      <span className="text-base md:text-lg font-display font-bold text-yellow-50">{index + 1}</span>
+                      {index === 0 && <Crown className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />}
                     </div>
                   </td>
                   <td className="py-3 px-2 md:px-4">
                     <div>
-                      <span className="font-semibold text-cream-100 text-sm md:text-base">{member.displayName}</span>
-                      <p className="text-xs text-cream-500/60 hidden md:block">{member.corpsName}</p>
+                      <span className="font-display font-semibold text-yellow-50 text-sm md:text-base">{member.displayName}</span>
+                      <p className="text-xs text-yellow-50/50 hidden md:block">{member.corpsName}</p>
                     </div>
                   </td>
                   <td className="text-center py-3 px-2 md:px-4">
-                    <span className="text-base md:text-lg font-bold text-gold-500">{member.circuitPoints}</span>
+                    <span className="text-base md:text-lg font-display font-bold text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]">{member.circuitPoints}</span>
                   </td>
                   <td className="text-center py-3 px-2 md:px-4">
                     <div className="flex items-center justify-center gap-0.5 md:gap-1">
                       {member.medals.gold > 0 && (
                         <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-yellow-500/20 rounded text-xs">
-                          <Medal className="w-3 h-3 text-yellow-500" />
-                          <span className="text-yellow-500 font-bold">{member.medals.gold}</span>
+                          <Medal className="w-3 h-3 text-yellow-400" />
+                          <span className="text-yellow-400 font-bold">{member.medals.gold}</span>
                         </div>
                       )}
                       {member.medals.silver > 0 && (
@@ -254,23 +254,23 @@ const CircuitStandingsTab = ({ league }) => {
                         </div>
                       )}
                       {member.medals.bronze > 0 && (
-                        <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-orange-600/20 rounded text-xs">
-                          <Medal className="w-3 h-3 text-orange-600" />
-                          <span className="text-orange-600 font-bold">{member.medals.bronze}</span>
+                        <div className="flex items-center gap-0.5 px-1 md:px-1.5 py-0.5 bg-orange-500/20 rounded text-xs">
+                          <Medal className="w-3 h-3 text-orange-400" />
+                          <span className="text-orange-400 font-bold">{member.medals.bronze}</span>
                         </div>
                       )}
                       {member.medals.gold === 0 && member.medals.silver === 0 && member.medals.bronze === 0 && (
-                        <span className="text-cream-500/40 text-xs">—</span>
+                        <span className="text-yellow-50/30 text-xs">—</span>
                       )}
                     </div>
                   </td>
-                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 hidden md:table-cell">
+                  <td className="text-center py-3 px-2 md:px-4 text-yellow-50 hidden md:table-cell">
                     {member.tourStops}
                   </td>
-                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 hidden lg:table-cell">
+                  <td className="text-center py-3 px-2 md:px-4 text-yellow-50 hidden lg:table-cell">
                     {member.seasonHighScore > 0 ? member.seasonHighScore.toFixed(1) : '—'}
                   </td>
-                  <td className="text-center py-3 px-2 md:px-4 text-cream-100 font-bold text-sm md:text-base">
+                  <td className="text-center py-3 px-2 md:px-4 text-yellow-50 font-display font-bold text-sm md:text-base">
                     {member.totalSeasonScore.toFixed(1)}
                   </td>
                 </tr>
@@ -281,24 +281,24 @@ const CircuitStandingsTab = ({ league }) => {
       </div>
 
       {league.settings?.finalsSize && (
-        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
           <p className="text-sm text-green-400">
-            <Star className="w-4 h-4 inline mr-1" />
+            <Star className="w-4 h-4 inline mr-1 drop-shadow-[0_0_4px_rgba(74,222,128,0.5)]" />
             Top {league.settings.finalsSize || 12} directors advance to League Finals
           </p>
         </div>
       )}
 
       {/* Scoring Legend */}
-      <div className="mt-6 p-4 bg-charcoal-900/50 rounded-lg">
-        <h4 className="text-sm font-semibold text-cream-300 mb-2">Circuit Points per Tour Stop</h4>
-        <div className="flex flex-wrap gap-2 text-xs text-cream-500/60">
-          <span className="px-2 py-1 bg-gold-500/20 rounded text-gold-500">1st: 15 pts</span>
-          <span className="px-2 py-1 bg-gray-400/20 rounded text-gray-400">2nd: 12 pts</span>
-          <span className="px-2 py-1 bg-orange-600/20 rounded text-orange-600">3rd: 10 pts</span>
-          <span className="px-2 py-1 bg-cream-500/10 rounded">4th: 8 pts</span>
-          <span className="px-2 py-1 bg-cream-500/10 rounded">5th: 6 pts</span>
-          <span className="px-2 py-1 bg-cream-500/10 rounded">6th+: 5-1 pts</span>
+      <div className="mt-6 p-4 bg-black/30 border border-white/5 rounded-xl">
+        <h4 className="text-sm font-display font-semibold text-yellow-50/70 mb-2">Circuit Points per Tour Stop</h4>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="px-2 py-1 bg-yellow-500/20 rounded text-yellow-400 font-medium">1st: 15 pts</span>
+          <span className="px-2 py-1 bg-gray-400/20 rounded text-gray-400 font-medium">2nd: 12 pts</span>
+          <span className="px-2 py-1 bg-orange-500/20 rounded text-orange-400 font-medium">3rd: 10 pts</span>
+          <span className="px-2 py-1 bg-white/5 rounded text-yellow-50/60">4th: 8 pts</span>
+          <span className="px-2 py-1 bg-white/5 rounded text-yellow-50/60">5th: 6 pts</span>
+          <span className="px-2 py-1 bg-white/5 rounded text-yellow-50/60">6th+: 5-1 pts</span>
         </div>
       </div>
     </motion.div>

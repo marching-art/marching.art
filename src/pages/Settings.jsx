@@ -1,9 +1,9 @@
-// src/pages/Settings.jsx (Tactical Luxury: Centered Form Card Layout)
+// src/pages/Settings.jsx (Night Mode Stadium HUD)
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Mail, MapPin, Shield, Bell, Palette,
-  Save, AlertCircle, Check, Lock, LogOut, Trash2
+  Save, AlertCircle, Check, Lock, LogOut, Trash2, Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -146,8 +146,8 @@ const Settings = () => {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 p-4">
-        <div className="h-8 w-48 bg-surface-tertiary rounded animate-pulse" />
-        <div className="h-96 bg-surface-secondary rounded-xl animate-pulse" />
+        <div className="h-8 w-48 bg-black/40 rounded animate-pulse mx-auto" />
+        <div className="h-96 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -159,7 +159,7 @@ const Settings = () => {
     { id: 'account', label: 'Account', icon: Lock }
   ];
 
-  // Toggle switch component
+  // Toggle switch component - Stadium HUD style
   const ToggleSwitch = ({ checked, onChange }) => (
     <label className="relative inline-flex items-center cursor-pointer">
       <input
@@ -168,16 +168,16 @@ const Settings = () => {
         checked={checked}
         onChange={onChange}
       />
-      <div className="w-11 h-6 bg-stone-300 dark:bg-surface-highlight peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+      <div className="w-11 h-6 bg-black/60 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-yellow-50/60 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-yellow-500/40 peer-checked:to-yellow-600/40 peer-checked:border-yellow-500/30 peer-checked:after:bg-yellow-400 peer-checked:shadow-[0_0_12px_rgba(234,179,8,0.3)]"></div>
     </label>
   );
 
-  // Setting row component
+  // Setting row component - Stadium HUD style
   const SettingRow = ({ title, description, checked, onChange }) => (
-    <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-surface rounded-lg border border-stone-200 dark:border-border-default">
+    <div className="flex items-center justify-between p-4 bg-black/30 backdrop-blur-sm rounded-xl border border-white/5 hover:border-white/10 transition-colors">
       <div>
-        <p className="font-display font-medium text-text-main">{title}</p>
-        <p className="text-sm text-text-muted">{description}</p>
+        <p className="font-display font-medium text-yellow-50">{title}</p>
+        <p className="text-sm text-yellow-50/50">{description}</p>
       </div>
       <ToggleSwitch checked={checked} onChange={onChange} />
     </div>
@@ -191,32 +191,42 @@ const Settings = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="sports-header text-3xl md:text-4xl text-text-main mb-2">Settings</h1>
-        <p className="text-text-muted font-body">Manage your account and preferences</p>
+        <h1 className="sports-header text-3xl md:text-4xl text-yellow-50 mb-2">Settings</h1>
+        <p className="text-yellow-50/50 font-body">Manage your account and preferences</p>
       </motion.div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Stadium HUD */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
         className="flex justify-center"
       >
-        <div className="bg-white dark:bg-surface-secondary rounded-full p-1.5 border border-stone-200 dark:border-border-default shadow-sm dark:shadow-none flex gap-1 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-display font-medium text-sm transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-primary text-text-inverse'
-                  : 'text-text-muted hover:text-text-main'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
-          ))}
+        <div className="bg-black/40 backdrop-blur-md rounded-xl p-1.5 border border-white/10 flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-medium text-sm transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'text-yellow-400'
+                    : 'text-yellow-50/60 hover:text-yellow-50 hover:bg-white/5'
+                }`}
+              >
+                <tab.icon className={`w-4 h-4 ${isActive ? 'drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]' : ''}`} />
+                <span className="hidden sm:inline">{tab.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="settingsTab"
+                    className="absolute -bottom-0.5 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6),0_0_20px_rgba(234,179,8,0.3)]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 
@@ -226,72 +236,72 @@ const Settings = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-text-main uppercase tracking-wide mb-6">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
               Profile Information
             </h3>
 
             <div className="space-y-5">
               {/* Display Name */}
               <div>
-                <label className="form-label">Display Name</label>
+                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Display Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
                   <input
                     type="text"
-                    className="form-input pl-10"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all"
                     placeholder="Your display name"
                     value={profileData.displayName}
                     onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
                     maxLength={50}
                   />
                 </div>
-                <p className="text-xs text-text-muted mt-1.5">
+                <p className="text-xs text-yellow-50/40 mt-1.5">
                   This is how your name will appear to other players
                 </p>
               </div>
 
               {/* Email (read-only) */}
               <div>
-                <label className="form-label">Email Address</label>
+                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
                   <input
                     type="email"
-                    className="form-input pl-10 opacity-60 cursor-not-allowed"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50/50 cursor-not-allowed"
                     value={user?.email || 'Anonymous'}
                     disabled
                   />
                 </div>
-                <p className="text-xs text-text-muted mt-1.5">
+                <p className="text-xs text-yellow-50/40 mt-1.5">
                   Email cannot be changed from settings
                 </p>
               </div>
 
               {/* Bio */}
               <div>
-                <label className="form-label">Bio</label>
+                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Bio</label>
                 <textarea
-                  className="form-input resize-none min-h-[100px]"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all resize-none min-h-[100px]"
                   placeholder="Tell us about yourself..."
                   value={profileData.bio}
                   onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                   maxLength={500}
                   rows={4}
                 />
-                <p className="text-xs text-text-muted mt-1.5">
+                <p className="text-xs text-yellow-50/40 mt-1.5">
                   {profileData.bio.length}/500 characters
                 </p>
               </div>
 
               {/* Location */}
               <div>
-                <label className="form-label">Location</label>
+                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Location</label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
                   <input
                     type="text"
-                    className="form-input pl-10"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all"
                     placeholder="City, State/Country"
                     value={profileData.location}
                     onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
@@ -305,7 +315,7 @@ const Settings = () => {
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Changes'}
@@ -321,8 +331,8 @@ const Settings = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-text-main uppercase tracking-wide mb-6">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
               Notification Preferences
             </h3>
 
@@ -382,7 +392,7 @@ const Settings = () => {
               <button
                 onClick={handleSaveNotifications}
                 disabled={saving}
-                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Preferences'}
@@ -398,8 +408,8 @@ const Settings = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-text-main uppercase tracking-wide mb-6">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
               Privacy Settings
             </h3>
 
@@ -439,7 +449,7 @@ const Settings = () => {
               <button
                 onClick={handleSavePrivacy}
                 disabled={saving}
-                className="btn-pill flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save Privacy Settings'}
@@ -457,27 +467,27 @@ const Settings = () => {
           className="space-y-4"
         >
           {/* Account Info */}
-          <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-text-main uppercase tracking-wide mb-6">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
               Account Information
             </h3>
 
             <div className="space-y-3">
-              <div className="flex justify-between p-3 bg-stone-50 dark:bg-surface rounded-lg border border-stone-200 dark:border-border-default">
-                <span className="text-text-muted font-display text-sm">Account Type</span>
-                <span className="text-text-main font-display font-medium">
+              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
+                <span className="text-yellow-50/50 font-display text-sm">Account Type</span>
+                <span className="text-yellow-400 font-display font-medium drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
                   {user?.isAnonymous ? 'Guest' : 'Registered'}
                 </span>
               </div>
 
-              <div className="flex justify-between p-3 bg-stone-50 dark:bg-surface rounded-lg border border-stone-200 dark:border-border-default">
-                <span className="text-text-muted font-display text-sm">User ID</span>
-                <span className="text-text-main font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
+              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
+                <span className="text-yellow-50/50 font-display text-sm">User ID</span>
+                <span className="text-yellow-50 font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
               </div>
 
-              <div className="flex justify-between p-3 bg-stone-50 dark:bg-surface rounded-lg border border-stone-200 dark:border-border-default">
-                <span className="text-text-muted font-display text-sm">Joined</span>
-                <span className="text-text-main font-display">
+              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
+                <span className="text-yellow-50/50 font-display text-sm">Joined</span>
+                <span className="text-yellow-50 font-display">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
                     : 'Unknown'}
@@ -487,16 +497,16 @@ const Settings = () => {
           </div>
 
           {/* Sign Out */}
-          <div className="form-card">
-            <h3 className="text-lg font-display font-bold text-text-main uppercase tracking-wide mb-4">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-4">
               Session
             </h3>
 
             <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-yellow-50/50 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-text-secondary font-body">Sign out of your account</p>
-                <p className="text-sm text-text-muted">
+                <p className="text-yellow-50/80 font-body">Sign out of your account</p>
+                <p className="text-sm text-yellow-50/40">
                   You'll need to sign in again to access your account
                 </p>
               </div>
@@ -504,7 +514,7 @@ const Settings = () => {
 
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-stone-300 dark:border-surface-highlight text-text-secondary hover:border-stone-400 dark:hover:border-surface-tertiary hover:text-text-main transition-colors font-display font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 text-yellow-50/70 hover:border-yellow-500/30 hover:text-yellow-50 hover:bg-white/5 transition-all font-display font-medium"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -512,16 +522,16 @@ const Settings = () => {
           </div>
 
           {/* Danger Zone */}
-          <div className="form-card border-danger/30 bg-danger-muted">
-            <h3 className="text-lg font-display font-bold text-danger uppercase tracking-wide mb-4">
+          <div className="bg-red-950/30 backdrop-blur-md border border-red-500/20 rounded-2xl p-6">
+            <h3 className="text-lg font-display font-bold text-red-400 uppercase tracking-wide mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]">
               Danger Zone
             </h3>
 
             <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-400/80 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-text-secondary font-body">Delete Account</p>
-                <p className="text-sm text-text-muted">
+                <p className="text-yellow-50/80 font-body">Delete Account</p>
+                <p className="text-sm text-yellow-50/40">
                   Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
               </div>
@@ -529,7 +539,7 @@ const Settings = () => {
 
             <button
               onClick={() => toast.error('Please contact support to delete your account')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-500/30 text-red-600 dark:text-red-400/80 hover:border-red-500/50 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors font-display font-medium"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 text-red-400/80 hover:border-red-500/50 hover:text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all font-display font-medium"
             >
               <Trash2 className="w-4 h-4" />
               Delete Account

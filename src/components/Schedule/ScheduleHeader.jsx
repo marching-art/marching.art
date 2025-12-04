@@ -1,13 +1,7 @@
-// ScheduleHeader - Header component for schedule page (Brutalist Architecture)
+// ScheduleHeader - Header component for schedule page (Night Mode Stadium HUD)
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Music, ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  BrutalistHeader,
-  BrutalistButton,
-  MetricBadge,
-  BrutalistCard
-} from '../ui';
+import { Calendar, Music, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 export const SchedulePageHeader = ({ totalShows, currentWeek }) => (
   <motion.div
@@ -16,16 +10,20 @@ export const SchedulePageHeader = ({ totalShows, currentWeek }) => (
     className="flex-shrink-0 mb-4"
   >
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <BrutalistHeader size="lg" as="h1">
+      <h1 className="sports-header text-2xl md:text-3xl text-yellow-50">
         The Tour
-      </BrutalistHeader>
-      <div className="flex items-center gap-3">
-        <MetricBadge variant="info" icon={Music}>
-          {totalShows} shows
-        </MetricBadge>
-        <MetricBadge variant="primary" icon={Calendar}>
-          Week {currentWeek}/7
-        </MetricBadge>
+      </h1>
+      <div className="flex items-center gap-2">
+        {/* Shows Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg">
+          <Music className="w-4 h-4 text-yellow-50/60" />
+          <span className="text-sm font-display font-medium text-yellow-50">{totalShows} shows</span>
+        </div>
+        {/* Week Badge - Glowing Gold */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-sm border border-yellow-500/20 rounded-lg shadow-[0_0_12px_rgba(234,179,8,0.15)]">
+          <Calendar className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
+          <span className="text-sm font-display font-bold text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">Week {currentWeek}/7</span>
+        </div>
       </div>
     </div>
   </motion.div>
@@ -44,39 +42,36 @@ export const SelectedWeekHeader = ({
     className="flex-shrink-0 flex items-center justify-between mb-3"
   >
     <div className="flex items-center gap-3">
-      <BrutalistHeader size="sm">
+      <h2 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide">
         Week {selectedWeek}
-      </BrutalistHeader>
+      </h2>
       {weekStatus === 'current' && (
-        <MetricBadge variant="primary" size="sm">
-          Active
-        </MetricBadge>
+        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-lg">
+          <Zap className="w-3 h-3 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
+          <span className="text-xs font-display font-bold text-yellow-400 uppercase tracking-wider drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">Active</span>
+        </div>
       )}
       {weekStatus === 'past' && (
-        <MetricBadge variant="muted" size="sm">
-          Complete
-        </MetricBadge>
+        <div className="px-2 py-1 bg-black/30 border border-white/10 rounded-lg">
+          <span className="text-xs font-display font-medium text-yellow-50/40 uppercase tracking-wider">Complete</span>
+        </div>
       )}
     </div>
     <div className="flex items-center gap-2">
-      <BrutalistButton
-        variant="outline"
-        size="sm"
+      <button
         onClick={onPrevWeek}
         disabled={selectedWeek === 1}
-        className="p-2"
+        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         <ChevronLeft className="w-5 h-5" />
-      </BrutalistButton>
-      <BrutalistButton
-        variant="outline"
-        size="sm"
+      </button>
+      <button
         onClick={onNextWeek}
         disabled={selectedWeek === 7}
-        className="p-2"
+        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         <ChevronRight className="w-5 h-5" />
-      </BrutalistButton>
+      </button>
     </div>
   </motion.div>
 );

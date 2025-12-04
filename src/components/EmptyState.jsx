@@ -1,7 +1,7 @@
-// EmptyState - Authoritative empty state with void icon and dashed border
+// EmptyState - Night Mode Stadium HUD empty state
 import React from 'react';
 
-// Void icon - slashed circle with 2px stroke
+// Void icon - slashed circle with subtle glow
 const VoidIcon = ({ className = "w-16 h-16" }) => (
   <svg
     viewBox="0 0 64 64"
@@ -23,18 +23,18 @@ const EmptyState = ({
   className = ''
 }) => {
   return (
-    <div className={`border-2 border-dashed border-charcoal-900 dark:border-cream-100 p-8 md:p-12 ${className}`}>
+    <div className={`bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl p-8 md:p-12 ${className}`}>
       <div className="text-center">
         {/* Void Icon */}
-        <VoidIcon className="w-12 h-12 md:w-16 md:h-16 text-charcoal-900 dark:text-cream-100 mx-auto mb-6" />
+        <VoidIcon className="w-12 h-12 md:w-16 md:h-16 text-yellow-50/30 mx-auto mb-6" />
 
         {/* Header */}
-        <h3 className="text-lg md:text-xl font-black text-charcoal-900 dark:text-cream-100 uppercase tracking-tight mb-2">
+        <h3 className="text-lg md:text-xl font-display font-bold text-yellow-50/60 uppercase tracking-wide mb-2">
           {title}
         </h3>
 
         {/* Subtext */}
-        <p className="font-mono text-sm text-charcoal-600 dark:text-cream-400">
+        <p className="font-mono text-sm text-yellow-50/40">
           {subtitle}
         </p>
       </div>
