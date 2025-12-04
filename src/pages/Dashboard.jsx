@@ -33,6 +33,7 @@ import {
   DifficultyConfidenceMeter,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
+import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
 import {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
@@ -255,6 +256,9 @@ const Dashboard = () => {
 
   // Execution Insights panel (Transparent Gameplay)
   const [showExecutionInsights, setShowExecutionInsights] = useState(false);
+
+  // Synergy configuration panel
+  const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
   // Context Panel tab state (desktop right column)
   const [contextPanelTab, setContextPanelTab] = useState('insights');
@@ -609,11 +613,36 @@ const Dashboard = () => {
                     <h2 className="sports-header text-2xl md:text-3xl lg:text-4xl text-cream">
                       {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
                     </h2>
-                    {activeCorps.showConcept && (
-                      <p className="text-cream-muted text-sm font-body italic mt-1">
-                        "{activeCorps.showConcept}"
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
+                        <button
+                          onClick={() => setShowSynergyPanel(true)}
+                          className="flex items-center gap-2 px-2 py-1 rounded-lg bg-gold-500/10 border border-gold-500/30 hover:bg-gold-500/20 transition-colors group"
+                        >
+                          <Sparkles className="w-3 h-3 text-gold-400" />
+                          <span className="text-xs text-cream-muted group-hover:text-gold-400 transition-colors">
+                            {activeCorps.showConcept.theme} • {activeCorps.showConcept.drillStyle}
+                          </span>
+                          {(executionState?.synergyBonus || 0) > 0 && (
+                            <span className="text-xs font-mono font-bold text-gold-400">
+                              +{(executionState?.synergyBonus || 0).toFixed(1)}
+                            </span>
+                          )}
+                        </button>
+                      ) : typeof activeCorps.showConcept === 'string' && activeCorps.showConcept ? (
+                        <p className="text-cream-muted text-sm font-body italic">
+                          "{activeCorps.showConcept}"
+                        </p>
+                      ) : (
+                        <button
+                          onClick={() => setShowSynergyPanel(true)}
+                          className="flex items-center gap-2 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 transition-colors text-orange-400"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span className="text-xs">Configure Synergy</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Performance Multiplier - Glass Box */}
@@ -731,9 +760,9 @@ const Dashboard = () => {
               </div>
 
               {/* ============================================================
-                  3. ACTION GRID: Rehearse, Staff, Equipment, Activities
+                  3. ACTION GRID: Rehearse, Staff, Equipment, Synergy, Activities
                   ============================================================ */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {/* Daily Rehearsal */}
                 <IconCard
                   icon={Music}
@@ -765,6 +794,14 @@ const Dashboard = () => {
                     setShowEquipmentPanel(true);
                     completeDailyChallenge('maintain_equipment');
                   }}
+                />
+
+                {/* Synergy Panel */}
+                <IconCard
+                  icon={Sparkles}
+                  label="Synergy"
+                  subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)} pts` : 'Configure'}
+                  onClick={() => setShowSynergyPanel(true)}
                 />
 
                 {/* Daily Activities */}
@@ -927,6 +964,19 @@ const Dashboard = () => {
                 Equip
               </div>
             </button>
+            <button
+              onClick={() => setContextPanelTab('synergy')}
+              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
+                contextPanelTab === 'synergy'
+                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
+                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Synergy
+              </div>
+            </button>
           </div>
 
           {/* Context Panel Content */}
@@ -1022,6 +1072,26 @@ const Dashboard = () => {
                     onUpgrade={upgradeEquipment}
                     processing={executionProcessing}
                     corpsCoin={profile?.corpsCoin || 0}
+                  />
+                </motion.div>
+              )}
+
+              {contextPanelTab === 'synergy' && (
+                <motion.div
+                  key="synergy"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-4"
+                >
+                  <ShowConceptSelector
+                    corpsClass={activeCorpsClass}
+                    currentConcept={typeof activeCorps?.showConcept === 'object' ? activeCorps.showConcept : {}}
+                    onSave={() => {
+                      refreshProfile();
+                      toast.success('Show concept synergy updated!');
+                    }}
+                    compact={true}
                   />
                 </motion.div>
               )}
@@ -1150,6 +1220,49 @@ const Dashboard = () => {
                     completeDailyChallenge(type === 'staff' ? 'staff_meeting' : type === 'equipment' ? 'maintain_equipment' : type);
                     refreshProfile();
                   }}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Synergy Panel */}
+      <AnimatePresence>
+        {showSynergyPanel && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSynergyPanel(false)}
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Show Concept Synergy</h2>
+                <button
+                  onClick={() => setShowSynergyPanel(false)}
+                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-4">
+                <ShowConceptSelector
+                  corpsClass={activeCorpsClass}
+                  currentConcept={typeof activeCorps?.showConcept === 'object' ? activeCorps.showConcept : {}}
+                  onSave={() => {
+                    refreshProfile();
+                    setShowSynergyPanel(false);
+                  }}
+                  compact={false}
                 />
               </div>
             </motion.div>
