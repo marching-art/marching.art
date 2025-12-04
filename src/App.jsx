@@ -88,7 +88,8 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Layout Component - Fullscreen HUD Dashboard Layout
+// Layout Component - Responsive HUD Dashboard Layout
+// Mobile: Scrollable content | Desktop: Viewport-filling HUD
 const Layout = ({ children }) => {
   const location = useLocation();
 
@@ -98,11 +99,11 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="h-screen flex flex-col font-sans transition-colors duration-200 bg-surface text-text-main overflow-hidden">
+    <div className="min-h-screen lg:h-screen flex flex-col font-sans transition-colors duration-200 bg-surface text-text-main lg:overflow-hidden">
       {/* Global Gaming Header - Top Navigation */}
       <GamingHeader />
 
-      {/* Main Content - Fills remaining viewport height */}
+      {/* Main Content - Scrollable on mobile, fills viewport on desktop */}
       <main className="flex-1 flex flex-col min-h-0 pt-16 pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
@@ -112,10 +113,10 @@ const Layout = ({ children }) => {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
-            className="flex-1 flex flex-col min-h-0 overflow-hidden"
+            className="flex-1 flex flex-col min-h-0 lg:overflow-hidden"
           >
             <Suspense fallback={<LoadingScreen />}>
-              <div className="flex-1 flex flex-col min-h-0 container-responsive py-4 overflow-y-auto hud-scroll">
+              <div className="flex-1 flex flex-col min-h-0 container-responsive py-4 lg:py-5 overflow-y-auto lg:overflow-hidden hud-scroll">
                 {children}
               </div>
             </Suspense>
