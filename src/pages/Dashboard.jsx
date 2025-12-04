@@ -13,7 +13,21 @@ import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import {
   EquipmentManager,
-  DashboardStaffPanel
+  DashboardStaffPanel,
+  ExecutionInsightsPanel,
+  SectionGauges,
+  // HUD Hover Insights - Phase 3 Transparent Gameplay
+  TacticalGaugeWithInsight,
+  MultiplierFactorPills,
+  ScoreBreakdownTooltip,
+  StaffEffectivenessTooltip,
+  // Glass Box Multiplier - Interactive breakdown
+  MultiplierGlassBoxLarge,
+  // Segmented Metric Bars - Split-signal display
+  SegmentedMetricBar,
+  ClusterBar,
+  // Difficulty Confidence Meter - Risk/Reward visualization
+  ConfidenceBadge,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
@@ -36,66 +50,8 @@ import { retireCorps } from '../firebase/functions';
 // ============================================================================
 // STADIUM HUD DESIGN COMPONENTS
 // Night Mode aesthetic with glassmorphism and neon gold accents
+// TacticalGaugeWithInsight imported from TransparentGameplay (Phase 3)
 // ============================================================================
-
-// Stadium HUD Metric Gauge - Glowing progress bar with light trail effect
-const TacticalMetricGauge = ({ value, color = 'gold', label, icon: Icon }) => {
-  const percentage = Math.round(value * 100);
-
-  // Stadium HUD color mapping for progress fill
-  const fillColorClasses = {
-    gold: 'progress-glow-fill',
-    blue: 'progress-glow-fill status-good',
-    red: 'progress-glow-fill status-danger',
-    orange: 'progress-glow-fill status-warning',
-    green: 'progress-glow-fill status-excellent',
-    purple: 'progress-glow-fill status-good'
-  };
-
-  const textColorClasses = {
-    gold: 'text-gold-400',
-    blue: 'text-blue-400',
-    red: 'text-rose-400',
-    orange: 'text-orange-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400'
-  };
-
-  const iconColorClasses = {
-    gold: 'text-gold-500',
-    blue: 'text-blue-400',
-    red: 'text-rose-400',
-    orange: 'text-orange-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400'
-  };
-
-  return (
-    <div className="space-y-3">
-      {/* Label with neon icon */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className={`w-4 h-4 ${iconColorClasses[color]}`} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />}
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-cream-muted">
-            {label}
-          </span>
-        </div>
-        <span className={`font-mono font-bold text-lg ${textColorClasses[color]}`} style={{ textShadow: '0 0 10px currentColor' }}>
-          {percentage}%
-        </span>
-      </div>
-      {/* Stadium HUD Progress Bar with Gold Light Trail */}
-      <div className="progress-glow h-3">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className={fillColorClasses[color]}
-        />
-      </div>
-    </div>
-  );
-};
 
 // Stadium HUD Action Tile - Responsive, fills grid cell
 const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
@@ -208,6 +164,9 @@ const Dashboard = () => {
 
   // Daily activities panel
   const [showDailyActivities, setShowDailyActivities] = useState(false);
+
+  // Execution Insights panel (Transparent Gameplay)
+  const [showExecutionInsights, setShowExecutionInsights] = useState(false);
 
   // Destructure commonly used values
   const {
@@ -657,51 +616,84 @@ const Dashboard = () => {
                     )}
                   </div>
 
-                  {/* Performance Multiplier - Glowing Score Bug */}
+                  {/* Performance Multiplier - Glass Box with interactive breakdown */}
                   <div className="flex-shrink-0 flex flex-col items-center">
-                    <div className="score-bug">
-                      <div className="text-[8px] text-cream-muted uppercase tracking-[0.25em] font-display font-bold mb-1">
-                        Multiplier
-                      </div>
-                      <div className={`text-4xl md:text-5xl font-display font-bold tabular-nums text-gold-400`} style={{ textShadow: '0 0 20px rgba(250, 204, 21, 0.5)' }}>
-                        {multiplier.toFixed(2)}x
-                      </div>
-                      <div className={`text-xs font-display font-bold uppercase tracking-wider ${multiplierStatus.color} flex items-center gap-1 mt-1`}>
-                        <TrendingUp size={12} style={{ filter: 'drop-shadow(0 0 4px currentColor)' }} />
-                        {multiplierStatus.label}
-                      </div>
-                    </div>
+                    <MultiplierGlassBoxLarge
+                      multiplier={multiplier}
+                      breakdown={{
+                        // Factor 1: Readiness (±12%) - (sectionReadiness - 0.80) * 0.60
+                        readiness: (readiness - 0.80) * 0.60,
+                        // Factor 2: Staff (±8%) - (staffEffectiveness - 0.80) * 0.40
+                        staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                        // Factor 3: Equipment (0 to -5%) - (equipmentHealth - 1.00) * 0.50
+                        equipment: (avgEquipment - 1.00) * 0.50,
+                        // Factor 4: Travel Condition (-3% if bus+truck < 140%)
+                        travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                        // Factor 5: Morale (±8%) - (sectionMorale - 0.75) * 0.32
+                        morale: (morale - 0.75) * 0.32,
+                        // Factor 6: Show Difficulty (±15%) - ceiling bonus or risk penalty
+                        showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
+                          ? (executionState?.showDesign?.ceilingBonus || 0.08)
+                          : (executionState?.showDesign?.riskPenalty || -0.10),
+                        // Factor 7: Championship Pressure (Days 47-49, ±2%)
+                        ...(profile?.currentDay >= 47 && profile?.currentDay <= 49 ? { championshipPressure: (morale - 0.80) * 0.10 } : {}),
+                        // Factor 8: Fatigue (Days 35-49, 0 to -5%)
+                        ...(profile?.currentDay > 35 ? { fatigue: -0.05 * ((profile.currentDay - 35) / 14) } : {}),
+                      }}
+                      currentDay={profile?.currentDay || 1}
+                      showDifficulty={executionState?.showDesign}
+                      avgReadiness={readiness}
+                    />
+                    {/* Link to full insights panel */}
+                    <button
+                      onClick={() => setShowExecutionInsights(true)}
+                      className="mt-2 text-[9px] text-cream-muted hover:text-gold-400 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                    >
+                      <ChevronRight size={10} />
+                      Full Analysis
+                    </button>
                   </div>
                 </div>
               </div>
 
               {/* ============================================================
-                  EXECUTION METRICS - Tactical Gauge Section
+                  EXECUTION METRICS - Split-Signal Segmented Bars (B/P/G/E)
                   ============================================================ */}
               <div className="px-6 md:px-8 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <TacticalMetricGauge
-                    value={readiness}
-                    color="blue"
-                    label="Readiness"
-                    icon={Target}
+                  {/* Readiness - 4 Segment Cluster Bar */}
+                  <ClusterBar
+                    type="readiness"
+                    sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
+                      brass: readiness,
+                      percussion: readiness,
+                      guard: readiness,
+                      ensemble: readiness
+                    }}
                   />
-                  <TacticalMetricGauge
-                    value={morale}
-                    color="red"
-                    label="Morale"
-                    icon={Heart}
+                  {/* Morale - 4 Segment Cluster Bar */}
+                  <ClusterBar
+                    type="morale"
+                    sections={typeof executionState?.morale === 'object' ? executionState.morale : {
+                      brass: morale,
+                      percussion: morale,
+                      guard: morale,
+                      overall: morale
+                    }}
                   />
-                  <TacticalMetricGauge
+                  {/* Equipment - Single Gauge (no subsections) */}
+                  <TacticalGaugeWithInsight
                     value={avgEquipment}
                     color="orange"
                     label="Equipment"
                     icon={Wrench}
+                    type="equipment"
+                    equipment={executionState?.equipment}
                   />
                 </div>
               </div>
 
-              {/* Quick Stats Row - Stadium HUD with glowing numbers */}
+              {/* Quick Stats Row - Stadium HUD with glowing numbers + Hover Insights */}
               <div className="flex flex-wrap items-center justify-between gap-4 px-6 md:px-8 pb-6 pt-0 border-t border-white/10 mt-0">
                 <div className="flex items-center gap-6 pt-5">
                   <div className="text-center">
@@ -713,17 +705,35 @@ const Dashboard = () => {
                     <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
-                    <div className="text-center">
-                      <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
-                        {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                    <ScoreBreakdownTooltip
+                      baseScore={activeCorps.totalSeasonScore || 0}
+                      multiplier={multiplier}
+                      synergyBonus={executionState?.synergyBonus || 0}
+                      finalScore={(activeCorps.totalSeasonScore || 0) * multiplier + (executionState?.synergyBonus || 0)}
+                    >
+                      <div className="text-center cursor-help hover:scale-105 transition-transform">
+                        <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(250, 204, 21, 0.5)' }}>
+                          {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                        </div>
+                        <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
                       </div>
-                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Score</div>
-                    </div>
+                    </ScoreBreakdownTooltip>
                   )}
-                  <div className="text-center">
-                    <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
-                  </div>
+                  <StaffEffectivenessTooltip
+                    assignedStaff={assignedStaff}
+                    totalImpact={assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04}
+                  >
+                    <div className="text-center cursor-help hover:scale-105 transition-transform">
+                      <div className="text-2xl font-mono font-bold text-green-400" style={{ textShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}>{assignedStaff.length}/8</div>
+                      <div className="text-[10px] text-cream-muted uppercase tracking-widest font-display">Staff</div>
+                    </div>
+                  </StaffEffectivenessTooltip>
+                  {/* Difficulty Confidence Badge - Risk/Reward indicator */}
+                  <ConfidenceBadge
+                    currentDifficulty={executionState?.showDesign || 'moderate'}
+                    currentReadiness={readiness}
+                    onClick={() => setShowExecutionInsights(true)}
+                  />
                 </div>
 
                 {/* Quick Links - Glass buttons with glow */}
@@ -1013,6 +1023,58 @@ const Dashboard = () => {
                   }}
                 />
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Execution Insights Panel - Transparent Gameplay */}
+      <AnimatePresence>
+        {showExecutionInsights && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowExecutionInsights(false)}
+              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-surface border-l border-stone-200 dark:border-l-3 dark:border-border-default z-50 overflow-hidden"
+            >
+              <ExecutionInsightsPanel
+                executionState={executionState}
+                multiplierBreakdown={{
+                  readiness: (executionState?.readiness || 0.75) - 0.75 > 0 ? ((executionState?.readiness || 0.75) - 0.75) * 0.48 : ((executionState?.readiness || 0.75) - 0.75) * 0.48,
+                  morale: (executionState?.morale || 0.80) - 0.80 > 0 ? ((executionState?.morale || 0.80) - 0.80) * 0.32 : ((executionState?.morale || 0.80) - 0.80) * 0.32,
+                  equipment: ((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90 > 0 ? (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20 : (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20,
+                  staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                  showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
+                  travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                }}
+                finalMultiplier={multiplier}
+                currentDay={profile?.currentDay || 1}
+                showDifficulty={executionState?.showDesign || 'moderate'}
+                showConcept={activeCorps?.showConcept}
+                lineup={activeCorps?.lineup}
+                assignedStaff={assignedStaff}
+                activeCorpsClass={activeCorpsClass}
+                onBoostStaffMorale={async (staffId) => {
+                  // Call boost staff morale function
+                  try {
+                    const { boostStaffMorale } = await import('../api/functions');
+                    await boostStaffMorale({ staffId });
+                    refreshProfile();
+                  } catch (error) {
+                    console.error('Failed to boost staff morale:', error);
+                  }
+                }}
+                onClose={() => setShowExecutionInsights(false)}
+              />
             </motion.div>
           </>
         )}

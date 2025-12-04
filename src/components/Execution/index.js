@@ -4,3 +4,40 @@ export { default as RehearsalPanel } from './RehearsalPanel';
 export { default as EquipmentManager } from './EquipmentManager';
 export { default as DashboardStaffPanel } from './DashboardStaffPanel';
 export { default as ShowDifficultySelector } from './ShowDifficultySelector';
+
+// Transparent Gameplay Components - "Echelon-Tier" UI
+export {
+  CircularProgressRing,
+  SectionGauges,
+  MultiplierBadge,
+  ExecutionMultiplierBreakdown,
+  ThresholdMeter,
+  StatusLight,
+  RateIndicator,
+  TemporalEffectsBar,
+  CaptionEquipmentMap,
+  // HUD Hover Insights
+  HoverTooltip,
+  SectionBreakdownTooltip,
+  EquipmentBreakdownTooltip,
+  StaffEffectivenessTooltip,
+  ScoreBreakdownTooltip,
+  MultiplierFactorPills,
+  TacticalGaugeWithInsight,
+  // Glass Box Multiplier - Interactive breakdown popover/drawer
+  MultiplierGlassBox,
+  MultiplierGlassBoxLarge,
+  // Segmented Metric Bars - Split-signal Readiness/Morale display
+  SegmentedMetricBar,
+  ClusterBar,
+  DualClusterDisplay,
+  InlineMiniSegments,
+  // Difficulty Confidence Meter - Risk/Reward visualization
+  DifficultyConfidenceMeter,
+  ConfidenceBadge,
+  MiniRiskIndicator,
+  DIFFICULTY_PRESETS,
+} from './TransparentGameplay';
+export { default as StaffEffectivenessPanel } from './TransparentGameplay/StaffEffectivenessPanel';
+export { default as SynergyVisualization } from './TransparentGameplay/SynergyVisualization';
+export { default as ExecutionInsightsPanel } from './TransparentGameplay/ExecutionInsightsPanel';
