@@ -29,7 +29,16 @@ const sizeStyles: Record<ModalSize, string> = {
   md: 'max-w-md',
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
-  full: 'max-w-[95vw] max-h-[95vh]',
+  full: 'max-w-[95vw] max-h-[90vh]',
+};
+
+// Content height limits based on size - larger modals get more content space
+const contentHeightStyles: Record<ModalSize, string> = {
+  sm: 'max-h-[50vh]',
+  md: 'max-h-[60vh]',
+  lg: 'max-h-[65vh]',
+  xl: 'max-h-[70vh]',
+  full: 'max-h-[calc(90vh-140px)]', // Full modal minus header/footer space
 };
 
 const overlayVariants = {
@@ -154,7 +163,7 @@ export const Modal: React.FC<ModalProps> = ({
             )}
 
             {/* Content */}
-            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className={`p-6 ${contentHeightStyles[size]} overflow-y-auto hud-scroll`}>
               {children}
             </div>
 

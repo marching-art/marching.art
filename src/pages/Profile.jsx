@@ -136,7 +136,7 @@ const Profile = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0 gap-6">
       {/* Header */}
       <ProfileHeader
         profile={profile}

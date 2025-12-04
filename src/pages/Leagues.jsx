@@ -110,12 +110,12 @@ const Leagues = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0 gap-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex-shrink-0"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl" />
         <div className="relative p-8 bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-transparent rounded-2xl shadow-sm dark:shadow-none">

@@ -143,12 +143,12 @@ const BattlePass = () => {
   const progressPercent = battlePassData?.progressPercentage || 0;
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="flex flex-col flex-1 min-h-0 gap-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex-shrink-0"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-amber-500/10 dark:via-gold-500/10 to-blue-500/10 rounded-2xl" />
         <div className="relative p-6 md:p-8 card-brutalist">
