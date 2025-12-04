@@ -8,7 +8,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers, analyticsHelpers } from './firebase';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
-import GamingHeader from './components/GamingHeader';
 import BottomNav from './components/BottomNav';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
@@ -100,11 +99,8 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen lg:h-screen flex flex-col font-sans transition-colors duration-200 bg-surface text-text-main">
-      {/* Global Gaming Header - Top Navigation */}
-      <GamingHeader />
-
       {/* Main Content - Scrollable on mobile, fills viewport on desktop */}
-      <main className="flex-1 flex flex-col min-h-0 pt-16 pb-20 lg:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0 pb-20 lg:pb-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -116,7 +112,7 @@ const Layout = ({ children }) => {
             className="flex-1 flex flex-col min-h-0"
           >
             <Suspense fallback={<LoadingScreen />}>
-              <div className="flex-1 flex flex-col min-h-0 container-responsive py-4 lg:py-5 overflow-y-auto hud-scroll">
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto hud-scroll">
                 {children}
               </div>
             </Suspense>
