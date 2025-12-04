@@ -306,19 +306,19 @@ const Scores = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-6">
-      {/* Header */}
+    <div className="flex flex-col flex-1 min-h-0 gap-4 lg:gap-5">
+      {/* Header - Compact */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex-shrink-0">
-        <h1 className="!text-3xl md:!text-5xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100 mb-4">
+        <h1 className="!text-2xl lg:!text-3xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100 mb-1">
           Scores & Rankings
         </h1>
-        <p className="text-slate-600 dark:text-cream-300">
-          Results, player rankings, and performance statistics
+        <p className="text-sm text-slate-600 dark:text-cream-300">
+          Results, rankings, and stats
         </p>
       </motion.div>
 
-      {/* Stadium Scoreboard Metrics */}
-      <div className="flex overflow-x-auto space-x-4 pb-4 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:pb-0 md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Stadium Scoreboard Metrics - Compact */}
+      <div className="flex-shrink-0 flex overflow-x-auto space-x-3 pb-2 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-0 lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -374,8 +374,8 @@ const Scores = () => {
         </motion.div>
       </div>
 
-      {/* Main Tabs - Mechanical Segmented Control */}
-      <div className="flex justify-center -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Main Tabs - Compact Segmented Control */}
+      <div className="flex-shrink-0 flex justify-center -mx-4 px-4 lg:mx-0 lg:px-0">
         <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
           {mainTabs.map((tab, index) => {
             const Icon = tab.icon;
@@ -385,30 +385,30 @@ const Scores = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2.5 md:py-3 font-bold uppercase tracking-wide transition-all whitespace-nowrap text-xs md:text-sm ${
+                className={`flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-2 lg:py-2.5 font-bold uppercase tracking-wide transition-all whitespace-nowrap text-[10px] lg:text-xs ${
                   isActive
                     ? 'bg-charcoal-900 dark:bg-cream-100 text-gold-400 dark:text-charcoal-900'
                     : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
                 } ${!isLast ? 'border-r-2 border-charcoal-900 dark:border-cream-100' : ''}`}
               >
-                <Icon className="w-4 h-4" />
-                {tab.name}
+                <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                <span className="hidden sm:inline">{tab.name}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Tab Content - Fills remaining space */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-          className="flex-1 min-h-0 flex flex-col"
-        >
+      {/* Tab Content - Fills remaining space with internal scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
           {activeTab === 'latest' && (
             <LatestScoresTab
               loading={loading}
@@ -451,8 +451,9 @@ const Scores = () => {
               allShows={allShows}
             />
           )}
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Show Detail Modal */}
       {selectedShow && (

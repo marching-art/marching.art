@@ -110,37 +110,37 @@ const Leagues = () => {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-6">
-      {/* Header */}
+    <div className="flex flex-col flex-1 min-h-0 gap-4 lg:gap-5">
+      {/* Header - Compact */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden flex-shrink-0"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl" />
-        <div className="relative p-8 bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-transparent rounded-2xl shadow-sm dark:shadow-none">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-xl lg:rounded-2xl" />
+        <div className="relative p-4 lg:p-6 bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-transparent rounded-xl lg:rounded-2xl shadow-sm dark:shadow-none">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl sm:text-4xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-2">
+              <h1 className="text-xl lg:text-2xl font-display font-bold text-charcoal-950 dark:text-cream-100 mb-1">
                 Circuit Leagues
               </h1>
-              <p className="text-slate-600 dark:text-cream-300 text-sm sm:text-base">
-                Compete on the tour circuit with other directors throughout the season
+              <p className="text-slate-600 dark:text-cream-300 text-xs lg:text-sm">
+                Compete with other directors throughout the season
               </p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
+              className="btn-primary flex items-center justify-center gap-2 text-sm py-2"
             >
-              <Plus className="w-5 h-5" />
-              Create League
+              <Plus className="w-4 h-4" />
+              Create
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2">
+      {/* Tab Navigation - Compact */}
+      <div className="flex-shrink-0 flex gap-2">
         <button
           onClick={() => setActiveTab('my-leagues')}
           className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-6 py-2.5 md:py-3 rounded-lg transition-all font-semibold text-sm md:text-base ${
@@ -167,16 +167,17 @@ const Leagues = () => {
         </button>
       </div>
 
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'my-leagues' && (
-          <motion.div
-            key="my-leagues"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-4"
-          >
+      {/* Tab Content - Fills remaining space with internal scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+        <AnimatePresence mode="wait">
+          {activeTab === 'my-leagues' && (
+            <motion.div
+              key="my-leagues"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-4"
+            >
             {loadingMyLeagues ? (
               <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-8 text-center">
                 <div className="w-8 h-8 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -328,6 +329,7 @@ const Leagues = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       {/* Create League Modal */}
       {showCreateModal && (
