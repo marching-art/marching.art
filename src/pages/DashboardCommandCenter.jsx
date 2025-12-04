@@ -157,19 +157,19 @@ const ActionButton = ({ icon: Icon, label, onClick, disabled, processing, comple
       whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
       whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
       className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg border transition-all
+        w-full flex items-center justify-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-2 lg:py-2.5 rounded-lg border transition-all
         ${completed ? variants.success : variants[variant]}
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
       {processing ? (
-        <RefreshCw className="w-4 h-4 animate-spin" />
+        <RefreshCw className="w-3.5 h-3.5 lg:w-4 lg:h-4 animate-spin" />
       ) : completed ? (
-        <CheckCircle className="w-4 h-4" />
+        <CheckCircle className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
       ) : (
-        <Icon className="w-4 h-4" />
+        <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
       )}
-      <span className="text-xs font-display font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] lg:text-xs font-display font-bold uppercase tracking-wider">{label}</span>
     </motion.button>
   );
 };
@@ -309,6 +309,116 @@ const NavItem = ({ icon: Icon, label, to, active, badge }) => (
       </span>
     )}
   </Link>
+);
+
+// ============================================================================
+// MOBILE HUD COMPONENTS - Compact, dense UI for small screens
+// ============================================================================
+
+// Mobile-specific compact status bar row
+const MobileStatusRow = ({ seasonData, weeksRemaining, currentWeek, profile, engagementData, formatSeasonName }) => {
+  const xpProgress = ((profile?.xp || 0) % 1000) / 10;
+
+  return (
+    <div className="lg:hidden shrink-0 px-3 py-2 bg-black/50 backdrop-blur-md border-b border-white/10">
+      {/* Row 1: Season & Time | Level & Coins */}
+      <div className="flex items-center justify-between gap-2 text-[11px]">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-cream-muted truncate font-display">
+            {formatSeasonName(seasonData?.name)}
+          </span>
+          {weeksRemaining && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono shrink-0">
+              <Clock className="w-3 h-3" />
+              Wk {currentWeek} • {weeksRemaining}w left
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Login Streak */}
+          {engagementData?.loginStreak > 0 && (
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-500/30">
+              <Flame className={`w-3 h-3 ${engagementData.loginStreak >= 7 ? 'text-orange-400 animate-pulse' : 'text-orange-500'}`} />
+              <span className="font-mono font-bold text-orange-400">{engagementData.loginStreak}</span>
+            </div>
+          )}
+          {/* Level */}
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 border border-gold-500/30">
+            <Zap className="w-3 h-3 text-gold-500" />
+            <span className="font-mono font-bold text-gold-400">Lv.{profile?.xpLevel || 1}</span>
+            <div className="w-6 h-1 bg-charcoal-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gold-500" style={{ width: `${xpProgress}%` }} />
+            </div>
+          </div>
+          {/* Coins */}
+          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gold-500/20 border border-gold-500/30">
+            <Coins className="w-3 h-3 text-gold-500" />
+            <span className="font-mono font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Mobile Corps Tabs - Horizontal scrolling
+const MobileCorpsTabs = ({ corps, activeCorpsClass, handleCorpsSwitch, setShowRegistration, CLASS_ORDER }) => {
+  if (!corps || Object.keys(corps).length === 0) return null;
+
+  return (
+    <div className="lg:hidden shrink-0 px-3 py-1.5 bg-black/30 border-b border-white/5">
+      <div className="flex items-center gap-1.5 overflow-x-auto scroll-hide">
+        <Music className="w-3.5 h-3.5 text-gold-500 shrink-0" />
+        {Object.entries(corps)
+          .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+          .map(([classId, corpsData]) => (
+            <button
+              key={classId}
+              onClick={() => handleCorpsSwitch(classId)}
+              className={`
+                px-2.5 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wide transition-all border shrink-0
+                ${activeCorpsClass === classId
+                  ? 'bg-gold-500/20 text-gold-400 border-gold-500/40'
+                  : 'bg-white/5 text-cream-muted border-white/10'}
+              `}
+            >
+              {corpsData.corpsName || corpsData.name}
+            </button>
+          ))}
+        <button
+          onClick={() => setShowRegistration(true)}
+          className="px-2 py-1 rounded text-[10px] font-display uppercase tracking-wide border border-dashed border-white/20 text-cream-muted shrink-0"
+        >
+          + New
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Mobile Context Switcher - Tab bar for Staff/Equip/Tasks
+const MobileContextSwitcher = ({ contextTab, setContextTab }) => (
+  <div className="lg:hidden shrink-0 flex border-t border-b border-white/10 bg-black/40">
+    {[
+      { id: 'staff', label: 'Staff', icon: Users },
+      { id: 'equipment', label: 'Equip', icon: Wrench },
+      { id: 'tasks', label: 'Tasks', icon: Zap },
+    ].map(tab => (
+      <button
+        key={tab.id}
+        onClick={() => setContextTab(tab.id)}
+        className={`
+          flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 text-[10px] font-display font-bold uppercase tracking-wider transition-all
+          ${contextTab === tab.id
+            ? 'bg-gold-500/20 text-gold-400 border-b-2 border-gold-500'
+            : 'text-cream-muted'}
+        `}
+      >
+        <tab.icon className="w-3.5 h-3.5" />
+        {tab.label}
+      </button>
+    ))}
+  </div>
 );
 
 // ============================================================================
@@ -635,9 +745,32 @@ const DashboardCommandCenter = () => {
       )}
 
       {/* ========================================================================
-          TOP STATUS BAR - Always visible global status
+          MOBILE HUD - Compact status bar (hidden on desktop)
           ======================================================================== */}
-      <div className="shrink-0 px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/10">
+      <MobileStatusRow
+        seasonData={seasonData}
+        weeksRemaining={weeksRemaining}
+        currentWeek={currentWeek}
+        profile={profile}
+        engagementData={engagementData}
+        formatSeasonName={formatSeasonName}
+      />
+
+      {/* ========================================================================
+          MOBILE CORPS TABS (hidden on desktop)
+          ======================================================================== */}
+      <MobileCorpsTabs
+        corps={corps}
+        activeCorpsClass={activeCorpsClass}
+        handleCorpsSwitch={handleCorpsSwitch}
+        setShowRegistration={setShowRegistration}
+        CLASS_ORDER={CLASS_ORDER}
+      />
+
+      {/* ========================================================================
+          DESKTOP TOP STATUS BAR - (hidden on mobile)
+          ======================================================================== */}
+      <div className="hidden lg:block shrink-0 px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center justify-between gap-4">
           {/* Season & Time */}
           <div className="flex items-center gap-3">
@@ -696,10 +829,10 @@ const DashboardCommandCenter = () => {
       </div>
 
       {/* ========================================================================
-          CORPS TABS - Switch between corps
+          DESKTOP CORPS TABS - Switch between corps (hidden on mobile)
           ======================================================================== */}
       {corps && Object.keys(corps).length > 0 && (
-        <div className="shrink-0 px-4 py-2 bg-black/20 border-b border-white/5">
+        <div className="hidden lg:block shrink-0 px-4 py-2 bg-black/20 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Music className="w-4 h-4 text-gold-500" />
             <div className="flex items-center gap-1 overflow-x-auto scroll-hide">
@@ -732,14 +865,14 @@ const DashboardCommandCenter = () => {
       )}
 
       {/* ========================================================================
-          MAIN CONTENT AREA - 3-Panel Layout
+          MAIN CONTENT AREA - Responsive 3-Panel / Mobile HUD Layout
           ======================================================================== */}
       {activeCorps && (
-        <div className="flex-1 min-h-0 flex overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
           {/* ================================================================
-              LEFT NAV RAIL - Slim icon navigation
+              LEFT NAV RAIL - Desktop only (hidden on mobile - BottomNav used)
               ================================================================ */}
-          <div className="shrink-0 w-16 bg-black/30 border-r border-white/10 py-3 flex flex-col items-center gap-1">
+          <div className="hidden lg:flex shrink-0 w-16 bg-black/30 border-r border-white/10 py-3 flex-col items-center gap-1">
             <NavItem icon={Home} label="Home" to="/" active={location.pathname === '/'} />
             <NavItem icon={Calendar} label="Schedule" to="/schedule" />
             <NavItem icon={ShoppingBag} label="Market" to="/staff" />
@@ -752,174 +885,340 @@ const DashboardCommandCenter = () => {
 
           {/* ================================================================
               MAIN PANEL - Corps status + Actions
+              Mobile: Compact HUD layout | Desktop: Full panel
               ================================================================ */}
-          <div className="flex-1 min-w-0 flex flex-col p-4 gap-4 overflow-y-auto hud-scroll">
-            {/* Corps Identity Header - Condensed */}
-            <div className="glass-panel p-4">
-              <div className="flex items-start justify-between gap-4">
-                {/* Left: Name + Class */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
-                      {getCorpsClassName(activeCorpsClass)}
-                    </span>
-                    {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[10px] font-bold">
-                        <Crown className="w-3 h-3" /> TOP 10
+          <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+            {/* Scrollable content area */}
+            <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-3 lg:p-4 space-y-3 lg:space-y-4">
+              {/* Corps Identity Header - Responsive */}
+              <div className="glass-panel p-3 lg:p-4">
+                {/* Mobile: Compact single-line header */}
+                <div className="lg:hidden">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-widest uppercase shrink-0 ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                        {getCorpsClassName(activeCorpsClass)}
                       </span>
+                      <h2 className="text-base font-display font-black text-cream uppercase tracking-tight truncate">
+                        {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
+                      </h2>
+                      <button
+                        onClick={() => setShowEditCorps(true)}
+                        className="p-1 rounded hover:bg-white/10 text-cream-muted shrink-0"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <MultiplierBadge value={multiplier} />
+                  </div>
+                  {/* Mobile Metrics Row - Tighter */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <MicroGauge value={readiness} color="blue" label="Ready" size="sm" />
+                    <MicroGauge value={morale} color="red" label="Morale" size="sm" />
+                    <MicroGauge value={avgEquipment} color="orange" label="Equip" size="sm" />
+                  </div>
+                </div>
+
+                {/* Desktop: Full header */}
+                <div className="hidden lg:block">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
+                          {getCorpsClassName(activeCorpsClass)}
+                        </span>
+                        {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[10px] font-bold">
+                            <Crown className="w-3 h-3" /> TOP 10
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setShowEditCorps(true)}
+                          className="p-1 rounded hover:bg-white/10 text-cream-muted hover:text-gold-400 transition-colors"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <h2 className="text-2xl font-display font-black text-cream uppercase tracking-tight truncate">
+                        {activeCorps.corpsName || activeCorps.name || 'UNNAMED CORPS'}
+                      </h2>
+                      {activeCorps.showConcept && (
+                        <p className="text-sm text-cream-muted italic truncate">"{activeCorps.showConcept}"</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <MultiplierBadge value={multiplier} />
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setShowCaptionSelection(true)}
+                          className="p-2 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-all"
+                          title="Edit Lineup"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <Link
+                          to="/schedule"
+                          className="p-2 rounded-lg bg-white/5 border border-white/10 text-cream-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"
+                          title="Schedule"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Link>
+                        <Link
+                          to="/scores"
+                          className="p-2 rounded-lg bg-white/5 border border-white/10 text-cream-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"
+                          title="Leaderboard"
+                        >
+                          <Trophy className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Desktop Metrics Row */}
+                  <div className="mt-4 grid grid-cols-3 gap-4">
+                    <MicroGauge value={readiness} color="blue" label="Ready" />
+                    <MicroGauge value={morale} color="red" label="Morale" />
+                    <MicroGauge value={avgEquipment} color="orange" label="Equip" />
+                  </div>
+                </div>
+              </div>
+
+            {/* Week Strip + Stats - Responsive */}
+              <div className="glass-panel p-3 lg:p-4">
+                {/* Mobile: Vertical layout */}
+                <div className="lg:hidden space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] uppercase tracking-wider text-cream-muted font-display">Week {currentWeek}</span>
+                    <WeekStrip
+                      rehearsalsThisWeek={rehearsalsThisWeek}
+                      shows={activeCorps?.selectedShows?.[`week${currentWeek}`]?.map(s => s.dayOfWeek) || []}
+                    />
+                  </div>
+                  {/* Mobile: 2x2 stat grid */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/10">
+                      <Target className="w-3 h-3 text-blue-400" />
+                      <span className="text-[10px] font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</span>
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/10">
+                      <Music className="w-3 h-3 text-purple-400" />
+                      <span className="text-[10px] font-mono font-bold text-purple-400">{showsThisWeek}</span>
+                    </div>
+                    {activeCorpsClass !== 'soundSport' && (
+                      <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/10">
+                        <Trophy className="w-3 h-3 text-gold-400" />
+                        <span className="text-[10px] font-mono font-bold text-gold-400">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</span>
+                      </div>
                     )}
-                    <button
-                      onClick={() => setShowEditCorps(true)}
-                      className="p-1 rounded hover:bg-white/10 text-cream-muted hover:text-gold-400 transition-colors"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </button>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 border border-white/10">
+                      <Users className="w-3 h-3 text-emerald-400" />
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">{assignedStaff.length}/8</span>
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-display font-black text-cream uppercase tracking-tight truncate">
-                    {activeCorps.corpsName || activeCorps.name || 'UNNAMED CORPS'}
-                  </h2>
-                  {activeCorps.showConcept && (
-                    <p className="text-sm text-cream-muted italic truncate">"{activeCorps.showConcept}"</p>
-                  )}
                 </div>
-
-                {/* Right: Multiplier + Quick Links */}
-                <div className="flex items-center gap-3">
-                  <MultiplierBadge value={multiplier} />
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setShowCaptionSelection(true)}
-                      className="p-2 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-all"
-                      title="Edit Lineup"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <Link
-                      to="/schedule"
-                      className="p-2 rounded-lg bg-white/5 border border-white/10 text-cream-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"
-                      title="Schedule"
-                    >
-                      <Calendar className="w-4 h-4" />
-                    </Link>
-                    <Link
-                      to="/scores"
-                      className="p-2 rounded-lg bg-white/5 border border-white/10 text-cream-muted hover:text-gold-400 hover:border-gold-500/30 transition-all"
-                      title="Leaderboard"
-                    >
-                      <Trophy className="w-4 h-4" />
-                    </Link>
+                {/* Desktop: Horizontal layout */}
+                <div className="hidden lg:flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-cream-muted font-display mb-2">Week {currentWeek} Progress</div>
+                    <WeekStrip
+                      rehearsalsThisWeek={rehearsalsThisWeek}
+                      shows={activeCorps?.selectedShows?.[`week${currentWeek}`]?.map(s => s.dayOfWeek) || []}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <StatPill icon={Target} value={`${rehearsalsThisWeek}/7`} label="Rehearsals" color="blue" />
+                    <StatPill icon={Music} value={showsThisWeek} label="Shows" color="purple" />
+                    {activeCorpsClass !== 'soundSport' && (
+                      <StatPill icon={Trophy} value={activeCorps.totalSeasonScore?.toFixed(1) || '0.0'} label="Score" color="gold" trend={weeklyProgress?.scoreImprovement} />
+                    )}
+                    <StatPill icon={Users} value={`${assignedStaff.length}/8`} label="Staff" color="green" />
                   </div>
                 </div>
               </div>
 
-              {/* Metrics Row - Inline */}
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                <MicroGauge value={readiness} color="blue" label="Ready" />
-                <MicroGauge value={morale} color="red" label="Morale" />
-                <MicroGauge value={avgEquipment} color="orange" label="Equip" />
+              {/* Quick Actions - 2x2 Grid on Mobile, Row on Desktop */}
+              <div className="grid grid-cols-2 lg:flex lg:items-center gap-2">
+                <ActionButton
+                  icon={Music}
+                  label="Rehearse"
+                  onClick={handleRehearsal}
+                  disabled={!canRehearseToday()}
+                  processing={executionProcessing}
+                  completed={!canRehearseToday()}
+                  variant="primary"
+                />
+                <ActionButton
+                  icon={Heart}
+                  label="Boost Morale"
+                  onClick={boostMorale}
+                  disabled={morale >= 1}
+                />
+                <ActionButton
+                  icon={Wrench}
+                  label="Repair All"
+                  onClick={() => {
+                    equipmentItems.forEach(item => {
+                      if (item.condition < 0.85) {
+                        repairEquipment(item.key);
+                      }
+                    });
+                  }}
+                  disabled={!equipmentNeedsRepair}
+                />
+                <Link to="/staff" className="lg:ml-auto">
+                  <ActionButton icon={Users} label="Hire Staff" />
+                </Link>
               </div>
-            </div>
 
-            {/* Week Strip + Stats */}
-            <div className="glass-panel p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-cream-muted font-display mb-2">Week {currentWeek} Progress</div>
-                  <WeekStrip
-                    rehearsalsThisWeek={rehearsalsThisWeek}
-                    shows={activeCorps?.selectedShows?.[`week${currentWeek}`]?.map(s => s.dayOfWeek) || []}
-                  />
+              {/* Activity Log - Desktop only */}
+              <div className="hidden lg:flex glass-panel p-3 items-center gap-4 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wider text-cream-muted font-display">This Week:</span>
+                <div className="flex items-center gap-1">
+                  <TrendingUp className={`w-3.5 h-3.5 ${(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} />
+                  <span className={`text-sm font-mono font-bold ${(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {(weeklyProgress?.scoreImprovement || 0) >= 0 ? '+' : ''}{(weeklyProgress?.scoreImprovement || 0).toFixed(1)} Score
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                  <StatPill icon={Target} value={`${rehearsalsThisWeek}/7`} label="Rehearsals" color="blue" />
-                  <StatPill icon={Music} value={showsThisWeek} label="Shows" color="purple" />
-                  {activeCorpsClass !== 'soundSport' && (
-                    <StatPill icon={Trophy} value={activeCorps.totalSeasonScore?.toFixed(1) || '0.0'} label="Score" color="gold" trend={weeklyProgress?.scoreImprovement} />
+                <div className="flex items-center gap-1">
+                  {(weeklyProgress?.rankChange || 0) > 0 ? (
+                    <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (weeklyProgress?.rankChange || 0) < 0 ? (
+                    <ArrowDown className="w-3.5 h-3.5 text-rose-400" />
+                  ) : (
+                    <Minus className="w-3.5 h-3.5 text-cream-muted" />
                   )}
-                  <StatPill icon={Users} value={`${assignedStaff.length}/8`} label="Staff" color="green" />
+                  <span className={`text-sm font-mono font-bold ${
+                    (weeklyProgress?.rankChange || 0) > 0 ? 'text-emerald-400' :
+                    (weeklyProgress?.rankChange || 0) < 0 ? 'text-rose-400' : 'text-cream-muted'
+                  }`}>
+                    {Math.abs(weeklyProgress?.rankChange || 0)} Rank
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-sm font-mono font-bold text-blue-400">
+                    {weeklyProgress?.rehearsalsCompleted || 0} Rehearsals
+                  </span>
                 </div>
               </div>
+
+              {/* SoundSport Banner */}
+              {activeCorpsClass === 'soundSport' && (
+                <div className="flex items-center justify-center gap-2 py-2 px-3 lg:px-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
+                  <Sparkles className="w-3 h-3 lg:w-4 lg:h-4" />
+                  <span className="text-[10px] lg:text-xs font-display font-bold">SoundSport is non-competitive - just have fun!</span>
+                </div>
+              )}
             </div>
 
-            {/* Quick Actions Row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <ActionButton
-                icon={Music}
-                label="Rehearse"
-                onClick={handleRehearsal}
-                disabled={!canRehearseToday()}
-                processing={executionProcessing}
-                completed={!canRehearseToday()}
-                variant="primary"
-              />
-              <ActionButton
-                icon={Heart}
-                label="Boost Morale"
-                onClick={boostMorale}
-                disabled={morale >= 1}
-              />
-              <ActionButton
-                icon={Wrench}
-                label="Repair All"
-                onClick={() => {
-                  equipmentItems.forEach(item => {
-                    if (item.condition < 0.85) {
-                      repairEquipment(item.key);
-                    }
-                  });
-                }}
-                disabled={!equipmentNeedsRepair}
-              />
-              <Link to="/staff" className="ml-auto">
-                <ActionButton icon={Users} label="Hire Staff" />
-              </Link>
-            </div>
+            {/* ================================================================
+                MOBILE CONTEXT SWITCHER - Staff/Equip/Tasks tabs (mobile only)
+                ================================================================ */}
+            <MobileContextSwitcher contextTab={contextTab} setContextTab={setContextTab} />
 
-            {/* Activity Log - Condensed Stats */}
-            <div className="glass-panel p-3 flex items-center gap-4 flex-wrap">
-              <span className="text-[10px] uppercase tracking-wider text-cream-muted font-display">This Week:</span>
-              <div className="flex items-center gap-1">
-                <TrendingUp className={`w-3.5 h-3.5 ${(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} />
-                <span className={`text-sm font-mono font-bold ${(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {(weeklyProgress?.scoreImprovement || 0) >= 0 ? '+' : ''}{(weeklyProgress?.scoreImprovement || 0).toFixed(1)} Score
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {(weeklyProgress?.rankChange || 0) > 0 ? (
-                  <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (weeklyProgress?.rankChange || 0) < 0 ? (
-                  <ArrowDown className="w-3.5 h-3.5 text-rose-400" />
-                ) : (
-                  <Minus className="w-3.5 h-3.5 text-cream-muted" />
+            {/* ================================================================
+                MOBILE CONTEXT CONTENT - Shows below main content on mobile
+                ================================================================ */}
+            <div className="lg:hidden flex-1 min-h-0 overflow-y-auto hud-scroll p-3 bg-black/30">
+              <AnimatePresence mode="wait">
+                {contextTab === 'staff' && (
+                  <motion.div
+                    key="staff-mobile"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] text-cream-muted font-display uppercase tracking-wider">
+                        Assigned ({assignedStaff.length}/8)
+                      </span>
+                      <Link to="/staff" className="text-[10px] text-gold-400 font-display uppercase">
+                        Browse →
+                      </Link>
+                    </div>
+                    {assignedStaff.map(staff => (
+                      <StaffRow key={staff.id} staff={staff} />
+                    ))}
+                    {assignedStaff.length < 8 && [...Array(Math.min(2, 8 - assignedStaff.length))].map((_, i) => (
+                      <EmptyStaffSlot key={i} onClick={() => window.location.href = '/staff'} />
+                    ))}
+                    {assignedStaff.length === 0 && (
+                      <div className="text-center py-4 text-cream-muted">
+                        <Users className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                        <p className="text-[10px]">No staff assigned</p>
+                      </div>
+                    )}
+                  </motion.div>
                 )}
-                <span className={`text-sm font-mono font-bold ${
-                  (weeklyProgress?.rankChange || 0) > 0 ? 'text-emerald-400' :
-                  (weeklyProgress?.rankChange || 0) < 0 ? 'text-rose-400' : 'text-cream-muted'
-                }`}>
-                  {Math.abs(weeklyProgress?.rankChange || 0)} Rank
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-sm font-mono font-bold text-blue-400">
-                  {weeklyProgress?.rehearsalsCompleted || 0} Rehearsals
-                </span>
-              </div>
+                {contextTab === 'equipment' && (
+                  <motion.div
+                    key="equipment-mobile"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] text-cream-muted font-display uppercase tracking-wider">Equipment</span>
+                      <span className={`text-[10px] font-mono ${avgEquipment >= 0.9 ? 'text-emerald-400' : avgEquipment >= 0.7 ? 'text-orange-400' : 'text-rose-400'}`}>
+                        Avg: {Math.round(avgEquipment * 100)}%
+                      </span>
+                    </div>
+                    {equipmentItems.map(item => (
+                      <EquipmentRow
+                        key={item.key}
+                        name={item.name}
+                        icon={item.icon}
+                        condition={item.condition}
+                        level={item.level}
+                        maxLevel={item.maxLevel}
+                        onRepair={() => repairEquipment(item.key)}
+                        onUpgrade={() => upgradeEquipment(item.key)}
+                        repairing={executionProcessing}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+                {contextTab === 'tasks' && (
+                  <motion.div
+                    key="tasks-mobile"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] text-cream-muted font-display uppercase tracking-wider">Daily Tasks</span>
+                      <span className="text-[10px] font-mono text-gold-400">{completedTasks}/{dailyTasks.length}</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(completedTasks / dailyTasks.length) * 100}%` }}
+                        className="h-full bg-gold-500 rounded-full"
+                      />
+                    </div>
+                    {dailyTasks.map(task => (
+                      <DailyTask
+                        key={task.id}
+                        task={task}
+                        completed={task.completed}
+                        onComplete={() => {
+                          completeDailyChallenge(task.id);
+                          if (task.id === 'rehearse') handleRehearsal();
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
-            {/* SoundSport Banner */}
-            {activeCorpsClass === 'soundSport' && (
-              <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-xs font-display font-bold">SoundSport is non-competitive - just have fun!</span>
-              </div>
-            )}
           </div>
 
           {/* ================================================================
-              RIGHT CONTEXT PANEL - Staff, Equipment, Tasks
+              RIGHT CONTEXT PANEL - Desktop only (hidden on mobile)
               ================================================================ */}
-          <div className="shrink-0 w-80 bg-black/30 border-l border-white/10 flex flex-col overflow-hidden">
+          <div className="hidden lg:flex shrink-0 w-80 bg-black/30 border-l border-white/10 flex-col overflow-hidden">
             {/* Context Tabs */}
             <div className="shrink-0 flex border-b border-white/10">
               {[
