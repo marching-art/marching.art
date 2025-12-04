@@ -269,6 +269,7 @@ const Dashboard = () => {
     seasonData,
     weeksRemaining,
     currentWeek,
+    currentDay,
     formatSeasonName,
     engagementData,
     dailyChallenges,
@@ -629,7 +630,7 @@ const Dashboard = () => {
                           ? (executionState?.showDesign?.ceilingBonus || 0.08)
                           : (executionState?.showDesign?.riskPenalty || -0.10),
                       }}
-                      currentDay={profile?.currentDay || 1}
+                      currentDay={currentDay}
                       showDifficulty={executionState?.showDesign}
                       avgReadiness={readiness}
                     />
@@ -944,7 +945,7 @@ const Dashboard = () => {
                     <DifficultyConfidenceMeter
                       currentDifficulty={executionState?.showDesign || 'moderate'}
                       currentReadiness={typeof readiness === 'number' ? readiness : 0.75}
-                      currentDay={profile?.currentDay || 1}
+                      currentDay={currentDay}
                       showSelector={false}
                       compact={true}
                     />
@@ -1185,7 +1186,7 @@ const Dashboard = () => {
                   travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
                 }}
                 finalMultiplier={multiplier}
-                currentDay={profile?.currentDay || 1}
+                currentDay={currentDay}
                 showDifficulty={executionState?.showDesign || 'moderate'}
                 showConcept={activeCorps?.showConcept}
                 lineup={activeCorps?.lineup}
