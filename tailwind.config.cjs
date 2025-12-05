@@ -197,6 +197,12 @@ module.exports = {
         'bounce-slow': 'bounce 2s infinite',
         'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
         'hazard': 'hazardScroll 1s linear infinite',
+        // System Boot animations - snappy, mechanical feel
+        'slide-in-bottom': 'slideInBottom 0.35s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+        'slide-in-right': 'slideInRight 0.35s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+        'slide-in-top': 'slideInTop 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+        'scale-in': 'scaleIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+        'boot-grid': 'bootGrid 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
       },
       keyframes: {
         fadeUp: {
@@ -210,6 +216,27 @@ module.exports = {
         slideIn: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' }
+        },
+        // System Boot keyframes
+        slideInBottom: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
+        },
+        slideInRight: {
+          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' }
+        },
+        slideInTop: {
+          '0%': { opacity: '0', transform: 'translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' }
+        },
+        bootGrid: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
         },
         pulseGold: {
           '0%, 100%': { backgroundColor: 'rgba(255, 212, 77, 0.1)' },
