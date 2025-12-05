@@ -13,6 +13,7 @@ import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import { listStaffForAuction } from '../../firebase/functions';
 import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import Portal from '../Portal';
+import BrandLogo from '../BrandLogo';
 
 // ============================================================================
 // CAPTION ICONS MAPPING
@@ -655,8 +656,10 @@ const StaffRoster = ({ userCorps = {} }) => {
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-[10px] text-data-muted uppercase tracking-widest">Loading...</p>
+                <div className="animate-pulse mb-2">
+                  <BrandLogo className="w-10 h-10 mx-auto" color="text-gold-500" />
+                </div>
+                <p className="font-mono text-[10px] text-gold-500/50 uppercase tracking-widest">Loading roster...</p>
               </div>
             </div>
           ) : filteredStaff.length === 0 ? (

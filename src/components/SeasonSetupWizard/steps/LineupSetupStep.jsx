@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, AlertCircle } from 'lucide-react';
 import { CAPTIONS, CAPTION_CATEGORIES, POINT_LIMITS, getCorpsClassName } from '../constants';
+import BrandLogo from '../../BrandLogo';
 
 const LineupSetupStep = ({
   currentCorpsClass,
@@ -122,8 +123,10 @@ const LineupSetupStep = ({
       {/* Caption Selection */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-cream-500/60">Loading available corps...</p>
+          <div className="animate-pulse mb-4">
+            <BrandLogo className="w-16 h-16 mx-auto" color="text-gold-500" />
+          </div>
+          <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading available corps...</p>
         </div>
       ) : (
         <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2 relative">

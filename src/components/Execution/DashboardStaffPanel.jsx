@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import Portal from '../Portal';
+import BrandLogo from '../BrandLogo';
 
 const CAPTION_OPTIONS = [
   { value: 'GE1', label: 'General Effect 1', color: 'bg-purple-500' },
@@ -87,8 +88,11 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
   if (loading) {
     return (
       <div className="card p-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="w-10 h-10 border-4 border-gold-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="animate-pulse">
+            <BrandLogo className="w-12 h-12" color="text-gold-500" />
+          </div>
+          <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading roster...</p>
         </div>
       </div>
     );

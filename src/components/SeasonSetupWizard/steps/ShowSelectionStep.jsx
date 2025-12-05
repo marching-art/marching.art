@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, Calendar, MapPin } from 'lucide-react';
 import { getCorpsClassName } from '../constants';
+import BrandLogo from '../../BrandLogo';
 
 const ShowSelectionStep = ({
   currentCorpsClass,
@@ -130,8 +131,10 @@ const ShowSelectionStep = ({
       {/* Shows for selected day */}
       {loading ? (
         <div className="text-center py-8">
-          <div className="animate-spin w-8 h-8 border-3 border-gold-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-cream-500/60">Loading shows...</p>
+          <div className="animate-pulse mb-3">
+            <BrandLogo className="w-12 h-12 mx-auto" color="text-gold-500" />
+          </div>
+          <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading shows...</p>
         </div>
       ) : availableShows.length === 0 ? (
         <div className="text-center py-8">

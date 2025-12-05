@@ -9,8 +9,9 @@
 // - Better animation via framer-motion
 
 import React from 'react';
-import { FullPageLoading, Spinner, Skeleton, SkeletonText } from './ui/Spinner';
+import { FullPageLoading, Skeleton, SkeletonText } from './ui/Spinner';
 import { Card } from './ui/Card';
+import BrandLogo from './BrandLogo';
 
 // =============================================================================
 // LOADING SCREEN COMPONENT
@@ -31,12 +32,14 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
     return <FullPageLoading label={message || 'Loading...'} showLogo={true} />;
   }
 
-  // Inline loading with centered spinner
+  // Inline loading with centered brand logo
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4">
-      <Spinner size="xl" variant="gold" />
+      <div className="animate-pulse">
+        <BrandLogo className="w-16 h-16" color="text-gold-500" />
+      </div>
       {message && (
-        <p className="text-cream-400 text-sm">{message}</p>
+        <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">{message}</p>
       )}
     </div>
   );

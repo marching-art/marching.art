@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Trophy, Plus, Search, ChevronRight, AlertTriangle, RefreshCw, X, Crown, Calendar, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
+import BrandLogo from '../components/BrandLogo';
 
 // Import React Query hooks
 import {
@@ -218,8 +219,11 @@ const Leagues = () => {
           {/* League List (Scrollable) */}
           <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-3 space-y-2">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="animate-pulse">
+                  <BrandLogo className="w-10 h-10" color="text-gold-500" />
+                </div>
+                <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading leagues...</p>
               </div>
             ) : hasError ? (
               <div className="text-center py-8">
