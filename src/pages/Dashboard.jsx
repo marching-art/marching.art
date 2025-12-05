@@ -997,20 +997,27 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowEquipmentPanel(false)}
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Equipment Manager</h2>
+              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-cream-100 uppercase tracking-tight">Equipment Manager</h2>
                 <button
                   onClick={() => setShowEquipmentPanel(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1038,20 +1045,27 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowStaffPanel(false)}
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Staff Roster</h2>
+              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Staff Roster</h2>
                 <button
                   onClick={() => setShowStaffPanel(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1073,20 +1087,27 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowDailyActivities(false)}
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Daily Activities</h2>
+              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-cream-100 uppercase tracking-tight">Daily Activities</h2>
                 <button
                   onClick={() => setShowDailyActivities(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1120,20 +1141,27 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSynergyPanel(false)}
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-y-auto"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
-              <div className="sticky top-0 bg-white dark:bg-surface border-b border-stone-200 dark:border-border-default p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">Show Concept Synergy</h2>
+              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Show Concept Synergy</h2>
                 <button
                   onClick={() => setShowSynergyPanel(false)}
-                  className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1163,14 +1191,21 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowExecutionInsights(false)}
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-surface border-l border-stone-200 dark:border-border-default z-50 overflow-hidden"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
             >
               <ExecutionInsightsPanel
                 executionState={executionState}

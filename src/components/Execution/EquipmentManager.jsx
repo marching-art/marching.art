@@ -196,26 +196,26 @@ const EquipmentManager = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-6"
+        className="bg-white/5 border border-white/10 rounded-lg p-4"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-display font-bold text-cream-100 mb-1 uppercase tracking-wider">
+            <h3 className="text-sm font-display font-bold text-gold-400 mb-1 uppercase tracking-wider">
               Performance Equipment
             </h3>
-            <p className="text-sm text-cream-500/60">
+            <p className="text-xs text-cream-muted">
               Directly affects caption scores (±5% impact)
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-gold-500/20 rounded-lg">
-            <Coins className="w-5 h-5 text-gold-500" />
-            <span className="font-bold text-gold-500">
-              {corpsCoin || 0} CC
+          <div className="flex items-center gap-2 px-3 py-2 bg-black/40 border border-gold-500/30 rounded">
+            <Coins className="w-4 h-4 text-gold-400" />
+            <span className="font-mono font-bold text-gold-400">
+              {corpsCoin || 0}
             </span>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {performanceEquipment.map((type, index) => {
             const maxValue = equipment?.[`${type.id}Max`];
             const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
@@ -226,35 +226,43 @@ const EquipmentManager = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`card-hover cursor-pointer border-2 p-3 ${getConditionBg(condition)}`}
+                className="cursor-pointer bg-black/40 border-2 border-white/10 hover:border-gold-500/30 p-3 transition-all group"
+                style={{ borderRadius: '4px' }}
                 onClick={() => setSelectedEquipment(type.id)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="text-2xl flex-shrink-0">{type.icon}</div>
+                  <div className="w-12 h-12 flex items-center justify-center bg-charcoal-900 border border-white/20 text-2xl flex-shrink-0" style={{ borderRadius: '4px' }}>
+                    {type.icon}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-cream-100 text-sm">{type.name}</h4>
-                      <div className="flex items-center gap-1 text-gold-500">
+                      <h4 className="font-display font-bold text-cream-100 text-sm uppercase tracking-wide">{type.name}</h4>
+                      <div className="flex items-center gap-1 text-gold-400">
                         {Array.from({ length: level }).map((_, i) => (
                           <Star key={i} className="w-2.5 h-2.5 fill-current" />
                         ))}
                       </div>
                     </div>
-                    <p className="text-[10px] text-cream-500/60 mb-1.5">{type.description}</p>
+                    <p className="text-[10px] text-cream-muted mb-1.5">{type.description}</p>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-500 ${
-                            condition >= 0.85 ? 'bg-green-500' :
-                            condition >= 0.70 ? 'bg-yellow-500' :
-                            'bg-red-500'
-                          }`}
-                          style={{ width: `${condition * 100}%` }}
-                        />
+                      {/* Segmented Progress Bar */}
+                      <div className="flex-1 h-2 bg-charcoal-900 overflow-hidden flex gap-0.5" style={{ borderRadius: '2px' }}>
+                        {[...Array(10)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`flex-1 transition-all duration-300 ${
+                              i < Math.round(condition * 10)
+                                ? condition >= 0.85 ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' :
+                                  condition >= 0.70 ? 'bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]' :
+                                  'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]'
+                                : 'bg-charcoal-800'
+                            }`}
+                          />
+                        ))}
                       </div>
                       <div className="flex gap-1">
                         {type.affectedCaptions.map(cap => (
-                          <span key={cap} className="px-1 py-0.5 rounded bg-blue-500/20 text-[8px] font-mono text-blue-400">
+                          <span key={cap} className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 text-[8px] font-mono text-blue-400" style={{ borderRadius: '2px' }}>
                             {cap}
                           </span>
                         ))}
@@ -263,9 +271,9 @@ const EquipmentManager = ({
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`text-sm font-mono font-bold ${getConditionColor(condition)}`}>
-                      {getConditionLabel(condition)}
+                      {Math.round(condition * 100)}%
                     </span>
-                    <span className="text-[10px] text-cream-500/60">Lvl {level}</span>
+                    <span className="text-[10px] font-mono text-gold-400">LVL {level}</span>
                   </div>
                 </div>
               </motion.div>
@@ -279,19 +287,19 @@ const EquipmentManager = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="card p-6"
+        className="bg-white/5 border border-white/10 rounded-lg p-4"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-display font-bold text-cream-100 mb-1 uppercase tracking-wider">
+            <h3 className="text-sm font-display font-bold text-gold-400 mb-1 uppercase tracking-wider">
               Travel Equipment
             </h3>
-            <p className="text-sm text-cream-500/60">
+            <p className="text-xs text-cream-muted">
               Affects overall travel health (combined 70%+ = no penalty)
             </p>
           </div>
           {/* Travel Health Status */}
-          <div className={`px-3 py-2 rounded-lg border ${hasTravelPenalty ? 'bg-red-500/20 border-red-500/30' : 'bg-green-500/20 border-green-500/30'}`}>
+          <div className={`px-3 py-2 border ${hasTravelPenalty ? 'bg-red-500/20 border-red-500/40' : 'bg-green-500/20 border-green-500/40'}`} style={{ borderRadius: '4px' }}>
             <div className="flex items-center gap-2">
               {hasTravelPenalty ? (
                 <AlertCircle className="w-4 h-4 text-red-400" />
@@ -299,18 +307,18 @@ const EquipmentManager = ({
                 <Sparkles className="w-4 h-4 text-green-400" />
               )}
               <div>
-                <div className={`text-sm font-bold ${hasTravelPenalty ? 'text-red-400' : 'text-green-400'}`}>
-                  {hasTravelPenalty ? '-3% Penalty' : 'No Penalty'}
+                <div className={`text-sm font-mono font-bold ${hasTravelPenalty ? 'text-red-400' : 'text-green-400'}`}>
+                  {hasTravelPenalty ? '-3%' : 'OK'}
                 </div>
-                <div className="text-[9px] text-cream-muted">
-                  {Math.round(travelHealth * 50)}% / 70% threshold
+                <div className="text-[9px] font-mono text-cream-muted">
+                  {Math.round(travelHealth * 50)}%/70%
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {travelEquipment.map((type, index) => {
             const maxValue = equipment?.[`${type.id}Max`];
             const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
@@ -322,39 +330,45 @@ const EquipmentManager = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + index * 0.05 }}
-                className={`card-hover cursor-pointer border-2 p-3 ${getConditionBg(condition)}`}
+                className="cursor-pointer bg-black/40 border-2 border-white/10 hover:border-gold-500/30 p-3 transition-all group"
+                style={{ borderRadius: '4px' }}
                 onClick={() => setSelectedEquipment(type.id)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-charcoal-700 flex-shrink-0">
-                    <LIcon className={`w-5 h-5 ${getConditionColor(condition)}`} />
+                  <div className="w-12 h-12 flex items-center justify-center bg-charcoal-900 border border-white/20 flex-shrink-0" style={{ borderRadius: '4px' }}>
+                    <LIcon className={`w-6 h-6 ${getConditionColor(condition)}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-cream-100 text-sm">{type.name}</h4>
-                      <div className="flex items-center gap-1 text-gold-500">
+                      <h4 className="font-display font-bold text-cream-100 text-sm uppercase tracking-wide">{type.name}</h4>
+                      <div className="flex items-center gap-1 text-gold-400">
                         {Array.from({ length: level }).map((_, i) => (
                           <Star key={i} className="w-2.5 h-2.5 fill-current" />
                         ))}
                       </div>
                     </div>
-                    <p className="text-[10px] text-cream-500/60 mb-1.5">{type.description}</p>
-                    <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          condition >= 0.85 ? 'bg-green-500' :
-                          condition >= 0.70 ? 'bg-yellow-500' :
-                          'bg-red-500'
-                        }`}
-                        style={{ width: `${condition * 100}%` }}
-                      />
+                    <p className="text-[10px] text-cream-muted mb-1.5">{type.description}</p>
+                    {/* Segmented Progress Bar */}
+                    <div className="h-2 bg-charcoal-900 overflow-hidden flex gap-0.5" style={{ borderRadius: '2px' }}>
+                      {[...Array(10)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 transition-all duration-300 ${
+                            i < Math.round(condition * 10)
+                              ? condition >= 0.85 ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' :
+                                condition >= 0.70 ? 'bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]' :
+                                'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]'
+                              : 'bg-charcoal-800'
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`text-sm font-mono font-bold ${getConditionColor(condition)}`}>
                       {Math.round(condition * 100)}%
                     </span>
-                    <span className="text-[10px] text-cream-500/60">Lvl {level}</span>
+                    <span className="text-[10px] font-mono text-gold-400">LVL {level}</span>
                   </div>
                 </div>
               </motion.div>
@@ -371,14 +385,22 @@ const EquipmentManager = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
               onClick={() => setSelectedEquipment(null)}
             >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="glass-dark rounded-2xl p-8 max-w-md w-full"
+              className="bg-charcoal-950/95 backdrop-blur-xl border border-white/10 p-6 max-w-md w-full shadow-[0_0_40px_rgba(0,0,0,0.8)]"
+              style={{
+                borderRadius: '8px',
+                backgroundImage: `
+                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: '20px 20px'
+              }}
               onClick={(e) => e.stopPropagation()}
             >
               {(() => {
@@ -387,59 +409,67 @@ const EquipmentManager = ({
                 const { condition, level } = getEquipmentData(equipment?.[selectedEquipment], maxValue);
 
                 return (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <div className="text-center">
-                      <div className="text-6xl mb-4">{type.icon}</div>
-                      <h3 className="text-2xl font-bold text-gradient mb-2">
+                      <div className="w-20 h-20 mx-auto bg-charcoal-900 border-2 border-white/20 flex items-center justify-center text-5xl mb-4" style={{ borderRadius: '8px' }}>
+                        {type.icon}
+                      </div>
+                      <h3 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight mb-1">
                         {type.name}
                       </h3>
-                      <p className="text-cream-500/60">
+                      <p className="text-xs text-cream-muted">
                         {type.description}
                       </p>
                     </div>
 
                     {/* Current Status */}
-                    <div className="card p-4">
+                    <div className="bg-black/40 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm text-cream-500/60">Current Status</span>
-                        <span className={`text-lg font-bold ${getConditionColor(condition)}`}>
-                          {getConditionLabel(condition)}
+                        <span className="text-xs font-display font-bold text-cream-muted uppercase">Condition</span>
+                        <span className={`text-lg font-mono font-bold ${getConditionColor(condition)}`}>
+                          {Math.round(condition * 100)}%
                         </span>
                       </div>
-                      <div className="w-full h-3 bg-charcoal-800 rounded-full overflow-hidden mb-3">
-                        <div
-                          className={`h-full ${
-                            condition >= 0.85 ? 'bg-green-500' :
-                            condition >= 0.70 ? 'bg-yellow-500' :
-                            'bg-red-500'
-                          }`}
-                          style={{ width: `${condition * 100}%` }}
-                        />
+                      {/* Segmented Progress Bar */}
+                      <div className="h-3 bg-charcoal-900 overflow-hidden flex gap-0.5 mb-3" style={{ borderRadius: '2px' }}>
+                        {[...Array(10)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`flex-1 transition-all duration-300 ${
+                              i < Math.round(condition * 10)
+                                ? condition >= 0.85 ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' :
+                                  condition >= 0.70 ? 'bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]' :
+                                  'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]'
+                                : 'bg-charcoal-800'
+                            }`}
+                          />
+                        ))}
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-cream-500/60">Level</span>
-                        <div className="flex items-center gap-1 text-gold-500">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-display font-bold text-cream-muted uppercase">Level</span>
+                        <div className="flex items-center gap-1 text-gold-400">
                           {Array.from({ length: level }).map((_, i) => (
                             <Star key={i} className="w-4 h-4 fill-current" />
                           ))}
-                          <span className="ml-2 font-semibold">{level}</span>
+                          <span className="ml-2 font-mono font-bold">{level}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {/* Repair */}
                       <button
                         onClick={() => handleRepair(selectedEquipment)}
                         disabled={processing || condition >= 0.95}
-                        className="w-full btn-outline py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-green-500/50 hover:bg-green-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ borderRadius: '4px' }}
                       >
-                        <Wrench className="w-5 h-5 mr-2" />
-                        <span>Repair to 100%</span>
-                        <span className="ml-auto flex items-center gap-1 text-gold-500">
+                        <Wrench className="w-5 h-5 text-green-400" />
+                        <span className="flex-1 text-left font-display font-bold text-cream-100 uppercase text-sm">Repair to 100%</span>
+                        <span className="flex items-center gap-1 font-mono font-bold text-gold-400">
                           <Coins className="w-4 h-4" />
-                          {type.repairCost} CC
+                          {type.repairCost}
                         </span>
                       </button>
 
@@ -447,29 +477,30 @@ const EquipmentManager = ({
                       <button
                         onClick={() => handleUpgrade(selectedEquipment)}
                         disabled={processing || level >= 5}
-                        className="w-full btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center gap-3 p-3 bg-gold-500/20 border border-gold-500/40 hover:border-gold-400 hover:bg-gold-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ borderRadius: '4px' }}
                       >
-                        <TrendingUp className="w-5 h-5 mr-2" />
-                        <span>Upgrade to Level {level + 1}</span>
-                        <span className="ml-auto flex items-center gap-1">
+                        <TrendingUp className="w-5 h-5 text-gold-400" />
+                        <span className="flex-1 text-left font-display font-bold text-gold-300 uppercase text-sm">Upgrade to LVL {level + 1}</span>
+                        <span className="flex items-center gap-1 font-mono font-bold text-gold-400">
                           <Coins className="w-4 h-4" />
-                          {type.upgradeCost} CC
+                          {type.upgradeCost}
                         </span>
                       </button>
 
                       {level >= 5 && (
-                        <div className="card-premium p-3 text-center">
-                          <div className="flex items-center justify-center gap-2 text-gold-500">
+                        <div className="p-3 bg-gold-500/20 border border-gold-500/40 text-center" style={{ borderRadius: '4px' }}>
+                          <div className="flex items-center justify-center gap-2 text-gold-400">
                             <Sparkles className="w-4 h-4" />
-                            <span className="text-sm font-semibold">Max Level Reached!</span>
+                            <span className="text-sm font-display font-bold uppercase">Max Level Reached</span>
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
-                    <div className="card p-4">
-                      <p className="text-xs text-cream-500/80 leading-relaxed">
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/30" style={{ borderRadius: '4px' }}>
+                      <p className="text-[11px] text-blue-300 leading-relaxed">
                         Equipment degrades over time and affects your execution multiplier.
                         Keep it in good condition for optimal performance!
                       </p>
@@ -478,7 +509,8 @@ const EquipmentManager = ({
                     {/* Close */}
                     <button
                       onClick={() => setSelectedEquipment(null)}
-                      className="btn-ghost w-full"
+                      className="w-full p-3 bg-white/5 border border-white/10 hover:border-white/30 text-cream-muted hover:text-cream-100 font-display font-bold uppercase text-sm transition-all"
+                      style={{ borderRadius: '4px' }}
                     >
                       Close
                     </button>
