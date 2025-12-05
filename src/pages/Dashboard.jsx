@@ -518,7 +518,7 @@ const Dashboard = () => {
   // ============================================================================
 
   return (
-    <div className="h-screen w-full bg-surface overflow-hidden flex flex-col">
+    <div className="h-full w-full overflow-hidden flex flex-col">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
