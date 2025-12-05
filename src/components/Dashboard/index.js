@@ -17,3 +17,4 @@ export { default as DashboardCorpsPanel } from './DashboardCorpsPanel';
 export { default as MorningReport } from './MorningReport';
 export { default as DailyOperations } from './DailyOperations';
 export { default as CommandCenter } from './CommandCenter';
+export { default as RichActionModule } from './RichActionModule';

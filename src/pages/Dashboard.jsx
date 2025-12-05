@@ -43,7 +43,8 @@ import {
   MoveCorpsModal,
   AchievementModal,
   MorningReport,
-  DailyOperations
+  DailyOperations,
+  RichActionModule
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
@@ -913,89 +914,97 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ================================================================
-            QUICK ACTIONS (cols 1-8, rows 4-6) - Square clickable tiles
+            QUICK ACTIONS (cols 1-8, rows 4-6) - Rich 3x2 action grid
+            Data-dense modules with inline graphics
             ================================================================ */}
         <motion.div
           variants={actionsContainerVariants}
-          className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-4 lg:grid-cols-6 gap-2"
+          className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-2 lg:grid-cols-3 grid-rows-2 gap-2"
         >
-          {/* Row 1: Primary Actions */}
+          {/* Row 1 */}
           <motion.div variants={actionTileVariants}>
-            <ActionTile
+            <RichActionModule
               icon={Music}
               label="Rehearse"
-              subtitle={canRehearseToday() ? '+5% Ready' : 'Done'}
               onClick={handleRehearsal}
               disabled={!canRehearseToday()}
               processing={executionProcessing}
               completed={!canRehearseToday()}
               color="blue"
+              moduleType="rehearse"
+              moduleData={{
+                currentReadiness: readiness,
+                potentialGain: canRehearseToday() ? 0.05 : 0,
+              }}
             />
           </motion.div>
           <motion.div variants={actionTileVariants}>
-            <ActionTile
+            <RichActionModule
               icon={Users}
               label="Staff"
-              subtitle={`${assignedStaff.length}/8`}
               onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
               color="green"
+              moduleType="staff"
+              moduleData={{
+                filled: assignedStaff.length,
+                max: 8,
+              }}
             />
           </motion.div>
           <motion.div variants={actionTileVariants}>
-            <ActionTile
+            <RichActionModule
               icon={Wrench}
               label="Equipment"
-              subtitle={equipmentNeedsRepair ? 'Repair!' : `${Math.round(avgEquipment * 100)}%`}
               onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
               color={equipmentNeedsRepair ? 'orange' : 'gold'}
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <ActionTile
-              icon={Sparkles}
-              label="Synergy"
-              subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)}` : 'Config'}
-              onClick={() => setShowSynergyPanel(true)}
-              color="purple"
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <ActionTile
-              icon={Zap}
-              label="Activities"
-              subtitle="Daily"
-              onClick={() => setShowDailyActivities(true)}
-              color="gold"
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <ActionTile
-              icon={BarChart3}
-              label="Insights"
-              subtitle="Analysis"
-              onClick={() => setShowExecutionInsights(true)}
-              color="blue"
+              moduleType="equipment"
+              moduleData={{
+                condition: avgEquipment,
+              }}
             />
           </motion.div>
 
-          {/* Row 2: Quick Links */}
+          {/* Row 2 */}
           <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/scores" icon={Trophy} label="Scores" color="gold" />
+            <RichActionModule
+              icon={Sparkles}
+              label="Synergy"
+              onClick={() => setShowSynergyPanel(true)}
+              color="purple"
+              moduleType="synergy"
+              moduleData={{
+                bonus: executionState?.synergyBonus || 0,
+                themeName: activeCorps?.showConcept?.theme || '',
+              }}
+            />
           </motion.div>
           <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/schedule" icon={Calendar} label="Schedule" color="purple" />
+            <RichActionModule
+              icon={Zap}
+              label="Activities"
+              onClick={() => setShowDailyActivities(true)}
+              color="gold"
+              moduleType="activities"
+              moduleData={{
+                completed: dailyChallenges?.filter(c => c.completed)?.length || 0,
+                total: dailyChallenges?.length || 3,
+              }}
+            />
           </motion.div>
           <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/leagues" icon={Crown} label="Leagues" color="blue" />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/staff" icon={Users} label="Market" color="green" />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/battlepass" icon={Gift} label="Pass" color="purple" />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <QuickLinkTile to="/profile" icon={Target} label="Profile" color="gold" />
+            <RichActionModule
+              icon={BarChart3}
+              label="Insights"
+              onClick={() => setShowExecutionInsights(true)}
+              color="blue"
+              moduleType="insights"
+              moduleData={{
+                trend: recentScores?.length >= 2
+                  ? (recentScores[0]?.totalScore > recentScores[1]?.totalScore ? 'up' : recentScores[0]?.totalScore < recentScores[1]?.totalScore ? 'down' : 'flat')
+                  : 'flat',
+                projectedScore: (activeCorps?.totalSeasonScore || 0) * multiplier || 62.5,
+              }}
+            />
           </motion.div>
         </motion.div>
 
