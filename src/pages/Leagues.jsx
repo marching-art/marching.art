@@ -17,6 +17,7 @@ import { useProfile } from '../hooks/useProfile';
 
 // Import modular components
 import { LeagueCard, CreateLeagueModal, LeagueDetailView } from '../components/Leagues';
+import EmptyState from '../components/EmptyState';
 
 const Leagues = () => {
   const { user } = useAuth();
@@ -197,30 +198,13 @@ const Leagues = () => {
                 </button>
               </div>
             ) : myLeagues.length === 0 ? (
-              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
-                <Users className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">
-                  You're not in any leagues yet
-                </h3>
-                <p className="text-slate-500 dark:text-cream-500/60 mb-6">
-                  Join a public league or create your own to compete with other directors
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={() => setActiveTab('discover')}
-                    className="btn-outline"
-                  >
-                    Browse Leagues
-                  </button>
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="btn-primary"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Create League
-                  </button>
-                </div>
-              </div>
+              <EmptyState
+                variant="signal"
+                title="No Active Circuits Detected"
+                subtitle="Join a circuit or initialize a new league to begin transmission. Compete with other directors throughout the season."
+                actionLabel="Initialize League"
+                onAction={() => setShowCreateModal(true)}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {myLeagues.map(league => (
@@ -282,15 +266,13 @@ const Leagues = () => {
                 </button>
               </div>
             ) : filteredAvailableLeagues.length === 0 ? (
-              <div className="bg-white dark:bg-charcoal-900/50 border border-cream-300 dark:border-cream-500/20 shadow-sm rounded-xl p-12 text-center">
-                <Search className="w-16 h-16 text-slate-300 dark:text-cream-500/40 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-900 dark:text-cream-100 mb-2">
-                  No leagues found
-                </h3>
-                <p className="text-slate-500 dark:text-cream-500/60">
-                  Try adjusting your search or create your own league
-                </p>
-              </div>
+              <EmptyState
+                variant="network"
+                title="No Signals Found"
+                subtitle={searchTerm ? "No circuits match your search parameters. Adjust filters or initialize your own league." : "No public circuits available. Be the first to initialize a new league."}
+                actionLabel="Create League"
+                onAction={() => setShowCreateModal(true)}
+              />
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

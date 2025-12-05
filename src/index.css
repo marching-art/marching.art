@@ -210,6 +210,56 @@ body {
 }
 
 /* ===========================================
+   TACTICAL COMMAND SURFACE
+   Layered background for depth and atmosphere
+   =========================================== */
+
+/* Noise/Grain Texture Overlay - Creates OLED/Carbon Fiber feel */
+.tactical-surface {
+  position: relative;
+}
+
+.tactical-surface::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* SVG noise pattern for subtle grain texture */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+}
+
+/* 20x20 Grid Overlay - Tactical alignment pattern */
+.tactical-surface::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* 20x20 grid pattern at 3% opacity */
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Enhanced Vignette - Darker edges for focus */
+.tactical-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 50%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.15) 60%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
+/* ===========================================
    STADIUM LIGHTS - Atmospheric Background Effect
    Warm gold gradient emanating from top center
    Creates the effect of overhead stadium lighting
