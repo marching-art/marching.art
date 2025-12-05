@@ -317,11 +317,11 @@ const ShowConceptSelector = ({
 
       {/* Info Panel */}
       {!compact && (
-        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+        <div className="p-3 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
           <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-cream-muted">
-              <span className="text-blue-400 font-bold">How synergy works:</span> Your show concept generates tags that are compared against your corps lineup. More tag matches = higher bonus points (up to +8.0 total).
+            <Info className="w-4 h-4 text-cream-muted flex-shrink-0 mt-0.5" />
+            <div className="text-[11px] text-cream/50">
+              <span className="text-cream/70 font-medium">How synergy works:</span> Your show concept generates tags that are compared against your corps lineup. More tag matches = higher bonus points (up to +8.0 total).
             </div>
           </div>
         </div>
