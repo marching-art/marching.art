@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Users, Wrench, Heart, Music, Eye, Flag,
-  Drum, Zap, ChevronRight, Play,
+  Drum, Zap, ChevronRight, Play, Square,
   Coffee, ChevronDown, ChevronUp, Check,
   TrendingUp, AlertTriangle, CheckCircle, Lightbulb, Activity
 } from 'lucide-react';
@@ -316,107 +316,69 @@ const DailyOperations = ({
 
   return (
     <div className="space-y-4">
-      {/* Daily Progress Summary */}
-      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
-              <Zap className="w-5 h-5 text-gold-400" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-gold-400 uppercase tracking-wide">Daily Progress</h3>
-              <p className="text-xs text-cream-muted">
-                Complete activities to boost your corps
-              </p>
-            </div>
+      {/* Compact Rehearsal Card - 80px height */}
+      <div className="h-20 glass-slot flex items-center gap-3 px-4">
+        {/* Left: Icon + Info */}
+        <div className="w-12 h-12 flex items-center justify-center bg-gold-500/20 border border-gold-500/40 rounded-lg flex-shrink-0">
+          <Music className="w-6 h-6 text-gold-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="text-sm font-mono font-bold text-cream-100">Full Rehearsal</h4>
+            <span className="text-xs font-mono text-gold-400">+5% readiness</span>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-mono font-bold text-gold-400">
-              {completionStats.completed}<span className="text-cream-muted">/{completionStats.total}</span>
+          {/* Horizontal Progress Bar for Week */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-charcoal-900 rounded-sm overflow-hidden flex gap-px">
+              {[...Array(7)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 transition-all ${
+                    i < (executionState?.rehearsalsThisWeek || 0)
+                      ? 'bg-gold-500'
+                      : 'bg-charcoal-800'
+                  }`}
+                />
+              ))}
             </div>
-            <div className="text-[10px] font-display font-bold text-cream-muted uppercase">Complete</div>
+            <span className="text-[10px] font-mono text-cream/50 w-10 text-right">
+              {executionState?.rehearsalsThisWeek || 0}/7
+            </span>
           </div>
         </div>
-        {/* Segmented Progress Bar */}
-        <div className="mt-3">
-          <div className="h-2 bg-charcoal-900 overflow-hidden flex gap-0.5" style={{ borderRadius: '2px' }}>
-            {[...Array(completionStats.total)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.1 }}
-                className={`flex-1 transition-all duration-300 ${
-                  i < completionStats.completed
-                    ? 'bg-gold-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]'
-                    : 'bg-charcoal-800'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Rehearsal */}
-      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
-              <Music className="w-5 h-5 text-gold-400" />
-            </div>
-            <div>
-              <h4 className="font-display font-bold text-cream-100 uppercase tracking-wide">Full Rehearsal</h4>
-              <p className="text-xs font-mono text-gold-400">+5% readiness, +50 XP</p>
-            </div>
-          </div>
-          {executionState?.rehearsalsThisWeek !== undefined && (
-            <div className="text-right">
-              <div className="text-lg font-mono font-bold text-cream-100">
-                {executionState.rehearsalsThisWeek}<span className="text-cream-muted">/7</span>
-              </div>
-              <div className="text-[10px] font-display font-bold text-cream-muted uppercase">This Week</div>
-            </div>
-          )}
-        </div>
-
+        {/* Right: Action Button */}
         <button
           onClick={handleRehearsal}
           disabled={!canRehearseToday || rehearsalProcessing || showRehearsalAnimation}
-          className={`w-full py-3 font-display font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all border ${
+          className={`h-10 px-4 font-mono font-bold text-xs uppercase flex items-center gap-2 transition-all border rounded-lg flex-shrink-0 ${
             canRehearseToday
-              ? 'bg-gold-500/20 border-gold-500/50 text-gold-400 hover:bg-gold-500/30 hover:border-gold-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+              ? 'bg-gold-500/20 border-gold-500/50 text-gold-400 hover:bg-gold-500/30'
               : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-not-allowed'
           }`}
-          style={{ borderRadius: '4px' }}
         >
           {rehearsalProcessing || showRehearsalAnimation ? (
-            <>
-              <div className="w-5 h-5 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
-              Rehearsing...
-            </>
+            <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
           ) : canRehearseToday ? (
             <>
-              <Play className="w-5 h-5" />
-              Run Full Rehearsal
+              <Play className="w-4 h-4" />
+              Run
             </>
           ) : (
-            <>
-              <Check className="w-5 h-5 text-green-400" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
-              Rehearsal Complete
-            </>
+            <Check className="w-4 h-4" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
           )}
         </button>
       </div>
 
-      {/* Daily Activities - Tactical Checklist */}
-      <div className="bg-white/5 border border-gold-500/30 p-4" style={{ borderRadius: '4px' }}>
-        <h4 className="text-sm font-display font-bold text-gold-400 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-gold-500/30">
-          <Zap className="w-4 h-4 text-gold-400" />
-          Daily Activities
-        </h4>
+      {/* Daily Tasks - Checklist Style */}
+      <div className="glass-slot">
+        <div className="flex items-center justify-between mb-3">
+          <span className="section-label mb-0">Daily Tasks</span>
+          <span className="text-sm font-mono font-bold text-gold-400">
+            {completionStats.completed}<span className="text-cream/40">/{completionStats.total}</span>
+          </span>
+        </div>
 
-        <div className="space-y-2">
-          {/* Determine the first available task to mark as "next" */}
+        <div className="space-y-1">
           {(() => {
             const activities = [
               { id: 'login', icon: Coffee, title: 'Login Bonus', reward: '+10 XP, +5 CC', available: opsStatus?.loginBonus?.available, loading: processing === 'login', onClick: handleClaimLogin },
@@ -426,19 +388,14 @@ const DailyOperations = ({
               { id: 'review', icon: Eye, title: 'Show Review', reward: '+20 XP', available: opsStatus?.showReview?.available, loading: processing === 'review', onClick: handleShowReview },
             ];
 
-            // Find the first available task
-            const firstAvailableIndex = activities.findIndex(a => a.available);
-
-            return activities.map((activity, index) => (
-              <ActivityRow
+            return activities.map((activity) => (
+              <TaskChecklistRow
                 key={activity.id}
-                icon={activity.icon}
                 title={activity.title}
                 reward={activity.reward}
                 available={activity.available}
                 loading={activity.loading}
                 onClick={activity.onClick}
-                isNextTask={activity.available && index === firstAvailableIndex}
               />
             ));
           })()}
@@ -927,6 +884,54 @@ const SectionalButton = ({ icon: Icon, label, available, loading, onClick }) => 
         )}
       </div>
       <span className={`text-[10px] font-display font-bold uppercase ${available ? 'text-blue-300' : 'text-green-400/70'}`}>{label}</span>
+    </button>
+  );
+};
+
+// Task Checklist Row Component - Clean checklist style with neon checkbox
+// Available: White text, clickable
+// Completed: Dimmed (opacity-50), neon green checkbox with glow
+const TaskChecklistRow = ({ title, reward, available, loading, onClick }) => {
+  const isCompleted = !available;
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={isCompleted || loading}
+      className={`w-full h-12 flex items-center gap-3 px-3 rounded-lg transition-all ${
+        isCompleted
+          ? 'opacity-50 cursor-default'
+          : 'hover:bg-white/5 cursor-pointer'
+      }`}
+    >
+      {/* Neon Checkbox */}
+      <div className={`w-5 h-5 flex items-center justify-center rounded border transition-all ${
+        isCompleted
+          ? 'bg-green-500/20 border-green-500/60 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+          : 'bg-transparent border-white/20'
+      }`}>
+        {loading ? (
+          <div className="w-3 h-3 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+        ) : isCompleted ? (
+          <Check className="w-3 h-3 text-green-400" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
+        ) : (
+          <Square className="w-3 h-3 text-transparent" />
+        )}
+      </div>
+
+      {/* Task Name (White) */}
+      <span className={`flex-1 text-left text-sm font-mono ${
+        isCompleted ? 'text-cream/50 line-through' : 'text-cream-100'
+      }`}>
+        {title}
+      </span>
+
+      {/* Reward (Gold, Monospace) */}
+      <span className={`text-xs font-mono font-bold ${
+        isCompleted ? 'text-gold-400/50' : 'text-gold-400'
+      }`}>
+        {reward}
+      </span>
     </button>
   );
 };
