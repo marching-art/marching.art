@@ -63,24 +63,20 @@ const RehearsalPanel = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card-premium p-6"
+        className="glass-slot"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-display font-bold text-cream-100 mb-1">
-              Daily Rehearsal
-            </h3>
-            <p className="text-sm text-cream-500/60">
-              Train your corps to improve execution
-            </p>
+            <h3 className="section-label mb-0">Daily Rehearsal</h3>
+            <p className="data-label-sm">Train your corps to improve execution</p>
           </div>
           <div className="text-right">
-            <div className="flex items-center gap-2 text-sm text-cream-300">
+            <div className="flex items-center gap-2 text-sm font-mono font-bold text-cream-100">
               <Clock className="w-4 h-4" />
               {getNextRehearsalTime()}
             </div>
             {executionState?.rehearsalsThisWeek !== undefined && (
-              <p className="text-xs text-cream-500/60 mt-1">
+              <p className="data-label-sm mt-1">
                 {executionState.rehearsalsThisWeek}/7 this week
               </p>
             )}
@@ -119,18 +115,18 @@ const RehearsalPanel = ({
         </div>
 
         {/* Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {rehearsalBenefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 bg-charcoal-900/30 rounded-lg"
+                className="flex items-center gap-3 p-3 bg-black/40 border border-white/5 hover:border-gold-500/30 rounded-lg transition-colors"
               >
                 <Icon className="w-5 h-5 text-gold-500 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-cream-500/60">{benefit.label}</p>
-                  <p className="text-sm font-semibold text-cream-100">
+                  <p className="data-label-sm">{benefit.label}</p>
+                  <p className="text-sm font-mono font-bold text-cream-100">
                     {benefit.value}
                   </p>
                 </div>
@@ -141,14 +137,14 @@ const RehearsalPanel = ({
 
         {/* Weekly Progress */}
         {executionState?.rehearsalsThisWeek !== undefined && (
-          <div className="mt-4">
+          <div className="mt-4 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-cream-500/60">Weekly Progress</span>
-              <span className="text-xs font-semibold text-cream-300">
+              <span className="data-label-sm">Weekly Progress</span>
+              <span className="text-sm font-mono font-bold text-cream-100">
                 {executionState.rehearsalsThisWeek}/7 Days
               </span>
             </div>
-            <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-charcoal-900 rounded-sm overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(executionState.rehearsalsThisWeek / 7) * 100}%` }}
@@ -157,8 +153,8 @@ const RehearsalPanel = ({
               />
             </div>
             {executionState.rehearsalsThisWeek === 7 && (
-              <p className="text-xs text-green-500 mt-2 font-semibold">
-                Perfect Week! Bonus XP awarded 🎉
+              <p className="text-xs text-green-400 mt-2 font-bold">
+                Perfect Week! Bonus XP awarded
               </p>
             )}
           </div>
@@ -170,13 +166,13 @@ const RehearsalPanel = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="card p-4"
+        className="glass-slot"
       >
         <div className="flex items-start gap-3">
           <Sparkles className="w-5 h-5 text-gold-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-cream-100 mb-1">Pro Tips</p>
-            <ul className="text-xs text-cream-500/80 space-y-1">
+            <p className="section-label mb-2">Pro Tips</p>
+            <ul className="text-xs text-cream-100/60 space-y-1">
               <li>• Daily rehearsals prevent readiness decay</li>
               <li>• Consecutive rehearsals build stronger momentum</li>
               <li>• Perfect weekly attendance earns bonus rewards</li>

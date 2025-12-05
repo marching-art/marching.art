@@ -58,22 +58,20 @@ const SHOW_DIFFICULTY_PRESETS = {
 };
 
 /**
- * Collapsible Section Component
+ * Collapsible Section Component - Command Console Accordion Style
  */
 const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badge }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '4px' }}>
+    <div className="accordion-section">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="accordion-header"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
-            <Icon className="w-4 h-4 text-gold-400" />
-          </div>
-          <span className="font-display font-bold text-cream-100 uppercase tracking-wide text-sm">
+          <Icon className="w-4 h-4 text-gold-500" />
+          <span className="text-xs font-bold text-gold-500 uppercase tracking-widest">
             {title}
           </span>
           {badge && (
@@ -82,7 +80,7 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
             </span>
           )}
         </div>
-        <ChevronRight className={`w-5 h-5 text-cream-muted transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+        <ChevronRight className={`accordion-chevron ${isOpen ? 'open' : ''}`} />
       </button>
       <AnimatePresence>
         {isOpen && (
@@ -92,7 +90,7 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-white/10">
+            <div className="accordion-content pt-3">
               {children}
             </div>
           </motion.div>
@@ -103,7 +101,7 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
 };
 
 /**
- * Quick Stats Summary Bar
+ * Quick Stats Summary Bar - Glass Slot Style
  */
 const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
   const readiness = executionState?.readiness ?? 0.75;
@@ -124,24 +122,15 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
     { label: 'Equipment', value: avgEquipment, color: 'orange', icon: Wrench },
   ];
 
-  const getValueColor = (val) => {
-    if (val >= 0.90) return 'text-green-400';
-    if (val >= 0.75) return 'text-yellow-400';
-    return 'text-red-400';
-  };
-
   return (
-    <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
+    <div className="glass-slot">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-gold-400" />
-          <span className="font-display font-bold text-gold-400 uppercase text-sm">Quick Overview</span>
-        </div>
+        <span className="section-label mb-0">Quick Overview</span>
         <div className="text-right">
           <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}>
             {multiplier.toFixed(2)}x
           </div>
-          <div className="text-[9px] font-display font-bold text-cream-muted uppercase">Multiplier</div>
+          <div className="data-label-sm">Multiplier</div>
         </div>
       </div>
 
@@ -156,8 +145,8 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
               showPercentage={true}
             />
             <div className="flex items-center justify-center gap-1 mt-2">
-              <Icon className="w-3 h-3 text-cream-muted" />
-              <span className="text-[10px] font-display font-bold uppercase text-cream-muted">
+              <Icon className="w-3 h-3 text-cream-100/50" />
+              <span className="data-label-sm">
                 {label}
               </span>
             </div>
@@ -166,13 +155,13 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
       </div>
 
       {/* Day indicator - Segmented Progress */}
-      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-cream-muted" />
-          <span className="text-xs font-display font-bold text-cream-muted uppercase">Season</span>
+          <Clock className="w-4 h-4 text-cream-100/50" />
+          <span className="data-label-sm">Season</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-24 h-2 bg-charcoal-900 overflow-hidden flex gap-px" style={{ borderRadius: '2px' }}>
+          <div className="w-24 h-2 bg-charcoal-900 overflow-hidden flex gap-px rounded-sm">
             {[...Array(7)].map((_, i) => (
               <div
                 key={i}
@@ -184,7 +173,7 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
               />
             ))}
           </div>
-          <span className="text-xs font-mono text-gold-400">{currentDay}/49</span>
+          <span className="text-sm font-mono font-bold text-cream-100">{currentDay}/49</span>
         </div>
       </div>
     </div>
@@ -243,27 +232,13 @@ export const ExecutionInsightsPanel = ({
   ];
 
   return (
-    <div className="h-full flex flex-col bg-charcoal-950/95">
-      {/* Header */}
-      <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
-            <Eye className="w-5 h-5 text-gold-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-display font-black text-gold-400 uppercase tracking-tight">
-              Execution Insights
-            </h2>
-            <p className="text-xs text-cream-muted">Full transparency on your corps performance</p>
-          </div>
-        </div>
+    <div className="panel-shell tactical-grid">
+      {/* Header - Command Console Style */}
+      <div className="panel-header">
+        <h2 className="panel-title">Execution Insights</h2>
         {onClose && (
-          <button
-            onClick={onClose}
-            className="p-2 border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-            style={{ borderRadius: '4px' }}
-          >
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="panel-close">
+            <X className="w-5 h-5" />
           </button>
         )}
       </div>
@@ -274,12 +249,11 @@ export const ExecutionInsightsPanel = ({
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-display font-bold uppercase transition-all whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-display font-bold uppercase transition-all whitespace-nowrap border rounded-lg ${
               activeTab === id
                 ? 'bg-gold-500/20 text-gold-400 border-gold-500/40'
-                : 'text-cream-muted hover:text-cream-100 border-transparent hover:border-white/20'
+                : 'text-cream-100/50 hover:text-cream-100 border-transparent hover:border-white/20'
             }`}
-            style={{ borderRadius: '4px' }}
           >
             <Icon className="w-3.5 h-3.5" />
             {label}
@@ -287,8 +261,8 @@ export const ExecutionInsightsPanel = ({
         ))}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Content - Panel Body with tactical grid */}
+      <div className="panel-body space-y-4 relative z-10">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
@@ -317,14 +291,14 @@ export const ExecutionInsightsPanel = ({
 
             {/* Warnings */}
             {!isPrepared && (
-              <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30">
+              <div className="glass-slot border-orange-500/30">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-display font-bold text-orange-400 uppercase mb-1">
+                    <div className="section-label text-orange-400 mb-1">
                       Underprepared Warning
                     </div>
-                    <p className="text-xs text-cream-muted">
+                    <p className="text-xs text-cream-100/60">
                       Your readiness ({Math.round(avgReadiness * 100)}%) is below the {Math.round(difficultyConfig.preparednessThreshold * 100)}% threshold for {difficultyConfig.label} difficulty.
                       You'll receive a {(difficultyConfig.riskPenalty * 100).toFixed(0)}% penalty instead of the +{(difficultyConfig.ceilingBonus * 100).toFixed(0)}% bonus.
                     </p>
@@ -408,18 +382,18 @@ export const ExecutionInsightsPanel = ({
       </div>
 
       {/* Footer with legend */}
-      <div className="border-t border-white/10 p-3 bg-black/40">
-        <div className="flex items-center justify-center gap-6 text-[10px] font-mono text-cream-muted">
+      <div className="border-t border-white/10 p-3 bg-charcoal-950/95 flex-shrink-0">
+        <div className="flex items-center justify-center gap-6 text-[10px] font-mono text-cream-100/50">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" style={{ borderRadius: '2px' }} />
+            <div className="w-2 h-2 bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)] rounded-sm" />
             <span>90%+</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]" style={{ borderRadius: '2px' }} />
+            <div className="w-2 h-2 bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)] rounded-sm" />
             <span>75-89%</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" style={{ borderRadius: '2px' }} />
+            <div className="w-2 h-2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)] rounded-sm" />
             <span>&lt;75%</span>
           </div>
         </div>
