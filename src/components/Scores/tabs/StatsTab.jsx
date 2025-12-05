@@ -2,8 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Crown, Medal, Users } from 'lucide-react';
-import LoadingScreen from '../../LoadingScreen';
-import EmptyState from '../../EmptyState';
+import { SystemLoader, ConsoleEmptyState } from '../../ui/CommandConsole';
 
 // Lifetime views configuration
 const lifetimeViews = [
@@ -83,7 +82,16 @@ const StatsTab = ({
         className="bg-charcoal-800/30 rounded-lg overflow-hidden"
       >
         {loading ? (
-          <LoadingScreen fullScreen={false} />
+          <div className="py-12">
+            <SystemLoader
+              messages={[
+                'QUERYING DATABASE...',
+                'AGGREGATING LIFETIME STATS...',
+                'CALCULATING RANKINGS...',
+              ]}
+              showProgress={true}
+            />
+          </div>
         ) : lifetimeData.length > 0 ? (
           <>
             {/* Desktop Table View */}
@@ -200,9 +208,10 @@ const StatsTab = ({
             </div>
           </>
         ) : (
-          <EmptyState
-            title="NO LIFETIME STATS"
-            subtitle="Complete seasons to appear on the lifetime leaderboard..."
+          <ConsoleEmptyState
+            variant="server"
+            title="NO LIFETIME STATS DETECTED"
+            subtitle="Database query returned empty. Complete seasons to register on the leaderboard."
           />
         )}
       </motion.div>

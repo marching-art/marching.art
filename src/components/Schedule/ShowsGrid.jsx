@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import ShowCard from './ShowCard';
-import EmptyState from '../EmptyState';
+import { ConsoleEmptyState } from '../ui/CommandConsole';
 
 const ShowsGrid = ({
   shows,
@@ -14,9 +14,10 @@ const ShowsGrid = ({
 }) => {
   if (shows.length === 0) {
     return (
-      <EmptyState
-        title="NO SHOWS SCHEDULED"
-        subtitle={`No shows scheduled for Week ${selectedWeek}...`}
+      <ConsoleEmptyState
+        variant="radar"
+        title="AWAITING SCHEDULE DATA"
+        subtitle={`No shows detected for Week ${selectedWeek}. Scanning for upcoming events...`}
       />
     );
   }

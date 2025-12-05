@@ -335,10 +335,10 @@ const Scores = () => {
             Recent Shows
           </span>
           <Calendar className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
+          <p className="text-4xl md:text-5xl font-bold text-data text-black dark:text-cream-100 text-center my-4">
             {stats.recentShows}
           </p>
-          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
+          <p className="text-xs text-data-muted text-center">
             Last 30 Days
           </p>
         </motion.div>
@@ -353,10 +353,10 @@ const Scores = () => {
             Top Score
           </span>
           <TrendingUp className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
+          <p className="text-4xl md:text-5xl font-bold text-data-gold text-center my-4">
             {stats.topScore}
           </p>
-          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
+          <p className="text-xs text-data-muted text-center">
             Season High
           </p>
         </motion.div>
@@ -371,10 +371,10 @@ const Scores = () => {
             Corps Active
           </span>
           <Award className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-mono font-bold text-black dark:text-cream-100 text-center my-4">
+          <p className="text-4xl md:text-5xl font-bold text-data text-black dark:text-cream-100 text-center my-4">
             {stats.corpsActive}
           </p>
-          <p className="text-xs font-mono text-muted dark:text-cream-500/60 text-center">
+          <p className="text-xs text-data-muted text-center">
             This Season
           </p>
         </motion.div>

@@ -106,7 +106,7 @@ const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing
         {label}
       </span>
       {subtitle && (
-        <span className="text-[8px] text-cream/50 font-mono">
+        <span className="text-[8px] text-data-muted">
           {subtitle}
         </span>
       )}
@@ -117,17 +117,17 @@ const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing
 // Compact Stat Pill - For inline stats display
 const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
   const colorClasses = {
-    gold: 'text-gold-400',
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400',
-    orange: 'text-orange-400',
+    gold: 'text-data-gold',
+    blue: 'text-data-blue',
+    green: 'text-data-success',
+    purple: 'text-data-purple',
+    orange: 'text-data-orange',
   };
 
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/10">
-      <Icon className={`w-3 h-3 ${colorClasses[color]}`} />
-      <span className={`text-xs font-mono font-bold ${colorClasses[color]}`}>{value}</span>
+      <Icon className={`w-3 h-3 ${color === 'gold' ? 'text-gold-400' : color === 'blue' ? 'text-blue-400' : color === 'green' ? 'text-green-400' : color === 'purple' ? 'text-purple-400' : 'text-orange-400'}`} />
+      <span className={`text-xs font-bold ${colorClasses[color]}`}>{value}</span>
       <span className="text-[9px] text-cream/40 uppercase">{label}</span>
     </div>
   );
@@ -135,13 +135,22 @@ const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
 
 // Compact Progress Bar - Reduced height for dense layout
 const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }) => {
-  const colorClasses = {
+  const bgClasses = {
     gold: 'bg-gold-500',
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     purple: 'bg-purple-500',
     orange: 'bg-orange-500',
     red: 'bg-red-500',
+  };
+
+  const textDataClasses = {
+    gold: 'text-data-gold',
+    blue: 'text-data-blue',
+    green: 'text-data-success',
+    purple: 'text-data-purple',
+    orange: 'text-data-orange',
+    red: 'text-data-error',
   };
 
   const percent = Math.round(value * 100);
@@ -155,11 +164,11 @@ const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
-          className={`h-full ${colorClasses[color]} rounded-full`}
+          className={`h-full ${bgClasses[color]} rounded-full`}
         />
       </div>
       {showPercent && (
-        <span className={`text-[10px] font-mono font-bold w-8 text-right ${colorClasses[color].replace('bg-', 'text-').replace('-500', '-400')}`}>
+        <span className={`text-[10px] font-bold w-8 text-right ${textDataClasses[color]}`}>
           {percent}%
         </span>
       )}
@@ -203,6 +212,75 @@ const classColors = {
 
 // Class order for sorting
 const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+// ===========================================================================
+// SYSTEM BOOT ANIMATION VARIANTS
+// Mechanical, snappy feel with staggered timing
+// ===========================================================================
+const bootEase = [0.25, 0.1, 0.25, 1.0]; // Mechanical ease
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.2,
+      ease: bootEase,
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const heroVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: bootEase },
+  },
+};
+
+const insightsVariants = {
+  hidden: { opacity: 0, x: 20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.35, ease: bootEase, delay: 0.1 },
+  },
+};
+
+const statusVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: bootEase, delay: 0.2 },
+  },
+};
+
+const actionsContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.2,
+      ease: bootEase,
+      delay: 0.25,
+      staggerChildren: 0.05,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const actionTileVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.25, ease: bootEase },
+  },
+};
 
 // ===========================================================================
 // MAIN DASHBOARD COMPONENT
@@ -522,13 +600,19 @@ const Dashboard = () => {
           - Status Bars (cols 1-8, row 3)
           - Quick Actions (cols 1-8, rows 4-6)
           ====================================================================== */}
-      <div className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2 p-2">
+      <motion.div
+        className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2 p-2"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
 
         {/* ================================================================
             HERO SECTION (cols 1-8, rows 1-2)
             Compact corps header with multiplier
             ================================================================ */}
-        <Widget className="col-span-12 lg:col-span-8 row-span-2 flex flex-col" noPadding>
+        <motion.div variants={heroVariants} className="col-span-12 lg:col-span-8 row-span-2">
+        <Widget className="h-full flex flex-col" noPadding>
           {activeCorps ? (
             <div className="h-full flex flex-col p-3">
               {/* Top row: Corps selector + User stats */}
@@ -608,7 +692,7 @@ const Dashboard = () => {
                           {activeCorps.showConcept.theme}
                         </span>
                         {(executionState?.synergyBonus || 0) > 0 && (
-                          <span className="text-[10px] font-mono font-bold text-gold-400">
+                          <span className="text-[10px] font-bold text-data-gold">
                             +{(executionState?.synergyBonus || 0).toFixed(1)}
                           </span>
                         )}
@@ -629,21 +713,21 @@ const Dashboard = () => {
                   {/* Quick stats inline */}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
+                      <div className="text-sm font-bold text-data-blue">{rehearsalsThisWeek}/7</div>
                       <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-purple-400">{showsThisWeek}</div>
+                      <div className="text-sm font-bold text-data-purple">{showsThisWeek}</div>
                       <div className="text-[8px] text-cream/40 uppercase">Shows</div>
                     </div>
                     {activeCorpsClass !== 'soundSport' && (
                       <div className="text-center">
-                        <div className="text-sm font-mono font-bold text-gold-400">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
+                        <div className="text-sm font-bold text-data-gold">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
                         <div className="text-[8px] text-cream/40 uppercase">Score</div>
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
+                      <div className="text-sm font-bold text-data-success">{assignedStaff.length}/8</div>
                       <div className="text-[8px] text-cream/40 uppercase">Staff</div>
                     </div>
                   </div>
@@ -684,12 +768,14 @@ const Dashboard = () => {
             </div>
           )}
         </Widget>
+        </motion.div>
 
         {/* ================================================================
             INSIGHTS PANEL (cols 9-12, rows 1-6) - Full height right sidebar
             No scrolling - tight vertical spacing
             ================================================================ */}
-        <Widget className="hidden lg:flex col-span-4 row-span-6 flex-col" noPadding>
+        <motion.div variants={insightsVariants} className="hidden lg:block col-span-4 row-span-6">
+        <Widget className="h-full flex flex-col" noPadding>
           <div className="h-full flex flex-col">
             {/* Panel Header */}
             <div className="shrink-0 px-3 py-2 border-b border-white/10 flex items-center justify-between">
@@ -745,25 +831,25 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-1 text-[9px]">
                   <div className="flex justify-between">
                     <span className="text-cream/40">Readiness</span>
-                    <span className={readiness >= 0.80 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={readiness >= 0.80 ? 'text-data-success' : 'text-data-orange'}>
                       {readiness >= 0.80 ? '+' : ''}{((readiness - 0.80) * 0.60 * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Morale</span>
-                    <span className={morale >= 0.75 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={morale >= 0.75 ? 'text-data-success' : 'text-data-orange'}>
                       {morale >= 0.75 ? '+' : ''}{((morale - 0.75) * 0.32 * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Staff</span>
-                    <span className={assignedStaff.length >= 4 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={assignedStaff.length >= 4 ? 'text-data-success' : 'text-data-orange'}>
                       {assignedStaff.length >= 6 ? '+4%' : assignedStaff.length >= 4 ? '+2%' : '-4%'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Equipment</span>
-                    <span className={avgEquipment >= 0.90 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={avgEquipment >= 0.90 ? 'text-data-success' : 'text-data-orange'}>
                       {((avgEquipment - 1.00) * 0.50 * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -772,17 +858,19 @@ const Dashboard = () => {
             </div>
           </div>
         </Widget>
+        </motion.div>
 
         {/* ================================================================
             STATUS BARS (cols 1-8, row 3) - Readiness/Morale module
             ================================================================ */}
-        <Widget className="col-span-12 lg:col-span-8 row-span-1 flex items-center">
+        <motion.div variants={statusVariants} className="col-span-12 lg:col-span-8 row-span-1">
+        <Widget className="h-full flex items-center">
           <div className="w-full grid grid-cols-3 gap-4">
             {/* Readiness */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-blue-400 uppercase tracking-wide">Readiness</span>
-                <span className="text-xs font-mono font-bold text-blue-400">{Math.round(readiness * 100)}%</span>
+                <span className="text-xs font-bold text-data-blue">{Math.round(readiness * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
@@ -796,7 +884,7 @@ const Dashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-green-400 uppercase tracking-wide">Morale</span>
-                <span className="text-xs font-mono font-bold text-green-400">{Math.round(morale * 100)}%</span>
+                <span className="text-xs font-bold text-data-success">{Math.round(morale * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
@@ -810,7 +898,7 @@ const Dashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-orange-400 uppercase tracking-wide">Equipment</span>
-                <span className="text-xs font-mono font-bold text-orange-400">{Math.round(avgEquipment * 100)}%</span>
+                <span className="text-xs font-bold text-data-orange">{Math.round(avgEquipment * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
@@ -822,68 +910,96 @@ const Dashboard = () => {
             </div>
           </div>
         </Widget>
+        </motion.div>
 
         {/* ================================================================
             QUICK ACTIONS (cols 1-8, rows 4-6) - Square clickable tiles
             ================================================================ */}
-        <div className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-4 lg:grid-cols-6 gap-2">
+        <motion.div
+          variants={actionsContainerVariants}
+          className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-4 lg:grid-cols-6 gap-2"
+        >
           {/* Row 1: Primary Actions */}
-          <ActionTile
-            icon={Music}
-            label="Rehearse"
-            subtitle={canRehearseToday() ? '+5% Ready' : 'Done'}
-            onClick={handleRehearsal}
-            disabled={!canRehearseToday()}
-            processing={executionProcessing}
-            completed={!canRehearseToday()}
-            color="blue"
-          />
-          <ActionTile
-            icon={Users}
-            label="Staff"
-            subtitle={`${assignedStaff.length}/8`}
-            onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
-            color="green"
-          />
-          <ActionTile
-            icon={Wrench}
-            label="Equipment"
-            subtitle={equipmentNeedsRepair ? 'Repair!' : `${Math.round(avgEquipment * 100)}%`}
-            onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
-            color={equipmentNeedsRepair ? 'orange' : 'gold'}
-          />
-          <ActionTile
-            icon={Sparkles}
-            label="Synergy"
-            subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)}` : 'Config'}
-            onClick={() => setShowSynergyPanel(true)}
-            color="purple"
-          />
-          <ActionTile
-            icon={Zap}
-            label="Activities"
-            subtitle="Daily"
-            onClick={() => setShowDailyActivities(true)}
-            color="gold"
-          />
-          <ActionTile
-            icon={BarChart3}
-            label="Insights"
-            subtitle="Analysis"
-            onClick={() => setShowExecutionInsights(true)}
-            color="blue"
-          />
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={Music}
+              label="Rehearse"
+              subtitle={canRehearseToday() ? '+5% Ready' : 'Done'}
+              onClick={handleRehearsal}
+              disabled={!canRehearseToday()}
+              processing={executionProcessing}
+              completed={!canRehearseToday()}
+              color="blue"
+            />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={Users}
+              label="Staff"
+              subtitle={`${assignedStaff.length}/8`}
+              onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
+              color="green"
+            />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={Wrench}
+              label="Equipment"
+              subtitle={equipmentNeedsRepair ? 'Repair!' : `${Math.round(avgEquipment * 100)}%`}
+              onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
+              color={equipmentNeedsRepair ? 'orange' : 'gold'}
+            />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={Sparkles}
+              label="Synergy"
+              subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)}` : 'Config'}
+              onClick={() => setShowSynergyPanel(true)}
+              color="purple"
+            />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={Zap}
+              label="Activities"
+              subtitle="Daily"
+              onClick={() => setShowDailyActivities(true)}
+              color="gold"
+            />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <ActionTile
+              icon={BarChart3}
+              label="Insights"
+              subtitle="Analysis"
+              onClick={() => setShowExecutionInsights(true)}
+              color="blue"
+            />
+          </motion.div>
 
           {/* Row 2: Quick Links */}
-          <QuickLinkTile to="/scores" icon={Trophy} label="Scores" color="gold" />
-          <QuickLinkTile to="/schedule" icon={Calendar} label="Schedule" color="purple" />
-          <QuickLinkTile to="/leagues" icon={Crown} label="Leagues" color="blue" />
-          <QuickLinkTile to="/staff" icon={Users} label="Market" color="green" />
-          <QuickLinkTile to="/battlepass" icon={Gift} label="Pass" color="purple" />
-          <QuickLinkTile to="/profile" icon={Target} label="Profile" color="gold" />
-        </div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/scores" icon={Trophy} label="Scores" color="gold" />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/schedule" icon={Calendar} label="Schedule" color="purple" />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/leagues" icon={Crown} label="Leagues" color="blue" />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/staff" icon={Users} label="Market" color="green" />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/battlepass" icon={Gift} label="Pass" color="purple" />
+          </motion.div>
+          <motion.div variants={actionTileVariants}>
+            <QuickLinkTile to="/profile" icon={Target} label="Profile" color="gold" />
+          </motion.div>
+        </motion.div>
 
-      </div>
+      </motion.div>
 
       {/* ======================================================================
           SLIDE-OUT PANELS (Mobile Only)

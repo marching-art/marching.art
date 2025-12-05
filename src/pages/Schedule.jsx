@@ -6,7 +6,7 @@ import { AlertCircle, Zap, Calendar, MapPin, Music, Users, Clock, ChevronRight, 
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import LoadingScreen from '../components/LoadingScreen';
+import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole';
 import { useSeasonStore } from '../store/seasonStore';
 
 // Import modular components
@@ -181,7 +181,18 @@ const Schedule = () => {
   };
 
   if (loading) {
-    return <LoadingScreen fullScreen={false} />;
+    return (
+      <div className="h-full flex items-center justify-center">
+        <SystemLoader
+          messages={[
+            'LOADING SCHEDULE DATA...',
+            'RETRIEVING TOUR DATES...',
+            'SYNCING REGISTRATION STATUS...',
+          ]}
+          showProgress={true}
+        />
+      </div>
+    );
   }
 
   if (!seasonData) {
@@ -215,12 +226,12 @@ const Schedule = () => {
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gold-400" />
             <h1 className="text-sm font-display font-bold text-cream uppercase tracking-wide">Tour Schedule</h1>
-            <span className="text-[9px] font-mono text-cream/40">
-              Wk {currentWeek} • {allShows.length} shows
+            <span className="text-[9px] text-data-muted">
+              Wk <span className="text-data-gold">{currentWeek}</span> • <span className="text-data">{allShows.length}</span> shows
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-mono font-bold">
+            <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-[10px] font-bold text-data-gold">
               {getWeekRegistrationCount(selectedWeek)} Reg
             </span>
           </div>
@@ -248,15 +259,15 @@ const Schedule = () => {
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
                 }`}
               >
-                <span className={`font-mono text-sm font-bold ${
-                  isSelected ? 'text-gold-400' : status === 'current' ? 'text-purple-400' : 'text-cream/60'
+                <span className={`text-sm font-bold ${
+                  isSelected ? 'text-data-gold' : status === 'current' ? 'text-data-purple' : 'text-data-muted'
                 }`}>
                   {week}
                 </span>
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] font-mono text-cream/40">{showCount}</span>
+                  <span className="text-[9px] text-data-muted">{showCount}</span>
                   {regCount > 0 && (
-                    <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-green-500/20 text-green-400">
+                    <span className="px-1 py-0.5 rounded text-[8px] font-bold text-data-success bg-green-500/20">
                       {regCount}
                     </span>
                   )}
@@ -282,26 +293,27 @@ const Schedule = () => {
           {/* Week Status Bar - Compact */}
           <div className="shrink-0 px-2 py-1.5 border-b border-white/5 bg-black/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
-                weekStatus === 'current' ? 'bg-purple-500/20 text-purple-400' :
-                weekStatus === 'past' ? 'bg-white/5 text-cream/40' :
-                'bg-blue-500/20 text-blue-400'
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                weekStatus === 'current' ? 'bg-purple-500/20 text-data-purple' :
+                weekStatus === 'past' ? 'bg-white/5 text-data-muted' :
+                'bg-blue-500/20 text-data-blue'
               }`}>
                 {weekStatus === 'current' ? 'Active' : weekStatus === 'past' ? 'Past' : 'Soon'}
               </span>
-              <span className="text-xs font-mono text-cream/60">Week {selectedWeek}</span>
+              <span className="text-xs text-data-muted">Week <span className="text-data">{selectedWeek}</span></span>
             </div>
-            <span className="text-[9px] font-mono text-cream/40">{selectedWeekShows.length} shows</span>
+            <span className="text-[9px] text-data-muted"><span className="text-data">{selectedWeekShows.length}</span> shows</span>
           </div>
 
           {/* Show Table - High Density with internal scroll */}
           <div className="flex-1 overflow-hidden flex flex-col">
             {selectedWeekShows.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center p-4">
-                  <Calendar className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                  <p className="text-xs text-cream/40">No shows this week</p>
-                </div>
+              <div className="flex-1 flex items-center justify-center p-4">
+                <ConsoleEmptyState
+                  variant="minimal"
+                  title="NO SHOWS DETECTED"
+                  subtitle={`Week ${selectedWeek} has no scheduled events.`}
+                />
               </div>
             ) : (
               <>
@@ -362,7 +374,7 @@ const Schedule = () => {
 
                         {/* Date - Monospace */}
                         <div className="flex items-center justify-center">
-                          <span className="text-[10px] font-mono text-cream/50">{formatDateCompact(show.day)}</span>
+                          <span className="text-[10px] text-data-muted">{formatDateCompact(show.day)}</span>
                         </div>
 
                         {/* Action Button - Fixed Right */}
@@ -420,7 +432,7 @@ const Schedule = () => {
                           {selectedShow.eventName}
                         </h2>
                         <div className="flex items-center gap-3 text-xs text-cream/60 mt-1">
-                          <span className="flex items-center gap-1 font-mono">
+                          <span className="flex items-center gap-1 text-data-muted">
                             <Calendar className="w-3 h-3 text-gold-400" />
                             {formatDateFull(selectedShow.day)}
                           </span>
@@ -457,12 +469,12 @@ const Schedule = () => {
                   {/* Show Info - Compact Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-black/30 border border-white/10 rounded-lg p-2">
-                      <span className="text-[9px] font-mono text-cream/40 uppercase">Type</span>
-                      <p className="text-sm font-mono font-bold text-cream">{selectedShow.type || 'Standard'}</p>
+                      <span className="text-[9px] text-data-muted uppercase">Type</span>
+                      <p className="text-sm font-bold text-data text-cream">{selectedShow.type || 'Standard'}</p>
                     </div>
                     <div className="bg-black/30 border border-white/10 rounded-lg p-2">
-                      <span className="text-[9px] font-mono text-cream/40 uppercase">Classes</span>
-                      <p className="text-sm font-mono font-bold text-cream">{selectedShow.classes?.join(', ') || 'All'}</p>
+                      <span className="text-[9px] text-data-muted uppercase">Classes</span>
+                      <p className="text-sm font-bold text-data text-cream">{selectedShow.classes?.join(', ') || 'All'}</p>
                     </div>
                   </div>
 
@@ -477,7 +489,7 @@ const Schedule = () => {
                   {/* Tip - Compact */}
                   <div className="flex items-center gap-2 px-2 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded text-[10px] text-cream/60">
                     <Info className="w-3 h-3 text-gold-400 shrink-0" />
-                    <span>Max <span className="text-gold-400 font-bold">4 shows</span>/week per corps</span>
+                    <span>Max <span className="font-bold text-data-gold">4</span> shows/week per corps</span>
                   </div>
                 </motion.div>
               </div>

@@ -1,9 +1,8 @@
 // LatestScoresTab - Day-by-day show scores navigation
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import LoadingScreen from '../../LoadingScreen';
+import { SystemLoader, ConsoleEmptyState } from '../../ui/CommandConsole';
 import ShowCard from '../ShowCard';
-import EmptyState from '../../EmptyState';
 
 const LatestScoresTab = ({
   loading,
@@ -31,7 +30,18 @@ const LatestScoresTab = ({
   };
 
   if (loading) {
-    return <LoadingScreen fullScreen={false} />;
+    return (
+      <div className="py-12">
+        <SystemLoader
+          messages={[
+            'RETRIEVING SCORE DATA...',
+            'PROCESSING RESULTS...',
+            'COMPILING STANDINGS...',
+          ]}
+          showProgress={true}
+        />
+      </div>
+    );
   }
 
   // Filter shows for selected day and exclude SoundSport corps
@@ -101,14 +111,16 @@ const LatestScoresTab = ({
           ))}
         </div>
       ) : availableDays.length > 0 ? (
-        <EmptyState
-          title="NO SHOWS FOUND"
-          subtitle={`No shows on Day ${selectedDay}. Use arrows to navigate.`}
+        <ConsoleEmptyState
+          variant="minimal"
+          title="NO SHOWS ON THIS DAY"
+          subtitle={`Day ${selectedDay} has no recorded performances. Navigate to adjacent days.`}
         />
       ) : (
-        <EmptyState
-          title="NO DATA FOUND"
-          subtitle="Waiting for DCI season to commence..."
+        <ConsoleEmptyState
+          variant="radar"
+          title="NO ACTIVE SIGNALS DETECTED"
+          subtitle="Scanning for DCI season data... awaiting transmission."
         />
       )}
     </div>

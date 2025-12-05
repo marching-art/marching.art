@@ -90,6 +90,17 @@ export {
   type SkeletonTextProps,
 } from './Spinner';
 
+// Command Console Components (System Boot / Empty States)
+export {
+  SystemLoader,
+  ConsoleLoadingOverlay,
+  ConsoleEmptyState,
+  type SystemLoaderProps,
+  type ConsoleLoadingOverlayProps,
+  type ConsoleEmptyStateProps,
+  type EmptyStateVariant,
+} from './CommandConsole';
+
 // Error Boundary Components
 export {
   ErrorBoundary,

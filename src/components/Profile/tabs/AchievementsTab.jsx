@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Award, Trophy, Crown, Medal, Star, Target, CheckCircle } from 'lucide-react';
-import EmptyState from '../../EmptyState';
+import { ConsoleEmptyState } from '../../ui/CommandConsole';
 
 const AchievementsTab = ({ profile, milestones }) => {
   return (
@@ -45,9 +45,10 @@ const AchievementsTab = ({ profile, milestones }) => {
             ))}
           </div>
         ) : (
-          <EmptyState
-            title="NO ACHIEVEMENTS"
-            subtitle="Keep playing to unlock achievements..."
+          <ConsoleEmptyState
+            variant="shield"
+            title="NO ACHIEVEMENTS UNLOCKED"
+            subtitle="Mission objectives pending. Continue operations to unlock commendations."
           />
         )}
       </div>

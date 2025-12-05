@@ -11,7 +11,7 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import { CAPTION_OPTIONS, getCaptionColor, getCaptionLabel } from '../../utils/captionUtils';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import EmptyState from '../EmptyState';
+import { SystemLoader, ConsoleEmptyState } from '../ui/CommandConsole';
 
 const StaffAuctions = () => {
   const { user } = useAuth();
@@ -222,13 +222,22 @@ const StaffAuctions = () => {
 
       {/* Auctions List */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full animate-spin" />
+        <div className="py-12">
+          <SystemLoader
+            messages={[
+              'SCANNING AUCTION FEEDS...',
+              'RETRIEVING BID DATA...',
+              'SYNCHRONIZING MARKET...',
+            ]}
+            showProgress={true}
+          />
         </div>
       ) : auctions.length === 0 ? (
-        <EmptyState
+        <ConsoleEmptyState
+          variant="radar"
           title="NO ACTIVE AUCTIONS"
-          subtitle="Check back later or list your own staff for auction..."
+          subtitle="Scanning frequencies... no active bids detected. List your own staff to initiate."
+          actionLabel="List Staff"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
