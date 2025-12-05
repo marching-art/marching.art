@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
-  TrendingUp, ChevronRight, Play, Check, X, Crown, Flame, Coins,
+  TrendingUp, Play, Check, X, Crown, Flame, Coins,
   Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
   CheckCircle, Circle, ArrowUp, AlertTriangle
 } from 'lucide-react';
@@ -174,32 +174,6 @@ const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }
         </span>
       )}
     </div>
-  );
-};
-
-// Quick Link Tile - For navigation actions
-const QuickLinkTile = ({ to, icon: Icon, label, color = 'gold' }) => {
-  const colorClasses = {
-    gold: 'text-gold-400 hover:bg-gold-500/20',
-    blue: 'text-blue-400 hover:bg-blue-500/20',
-    green: 'text-green-400 hover:bg-green-500/20',
-    purple: 'text-purple-400 hover:bg-purple-500/20',
-  };
-
-  return (
-    <Link
-      to={to}
-      className={`
-        flex items-center gap-2 px-3 py-2
-        bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg
-        transition-all hover:border-white/20
-        ${colorClasses[color]}
-      `}
-    >
-      <Icon className="w-4 h-4" />
-      <span className="text-xs font-display font-bold uppercase tracking-wide text-cream">{label}</span>
-      <ChevronRight className="w-3 h-3 ml-auto text-cream/40" />
-    </Link>
   );
 };
 

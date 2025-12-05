@@ -318,7 +318,7 @@ const RichActionModule = ({
       whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
       className={`
         h-full w-full flex flex-col p-4
-        bg-black/50 backdrop-blur-md border border-white/10 rounded-lg
+        bg-black/40 backdrop-blur-md border border-white/10 rounded-lg
         transition-all duration-200
         ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}
         ${completed ? 'border-green-500/40 bg-green-500/10' : ''}
