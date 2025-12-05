@@ -66,7 +66,6 @@ const StaffCard = ({ staff, assignedCaption, onBoostMorale, boostCost = 150 }) =
 
   return (
     <motion.div
-      layout
       className="glass-slot overflow-hidden"
     >
       {/* Header - always visible */}
