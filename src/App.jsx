@@ -1,21 +1,19 @@
 // src/App.jsx
 import React, { useState, useEffect, createContext, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { auth, authHelpers, analyticsHelpers } from './firebase';
+import { auth, authHelpers } from './firebase';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
-import BottomNav from './components/BottomNav';
-import CommandRail from './components/CommandRail';
+import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
 
 // Lazy load pages for better performance
@@ -50,28 +48,6 @@ const Page = ({ name, children }) => (
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
-// Page transition animations
-const pageVariants = {
-  initial: {
-    opacity: 0,
-    y: 20
-  },
-  in: {
-    opacity: 1,
-    y: 0
-  },
-  out: {
-    opacity: 0,
-    y: -20
-  }
-};
-
-const pageTransition = {
-  type: 'tween',
-  ease: 'anticipate',
-  duration: 0.5
-};
-
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -86,52 +62,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return children;
-};
-
-// Layout Component - Responsive HUD Dashboard Layout
-// Mobile: Scrollable content with BottomNav | Desktop: Fixed CommandRail + Viewport-filling HUD
-const Layout = ({ children }) => {
-  const location = useLocation();
-
-  useEffect(() => {
-    // Log page views
-    analyticsHelpers.logPageView(location.pathname);
-  }, [location]);
-
-  return (
-    <div className="flex h-screen bg-surface overflow-hidden font-sans transition-colors duration-200 text-text-main">
-      {/* Desktop Command Rail - Hidden on Mobile */}
-      <div className="hidden lg:block w-[72px] shrink-0 relative">
-        <CommandRail />
-      </div>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden pb-20 lg:pb-0">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-            className="flex-1 flex flex-col min-h-0"
-          >
-            <Suspense fallback={<LoadingScreen />}>
-              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto hud-scroll">
-                {children}
-              </div>
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {/* Mobile Bottom Navigation - Hidden on Desktop */}
-      <div className="lg:hidden">
-        <BottomNav />
-      </div>
-    </div>
-  );
 };
 
 // Main App Component
@@ -248,9 +178,9 @@ function App() {
           {/* Protected Routes - Each page wrapped with error boundary */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Dashboard"><Dashboard /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
@@ -262,95 +192,95 @@ function App() {
 
           <Route path="/schedule" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Schedule"><Schedule /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/scores" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Scores"><Scores /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/scores/:date" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Scores"><Scores /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/profile/:userId?" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Profile"><Profile /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/settings" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Settings"><Settings /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/hall-of-champions" element={
-            <Layout>
+            <GameShell>
               <Page name="Hall of Champions"><HallOfChampions /></Page>
-            </Layout>
+            </GameShell>
           } />
 
           <Route path="/admin" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Admin"><Admin /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/staff" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Staff"><Staff /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/battlepass" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Battle Pass"><BattlePass /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/leagues" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Leagues"><Leagues /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/retired-corps" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Retired Corps"><RetiredCorpsGallery /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
           <Route path="/corps-history" element={
             <ProtectedRoute>
-              <Layout>
+              <GameShell>
                 <Page name="Corps History"><CorpsHistory /></Page>
-              </Layout>
+              </GameShell>
             </ProtectedRoute>
           } />
 
