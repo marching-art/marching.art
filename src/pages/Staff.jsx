@@ -28,44 +28,51 @@ const Staff = () => {
   ];
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4">
-      {/* Tab Navigation - Stadium HUD Glass Style */}
-      <div className="glass-panel p-1.5 flex gap-1 overflow-x-auto flex-shrink-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center gap-1.5 md:gap-2 px-4 md:px-5 py-2.5 rounded-lg transition-all font-display font-semibold text-sm uppercase tracking-wide ${
-                isActive
-                  ? 'text-yellow-400'
-                  : 'text-yellow-50/60 hover:text-yellow-50 hover:bg-white/5'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'icon-neon-gold' : ''}`} />
-              <span className="hidden sm:inline">{tab.fullLabel}</span>
-              <span className="sm:hidden">{tab.label}</span>
-              {isActive && (
-                <motion.div
-                  layoutId="staffTab"
-                  className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              )}
-            </button>
-          );
-        })}
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      {/* ================================================================
+          TOP BAR: Tab Navigation (Fixed Height)
+          ================================================================ */}
+      <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md">
+        <div className="flex gap-1 p-1.5 overflow-x-auto hud-scroll">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded transition-all font-display font-semibold text-xs uppercase tracking-wide ${
+                  isActive
+                    ? 'text-gold-400 bg-gold-500/10'
+                    : 'text-cream/50 hover:text-cream hover:bg-white/5'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-gold-400' : ''}`} />
+                <span className="hidden sm:inline">{tab.fullLabel}</span>
+                <span className="sm:hidden">{tab.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="staffTab"
+                    className="absolute bottom-0 left-2 right-2 h-[2px] bg-gold-500"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tab Content - Fills remaining space with internal scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+      {/* ================================================================
+          WORK SURFACE: Tab Content (h-full, internal scroll)
+          ================================================================ */}
+      <div className="flex-1 overflow-hidden">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
+          className="h-full"
         >
           {activeTab === 'marketplace' && <StaffMarketplace />}
           {activeTab === 'roster' && <StaffRoster userCorps={corps || {}} />}

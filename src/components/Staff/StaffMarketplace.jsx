@@ -47,102 +47,110 @@ const getRarityColor = (baseValue) => {
 };
 
 // ============================================================================
-// TABLE ROW COMPONENT - ~60px height, high density
+// TABLE ROW COMPONENT - ~44px height, maximum density
+// Monospaced fonts for all numerical values, zebra striping, fixed action column
 // ============================================================================
-const StaffTableRow = ({ staff, index, isSelected, owned, canAfford, onClick }) => {
+const StaffTableRow = ({ staff, index, isSelected, owned, canAfford, onClick, onRecruit }) => {
   const CaptionIcon = CAPTION_ICONS[staff.caption] || Award;
   const boostPercent = Math.round(staff.baseValue / 100);
   const rarity = getRarity(staff.baseValue);
   const isLegendary = rarity === 'legendary';
 
   return (
-    <motion.tr
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: index * 0.02 }}
+    <tr
       onClick={onClick}
       className={`
-        h-[60px] cursor-pointer transition-all duration-150 group
-        ${index % 2 === 0 ? 'bg-white/[0.02]' : 'bg-transparent'}
-        ${isSelected
-          ? 'bg-gold-500/10 border-l-2 border-l-gold-500'
-          : 'border-l-2 border-l-transparent hover:bg-white/5 hover:border-l-gold-500/50'
-        }
-        ${owned ? 'opacity-60' : ''}
+        h-[44px] cursor-pointer transition-colors duration-100 group
+        ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}
+        ${isSelected ? 'bg-gold-500/15' : 'hover:bg-white/[0.08]'}
+        ${owned ? 'opacity-50' : ''}
       `}
     >
-      {/* Name/Role Column */}
-      <td className="px-3 py-2">
-        <div className="flex items-center gap-3">
-          {/* Icon */}
+      {/* Name/Role Column - Compact */}
+      <td className="py-1 px-2">
+        <div className="flex items-center gap-2">
+          {/* Icon - Smaller */}
           <div className={`
-            w-10 h-10 flex items-center justify-center flex-shrink-0
-            ${isLegendary ? 'bg-gold-500/20 border border-gold-500/40' : 'bg-white/5 border border-white/10'}
+            w-7 h-7 flex items-center justify-center flex-shrink-0 rounded
+            ${isLegendary ? 'bg-gold-500/20' : 'bg-white/5'}
           `}>
-            <CaptionIcon className={`w-5 h-5 ${isLegendary ? 'text-gold-500' : 'text-cream/60'}`} />
+            <CaptionIcon className={`w-4 h-4 ${isLegendary ? 'text-gold-500' : 'text-cream/50'}`} />
           </div>
 
-          {/* Name & Role */}
+          {/* Name & Role - Compact */}
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-sm text-cream truncate uppercase tracking-wide">
+            <div className="flex items-center gap-1">
+              <span className="font-display font-bold text-xs text-cream truncate uppercase tracking-wide">
                 {staff.name}
               </span>
               {isLegendary && (
-                <Star className="w-3 h-3 text-gold-500 fill-gold-500 flex-shrink-0" />
+                <Star className="w-2.5 h-2.5 text-gold-500 fill-gold-500 flex-shrink-0" />
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className={`
-                inline-flex px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase
-                ${getRarityColor(staff.baseValue)} border
-              `}>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[8px] font-mono font-bold uppercase ${
+                isLegendary ? 'text-gold-500' : rarity === 'rare' ? 'text-blue-400' : 'text-cream/40'
+              }`}>
                 {getRarityLabel(staff.baseValue)}
               </span>
-              <span className="text-[10px] font-mono text-cream/40">
-                {staff.caption} • {staff.yearInducted || '----'}
+              <span className="text-[9px] font-mono text-cream/30">
+                {staff.caption}
               </span>
             </div>
           </div>
         </div>
       </td>
 
-      {/* Boost Column */}
-      <td className="px-3 py-2 hidden md:table-cell">
-        <span className={`
-          inline-flex items-center gap-1 px-2 py-1 text-xs font-mono font-bold
-          ${boostPercent >= 3 ? 'text-green-400 bg-green-500/15' : 'text-cream/60 bg-white/5'}
-          border ${boostPercent >= 3 ? 'border-green-500/30' : 'border-white/10'}
-        `}>
-          <TrendingUp className="w-3 h-3" />
+      {/* Year Column - Monospace */}
+      <td className="py-1 px-2 hidden lg:table-cell">
+        <span className="font-mono text-xs text-cream/50">{staff.yearInducted || '----'}</span>
+      </td>
+
+      {/* Boost Column - Monospace */}
+      <td className="py-1 px-2 hidden md:table-cell">
+        <span className={`font-mono text-xs font-bold ${boostPercent >= 3 ? 'text-green-400' : 'text-cream/50'}`}>
           +{boostPercent}%
         </span>
       </td>
 
       {/* Status Column */}
-      <td className="px-3 py-2 hidden sm:table-cell">
+      <td className="py-1 px-2 hidden sm:table-cell">
         {owned ? (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold uppercase text-green-400 bg-green-500/15 border border-green-500/30">
-            <Check className="w-3 h-3" />
-            OWNED
-          </span>
+          <span className="text-[9px] font-mono font-bold text-green-400 uppercase">Owned</span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-bold uppercase text-cream/50 bg-white/5 border border-white/10">
-            AVAILABLE
-          </span>
+          <span className="text-[9px] font-mono text-cream/40 uppercase">Avail</span>
         )}
       </td>
 
-      {/* Cost Column - Right Aligned */}
-      <td className="px-3 py-2 text-right">
-        <div className="flex items-center justify-end gap-1">
-          <DollarSign className={`w-4 h-4 ${canAfford || owned ? 'text-gold-500' : 'text-red-400/60'}`} />
-          <span className={`font-mono font-bold text-sm ${canAfford || owned ? 'text-gold-500' : 'text-red-400/60'}`}>
-            {staff.baseValue.toLocaleString()}
-          </span>
-        </div>
+      {/* Cost Column - Monospace, Right Aligned */}
+      <td className="py-1 px-2 text-right">
+        <span className={`font-mono text-xs font-bold ${canAfford || owned ? 'text-gold-400' : 'text-red-400/60'}`}>
+          {staff.baseValue.toLocaleString()}
+        </span>
       </td>
-    </motion.tr>
+
+      {/* Action Column - Fixed Right */}
+      <td className="py-1 px-2 text-right sticky right-0 bg-inherit">
+        {owned ? (
+          <Check className="w-4 h-4 text-green-400 ml-auto" />
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onRecruit(staff); }}
+            disabled={!canAfford}
+            className={`
+              px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wide rounded
+              transition-colors
+              ${canAfford
+                ? 'bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30'
+                : 'bg-white/5 text-cream/30 cursor-not-allowed border border-white/10'
+              }
+            `}
+          >
+            Recruit
+          </button>
+        )}
+      </td>
+    </tr>
   );
 };
 
@@ -433,33 +441,36 @@ const StaffMarketplace = () => {
       {/* Main List Panel */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
-        {/* Header Bar */}
-        <div className="p-4 border-b border-cream/10 bg-black/40">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <div>
-              <h1 className="font-display font-black text-xl text-cream uppercase tracking-wide">Scouting Report</h1>
-              <p className="text-xs text-cream/40 font-mono mt-0.5">Recruit Hall of Fame legends to boost your corps</p>
+        {/* Header Bar - Compact */}
+        <div className="shrink-0 p-2 border-b border-white/10 bg-black/40">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-3">
+              <h1 className="font-display font-bold text-sm text-cream uppercase tracking-wide">Staff Market</h1>
+              <div className="flex items-center gap-2 text-[9px] font-mono">
+                <span className="text-cream/40"><span className="text-cream font-bold">{filteredStaff.length}</span> staff</span>
+                <span className="text-gold-500"><Crown className="w-2.5 h-2.5 inline" /> {legendaryCount}</span>
+                <span className="text-green-400"><Check className="w-2.5 h-2.5 inline" /> {ownedCount}</span>
+              </div>
             </div>
 
             {/* Balance */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-black/60 border border-gold-500/30">
-              <DollarSign className="w-4 h-4 text-gold-500" />
-              <span className="font-mono font-bold text-gold-500">{corpsCoin.toLocaleString()}</span>
-              <span className="text-[10px] font-mono text-cream/40">CC</span>
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-black/60 border border-gold-500/30 rounded">
+              <DollarSign className="w-3 h-3 text-gold-500" />
+              <span className="font-mono text-xs font-bold text-gold-500">{corpsCoin.toLocaleString()}</span>
             </div>
           </div>
 
-          {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row gap-2">
+          {/* Search & Filters - Single row */}
+          <div className="flex gap-2">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream/30" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-cream/30" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name..."
-                className="w-full pl-10 pr-3 py-2 bg-black/60 border-2 border-cream/10 text-cream text-sm font-mono placeholder:text-cream/30 focus:outline-none focus:border-gold-500/50"
+                placeholder="Search..."
+                className="w-full pl-7 pr-2 py-1.5 bg-black/60 border border-white/10 rounded text-cream text-xs font-mono placeholder:text-cream/30 focus:outline-none focus:border-gold-500/50"
               />
             </div>
 
@@ -468,105 +479,114 @@ const StaffMarketplace = () => {
               <select
                 value={captionFilter}
                 onChange={(e) => setCaptionFilter(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-black/60 border-2 border-cream/10 text-cream text-sm font-mono focus:outline-none focus:border-gold-500/50 appearance-none pr-8 cursor-pointer"
+                className="w-full sm:w-auto px-2 py-1.5 bg-black/60 border border-white/10 rounded text-cream text-xs font-mono focus:outline-none focus:border-gold-500/50 appearance-none pr-6 cursor-pointer"
               >
-                <option value="all">All Roles</option>
+                <option value="all">All</option>
                 {CAPTION_OPTIONS.filter(o => o.value !== 'all').map(option => (
-                  <option key={option.value} value={option.value}>{option.value} - {option.label}</option>
+                  <option key={option.value} value={option.value}>{option.value}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-cream/40 pointer-events-none" />
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-cream/40 pointer-events-none" />
             </div>
+
+            {/* Clear filters */}
+            {(searchTerm || captionFilter !== 'all') && (
+              <button
+                onClick={() => { setSearchTerm(''); setCaptionFilter('all'); }}
+                className="px-2 py-1.5 text-[9px] font-mono text-gold-400 hover:text-gold-300 border border-gold-500/30 rounded"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Results Bar */}
-        <div className="px-4 py-2 border-b border-cream/5 bg-black/20 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <span className="text-cream/40">
-              <span className="text-cream font-bold">{filteredStaff.length}</span> staff
-            </span>
-            <span className="text-gold-500">
-              <Crown className="w-3 h-3 inline mr-1" />{legendaryCount}
-            </span>
-            <span className="text-green-400">
-              <Check className="w-3 h-3 inline mr-1" />{ownedCount} owned
-            </span>
-          </div>
-          {(searchTerm || captionFilter !== 'all') && (
-            <button
-              onClick={() => { setSearchTerm(''); setCaptionFilter('all'); }}
-              className="text-xs font-mono text-gold-500 hover:text-gold-400 flex items-center gap-1"
-            >
-              <X className="w-3 h-3" /> Clear
-            </button>
-          )}
-        </div>
-
-        {/* Data Table */}
-        <div className="flex-1 overflow-auto">
+        {/* ================================================================
+            DATA TABLE: High-density with sticky header and internal scroll
+            ================================================================ */}
+        <div className="flex-1 overflow-hidden flex flex-col">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="w-8 h-8 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-xs font-mono text-cream/40 uppercase tracking-widest">Loading Market Data...</p>
+                <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-[10px] font-mono text-cream/40 uppercase tracking-widest">Loading...</p>
               </div>
             </div>
           ) : filteredStaff.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center p-8">
-                <User className="w-12 h-12 text-cream/20 mx-auto mb-3" />
-                <p className="font-mono text-sm text-cream/40">No staff found</p>
-                <p className="font-mono text-xs text-cream/20 mt-1">Try adjusting filters</p>
+              <div className="text-center p-4">
+                <User className="w-8 h-8 text-cream/20 mx-auto mb-2" />
+                <p className="font-mono text-xs text-cream/40">No staff found</p>
               </div>
             </div>
           ) : (
-            <table className="w-full">
-              <thead className="sticky top-0 bg-black/80 backdrop-blur-sm z-10">
-                <tr className="text-left border-b border-cream/10">
-                  <th
-                    onClick={() => handleSort('name')}
-                    className="px-3 py-3 font-mono text-[10px] text-cream/50 uppercase tracking-widest cursor-pointer hover:text-cream transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      Name / Role <SortIcon column="name" />
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('boost')}
-                    className="px-3 py-3 font-mono text-[10px] text-cream/50 uppercase tracking-widest cursor-pointer hover:text-cream transition-colors hidden md:table-cell"
-                  >
-                    <div className="flex items-center gap-1">
-                      Boost <SortIcon column="boost" />
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 font-mono text-[10px] text-cream/50 uppercase tracking-widest hidden sm:table-cell">
-                    Status
-                  </th>
-                  <th
-                    onClick={() => handleSort('cost')}
-                    className="px-3 py-3 font-mono text-[10px] text-cream/50 uppercase tracking-widest cursor-pointer hover:text-cream transition-colors text-right"
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Cost <SortIcon column="cost" />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStaff.map((staff, index) => (
-                  <StaffTableRow
-                    key={staff.id}
-                    staff={staff}
-                    index={index}
-                    isSelected={selectedStaff?.id === staff.id}
-                    owned={ownsStaff(staff.id)}
-                    canAfford={canAfford(staff.baseValue)}
-                    onClick={() => setSelectedStaff(staff)}
-                  />
-                ))}
-              </tbody>
-            </table>
+            <div className="flex-1 overflow-hidden">
+              {/* Table with sticky header */}
+              <table className="w-full table-fixed">
+                <thead className="sticky top-0 z-10 bg-black/90 backdrop-blur-sm">
+                  <tr className="border-b border-white/10">
+                    <th
+                      onClick={() => handleSort('name')}
+                      className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide cursor-pointer hover:text-cream transition-colors text-left w-[40%]"
+                    >
+                      <div className="flex items-center gap-1">
+                        Name <SortIcon column="name" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('newest')}
+                      className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide cursor-pointer hover:text-cream transition-colors text-left hidden lg:table-cell w-[10%]"
+                    >
+                      <div className="flex items-center gap-1">
+                        Year <SortIcon column="newest" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => handleSort('boost')}
+                      className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide cursor-pointer hover:text-cream transition-colors text-left hidden md:table-cell w-[10%]"
+                    >
+                      <div className="flex items-center gap-1">
+                        Boost <SortIcon column="boost" />
+                      </div>
+                    </th>
+                    <th className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide text-left hidden sm:table-cell w-[10%]">
+                      Status
+                    </th>
+                    <th
+                      onClick={() => handleSort('cost')}
+                      className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide cursor-pointer hover:text-cream transition-colors text-right w-[15%]"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Cost <SortIcon column="cost" />
+                      </div>
+                    </th>
+                    <th className="py-1 px-2 font-mono text-[9px] text-cream/50 uppercase tracking-wide text-right sticky right-0 bg-black/90 w-[15%]">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+              </table>
+
+              {/* Scrollable tbody container */}
+              <div className="overflow-y-auto hud-scroll" style={{ height: 'calc(100% - 28px)' }}>
+                <table className="w-full table-fixed">
+                  <tbody>
+                    {filteredStaff.map((staff, index) => (
+                      <StaffTableRow
+                        key={staff.id}
+                        staff={staff}
+                        index={index}
+                        isSelected={selectedStaff?.id === staff.id}
+                        owned={ownsStaff(staff.id)}
+                        canAfford={canAfford(staff.baseValue)}
+                        onClick={() => setSelectedStaff(staff)}
+                        onRecruit={handlePurchase}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       </div>
