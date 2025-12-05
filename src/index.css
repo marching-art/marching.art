@@ -4,6 +4,16 @@
 @tailwind utilities;
 
 /* ===========================================
+   DESKTOP AUTO-ZOOM
+   Double the base font size on desktop screens
+   =========================================== */
+@media (min-width: 1024px) {
+  html {
+    font-size: 32px; /* 2x default 16px = 200% zoom */
+  }
+}
+
+/* ===========================================
    NIGHT MODE STADIUM HUD DESIGN SYSTEM
    Single Dark Theme - "Always Night at the Stadium"
    =========================================== */
