@@ -215,7 +215,7 @@ const EquipmentManager = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {performanceEquipment.map((type, index) => {
             const maxValue = equipment?.[`${type.id}Max`];
             const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
@@ -223,67 +223,51 @@ const EquipmentManager = ({
             return (
               <motion.div
                 key={type.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`card-hover cursor-pointer border-2 ${getConditionBg(condition)}`}
+                transition={{ delay: index * 0.05 }}
+                className={`card-hover cursor-pointer border-2 p-3 ${getConditionBg(condition)}`}
                 onClick={() => setSelectedEquipment(type.id)}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-4xl">{type.icon}</div>
-                  <div className="flex items-center gap-1 text-gold-500">
-                    {Array.from({ length: level }).map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-current" />
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl flex-shrink-0">{type.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-semibold text-cream-100 text-sm">{type.name}</h4>
+                      <div className="flex items-center gap-1 text-gold-500">
+                        {Array.from({ length: level }).map((_, i) => (
+                          <Star key={i} className="w-2.5 h-2.5 fill-current" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-cream-500/60 mb-1.5">{type.description}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 ${
+                            condition >= 0.85 ? 'bg-green-500' :
+                            condition >= 0.70 ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${condition * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex gap-1">
+                        {type.affectedCaptions.map(cap => (
+                          <span key={cap} className="px-1 py-0.5 rounded bg-blue-500/20 text-[8px] font-mono text-blue-400">
+                            {cap}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <h4 className="font-semibold text-cream-100 mb-1">
-                  {type.name}
-                </h4>
-                <p className="text-xs text-cream-500/60 mb-2">
-                  {type.description}
-                </p>
-
-                {/* Affected captions */}
-                <div className="flex gap-1 mb-3">
-                  {type.affectedCaptions.map(cap => (
-                    <span key={cap} className="px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] font-mono text-blue-400 border border-blue-500/30">
-                      {cap}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mb-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-cream-500/60">Condition</span>
-                    <span className={`text-sm font-semibold ${getConditionColor(condition)}`}>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-sm font-mono font-bold ${getConditionColor(condition)}`}>
                       {getConditionLabel(condition)}
                     </span>
-                  </div>
-                  <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        condition >= 0.85 ? 'bg-green-500' :
-                        condition >= 0.70 ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{ width: `${condition * 100}%` }}
-                    />
+                    <span className="text-[10px] text-cream-500/60">Lvl {level}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-cream-500/60">Level {level}</span>
-                  <ChevronRight className="w-4 h-4 text-cream-500/40" />
-                </div>
-
-                {condition < 0.70 && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-yellow-500">
-                    <AlertCircle className="w-3 h-3" />
-                    Needs attention
-                  </div>
-                )}
               </motion.div>
             );
           })}
@@ -326,7 +310,7 @@ const EquipmentManager = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
           {travelEquipment.map((type, index) => {
             const maxValue = equipment?.[`${type.id}Max`];
             const { condition, level } = getEquipmentData(equipment?.[type.id], maxValue);
@@ -335,27 +319,27 @@ const EquipmentManager = ({
             return (
               <motion.div
                 key={type.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className={`card-hover cursor-pointer border-2 ${getConditionBg(condition)}`}
+                transition={{ delay: 0.2 + index * 0.05 }}
+                className={`card-hover cursor-pointer border-2 p-3 ${getConditionBg(condition)}`}
                 onClick={() => setSelectedEquipment(type.id)}
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-charcoal-700">
-                    <LIcon className={`w-8 h-8 ${getConditionColor(condition)}`} />
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-charcoal-700 flex-shrink-0">
+                    <LIcon className={`w-5 h-5 ${getConditionColor(condition)}`} />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-cream-100">{type.name}</h4>
+                      <h4 className="font-semibold text-cream-100 text-sm">{type.name}</h4>
                       <div className="flex items-center gap-1 text-gold-500">
                         {Array.from({ length: level }).map((_, i) => (
-                          <Star key={i} className="w-3 h-3 fill-current" />
+                          <Star key={i} className="w-2.5 h-2.5 fill-current" />
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-cream-500/60 mb-2">{type.description}</p>
-                    <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
+                    <p className="text-[10px] text-cream-500/60 mb-1.5">{type.description}</p>
+                    <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-500 ${
                           condition >= 0.85 ? 'bg-green-500' :
@@ -366,11 +350,11 @@ const EquipmentManager = ({
                       />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-mono font-bold ${getConditionColor(condition)}`}>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-sm font-mono font-bold ${getConditionColor(condition)}`}>
                       {Math.round(condition * 100)}%
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-cream-500/40 ml-auto" />
+                    </span>
+                    <span className="text-[10px] text-cream-500/60">Lvl {level}</span>
                   </div>
                 </div>
               </motion.div>
