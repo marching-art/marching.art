@@ -33,7 +33,7 @@ const Staff = () => {
           TOP BAR: Tab Navigation (Fixed Height)
           ================================================================ */}
       <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md">
-        <div className="flex gap-1 py-1.5 overflow-x-auto hud-scroll">
+        <div className="flex gap-1 p-1.5 overflow-x-auto hud-scroll">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
