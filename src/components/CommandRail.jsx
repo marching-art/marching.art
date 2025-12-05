@@ -112,48 +112,6 @@ const secondaryNavItems = [
 ];
 
 // =============================================================================
-// TOOLTIP COMPONENT (for collapsed state)
-// =============================================================================
-
-const Tooltip = ({ children, label, description, show = true }) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  if (!show) {
-    return children;
-  }
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children}
-      <AnimatePresence>
-        {isVisible && (
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-[100] pointer-events-none"
-          >
-            <div className="bg-charcoal-800/95 backdrop-blur-sm border border-gold-500/30 rounded-lg px-3 py-2 shadow-lg shadow-black/50 whitespace-nowrap">
-              <div className="text-sm font-display font-bold text-cream">{label}</div>
-              {description && (
-                <div className="text-xs text-cream-muted mt-0.5">{description}</div>
-              )}
-              {/* Arrow */}
-              <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-charcoal-800/95" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// =============================================================================
 // NAV ITEM COMPONENT
 // =============================================================================
 
@@ -161,54 +119,43 @@ const NavItem = ({ item, isActive, isExpanded }) => {
   const Icon = item.icon;
 
   return (
-    <Tooltip label={item.label} description={item.description} show={!isExpanded}>
-      <Link
-        to={item.path}
+    <Link
+      to={item.path}
+      className={`
+        relative flex items-center rounded-xl
+        transition-all duration-300 group
+        ${isExpanded ? 'w-full px-3 py-2.5 gap-3' : 'w-12 h-12 justify-center'}
+      `}
+    >
+      {/* Icon */}
+      <Icon
         className={`
-          relative flex items-center rounded-xl
-          transition-all duration-300 group
-          ${isExpanded ? 'w-full px-3 py-2.5 gap-3' : 'w-12 h-12 justify-center'}
+          w-5 h-5 transition-all duration-300 shrink-0
+          ${isActive
+            ? 'text-gold-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'
+            : 'text-cream-muted group-hover:text-gold-400 group-hover:drop-shadow-[0_0_4px_rgba(234,179,8,0.3)]'
+          }
         `}
-      >
-        {/* Active indicator - Left edge glow, centered on icon */}
-        {isActive && (
-          <motion.div
-            layoutId="railActive"
-            className={`absolute left-0 w-1 h-5 bg-gold-500 rounded-r-full shadow-[0_0_10px_rgba(234,179,8,0.6)] ${isExpanded ? 'top-1/2 -translate-y-1/2' : 'top-1/2 -translate-y-1/2'}`}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
+      />
+
+      {/* Label (expanded state) */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.span
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+            className={`
+              text-sm font-medium truncate
+              ${isActive ? 'text-gold-400' : 'text-cream-muted group-hover:text-cream'}
+            `}
+          >
+            {item.label}
+          </motion.span>
         )}
-
-        {/* Icon */}
-        <Icon
-          className={`
-            w-5 h-5 transition-all duration-300 shrink-0
-            ${isActive
-              ? 'text-gold-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'
-              : 'text-cream-muted group-hover:text-gold-400 group-hover:drop-shadow-[0_0_4px_rgba(234,179,8,0.3)]'
-            }
-          `}
-        />
-
-        {/* Label (expanded state) */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.span
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className={`
-                text-sm font-medium truncate
-                ${isActive ? 'text-gold-400' : 'text-cream-muted group-hover:text-cream'}
-              `}
-            >
-              {item.label}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </Link>
-    </Tooltip>
+      </AnimatePresence>
+    </Link>
   );
 };
 
@@ -360,52 +307,6 @@ const CommandRail = ({ isExpanded = false, onToggle }) => {
             isExpanded={isExpanded}
           />
         )}
-      </div>
-
-      {/* User Profile Footer */}
-      <div className={`border-t border-white/5 p-3 ${isExpanded ? '' : ''}`}>
-        <Link
-          to="/profile"
-          className={`
-            flex items-center rounded-xl
-            bg-charcoal-900/50 border border-white/10
-            hover:border-gold-500/30 hover:bg-charcoal-800/50
-            transition-all group
-            ${isExpanded ? 'px-3 py-2.5 gap-3' : 'w-12 h-12 justify-center mx-auto'}
-          `}
-        >
-          {user?.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt="Profile"
-              className="w-8 h-8 rounded-lg object-cover border border-white/20 group-hover:border-gold-500/50 transition-colors shrink-0"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold-400/20 to-gold-600/20 flex items-center justify-center border border-gold-500/30 shrink-0">
-              <User className="w-4 h-4 text-gold-400" />
-            </div>
-          )}
-
-          {/* User info (expanded) */}
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden flex-1 min-w-0"
-              >
-                <div className="text-sm font-medium text-cream truncate">
-                  {user?.displayName || 'Player'}
-                </div>
-                <div className="text-xs text-cream-muted truncate">
-                  View Profile
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Link>
       </div>
 
       {/* Stadium Lights Effect - Subtle glow at top */}
