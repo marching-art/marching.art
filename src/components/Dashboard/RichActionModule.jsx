@@ -176,27 +176,27 @@ const SynergyMultiplier = ({ bonus = 0.5, themeName = '' }) => {
 const CircularProgress = ({ completed = 1, total = 3, color = 'gold' }) => {
   const colors = colorClasses[color];
   const percent = total > 0 ? (completed / total) * 100 : 0;
-  const circumference = 2 * Math.PI * 20; // radius = 20
+  const circumference = 2 * Math.PI * 18; // radius = 18
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
   return (
-    <div className="w-full flex flex-col items-center gap-1">
-      <div className="relative w-12 h-12">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
+    <div className="w-full flex items-center justify-center gap-3">
+      <div className="relative w-10 h-10">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 44 44">
           {/* Background ring */}
           <circle
-            cx="24"
-            cy="24"
-            r="20"
+            cx="22"
+            cy="22"
+            r="18"
             fill="none"
             className={colors.ringBg}
             strokeWidth="4"
           />
           {/* Progress ring */}
           <motion.circle
-            cx="24"
-            cy="24"
-            r="20"
+            cx="22"
+            cy="22"
+            r="18"
             fill="none"
             className={colors.ring}
             strokeWidth="4"
@@ -209,7 +209,7 @@ const CircularProgress = ({ completed = 1, total = 3, color = 'gold' }) => {
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-xs font-bold ${colors.text}`}>
+          <span className={`text-[10px] font-bold ${colors.text}`}>
             {completed}/{total}
           </span>
         </div>
