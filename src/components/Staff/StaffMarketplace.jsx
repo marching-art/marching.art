@@ -601,8 +601,8 @@ const StaffMarketplace = () => {
             <div className="flex items-center justify-center h-full p-4">
               <ConsoleEmptyState
                 variant="minimal"
-                title="NO STAFF DETECTED"
-                subtitle="No matching personnel in database. Adjust filters or expand search criteria."
+                title="LOADING STAFF"
+                subtitle="Please wait while personnel data is being retrieved."
               />
             </div>
           ) : (
