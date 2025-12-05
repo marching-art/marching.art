@@ -369,10 +369,16 @@ export const DifficultyConfidenceMeter = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  // Get current difficulty config
+  // Derive difficulty key from string or numeric difficulty value
+  // Must match logic in ExecutionInsightsPanel for consistency
   const difficultyKey = typeof currentDifficulty === 'string'
     ? currentDifficulty
-    : currentDifficulty?.key || 'moderate';
+    : currentDifficulty?.key
+      ? currentDifficulty.key
+      : currentDifficulty?.difficulty <= 3 ? 'conservative'
+      : currentDifficulty?.difficulty <= 5 ? 'moderate'
+      : currentDifficulty?.difficulty <= 7 ? 'ambitious'
+      : 'legendary';
   const config = DIFFICULTY_PRESETS[difficultyKey] || DIFFICULTY_PRESETS.moderate;
 
   // Check if difficulty is locked (after day 10)
@@ -533,9 +539,16 @@ export const ConfidenceBadge = ({
   currentReadiness = 0.75,
   onClick,
 }) => {
+  // Derive difficulty key from string or numeric difficulty value
+  // Must match logic in ExecutionInsightsPanel for consistency
   const difficultyKey = typeof currentDifficulty === 'string'
     ? currentDifficulty
-    : currentDifficulty?.key || 'moderate';
+    : currentDifficulty?.key
+      ? currentDifficulty.key
+      : currentDifficulty?.difficulty <= 3 ? 'conservative'
+      : currentDifficulty?.difficulty <= 5 ? 'moderate'
+      : currentDifficulty?.difficulty <= 7 ? 'ambitious'
+      : 'legendary';
   const config = DIFFICULTY_PRESETS[difficultyKey] || DIFFICULTY_PRESETS.moderate;
 
   const isPrepared = currentReadiness >= config.preparednessThreshold;
@@ -576,9 +589,16 @@ export const MiniRiskIndicator = ({
   currentDifficulty = 'moderate',
   currentReadiness = 0.75,
 }) => {
+  // Derive difficulty key from string or numeric difficulty value
+  // Must match logic in ExecutionInsightsPanel for consistency
   const difficultyKey = typeof currentDifficulty === 'string'
     ? currentDifficulty
-    : currentDifficulty?.key || 'moderate';
+    : currentDifficulty?.key
+      ? currentDifficulty.key
+      : currentDifficulty?.difficulty <= 3 ? 'conservative'
+      : currentDifficulty?.difficulty <= 5 ? 'moderate'
+      : currentDifficulty?.difficulty <= 7 ? 'ambitious'
+      : 'legendary';
   const config = DIFFICULTY_PRESETS[difficultyKey] || DIFFICULTY_PRESETS.moderate;
 
   const isPrepared = currentReadiness >= config.preparednessThreshold;
