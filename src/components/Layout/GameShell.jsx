@@ -192,7 +192,7 @@ const GameShell = ({ children }) => {
 
           {/* Desktop Command Rail - Fixed Width Sidebar */}
           <motion.aside
-            className="hidden lg:flex flex-col h-full relative z-20 overflow-hidden border-r border-white/5"
+            className="hidden lg:flex flex-col h-full relative z-20 border-r border-white/5"
             initial={false}
             animate={{ width: isRailExpanded ? 240 : 80 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}

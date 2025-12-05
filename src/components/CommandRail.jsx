@@ -19,11 +19,31 @@ import {
   Settings,
   Shield,
   ChevronLeft,
-  ChevronRight,
-  Zap
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { adminHelpers } from '../firebase';
+
+// =============================================================================
+// MARCHING.ART GAME LOGO
+// =============================================================================
+
+const MarchingArtLogo = ({ className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65" className={className}>
+    <g>
+      <circle cx="0" cy="0" r="4" className="fill-gold-400"/>
+      <circle cx="25" cy="0" r="4" className="fill-gold-400"/>
+      <circle cx="50" cy="0" r="4" className="fill-gold-400"/>
+      <circle cx="0" cy="25" r="4" className="fill-gold-400"/>
+      <circle cx="25" cy="25" r="4" className="fill-gold-400"/>
+      <circle cx="50" cy="25" r="4" className="fill-gold-400"/>
+      <circle cx="0" cy="50" r="4" className="fill-gold-400"/>
+      <circle cx="25" cy="50" r="4" className="fill-gold-400"/>
+      <circle cx="50" cy="50" r="4" className="fill-gold-400"/>
+      <path d="M 0 0 Q 50 0, 50 50" className="stroke-charcoal-950" strokeWidth="6" fill="none" strokeLinecap="round"/>
+    </g>
+  </svg>
+);
 
 // =============================================================================
 // TYPES & CONSTANTS
@@ -150,7 +170,7 @@ const NavItem = ({ item, isActive, isExpanded }) => {
           ${isExpanded ? 'w-full px-3 py-2.5 gap-3' : 'w-12 h-12 justify-center'}
           ${isActive
             ? 'bg-gold-500/20 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
-            : 'hover:bg-white/5'
+            : 'hover:shadow-[0_0_12px_rgba(234,179,8,0.15)]'
           }
         `}
       >
@@ -210,11 +230,11 @@ const ToggleButton = ({ isExpanded, onToggle }) => {
     <button
       onClick={onToggle}
       className="
-        absolute -right-3 top-20 z-30
+        absolute -right-3 top-8 -translate-y-1/2 z-30
         w-6 h-6 rounded-full
         bg-charcoal-800 border border-gold-500/30
         flex items-center justify-center
-        hover:bg-charcoal-700 hover:border-gold-500/50
+        hover:bg-charcoal-700 hover:border-gold-500/50 hover:shadow-[0_0_10px_rgba(234,179,8,0.3)]
         transition-all duration-200
         shadow-lg shadow-black/50
       "
@@ -277,9 +297,9 @@ const CommandRail = ({ isExpanded = false, onToggle }) => {
       `}>
         <Link
           to="/dashboard"
-          className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 shadow-gold-glow-sm hover:shadow-gold-glow-md transition-shadow shrink-0"
+          className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 shadow-gold-glow-sm hover:shadow-gold-glow-md transition-shadow shrink-0 p-1.5"
         >
-          <Zap className="w-5 h-5 text-charcoal-950" />
+          <MarchingArtLogo className="w-full h-full" />
         </Link>
 
         {/* Brand text (expanded) */}
