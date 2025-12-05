@@ -1,16 +1,204 @@
-// src/pages/Settings.jsx (Night Mode Stadium HUD)
+// src/pages/Settings.jsx
+// "The Director's Office" - Full viewport split-view settings panel
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Mail, MapPin, Shield, Bell, Palette,
-  Save, AlertCircle, Check, Lock, LogOut, Trash2, Zap
+  User, Mail, MapPin, Shield, Bell,
+  Save, AlertCircle, Lock, LogOut, Trash2,
+  ChevronRight, Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile as firebaseUpdateProfile } from 'firebase/auth';
 import { updateProfile } from '../firebase/functions';
 import toast from 'react-hot-toast';
+
+// =============================================================================
+// GAME-STYLE INPUT COMPONENTS
+// =============================================================================
+
+const GameInput = ({ icon: Icon, label, description, ...props }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-display font-bold text-cream/80 uppercase tracking-wider">
+      {label}
+    </label>
+    <div className="relative group">
+      {Icon && (
+        <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gold-500/60 group-focus-within:text-gold-400 transition-colors" />
+      )}
+      <input
+        className={`
+          w-full bg-charcoal-900/80
+          border-2 border-charcoal-700
+          rounded-lg px-4 py-4
+          ${Icon ? 'pl-12' : ''}
+          text-cream font-body text-base
+          placeholder:text-cream/30
+          focus:outline-none focus:border-gold-500/60
+          focus:shadow-[0_0_20px_rgba(234,179,8,0.15),inset_0_0_20px_rgba(234,179,8,0.05)]
+          hover:border-charcoal-600
+          transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-charcoal-700
+        `}
+        {...props}
+      />
+      {/* Focus glow line at bottom */}
+      <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-gold-500/0 group-focus-within:bg-gold-500/60 transition-colors rounded-full" />
+    </div>
+    {description && (
+      <p className="text-xs text-cream/40 font-body pl-1">{description}</p>
+    )}
+  </div>
+);
+
+const GameTextarea = ({ label, description, ...props }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-display font-bold text-cream/80 uppercase tracking-wider">
+      {label}
+    </label>
+    <div className="relative group">
+      <textarea
+        className={`
+          w-full bg-charcoal-900/80
+          border-2 border-charcoal-700
+          rounded-lg px-4 py-4
+          text-cream font-body text-base
+          placeholder:text-cream/30
+          focus:outline-none focus:border-gold-500/60
+          focus:shadow-[0_0_20px_rgba(234,179,8,0.15),inset_0_0_20px_rgba(234,179,8,0.05)]
+          hover:border-charcoal-600
+          transition-all duration-200
+          resize-none
+        `}
+        {...props}
+      />
+      <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-gold-500/0 group-focus-within:bg-gold-500/60 transition-colors rounded-full" />
+    </div>
+    {description && (
+      <p className="text-xs text-cream/40 font-body pl-1">{description}</p>
+    )}
+  </div>
+);
+
+const GameToggle = ({ checked, onChange, label, description }) => (
+  <label className="flex items-center justify-between p-4 bg-charcoal-900/60 border-2 border-charcoal-800 rounded-lg cursor-pointer hover:border-charcoal-700 hover:bg-charcoal-900/80 transition-all group">
+    <div className="flex-1 mr-4">
+      <p className="font-display font-bold text-cream group-hover:text-gold-400 transition-colors">{label}</p>
+      <p className="text-sm text-cream/50 mt-0.5">{description}</p>
+    </div>
+    <div className="relative">
+      <input
+        type="checkbox"
+        className="sr-only peer"
+        checked={checked}
+        onChange={onChange}
+      />
+      <div className={`
+        w-14 h-8 rounded-full transition-all duration-300
+        bg-charcoal-800 border-2 border-charcoal-600
+        peer-checked:bg-gold-500/30 peer-checked:border-gold-500/50
+        peer-checked:shadow-[0_0_15px_rgba(234,179,8,0.3)]
+        peer-focus:ring-2 peer-focus:ring-gold-500/30
+      `}>
+        <div className={`
+          absolute top-1 left-1 w-6 h-6 rounded-full transition-all duration-300
+          bg-cream/60
+          peer-checked:translate-x-6 peer-checked:bg-gold-400
+          shadow-md
+        `} />
+      </div>
+    </div>
+  </label>
+);
+
+const GameButton = ({ children, variant = 'primary', ...props }) => {
+  const variants = {
+    primary: `
+      bg-gradient-to-b from-gold-400 to-gold-600
+      text-charcoal-950 font-display font-bold uppercase tracking-wider
+      border-2 border-gold-300
+      shadow-[0_4px_0_0_#854d0e,0_0_20px_rgba(234,179,8,0.3)]
+      hover:shadow-[0_2px_0_0_#854d0e,0_0_25px_rgba(234,179,8,0.4)]
+      hover:translate-y-0.5
+      active:shadow-[0_0_0_0_#854d0e,0_0_15px_rgba(234,179,8,0.2)]
+      active:translate-y-1
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
+    `,
+    secondary: `
+      bg-charcoal-800
+      text-cream font-display font-bold uppercase tracking-wider
+      border-2 border-charcoal-600
+      shadow-[0_4px_0_0_#0a0a0a]
+      hover:shadow-[0_2px_0_0_#0a0a0a]
+      hover:translate-y-0.5 hover:border-cream/20
+      active:shadow-none active:translate-y-1
+    `,
+    danger: `
+      bg-gradient-to-b from-red-500 to-red-700
+      text-white font-display font-bold uppercase tracking-wider
+      border-2 border-red-400
+      shadow-[0_4px_0_0_#7f1d1d,0_0_15px_rgba(239,68,68,0.2)]
+      hover:shadow-[0_2px_0_0_#7f1d1d,0_0_20px_rgba(239,68,68,0.3)]
+      hover:translate-y-0.5
+      active:shadow-none active:translate-y-1
+    `
+  };
+
+  return (
+    <button
+      className={`
+        px-6 py-3 rounded-lg transition-all duration-150
+        flex items-center justify-center gap-2
+        ${variants[variant]}
+      `}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+// =============================================================================
+// NAVIGATION ITEM COMPONENT
+// =============================================================================
+
+const NavItem = ({ icon: Icon, label, description, isActive, onClick, variant = 'default' }) => {
+  const variantStyles = {
+    default: isActive
+      ? 'bg-gold-500/10 border-gold-500/30 text-gold-400'
+      : 'border-transparent hover:bg-white/5 hover:border-white/10 text-cream/70 hover:text-cream',
+    danger: isActive
+      ? 'bg-red-500/10 border-red-500/30 text-red-400'
+      : 'border-transparent hover:bg-red-500/5 hover:border-red-500/20 text-red-400/70 hover:text-red-400'
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left
+        ${variantStyles[variant]}
+      `}
+    >
+      <div className={`
+        w-10 h-10 rounded-lg flex items-center justify-center
+        ${isActive ? 'bg-gold-500/20' : 'bg-white/5'}
+        ${variant === 'danger' && isActive ? 'bg-red-500/20' : ''}
+      `}>
+        <Icon className={`w-5 h-5 ${isActive ? 'drop-shadow-[0_0_8px_currentColor]' : ''}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-display font-bold text-sm uppercase tracking-wide truncate">{label}</p>
+        <p className="text-xs opacity-60 truncate mt-0.5">{description}</p>
+      </div>
+      <ChevronRight className={`w-5 h-5 transition-transform ${isActive ? 'translate-x-1' : ''}`} />
+    </button>
+  );
+};
+
+// =============================================================================
+// MAIN SETTINGS COMPONENT
+// =============================================================================
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -143,410 +331,386 @@ const Settings = () => {
     }
   };
 
+  const navItems = [
+    { id: 'profile', label: 'Profile', icon: User, description: 'Your public identity' },
+    { id: 'notifications', label: 'Alerts', icon: Bell, description: 'Notification preferences' },
+    { id: 'privacy', label: 'Privacy', icon: Shield, description: 'Control your visibility' },
+    { id: 'account', label: 'Account', icon: Lock, description: 'Session & security' }
+  ];
+
+  const sectionTitles = {
+    profile: 'PROFILE CONFIGURATION',
+    notifications: 'ALERT PREFERENCES',
+    privacy: 'PRIVACY CONTROLS',
+    account: 'ACCOUNT SECURITY'
+  };
+
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6 p-4">
-        <div className="h-8 w-48 bg-black/40 rounded animate-pulse mx-auto" />
-        <div className="h-96 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl animate-pulse" />
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-cream/60 font-display uppercase tracking-wider">Loading Settings...</p>
+        </div>
       </div>
     );
   }
 
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Alerts', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Shield },
-    { id: 'account', label: 'Account', icon: Lock }
-  ];
-
-  // Toggle switch component - Stadium HUD style
-  const ToggleSwitch = ({ checked, onChange }) => (
-    <label className="relative inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        className="sr-only peer"
-        checked={checked}
-        onChange={onChange}
-      />
-      <div className="w-11 h-6 bg-black/60 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-yellow-50/60 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-yellow-500/40 peer-checked:to-yellow-600/40 peer-checked:border-yellow-500/30 peer-checked:after:bg-yellow-400 peer-checked:shadow-[0_0_12px_rgba(234,179,8,0.3)]"></div>
-    </label>
-  );
-
-  // Setting row component - Stadium HUD style
-  const SettingRow = ({ title, description, checked, onChange }) => (
-    <div className="flex items-center justify-between p-4 bg-black/30 backdrop-blur-sm rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-      <div>
-        <p className="font-display font-medium text-yellow-50">{title}</p>
-        <p className="text-sm text-yellow-50/50">{description}</p>
-      </div>
-      <ToggleSwitch checked={checked} onChange={onChange} />
-    </div>
-  );
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <h1 className="sports-header text-3xl md:text-4xl text-yellow-50 mb-2">Settings</h1>
-        <p className="text-yellow-50/50 font-body">Manage your account and preferences</p>
-      </motion.div>
+    <div className="h-full w-full flex flex-col lg:flex-row overflow-hidden">
 
-      {/* Tab Navigation - Stadium HUD */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="flex justify-center"
-      >
-        <div className="bg-black/40 backdrop-blur-md rounded-xl p-1.5 border border-white/10 flex gap-1 overflow-x-auto">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-medium text-sm transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'text-yellow-400'
-                    : 'text-yellow-50/60 hover:text-yellow-50 hover:bg-white/5'
-                }`}
-              >
-                <tab.icon className={`w-4 h-4 ${isActive ? 'drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]' : ''}`} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                {isActive && (
-                  <motion.div
-                    layoutId="settingsTab"
-                    className="absolute -bottom-0.5 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6),0_0_20px_rgba(234,179,8,0.3)]"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </motion.div>
+      {/* Left Column - Navigation Panel */}
+      <div className="lg:w-[320px] xl:w-[360px] shrink-0 bg-charcoal-950/60 backdrop-blur-xl border-b lg:border-b-0 lg:border-r border-white/5">
+        <div className="h-full flex flex-col p-4 lg:p-6">
 
-      {/* Profile Settings */}
-      {activeTab === 'profile' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
-              Profile Information
-            </h3>
-
-            <div className="space-y-5">
-              {/* Display Name */}
+          {/* Header */}
+          <div className="mb-6 lg:mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-gold-glow-sm">
+                <SettingsIcon className="w-5 h-5 text-charcoal-950" />
+              </div>
               <div>
-                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Display Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
-                  <input
-                    type="text"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all"
-                    placeholder="Your display name"
+                <h1 className="font-display font-bold text-xl text-cream uppercase tracking-wide">Settings</h1>
+                <p className="text-xs text-cream/50">Director's Office</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Items - Horizontal on mobile, vertical on desktop */}
+          <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 -mx-2 px-2 lg:mx-0 lg:px-0">
+            {navItems.map((item) => (
+              <div key={item.id} className="shrink-0 lg:shrink">
+                <NavItem
+                  icon={item.icon}
+                  label={item.label}
+                  description={item.description}
+                  isActive={activeTab === item.id}
+                  onClick={() => setActiveTab(item.id)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* User Card - Desktop only */}
+          <div className="hidden lg:block mt-auto pt-6 border-t border-white/5">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-900/50">
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-lg object-cover border border-white/20"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gold-400/20 to-gold-600/20 flex items-center justify-center border border-gold-500/30">
+                  <User className="w-5 h-5 text-gold-400" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-display font-bold text-cream truncate">
+                  {user?.displayName || 'Player'}
+                </p>
+                <p className="text-xs text-cream/50 truncate">
+                  {user?.email || 'Guest Account'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column - Content Panel */}
+      <div className="flex-1 min-h-0 overflow-y-auto relative">
+
+        {/* Watermark Header */}
+        <div className="absolute top-0 left-0 right-0 h-48 overflow-hidden pointer-events-none select-none">
+          <div className="absolute top-4 lg:top-8 left-4 lg:left-8 right-4">
+            <h2 className="font-display font-black text-[3rem] lg:text-[5rem] xl:text-[6rem] text-cream/[0.03] uppercase tracking-tight leading-none whitespace-nowrap">
+              {sectionTitles[activeTab]}
+            </h2>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="relative z-10 p-4 lg:p-8 xl:p-12 max-w-3xl">
+          <AnimatePresence mode="wait">
+
+            {/* Profile Tab */}
+            {activeTab === 'profile' && (
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-cream mb-2">Profile Information</h3>
+                  <p className="text-cream/50">Customize how you appear to other players.</p>
+                </div>
+
+                <div className="space-y-6">
+                  <GameInput
+                    icon={User}
+                    label="Display Name"
+                    description="This is how your name will appear to other players"
+                    placeholder="Enter your display name"
                     value={profileData.displayName}
                     onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
                     maxLength={50}
                   />
-                </div>
-                <p className="text-xs text-yellow-50/40 mt-1.5">
-                  This is how your name will appear to other players
-                </p>
-              </div>
 
-              {/* Email (read-only) */}
-              <div>
-                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
-                  <input
-                    type="email"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50/50 cursor-not-allowed"
+                  <GameInput
+                    icon={Mail}
+                    label="Email Address"
+                    description="Email cannot be changed from settings"
                     value={user?.email || 'Anonymous'}
                     disabled
                   />
-                </div>
-                <p className="text-xs text-yellow-50/40 mt-1.5">
-                  Email cannot be changed from settings
-                </p>
-              </div>
 
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Bio</label>
-                <textarea
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all resize-none min-h-[100px]"
-                  placeholder="Tell us about yourself..."
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  maxLength={500}
-                  rows={4}
-                />
-                <p className="text-xs text-yellow-50/40 mt-1.5">
-                  {profileData.bio.length}/500 characters
-                </p>
-              </div>
+                  <GameTextarea
+                    label="Bio"
+                    description={`${profileData.bio.length}/500 characters`}
+                    placeholder="Tell us about yourself..."
+                    value={profileData.bio}
+                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                    maxLength={500}
+                    rows={4}
+                  />
 
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-display font-medium text-yellow-50/70 mb-2">Location</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-50/40" />
-                  <input
-                    type="text"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pl-10 text-yellow-50 placeholder:text-yellow-50/30 focus:outline-none focus:border-yellow-500/30 focus:shadow-[0_0_15px_rgba(234,179,8,0.15)] transition-all"
+                  <GameInput
+                    icon={MapPin}
+                    label="Location"
                     placeholder="City, State/Country"
                     value={profileData.location}
                     onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
                     maxLength={100}
                   />
                 </div>
-              </div>
-            </div>
 
-            <div className="flex justify-end mt-8">
-              <button
-                onClick={handleSaveProfile}
-                disabled={saving}
-                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                <div className="flex justify-end pt-4">
+                  <GameButton onClick={handleSaveProfile} disabled={saving}>
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </GameButton>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Notifications Tab */}
+            {activeTab === 'notifications' && (
+              <motion.div
+                key="notifications"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
               >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-cream mb-2">Notification Preferences</h3>
+                  <p className="text-cream/50">Control how and when you receive updates.</p>
+                </div>
 
-      {/* Notification Settings */}
-      {activeTab === 'notifications' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
-              Notification Preferences
-            </h3>
+                <div className="space-y-3">
+                  <GameToggle
+                    label="Email Notifications"
+                    description="Receive email updates about your account"
+                    checked={notificationSettings.emailNotifications}
+                    onChange={(e) => setNotificationSettings({
+                      ...notificationSettings,
+                      emailNotifications: e.target.checked
+                    })}
+                  />
 
-            <div className="space-y-3">
-              <SettingRow
-                title="Email Notifications"
-                description="Receive email updates about your account"
-                checked={notificationSettings.emailNotifications}
-                onChange={(e) => setNotificationSettings({
-                  ...notificationSettings,
-                  emailNotifications: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="Show Reminders"
+                    description="Get reminded about upcoming shows"
+                    checked={notificationSettings.showReminders}
+                    onChange={(e) => setNotificationSettings({
+                      ...notificationSettings,
+                      showReminders: e.target.checked
+                    })}
+                  />
 
-              <SettingRow
-                title="Show Reminders"
-                description="Get reminded about upcoming shows"
-                checked={notificationSettings.showReminders}
-                onChange={(e) => setNotificationSettings({
-                  ...notificationSettings,
-                  showReminders: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="League Updates"
+                    description="Notifications about your leagues"
+                    checked={notificationSettings.leagueUpdates}
+                    onChange={(e) => setNotificationSettings({
+                      ...notificationSettings,
+                      leagueUpdates: e.target.checked
+                    })}
+                  />
 
-              <SettingRow
-                title="League Updates"
-                description="Notifications about your leagues"
-                checked={notificationSettings.leagueUpdates}
-                onChange={(e) => setNotificationSettings({
-                  ...notificationSettings,
-                  leagueUpdates: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="Battle Pass Rewards"
+                    description="Alerts when new rewards are available"
+                    checked={notificationSettings.battlePassRewards}
+                    onChange={(e) => setNotificationSettings({
+                      ...notificationSettings,
+                      battlePassRewards: e.target.checked
+                    })}
+                  />
 
-              <SettingRow
-                title="Battle Pass Rewards"
-                description="Alerts when new rewards are available"
-                checked={notificationSettings.battlePassRewards}
-                onChange={(e) => setNotificationSettings({
-                  ...notificationSettings,
-                  battlePassRewards: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="Weekly Recap"
+                    description="Weekly summary of your performance"
+                    checked={notificationSettings.weeklyRecap}
+                    onChange={(e) => setNotificationSettings({
+                      ...notificationSettings,
+                      weeklyRecap: e.target.checked
+                    })}
+                  />
+                </div>
 
-              <SettingRow
-                title="Weekly Recap"
-                description="Weekly summary of your performance"
-                checked={notificationSettings.weeklyRecap}
-                onChange={(e) => setNotificationSettings({
-                  ...notificationSettings,
-                  weeklyRecap: e.target.checked
-                })}
-              />
-            </div>
+                <div className="flex justify-end pt-4">
+                  <GameButton onClick={handleSaveNotifications} disabled={saving}>
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Preferences'}
+                  </GameButton>
+                </div>
+              </motion.div>
+            )}
 
-            <div className="flex justify-end mt-8">
-              <button
-                onClick={handleSaveNotifications}
-                disabled={saving}
-                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Privacy Tab */}
+            {activeTab === 'privacy' && (
+              <motion.div
+                key="privacy"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
               >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save Preferences'}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-cream mb-2">Privacy Settings</h3>
+                  <p className="text-cream/50">Control what others can see about you.</p>
+                </div>
 
-      {/* Privacy Settings */}
-      {activeTab === 'privacy' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
-              Privacy Settings
-            </h3>
+                <div className="space-y-3">
+                  <GameToggle
+                    label="Public Profile"
+                    description="Allow others to view your profile"
+                    checked={privacySettings.publicProfile}
+                    onChange={(e) => setPrivacySettings({
+                      ...privacySettings,
+                      publicProfile: e.target.checked
+                    })}
+                  />
 
-            <div className="space-y-3">
-              <SettingRow
-                title="Public Profile"
-                description="Allow others to view your profile"
-                checked={privacySettings.publicProfile}
-                onChange={(e) => setPrivacySettings({
-                  ...privacySettings,
-                  publicProfile: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="Show Location"
+                    description="Display your location on your profile"
+                    checked={privacySettings.showLocation}
+                    onChange={(e) => setPrivacySettings({
+                      ...privacySettings,
+                      showLocation: e.target.checked
+                    })}
+                  />
 
-              <SettingRow
-                title="Show Location"
-                description="Display your location on your profile"
-                checked={privacySettings.showLocation}
-                onChange={(e) => setPrivacySettings({
-                  ...privacySettings,
-                  showLocation: e.target.checked
-                })}
-              />
+                  <GameToggle
+                    label="Show Statistics"
+                    description="Display your stats and achievements"
+                    checked={privacySettings.showStats}
+                    onChange={(e) => setPrivacySettings({
+                      ...privacySettings,
+                      showStats: e.target.checked
+                    })}
+                  />
+                </div>
 
-              <SettingRow
-                title="Show Statistics"
-                description="Display your stats and achievements"
-                checked={privacySettings.showStats}
-                onChange={(e) => setPrivacySettings({
-                  ...privacySettings,
-                  showStats: e.target.checked
-                })}
-              />
-            </div>
+                <div className="flex justify-end pt-4">
+                  <GameButton onClick={handleSavePrivacy} disabled={saving}>
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Privacy Settings'}
+                  </GameButton>
+                </div>
+              </motion.div>
+            )}
 
-            <div className="flex justify-end mt-8">
-              <button
-                onClick={handleSavePrivacy}
-                disabled={saving}
-                className="gold-ingot-btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Account Tab */}
+            {activeTab === 'account' && (
+              <motion.div
+                key="account"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-8"
               >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save Privacy Settings'}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-cream mb-2">Account Information</h3>
+                  <p className="text-cream/50">Manage your account and session.</p>
+                </div>
 
-      {/* Account Settings */}
-      {activeTab === 'account' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
-        >
-          {/* Account Info */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-6">
-              Account Information
-            </h3>
+                {/* Account Info Cards */}
+                <div className="grid gap-3">
+                  <div className="flex justify-between items-center p-4 bg-charcoal-900/60 border-2 border-charcoal-800 rounded-lg">
+                    <span className="text-cream/60 font-display text-sm uppercase tracking-wide">Account Type</span>
+                    <span className="text-gold-400 font-display font-bold drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]">
+                      {user?.isAnonymous ? 'Guest' : 'Registered'}
+                    </span>
+                  </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
-                <span className="text-yellow-50/50 font-display text-sm">Account Type</span>
-                <span className="text-yellow-400 font-display font-medium drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
-                  {user?.isAnonymous ? 'Guest' : 'Registered'}
-                </span>
-              </div>
+                  <div className="flex justify-between items-center p-4 bg-charcoal-900/60 border-2 border-charcoal-800 rounded-lg">
+                    <span className="text-cream/60 font-display text-sm uppercase tracking-wide">User ID</span>
+                    <span className="text-cream font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
+                  </div>
 
-              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
-                <span className="text-yellow-50/50 font-display text-sm">User ID</span>
-                <span className="text-yellow-50 font-mono text-sm">{user?.uid?.slice(0, 12)}...</span>
-              </div>
+                  <div className="flex justify-between items-center p-4 bg-charcoal-900/60 border-2 border-charcoal-800 rounded-lg">
+                    <span className="text-cream/60 font-display text-sm uppercase tracking-wide">Joined</span>
+                    <span className="text-cream font-display">
+                      {user?.metadata?.creationTime
+                        ? new Date(user.metadata.creationTime).toLocaleDateString()
+                        : 'Unknown'}
+                    </span>
+                  </div>
+                </div>
 
-              <div className="flex justify-between p-3 bg-black/30 rounded-xl border border-white/5">
-                <span className="text-yellow-50/50 font-display text-sm">Joined</span>
-                <span className="text-yellow-50 font-display">
-                  {user?.metadata?.creationTime
-                    ? new Date(user.metadata.creationTime).toLocaleDateString()
-                    : 'Unknown'}
-                </span>
-              </div>
-            </div>
-          </div>
+                {/* Session Section */}
+                <div className="pt-6 border-t border-white/10">
+                  <h4 className="font-display font-bold text-lg text-cream mb-4">Session</h4>
+                  <div className="flex items-start gap-4 mb-4 p-4 bg-charcoal-900/40 rounded-lg border border-white/5">
+                    <AlertCircle className="w-5 h-5 text-cream/50 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-cream/80">Sign out of your account</p>
+                      <p className="text-sm text-cream/40 mt-1">
+                        You'll need to sign in again to access your account
+                      </p>
+                    </div>
+                  </div>
+                  <GameButton variant="secondary" onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </GameButton>
+                </div>
 
-          {/* Sign Out */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-yellow-50 uppercase tracking-wide mb-4">
-              Session
-            </h3>
-
-            <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-yellow-50/50 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-yellow-50/80 font-body">Sign out of your account</p>
-                <p className="text-sm text-yellow-50/40">
-                  You'll need to sign in again to access your account
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 text-yellow-50/70 hover:border-yellow-500/30 hover:text-yellow-50 hover:bg-white/5 transition-all font-display font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
-          </div>
-
-          {/* Danger Zone */}
-          <div className="bg-red-950/30 backdrop-blur-md border border-red-500/20 rounded-2xl p-6">
-            <h3 className="text-lg font-display font-bold text-red-400 uppercase tracking-wide mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]">
-              Danger Zone
-            </h3>
-
-            <div className="flex items-start gap-3 mb-5">
-              <AlertCircle className="w-5 h-5 text-red-400/80 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-yellow-50/80 font-body">Delete Account</p>
-                <p className="text-sm text-yellow-50/40">
-                  Permanently delete your account and all associated data. This action cannot be undone.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => toast.error('Please contact support to delete your account')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/30 text-red-400/80 hover:border-red-500/50 hover:text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all font-display font-medium"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Account
-            </button>
-          </div>
-        </motion.div>
-      )}
+                {/* Danger Zone */}
+                <div className="pt-6 border-t border-red-500/20">
+                  <h4 className="font-display font-bold text-lg text-red-400 mb-4 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Danger Zone
+                  </h4>
+                  <div className="p-4 bg-red-950/30 rounded-lg border border-red-500/20 mb-4">
+                    <p className="text-cream/80 mb-1">Delete Account</p>
+                    <p className="text-sm text-cream/40">
+                      Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                  </div>
+                  <GameButton
+                    variant="danger"
+                    onClick={() => toast.error('Please contact support to delete your account')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Account
+                  </GameButton>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };

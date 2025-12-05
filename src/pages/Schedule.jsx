@@ -13,7 +13,7 @@ import { useSeasonStore } from '../store/seasonStore';
 import {
   ShowRegistrationModal,
   WeekTabs,
-  ShowsGrid,
+  TourStrip,
   SchedulePageHeader,
   SelectedWeekHeader
 } from '../components/Schedule';
@@ -210,9 +210,9 @@ const Schedule = () => {
         />
       </div>
 
-      {/* Shows Grid - Fills remaining space with internal scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
-        <ShowsGrid
+      {/* Tour Strip - Horizontal scrolling tour route */}
+      <div className="flex-1 min-h-0">
+        <TourStrip
           shows={selectedWeekShows}
           selectedWeek={selectedWeek}
           getActualDate={getActualDate}
