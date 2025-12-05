@@ -4,16 +4,6 @@
 @tailwind utilities;
 
 /* ===========================================
-   DESKTOP AUTO-ZOOM
-   Scale up the entire page on desktop screens
-   =========================================== */
-@media (min-width: 1024px) {
-  html {
-    zoom: 2;
-  }
-}
-
-/* ===========================================
    NIGHT MODE STADIUM HUD DESIGN SYSTEM
    Single Dark Theme - "Always Night at the Stadium"
    =========================================== */
