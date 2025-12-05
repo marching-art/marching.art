@@ -200,7 +200,7 @@ const EquipmentManager = ({
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-display font-bold text-cream-100 mb-1">
+            <h3 className="text-sm font-display font-bold text-cream-100 mb-1 uppercase tracking-wider">
               Performance Equipment
             </h3>
             <p className="text-sm text-cream-500/60">
@@ -299,7 +299,7 @@ const EquipmentManager = ({
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-display font-bold text-cream-100 mb-1">
+            <h3 className="text-sm font-display font-bold text-cream-100 mb-1 uppercase tracking-wider">
               Travel Equipment
             </h3>
             <p className="text-sm text-cream-500/60">
