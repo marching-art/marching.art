@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wrench, TrendingUp, AlertCircle, Sparkles,
-  ChevronRight, Coins, Star, Bus, Truck, Info, Music, Target, Zap
+  Coins, Star, Bus, Truck
 } from 'lucide-react';
 import Portal from '../Portal';
 
@@ -16,7 +16,6 @@ const EquipmentManager = ({
   corpsCoin
 }) => {
   const [selectedEquipment, setSelectedEquipment] = useState(null);
-  const [showCaptionMap, setShowCaptionMap] = useState(false);
 
   // Performance equipment (affects captions)
   const performanceEquipment = [
@@ -135,63 +134,6 @@ const EquipmentManager = ({
 
   return (
     <div className="space-y-4">
-      {/* Caption Impact Map - Collapsible */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-dark rounded-xl overflow-hidden"
-      >
-        <button
-          onClick={() => setShowCaptionMap(!showCaptionMap)}
-          className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-display font-bold text-cream uppercase">
-              Equipment → Caption Impact
-            </span>
-          </div>
-          <ChevronRight className={`w-4 h-4 text-cream-muted transition-transform ${showCaptionMap ? 'rotate-90' : ''}`} />
-        </button>
-        <AnimatePresence>
-          {showCaptionMap && (
-            <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: 'auto' }}
-              exit={{ height: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 pb-3 space-y-2">
-                {performanceEquipment.map(eq => {
-                  const { condition } = getEquipmentData(equipment?.[eq.id], equipment?.[`${eq.id}Max`]);
-                  return (
-                    <div key={eq.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{eq.icon}</span>
-                        <span className="text-xs text-cream">{eq.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          {eq.affectedCaptions.map(cap => (
-                            <span key={cap} className="px-1.5 py-0.5 rounded bg-charcoal-700 text-[9px] font-mono text-cream-muted">
-                              {cap}
-                            </span>
-                          ))}
-                        </div>
-                        <span className={`font-mono text-xs font-bold ${getConditionColor(condition)}`}>
-                          {Math.round(condition * 100)}%
-                        </span>
-                        <span className="text-[9px] text-cream-muted">{eq.captionImpact}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
       {/* Performance Equipment Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
