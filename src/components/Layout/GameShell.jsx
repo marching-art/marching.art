@@ -179,7 +179,7 @@ const GameShell = ({ children }) => {
             - Max width 1920px keeps the "console" feel on large screens
             - Centered with subtle border framing on desktop
             ================================================================= */}
-        <div className="h-full w-full max-w-[1920px] mx-auto lg:shadow-2xl lg:border-x lg:border-white/10">
+        <div className="h-full w-full">
           {/* =================================================================
               APP SHELL LAYOUT: CSS Grid Structure
               - Mobile: Single column (100vw) with bottom nav
