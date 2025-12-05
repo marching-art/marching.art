@@ -5,11 +5,12 @@
 
 /* ===========================================
    DESKTOP AUTO-ZOOM
-   Double the base font size on desktop screens
+   Scale up the entire page on desktop screens
+   Note: CSS zoom works in Chrome, Edge, Safari. Firefox ignores it.
    =========================================== */
 @media (min-width: 1024px) {
   html {
-    font-size: 32px; /* 2x default 16px = 200% zoom */
+    zoom: 2; /* 200% zoom on desktop */
   }
 }
 
