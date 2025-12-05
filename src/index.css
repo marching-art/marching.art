@@ -1237,6 +1237,111 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
   }
 
+  /* ===========================================
+     COMMAND CONSOLE PANEL SYSTEM
+     Standardized slide-out panel design language
+     =========================================== */
+
+  /* Tactical Grid Background Pattern */
+  .tactical-grid {
+    position: relative;
+  }
+
+  .tactical-grid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 20px 20px;
+    z-index: 0;
+  }
+
+  /* Panel Shell - Standard slide-out panel container */
+  .panel-shell {
+    @apply h-full flex flex-col;
+    background: rgba(17, 24, 39, 0.95);
+  }
+
+  /* Panel Header - Fixed height header */
+  .panel-header {
+    @apply h-14 flex items-center justify-between px-4;
+    @apply border-b border-white/10;
+    background: rgba(10, 10, 10, 0.95);
+    flex-shrink: 0;
+  }
+
+  /* Panel Title - Standardized typography */
+  .panel-title {
+    @apply text-lg font-display font-bold uppercase tracking-wider text-cream-100;
+  }
+
+  /* Panel Close Button */
+  .panel-close {
+    @apply p-2 transition-colors;
+    @apply text-cream-100/50 hover:text-red-400;
+  }
+
+  /* Panel Body - Scrollable content area with tactical grid */
+  .panel-body {
+    @apply flex-1 overflow-y-auto p-4;
+    background: rgba(17, 24, 39, 0.95);
+  }
+
+  /* Glass Slot - Standard data card pattern */
+  .glass-slot {
+    @apply p-4 rounded-lg transition-all duration-200;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-slot:hover {
+    border-color: rgba(234, 179, 8, 0.3);
+  }
+
+  /* Section Header - For accordion/section titles */
+  .section-label {
+    @apply text-xs font-bold text-gold-500 uppercase tracking-widest mb-2;
+  }
+
+  /* Data Label - Small muted labels */
+  .data-label-sm {
+    @apply text-[10px] uppercase;
+    color: rgba(245, 245, 220, 0.5);
+  }
+
+  /* Data Value - Monospace bold values */
+  .data-value-sm {
+    @apply text-sm font-mono font-bold text-cream-100;
+  }
+
+  /* Accordion Section - Collapsible panel section */
+  .accordion-section {
+    @apply rounded-lg overflow-hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .accordion-header {
+    @apply w-full p-3 flex items-center justify-between;
+    @apply text-xs font-bold text-gold-500 uppercase tracking-widest;
+    @apply hover:bg-white/5 transition-colors cursor-pointer;
+  }
+
+  .accordion-chevron {
+    @apply w-4 h-4 text-cream-100/50 transition-transform duration-200;
+  }
+
+  .accordion-chevron.open {
+    transform: rotate(90deg);
+  }
+
+  .accordion-content {
+    @apply px-3 pb-3 border-t border-white/5;
+  }
+
   /* Legacy glass class (backwards compatible) */
   .glass {
     background: var(--glass-bg);

@@ -76,13 +76,13 @@ const DashboardCorpsPanel = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card"
+      className="glass-slot"
     >
       {/* Corps Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-display font-bold text-cream-100 truncate">
+            <h2 className="text-lg font-display font-bold uppercase tracking-wider text-cream-100 truncate">
               {activeCorps.corpsName || activeCorps.name}
             </h2>
             <span className={`text-xs px-2 py-0.5 rounded border ${
@@ -101,7 +101,7 @@ const DashboardCorpsPanel = ({
             )}
           </div>
           {activeCorps.location && (
-            <p className="text-sm text-cream-500/60 mt-1">{activeCorps.location}</p>
+            <p className="data-label-sm mt-1">{activeCorps.location}</p>
           )}
         </div>
 
@@ -109,7 +109,7 @@ const DashboardCorpsPanel = ({
         <div className="relative">
           <button
             onClick={() => setShowManagementMenu(!showManagementMenu)}
-            className="btn-ghost p-2"
+            className="p-2 text-cream-100/50 hover:text-cream-100 transition-colors"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -177,20 +177,20 @@ const DashboardCorpsPanel = ({
 
       {/* Show Concept (if exists) */}
       {activeCorps.showConcept && (
-        <div className="p-3 bg-charcoal-900/30 rounded-lg mb-4 text-sm text-cream-300">
-          <span className="text-cream-500/60">Show: </span>
+        <div className="p-3 bg-black/40 border border-white/5 rounded-lg mb-4 text-sm text-cream-100/80">
+          <span className="data-label-sm mr-2">Show:</span>
           {activeCorps.showConcept}
         </div>
       )}
 
       {/* Section Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-cream-500/10 pb-2">
+      <div className="flex gap-2 mb-4 border-b border-white/5 pb-2">
         <button
           onClick={() => setActiveSection('lineup')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${
             activeSection === 'lineup'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+              ? 'bg-gold-500/20 text-gold-400 border border-gold-500/40'
+              : 'bg-black/40 border border-white/5 text-cream-100/50 hover:text-cream-100 hover:border-gold-500/30'
           }`}
         >
           <Users className="w-3 h-3" />
@@ -198,10 +198,10 @@ const DashboardCorpsPanel = ({
         </button>
         <button
           onClick={() => setActiveSection('schedule')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${
             activeSection === 'schedule'
-              ? 'bg-gold-500 text-charcoal-900'
-              : 'bg-charcoal-800 text-cream-500/60 hover:text-cream-100'
+              ? 'bg-gold-500/20 text-gold-400 border border-gold-500/40'
+              : 'bg-black/40 border border-white/5 text-cream-100/50 hover:text-cream-100 hover:border-gold-500/30'
           }`}
         >
           <Calendar className="w-3 h-3" />
@@ -240,9 +240,9 @@ const DashboardCorpsPanel = ({
             </div>
 
             {!hasLineup ? (
-              <div className="text-center py-6">
-                <AlertCircle className="w-10 h-10 text-cream-500/40 mx-auto mb-2" />
-                <p className="text-sm text-cream-500/60 mb-3">No captions selected</p>
+              <div className="text-center py-6 bg-black/40 border border-white/5 rounded-lg">
+                <AlertCircle className="w-10 h-10 text-cream-100/30 mx-auto mb-2" />
+                <p className="text-sm text-cream-100/50 mb-3">No captions selected</p>
                 <button
                   onClick={onShowCaptionSelection}
                   className="btn-primary text-sm"
@@ -261,15 +261,15 @@ const DashboardCorpsPanel = ({
                   return (
                     <div
                       key={caption}
-                      className="flex items-center justify-between p-2 bg-charcoal-900/30 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-black/40 border border-white/5 hover:border-gold-500/30 rounded-lg transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-cream-500/60">{caption}</p>
-                        <p className="text-xs font-medium text-cream-100 truncate">{corpsName}</p>
-                        {year && <p className="text-[10px] text-cream-500/40">({year})</p>}
+                        <p className="data-label-sm">{caption}</p>
+                        <p className="text-xs font-mono font-bold text-cream-100 truncate">{corpsName}</p>
+                        {year && <p className="text-[10px] text-cream-100/40">({year})</p>}
                       </div>
                       <div className="text-right pl-2">
-                        <p className="text-sm font-bold text-gold-500">{points}</p>
+                        <p className="text-sm font-mono font-bold text-gold-400">{points}</p>
                       </div>
                     </div>
                   );
@@ -300,9 +300,9 @@ const DashboardCorpsPanel = ({
             </div>
 
             {!hasShows ? (
-              <div className="text-center py-6">
-                <Calendar className="w-10 h-10 text-cream-500/40 mx-auto mb-2" />
-                <p className="text-sm text-cream-500/60 mb-3">No shows selected</p>
+              <div className="text-center py-6 bg-black/40 border border-white/5 rounded-lg">
+                <Calendar className="w-10 h-10 text-cream-100/30 mx-auto mb-2" />
+                <p className="text-sm text-cream-100/50 mb-3">No shows selected</p>
                 <Link
                   to="/schedule"
                   className="btn-primary text-sm inline-flex items-center"
@@ -315,21 +315,21 @@ const DashboardCorpsPanel = ({
                 {activeCorps.selectedShows[`week${currentWeek}`].map((show, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-charcoal-900/30 rounded-lg"
+                    className="flex items-center justify-between p-2 bg-black/40 border border-white/5 hover:border-gold-500/30 rounded-lg transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-cream-100 truncate">
+                      <p className="text-xs font-mono font-bold text-cream-100 truncate">
                         {show.eventName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {show.date && (
-                          <span className="text-[10px] text-cream-500/60 flex items-center gap-1">
+                          <span className="data-label-sm flex items-center gap-1">
                             <Calendar className="w-2.5 h-2.5" />
                             {show.date?.toDate ? show.date.toDate().toLocaleDateString() : show.date}
                           </span>
                         )}
                         {show.location && (
-                          <span className="text-[10px] text-cream-500/60 flex items-center gap-1">
+                          <span className="data-label-sm flex items-center gap-1">
                             <MapPin className="w-2.5 h-2.5" />
                             {show.location}
                           </span>
