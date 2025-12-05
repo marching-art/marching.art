@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Zap, Users, Wrench, Heart, Target, Trophy, Calendar,
+  Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, Play, Check, X, Crown, Flame, Coins,
   Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
   CheckCircle, Circle, ArrowUp, AlertTriangle
