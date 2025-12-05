@@ -52,163 +52,145 @@ import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { retireCorps } from '../firebase/functions';
 
 // ============================================================================
-// FIXED-HEIGHT HUD COMPONENTS
-// Night Mode aesthetic with glassmorphism and neon gold accents
+// DENSE BENTO-GRID HUD COMPONENTS
+// "Rack" style widgets with glassmorphism and tight spacing
 // ============================================================================
 
-// TopBar Component - Fixed height header with user stats
-const TopBar = ({ profile, seasonData, weeksRemaining, currentWeek, formatSeasonName, engagementData, unclaimedRewardsCount }) => {
-  const xpProgress = ((profile?.xp || 0) % 1000) / 10;
+// Glassmorphism Widget wrapper - consistent styling for all bento cells
+const Widget = ({ children, className = '', noPadding = false }) => (
+  <div className={`
+    bg-black/50 backdrop-blur-md
+    border border-white/10
+    rounded-lg overflow-hidden
+    ${noPadding ? '' : 'p-3'}
+    ${className}
+  `}>
+    {children}
+  </div>
+);
+
+// Compact Action Tile - Square clickable tile for actions grid
+const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed, color = 'gold' }) => {
+  const colorClasses = {
+    gold: 'text-gold-400 bg-gold-500/20 border-gold-500/30 hover:bg-gold-500/30',
+    blue: 'text-blue-400 bg-blue-500/20 border-blue-500/30 hover:bg-blue-500/30',
+    green: 'text-green-400 bg-green-500/20 border-green-500/30 hover:bg-green-500/30',
+    purple: 'text-purple-400 bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30',
+    orange: 'text-orange-400 bg-orange-500/20 border-orange-500/30 hover:bg-orange-500/30',
+  };
 
   return (
-    <div className="shrink-0 bg-surface-secondary border-b border-border-default">
-      <div className="px-4 py-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Welcome & Season Info */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-2xl font-display font-black text-text-main uppercase tracking-tight truncate">
-              {profile?.displayName || 'Director'}
-            </h1>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-text-muted text-sm font-display">
-                {formatSeasonName(seasonData?.name)}
-              </span>
-              {weeksRemaining && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold">
-                  <Calendar className="w-3 h-3" />
-                  Week {currentWeek} • {weeksRemaining}w left
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Stats Row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Login Streak */}
-            {engagementData?.loginStreak > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30">
-                <Flame className={`w-4 h-4 ${engagementData.loginStreak >= 7 ? 'text-orange-500 animate-pulse' : 'text-orange-500'}`} />
-                <span className="text-sm font-mono font-bold text-orange-600 dark:text-orange-400">
-                  {engagementData.loginStreak}
-                </span>
-              </div>
-            )}
-
-            {/* XP Level */}
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
-            >
-              <Zap className="w-4 h-4 text-amber-600 dark:text-gold-500" />
-              <div className="flex flex-col">
-                <span className="text-xs font-mono font-bold text-amber-600 dark:text-gold-500">LVL {profile?.xpLevel || 1}</span>
-                <div className="w-10 h-1 bg-stone-200 dark:bg-charcoal-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500 dark:bg-gold-500 transition-all duration-500"
-                    style={{ width: `${xpProgress}%` }}
-                  />
-                </div>
-              </div>
-            </Link>
-
-            {/* CorpsCoin */}
-            <Link
-              to="/staff"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/20 dark:bg-gold-500/20 border border-amber-500/30 dark:border-gold-500/30 hover:border-amber-500/60 dark:hover:border-gold-500/60 transition-all"
-            >
-              <Coins className="w-4 h-4 text-amber-600 dark:text-gold-500" />
-              <span className="text-sm font-mono font-bold text-amber-600 dark:text-gold-500">
-                {(profile?.corpsCoin || 0).toLocaleString()}
-              </span>
-            </Link>
-
-            {/* Battle Pass Rewards */}
-            {unclaimedRewardsCount > 0 && (
-              <Link
-                to="/battlepass"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/30 dark:from-gold-500/30 to-purple-500/30 border border-amber-500/50 dark:border-gold-500/50 animate-pulse"
-              >
-                <Gift className="w-4 h-4 text-amber-600 dark:text-gold-400" />
-                <span className="text-xs font-bold text-amber-600 dark:text-gold-400">{unclaimedRewardsCount}</span>
-              </Link>
-            )}
-          </div>
-        </div>
+    <motion.button
+      onClick={onClick}
+      disabled={disabled || processing}
+      whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
+      whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
+      className={`
+        h-full w-full flex flex-col items-center justify-center gap-1.5
+        bg-black/50 backdrop-blur-md border border-white/10 rounded-lg
+        transition-all duration-200
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}
+        ${completed ? 'border-green-500/40 bg-green-500/10' : ''}
+      `}
+    >
+      <div className={`p-2 rounded-lg ${completed ? 'bg-green-500/20' : colorClasses[color]}`}>
+        {processing ? (
+          <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+        ) : completed ? (
+          <Check className="w-5 h-5 text-green-400" />
+        ) : (
+          <Icon className={`w-5 h-5 ${colorClasses[color].split(' ')[0]}`} />
+        )}
       </div>
+      <span className="text-[10px] font-display font-bold text-cream uppercase tracking-wide text-center leading-tight">
+        {label}
+      </span>
+      {subtitle && (
+        <span className="text-[8px] text-cream/50 font-mono">
+          {subtitle}
+        </span>
+      )}
+    </motion.button>
+  );
+};
+
+// Compact Stat Pill - For inline stats display
+const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
+  const colorClasses = {
+    gold: 'text-gold-400',
+    blue: 'text-blue-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400',
+    orange: 'text-orange-400',
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/10">
+      <Icon className={`w-3 h-3 ${colorClasses[color]}`} />
+      <span className={`text-xs font-mono font-bold ${colorClasses[color]}`}>{value}</span>
+      <span className="text-[9px] text-cream/40 uppercase">{label}</span>
     </div>
   );
 };
 
-// Stadium HUD Action Tile - Responsive, fills grid cell
-const IconCard = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed }) => (
-  <motion.button
-    onClick={onClick}
-    disabled={disabled || processing}
-    whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
-    whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
-    className={`icon-card group min-h-[90px] flex flex-col items-center justify-center gap-2 p-3 ${
-      disabled ? 'opacity-50 cursor-not-allowed' : ''
-    } ${completed ? 'border-green-500/40' : ''}`}
-  >
-    {/* Large background icon */}
-    <div className="icon-card-bg flex items-center justify-center">
-      <Icon className="w-full h-full text-white/80" />
-    </div>
+// Compact Progress Bar - Reduced height for dense layout
+const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }) => {
+  const colorClasses = {
+    gold: 'bg-gold-500',
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    purple: 'bg-purple-500',
+    orange: 'bg-orange-500',
+    red: 'bg-red-500',
+  };
 
-    {/* Content */}
-    <div className="relative z-10 flex flex-col items-center gap-1">
-      <div className={`p-2 rounded-xl transition-all duration-300 ${
-        completed
-          ? 'bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
-          : 'bg-gold-500/10 group-hover:bg-gold-500/20 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(250,204,21,0.3)]'
-      }`}>
-        {processing ? (
-          <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
-        ) : completed ? (
-          <Check className="w-5 h-5 text-green-500" />
-        ) : (
-          <Icon className="w-5 h-5 text-gold-400 transition-all group-hover:text-gold-300" />
-        )}
-      </div>
-      <span className="text-xs font-display font-bold text-cream uppercase tracking-wider text-center group-hover:text-gold-400 transition-colors">
+  const percent = Math.round(value * 100);
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wide w-16 shrink-0">
         {label}
       </span>
-      {subtitle && (
-        <span className="text-[9px] text-cream-muted font-display uppercase tracking-wide">
-          {subtitle}
+      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          className={`h-full ${colorClasses[color]} rounded-full`}
+        />
+      </div>
+      {showPercent && (
+        <span className={`text-[10px] font-mono font-bold w-8 text-right ${colorClasses[color].replace('bg-', 'text-').replace('-500', '-400')}`}>
+          {percent}%
         </span>
       )}
     </div>
-  </motion.button>
-);
+  );
+};
 
-// Quick Stat Card
-const QuickStatCard = ({ icon: Icon, label, value, color = 'gold', to }) => {
+// Quick Link Tile - For navigation actions
+const QuickLinkTile = ({ to, icon: Icon, label, color = 'gold' }) => {
   const colorClasses = {
-    gold: 'text-gold-400 bg-gold-500/10 border-gold-500/30',
-    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-    orange: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
-    green: 'text-green-400 bg-green-500/10 border-green-500/30'
+    gold: 'text-gold-400 hover:bg-gold-500/20',
+    blue: 'text-blue-400 hover:bg-blue-500/20',
+    green: 'text-green-400 hover:bg-green-500/20',
+    purple: 'text-purple-400 hover:bg-purple-500/20',
   };
 
-  const content = (
-    <div className={`glass-card p-3 flex items-center gap-3 ${to ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}>
-      <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClasses[color]}`}>
-        <Icon className={`w-4 h-4 ${colorClasses[color].split(' ')[0]}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className={`text-lg font-mono font-bold ${colorClasses[color].split(' ')[0]}`}>
-          {value}
-        </div>
-        <div className="text-[10px] font-display uppercase tracking-widest text-cream-muted">
-          {label}
-        </div>
-      </div>
-    </div>
+  return (
+    <Link
+      to={to}
+      className={`
+        flex items-center gap-2 px-3 py-2
+        bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg
+        transition-all hover:border-white/20
+        ${colorClasses[color]}
+      `}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="text-xs font-display font-bold uppercase tracking-wide text-cream">{label}</span>
+      <ChevronRight className="w-3 h-3 ml-auto text-cream/40" />
+    </Link>
   );
-
-  return to ? <Link to={to} className="block">{content}</Link> : content;
 };
 
 // Class colors for badges
@@ -514,11 +496,12 @@ const Dashboard = () => {
   };
 
   // ============================================================================
-  // RENDER: BENTO GRID LAYOUT - 100vh Fixed-Height HUD
+  // RENDER: DENSE BENTO-GRID LAYOUT - 12x6 Fixed-Height Command Center
+  // No scrolling required - everything fits in viewport
   // ============================================================================
 
   return (
-    <div className="h-full w-full overflow-hidden flex flex-col">
+    <div className="h-full w-full overflow-hidden">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -533,571 +516,373 @@ const Dashboard = () => {
       )}
 
       {/* ======================================================================
-          TOP BAR (Fixed Height)
+          BENTO GRID: 12-column, 6-row dense layout
+          - Hero (cols 1-8, rows 1-2)
+          - Insights Panel (cols 9-12, rows 1-6) - Full height sidebar
+          - Status Bars (cols 1-8, row 3)
+          - Quick Actions (cols 1-8, rows 4-6)
           ====================================================================== */}
-      <TopBar
-        profile={profile}
-        seasonData={seasonData}
-        weeksRemaining={weeksRemaining}
-        currentWeek={currentWeek}
-        formatSeasonName={formatSeasonName}
-        engagementData={engagementData}
-        unclaimedRewardsCount={unclaimedRewardsCount}
-      />
-
-      {/* ======================================================================
-          MAIN CONTENT GRID (Fills remaining height)
-          Mobile: Single column | Desktop: 2-column grid [1fr 380px]
-          ====================================================================== */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] overflow-hidden">
+      <div className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2 p-2">
 
         {/* ================================================================
-            CENTER COLUMN: The Cockpit (Scrollable internally)
+            HERO SECTION (cols 1-8, rows 1-2)
+            Compact corps header with multiplier
             ================================================================ */}
-        <div className="h-full overflow-y-auto p-4 space-y-4">
+        <Widget className="col-span-12 lg:col-span-8 row-span-2 flex flex-col" noPadding>
+          {activeCorps ? (
+            <div className="h-full flex flex-col p-3">
+              {/* Top row: Corps selector + User stats */}
+              <div className="flex items-center justify-between gap-3 mb-2">
+                {/* Corps selector or single corps badge */}
+                <div className="flex items-center gap-2 min-w-0">
+                  {hasMultipleCorps ? (
+                    <div className="flex items-center gap-1 overflow-x-auto scroll-hide">
+                      {Object.entries(corps)
+                        .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+                        .map(([classId, corpsData]) => (
+                          <button
+                            key={classId}
+                            onClick={() => handleCorpsSwitch(classId)}
+                            className={`flex-shrink-0 px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wide transition-all ${
+                              activeCorpsClass === classId
+                                ? `${classColors[classId]} shadow-sm`
+                                : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
+                            }`}
+                          >
+                            {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
+                          </button>
+                        ))}
+                    </div>
+                  ) : (
+                    <span className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
+                      {getCorpsClassName(activeCorpsClass)}
+                    </span>
+                  )}
+                  {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[9px] font-bold">
+                      <Crown size={8} /> TOP 10
+                    </span>
+                  )}
+                </div>
 
-          {/* Corps Selector (if multiple) */}
-          {hasMultipleCorps && (
-            <div className="flex items-center gap-3">
-              <Music className="w-5 h-5 text-amber-600 dark:text-gold-500 flex-shrink-0" />
-              <div className="flex items-center gap-2 overflow-x-auto scroll-hide pb-1">
-                {Object.entries(corps)
-                  .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                  .map(([classId, corpsData]) => (
+                {/* User stats pills */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {engagementData?.loginStreak > 0 && (
+                    <StatPill icon={Flame} value={engagementData.loginStreak} label="streak" color="orange" />
+                  )}
+                  <StatPill icon={Zap} value={`L${profile?.xpLevel || 1}`} label="xp" color="gold" />
+                  <StatPill icon={Coins} value={(profile?.corpsCoin || 0).toLocaleString()} label="" color="gold" />
+                  {unclaimedRewardsCount > 0 && (
+                    <Link to="/battlepass" className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded border border-purple-500/30 animate-pulse">
+                      <Gift className="w-3 h-3 text-purple-400" />
+                      <span className="text-[10px] font-bold text-purple-400">{unclaimedRewardsCount}</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* Main hero content: Corps name + Multiplier */}
+              <div className="flex-1 flex items-center justify-between gap-4 min-h-0">
+                {/* Corps Identity - Left */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl lg:text-2xl xl:text-3xl font-display font-black text-cream uppercase tracking-tight truncate">
+                      {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
+                    </h1>
                     <button
-                      key={classId}
-                      onClick={() => handleCorpsSwitch(classId)}
-                      className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all border-2 ${
-                        activeCorpsClass === classId
-                          ? 'bg-primary text-text-inverse border-amber-400 dark:border-gold-400 shadow-md'
-                          : 'bg-white dark:bg-surface-secondary text-text-muted border-stone-200 dark:border-border-default hover:text-text-main hover:border-primary/50'
-                      }`}
+                      onClick={() => setShowEditCorps(true)}
+                      className="p-1 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors shrink-0"
                     >
-                      {corpsData.corpsName || corpsData.name}
+                      <Edit className="w-3.5 h-3.5" />
                     </button>
-                  ))}
+                  </div>
+                  {/* Show concept / synergy */}
+                  <div className="flex items-center gap-2 mt-1">
+                    {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
+                      <button
+                        onClick={() => setShowSynergyPanel(true)}
+                        className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gold-500/10 border border-gold-500/20 hover:bg-gold-500/20 transition-colors group"
+                      >
+                        <Sparkles className="w-3 h-3 text-gold-400" />
+                        <span className="text-[10px] text-cream/60 group-hover:text-gold-400">
+                          {activeCorps.showConcept.theme}
+                        </span>
+                        {(executionState?.synergyBonus || 0) > 0 && (
+                          <span className="text-[10px] font-mono font-bold text-gold-400">
+                            +{(executionState?.synergyBonus || 0).toFixed(1)}
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowSynergyPanel(true)}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px]"
+                      >
+                        <Sparkles className="w-3 h-3" /> Configure
+                      </button>
+                    )}
+                    {/* Season info */}
+                    <span className="text-[10px] text-cream/40">
+                      {formatSeasonName(seasonData?.name)} • Week {currentWeek}
+                    </span>
+                  </div>
+                  {/* Quick stats inline */}
+                  <div className="flex items-center gap-3 mt-2">
+                    <div className="text-center">
+                      <div className="text-sm font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
+                      <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-mono font-bold text-purple-400">{showsThisWeek}</div>
+                      <div className="text-[8px] text-cream/40 uppercase">Shows</div>
+                    </div>
+                    {activeCorpsClass !== 'soundSport' && (
+                      <div className="text-center">
+                        <div className="text-sm font-mono font-bold text-gold-400">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
+                        <div className="text-[8px] text-cream/40 uppercase">Score</div>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <div className="text-sm font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
+                      <div className="text-[8px] text-cream/40 uppercase">Staff</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Multiplier - Right */}
+                <div className="shrink-0 flex flex-col items-center">
+                  <MultiplierGlassBoxLarge
+                    multiplier={multiplier}
+                    breakdown={{
+                      readiness: (readiness - 0.80) * 0.60,
+                      staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                      equipment: (avgEquipment - 1.00) * 0.50,
+                      travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                      morale: (morale - 0.75) * 0.32,
+                      showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
+                        ? (executionState?.showDesign?.ceilingBonus || 0.08)
+                        : (executionState?.showDesign?.riskPenalty || -0.10),
+                    }}
+                    currentDay={currentDay}
+                    showDifficulty={executionState?.showDesign}
+                    avgReadiness={readiness}
+                  />
+                </div>
               </div>
             </div>
-          )}
-
-          {activeCorps && (
-            <>
-              {/* ============================================================
-                  1. HEADER ROW: Corps Name + MultiplierGlassBoxLarge
-                  ============================================================ */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="stadium-banner p-6 rounded-xl"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Corps Identity */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-display font-bold tracking-widest uppercase ${classColors[activeCorpsClass] || 'bg-cream-500 text-charcoal-900'}`}>
-                        {getCorpsClassName(activeCorpsClass)}
-                      </span>
-                      {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                        <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gold-500/20 text-gold-400 text-[10px] font-bold uppercase">
-                          <Crown size={10} />
-                          TOP 10
-                        </span>
-                      )}
-                      <button
-                        onClick={() => setShowEditCorps(true)}
-                        className="p-1 rounded hover:bg-white/10 text-cream-muted hover:text-gold-400 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <h2 className="sports-header text-2xl md:text-3xl lg:text-4xl text-cream">
-                      {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
-                    </h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
-                        <button
-                          onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-2 px-2 py-1 rounded-lg bg-gold-500/10 border border-gold-500/30 hover:bg-gold-500/20 transition-colors group"
-                        >
-                          <Sparkles className="w-3 h-3 text-gold-400" />
-                          <span className="text-xs text-cream-muted group-hover:text-gold-400 transition-colors">
-                            {activeCorps.showConcept.theme} • {activeCorps.showConcept.drillStyle}
-                          </span>
-                          {(executionState?.synergyBonus || 0) > 0 && (
-                            <span className="text-xs font-mono font-bold text-gold-400">
-                              +{(executionState?.synergyBonus || 0).toFixed(1)}
-                            </span>
-                          )}
-                        </button>
-                      ) : typeof activeCorps.showConcept === 'string' && activeCorps.showConcept ? (
-                        <p className="text-cream-muted text-sm font-body italic">
-                          "{activeCorps.showConcept}"
-                        </p>
-                      ) : (
-                        <button
-                          onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-2 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 transition-colors text-orange-400"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span className="text-xs">Configure Synergy</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Performance Multiplier - Glass Box */}
-                  <div className="flex-shrink-0 flex flex-col items-center">
-                    <MultiplierGlassBoxLarge
-                      multiplier={multiplier}
-                      breakdown={{
-                        readiness: (readiness - 0.80) * 0.60,
-                        staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
-                        equipment: (avgEquipment - 1.00) * 0.50,
-                        travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
-                        morale: (morale - 0.75) * 0.32,
-                        showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
-                          ? (executionState?.showDesign?.ceilingBonus || 0.08)
-                          : (executionState?.showDesign?.riskPenalty || -0.10),
-                      }}
-                      currentDay={currentDay}
-                      showDifficulty={executionState?.showDesign}
-                      avgReadiness={readiness}
-                    />
-                    <button
-                      onClick={() => setShowExecutionInsights(true)}
-                      className="mt-2 text-[9px] text-cream-muted hover:text-gold-400 uppercase tracking-wider flex items-center gap-1 transition-colors lg:hidden"
-                    >
-                      <ChevronRight size={10} />
-                      Full Analysis
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* ============================================================
-                  2. VITALS ROW: ClusterBar (Readiness), ClusterBar (Morale), TacticalGauge (Equip)
-                  ============================================================ */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Readiness - 4 Segment Cluster Bar */}
-                <div className="glass-card p-4 rounded-xl">
-                  <ClusterBar
-                    type="readiness"
-                    sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
-                      brass: readiness,
-                      percussion: readiness,
-                      guard: readiness,
-                      ensemble: readiness
-                    }}
-                  />
-                </div>
-                {/* Morale - 4 Segment Cluster Bar */}
-                <div className="glass-card p-4 rounded-xl">
-                  <ClusterBar
-                    type="morale"
-                    sections={typeof executionState?.morale === 'object' ? executionState.morale : {
-                      brass: morale,
-                      percussion: morale,
-                      guard: morale,
-                      overall: morale
-                    }}
-                  />
-                </div>
-                {/* Equipment - Single Gauge */}
-                <div className="glass-card p-4 rounded-xl">
-                  <TacticalGaugeWithInsight
-                    value={avgEquipment}
-                    color="orange"
-                    label="Equipment"
-                    icon={Wrench}
-                    type="equipment"
-                    equipment={executionState?.equipment}
-                  />
-                </div>
-              </div>
-
-              {/* Quick Stats Row */}
-              <div className="flex flex-wrap items-center gap-4 px-2">
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
-                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">This Week</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-mono font-bold text-purple-400">{showsThisWeek}</div>
-                    <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Shows</div>
-                  </div>
-                  {activeCorpsClass !== 'soundSport' && (
-                    <ScoreBreakdownTooltip
-                      baseScore={activeCorps.totalSeasonScore || 0}
-                      multiplier={multiplier}
-                      synergyBonus={executionState?.synergyBonus || 0}
-                      finalScore={(activeCorps.totalSeasonScore || 0) * multiplier + (executionState?.synergyBonus || 0)}
-                    >
-                      <div className="text-center cursor-help hover:scale-105 transition-transform">
-                        <div className="text-xl font-mono font-bold text-gold-400">
-                          {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
-                        </div>
-                        <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Score</div>
-                      </div>
-                    </ScoreBreakdownTooltip>
-                  )}
-                  <StaffEffectivenessTooltip
-                    assignedStaff={assignedStaff}
-                    totalImpact={assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04}
-                  >
-                    <div className="text-center cursor-help hover:scale-105 transition-transform">
-                      <div className="text-xl font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
-                      <div className="text-[10px] text-text-muted uppercase tracking-widest font-display">Staff</div>
-                    </div>
-                  </StaffEffectivenessTooltip>
-                  {/* Difficulty Confidence Badge */}
-                  <ConfidenceBadge
-                    currentDifficulty={executionState?.showDesign || 'moderate'}
-                    currentReadiness={readiness}
-                    onClick={() => setShowExecutionInsights(true)}
-                  />
-                </div>
-              </div>
-
-              {/* ============================================================
-                  3. ACTION GRID: Rehearse, Staff, Equipment, Synergy, Activities
-                  ============================================================ */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {/* Daily Rehearsal */}
-                <IconCard
-                  icon={Music}
-                  label="Rehearse"
-                  subtitle="+5% Ready"
-                  onClick={handleRehearsal}
-                  disabled={!canRehearseToday()}
-                  processing={executionProcessing}
-                  completed={!canRehearseToday()}
-                />
-
-                {/* Staff Panel */}
-                <IconCard
-                  icon={Users}
-                  label="Staff"
-                  subtitle={`${assignedStaff.length}/8 Assigned`}
-                  onClick={() => {
-                    setShowStaffPanel(true);
-                    completeDailyChallenge('staff_meeting');
-                  }}
-                />
-
-                {/* Equipment Panel */}
-                <IconCard
-                  icon={Wrench}
-                  label="Equipment"
-                  subtitle={equipmentNeedsRepair ? 'Needs Repair!' : `${Math.round(avgEquipment * 100)}%`}
-                  onClick={() => {
-                    setShowEquipmentPanel(true);
-                    completeDailyChallenge('maintain_equipment');
-                  }}
-                />
-
-                {/* Synergy Panel */}
-                <IconCard
-                  icon={Sparkles}
-                  label="Synergy"
-                  subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)} pts` : 'Configure'}
-                  onClick={() => setShowSynergyPanel(true)}
-                />
-
-                {/* Daily Activities */}
-                <IconCard
-                  icon={Zap}
-                  label="Activities"
-                  subtitle="Daily Tasks"
-                  onClick={() => setShowDailyActivities(true)}
-                />
-              </div>
-
-              {/* ============================================================
-                  4. STATS ROW: Weekly Progress
-                  ============================================================ */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <QuickStatCard
-                  icon={Target}
-                  label="Rehearsals"
-                  value={`+${weeklyProgress?.rehearsalsCompleted || 0}`}
-                  color="blue"
-                />
-                <QuickStatCard
-                  icon={Trophy}
-                  label="Score Change"
-                  value={`${(weeklyProgress?.scoreImprovement || 0) >= 0 ? '+' : ''}${(weeklyProgress?.scoreImprovement || 0).toFixed(1)}`}
-                  color={(weeklyProgress?.scoreImprovement || 0) >= 0 ? 'green' : 'orange'}
-                />
-                <QuickStatCard
-                  icon={TrendingUp}
-                  label="Rank Change"
-                  value={`${(weeklyProgress?.rankChange || 0) > 0 ? '↑' : (weeklyProgress?.rankChange || 0) < 0 ? '↓' : '→'}${Math.abs(weeklyProgress?.rankChange || 0)}`}
-                  color={(weeklyProgress?.rankChange || 0) > 0 ? 'green' : (weeklyProgress?.rankChange || 0) < 0 ? 'orange' : 'blue'}
-                />
-                <QuickStatCard
-                  icon={Users}
-                  label="Staff Market"
-                  value="Browse"
-                  color="purple"
-                  to="/staff"
-                />
-              </div>
-
-              {/* ============================================================
-                  5. QUICK LINKS ROW
-                  ============================================================ */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Link
-                  to="/scores"
-                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
-                >
-                  <div className="p-2 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
-                    <Trophy className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="font-display font-bold text-text-main text-sm truncate">Leaderboards</span>
-                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-                </Link>
-                <Link
-                  to="/schedule"
-                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
-                >
-                  <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/30 flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <span className="font-display font-bold text-text-main text-sm truncate">Schedule</span>
-                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-                </Link>
-                <Link
-                  to="/leagues"
-                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
-                >
-                  <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 flex-shrink-0">
-                    <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="font-display font-bold text-text-main text-sm truncate">Leagues</span>
-                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-                </Link>
-                <Link
-                  to="/battlepass"
-                  className="card-brutalist p-4 flex items-center gap-3 transition-all hover:scale-[1.02]"
-                >
-                  <div className="p-2 rounded-xl bg-gold-500/10 border border-gold-500/30 flex-shrink-0">
-                    <Crown className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="font-display font-bold text-text-main text-sm truncate">Season Pass</span>
-                  <ChevronRight className="w-5 h-5 text-text-muted ml-auto flex-shrink-0" />
-                </Link>
-              </div>
-
-              {/* SoundSport Fun Badge */}
-              {activeCorpsClass === 'soundSport' && (
-                <div className="flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-green-500/10 border-2 border-green-500/30 text-green-600 dark:text-green-400">
-                  <Sparkles size={20} />
-                  <span className="font-display font-bold">SoundSport is non-competitive - just have fun!</span>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* No Corps State */}
-          {!activeCorps && !showSeasonSetupWizard && (
-            <div className="flex-1 flex items-center justify-center py-20">
+          ) : (
+            /* No Corps State */
+            <div className="h-full flex items-center justify-center p-4">
               <div className="text-center">
-                <Music className="w-16 h-16 mx-auto mb-4 text-text-muted opacity-50" />
-                <h2 className="text-xl font-display font-bold text-text-main mb-2">No Corps Registered</h2>
-                <p className="text-text-muted mb-4">Create your first corps to begin your journey!</p>
-                <button
-                  onClick={() => setShowRegistration(true)}
-                  className="btn-primary"
-                >
+                <Music className="w-12 h-12 mx-auto mb-3 text-cream/20" />
+                <h2 className="text-lg font-display font-bold text-cream mb-1">No Corps Registered</h2>
+                <p className="text-xs text-cream/50 mb-3">Create your first corps to begin!</p>
+                <button onClick={() => setShowRegistration(true)} className="px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg text-sm font-bold">
                   Register Corps
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </Widget>
 
         {/* ================================================================
-            RIGHT COLUMN: Context Panel (Fixed Width 380px, Scrollable internally)
-            Hidden on mobile - use slide-out panels instead
+            INSIGHTS PANEL (cols 9-12, rows 1-6) - Full height right sidebar
+            No scrolling - tight vertical spacing
             ================================================================ */}
-        <div className="hidden lg:flex flex-col h-full border-l border-border-default bg-surface-secondary overflow-hidden">
-          {/* Context Panel Tabs */}
-          <div className="flex border-b border-border-default shrink-0">
-            <button
-              onClick={() => setContextPanelTab('insights')}
-              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-                contextPanelTab === 'insights'
-                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Insights
+        <Widget className="hidden lg:flex col-span-4 row-span-6 flex-col" noPadding>
+          <div className="h-full flex flex-col">
+            {/* Panel Header */}
+            <div className="shrink-0 px-3 py-2 border-b border-white/10 flex items-center justify-between">
+              <span className="text-[10px] font-display font-bold text-cream/60 uppercase tracking-wider">Performance Insights</span>
+              <button
+                onClick={() => setShowExecutionInsights(true)}
+                className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+              >
+                Full Analysis →
+              </button>
+            </div>
+
+            {/* Insights Content - No scroll, tight spacing */}
+            <div className="flex-1 p-3 space-y-3 overflow-hidden">
+              {/* Difficulty Badge */}
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-cream/50 uppercase">Show Difficulty</span>
+                <ConfidenceBadge
+                  currentDifficulty={executionState?.showDesign || 'moderate'}
+                  currentReadiness={readiness}
+                  onClick={() => setShowExecutionInsights(true)}
+                />
               </div>
-            </button>
-            <button
-              onClick={() => setContextPanelTab('staff')}
-              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-                contextPanelTab === 'staff'
-                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Users className="w-4 h-4" />
-                Staff
+
+              {/* Readiness Bars */}
+              <div className="space-y-1.5">
+                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Readiness</span>
+                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.brass : readiness} label="Brass" color="blue" />
+                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.percussion : readiness} label="Perc" color="blue" />
+                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.guard : readiness} label="Guard" color="blue" />
+                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.ensemble : readiness} label="Ensemble" color="blue" />
               </div>
-            </button>
-            <button
-              onClick={() => setContextPanelTab('equipment')}
-              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-                contextPanelTab === 'equipment'
-                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Wrench className="w-4 h-4" />
-                Equip
+
+              {/* Morale Bars */}
+              <div className="space-y-1.5">
+                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Morale</span>
+                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.brass : morale} label="Brass" color="green" />
+                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.percussion : morale} label="Perc" color="green" />
+                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.guard : morale} label="Guard" color="green" />
               </div>
-            </button>
-            <button
-              onClick={() => setContextPanelTab('synergy')}
-              className={`flex-1 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-                contextPanelTab === 'synergy'
-                  ? 'text-gold-600 dark:text-gold-400 border-b-2 border-gold-500 bg-gold-500/5'
-                  : 'text-text-muted hover:text-text-main hover:bg-stone-50 dark:hover:bg-surface'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Synergy
+
+              {/* Equipment Condition */}
+              <div className="space-y-1.5">
+                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Equipment</span>
+                <CompactProgressBar value={executionState?.equipment?.instruments || 0.90} label="Instruments" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
+                <CompactProgressBar value={executionState?.equipment?.uniforms || 0.90} label="Uniforms" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
+                <CompactProgressBar value={executionState?.equipment?.props || 0.90} label="Props" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
               </div>
-            </button>
+
+              {/* Multiplier Factors */}
+              <div className="space-y-1 pt-2 border-t border-white/5">
+                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Multiplier Factors</span>
+                <div className="grid grid-cols-2 gap-1 text-[9px]">
+                  <div className="flex justify-between">
+                    <span className="text-cream/40">Readiness</span>
+                    <span className={readiness >= 0.80 ? 'text-green-400' : 'text-orange-400'}>
+                      {readiness >= 0.80 ? '+' : ''}{((readiness - 0.80) * 0.60 * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream/40">Morale</span>
+                    <span className={morale >= 0.75 ? 'text-green-400' : 'text-orange-400'}>
+                      {morale >= 0.75 ? '+' : ''}{((morale - 0.75) * 0.32 * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream/40">Staff</span>
+                    <span className={assignedStaff.length >= 4 ? 'text-green-400' : 'text-orange-400'}>
+                      {assignedStaff.length >= 6 ? '+4%' : assignedStaff.length >= 4 ? '+2%' : '-4%'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream/40">Equipment</span>
+                    <span className={avgEquipment >= 0.90 ? 'text-green-400' : 'text-orange-400'}>
+                      {((avgEquipment - 1.00) * 0.50 * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </Widget>
 
-          {/* Context Panel Content */}
-          <div className="flex-1 overflow-y-auto">
-            <AnimatePresence mode="wait">
-              {contextPanelTab === 'insights' && (
+        {/* ================================================================
+            STATUS BARS (cols 1-8, row 3) - Readiness/Morale module
+            ================================================================ */}
+        <Widget className="col-span-12 lg:col-span-8 row-span-1 flex items-center">
+          <div className="w-full grid grid-cols-3 gap-4">
+            {/* Readiness */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-display font-bold text-blue-400 uppercase tracking-wide">Readiness</span>
+                <span className="text-xs font-mono font-bold text-blue-400">{Math.round(readiness * 100)}%</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
-                  key="insights"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="p-4 space-y-4"
-                >
-                  {/* Difficulty Confidence Meter */}
-                  <div className="glass-dark rounded-xl p-4">
-                    <DifficultyConfidenceMeter
-                      currentDifficulty={executionState?.showDesign || 'moderate'}
-                      currentReadiness={typeof readiness === 'number' ? readiness : 0.75}
-                      currentDay={currentDay}
-                      showSelector={false}
-                      compact={true}
-                    />
-                  </div>
-
-                  {/* Section Readiness Breakdown */}
-                  <div className="glass-dark rounded-xl p-4">
-                    <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
-                      Section Readiness
-                    </h4>
-                    <SegmentedMetricBar
-                      type="readiness"
-                      sections={typeof executionState?.readiness === 'object' ? executionState.readiness : {
-                        brass: readiness || 0.75,
-                        percussion: readiness || 0.75,
-                        guard: readiness || 0.75,
-                        ensemble: readiness || 0.75
-                      }}
-                      compact={true}
-                    />
-                  </div>
-
-                  {/* Section Morale Breakdown */}
-                  <div className="glass-dark rounded-xl p-4">
-                    <h4 className="text-xs font-display font-bold text-cream-muted uppercase tracking-wider mb-3">
-                      Section Morale
-                    </h4>
-                    <SegmentedMetricBar
-                      type="morale"
-                      sections={typeof executionState?.morale === 'object' ? executionState.morale : {
-                        brass: morale || 0.80,
-                        percussion: morale || 0.80,
-                        guard: morale || 0.80,
-                        overall: morale || 0.80
-                      }}
-                      compact={true}
-                    />
-                  </div>
-
-                  {/* View Full Analysis Button */}
-                  <button
-                    onClick={() => setShowExecutionInsights(true)}
-                    className="w-full py-3 px-4 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 hover:bg-gold-500/20 transition-colors font-display font-bold uppercase text-xs tracking-wider flex items-center justify-center gap-2"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    Full Analysis Panel
-                  </button>
-                </motion.div>
-              )}
-
-              {contextPanelTab === 'staff' && (
+                  initial={{ width: 0 }}
+                  animate={{ width: `${readiness * 100}%` }}
+                  className="h-full bg-blue-500 rounded-full"
+                />
+              </div>
+            </div>
+            {/* Morale */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-display font-bold text-green-400 uppercase tracking-wide">Morale</span>
+                <span className="text-xs font-mono font-bold text-green-400">{Math.round(morale * 100)}%</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
-                  key="staff"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="p-4"
-                >
-                  <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
-                </motion.div>
-              )}
-
-              {contextPanelTab === 'equipment' && (
+                  initial={{ width: 0 }}
+                  animate={{ width: `${morale * 100}%` }}
+                  className="h-full bg-green-500 rounded-full"
+                />
+              </div>
+            </div>
+            {/* Equipment */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-display font-bold text-orange-400 uppercase tracking-wide">Equipment</span>
+                <span className="text-xs font-mono font-bold text-orange-400">{Math.round(avgEquipment * 100)}%</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
-                  key="equipment"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="p-4"
-                >
-                  <EquipmentManager
-                    equipment={executionState?.equipment}
-                    onRepair={repairEquipment}
-                    onUpgrade={upgradeEquipment}
-                    processing={executionProcessing}
-                    corpsCoin={profile?.corpsCoin || 0}
-                  />
-                </motion.div>
-              )}
-
-              {contextPanelTab === 'synergy' && (
-                <motion.div
-                  key="synergy"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="p-4"
-                >
-                  <ShowConceptSelector
-                    corpsClass={activeCorpsClass}
-                    currentConcept={typeof activeCorps?.showConcept === 'object' ? activeCorps.showConcept : {}}
-                    onSave={() => {
-                      refreshProfile();
-                      toast.success('Show concept synergy updated!');
-                    }}
-                    compact={true}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  initial={{ width: 0 }}
+                  animate={{ width: `${avgEquipment * 100}%` }}
+                  className={`h-full rounded-full ${avgEquipment < 0.85 ? 'bg-orange-500' : 'bg-gold-500'}`}
+                />
+              </div>
+            </div>
           </div>
+        </Widget>
+
+        {/* ================================================================
+            QUICK ACTIONS (cols 1-8, rows 4-6) - Square clickable tiles
+            ================================================================ */}
+        <div className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-4 lg:grid-cols-6 gap-2">
+          {/* Row 1: Primary Actions */}
+          <ActionTile
+            icon={Music}
+            label="Rehearse"
+            subtitle={canRehearseToday() ? '+5% Ready' : 'Done'}
+            onClick={handleRehearsal}
+            disabled={!canRehearseToday()}
+            processing={executionProcessing}
+            completed={!canRehearseToday()}
+            color="blue"
+          />
+          <ActionTile
+            icon={Users}
+            label="Staff"
+            subtitle={`${assignedStaff.length}/8`}
+            onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
+            color="green"
+          />
+          <ActionTile
+            icon={Wrench}
+            label="Equipment"
+            subtitle={equipmentNeedsRepair ? 'Repair!' : `${Math.round(avgEquipment * 100)}%`}
+            onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
+            color={equipmentNeedsRepair ? 'orange' : 'gold'}
+          />
+          <ActionTile
+            icon={Sparkles}
+            label="Synergy"
+            subtitle={activeCorps?.showConcept?.theme ? `+${(executionState?.synergyBonus || 0).toFixed(1)}` : 'Config'}
+            onClick={() => setShowSynergyPanel(true)}
+            color="purple"
+          />
+          <ActionTile
+            icon={Zap}
+            label="Activities"
+            subtitle="Daily"
+            onClick={() => setShowDailyActivities(true)}
+            color="gold"
+          />
+          <ActionTile
+            icon={BarChart3}
+            label="Insights"
+            subtitle="Analysis"
+            onClick={() => setShowExecutionInsights(true)}
+            color="blue"
+          />
+
+          {/* Row 2: Quick Links */}
+          <QuickLinkTile to="/scores" icon={Trophy} label="Scores" color="gold" />
+          <QuickLinkTile to="/schedule" icon={Calendar} label="Schedule" color="purple" />
+          <QuickLinkTile to="/leagues" icon={Crown} label="Leagues" color="blue" />
+          <QuickLinkTile to="/staff" icon={Users} label="Market" color="green" />
+          <QuickLinkTile to="/battlepass" icon={Gift} label="Pass" color="purple" />
+          <QuickLinkTile to="/profile" icon={Target} label="Profile" color="gold" />
         </div>
+
       </div>
 
       {/* ======================================================================
