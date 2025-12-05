@@ -9,6 +9,7 @@ import { auth, authHelpers, analyticsHelpers } from './firebase';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
 import BottomNav from './components/BottomNav';
+import CommandRail from './components/CommandRail';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
 import Tutorial from './components/Tutorial';
@@ -88,7 +89,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // Layout Component - Responsive HUD Dashboard Layout
-// Mobile: Scrollable content | Desktop: Viewport-filling HUD with scroll fallback
+// Mobile: Scrollable content with BottomNav | Desktop: Fixed CommandRail + Viewport-filling HUD
 const Layout = ({ children }) => {
   const location = useLocation();
 
@@ -98,9 +99,14 @@ const Layout = ({ children }) => {
   }, [location]);
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col font-sans transition-colors duration-200 bg-surface text-text-main">
-      {/* Main Content - Scrollable on mobile, fills viewport on desktop */}
-      <main className="flex-1 flex flex-col min-h-0 pb-20 lg:pb-0 overflow-hidden">
+    <div className="flex h-screen bg-surface overflow-hidden font-sans transition-colors duration-200 text-text-main">
+      {/* Desktop Command Rail - Hidden on Mobile */}
+      <div className="hidden lg:block w-[72px] shrink-0 relative">
+        <CommandRail />
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden pb-20 lg:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -120,8 +126,10 @@ const Layout = ({ children }) => {
         </AnimatePresence>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNav />
+      {/* Mobile Bottom Navigation - Hidden on Desktop */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 };
