@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import BrandLogo from '../BrandLogo';
 
 // =============================================================================
 // SPINNER COMPONENT
@@ -81,9 +82,11 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           `}
         >
           <div className="flex flex-col items-center gap-3">
-            <Spinner size="lg" variant="gold" />
+            <div className="animate-pulse">
+              <BrandLogo className="w-12 h-12" color="text-gold-500" />
+            </div>
             {label && (
-              <p className="text-sm text-cream-300 font-medium">{label}</p>
+              <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">{label}</p>
             )}
           </div>
         </motion.div>
@@ -102,7 +105,7 @@ export interface FullPageLoadingProps {
 }
 
 export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
-  label = 'Loading...',
+  label = 'INITIALIZING...',
   showLogo = true,
 }) => {
   return (
@@ -113,17 +116,16 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="text-4xl font-display font-bold text-gradient"
+            className="animate-pulse"
           >
-            marching.art
+            <BrandLogo className="w-24 h-24" color="text-gold-500" />
           </motion.div>
         )}
-        <Spinner size="xl" variant="gold" />
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-cream-400"
+          className="font-mono text-xs text-gold-500/50 uppercase tracking-widest"
         >
           {label}
         </motion.p>

@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
+import BrandLogo from '../BrandLogo';
 import {
   claimDailyLogin,
   staffCheckin,
@@ -307,8 +308,11 @@ const DailyOperations = ({
   if (loading) {
     return (
       <div className="glass rounded-xl p-6">
-        <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <div className="animate-pulse">
+            <BrandLogo className="w-12 h-12" color="text-gold-500" />
+          </div>
+          <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading activities...</p>
         </div>
       </div>
     );

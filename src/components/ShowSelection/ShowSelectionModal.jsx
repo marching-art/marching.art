@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import BrandLogo from '../BrandLogo';
 
 const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, seasonId, currentSelections = [] }) => {
   const [availableShows, setAvailableShows] = useState([]);
@@ -199,8 +200,10 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           {/* Available Shows */}
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin w-12 h-12 border-4 border-gold-500 border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-cream-500/60">Loading available shows...</p>
+              <div className="animate-pulse mb-4">
+                <BrandLogo className="w-16 h-16 mx-auto" color="text-gold-500" />
+              </div>
+              <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading available shows...</p>
             </div>
           ) : availableShows.length === 0 ? (
             <div className="text-center py-12">
