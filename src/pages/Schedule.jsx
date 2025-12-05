@@ -222,7 +222,7 @@ const Schedule = () => {
           ================================================================ */}
       <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md">
         {/* Header Bar - Compact */}
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gold-400" />
             <h1 className="text-sm font-display font-bold text-cream uppercase tracking-wide">Tour Schedule</h1>
@@ -238,7 +238,7 @@ const Schedule = () => {
         </div>
 
         {/* Week Tabs - Compact Horizontal Scroll */}
-        <div className="flex gap-1 py-1.5 overflow-x-auto hud-scroll">
+        <div className="flex gap-1 p-1.5 overflow-x-auto hud-scroll">
           {[1, 2, 3, 4, 5, 6, 7].map((week) => {
             const status = getWeekStatus(week);
             const regCount = getWeekRegistrationCount(week);

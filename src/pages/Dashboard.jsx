@@ -576,7 +576,7 @@ const Dashboard = () => {
           - Quick Actions (cols 1-8, rows 4-6)
           ====================================================================== */}
       <motion.div
-        className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2"
+        className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2 p-2"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
