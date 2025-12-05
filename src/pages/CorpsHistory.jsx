@@ -8,6 +8,7 @@ import {
   BarChart3, Clock, Medal, Crown, History
 } from 'lucide-react';
 import { useAuth } from '../App';
+import BrandLogo from '../components/BrandLogo';
 import { db, dataNamespace } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
@@ -194,7 +195,7 @@ const CorpsHistory = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-6">
-          <Music className="w-16 h-16 text-cream-500/20 mx-auto mb-4" />
+          <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-cream-500/20" />
           <h3 className="text-2xl font-display font-bold text-cream-100 mb-2">No Corps Found</h3>
           <p className="text-cream-500/60">Create a corps to start building your legacy!</p>
         </div>
