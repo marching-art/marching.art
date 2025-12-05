@@ -44,16 +44,17 @@ const ShowConceptSelector = ({
   onSave,
   compact = false
 }) => {
-  const [theme, setTheme] = useState(currentConcept.theme || '');
-  const [musicSource, setMusicSource] = useState(currentConcept.musicSource || '');
-  const [drillStyle, setDrillStyle] = useState(currentConcept.drillStyle || '');
+  const [theme, setTheme] = useState(currentConcept?.theme || '');
+  const [musicSource, setMusicSource] = useState(currentConcept?.musicSource || '');
+  const [drillStyle, setDrillStyle] = useState(currentConcept?.drillStyle || '');
   const [saving, setSaving] = useState(false);
 
+  // Only sync from props when the actual values change, not the object reference
   useEffect(() => {
-    setTheme(currentConcept.theme || '');
-    setMusicSource(currentConcept.musicSource || '');
-    setDrillStyle(currentConcept.drillStyle || '');
-  }, [currentConcept]);
+    if (currentConcept?.theme) setTheme(currentConcept.theme);
+    if (currentConcept?.musicSource) setMusicSource(currentConcept.musicSource);
+    if (currentConcept?.drillStyle) setDrillStyle(currentConcept.drillStyle);
+  }, [currentConcept?.theme, currentConcept?.musicSource, currentConcept?.drillStyle]);
 
   // Get all unique tags from current selections
   const getSelectedTags = () => {
