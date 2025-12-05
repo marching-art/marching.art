@@ -312,7 +312,7 @@ const Scores = () => {
           ================================================================= */}
       <div className="shrink-0 border-b border-white/5 bg-charcoal-950/30">
         {/* Header - Compact */}
-        <div className="px-4 py-3">
+        <div className="py-3">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="text-2xl lg:text-3xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100">
               Scores & Rankings
@@ -324,7 +324,7 @@ const Scores = () => {
         </div>
 
         {/* Stadium Scoreboard Metrics - Compact */}
-        <div className="flex overflow-x-auto space-x-3 pb-3 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-3 lg:overflow-visible hud-scroll">
+        <div className="flex overflow-x-auto space-x-3 pb-3 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-3 lg:overflow-visible hud-scroll">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -381,7 +381,7 @@ const Scores = () => {
         </div>
 
         {/* Main Tabs - Compact Segmented Control */}
-        <div className="flex justify-center px-4 pb-3">
+        <div className="flex justify-center pb-3">
         <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
           {mainTabs.map((tab, index) => {
             const Icon = tab.icon;
@@ -410,7 +410,7 @@ const Scores = () => {
           WORK SURFACE: Tab Content (Fills remaining height)
           ================================================================= */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto hud-scroll px-4 py-4">
+        <div className="h-full overflow-y-auto hud-scroll py-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
