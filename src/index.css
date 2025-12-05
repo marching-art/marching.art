@@ -551,6 +551,61 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply -translate-y-1;
   }
 
+  /* ===========================================
+     TACTICAL LIST ROW - High-Density Data Display
+     Scanline hover effect for HUD aesthetic
+     =========================================== */
+  .tactical-row {
+    @apply relative transition-colors duration-100;
+  }
+
+  .tactical-row:hover {
+    @apply bg-white/5;
+  }
+
+  /* Scanline overlay effect on hover */
+  .tactical-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(250, 204, 21, 0.03) 2px,
+      rgba(250, 204, 21, 0.03) 4px
+    );
+    transition: opacity 0.15s ease;
+  }
+
+  .tactical-row:hover::before {
+    opacity: 1;
+  }
+
+  /* Mini Stat Bar - Ultra compact progress indicator */
+  .mini-stat-bar {
+    @apply h-1 bg-white/10 rounded-full overflow-hidden;
+  }
+
+  .mini-stat-bar-fill {
+    @apply h-full rounded-full transition-all;
+  }
+
+  /* Rarity border colors for avatars */
+  .rarity-legendary {
+    @apply border-gold-500 shadow-gold-glow-sm;
+  }
+
+  .rarity-rare {
+    @apply border-blue-400;
+  }
+
+  .rarity-common {
+    @apply border-white/20;
+  }
+
   /* Glow Border Animation */
   .glow-border-pulse {
     animation: glowBorderPulse 2s ease-in-out infinite;
