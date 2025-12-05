@@ -306,19 +306,25 @@ const Scores = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4 lg:gap-5">
-      {/* Header - Compact */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex-shrink-0">
-        <h1 className="!text-2xl lg:!text-3xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100 mb-1">
-          Scores & Rankings
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-cream-300">
-          Results, rankings, and stats
-        </p>
-      </motion.div>
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      {/* =================================================================
+          TOP BAR: Header + Stats (Fixed Height)
+          ================================================================= */}
+      <div className="shrink-0 border-b border-white/5 bg-charcoal-950/30">
+        {/* Header - Compact */}
+        <div className="px-4 py-3">
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+            <h1 className="text-2xl lg:text-3xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100">
+              Scores & Rankings
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-cream-300">
+              Results, rankings, and stats
+            </p>
+          </motion.div>
+        </div>
 
-      {/* Stadium Scoreboard Metrics - Compact */}
-      <div className="flex-shrink-0 flex overflow-x-auto space-x-3 pb-2 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-0 lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0">
+        {/* Stadium Scoreboard Metrics - Compact */}
+        <div className="flex overflow-x-auto space-x-3 pb-3 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-3 lg:overflow-visible hud-scroll">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -372,10 +378,10 @@ const Scores = () => {
             This Season
           </p>
         </motion.div>
-      </div>
+        </div>
 
-      {/* Main Tabs - Compact Segmented Control */}
-      <div className="flex-shrink-0 flex justify-center -mx-4 px-4 lg:mx-0 lg:px-0">
+        {/* Main Tabs - Compact Segmented Control */}
+        <div className="flex justify-center px-4 pb-3">
         <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
           {mainTabs.map((tab, index) => {
             const Icon = tab.icon;
@@ -397,10 +403,14 @@ const Scores = () => {
             );
           })}
         </div>
+        </div>
       </div>
 
-      {/* Tab Content - Fills remaining space with internal scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto hud-scroll">
+      {/* =================================================================
+          WORK SURFACE: Tab Content (Fills remaining height)
+          ================================================================= */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto hud-scroll px-4 py-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -453,6 +463,7 @@ const Scores = () => {
           )}
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
 
       {/* Show Detail Modal */}

@@ -205,8 +205,13 @@ body {
   @apply font-body;
   background: #0A0A0A;
   color: #F5F5DC;
-  min-height: 100vh;
-  overflow-x: hidden;
+  /* ONE-SCREEN GAME UI: Fixed viewport, NO browser scroll */
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 /* ===========================================
@@ -1480,14 +1485,38 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   /* ===========================================
-     FULLSCREEN HUD DASHBOARD UTILITIES
-     For viewport-filling layouts without scrolling
+     ONE-SCREEN GAME UI: HUD LAYOUT SYSTEM
+     Browser window NEVER scrolls. All scrolling is internal.
      =========================================== */
 
-  /* HUD Page Container - Fills viewport, manages internal scroll */
+  /* ===========================================
+     CANVAS LOGIC: Page Structure
+     Top Bar (fixed height) + Work Surface (flex-1 overflow-hidden)
+     =========================================== */
+
+  /* HUD Page Container - Root container for all pages */
   .hud-page {
-    @apply flex-1 flex flex-col min-h-0;
+    @apply h-full w-full flex flex-col overflow-hidden;
   }
+
+  /* HUD Top Bar - Fixed height navigation/context bar */
+  .hud-topbar {
+    @apply shrink-0 border-b border-white/5;
+  }
+
+  /* HUD Work Surface - Fills remaining height, handles internal scroll */
+  .hud-surface {
+    @apply flex-1 overflow-hidden relative;
+  }
+
+  /* HUD Content Area - Scrollable internal content */
+  .hud-content {
+    @apply h-full overflow-y-auto overflow-x-hidden hud-scroll;
+  }
+
+  /* ===========================================
+     SCROLL STYLING: Thin gold scrollbar
+     =========================================== */
 
   /* HUD Scroll Container - Thin, subtle scrollbar for internal content */
   .hud-scroll {
@@ -1513,20 +1542,52 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     background: rgba(250, 204, 21, 0.5);
   }
 
+  /* ===========================================
+     GRID LAYOUTS: Bento-style grids
+     =========================================== */
+
   /* HUD Grid - Fills available space and distributes content */
   .hud-grid {
-    @apply flex-1 grid gap-4 min-h-0;
+    @apply flex-1 grid gap-2 min-h-0 overflow-hidden;
   }
+
+  /* HUD Split - Two-column layout */
+  .hud-split {
+    @apply flex-1 grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-0 overflow-hidden;
+  }
+
+  /* HUD Split with fixed right column */
+  .hud-split-fixed {
+    @apply flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-0 min-h-0 overflow-hidden;
+  }
+
+  /* ===========================================
+     PANEL SYSTEM: Cards that fill height
+     =========================================== */
 
   /* HUD Panel - Expandable panel that fills available height */
   .hud-panel {
-    @apply flex flex-col min-h-0 overflow-hidden;
+    @apply flex flex-col min-h-0 overflow-hidden border border-white/5 rounded-lg;
+  }
+
+  /* HUD Panel Header - Fixed height */
+  .hud-panel-header {
+    @apply shrink-0 px-4 py-3 border-b border-white/5;
   }
 
   /* HUD Panel Content - Scrollable content within panel */
   .hud-panel-content {
-    @apply flex-1 overflow-y-auto hud-scroll;
+    @apply flex-1 overflow-y-auto hud-scroll p-4;
   }
+
+  /* HUD Panel Footer - Fixed height */
+  .hud-panel-footer {
+    @apply shrink-0 px-4 py-3 border-t border-white/5;
+  }
+
+  /* ===========================================
+     UTILITY CLASSES
+     =========================================== */
 
   /* No Scroll - Prevent scrolling on element */
   .no-scroll {
@@ -1536,6 +1597,16 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   /* Fill Height - Makes element fill remaining height */
   .fill-height {
     @apply flex-1 min-h-0;
+  }
+
+  /* Edge-to-edge content (no margins) */
+  .edge-to-edge {
+    @apply m-0 p-0;
+  }
+
+  /* Minimal gap between elements */
+  .gap-minimal {
+    @apply gap-px;
   }
 }
 
