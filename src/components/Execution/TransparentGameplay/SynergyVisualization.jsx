@@ -53,6 +53,9 @@ const CAPTION_INFO = {
   P: { label: 'P', fullName: 'Percussion', icon: Music }
 };
 
+// Caption order (matches CaptionSelectionModal)
+const CAPTION_ORDER = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+
 // Tag color mapping for visual consistency
 const TAG_COLORS = {
   classical: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -439,11 +442,11 @@ export const SynergyVisualization = ({
               {showDetails && (
                 <div className="space-y-2">
                   <div className="text-[10px] text-cream-muted uppercase">Caption Synergy Breakdown</div>
-                  {Object.entries(lineup || {}).map(([caption, corpsValue]) => (
+                  {CAPTION_ORDER.filter(caption => lineup?.[caption]).map(caption => (
                     <CaptionSynergyCard
                       key={caption}
                       caption={caption}
-                      corpsValue={corpsValue}
+                      corpsValue={lineup[caption]}
                       showTags={synergySummary.showTags}
                     />
                   ))}
