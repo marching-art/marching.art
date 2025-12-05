@@ -11,6 +11,13 @@
 /* CSS Variables - Single Dark Mode Only */
 :root {
   /* ===========================================
+     DATA-FIRST TYPOGRAPHY SYSTEM
+     Monospace enforcement for all numerical data
+     =========================================== */
+  --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+  --font-data-tracking: -0.05em;
+
+  /* ===========================================
      GLASSMORPHISM BORDER RADIUS
      Soft, premium rounded corners for glass panels
      =========================================== */
@@ -408,9 +415,57 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
     @apply transition-all duration-200;
   }
 
+  /* ===========================================
+     DATA-FIRST TYPOGRAPHY SYSTEM
+     Monospace enforcement for numerical data
+     - Tabular-nums prevents jitter in live updates
+     - Tight tracking for density
+     =========================================== */
+
+  /* Core Data Typography Utility
+   * Use for ALL numerical values: scores, currency, XP, dates, times, prices, percentages
+   * Use for ALL ID strings: #8291, Season ID, etc.
+   * Use for ALL tabular data
+   */
+  .text-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--font-data-tracking);
+  }
+
+  /* Semantic color variants for data values */
+  .text-data-gold {
+    @apply text-data text-gold-400;
+  }
+
+  .text-data-success {
+    @apply text-data text-green-400;
+  }
+
+  .text-data-error {
+    @apply text-data text-red-400;
+  }
+
+  .text-data-blue {
+    @apply text-data text-blue-400;
+  }
+
+  .text-data-purple {
+    @apply text-data text-purple-400;
+  }
+
+  .text-data-orange {
+    @apply text-data text-orange-400;
+  }
+
+  .text-data-muted {
+    @apply text-data;
+    color: rgba(245, 245, 220, 0.6);
+  }
+
   /* Data Display - Scoreboard Style
    * Labels: Small, uppercase, cream muted color
-   * Values: Massive, athletic font, gold color
+   * Values: Massive, monospace font, gold color
    */
   .data-label {
     @apply text-sm uppercase tracking-wider;
@@ -418,19 +473,31 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 
   .data-value {
-    @apply text-5xl font-display font-bold tracking-tight text-gold-400;
+    @apply text-5xl font-bold text-gold-400;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-sm {
-    @apply text-3xl font-display font-bold tracking-tight text-gold-400;
+    @apply text-3xl font-bold text-gold-400;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-lg {
-    @apply text-6xl font-display font-bold tracking-tight text-gold-400;
+    @apply text-6xl font-bold text-gold-400;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-xl {
-    @apply text-7xl font-display font-bold tracking-tight text-gold-400;
+    @apply text-7xl font-bold text-gold-400;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--font-data-tracking);
   }
 
   /* Data Display Container - Vertical Stack */

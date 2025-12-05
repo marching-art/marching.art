@@ -106,7 +106,7 @@ const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing
         {label}
       </span>
       {subtitle && (
-        <span className="text-[8px] text-cream/50 font-mono">
+        <span className="text-[8px] text-data-muted">
           {subtitle}
         </span>
       )}
@@ -117,17 +117,17 @@ const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing
 // Compact Stat Pill - For inline stats display
 const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
   const colorClasses = {
-    gold: 'text-gold-400',
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400',
-    orange: 'text-orange-400',
+    gold: 'text-data-gold',
+    blue: 'text-data-blue',
+    green: 'text-data-success',
+    purple: 'text-data-purple',
+    orange: 'text-data-orange',
   };
 
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/10">
-      <Icon className={`w-3 h-3 ${colorClasses[color]}`} />
-      <span className={`text-xs font-mono font-bold ${colorClasses[color]}`}>{value}</span>
+      <Icon className={`w-3 h-3 ${color === 'gold' ? 'text-gold-400' : color === 'blue' ? 'text-blue-400' : color === 'green' ? 'text-green-400' : color === 'purple' ? 'text-purple-400' : 'text-orange-400'}`} />
+      <span className={`text-xs font-bold ${colorClasses[color]}`}>{value}</span>
       <span className="text-[9px] text-cream/40 uppercase">{label}</span>
     </div>
   );
@@ -135,13 +135,22 @@ const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
 
 // Compact Progress Bar - Reduced height for dense layout
 const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }) => {
-  const colorClasses = {
+  const bgClasses = {
     gold: 'bg-gold-500',
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     purple: 'bg-purple-500',
     orange: 'bg-orange-500',
     red: 'bg-red-500',
+  };
+
+  const textDataClasses = {
+    gold: 'text-data-gold',
+    blue: 'text-data-blue',
+    green: 'text-data-success',
+    purple: 'text-data-purple',
+    orange: 'text-data-orange',
+    red: 'text-data-error',
   };
 
   const percent = Math.round(value * 100);
@@ -155,11 +164,11 @@ const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
-          className={`h-full ${colorClasses[color]} rounded-full`}
+          className={`h-full ${bgClasses[color]} rounded-full`}
         />
       </div>
       {showPercent && (
-        <span className={`text-[10px] font-mono font-bold w-8 text-right ${colorClasses[color].replace('bg-', 'text-').replace('-500', '-400')}`}>
+        <span className={`text-[10px] font-bold w-8 text-right ${textDataClasses[color]}`}>
           {percent}%
         </span>
       )}
@@ -608,7 +617,7 @@ const Dashboard = () => {
                           {activeCorps.showConcept.theme}
                         </span>
                         {(executionState?.synergyBonus || 0) > 0 && (
-                          <span className="text-[10px] font-mono font-bold text-gold-400">
+                          <span className="text-[10px] font-bold text-data-gold">
                             +{(executionState?.synergyBonus || 0).toFixed(1)}
                           </span>
                         )}
@@ -629,21 +638,21 @@ const Dashboard = () => {
                   {/* Quick stats inline */}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-blue-400">{rehearsalsThisWeek}/7</div>
+                      <div className="text-sm font-bold text-data-blue">{rehearsalsThisWeek}/7</div>
                       <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-purple-400">{showsThisWeek}</div>
+                      <div className="text-sm font-bold text-data-purple">{showsThisWeek}</div>
                       <div className="text-[8px] text-cream/40 uppercase">Shows</div>
                     </div>
                     {activeCorpsClass !== 'soundSport' && (
                       <div className="text-center">
-                        <div className="text-sm font-mono font-bold text-gold-400">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
+                        <div className="text-sm font-bold text-data-gold">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
                         <div className="text-[8px] text-cream/40 uppercase">Score</div>
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="text-sm font-mono font-bold text-green-400">{assignedStaff.length}/8</div>
+                      <div className="text-sm font-bold text-data-success">{assignedStaff.length}/8</div>
                       <div className="text-[8px] text-cream/40 uppercase">Staff</div>
                     </div>
                   </div>
@@ -745,25 +754,25 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-1 text-[9px]">
                   <div className="flex justify-between">
                     <span className="text-cream/40">Readiness</span>
-                    <span className={readiness >= 0.80 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={readiness >= 0.80 ? 'text-data-success' : 'text-data-orange'}>
                       {readiness >= 0.80 ? '+' : ''}{((readiness - 0.80) * 0.60 * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Morale</span>
-                    <span className={morale >= 0.75 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={morale >= 0.75 ? 'text-data-success' : 'text-data-orange'}>
                       {morale >= 0.75 ? '+' : ''}{((morale - 0.75) * 0.32 * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Staff</span>
-                    <span className={assignedStaff.length >= 4 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={assignedStaff.length >= 4 ? 'text-data-success' : 'text-data-orange'}>
                       {assignedStaff.length >= 6 ? '+4%' : assignedStaff.length >= 4 ? '+2%' : '-4%'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-cream/40">Equipment</span>
-                    <span className={avgEquipment >= 0.90 ? 'text-green-400' : 'text-orange-400'}>
+                    <span className={avgEquipment >= 0.90 ? 'text-data-success' : 'text-data-orange'}>
                       {((avgEquipment - 1.00) * 0.50 * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -782,7 +791,7 @@ const Dashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-blue-400 uppercase tracking-wide">Readiness</span>
-                <span className="text-xs font-mono font-bold text-blue-400">{Math.round(readiness * 100)}%</span>
+                <span className="text-xs font-bold text-data-blue">{Math.round(readiness * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
@@ -796,7 +805,7 @@ const Dashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-green-400 uppercase tracking-wide">Morale</span>
-                <span className="text-xs font-mono font-bold text-green-400">{Math.round(morale * 100)}%</span>
+                <span className="text-xs font-bold text-data-success">{Math.round(morale * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
@@ -810,7 +819,7 @@ const Dashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-display font-bold text-orange-400 uppercase tracking-wide">Equipment</span>
-                <span className="text-xs font-mono font-bold text-orange-400">{Math.round(avgEquipment * 100)}%</span>
+                <span className="text-xs font-bold text-data-orange">{Math.round(avgEquipment * 100)}%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
