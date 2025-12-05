@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="theme-color" content="#FFD44D" />
+    <meta name="theme-color" content="#EAB308" />
     <meta name="description" content="marching.art - Build your dream corps, select legendary captions, and compete with directors worldwide." />
     <meta name="keywords" content="drum corps, DCI, fantasy sports, marching band, music, competition" />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://marching.art/" />
@@ -17,96 +17,114 @@
 
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    
+
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+
     <title>marching.art</title>
-    
-    <!-- Splash Screen Styles -->
+
+    <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
     <style>
+      html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
+
       #root {
         min-height: 100vh;
       }
-      
-      .splash-screen {
+
+      /* App Loader - Official Drill Grid Logo */
+      .app-loader {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #1A1A1A 0%, #0D0D0D 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        inset: 0;
+        background-color: #0A0A0A; /* charcoal-950 */
         z-index: 9999;
-      }
-      
-      .splash-logo {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #FFD44D 0%, #FFCA26 50%, #D9A300 100%);
-        border-radius: 16px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        animation: pulse 2s infinite;
       }
-      
+
+      .app-loader svg {
+        width: 96px;  /* w-24 = 6rem = 96px */
+        height: 96px;
+        color: #EAB308; /* gold-500 */
+      }
+
+      .app-loader-text {
+        margin-top: 24px;
+        font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 12px;
+        color: rgba(234, 179, 8, 0.5); /* text-gold-500/50 */
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      /* Pulse animation matching Tailwind's animate-pulse */
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
       @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.8; }
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
-      
-      .splash-text {
-        color: #E5D396;
-        font-family: 'Montserrat', system-ui, sans-serif;
-        font-size: 14px;
-        margin-top: 20px;
-        opacity: 0.8;
-      }
-      
-      /* Hide splash when app loads */
-      .app-loaded .splash-screen {
+
+      /* Hide loader when app loads */
+      .app-loaded .app-loader {
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.5s ease-out;
+        transition: opacity 0.3s ease-out;
       }
     </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    
-    <!-- Splash Screen -->
-    <div id="splash" class="splash-screen">
-      <div style="text-align: center;">
-        <div class="splash-logo">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18V5l12-2v13" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="6" cy="18" r="3" stroke="#1A1A1A" stroke-width="2"/>
-            <circle cx="18" cy="16" r="3" stroke="#1A1A1A" stroke-width="2"/>
-          </svg>
-        </div>
-        <div class="splash-text">Loading marching.art...</div>
+
+    <!-- App Loader - Official Drill Grid Logo -->
+    <div id="app-loader" class="app-loader">
+      <div class="animate-pulse">
+        <!-- Official Marching.art Drill Grid Logo -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65">
+          <g>
+            <!-- The 9 Dots (Field Grid) -->
+            <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="25" cy="0" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="50" cy="0" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="0" cy="25" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="25" cy="25" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="50" cy="25" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="0" cy="50" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="25" cy="50" r="4" fill="currentColor" opacity="0.8"/>
+            <circle cx="50" cy="50" r="4" fill="currentColor" opacity="0.8"/>
+            <!-- The Drill Path -->
+            <path d="M 0 0 Q 50 0, 50 50" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
       </div>
+      <div class="app-loader-text">Initializing...</div>
     </div>
-    
+
     <!-- React Root -->
     <div id="root"></div>
-    
-    <!-- Remove splash screen once React loads -->
+
+    <!-- Remove loader once React loads -->
     <script>
       window.addEventListener('load', function() {
         setTimeout(function() {
           document.body.classList.add('app-loaded');
           setTimeout(function() {
-            const splash = document.getElementById('splash');
-            if (splash) splash.remove();
-          }, 500);
+            var loader = document.getElementById('app-loader');
+            if (loader) loader.remove();
+          }, 300);
         }, 100);
       });
     </script>
