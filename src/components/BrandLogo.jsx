@@ -7,20 +7,31 @@
 import React from 'react';
 
 const BrandLogo = ({ className = "w-16 h-16", color = "text-gold-500" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65" className={`${className} ${color}`}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="-5 -5 65 65"
+    className={`${className} ${color}`}
+  >
     <g>
-      {/* The 9 Dots (Field Grid) */}
-      <circle cx="0" cy="0" r="4" className="fill-current"/>
-      <circle cx="25" cy="0" r="4" className="fill-current"/>
-      <circle cx="50" cy="0" r="4" className="fill-current"/>
-      <circle cx="0" cy="25" r="4" className="fill-current"/>
-      <circle cx="25" cy="25" r="4" className="fill-current"/>
-      <circle cx="50" cy="25" r="4" className="fill-current"/>
-      <circle cx="0" cy="50" r="4" className="fill-current"/>
-      <circle cx="25" cy="50" r="4" className="fill-current"/>
-      <circle cx="50" cy="50" r="4" className="fill-current"/>
-      {/* The Drill Path */}
-      <path d="M 0 0 Q 50 0, 50 50" className="stroke-current" strokeWidth="6" fill="none" strokeLinecap="round"/>
+      {/* The 9 Dots (Field Grid) - Using Current Color for Fill */}
+      <circle cx="0" cy="0" r="4" className="fill-current opacity-80"/>
+      <circle cx="25" cy="0" r="4" className="fill-current opacity-80"/>
+      <circle cx="50" cy="0" r="4" className="fill-current opacity-80"/>
+      <circle cx="0" cy="25" r="4" className="fill-current opacity-80"/>
+      <circle cx="25" cy="25" r="4" className="fill-current opacity-80"/>
+      <circle cx="50" cy="25" r="4" className="fill-current opacity-80"/>
+      <circle cx="0" cy="50" r="4" className="fill-current opacity-80"/>
+      <circle cx="25" cy="50" r="4" className="fill-current opacity-80"/>
+      <circle cx="50" cy="50" r="4" className="fill-current opacity-80"/>
+
+      {/* The Drill Path - Using Current Color for Stroke */}
+      <path
+        d="M 0 0 Q 50 0, 50 50"
+        className="stroke-current"
+        strokeWidth="6"
+        fill="none"
+        strokeLinecap="round"
+      />
     </g>
   </svg>
 );

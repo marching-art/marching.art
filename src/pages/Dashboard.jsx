@@ -5,12 +5,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
+  Zap, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, Play, Check, X, Crown, Flame, Coins,
   Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
   CheckCircle, Circle, ArrowUp, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../App';
+import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import {
@@ -733,7 +734,7 @@ const Dashboard = () => {
             /* No Corps State */
             <div className="h-full flex items-center justify-center p-4">
               <div className="text-center">
-                <Music className="w-12 h-12 mx-auto mb-3 text-cream/20" />
+                <BrandLogo className="w-12 h-12 mx-auto mb-3" color="text-cream/20" />
                 <h2 className="text-lg font-display font-bold text-cream mb-1">No Corps Registered</h2>
                 <p className="text-xs text-cream/50 mb-3">Create your first corps to begin!</p>
                 <button onClick={() => setShowRegistration(true)} className="px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg text-sm font-bold">
