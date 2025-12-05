@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import { CAPTION_OPTIONS, getCaptionLabel } from '../../utils/captionUtils';
+import { SystemLoader, ConsoleEmptyState } from '../ui/CommandConsole';
 import toast from 'react-hot-toast';
 
 // ============================================================================
@@ -584,18 +585,23 @@ const StaffMarketplace = () => {
         {/* Staff List - Scrollable */}
         <div className="flex-1 overflow-y-auto hud-scroll">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-6 h-6 border-2 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-[10px] text-data-muted uppercase tracking-widest">Loading...</p>
-              </div>
+            <div className="flex items-center justify-center h-full py-8">
+              <SystemLoader
+                messages={[
+                  'SCANNING PERSONNEL DATABASE...',
+                  'RETRIEVING STAFF PROFILES...',
+                  'LOADING MARKETPLACE DATA...',
+                ]}
+                showProgress={true}
+              />
             </div>
           ) : filteredStaff.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center p-4">
-                <User className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                <p className="text-xs text-data-muted">No staff found</p>
-              </div>
+            <div className="flex items-center justify-center h-full p-4">
+              <ConsoleEmptyState
+                variant="minimal"
+                title="NO STAFF DETECTED"
+                subtitle="No matching personnel in database. Adjust filters or expand search criteria."
+              />
             </div>
           ) : (
             filteredStaff.map((staff, index) => (

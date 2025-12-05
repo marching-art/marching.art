@@ -6,7 +6,7 @@ import { AlertCircle, Zap, Calendar, MapPin, Music, Users, Clock, ChevronRight, 
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import LoadingScreen from '../components/LoadingScreen';
+import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole';
 import { useSeasonStore } from '../store/seasonStore';
 
 // Import modular components
@@ -181,7 +181,18 @@ const Schedule = () => {
   };
 
   if (loading) {
-    return <LoadingScreen fullScreen={false} />;
+    return (
+      <div className="h-full flex items-center justify-center">
+        <SystemLoader
+          messages={[
+            'LOADING SCHEDULE DATA...',
+            'RETRIEVING TOUR DATES...',
+            'SYNCING REGISTRATION STATUS...',
+          ]}
+          showProgress={true}
+        />
+      </div>
+    );
   }
 
   if (!seasonData) {
@@ -297,11 +308,12 @@ const Schedule = () => {
           {/* Show Table - High Density with internal scroll */}
           <div className="flex-1 overflow-hidden flex flex-col">
             {selectedWeekShows.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center p-4">
-                  <Calendar className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                  <p className="text-xs text-cream/40">No shows this week</p>
-                </div>
+              <div className="flex-1 flex items-center justify-center p-4">
+                <ConsoleEmptyState
+                  variant="minimal"
+                  title="NO SHOWS DETECTED"
+                  subtitle={`Week ${selectedWeek} has no scheduled events.`}
+                />
               </div>
             ) : (
               <>
