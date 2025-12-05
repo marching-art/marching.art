@@ -64,20 +64,20 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="glass-dark rounded-xl overflow-hidden">
+    <div className="bg-white/5 border border-white/10 overflow-hidden" style={{ borderRadius: '4px' }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gold-500/20">
-            <Icon className="w-5 h-5 text-gold-400" />
+          <div className="w-8 h-8 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
+            <Icon className="w-4 h-4 text-gold-400" />
           </div>
-          <span className="font-display font-bold text-cream uppercase tracking-wide">
+          <span className="font-display font-bold text-cream-100 uppercase tracking-wide text-sm">
             {title}
           </span>
           {badge && (
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badge.color}`}>
+            <span className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase border ${badge.color}`} style={{ borderRadius: '2px' }}>
               {badge.text}
             </span>
           )}
@@ -92,7 +92,7 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-4 border-t border-white/10">
               {children}
             </div>
           </motion.div>
@@ -131,17 +131,17 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
   };
 
   return (
-    <div className="glass-dark rounded-xl p-4">
+    <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-gold-400" />
-          <span className="font-display font-bold text-cream uppercase">Quick Overview</span>
+          <span className="font-display font-bold text-gold-400 uppercase text-sm">Quick Overview</span>
         </div>
         <div className="text-right">
           <div className="text-2xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}>
             {multiplier.toFixed(2)}x
           </div>
-          <div className="text-[9px] text-cream-muted uppercase">Multiplier</div>
+          <div className="text-[9px] font-display font-bold text-cream-muted uppercase">Multiplier</div>
         </div>
       </div>
 
@@ -165,20 +165,26 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
         ))}
       </div>
 
-      {/* Day indicator */}
+      {/* Day indicator - Segmented Progress */}
       <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-cream-muted" />
-          <span className="text-xs text-cream-muted">Season Progress</span>
+          <span className="text-xs font-display font-bold text-cream-muted uppercase">Season</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-24 h-2 bg-charcoal-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gold-500"
-              style={{ width: `${(currentDay / 49) * 100}%` }}
-            />
+          <div className="w-24 h-2 bg-charcoal-900 overflow-hidden flex gap-px" style={{ borderRadius: '2px' }}>
+            {[...Array(7)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex-1 ${
+                  i < Math.ceil((currentDay / 49) * 7)
+                    ? 'bg-gold-500 shadow-[0_0_4px_rgba(234,179,8,0.6)]'
+                    : 'bg-charcoal-800'
+                }`}
+              />
+            ))}
           </div>
-          <span className="text-xs font-mono text-cream">Day {currentDay}/49</span>
+          <span className="text-xs font-mono text-gold-400">{currentDay}/49</span>
         </div>
       </div>
     </div>
@@ -237,24 +243,25 @@ export const ExecutionInsightsPanel = ({
   ];
 
   return (
-    <div className="h-full flex flex-col bg-surface">
+    <div className="h-full flex flex-col bg-charcoal-950/95">
       {/* Header */}
-      <div className="sticky top-0 bg-surface border-b border-border-default p-4 flex items-center justify-between z-10">
+      <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gold-500/20">
-            <Eye className="w-6 h-6 text-gold-400" />
+          <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
+            <Eye className="w-5 h-5 text-gold-400" />
           </div>
           <div>
-            <h2 className="text-xl font-display font-black text-text-main uppercase tracking-tight">
+            <h2 className="text-lg font-display font-black text-gold-400 uppercase tracking-tight">
               Execution Insights
             </h2>
-            <p className="text-xs text-text-muted">Full transparency on your corps performance</p>
+            <p className="text-xs text-cream-muted">Full transparency on your corps performance</p>
           </div>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-surface-secondary text-text-muted hover:text-text-main transition-colors"
+            className="p-2 border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
+            style={{ borderRadius: '4px' }}
           >
             <X className="w-6 h-6" />
           </button>
@@ -262,18 +269,19 @@ export const ExecutionInsightsPanel = ({
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 p-2 bg-surface-secondary border-b border-border-default overflow-x-auto">
+      <div className="flex items-center gap-1 p-2 bg-black/40 border-b border-white/10 overflow-x-auto">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-display font-bold uppercase transition-all whitespace-nowrap border ${
               activeTab === id
-                ? 'bg-gold-500/20 text-gold-400 border border-gold-500/40'
-                : 'text-text-muted hover:text-text-main hover:bg-surface'
+                ? 'bg-gold-500/20 text-gold-400 border-gold-500/40'
+                : 'text-cream-muted hover:text-cream-100 border-transparent hover:border-white/20'
             }`}
+            style={{ borderRadius: '4px' }}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-3.5 h-3.5" />
             {label}
           </button>
         ))}
@@ -400,19 +408,19 @@ export const ExecutionInsightsPanel = ({
       </div>
 
       {/* Footer with legend */}
-      <div className="border-t border-border-default p-3 bg-surface-secondary">
-        <div className="flex items-center justify-center gap-6 text-[10px] text-cream-muted">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span>Excellent (90%+)</span>
+      <div className="border-t border-white/10 p-3 bg-black/40">
+        <div className="flex items-center justify-center gap-6 text-[10px] font-mono text-cream-muted">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" style={{ borderRadius: '2px' }} />
+            <span>90%+</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-yellow-500" />
-            <span>Good (75-89%)</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]" style={{ borderRadius: '2px' }} />
+            <span>75-89%</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span>Needs Work (&lt;75%)</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" style={{ borderRadius: '2px' }} />
+            <span>&lt;75%</span>
           </div>
         </div>
       </div>

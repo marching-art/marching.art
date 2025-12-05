@@ -317,57 +317,64 @@ const DailyOperations = ({
   return (
     <div className="space-y-4">
       {/* Daily Progress Summary */}
-      <div className="glass rounded-xl p-4">
+      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gold-500/20">
-              <Zap className="w-5 h-5 text-gold-500" />
+            <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
+              <Zap className="w-5 h-5 text-gold-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-cream-100">Daily Progress</h3>
-              <p className="text-xs text-cream-500/60">
+              <h3 className="font-display font-bold text-gold-400 uppercase tracking-wide">Daily Progress</h3>
+              <p className="text-xs text-cream-muted">
                 Complete activities to boost your corps
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gold-500">
-              {completionStats.completed}/{completionStats.total}
+            <div className="text-2xl font-mono font-bold text-gold-400">
+              {completionStats.completed}<span className="text-cream-muted">/{completionStats.total}</span>
             </div>
-            <div className="text-xs text-cream-500/60">complete</div>
+            <div className="text-[10px] font-display font-bold text-cream-muted uppercase">Complete</div>
           </div>
         </div>
-        {/* Progress Bar */}
+        {/* Segmented Progress Bar */}
         <div className="mt-3">
-          <div className="w-full h-2 bg-charcoal-800 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(completionStats.completed / completionStats.total) * 100}%` }}
-              transition={{ duration: 0.5 }}
-              className="h-full bg-gold-500"
-            />
+          <div className="h-2 bg-charcoal-900 overflow-hidden flex gap-0.5" style={{ borderRadius: '2px' }}>
+            {[...Array(completionStats.total)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.1 }}
+                className={`flex-1 transition-all duration-300 ${
+                  i < completionStats.completed
+                    ? 'bg-gold-500 shadow-[0_0_6px_rgba(234,179,8,0.6)]'
+                    : 'bg-charcoal-800'
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
 
       {/* Main Rehearsal */}
-      <div className="glass rounded-xl p-4">
+      <div className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gold-500/20">
-              <Music className="w-5 h-5 text-gold-500" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center bg-gold-500/20 border border-gold-500/40" style={{ borderRadius: '4px' }}>
+              <Music className="w-5 h-5 text-gold-400" />
             </div>
             <div>
-              <h4 className="font-semibold text-cream-100">Full Rehearsal</h4>
-              <p className="text-xs text-cream-500/60">+5% readiness, +50 XP</p>
+              <h4 className="font-display font-bold text-cream-100 uppercase tracking-wide">Full Rehearsal</h4>
+              <p className="text-xs font-mono text-gold-400">+5% readiness, +50 XP</p>
             </div>
           </div>
           {executionState?.rehearsalsThisWeek !== undefined && (
             <div className="text-right">
-              <div className="text-sm font-medium text-cream-300">
-                {executionState.rehearsalsThisWeek}/7
+              <div className="text-lg font-mono font-bold text-cream-100">
+                {executionState.rehearsalsThisWeek}<span className="text-cream-muted">/7</span>
               </div>
-              <div className="text-xs text-cream-500/60">this week</div>
+              <div className="text-[10px] font-display font-bold text-cream-muted uppercase">This Week</div>
             </div>
           )}
         </div>
@@ -375,15 +382,16 @@ const DailyOperations = ({
         <button
           onClick={handleRehearsal}
           disabled={!canRehearseToday || rehearsalProcessing || showRehearsalAnimation}
-          className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`w-full py-3 font-display font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all border ${
             canRehearseToday
-              ? 'bg-gold-500 text-charcoal-900 hover:bg-gold-400'
-              : 'bg-charcoal-800 text-cream-500/60 cursor-not-allowed'
+              ? 'bg-gold-500/20 border-gold-500/50 text-gold-400 hover:bg-gold-500/30 hover:border-gold-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+              : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-not-allowed'
           }`}
+          style={{ borderRadius: '4px' }}
         >
           {rehearsalProcessing || showRehearsalAnimation ? (
             <>
-              <div className="w-5 h-5 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
               Rehearsing...
             </>
           ) : canRehearseToday ? (
@@ -393,7 +401,7 @@ const DailyOperations = ({
             </>
           ) : (
             <>
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-green-400" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
               Rehearsal Complete
             </>
           )}
@@ -401,9 +409,9 @@ const DailyOperations = ({
       </div>
 
       {/* Daily Activities - Tactical Checklist */}
-      <div className="glass p-4 border-2 border-amber-500/30 dark:border-gold-500/30" style={{ borderRadius: '4px' }}>
-        <h4 className="text-sm font-display font-bold text-amber-700 dark:text-gold-400 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b-2 border-amber-500/20 dark:border-gold-500/20">
-          <Zap className="w-4 h-4 text-amber-600 dark:text-gold-500" />
+      <div className="bg-white/5 border border-gold-500/30 p-4" style={{ borderRadius: '4px' }}>
+        <h4 className="text-sm font-display font-bold text-gold-400 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-gold-500/30">
+          <Zap className="w-4 h-4 text-gold-400" />
           Daily Activities
         </h4>
 
@@ -439,11 +447,11 @@ const DailyOperations = ({
 
       {/* Sectional Rehearsals */}
       {opsStatus?.sectionalRehearsals && (
-        <div className="glass rounded-xl p-4 border border-blue-500/20">
-          <h4 className="text-sm font-display font-bold text-blue-300 uppercase tracking-widest mb-4 flex items-center gap-2 pb-2 border-b border-blue-500/20">
+        <div className="bg-white/5 border border-blue-500/30 p-4" style={{ borderRadius: '4px' }}>
+          <h4 className="text-sm font-display font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2 pb-2 border-b border-blue-500/30">
             <Target className="w-4 h-4 text-blue-400" />
             Sectional Rehearsals
-            <span className="text-xs font-normal text-blue-400/60">(+2% readiness each)</span>
+            <span className="text-xs font-mono text-blue-400/60">(+2% each)</span>
           </h4>
 
           <div className="grid grid-cols-4 gap-2">
@@ -824,94 +832,101 @@ const BreakdownRowDetailed = ({ label, weight, current, contribution, delta }) =
   );
 };
 
-// Activity Row Component - Commander's tactical checklist
-// isNextTask: Highlighted with pale yellow background as the next action to take
-// Available (not next): Standard clickable row
-// Completed: 50% opacity with strikethrough text
+// Activity Row Component - Commander's tactical checklist with neon tick marks
+// isNextTask: Highlighted with gold glow as the next action to take
+// Available (not next): Standard clickable row with dark glass panel
+// Completed: Green neon tick with glow effect
 const ActivityRow = ({ icon: Icon, title, reward, available, loading, onClick, isNextTask = false }) => {
   // Determine styling based on state
   const getRowStyles = () => {
     if (!available) {
-      // Completed: dimmed to 50% opacity
-      return 'bg-charcoal-900/20 border-charcoal-800/30 cursor-default opacity-50';
+      // Completed: subtle with neon tick
+      return 'bg-black/30 border-green-500/30 cursor-default';
     }
     if (isNextTask) {
-      // Next task to complete: prominent highlight with pale yellow background
-      return 'bg-amber-100 dark:bg-amber-500/30 border-amber-400 dark:border-gold-500 hover:bg-amber-200 dark:hover:bg-amber-500/40 cursor-pointer shadow-md shadow-amber-500/20 dark:shadow-gold-500/20';
+      // Next task to complete: gold glow highlight
+      return 'bg-gold-500/10 border-gold-500/50 hover:border-gold-400 cursor-pointer shadow-[0_0_15px_rgba(234,179,8,0.15)]';
     }
-    // Available but not next: standard clickable
-    return 'bg-charcoal-800/30 dark:bg-charcoal-900/50 border-charcoal-700/50 dark:border-charcoal-700/30 hover:bg-charcoal-700/40 dark:hover:bg-charcoal-800/50 hover:border-charcoal-600 cursor-pointer';
+    // Available but not next: dark glass panel
+    return 'bg-black/40 border-white/10 hover:border-white/20 cursor-pointer';
   };
 
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`w-full flex items-center gap-3 p-3 transition-all border-2 ${getRowStyles()}`}
+      className={`w-full flex items-center gap-3 p-3 transition-all border ${getRowStyles()}`}
       style={{ borderRadius: '4px' }}
     >
-      <div className={`p-2 ${
+      <div className={`w-8 h-8 flex items-center justify-center border ${
         !available
-          ? 'bg-green-500/20'
+          ? 'bg-green-500/20 border-green-500/40 shadow-[0_0_10px_rgba(34,197,94,0.4)]'
           : isNextTask
-            ? 'bg-amber-500/40 dark:bg-gold-500/40'
-            : 'bg-charcoal-700/50 dark:bg-charcoal-800/50'
+            ? 'bg-gold-500/20 border-gold-500/40'
+            : 'bg-charcoal-900 border-white/20'
       }`} style={{ borderRadius: '4px' }}>
         {loading ? (
-          <div className="w-4 h-4 border-2 border-amber-500 dark:border-gold-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
         ) : available ? (
-          <Icon className={`w-4 h-4 ${isNextTask ? 'text-amber-700 dark:text-gold-300' : 'text-cream-400 dark:text-cream-500'}`} />
+          <Icon className={`w-4 h-4 ${isNextTask ? 'text-gold-400' : 'text-cream-muted'}`} />
         ) : (
-          <Check className="w-4 h-4 text-green-500" />
+          <Check className="w-4 h-4 text-green-400" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
         )}
       </div>
       <div className="flex-1 text-left">
-        <div className={`text-sm font-semibold ${
+        <div className={`text-sm font-display font-bold uppercase tracking-wide ${
           !available
-            ? 'text-cream-600 dark:text-cream-600 line-through'
+            ? 'text-green-400/70'
             : isNextTask
-              ? 'text-amber-900 dark:text-gold-200'
-              : 'text-cream-200 dark:text-cream-300'
+              ? 'text-gold-300'
+              : 'text-cream-100'
         }`}>
           {title}
         </div>
-        <div className={`text-xs ${
+        <div className={`text-xs font-mono ${
           !available
-            ? 'text-cream-500/40 line-through'
+            ? 'text-green-500/50'
             : isNextTask
-              ? 'text-amber-700 dark:text-gold-400/80'
-              : 'text-cream-500/60 dark:text-cream-500/60'
+              ? 'text-gold-400/80'
+              : 'text-cream-muted'
         }`}>
           {reward}
         </div>
       </div>
       {available && (
-        <ChevronRight className={`w-5 h-5 ${isNextTask ? 'text-amber-600 dark:text-gold-400' : 'text-cream-500/40'}`} />
+        <ChevronRight className={`w-5 h-5 ${isNextTask ? 'text-gold-400' : 'text-cream-muted'}`} />
       )}
     </button>
   );
 };
 
-// Sectional Button Component - Tactical grid buttons
+// Sectional Button Component - Tactical grid buttons with neon effects
 const SectionalButton = ({ icon: Icon, label, available, loading, onClick }) => {
   return (
     <button
       onClick={onClick}
       disabled={!available || loading}
-      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all border-2 ${
+      className={`flex flex-col items-center gap-1.5 p-3 transition-all border ${
         available
-          ? 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 hover:border-blue-500/50 cursor-pointer'
-          : 'bg-charcoal-900/30 border-transparent cursor-default opacity-50'
+          ? 'bg-blue-500/10 border-blue-500/30 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] cursor-pointer'
+          : 'bg-black/30 border-green-500/30 cursor-default'
       }`}
+      style={{ borderRadius: '4px' }}
     >
-      {loading ? (
-        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-      ) : available ? (
-        <Icon className="w-5 h-5 text-blue-400" />
-      ) : (
-        <Check className="w-5 h-5 text-green-500" />
-      )}
-      <span className={`text-xs ${available ? 'text-blue-300' : 'text-cream-500/50 line-through'}`}>{label}</span>
+      <div className={`w-8 h-8 flex items-center justify-center border ${
+        available
+          ? 'bg-blue-500/20 border-blue-500/40'
+          : 'bg-green-500/20 border-green-500/40 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+      }`} style={{ borderRadius: '4px' }}>
+        {loading ? (
+          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+        ) : available ? (
+          <Icon className="w-4 h-4 text-blue-400" />
+        ) : (
+          <Check className="w-4 h-4 text-green-400" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
+        )}
+      </div>
+      <span className={`text-[10px] font-display font-bold uppercase ${available ? 'text-blue-300' : 'text-green-400/70'}`}>{label}</span>
     </button>
   );
 };

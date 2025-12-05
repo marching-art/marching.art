@@ -100,122 +100,120 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-6"
+        className="bg-white/5 border border-white/10 rounded-lg p-4"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-display font-bold text-cream-100 mb-1">
+            <h3 className="text-sm font-display font-bold text-gold-400 uppercase tracking-wider mb-1">
               DCI Hall of Fame Staff
             </h3>
-            <p className="text-sm text-cream-500/60">
+            <p className="text-xs text-cream-muted">
               Real DCI legends boosting your corps
             </p>
           </div>
           <Link
             to="/staff"
-            className="btn-primary text-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-gold-500/20 border border-gold-500/40 hover:border-gold-400 text-gold-400 text-xs font-display font-bold uppercase transition-all"
+            style={{ borderRadius: '4px' }}
           >
-            <ShoppingCart className="w-4 h-4 mr-2" />
+            <ShoppingCart className="w-4 h-4" />
             Marketplace
           </Link>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-charcoal-800/50 rounded-lg p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Target className="w-4 h-4 text-green-500" />
-              <span className="text-2xl font-bold text-cream-100">{assignedToCorps.length}</span>
+        {/* Stats Row - Tactical compact style */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-black/40 border border-white/10 p-3 text-center" style={{ borderRadius: '4px' }}>
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <Target className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-xl font-mono font-bold text-green-400">{assignedToCorps.length}</span>
             </div>
-            <p className="text-xs text-cream-500/60">Assigned</p>
+            <p className="text-[10px] font-display font-bold text-cream-muted uppercase">Assigned</p>
           </div>
-          <div className="bg-charcoal-800/50 rounded-lg p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span className="text-2xl font-bold text-cream-100">{unassignedStaff.length}</span>
+          <div className="bg-black/40 border border-white/10 p-3 text-center" style={{ borderRadius: '4px' }}>
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <Users className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xl font-mono font-bold text-blue-400">{unassignedStaff.length}</span>
             </div>
-            <p className="text-xs text-cream-500/60">Available</p>
+            <p className="text-[10px] font-display font-bold text-cream-muted uppercase">Available</p>
           </div>
-          <div className="bg-charcoal-800/50 rounded-lg p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-gold-500" />
-              <span className="text-2xl font-bold text-gold-500">+{calculateStaffBonus()}%</span>
+          <div className="bg-black/40 border border-gold-500/30 p-3 text-center" style={{ borderRadius: '4px' }}>
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-gold-400" />
+              <span className="text-xl font-mono font-bold text-gold-400">+{calculateStaffBonus()}%</span>
             </div>
-            <p className="text-xs text-cream-500/60">Score Bonus</p>
+            <p className="text-[10px] font-display font-bold text-cream-muted uppercase">Bonus</p>
           </div>
         </div>
 
-        {/* Assigned Staff List */}
+        {/* Assigned Staff List - Tactical List Style */}
         {assignedToCorps.length > 0 ? (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-cream-300 mb-2">
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-display font-bold text-cream-muted uppercase tracking-wider pb-2 border-b border-white/10">
               Staff for {formatCorpsClassName(activeCorpsClass)}
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
               {assignedToCorps.map((staff) => (
                 <button
                   key={staff.staffId}
                   onClick={() => setSelectedStaff(staff)}
-                  className="flex items-center gap-3 p-3 bg-charcoal-900/50 rounded-lg border border-charcoal-700 hover:border-gold-500/50 hover:bg-charcoal-800/50 transition-all cursor-pointer text-left w-full"
+                  className="flex items-center gap-3 p-2 bg-black/40 border border-white/10 hover:border-gold-500/30 transition-all cursor-pointer text-left w-full group"
+                  style={{ borderRadius: '4px' }}
                 >
-                  <div className={`w-10 h-10 ${getCaptionColor(staff.caption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
-                    <Award className={`w-5 h-5 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
+                  <div className={`w-8 h-8 ${getCaptionColor(staff.caption)}/20 border border-white/20 flex items-center justify-center flex-shrink-0`} style={{ borderRadius: '4px' }}>
+                    <Award className={`w-4 h-4 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-cream-100 text-sm truncate">
+                    <p className="font-display font-bold text-cream-100 text-sm truncate uppercase tracking-wide">
                       {staff.name}
                     </p>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium text-white ${getCaptionColor(staff.caption)}`}>
-                        {staff.caption}
-                      </span>
-                      <span className="text-xs text-cream-500/60">
-                        {getCaptionLabel(staff.caption)}
-                      </span>
-                    </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-cream-500/40" />
+                  <span className={`px-2 py-0.5 border text-[10px] font-mono font-bold ${getCaptionColor(staff.caption)} ${getCaptionColor(staff.caption).replace('bg-', 'border-')}`} style={{ borderRadius: '2px' }}>
+                    {staff.caption}
+                  </span>
+                  <span className="text-xs font-mono text-gold-400 group-hover:text-gold-300">
+                    +1%
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-cream-muted group-hover:text-gold-400 transition-colors" />
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 bg-charcoal-900/30 rounded-lg">
-            <Users className="w-12 h-12 text-cream-500/40 mx-auto mb-3" />
-            <p className="text-cream-500/60 mb-1">No staff assigned to this corps</p>
-            <p className="text-sm text-cream-500/40 mb-4">
+          <div className="text-center py-6 bg-black/40 border border-white/10" style={{ borderRadius: '4px' }}>
+            <Users className="w-10 h-10 text-cream-muted mx-auto mb-2" />
+            <p className="text-sm font-display font-bold text-cream-muted uppercase mb-1">No Staff Assigned</p>
+            <p className="text-xs text-cream-muted mb-4">
               {ownedStaff.length > 0
-                ? `You have ${unassignedStaff.length} unassigned staff available`
-                : 'Purchase staff from the marketplace to boost your scores'}
+                ? `${unassignedStaff.length} unassigned staff available`
+                : 'Purchase staff to boost scores'}
             </p>
             <Link
               to="/staff"
-              className="btn-outline text-sm inline-flex"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:border-gold-500/30 text-cream-100 text-xs font-display font-bold uppercase transition-all"
+              style={{ borderRadius: '4px' }}
             >
               {ownedStaff.length > 0 ? 'Assign Staff' : 'Browse Marketplace'}
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
         )}
 
         {/* Unassigned Staff Notice */}
         {unassignedStaff.length > 0 && assignedToCorps.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30" style={{ borderRadius: '4px' }}>
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-blue-400">
-                  {unassignedStaff.length} Unassigned Staff Available
-                </p>
-                <p className="text-xs text-cream-500/60 mt-1">
-                  Visit the Staff page to assign them to your corps for additional bonuses.
+                <p className="text-xs font-display font-bold text-blue-400 uppercase">
+                  {unassignedStaff.length} Unassigned Staff
                 </p>
               </div>
               <Link
                 to="/staff?tab=roster"
-                className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap"
+                className="text-xs font-mono text-blue-400 hover:text-blue-300 whitespace-nowrap"
               >
-                Assign Now →
+                Assign →
               </Link>
             </div>
           </div>
@@ -227,17 +225,25 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="card p-4"
+        className="bg-white/5 border border-white/10 p-4" style={{ borderRadius: '4px' }}
       >
         <div className="flex items-start gap-3">
-          <Trophy className="w-5 h-5 text-gold-500 flex-shrink-0 mt-0.5" />
+          <Trophy className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-cream-100 mb-2">How Staff Affects Your Score</p>
-            <ul className="text-xs text-cream-500/80 space-y-1">
-              <li>Each staff member boosts your corps multiplier by ~1%</li>
-              <li>Staff can provide up to +5% total score bonus</li>
-              <li>Staff are assigned to specific corps for targeted improvements</li>
-              <li>DCI Hall of Fame inductees are based on real legends</li>
+            <p className="text-xs font-display font-bold text-gold-400 uppercase tracking-wide mb-2">How Staff Affects Your Score</p>
+            <ul className="text-[11px] text-cream-muted space-y-1 font-mono">
+              <li className="flex items-center gap-2">
+                <span className="text-gold-400">+1%</span>
+                <span>per staff member assigned</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-gold-400">+5%</span>
+                <span>maximum total bonus</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-blue-400">CAP</span>
+                <span>caption-specific boosts</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -247,18 +253,27 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
       <AnimatePresence>
         {selectedStaff && (
           <Portal>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-6 w-full max-w-lg"
+                className="bg-charcoal-950/95 backdrop-blur-xl border border-white/10 p-6 w-full max-w-lg shadow-[0_0_40px_rgba(0,0,0,0.8)]"
+                style={{
+                  borderRadius: '8px',
+                  backgroundImage: `
+                    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+                  `,
+                  backgroundSize: '20px 20px'
+                }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-cream-100">Staff Details</h3>
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gold-500/30">
+                  <h3 className="text-lg font-display font-black text-gold-400 uppercase tracking-tight">Staff Details</h3>
                   <button
                     onClick={() => setSelectedStaff(null)}
-                    className="p-2 text-cream-300 hover:text-cream-100 hover:bg-charcoal-700 rounded transition-colors"
+                    className="p-2 border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
+                    style={{ borderRadius: '4px' }}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -266,43 +281,43 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
 
                 <div className="space-y-4">
                   {/* Staff Info */}
-                  <div className="flex items-start gap-4 p-4 bg-charcoal-900/50 rounded-lg">
-                    <div className={`w-12 h-12 ${getCaptionColor(selectedStaff.caption)}/20 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                  <div className="flex items-start gap-4 p-4 bg-black/40 border border-white/10" style={{ borderRadius: '4px' }}>
+                    <div className={`w-12 h-12 ${getCaptionColor(selectedStaff.caption)}/20 border border-white/20 flex items-center justify-center flex-shrink-0`} style={{ borderRadius: '4px' }}>
                       <Award className={`w-6 h-6 ${getCaptionColor(selectedStaff.caption).replace('bg-', 'text-')}`} />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-cream-100 mb-1">{selectedStaff.name}</h4>
+                      <h4 className="font-display font-bold text-cream-100 uppercase tracking-wide mb-1">{selectedStaff.name}</h4>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold text-white ${getCaptionColor(selectedStaff.caption)}`}>
+                        <span className={`px-2 py-0.5 border text-[10px] font-mono font-bold ${getCaptionColor(selectedStaff.caption)} ${getCaptionColor(selectedStaff.caption).replace('bg-', 'border-')}`} style={{ borderRadius: '2px' }}>
                           {selectedStaff.caption}
                         </span>
-                        <span className="text-xs text-cream-400">
-                          Inducted {selectedStaff.yearInducted}
+                        <span className="text-xs font-mono text-cream-muted">
+                          {selectedStaff.yearInducted}
                         </span>
                       </div>
                       {selectedStaff.biography && (
-                        <p className="text-sm text-cream-400">{selectedStaff.biography}</p>
+                        <p className="text-xs text-cream-muted">{selectedStaff.biography}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-charcoal-900/50 rounded-lg">
-                      <p className="text-cream-400 text-sm mb-1">Current Value</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-black/40 border border-white/10" style={{ borderRadius: '4px' }}>
+                      <p className="text-[10px] font-display font-bold text-cream-muted uppercase mb-1">Value</p>
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4 text-gold-400" />
-                        <span className="text-xl font-bold text-gold-400">
+                        <span className="text-xl font-mono font-bold text-gold-400">
                           {selectedStaff.currentValue || selectedStaff.baseValue || 0}
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-charcoal-900/50 rounded-lg">
-                      <p className="text-cream-400 text-sm mb-1">Seasons</p>
+                    <div className="p-3 bg-black/40 border border-white/10" style={{ borderRadius: '4px' }}>
+                      <p className="text-[10px] font-display font-bold text-cream-muted uppercase mb-1">Seasons</p>
                       <div className="flex items-center gap-1">
                         <Trophy className="w-4 h-4 text-blue-400" />
-                        <span className="text-xl font-bold text-blue-400">
+                        <span className="text-xl font-mono font-bold text-blue-400">
                           {selectedStaff.seasonsCompleted || 0}
                         </span>
                       </div>
@@ -310,37 +325,40 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
                   </div>
 
                   {/* Assignment Info */}
-                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div className="p-4 bg-green-500/10 border border-green-500/30" style={{ borderRadius: '4px' }}>
                     <div className="flex items-center gap-2 mb-2">
-                      <Target className="w-5 h-5 text-green-400" />
-                      <span className="font-semibold text-green-400">Currently Assigned</span>
+                      <Target className="w-4 h-4 text-green-400" />
+                      <span className="text-xs font-display font-bold text-green-400 uppercase">Currently Assigned</span>
                     </div>
-                    <p className="text-cream-300 mb-3">
-                      Boosting <span className="font-semibold">{getCaptionLabel(selectedStaff.caption)}</span> for{' '}
-                      <span className="font-semibold">
+                    <p className="text-xs text-cream-muted mb-3">
+                      Boosting <span className="font-mono text-green-400">{getCaptionLabel(selectedStaff.caption)}</span> for{' '}
+                      <span className="font-mono text-cream-100">
                         {selectedStaff.assignedTo?.corpsName || formatCorpsClassName(selectedStaff.assignedTo?.corpsClass)}
                       </span>
                     </p>
                     <button
                       onClick={handleUnassign}
                       disabled={assigning}
-                      className="w-full py-2 px-4 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                      className="w-full py-2 px-4 border border-red-500/40 text-red-400 hover:bg-red-500/20 hover:border-red-500/60 transition-all disabled:opacity-50 font-display font-bold uppercase text-sm"
+                      style={{ borderRadius: '4px' }}
                     >
                       {assigning ? 'Unassigning...' : 'Unassign Staff'}
                     </button>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedStaff(null)}
-                      className="flex-1 py-2 px-4 rounded-lg bg-charcoal-700 text-cream-300 hover:bg-charcoal-600 transition-all"
+                      className="flex-1 py-2.5 px-4 bg-white/5 border border-white/10 hover:border-white/30 text-cream-muted hover:text-cream-100 font-display font-bold uppercase text-sm transition-all"
+                      style={{ borderRadius: '4px' }}
                     >
                       Close
                     </button>
                     <button
                       onClick={handleManageInMarketplace}
-                      className="flex-1 py-2 px-4 rounded-lg bg-gold-500 text-charcoal-900 font-semibold hover:bg-gold-400 transition-all"
+                      className="flex-1 py-2.5 px-4 bg-gold-500/20 border border-gold-500/40 hover:border-gold-400 text-gold-400 font-display font-bold uppercase text-sm transition-all"
+                      style={{ borderRadius: '4px' }}
                     >
                       Manage in Roster
                     </button>
