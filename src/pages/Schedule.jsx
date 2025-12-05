@@ -205,37 +205,29 @@ const Schedule = () => {
   const weekStatus = getWeekStatus(selectedWeek);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="h-full w-full flex flex-col overflow-hidden">
       {/* ================================================================
-          COMMAND CONSOLE LAYOUT
+          TOP BAR: Week Selector (Fixed Height, Compact)
           ================================================================ */}
-
-      {/* ============================================================
-          TOP RAIL: Week Selector
-          ============================================================ */}
-      <div className="flex-shrink-0 border-b border-cream-500/10 bg-charcoal-950/50">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-cream-500/10">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gold-400" />
-            <div>
-              <h1 className="text-lg font-display font-bold text-cream-100 uppercase tracking-wide">
-                Tour Schedule
-              </h1>
-              <p className="text-xs text-cream-500/60">
-                Week {currentWeek} Active • {allShows.length} Shows Total
-              </p>
-            </div>
+      <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md">
+        {/* Header Bar - Compact */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gold-400" />
+            <h1 className="text-sm font-display font-bold text-cream uppercase tracking-wide">Tour Schedule</h1>
+            <span className="text-[9px] font-mono text-cream/40">
+              Wk {currentWeek} • {allShows.length} shows
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-lg bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs font-mono font-bold">
-              {getWeekRegistrationCount(selectedWeek)} Registered
+            <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-mono font-bold">
+              {getWeekRegistrationCount(selectedWeek)} Reg
             </span>
           </div>
         </div>
 
-        {/* Week Tabs - Horizontal Scroll */}
-        <div className="flex gap-1 p-2 overflow-x-auto hud-scroll">
+        {/* Week Tabs - Compact Horizontal Scroll */}
+        <div className="flex gap-1 p-1.5 overflow-x-auto hud-scroll">
           {[1, 2, 3, 4, 5, 6, 7].map((week) => {
             const status = getWeekStatus(week);
             const regCount = getWeekRegistrationCount(week);
@@ -246,36 +238,31 @@ const Schedule = () => {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`relative flex-shrink-0 flex flex-col items-center px-4 py-2 rounded-lg border-2 transition-all min-w-[80px] ${
+                className={`relative flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded transition-all ${
                   isSelected
-                    ? 'bg-gold-500/20 border-gold-500/50 shadow-[0_0_12px_rgba(234,179,8,0.2)]'
+                    ? 'bg-gold-500/20 border border-gold-500/50'
                     : status === 'current'
-                    ? 'bg-purple-500/10 border-purple-500/30 hover:border-purple-500/50'
+                    ? 'bg-purple-500/10 border border-purple-500/30 hover:border-purple-500/50'
                     : status === 'past'
-                    ? 'bg-charcoal-900/30 border-cream-500/10 opacity-60 hover:opacity-80'
-                    : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/30'
+                    ? 'bg-white/5 border border-white/5 opacity-50 hover:opacity-70'
+                    : 'bg-white/5 border border-white/10 hover:border-white/20'
                 }`}
               >
-                <span className={`text-xs font-display uppercase tracking-wider ${
-                  isSelected ? 'text-gold-400' : status === 'current' ? 'text-purple-400' : 'text-cream-500/60'
-                }`}>
-                  Week
-                </span>
-                <span className={`text-xl font-mono font-bold ${
-                  isSelected ? 'text-gold-400' : status === 'current' ? 'text-purple-300' : 'text-cream-300'
+                <span className={`font-mono text-sm font-bold ${
+                  isSelected ? 'text-gold-400' : status === 'current' ? 'text-purple-400' : 'text-cream/60'
                 }`}>
                   {week}
                 </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-cream-500/40">{showCount} shows</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] font-mono text-cream/40">{showCount}</span>
                   {regCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-500/20 text-green-400">
+                    <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-green-500/20 text-green-400">
                       {regCount}
                     </span>
                   )}
                 </div>
                 {status === 'current' && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                  <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
                 )}
               </button>
             );
@@ -284,141 +271,162 @@ const Schedule = () => {
       </div>
 
       {/* ============================================================
-          BOTTOM SPLIT: Show List + Show Detail
+          WORK SURFACE: Show List + Show Detail (Split View)
           ============================================================ */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex overflow-hidden">
 
-        {/* LEFT: Show List */}
-        <div className={`flex flex-col min-h-0 border-r border-cream-500/10 bg-charcoal-950/30 ${
-          selectedShow ? 'hidden lg:flex lg:w-96' : 'w-full lg:w-96'
+        {/* LEFT: Show List - High Density Table */}
+        <div className={`flex flex-col overflow-hidden border-r border-white/5 bg-black/20 ${
+          selectedShow ? 'hidden lg:flex lg:w-[400px]' : 'w-full lg:w-[400px]'
         }`}>
-          {/* Week Status Bar */}
-          <div className="flex-shrink-0 px-4 py-3 border-b border-cream-500/10 bg-charcoal-900/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  weekStatus === 'current' ? 'bg-purple-500/20 text-purple-400' :
-                  weekStatus === 'past' ? 'bg-charcoal-700 text-cream-500/40' :
-                  'bg-blue-500/20 text-blue-400'
-                }`}>
-                  {weekStatus === 'current' ? 'Active' : weekStatus === 'past' ? 'Completed' : 'Upcoming'}
-                </span>
-                <span className="text-sm font-display text-cream-300">
-                  Week {selectedWeek}
-                </span>
-              </div>
-              <span className="text-xs text-cream-500/60">
-                {selectedWeekShows.length} Shows
+          {/* Week Status Bar - Compact */}
+          <div className="shrink-0 px-2 py-1.5 border-b border-white/5 bg-black/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
+                weekStatus === 'current' ? 'bg-purple-500/20 text-purple-400' :
+                weekStatus === 'past' ? 'bg-white/5 text-cream/40' :
+                'bg-blue-500/20 text-blue-400'
+              }`}>
+                {weekStatus === 'current' ? 'Active' : weekStatus === 'past' ? 'Past' : 'Soon'}
               </span>
+              <span className="text-xs font-mono text-cream/60">Week {selectedWeek}</span>
             </div>
+            <span className="text-[9px] font-mono text-cream/40">{selectedWeekShows.length} shows</span>
           </div>
 
-          {/* Show List */}
-          <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-3 space-y-2">
+          {/* Show Table - High Density with internal scroll */}
+          <div className="flex-1 overflow-hidden flex flex-col">
             {selectedWeekShows.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-10 h-10 text-cream-500/20 mx-auto mb-3" />
-                <p className="text-sm text-cream-500/60">No shows scheduled for this week</p>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center p-4">
+                  <Calendar className="w-8 h-8 text-cream/20 mx-auto mb-2" />
+                  <p className="text-xs text-cream/40">No shows this week</p>
+                </div>
               </div>
             ) : (
-              selectedWeekShows.map((show, idx) => {
-                const myCorps = getMyCorpsAtShow(show);
-                const isSelected = selectedShow?.eventName === show.eventName && selectedShow?.day === show.day;
+              <>
+                {/* Table Header - Sticky */}
+                <div className="shrink-0 border-b border-white/10 bg-black/60">
+                  <div className="grid grid-cols-[1fr_80px_60px] gap-2 px-2 py-1">
+                    <span className="text-[9px] font-mono text-cream/40 uppercase">Event</span>
+                    <span className="text-[9px] font-mono text-cream/40 uppercase text-center">Date</span>
+                    <span className="text-[9px] font-mono text-cream/40 uppercase text-right">Action</span>
+                  </div>
+                </div>
 
-                return (
-                  <button
-                    key={`${show.eventName}-${show.day}-${idx}`}
-                    onClick={() => setSelectedShow(show)}
-                    className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                      isSelected
-                        ? 'bg-gold-500/20 border-gold-500/50 shadow-[0_0_12px_rgba(234,179,8,0.2)]'
-                        : myCorps.length > 0
-                        ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
-                        : 'bg-charcoal-900/30 border-cream-500/10 hover:border-cream-500/30 hover:bg-charcoal-900/50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isSelected ? 'bg-gold-500/30' : myCorps.length > 0 ? 'bg-green-500/20' : 'bg-charcoal-800'
-                      }`}>
-                        <MapPin className={`w-5 h-5 ${
-                          isSelected ? 'text-gold-400' : myCorps.length > 0 ? 'text-green-400' : 'text-cream-400'
-                        }`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-display font-bold text-sm truncate ${
-                          isSelected ? 'text-gold-400' : 'text-cream-100'
-                        }`}>
-                          {show.eventName}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-cream-500/60 mt-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{formatDateCompact(show.day)}</span>
-                        </div>
-                        {myCorps.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {myCorps.map(c => (
-                              <span
-                                key={c.corpsClass}
-                                className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${getClassColor(c.corpsClass)}`}
-                              >
-                                {c.corpsName}
-                              </span>
-                            ))}
+                {/* Scrollable Show Rows */}
+                <div className="flex-1 overflow-y-auto hud-scroll">
+                  {selectedWeekShows.map((show, idx) => {
+                    const myCorps = getMyCorpsAtShow(show);
+                    const isSelected = selectedShow?.eventName === show.eventName && selectedShow?.day === show.day;
+
+                    return (
+                      <div
+                        key={`${show.eventName}-${show.day}-${idx}`}
+                        onClick={() => setSelectedShow(show)}
+                        className={`
+                          grid grid-cols-[1fr_80px_60px] gap-2 px-2 py-2 cursor-pointer
+                          transition-colors duration-100 border-b border-white/5
+                          ${idx % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}
+                          ${isSelected ? 'bg-gold-500/15' : 'hover:bg-white/[0.08]'}
+                        `}
+                      >
+                        {/* Event Name + Corps badges */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className={`w-3 h-3 shrink-0 ${
+                              myCorps.length > 0 ? 'text-green-400' : 'text-cream/40'
+                            }`} />
+                            <span className={`text-xs font-display font-bold truncate ${
+                              isSelected ? 'text-gold-400' : 'text-cream'
+                            }`}>
+                              {show.eventName}
+                            </span>
                           </div>
-                        )}
+                          {myCorps.length > 0 && (
+                            <div className="flex gap-1 mt-1 ml-4">
+                              {myCorps.slice(0, 2).map(c => (
+                                <span
+                                  key={c.corpsClass}
+                                  className={`px-1 py-0.5 rounded text-[8px] font-mono font-bold ${getClassColor(c.corpsClass)}`}
+                                >
+                                  {c.corpsName.slice(0, 8)}
+                                </span>
+                              ))}
+                              {myCorps.length > 2 && (
+                                <span className="text-[8px] text-cream/40">+{myCorps.length - 2}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Date - Monospace */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-[10px] font-mono text-cream/50">{formatDateCompact(show.day)}</span>
+                        </div>
+
+                        {/* Action Button - Fixed Right */}
+                        <div className="flex items-center justify-end">
+                          {myCorps.length > 0 ? (
+                            <Check className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleRegisterCorps(show); }}
+                              className="px-2 py-1 text-[8px] font-mono font-bold uppercase bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30 rounded"
+                            >
+                              Reg
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <ChevronRight className={`w-4 h-4 flex-shrink-0 ${
-                        isSelected ? 'text-gold-400' : 'text-cream-500/40'
-                      }`} />
-                    </div>
-                  </button>
-                );
-              })
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* RIGHT: Show Detail */}
-        <div className={`flex-1 flex flex-col min-h-0 ${!selectedShow ? 'hidden lg:flex' : 'flex'}`}>
+        {/* RIGHT: Show Detail - Compact */}
+        <div className={`flex-1 flex flex-col overflow-hidden ${!selectedShow ? 'hidden lg:flex' : 'flex'}`}>
           {selectedShow ? (
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Mobile Back Button */}
-              <div className="lg:hidden flex-shrink-0 p-3 border-b border-cream-500/10 bg-charcoal-950/50">
+            <div className="h-full flex flex-col overflow-hidden">
+              {/* Mobile Back Button - Compact */}
+              <div className="lg:hidden shrink-0 px-2 py-1.5 border-b border-white/5 bg-black/30">
                 <button
                   onClick={() => setSelectedShow(null)}
-                  className="flex items-center gap-2 text-cream-400 hover:text-cream-100 transition-colors"
+                  className="flex items-center gap-1.5 text-cream/60 hover:text-cream text-xs"
                 >
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                  <span className="text-sm font-display">Back to Shows</span>
+                  <ChevronRight className="w-3 h-3 rotate-180" />
+                  <span>Back</span>
                 </button>
               </div>
 
-              {/* Show Detail Content */}
-              <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 lg:p-6">
+              {/* Show Detail Content - Internal Scroll */}
+              <div className="flex-1 overflow-y-auto hud-scroll p-3">
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-3"
                 >
-                  {/* Show Header */}
-                  <div className="bg-gradient-to-br from-charcoal-900/80 to-charcoal-900/40 border-2 border-cream-500/10 rounded-xl p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 rounded-xl bg-gold-500/20 border border-gold-500/30 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-8 h-8 text-gold-400" />
+                  {/* Show Header - Compact */}
+                  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center shrink-0">
+                        <Trophy className="w-5 h-5 text-gold-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-2xl font-display font-bold text-cream-100 mb-2">
+                        <h2 className="text-lg font-display font-bold text-cream truncate">
                           {selectedShow.eventName}
                         </h2>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-cream-400">
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 text-gold-400" />
+                        <div className="flex items-center gap-3 text-xs text-cream/60 mt-1">
+                          <span className="flex items-center gap-1 font-mono">
+                            <Calendar className="w-3 h-3 text-gold-400" />
                             {formatDateFull(selectedShow.day)}
                           </span>
                           {selectedShow.location && (
-                            <span className="flex items-center gap-1.5">
-                              <MapPin className="w-4 h-4 text-purple-400" />
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-purple-400" />
                               {selectedShow.location}
                             </span>
                           )}
@@ -427,99 +435,63 @@ const Schedule = () => {
                     </div>
                   </div>
 
-                  {/* My Corps at Show */}
+                  {/* My Corps at Show - Compact */}
                   {getMyCorpsAtShow(selectedShow).length > 0 && (
-                    <div className="bg-green-500/10 border-2 border-green-500/30 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Check className="w-5 h-5 text-green-400" />
-                        <h3 className="font-display font-bold text-green-400 uppercase text-sm tracking-wide">
-                          Your Corps Attending
-                        </h3>
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Check className="w-3.5 h-3.5 text-green-400" />
+                        <span className="text-[10px] font-mono font-bold text-green-400 uppercase">Attending</span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {getMyCorpsAtShow(selectedShow).map(c => (
-                          <div
-                            key={c.corpsClass}
-                            className="flex items-center gap-3 p-3 bg-charcoal-900/50 rounded-lg"
-                          >
-                            <Music className="w-5 h-5 text-green-400" />
-                            <div>
-                              <p className="font-display font-bold text-cream-100">{c.corpsName}</p>
-                              <p className="text-xs text-cream-500/60 capitalize">{c.corpsClass.replace(/([A-Z])/g, ' $1').trim()}</p>
-                            </div>
+                          <div key={c.corpsClass} className="flex items-center gap-2 px-2 py-1.5 bg-black/30 rounded">
+                            <Music className="w-3 h-3 text-green-400" />
+                            <span className="text-xs font-display font-bold text-cream">{c.corpsName}</span>
+                            <span className="text-[9px] text-cream/40 capitalize ml-auto">{c.corpsClass.replace(/([A-Z])/g, ' $1').trim()}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Show Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Star className="w-4 h-4 text-gold-400" />
-                        <span className="text-xs text-cream-500/60 uppercase tracking-wide">Competition</span>
-                      </div>
-                      <p className="text-lg font-mono font-bold text-cream-100">
-                        {selectedShow.type || 'Standard'}
-                      </p>
+                  {/* Show Info - Compact Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-black/30 border border-white/10 rounded-lg p-2">
+                      <span className="text-[9px] font-mono text-cream/40 uppercase">Type</span>
+                      <p className="text-sm font-mono font-bold text-cream">{selectedShow.type || 'Standard'}</p>
                     </div>
-                    <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4 text-purple-400" />
-                        <span className="text-xs text-cream-500/60 uppercase tracking-wide">Classes</span>
-                      </div>
-                      <p className="text-lg font-mono font-bold text-cream-100">
-                        {selectedShow.classes?.join(', ') || 'All Classes'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Tip Box */}
-                  <div className="flex items-start gap-3 p-4 bg-gold-500/10 border border-gold-500/20 rounded-xl">
-                    <Info className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-cream-300">
-                      <p className="font-semibold text-gold-400 mb-1">Pro Tip</p>
-                      <p className="text-cream-400">Each corps can attend up to 4 shows per week. Choose strategically to maximize your season score!</p>
+                    <div className="bg-black/30 border border-white/10 rounded-lg p-2">
+                      <span className="text-[9px] font-mono text-cream/40 uppercase">Classes</span>
+                      <p className="text-sm font-mono font-bold text-cream">{selectedShow.classes?.join(', ') || 'All'}</p>
                     </div>
                   </div>
 
                   {/* Register Button */}
                   <button
                     onClick={() => handleRegisterCorps(selectedShow)}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-500 to-amber-500 text-charcoal-900 font-display font-bold uppercase tracking-wide hover:from-gold-400 hover:to-amber-400 transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)]"
+                    className="w-full py-3 rounded-lg bg-gold-500 text-charcoal-900 font-display font-bold uppercase text-sm tracking-wide hover:bg-gold-400 transition-colors"
                   >
-                    Register Corps for Show
+                    Register Corps
                   </button>
+
+                  {/* Tip - Compact */}
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded text-[10px] text-cream/60">
+                    <Info className="w-3 h-3 text-gold-400 shrink-0" />
+                    <span>Max <span className="text-gold-400 font-bold">4 shows</span>/week per corps</span>
+                  </div>
                 </motion.div>
               </div>
             </div>
           ) : (
             /* Empty State - No Show Selected */
-            <div className="flex-1 flex items-center justify-center bg-charcoal-950/30">
-              <div className="text-center px-6">
-                <div className="w-20 h-20 rounded-2xl bg-charcoal-900/50 border border-cream-500/10 flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="w-10 h-10 text-cream-500/20" />
-                </div>
-                <h3 className="text-lg font-display font-bold text-cream-300 mb-2">Select a Show</h3>
-                <p className="text-sm text-cream-500/60 max-w-xs mx-auto">
-                  Choose a show from the list to view details and register your corps.
-                </p>
+            <div className="h-full flex items-center justify-center bg-black/20">
+              <div className="text-center p-4">
+                <MapPin className="w-10 h-10 text-cream/20 mx-auto mb-2" />
+                <h3 className="text-sm font-display font-bold text-cream/60 mb-1">Select a Show</h3>
+                <p className="text-[10px] text-cream/40">Click a show to view details</p>
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Quick Tip Bar - Fixed at bottom */}
-      <div className="flex-shrink-0 px-4 py-2 border-t border-cream-500/10 bg-charcoal-950/50">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-md bg-gold-500/10 border border-gold-500/20 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-3 h-3 text-gold-400" />
-          </div>
-          <p className="text-xs text-cream-500/60">
-            Each corps can attend up to <span className="text-gold-400 font-medium">4 shows</span> per week. Select shows to register.
-          </p>
         </div>
       </div>
 

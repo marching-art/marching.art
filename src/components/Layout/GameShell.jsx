@@ -158,20 +158,35 @@ const GameShell = ({ children }) => {
     railWidth: isRailExpanded ? 240 : 80
   };
 
+  // Calculate grid template columns based on rail state
+  // Desktop: Sidebar (fixed width) + Main Content (flex-1)
+  // Mobile: Full width (sidebar hidden, bottom nav visible)
+  const gridCols = isRailExpanded ? '240px 1fr' : '80px 1fr';
+
   return (
     <ShellContext.Provider value={shellContextValue}>
-      {/* Global Console Wrapper */}
+      {/* =================================================================
+          ONE-SCREEN GAME UI: Global Console Wrapper
+          Fixed viewport - browser window NEVER scrolls
+          ================================================================= */}
       <div className="h-screen w-screen overflow-hidden bg-stadium-black text-cream font-sans">
 
         {/* Atmospheric Background Layer */}
         <AtmosphericBackground />
 
-        {/* Main Console Layout */}
-        <div className="relative z-10 flex h-full w-full">
+        {/* =================================================================
+            APP SHELL LAYOUT: CSS Grid Structure
+            - Mobile: Single column (100vw) with bottom nav
+            - Desktop: Sidebar (fixed) + Main Content (1fr)
+            ================================================================= */}
+        <div
+          className="relative z-10 h-full w-full grid grid-cols-1 lg:grid-cols-[var(--sidebar-width)_1fr]"
+          style={{ '--sidebar-width': isRailExpanded ? '240px' : '80px' }}
+        >
 
-          {/* Desktop Command Rail - Hidden on Mobile */}
-          <motion.div
-            className="hidden lg:block shrink-0 relative z-20"
+          {/* Desktop Command Rail - Fixed Width Sidebar */}
+          <motion.aside
+            className="hidden lg:flex flex-col h-full relative z-20 overflow-hidden border-r border-white/5"
             initial={false}
             animate={{ width: isRailExpanded ? 240 : 80 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -180,10 +195,15 @@ const GameShell = ({ children }) => {
               isExpanded={isRailExpanded}
               onToggle={toggleRail}
             />
-          </motion.div>
+          </motion.aside>
 
-          {/* Main Viewport - Fixed container with internal scroll */}
-          <main className="flex-1 h-full overflow-hidden relative pb-20 lg:pb-0">
+          {/* =================================================================
+              MAIN CONTENT AREA: Canvas Logic
+              - Position: relative (for absolute children)
+              - Uses h-full flex flex-col for proper height management
+              - Work Surface handles internal scrolling ONLY
+              ================================================================= */}
+          <main className="relative h-full w-full overflow-hidden flex flex-col pb-20 lg:pb-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -192,17 +212,22 @@ const GameShell = ({ children }) => {
                 exit="out"
                 variants={pageVariants}
                 transition={pageTransition}
-                className="h-full w-full"
+                className="h-full w-full flex flex-col"
               >
-                {/* Viewport Container - Pages must use w-full h-full */}
-                <div className="h-full w-full overflow-y-auto overflow-x-hidden hud-scroll">
+                {/* =============================================================
+                    WORK SURFACE: Page Content Container
+                    - flex-1: Takes remaining height after top bar
+                    - overflow-hidden: Frame remains static
+                    - Internal scroll via .hud-scroll applied to scrollable areas
+                    ============================================================= */}
+                <div className="flex-1 overflow-hidden">
                   {children}
                 </div>
               </motion.div>
             </AnimatePresence>
           </main>
 
-          {/* Mobile Bottom Navigation - Hidden on Desktop */}
+          {/* Mobile Bottom Navigation - Fixed at bottom, hidden on desktop */}
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
             <BottomNav />
           </div>
