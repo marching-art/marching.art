@@ -153,21 +153,21 @@ const ConditionHealthBar = ({ condition = 0.89 }) => {
 const SynergyMultiplier = ({ bonus = 0.5, themeName = '' }) => {
   const isPositive = bonus > 0;
   return (
-    <div className="w-full flex flex-col items-center justify-center gap-1">
-      <motion.div
-        className={`text-2xl font-display font-black ${
-          isPositive ? 'text-purple-400' : 'text-cream/40'
-        }`}
-        animate={isPositive ? { textShadow: ['0 0 10px rgba(168,85,247,0.5)', '0 0 20px rgba(168,85,247,0.8)', '0 0 10px rgba(168,85,247,0.5)'] } : {}}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        {isPositive ? '+' : ''}{bonus.toFixed(1)}x
-      </motion.div>
-      {themeName && (
-        <div className="text-[9px] text-cream/40 truncate max-w-full px-2 text-center">
-          {themeName.length > 16 ? `${themeName.slice(0, 14)}...` : themeName}
-        </div>
-      )}
+    <div className="w-full space-y-1">
+      <div className="flex items-center justify-center">
+        <motion.div
+          className={`text-xl font-display font-black ${
+            isPositive ? 'text-purple-400' : 'text-cream/40'
+          }`}
+          animate={isPositive ? { textShadow: ['0 0 10px rgba(168,85,247,0.5)', '0 0 20px rgba(168,85,247,0.8)', '0 0 10px rgba(168,85,247,0.5)'] } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          {isPositive ? '+' : ''}{bonus.toFixed(1)}x
+        </motion.div>
+      </div>
+      <div className="text-center text-[9px] text-cream/40 truncate px-2">
+        {themeName ? (themeName.length > 16 ? `${themeName.slice(0, 14)}...` : themeName) : 'abstract'}
+      </div>
     </div>
   );
 };
@@ -181,7 +181,7 @@ const CircularProgress = ({ completed = 1, total = 3, color = 'gold' }) => {
 
   return (
     <div className="w-full flex flex-col items-center gap-1">
-      <div className="relative w-14 h-14">
+      <div className="relative w-12 h-12">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
           {/* Background ring */}
           <circle
@@ -209,7 +209,7 @@ const CircularProgress = ({ completed = 1, total = 3, color = 'gold' }) => {
         </svg>
         {/* Center text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-sm font-bold ${colors.text}`}>
+          <span className={`text-xs font-bold ${colors.text}`}>
             {completed}/{total}
           </span>
         </div>
@@ -226,15 +226,15 @@ const TrendIndicator = ({ trend = 'up', projectedScore = 62.5 }) => {
   const bgColor = trend === 'up' ? 'bg-green-500/20' : trend === 'down' ? 'bg-red-500/20' : 'bg-white/10';
 
   return (
-    <div className="w-full flex flex-col items-center gap-2">
-      <div className={`p-2 rounded-lg ${bgColor}`}>
-        <TrendIcon className={`w-6 h-6 ${trendColor}`} />
+    <div className="w-full flex items-center justify-center gap-3">
+      <div className={`p-1.5 rounded-lg ${bgColor}`}>
+        <TrendIcon className={`w-5 h-5 ${trendColor}`} />
       </div>
-      <div className="text-center">
-        <div className="text-lg font-display font-bold text-cream">
+      <div>
+        <div className="text-base font-display font-bold text-cream">
           {projectedScore.toFixed(1)}
         </div>
-        <div className="text-[9px] text-cream/40">Projected Score</div>
+        <div className="text-[9px] text-cream/40">Projected</div>
       </div>
     </div>
   );
