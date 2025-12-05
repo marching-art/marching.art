@@ -6,11 +6,20 @@
 /* ===========================================
    DESKTOP AUTO-ZOOM
    Scale up the entire page on desktop screens
-   Note: CSS zoom works in Chrome, Edge, Safari. Firefox ignores it.
    =========================================== */
 @media (min-width: 1024px) {
+  /* Chrome, Edge, Safari */
   html {
-    zoom: 2; /* 200% zoom on desktop */
+    zoom: 2;
+  }
+
+  /* Firefox fallback - doesn't support zoom */
+  @supports not (zoom: 2) {
+    html {
+      transform: scale(2);
+      transform-origin: top left;
+      width: 50%;
+    }
   }
 }
 
