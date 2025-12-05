@@ -175,14 +175,20 @@ const GameShell = ({ children }) => {
         <AtmosphericBackground />
 
         {/* =================================================================
-            APP SHELL LAYOUT: CSS Grid Structure
-            - Mobile: Single column (100vw) with bottom nav
-            - Desktop: Sidebar (fixed) + Main Content (1fr)
+            VIEWPORT CONSTRAINT: Console Frame for Ultra-Wide Monitors
+            - Max width 1920px keeps the "console" feel on large screens
+            - Centered with subtle border framing on desktop
             ================================================================= */}
-        <div
-          className="relative z-10 h-full w-full grid grid-cols-1 lg:grid-cols-[var(--sidebar-width)_1fr]"
-          style={{ '--sidebar-width': isRailExpanded ? '240px' : '80px' }}
-        >
+        <div className="h-full w-full max-w-[1920px] mx-auto lg:shadow-2xl lg:border-x lg:border-white/10">
+          {/* =================================================================
+              APP SHELL LAYOUT: CSS Grid Structure
+              - Mobile: Single column (100vw) with bottom nav
+              - Desktop: Sidebar (fixed) + Main Content (1fr)
+              ================================================================= */}
+          <div
+            className="relative z-10 h-full w-full grid grid-cols-1 lg:grid-cols-[var(--sidebar-width)_1fr]"
+            style={{ '--sidebar-width': isRailExpanded ? '240px' : '80px' }}
+          >
 
           {/* Desktop Command Rail - Fixed Width Sidebar */}
           <motion.aside
@@ -231,6 +237,7 @@ const GameShell = ({ children }) => {
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
             <BottomNav />
           </div>
+        </div>
         </div>
       </div>
     </ShellContext.Provider>
