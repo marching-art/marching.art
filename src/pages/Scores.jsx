@@ -1,475 +1,328 @@
 // src/pages/Scores.jsx
-// Unified hub for scores, rankings, and statistics
-import React, { useState, useEffect } from 'react';
+// Competitive Analytics Terminal - High-density scores and rankings hub
+// Layout: Filter Rail (Left) + Main Ledger (Center) + Ticker (Top)
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Trophy,
-  Calendar,
-  TrendingUp,
-  Clock,
-  Award,
-  BarChart3,
-  Music
-} from 'lucide-react';
-import { collection, query, getDocs, orderBy, limit, doc, getDoc, startAfter } from 'firebase/firestore';
-import { db, dataNamespace } from '../firebase';
+import { Terminal, BarChart3 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import { useSeasonStore } from '../store/seasonStore';
-import toast from 'react-hot-toast';
 
-// Import modular tab components
-import LatestScoresTab from '../components/Scores/tabs/LatestScoresTab';
-import RankingsTab from '../components/Scores/tabs/RankingsTab';
-import StatsTab from '../components/Scores/tabs/StatsTab';
-import SoundSportTab from '../components/Scores/tabs/SoundSportTab';
-import ShowDetailModal from '../components/Scores/ShowDetailModal';
+// Hooks
+import { useScoresData, calculateCaptionAggregates } from '../hooks/useScoresData';
+
+// Components
+import FilterRail from '../components/Scores/FilterRail';
+import AnalyticsTicker from '../components/Scores/AnalyticsTicker';
+import ScoreLedger from '../components/Scores/ScoreLedger';
+import CorpsDossier from '../components/Scores/CorpsDossier';
+import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole';
 
 const Scores = () => {
   const { user } = useAuth();
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
-
-  // Use global season store instead of fetching independently
   const seasonData = useSeasonStore((state) => state.seasonData);
-  const seasonUid = useSeasonStore((state) => state.seasonUid);
+  const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
 
-  // Main tab state
-  const [activeTab, setActiveTab] = useState('latest');
-  const [loading, setLoading] = useState(true);
+  // Filter state
+  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [activeClass, setActiveClass] = useState('all');
+  const [enabledCaptions, setEnabledCaptions] = useState({ ge: true, vis: true, mus: true });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileFilterVisible, setMobileFilterVisible] = useState(false);
 
-  // Scores data
-  const [allShows, setAllShows] = useState([]); // All shows grouped by day
-  const [selectedDay, setSelectedDay] = useState(null); // Current day being viewed
-  const [availableDays, setAvailableDays] = useState([]); // Days with shows
-  const [selectedShow, setSelectedShow] = useState(null);
-  const [stats, setStats] = useState({ recentShows: 0, topScore: '-', corpsActive: 0 });
+  // Dossier state
+  const [selectedCorps, setSelectedCorps] = useState(null);
 
-  // Extract user's corps names for highlighting in the Latest Scores feed
-  const userCorpsNames = React.useMemo(() => {
+  // Use the scores data hook
+  const {
+    loading,
+    error,
+    allShows,
+    archivedSeasons,
+    stats,
+    aggregatedScores,
+    columnStats,
+    isArchived,
+    currentSeasonUid
+  } = useScoresData({
+    seasonId: selectedSeason,
+    classFilter: activeClass,
+    enabledCaptions
+  });
+
+  // Get current season name
+  const currentSeasonName = useMemo(() => {
+    if (selectedSeason) {
+      const archived = archivedSeasons.find(s => s.id === selectedSeason);
+      return archived?.seasonName?.replace(/_/g, ' ') || selectedSeason;
+    }
+    return formatSeasonName?.() || 'Current Season';
+  }, [selectedSeason, archivedSeasons, formatSeasonName]);
+
+  // Filter scores by search query
+  const filteredScores = useMemo(() => {
+    if (!searchQuery.trim()) return aggregatedScores;
+
+    const query = searchQuery.toLowerCase();
+    return aggregatedScores.filter(score => {
+      const corpsName = (score.corps || score.corpsName || '').toLowerCase();
+      return corpsName.includes(query);
+    });
+  }, [aggregatedScores, searchQuery]);
+
+  // Extract user's corps names for highlighting
+  const userCorpsNames = useMemo(() => {
     if (!loggedInProfile?.corps) return [];
     return Object.values(loggedInProfile.corps)
       .filter(corps => corps?.corpsName)
       .map(corps => corps.corpsName);
   }, [loggedInProfile?.corps]);
 
-  // Rankings/Leaderboard data
-  const [leaderboardData, setLeaderboardData] = useState({
-    overall: [],
-    weekly: [],
-    monthly: [],
-    lifetime: []
-  });
-  const [rankingsTab, setRankingsTab] = useState('overall');
-  const [activeClass, setActiveClass] = useState('world');
-  const [userRank, setUserRank] = useState(null);
-  const [lifetimeView, setLifetimeView] = useState('totalPoints');
+  // Get user's active corps for head-to-head comparison
+  const userActiveCorps = useMemo(() => {
+    if (!loggedInProfile?.corps) return null;
+    // Get first corps with a lineup (active corps)
+    const activeCorps = Object.values(loggedInProfile.corps).find(c => c?.lineup);
+    if (!activeCorps) return null;
+    return {
+      corpsName: activeCorps.corpsName,
+      ...calculateCaptionAggregates({
+        geScore: activeCorps.totalSeasonScore || 0,
+        visualScore: 0,
+        musicScore: 0
+      })
+    };
+  }, [loggedInProfile?.corps]);
 
-  // Pagination state
-  const [lastDocs, setLastDocs] = useState({ overall: null, weekly: null, monthly: null });
-  const [hasMore, setHasMore] = useState({ overall: false, weekly: false, monthly: false });
-  const [loadingMore, setLoadingMore] = useState(false);
-  const PAGE_SIZE = 25;
-
-  // Main tabs configuration
-  const mainTabs = [
-    { id: 'latest', name: 'Latest Scores', icon: Clock },
-    { id: 'rankings', name: 'Rankings', icon: Trophy },
-    { id: 'stats', name: 'Stats', icon: BarChart3 },
-    { id: 'soundsport', name: 'SoundSport', icon: Music }
-  ];
-
-  // Complete the daily challenge for checking scores/leaderboard
+  // Complete daily challenge on visit
   useEffect(() => {
     if (user && loggedInProfile && completeDailyChallenge) {
       completeDailyChallenge('check_leaderboard');
     }
   }, [user, loggedInProfile, completeDailyChallenge]);
 
-  // Fetch scores data (all shows with day-based organization)
-  useEffect(() => {
-    const fetchScoresData = async () => {
-      if (!seasonUid) return;
-      if (activeTab !== 'latest' && activeTab !== 'soundsport') return;
+  // Handle caption toggle
+  const handleCaptionToggle = (caption) => {
+    setEnabledCaptions(prev => ({
+      ...prev,
+      [caption]: !prev[caption]
+    }));
+  };
 
-      try {
-        setLoading(true);
-        const recapRef = doc(db, 'fantasy_recaps', seasonUid);
-        const recapDoc = await getDoc(recapRef);
-
-        if (recapDoc.exists()) {
-          const data = recapDoc.data();
-          const recaps = data.recaps || [];
-
-          // Process all shows and group by day
-          const shows = recaps.flatMap(recap =>
-            recap.shows?.map(show => ({
-              eventName: show.eventName,
-              location: show.location,
-              date: recap.date?.toDate?.().toLocaleDateString() || 'TBD',
-              offSeasonDay: recap.offSeasonDay,
-              scores: show.results?.map(result => ({
-                corps: result.corpsName,
-                score: result.totalScore || 0,
-                geScore: result.geScore || 0,
-                visualScore: result.visualScore || 0,
-                musicScore: result.musicScore || 0,
-                corpsClass: result.corpsClass
-              })).sort((a, b) => b.score - a.score) || []
-            })) || []
-          ).sort((a, b) => b.offSeasonDay - a.offSeasonDay);
-
-          setAllShows(shows);
-
-          // Get unique days that have shows (sorted descending - most recent first)
-          const days = [...new Set(shows.map(s => s.offSeasonDay))].sort((a, b) => b - a);
-          setAvailableDays(days);
-
-          // Set selected day to most recent if not already set
-          if (days.length > 0 && selectedDay === null) {
-            setSelectedDay(days[0]);
-          }
-
-          // Calculate stats
-          const allScores = shows.flatMap(show => show.scores.map(s => s.score));
-          const topScore = allScores.length > 0 ? Math.max(...allScores).toFixed(3) : '-';
-          const uniqueCorps = new Set(shows.flatMap(show => show.scores.map(s => s.corps)));
-
-          setStats({
-            recentShows: shows.length,
-            topScore,
-            corpsActive: uniqueCorps.size
-          });
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching scores:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchScoresData();
-  }, [activeTab, seasonUid]);
-
-  // Fetch leaderboard data with pagination
-  useEffect(() => {
-    const fetchLeaderboardData = async () => {
-      if (activeTab !== 'rankings' && activeTab !== 'stats') return;
-
-      setLoading(true);
-      // Reset pagination when filters change
-      setLastDocs({ overall: null, weekly: null, monthly: null });
-      setHasMore({ overall: false, weekly: false, monthly: false });
-
-      try {
-        const safeCollectionFetch = async (collectionPath, orderField = 'score') => {
-          try {
-            const collRef = collection(db, ...collectionPath);
-            const q = query(collRef, orderBy(orderField, 'desc'), limit(PAGE_SIZE));
-            const snapshot = await getDocs(q);
-            const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-            const hasMoreDocs = snapshot.docs.length === PAGE_SIZE;
-            return {
-              data: snapshot.docs.map((doc, index) => ({
-                id: doc.id,
-                rank: index + 1,
-                ...doc.data()
-              })),
-              lastDoc: lastVisible,
-              hasMore: hasMoreDocs
-            };
-          } catch (err) {
-            console.log(`Collection ${collectionPath.join('/')} not found or empty`);
-            return { data: [], lastDoc: null, hasMore: false };
-          }
-        };
-
-        // Fetch overall leaderboard
-        const overallResult = await safeCollectionFetch(
-          ['artifacts', dataNamespace, 'leaderboard', 'overall', activeClass]
-        );
-
-        // Fetch weekly leaderboard
-        const weeklyResult = await safeCollectionFetch(
-          ['artifacts', dataNamespace, 'leaderboard', 'weekly', activeClass]
-        );
-
-        // Fetch monthly leaderboard
-        const monthlyResult = await safeCollectionFetch(
-          ['artifacts', dataNamespace, 'leaderboard', 'monthly', activeClass]
-        );
-
-        // Fetch lifetime stats (single document, no pagination needed)
-        let sortedLifetimeData = [];
-        try {
-          const lifetimeRef = doc(db, `artifacts/${dataNamespace}/leaderboard/lifetime_${lifetimeView}/data`);
-          const lifetimeDoc = await getDoc(lifetimeRef);
-
-          if (lifetimeDoc.exists()) {
-            const lifetimeLeaderboard = lifetimeDoc.data();
-            sortedLifetimeData = (lifetimeLeaderboard.entries || []).map((entry, index) => ({
-              id: entry.userId,
-              rank: index + 1,
-              username: entry.username,
-              userTitle: entry.userTitle,
-              lifetimeStats: entry.lifetimeStats
-            }));
-          }
-        } catch (err) {
-          console.log('Lifetime leaderboard not available yet');
-        }
-
-        setLeaderboardData({
-          overall: overallResult.data,
-          weekly: weeklyResult.data,
-          monthly: monthlyResult.data,
-          lifetime: sortedLifetimeData
-        });
-
-        setLastDocs({
-          overall: overallResult.lastDoc,
-          weekly: weeklyResult.lastDoc,
-          monthly: monthlyResult.lastDoc
-        });
-
-        setHasMore({
-          overall: overallResult.hasMore,
-          weekly: weeklyResult.hasMore,
-          monthly: monthlyResult.hasMore
-        });
-
-        // Find user's rank if logged in
-        if (user && loggedInProfile?.username) {
-          const userData = overallResult.data.find(entry => entry.username === loggedInProfile.username);
-          if (userData) {
-            setUserRank(userData.rank);
-          }
-        }
-
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        if (error.code !== 'permission-denied' && error.code !== 'not-found') {
-          toast.error('Failed to load leaderboard data');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaderboardData();
-  }, [activeTab, activeClass, user, loggedInProfile, lifetimeView]);
-
-  // Load more leaderboard entries
-  const loadMoreLeaderboard = async () => {
-    if (loadingMore || !hasMore[rankingsTab] || !lastDocs[rankingsTab]) return;
-
-    setLoadingMore(true);
-    try {
-      const collRef = collection(db, 'artifacts', dataNamespace, 'leaderboard', rankingsTab, activeClass);
-      const q = query(
-        collRef,
-        orderBy('score', 'desc'),
-        startAfter(lastDocs[rankingsTab]),
-        limit(PAGE_SIZE)
-      );
-      const snapshot = await getDocs(q);
-
-      const currentLength = leaderboardData[rankingsTab].length;
-      const newData = snapshot.docs.map((doc, index) => ({
-        id: doc.id,
-        rank: currentLength + index + 1,
-        ...doc.data()
-      }));
-
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-
-      setLeaderboardData(prev => ({
-        ...prev,
-        [rankingsTab]: [...prev[rankingsTab], ...newData]
-      }));
-
-      setLastDocs(prev => ({
-        ...prev,
-        [rankingsTab]: lastVisible
-      }));
-
-      setHasMore(prev => ({
-        ...prev,
-        [rankingsTab]: snapshot.docs.length === PAGE_SIZE
-      }));
-
-    } catch (error) {
-      console.error('Error loading more:', error);
-      toast.error('Failed to load more entries');
-    } finally {
-      setLoadingMore(false);
-    }
+  // Handle row click - open dossier
+  const handleRowClick = (corps) => {
+    setSelectedCorps(corps);
   };
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden">
-      {/* =================================================================
-          TOP BAR: Header + Stats (Fixed Height)
-          ================================================================= */}
-      <div className="shrink-0 border-b border-white/5 bg-charcoal-950/30">
-        {/* Header - Compact */}
-        <div className="px-4 py-3">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl lg:text-3xl font-display font-black uppercase tracking-tighter text-charcoal-950 dark:text-cream-100">
-              Scores & Rankings
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-cream-300">
-              Results, rankings, and stats
-            </p>
-          </motion.div>
+    <div className={`
+      h-full w-full flex flex-col overflow-hidden bg-charcoal-950
+      ${isArchived ? 'sepia-[.15] grayscale-[.1]' : ''}
+    `}>
+      {/* ================================================================
+          ZONE C: THE TICKER (Top Bar)
+          ================================================================ */}
+      <AnalyticsTicker
+        stats={stats}
+        isArchived={isArchived}
+        seasonName={currentSeasonName}
+      />
+
+      {/* ================================================================
+          MAIN CONTENT: Filter Rail + Main Ledger
+          ================================================================ */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ==============================================================
+            ZONE A: THE FILTER RAIL (Left Sidebar - Fixed Width 250px)
+            ============================================================== */}
+        <div className={`hidden lg:block flex-shrink-0 w-[250px] ${isArchived ? 'opacity-90' : ''}`}>
+          <FilterRail
+            selectedSeason={selectedSeason}
+            onSeasonChange={setSelectedSeason}
+            archivedSeasons={archivedSeasons}
+            activeClass={activeClass}
+            onClassChange={setActiveClass}
+            enabledCaptions={enabledCaptions}
+            onCaptionToggle={handleCaptionToggle}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            isVisible={true}
+            onToggleVisibility={() => {}}
+          />
         </div>
 
-        {/* Stadium Scoreboard Metrics - Compact */}
-        <div className="flex overflow-x-auto space-x-3 pb-3 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-x-0 lg:pb-3 lg:overflow-visible hud-scroll">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
-        >
-          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
-            Recent Shows
-          </span>
-          <Calendar className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-bold text-data text-black dark:text-cream-100 text-center my-4">
-            {stats.recentShows}
-          </p>
-          <p className="text-xs text-data-muted text-center">
-            Last 30 Days
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
-        >
-          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
-            Top Score
-          </span>
-          <TrendingUp className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-bold text-data-gold text-center my-4">
-            {stats.topScore}
-          </p>
-          <p className="text-xs text-data-muted text-center">
-            Season High
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex-shrink-0 w-[160px] md:w-auto bg-white dark:bg-charcoal-900 border-2 border-black dark:border-gold-500 shadow-hard dark:shadow-brutal-gold rounded-sm p-4 relative"
-        >
-          <span className="text-xs font-bold uppercase tracking-widest text-black dark:text-cream-300">
-            Corps Active
-          </span>
-          <Award className="w-5 h-5 text-black dark:text-cream-100 absolute top-4 right-4" aria-hidden="true" />
-          <p className="text-4xl md:text-5xl font-bold text-data text-black dark:text-cream-100 text-center my-4">
-            {stats.corpsActive}
-          </p>
-          <p className="text-xs text-data-muted text-center">
-            This Season
-          </p>
-        </motion.div>
+        {/* Mobile Filter Rail - Only shows when toggled via FAB button */}
+        <div className="lg:hidden">
+          <FilterRail
+            selectedSeason={selectedSeason}
+            onSeasonChange={setSelectedSeason}
+            archivedSeasons={archivedSeasons}
+            activeClass={activeClass}
+            onClassChange={setActiveClass}
+            enabledCaptions={enabledCaptions}
+            onCaptionToggle={handleCaptionToggle}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            isVisible={mobileFilterVisible}
+            onToggleVisibility={() => setMobileFilterVisible(!mobileFilterVisible)}
+            isMobile={true}
+          />
         </div>
 
-        {/* Main Tabs - Compact Segmented Control */}
-        <div className="flex justify-center px-4 pb-3">
-        <div className="inline-flex border-2 border-charcoal-900 dark:border-cream-100 rounded-sm overflow-hidden">
-          {mainTabs.map((tab, index) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            const isLast = index === mainTabs.length - 1;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-2 lg:py-2.5 font-bold uppercase tracking-wide transition-all whitespace-nowrap text-[10px] lg:text-xs ${
-                  isActive
-                    ? 'bg-charcoal-900 dark:bg-cream-100 text-gold-400 dark:text-charcoal-900'
-                    : 'bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-cream-100 hover:bg-cream-100 dark:hover:bg-charcoal-800'
-                } ${!isLast ? 'border-r-2 border-charcoal-900 dark:border-cream-100' : ''}`}
+        {/* ==============================================================
+            ZONE B: THE MAIN LEDGER (Center - Flex Grow)
+            ============================================================== */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Terminal Header */}
+          <div className="flex-shrink-0 px-4 py-3 border-b border-cream-500/10 bg-charcoal-950/80">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+                  <Terminal className="w-5 h-5 text-gold-400" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-display font-black uppercase tracking-tight text-cream-100">
+                    Competitive Analytics
+                  </h1>
+                  <p className="text-[10px] text-cream-500/60 font-mono uppercase tracking-widest">
+                    Score Ledger • {filteredScores.length} Corps
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="hidden md:flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Top Score</p>
+                  <p className="font-mono text-lg font-bold text-gold-400">{stats.topScore || '-'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Active</p>
+                  <p className="font-mono text-lg font-bold text-cream-100">{stats.corpsActive || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile: Quick Filters */}
+            <div className="lg:hidden flex items-center gap-2 mt-3 overflow-x-auto pb-2 hud-scroll">
+              {['all', 'world', 'open', 'a'].map(cls => (
+                <button
+                  key={cls}
+                  onClick={() => setActiveClass(cls)}
+                  className={`
+                    flex-shrink-0 px-3 py-1.5 text-xs font-display font-bold uppercase tracking-wide
+                    border rounded transition-all
+                    ${activeClass === cls
+                      ? 'bg-gold-500 text-charcoal-900 border-gold-500'
+                      : 'bg-charcoal-900 text-cream-400 border-cream-500/10 hover:border-cream-500/30'
+                    }
+                  `}
+                >
+                  {cls === 'all' ? 'All' : cls}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Score Ledger Content */}
+          <div className="flex-1 overflow-y-auto hud-scroll">
+            {loading ? (
+              <div className="flex items-center justify-center h-full py-12">
+                <SystemLoader
+                  messages={[
+                    'RETRIEVING SCORE DATA...',
+                    'PROCESSING RESULTS...',
+                    'CALCULATING RANKINGS...',
+                    'AGGREGATING CAPTIONS...',
+                    'COMPILING STANDINGS...',
+                  ]}
+                  showProgress={true}
+                />
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full p-4">
+                <ConsoleEmptyState
+                  variant="network"
+                  title="CONNECTION ERROR"
+                  subtitle={error}
+                />
+              </div>
+            ) : filteredScores.length === 0 ? (
+              <div className="flex items-center justify-center h-full p-4">
+                <ConsoleEmptyState
+                  variant="radar"
+                  title={searchQuery ? 'NO MATCHES FOUND' : 'NO SCORE DATA AVAILABLE'}
+                  subtitle={
+                    searchQuery
+                      ? `No corps matching "${searchQuery}". Try a different search.`
+                      : isArchived
+                        ? 'This archived season has no score data available.'
+                        : 'Awaiting DCI season data transmission...'
+                  }
+                />
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="p-4"
               >
-                <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-                <span className="hidden sm:inline">{tab.name}</span>
-              </button>
-            );
-          })}
-        </div>
+                {/* Archive Notice */}
+                {isArchived && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center gap-3"
+                  >
+                    <BarChart3 className="w-5 h-5 text-amber-400" />
+                    <div>
+                      <p className="text-sm font-display font-bold text-amber-400 uppercase tracking-wide">
+                        Historical Archive Mode
+                      </p>
+                      <p className="text-xs text-amber-400/70">
+                        Viewing archived data from {currentSeasonName}. Some features are disabled.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* The Ledger Table */}
+                <div className="bg-charcoal-900/30 border border-cream-500/10 rounded-lg overflow-hidden">
+                  <ScoreLedger
+                    scores={filteredScores}
+                    columnStats={columnStats}
+                    enabledCaptions={enabledCaptions}
+                    onRowClick={handleRowClick}
+                    selectedCorps={selectedCorps?.corps || selectedCorps?.corpsName}
+                    highlightedCorps={userCorpsNames}
+                    isArchived={isArchived}
+                  />
+                </div>
+
+                {/* Results count */}
+                <div className="mt-4 flex items-center justify-between text-[10px] font-mono text-cream-500/40 uppercase tracking-widest">
+                  <span>Displaying {filteredScores.length} of {aggregatedScores.length} corps</span>
+                  <span>{isArchived ? 'Archive Mode' : 'Live Data'}</span>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* =================================================================
-          WORK SURFACE: Tab Content (Fills remaining height)
-          ================================================================= */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto hud-scroll px-4 py-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-          {activeTab === 'latest' && (
-            <LatestScoresTab
-              loading={loading}
-              allShows={allShows}
-              selectedDay={selectedDay}
-              setSelectedDay={setSelectedDay}
-              availableDays={availableDays}
-              setSelectedShow={setSelectedShow}
-              userCorpsNames={userCorpsNames}
-            />
-          )}
-          {activeTab === 'rankings' && (
-            <RankingsTab
-              loading={loading}
-              leaderboardData={leaderboardData}
-              rankingsTab={rankingsTab}
-              setRankingsTab={setRankingsTab}
-              activeClass={activeClass}
-              setActiveClass={setActiveClass}
-              userRank={userRank}
-              loggedInProfile={loggedInProfile}
-              user={user}
-              hasMore={hasMore}
-              loadingMore={loadingMore}
-              loadMoreLeaderboard={loadMoreLeaderboard}
-            />
-          )}
-          {activeTab === 'stats' && (
-            <StatsTab
-              loading={loading}
-              lifetimeData={leaderboardData.lifetime}
-              lifetimeView={lifetimeView}
-              setLifetimeView={setLifetimeView}
-              loggedInProfile={loggedInProfile}
-            />
-          )}
-          {activeTab === 'soundsport' && (
-            <SoundSportTab
-              loading={loading}
-              allShows={allShows}
-            />
-          )}
-          </motion.div>
-        </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Show Detail Modal */}
-      {selectedShow && (
-        <ShowDetailModal show={selectedShow} onClose={() => setSelectedShow(null)} />
-      )}
+      {/* ================================================================
+          CORPS DOSSIER SLIDE-OVER PANEL
+          ================================================================ */}
+      <CorpsDossier
+        isOpen={!!selectedCorps}
+        onClose={() => setSelectedCorps(null)}
+        corps={selectedCorps}
+        myCorps={userActiveCorps}
+        isArchived={isArchived}
+      />
     </div>
   );
 };
