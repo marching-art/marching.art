@@ -10,14 +10,10 @@ import {
 } from 'lucide-react';
 
 import {
-  SectionGauges,
-  ExecutionMultiplierBreakdown,
   ThresholdMeter,
   TemporalEffectsBar,
-  CircularProgressRing
 } from './index';
 import StaffEffectivenessPanel from './StaffEffectivenessPanel';
-import SynergyVisualization from './SynergyVisualization';
 
 // ============================================================================
 // SHOW DIFFICULTY PRESETS (must match backend execution.js)
@@ -101,7 +97,45 @@ const InsightSection = ({ title, icon: Icon, children, defaultOpen = false, badg
 };
 
 /**
- * Quick Stats Summary Bar - Glass Slot Style
+ * Segmented Stat Bar Component - Horizontal bar with segments
+ */
+const SegmentedStatBar = ({ value, label, icon: Icon, colorClass = 'gold' }) => {
+  const percentage = Math.round(value * 100);
+  const getBarColor = (val) => {
+    if (val >= 0.90) return 'bg-green-500';
+    if (val >= 0.75) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 text-cream/50" />
+          <span className="text-[10px] text-cream/50 uppercase">{label}</span>
+        </div>
+        <span className={`text-sm font-mono font-bold ${
+          value >= 0.90 ? 'text-green-400' : value >= 0.75 ? 'text-yellow-400' : 'text-red-400'
+        }`}>
+          {percentage}%
+        </span>
+      </div>
+      <div className="h-1.5 bg-charcoal-900 rounded-sm overflow-hidden flex gap-px">
+        {[...Array(10)].map((_, i) => (
+          <div
+            key={i}
+            className={`flex-1 transition-all duration-300 ${
+              i < Math.round(value * 10) ? getBarColor(value) : 'bg-charcoal-800'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Quick Stats Summary Bar - Analytics Dashboard Style
  */
 const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
   const readiness = executionState?.readiness ?? 0.75;
@@ -116,14 +150,9 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
     ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
     : 0.90;
 
-  const stats = [
-    { label: 'Readiness', value: readiness, color: 'blue', icon: Target },
-    { label: 'Morale', value: morale, color: 'red', icon: Heart },
-    { label: 'Equipment', value: avgEquipment, color: 'orange', icon: Wrench },
-  ];
-
   return (
     <div className="glass-slot">
+      {/* Header with multiplier */}
       <div className="flex items-center justify-between mb-4">
         <span className="section-label mb-0">Quick Overview</span>
         <div className="text-right">
@@ -134,48 +163,161 @@ const QuickStatsSummary = ({ executionState, multiplier, currentDay }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {stats.map(({ label, value, color, icon: Icon }) => (
-          <div key={label} className="text-center">
-            <CircularProgressRing
-              value={value}
-              size={56}
-              strokeWidth={5}
-              color={color}
-              showPercentage={true}
-            />
-            <div className="flex items-center justify-center gap-1 mt-2">
-              <Icon className="w-3 h-3 text-cream-100/50" />
-              <span className="data-label-sm">
-                {label}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Segmented Stat Bars */}
+      <div className="space-y-3">
+        <SegmentedStatBar value={readiness} label="Readiness" icon={Target} />
+        <SegmentedStatBar value={morale} label="Morale" icon={Heart} />
+        <SegmentedStatBar value={avgEquipment} label="Equipment" icon={Wrench} />
       </div>
 
-      {/* Day indicator - Segmented Progress */}
-      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-cream-100/50" />
-          <span className="data-label-sm">Season</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-24 h-2 bg-charcoal-900 overflow-hidden flex gap-px rounded-sm">
-            {[...Array(7)].map((_, i) => (
-              <div
-                key={i}
-                className={`flex-1 ${
-                  i < Math.ceil((currentDay / 49) * 7)
-                    ? 'bg-gold-500 shadow-[0_0_4px_rgba(234,179,8,0.6)]'
-                    : 'bg-charcoal-800'
-                }`}
-              />
-            ))}
+      {/* Season Progress - Thin Timeline Rail */}
+      <div className="mt-4 pt-3 border-t border-white/5">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-cream/50" />
+            <span className="text-[10px] text-cream/50 uppercase">Season Progress</span>
           </div>
-          <span className="text-sm font-mono font-bold text-cream-100">{currentDay}/49</span>
+          <span className="text-xs font-mono text-cream/60">Day {currentDay}/49</span>
+        </div>
+        <div className="h-1 bg-charcoal-900 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gold-500 transition-all duration-500"
+            style={{ width: `${(currentDay / 49) * 100}%` }}
+          />
         </div>
       </div>
+    </div>
+  );
+};
+
+/**
+ * Section Bar with Segmented Progress
+ */
+const SectionBar = ({ label, value, captions, icon: Icon }) => {
+  const percentage = Math.round(value * 100);
+  const getBarColor = (val) => {
+    if (val >= 0.90) return 'bg-green-500';
+    if (val >= 0.75) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <div className="py-2.5 border-b border-white/5 last:border-0">
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-2">
+          <Icon className="w-3.5 h-3.5 text-cream/50" />
+          <span className="text-sm text-cream-100">{label}</span>
+          <span className="text-[9px] text-cream/40">{captions}</span>
+        </div>
+        <span className={`text-sm font-mono font-bold ${
+          value >= 0.90 ? 'text-green-400' : value >= 0.75 ? 'text-yellow-400' : 'text-red-400'
+        }`}>
+          {percentage}%
+        </span>
+      </div>
+      <div className="h-1.5 bg-charcoal-900 rounded-sm overflow-hidden flex gap-px">
+        {[...Array(10)].map((_, i) => (
+          <div
+            key={i}
+            className={`flex-1 transition-all duration-300 ${
+              i < Math.round(value * 10) ? getBarColor(value) : 'bg-charcoal-800'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Sections Tab Content - Auto-expands lowest performing section
+ */
+const SectionsTabContent = ({ executionState }) => {
+  const sections = [
+    { key: 'brass', label: 'Brass', icon: Zap, captions: 'B, MA' },
+    { key: 'percussion', label: 'Percussion', icon: Zap, captions: 'P' },
+    { key: 'guard', label: 'Guard', icon: Eye, captions: 'VP, VA, CG' },
+    { key: 'ensemble', label: 'Ensemble', icon: Users, captions: 'GE1, GE2' },
+  ];
+
+  // Get readiness values
+  const readinessData = typeof executionState?.readiness === 'object'
+    ? executionState.readiness
+    : {
+        brass: executionState?.readiness || 0.75,
+        percussion: executionState?.readiness || 0.75,
+        guard: executionState?.readiness || 0.75,
+        ensemble: executionState?.readiness || 0.75
+      };
+
+  // Get morale values
+  const moraleData = typeof executionState?.morale === 'object'
+    ? executionState.morale
+    : {
+        brass: executionState?.morale || 0.80,
+        percussion: executionState?.morale || 0.80,
+        guard: executionState?.morale || 0.80,
+        overall: executionState?.morale || 0.80
+      };
+
+  // Find lowest performing section for readiness
+  const lowestReadiness = sections.reduce((lowest, section) => {
+    const value = readinessData[section.key] || 0.75;
+    return value < (readinessData[lowest] || 0.75) ? section.key : lowest;
+  }, 'brass');
+
+  // Find lowest performing section for morale
+  const lowestMorale = sections.reduce((lowest, section) => {
+    const value = moraleData[section.key] || moraleData.overall || 0.80;
+    return value < (moraleData[lowest] || moraleData.overall || 0.80) ? section.key : lowest;
+  }, 'brass');
+
+  // Determine which accordion to open (the one with biggest problem)
+  const lowestReadinessValue = readinessData[lowestReadiness] || 0.75;
+  const lowestMoraleValue = moraleData[lowestMorale] || moraleData.overall || 0.80;
+  const openReadiness = lowestReadinessValue < lowestMoraleValue;
+
+  return (
+    <div className="space-y-4">
+      {/* Readiness by Section */}
+      <InsightSection
+        title="Section Readiness"
+        icon={Target}
+        defaultOpen={openReadiness}
+        badge={lowestReadinessValue < 0.75 ? { text: 'Low', color: 'bg-red-500/20 border-red-500/40 text-red-400' } : undefined}
+      >
+        <div className="space-y-0">
+          {sections.map(({ key, label, icon, captions }) => (
+            <SectionBar
+              key={key}
+              label={label}
+              value={readinessData[key] || 0.75}
+              captions={captions}
+              icon={icon}
+            />
+          ))}
+        </div>
+      </InsightSection>
+
+      {/* Morale by Section */}
+      <InsightSection
+        title="Section Morale"
+        icon={Heart}
+        defaultOpen={!openReadiness}
+        badge={lowestMoraleValue < 0.75 ? { text: 'Low', color: 'bg-red-500/20 border-red-500/40 text-red-400' } : undefined}
+      >
+        <div className="space-y-0">
+          {sections.map(({ key, label, icon, captions }) => (
+            <SectionBar
+              key={key}
+              label={label}
+              value={moraleData[key] || moraleData.overall || 0.80}
+              captions={captions}
+              icon={icon}
+            />
+          ))}
+        </div>
+      </InsightSection>
     </div>
   );
 };
@@ -189,8 +331,6 @@ export const ExecutionInsightsPanel = ({
   finalMultiplier = 1.0,
   currentDay = 1,
   showDifficulty,
-  showConcept,
-  lineup,
   assignedStaff = [],
   activeCorpsClass,
   onBoostStaffMorale,
@@ -228,7 +368,6 @@ export const ExecutionInsightsPanel = ({
     { id: 'breakdown', label: 'Multiplier', icon: TrendingUp },
     { id: 'sections', label: 'Sections', icon: Target },
     { id: 'staff', label: 'Staff', icon: Users },
-    { id: 'synergy', label: 'Synergy', icon: Sparkles },
   ];
 
   return (
@@ -309,56 +448,124 @@ export const ExecutionInsightsPanel = ({
           </>
         )}
 
-        {/* Breakdown Tab */}
+        {/* Breakdown Tab - Receipt/Invoice Style */}
         {activeTab === 'breakdown' && (
-          <ExecutionMultiplierBreakdown
-            breakdown={multiplierBreakdown}
-            finalMultiplier={finalMultiplier}
-            isExpanded={true}
-          />
+          <div className="glass-slot">
+            <span className="section-label">Multiplier Breakdown</span>
+
+            {/* Stacked Factors - Receipt Style */}
+            <div className="space-y-0 mt-3 border-t border-white/10">
+              {/* Base */}
+              <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                <span className="text-sm text-cream/60">Base</span>
+                <span className="text-sm font-mono text-cream-100">1.00</span>
+              </div>
+
+              {/* Readiness */}
+              {multiplierBreakdown.readiness !== undefined && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-sm text-cream/60">Readiness</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.readiness >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.readiness >= 0 ? '+' : ''}{(multiplierBreakdown.readiness * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Staff */}
+              {multiplierBreakdown.staff !== undefined && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="text-sm text-cream/60">Staff</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.staff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.staff >= 0 ? '+' : ''}{(multiplierBreakdown.staff * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Morale */}
+              {multiplierBreakdown.morale !== undefined && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-3.5 h-3.5 text-red-400" />
+                    <span className="text-sm text-cream/60">Morale</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.morale >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.morale >= 0 ? '+' : ''}{(multiplierBreakdown.morale * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Equipment */}
+              {multiplierBreakdown.equipment !== undefined && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-3.5 h-3.5 text-orange-400" />
+                    <span className="text-sm text-cream/60">Equipment</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.equipment >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.equipment >= 0 ? '+' : ''}{(multiplierBreakdown.equipment * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Show Difficulty */}
+              {multiplierBreakdown.showDifficulty !== undefined && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                    <span className="text-sm text-cream/60">Difficulty</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.showDifficulty >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.showDifficulty >= 0 ? '+' : ''}{(multiplierBreakdown.showDifficulty * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Random Variance */}
+              {multiplierBreakdown.randomVariance !== undefined && multiplierBreakdown.randomVariance !== 0 && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-sm text-cream/60">Daily Luck</span>
+                  </div>
+                  <span className={`text-sm font-mono font-bold ${multiplierBreakdown.randomVariance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {multiplierBreakdown.randomVariance >= 0 ? '+' : ''}{(multiplierBreakdown.randomVariance * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Fatigue */}
+              {multiplierBreakdown.fatigue !== undefined && multiplierBreakdown.fatigue !== 0 && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+                    <span className="text-sm text-cream/60">Fatigue</span>
+                  </div>
+                  <span className="text-sm font-mono font-bold text-red-400">
+                    {(multiplierBreakdown.fatigue * 100).toFixed(1)}%
+                  </span>
+                </div>
+              )}
+
+              {/* Total - Highlighted */}
+              <div className="flex items-center justify-between py-3 mt-2 bg-gold-500/10 border border-gold-500/30 rounded-lg px-3 -mx-1">
+                <span className="text-sm font-bold text-gold-400 uppercase">Total</span>
+                <span className="text-xl font-mono font-bold text-gold-400" style={{ textShadow: '0 0 10px rgba(255, 215, 0, 0.4)' }}>
+                  {finalMultiplier.toFixed(2)}x
+                </span>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Sections Tab */}
+        {/* Sections Tab - Auto-expand lowest performing */}
         {activeTab === 'sections' && (
-          <div className="space-y-6">
-            {/* Readiness by Section */}
-            <InsightSection title="Section Readiness" icon={Target} defaultOpen={true}>
-              <div className="space-y-4">
-                <p className="text-xs text-cream-muted">
-                  Each section's readiness affects specific captions. Higher readiness = better execution on those captions (±12% range).
-                </p>
-                <SectionGauges
-                  data={typeof executionState?.readiness === 'object' ? executionState.readiness : {
-                    brass: executionState?.readiness || 0.75,
-                    percussion: executionState?.readiness || 0.75,
-                    guard: executionState?.readiness || 0.75,
-                    ensemble: executionState?.readiness || 0.75
-                  }}
-                  type="readiness"
-                  showLabels={true}
-                />
-              </div>
-            </InsightSection>
-
-            {/* Morale by Section */}
-            <InsightSection title="Section Morale" icon={Heart}>
-              <div className="space-y-4">
-                <p className="text-xs text-cream-muted">
-                  Morale affects execution quality. Low morale hurts performance (±8% range). Rehearsals cost morale.
-                </p>
-                <SectionGauges
-                  data={typeof executionState?.morale === 'object' ? executionState.morale : {
-                    brass: executionState?.morale || 0.80,
-                    percussion: executionState?.morale || 0.80,
-                    guard: executionState?.morale || 0.80,
-                    overall: executionState?.morale || 0.80
-                  }}
-                  type="morale"
-                  showLabels={true}
-                />
-              </div>
-            </InsightSection>
-          </div>
+          <SectionsTabContent executionState={executionState} />
         )}
 
         {/* Staff Tab */}
@@ -368,15 +575,6 @@ export const ExecutionInsightsPanel = ({
             activeCorpsClass={activeCorpsClass}
             onBoostMorale={onBoostStaffMorale}
             showUnassigned={true}
-          />
-        )}
-
-        {/* Synergy Tab */}
-        {activeTab === 'synergy' && (
-          <SynergyVisualization
-            showConcept={showConcept}
-            lineup={lineup}
-            showDetails={true}
           />
         )}
       </div>

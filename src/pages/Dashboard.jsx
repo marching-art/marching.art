@@ -1157,19 +1157,20 @@ const Dashboard = () => {
                 backgroundSize: '20px 20px'
               }}
             >
-              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Show Concept Synergy</h2>
+              <div className="panel-header">
+                <h2 className="panel-title">Show Concept Synergy</h2>
                 <button
                   onClick={() => setShowSynergyPanel(false)}
-                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
+                  className="panel-close"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="p-4">
                 <ShowConceptSelector
                   corpsClass={activeCorpsClass}
                   currentConcept={typeof activeCorps?.showConcept === 'object' ? activeCorps.showConcept : {}}
+                  lineup={activeCorps?.lineup || {}}
                   onSave={() => {
                     refreshProfile();
                     setShowSynergyPanel(false);

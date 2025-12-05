@@ -96,151 +96,118 @@ const DashboardStaffPanel = ({ activeCorpsClass, userCorps = {} }) => {
 
   return (
     <div className="space-y-4">
-      {/* Staff Overview Card */}
+      {/* Staff Roster Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-slot"
       >
+        {/* Header with Marketplace Icon */}
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="section-label mb-0">DCI Hall of Fame Staff</h3>
-            <p className="data-label-sm">Real DCI legends boosting your corps</p>
+          <div className="flex items-center gap-2">
+            <span className="section-label mb-0">Staff Roster</span>
+            <span className="text-xs font-mono text-green-400">+{calculateStaffBonus()}%</span>
           </div>
           <Link
             to="/staff"
-            className="flex items-center gap-2 px-3 py-2 bg-gold-500/20 border border-gold-500/40 hover:border-gold-500/60 text-gold-400 text-xs font-display font-bold uppercase transition-all rounded-lg"
+            className="p-2 bg-black/40 border border-gold-500/30 hover:border-gold-500/50 hover:bg-gold-500/10 text-gold-400 transition-all rounded-lg"
+            title="Staff Marketplace"
           >
             <ShoppingCart className="w-4 h-4" />
-            Marketplace
           </Link>
         </div>
 
-        {/* Stats Row - Glass Slot style */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="bg-black/40 border border-white/5 hover:border-gold-500/30 p-3 text-center rounded-lg transition-colors">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Target className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-lg font-mono font-bold text-green-400">{assignedToCorps.length}</span>
-            </div>
-            <p className="data-label-sm">Assigned</p>
+        {/* Stats Row - Compact */}
+        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/5">
+          <div className="flex items-center gap-1.5">
+            <Target className="w-3.5 h-3.5 text-green-400" />
+            <span className="text-sm font-mono font-bold text-green-400">{assignedToCorps.length}</span>
+            <span className="text-[10px] text-cream/40">assigned</span>
           </div>
-          <div className="bg-black/40 border border-white/5 hover:border-gold-500/30 p-3 text-center rounded-lg transition-colors">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Users className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-lg font-mono font-bold text-blue-400">{unassignedStaff.length}</span>
-            </div>
-            <p className="data-label-sm">Available</p>
-          </div>
-          <div className="bg-black/40 border border-gold-500/30 p-3 text-center rounded-lg">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-gold-400" />
-              <span className="text-lg font-mono font-bold text-gold-400">+{calculateStaffBonus()}%</span>
-            </div>
-            <p className="data-label-sm">Bonus</p>
+          <div className="w-px h-4 bg-white/10" />
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-cream/50" />
+            <span className="text-sm font-mono font-bold text-cream/50">{unassignedStaff.length}</span>
+            <span className="text-[10px] text-cream/40">available</span>
           </div>
         </div>
 
-        {/* Assigned Staff List */}
+        {/* Staff Roster Table */}
         {assignedToCorps.length > 0 ? (
-          <div className="space-y-2">
-            <h4 className="section-label border-b border-white/5 pb-2">
-              Staff for {formatCorpsClassName(activeCorpsClass)}
-            </h4>
-            <div className="space-y-1">
-              {assignedToCorps.map((staff) => (
-                <button
-                  key={staff.staffId}
-                  onClick={() => setSelectedStaff(staff)}
-                  className="flex items-center gap-3 p-2 bg-black/40 border border-white/5 hover:border-gold-500/30 transition-all cursor-pointer text-left w-full group rounded-lg"
-                >
-                  <div className={`w-8 h-8 ${getCaptionColor(staff.caption)}/20 border border-white/10 flex items-center justify-center flex-shrink-0 rounded-lg`}>
-                    <Award className={`w-4 h-4 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-mono font-bold text-cream-100 truncate">
-                      {staff.name}
-                    </p>
-                  </div>
-                  <span className={`px-2 py-0.5 border text-[10px] font-mono font-bold rounded ${getCaptionColor(staff.caption)} ${getCaptionColor(staff.caption).replace('bg-', 'border-')}`}>
-                    {staff.caption}
-                  </span>
-                  <span className="text-xs font-mono text-gold-400 group-hover:text-gold-300">
-                    +1%
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-cream-100/50 group-hover:text-gold-400 transition-colors" />
-                </button>
-              ))}
-            </div>
+          <div className="space-y-1">
+            {assignedToCorps.map((staff) => (
+              <button
+                key={staff.staffId}
+                onClick={() => setSelectedStaff(staff)}
+                className="w-full h-14 flex items-center gap-3 px-3 bg-black/40 border border-white/5 hover:border-gold-500/30 transition-all cursor-pointer rounded-lg group"
+              >
+                {/* Avatar */}
+                <div className={`w-9 h-9 ${getCaptionColor(staff.caption)}/20 border border-white/10 flex items-center justify-center flex-shrink-0 rounded-lg`}>
+                  <Award className={`w-4 h-4 ${getCaptionColor(staff.caption).replace('bg-', 'text-')}`} />
+                </div>
+
+                {/* Name / Role */}
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-mono font-bold text-cream-100 truncate">
+                    {staff.name}
+                  </p>
+                  <p className="text-[10px] text-cream/40 truncate">
+                    {getCaptionLabel(staff.caption)}
+                  </p>
+                </div>
+
+                {/* Bonus Stat (Green) */}
+                <span className="text-sm font-mono font-bold text-green-400 flex-shrink-0">
+                  +1%
+                </span>
+
+                {/* Salary (Gold) */}
+                <span className="text-xs font-mono text-gold-400 flex-shrink-0 w-16 text-right">
+                  ${staff.salary || 0}/wk
+                </span>
+              </button>
+            ))}
           </div>
         ) : (
           <div className="text-center py-6 bg-black/40 border border-white/5 rounded-lg">
-            <Users className="w-10 h-10 text-cream-100/30 mx-auto mb-2" />
-            <p className="text-sm font-mono font-bold text-cream-100/50 mb-1">No Staff Assigned</p>
-            <p className="data-label-sm mb-4">
+            <Users className="w-8 h-8 text-cream/30 mx-auto mb-2" />
+            <p className="text-sm font-mono text-cream/50 mb-1">No Staff Assigned</p>
+            <p className="text-[10px] text-cream/40 mb-3">
               {ownedStaff.length > 0
-                ? `${unassignedStaff.length} unassigned staff available`
-                : 'Purchase staff to boost scores'}
+                ? `${unassignedStaff.length} available to assign`
+                : 'Purchase staff in marketplace'}
             </p>
             <Link
               to="/staff"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-black/40 border border-white/5 hover:border-gold-500/30 text-cream-100 text-xs font-display font-bold uppercase transition-all rounded-lg"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 hover:border-gold-500/30 text-cream/60 text-xs font-mono transition-all rounded-lg"
             >
               {ownedStaff.length > 0 ? 'Assign Staff' : 'Browse Marketplace'}
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
         )}
 
-        {/* Unassigned Staff Notice */}
+        {/* Unassigned Staff Notice - Subtle */}
         {unassignedStaff.length > 0 && assignedToCorps.length > 0 && (
-          <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest">
-                  {unassignedStaff.length} Unassigned Staff
-                </p>
-              </div>
-              <Link
-                to="/staff?tab=roster"
-                className="text-xs font-mono text-blue-400 hover:text-blue-300 whitespace-nowrap"
-              >
-                Assign →
-              </Link>
-            </div>
+          <div className="mt-3 flex items-center justify-between text-[10px]">
+            <span className="text-cream/40">
+              {unassignedStaff.length} staff available to assign
+            </span>
+            <Link
+              to="/staff?tab=roster"
+              className="text-gold-400 hover:text-gold-300 font-mono"
+            >
+              Manage →
+            </Link>
           </div>
         )}
       </motion.div>
 
-      {/* How Staff Affects Scoring - Help section (closed by default design) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-slot"
-      >
-        <div className="flex items-start gap-3">
-          <Trophy className="w-5 h-5 text-gold-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="section-label mb-2">How Staff Affects Your Score</p>
-            <ul className="text-xs text-cream-100/60 space-y-1 font-mono">
-              <li className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gold-400">+1%</span>
-                <span>per staff member assigned</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gold-400">+5%</span>
-                <span>maximum total bonus</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-sm font-bold text-blue-400">CAP</span>
-                <span>caption-specific boosts</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </motion.div>
+      {/* Staff Info - Compact */}
+      <div className="flex items-center gap-4 text-[10px] text-cream/40 px-1">
+        <span><span className="text-gold-400 font-mono font-bold">+1%</span> per staff</span>
+        <span><span className="text-gold-400 font-mono font-bold">+5%</span> max bonus</span>
+      </div>
 
       {/* Staff Details Modal */}
       <AnimatePresence>
