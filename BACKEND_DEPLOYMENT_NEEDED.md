@@ -55,6 +55,6 @@ After deployment, test by:
 3. Should complete without errors
 4. Check logs for successful profile reset message
 
----
+-----
 
 **Note:** The frontend changes (error handling improvements, UX enhancements) are already deployed via Vercel and working correctly.
