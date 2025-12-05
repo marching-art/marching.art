@@ -608,7 +608,7 @@ const Dashboard = () => {
                                 : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
                             }`}
                           >
-                            {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
+                            {corpsData.corpsName || corpsData.name || ''}
                           </button>
                         ))}
                     </div>
