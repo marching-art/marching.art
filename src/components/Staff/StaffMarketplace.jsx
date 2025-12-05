@@ -8,6 +8,7 @@ import {
   Music, Eye, Flag, Drum, Sparkles, Star, Crown,
   ArrowUpDown, User, TrendingUp, FileText
 } from 'lucide-react';
+import FilterRack from './FilterRack';
 import { useAuth } from '../../App';
 import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import { CAPTION_OPTIONS, getCaptionLabel } from '../../utils/captionUtils';
@@ -410,6 +411,8 @@ const StaffMarketplace = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [captionFilter, setCaptionFilter] = useState('all');
+  const [minCost, setMinCost] = useState('');
+  const [maxCost, setMaxCost] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filteredStaff, setFilteredStaff] = useState([]);
@@ -421,7 +424,7 @@ const StaffMarketplace = () => {
 
   useEffect(() => {
     filterAndSortStaff();
-  }, [marketplace, searchTerm, sortBy, sortDirection]);
+  }, [marketplace, searchTerm, minCost, maxCost, sortBy, sortDirection]);
 
   const filterAndSortStaff = () => {
     let filtered = [...marketplace];
@@ -432,6 +435,20 @@ const StaffMarketplace = () => {
         staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         staff.biography?.toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
+
+    // Apply cost range filter
+    if (minCost) {
+      const min = parseInt(minCost, 10);
+      if (!isNaN(min)) {
+        filtered = filtered.filter(staff => staff.baseValue >= min);
+      }
+    }
+    if (maxCost) {
+      const max = parseInt(maxCost, 10);
+      if (!isNaN(max)) {
+        filtered = filtered.filter(staff => staff.baseValue <= max);
+      }
     }
 
     // Apply sorting
@@ -491,6 +508,17 @@ const StaffMarketplace = () => {
   const legendaryCount = filteredStaff.filter(s => getRarity(s.baseValue) === 'legendary').length;
   const ownedCount = filteredStaff.filter(s => ownsStaff(s.id)).length;
 
+  // Check if any filters are active
+  const hasActiveFilters = searchTerm || captionFilter !== 'all' || minCost || maxCost;
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setCaptionFilter('all');
+    setMinCost('');
+    setMaxCost('');
+  };
+
   const SortIcon = ({ column }) => {
     if (sortBy !== column) return <ArrowUpDown className="w-3 h-3 text-cream/30" />;
     return sortDirection === 'asc'
@@ -504,9 +532,9 @@ const StaffMarketplace = () => {
       {/* Main List Panel */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
-        {/* Header Bar - Compact */}
+        {/* Header Bar - Compact stats and balance */}
         <div className="shrink-0 p-2 border-b border-white/10 bg-black/40">
-          <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
               <h1 className="font-display font-bold text-sm text-cream uppercase tracking-wide">Staff Market</h1>
               <div className="flex items-center gap-2 text-[9px]">
@@ -522,47 +550,21 @@ const StaffMarketplace = () => {
               <span className="text-xs font-bold text-data-gold">{corpsCoin.toLocaleString()}</span>
             </div>
           </div>
-
-          {/* Search & Filters - Single row */}
-          <div className="flex gap-2">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-cream/30" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search..."
-                className="w-full pl-7 pr-2 py-1.5 bg-black/60 border border-white/10 rounded text-cream text-xs placeholder:text-cream/30 focus:outline-none focus:border-gold-500/50"
-              />
-            </div>
-
-            {/* Caption Filter */}
-            <div className="relative">
-              <select
-                value={captionFilter}
-                onChange={(e) => setCaptionFilter(e.target.value)}
-                className="w-full sm:w-auto px-2 py-1.5 bg-black/60 border border-white/10 rounded text-cream text-xs focus:outline-none focus:border-gold-500/50 appearance-none pr-6 cursor-pointer"
-              >
-                <option value="all">All</option>
-                {CAPTION_OPTIONS.filter(o => o.value !== 'all').map(option => (
-                  <option key={option.value} value={option.value}>{option.value}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-cream/40 pointer-events-none" />
-            </div>
-
-            {/* Clear filters */}
-            {(searchTerm || captionFilter !== 'all') && (
-              <button
-                onClick={() => { setSearchTerm(''); setCaptionFilter('all'); }}
-                className="px-2 py-1.5 text-gold-400 hover:text-gold-300 border border-gold-500/30 rounded"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
         </div>
+
+        {/* Filter Rack - Responsive filter controls */}
+        <FilterRack
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          captionFilter={captionFilter}
+          onCaptionChange={setCaptionFilter}
+          minCost={minCost}
+          maxCost={maxCost}
+          onMinCostChange={setMinCost}
+          onMaxCostChange={setMaxCost}
+          onClearFilters={handleClearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
         {/* Column Headers */}
         <div className="shrink-0 h-8 flex items-center gap-2 px-2 border-b border-white/10 bg-black/60 text-[9px] text-data-muted uppercase">
