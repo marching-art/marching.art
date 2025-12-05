@@ -167,8 +167,8 @@ const CaptionSynergyCard = ({ caption, corpsValue, showTags }) => {
 
   if (!corpsValue) return null;
 
-  // Parse corps value: "Blue Devils|20|2014"
-  const [corpsName, points, sourceYear] = corpsValue.split('|');
+  // Parse corps value: "Blue Devils|2014|20" (corpsName|sourceYear|points)
+  const [corpsName, sourceYear, points] = corpsValue.split('|');
   const corpsTags = getDefaultCorpsTags(corpsName, sourceYear);
 
   // Calculate matching tags
@@ -313,7 +313,7 @@ export const SynergyVisualization = ({
     for (const [caption, corpsValue] of Object.entries(lineup || {})) {
       if (!corpsValue) continue;
 
-      const [corpsName, , sourceYear] = corpsValue.split('|');
+      const [corpsName, sourceYear] = corpsValue.split('|');
       const corpsTags = getDefaultCorpsTags(corpsName, sourceYear);
       const matchingTags = showTags.filter(tag => corpsTags.includes(tag));
       const matchRatio = showTags.length > 0 ? matchingTags.length / showTags.length : 0;
