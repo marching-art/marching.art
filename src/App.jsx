@@ -36,6 +36,7 @@ const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
 const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const HUDDashboard = lazy(() => import('./pages/HUDDashboard'));
 
 // Helper component to wrap pages with error boundaries
 const Page = ({ name, children }) => (
@@ -180,6 +181,15 @@ function App() {
             <ProtectedRoute>
               <GameShell>
                 <Page name="Dashboard"><Dashboard /></Page>
+              </GameShell>
+            </ProtectedRoute>
+          } />
+
+          {/* HUD Dashboard - New 3-column layout (Phase 2) */}
+          <Route path="/hud" element={
+            <ProtectedRoute>
+              <GameShell>
+                <Page name="HUD Dashboard"><HUDDashboard /></Page>
               </GameShell>
             </ProtectedRoute>
           } />
