@@ -4,14 +4,14 @@ import { motion } from 'framer-motion';
 import {
   Shield, Database, Users, Calendar, Award,
   Play, RefreshCw, Settings, Download, Upload,
-  CheckCircle, XCircle, Clock, AlertTriangle, Plus
+  CheckCircle, XCircle, Clock, AlertTriangle, Plus, Table
 } from 'lucide-react';
 import { db, adminHelpers } from '../firebase';
 import { doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { StaffManagement } from '../components/Admin';
+import { StaffManagement, ScoresSpreadsheet } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 const Admin = () => {
@@ -158,6 +158,7 @@ const Admin = () => {
         {[
           { id: 'overview', label: 'Overview', icon: Database },
           { id: 'season', label: 'Season Management', icon: Calendar },
+          { id: 'scores', label: 'Scores Reference', icon: Table },
           { id: 'staff', label: 'Staff Database', icon: Award },
           { id: 'users', label: 'User Management', icon: Users },
           { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
@@ -186,6 +187,7 @@ const Admin = () => {
       >
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
         {activeTab === 'season' && <SeasonManagementTab seasonData={seasonData} callAdminFunction={callAdminFunction} />}
+        {activeTab === 'scores' && <ScoresSpreadsheet />}
         {activeTab === 'staff' && <StaffManagement />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
