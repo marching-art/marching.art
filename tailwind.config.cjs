@@ -286,7 +286,34 @@ module.exports = {
         'md': '12px',
         'lg': '16px',
         'xl': '24px',
-      }
+      },
+      // ===========================================
+      // AAA SIMULATION HUD - CUSTOM UTILITIES
+      // ===========================================
+      height: {
+        'dvh': '100dvh', // Dynamic viewport height for mobile compatibility
+        'screen': '100vh',
+      },
+      minHeight: {
+        'dvh': '100dvh',
+        'screen': '100vh',
+      },
+      maxHeight: {
+        'dvh': '100dvh',
+        'screen': '100vh',
+      },
+      // Grid template for Bento layout
+      gridTemplateColumns: {
+        'bento-12': 'repeat(12, minmax(0, 1fr))',
+        'bento-nav': '80px repeat(11, minmax(0, 1fr))',
+        'bento-nav-expanded': '240px repeat(11, minmax(0, 1fr))',
+      },
+      gridTemplateRows: {
+        'bento-full': '56px minmax(0, 1fr) 32px', // header + main + ticker
+        'bento-no-header': 'minmax(0, 1fr) 32px', // main + ticker
+        'bento-no-ticker': '56px minmax(0, 1fr)', // header + main
+        'bento-minimal': 'minmax(0, 1fr)', // main only
+      },
     },
   },
   plugins: [],

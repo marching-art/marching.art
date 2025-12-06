@@ -222,7 +222,7 @@ const CommandRail = ({ isExpanded = false, onToggle }) => {
 
   return (
     <nav
-      className="h-full flex flex-col bg-charcoal-950/80 backdrop-blur-xl border-r border-gold-500/10 relative"
+      className="h-full flex flex-col bg-charcoal-950/80 backdrop-blur-xl relative"
       aria-label="Main navigation"
     >
       {/* Toggle Button */}

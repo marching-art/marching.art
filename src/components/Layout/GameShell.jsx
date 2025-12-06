@@ -1,8 +1,20 @@
 // =============================================================================
-// GAME SHELL COMPONENT
+// GAME SHELL COMPONENT - AAA SIMULATION HUD
 // =============================================================================
-// Immersive "Stadium Console" wrapper that transforms the app from a website
-// to a game HUD. Features atmospheric lighting, command rail, and fixed viewport.
+// The "Director's Tablet" - A fixed-viewport game HUD that transforms the app
+// from a website into a cockpit. Implements the One-Screen Rule with Bento Grid.
+//
+// Core Design Philosophies:
+// 1. ONE-SCREEN RULE (100dvh) - No window-level scrolling
+// 2. ZERO "WEB" WHITESPACE - Borders instead of margins/padding
+// 3. BENTO-GRID LAYOUT - 12-column modular grid topology
+//
+// Grid Layout (Desktop):
+// - header: Global Ticker (56px) - Season clock, resources, alerts
+// - nav: Command Rail (80px/240px) - Persistent sidebar navigation
+// - main: Main Stage (flexible) - Primary content area
+// - inspect: Inspector Panel (3 cols) - Context-sensitive details
+// - ticker: World Ticker (32px) - Scrolling news marquee
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -10,9 +22,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { analyticsHelpers } from '../../firebase';
 import CommandRail from '../CommandRail';
 import BottomNav from '../BottomNav';
+import GlobalTicker from '../hud/GlobalTicker';
+import WorldTicker from '../hud/WorldTicker';
+import InspectorPanel, { InspectorProvider } from '../hud/InspectorPanel';
 
 // =============================================================================
-// SHELL CONTEXT - For managing sidebar state across components
+// SHELL CONTEXT - For managing HUD state across components
 // =============================================================================
 
 const ShellContext = createContext(null);
@@ -32,7 +47,7 @@ export const useShell = () => {
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 20
+    y: 12
   },
   in: {
     opacity: 1,
@@ -40,14 +55,14 @@ const pageVariants = {
   },
   out: {
     opacity: 0,
-    y: -20
+    y: -12
   }
 };
 
 const pageTransition = {
   type: 'tween',
-  ease: 'anticipate',
-  duration: 0.5
+  ease: [0.25, 0.1, 0.25, 1.0], // Snappy, mechanical feel
+  duration: 0.35
 };
 
 // =============================================================================
@@ -132,6 +147,9 @@ const AtmosphericBackground = () => {
 const GameShell = ({ children }) => {
   const location = useLocation();
   const [isRailExpanded, setIsRailExpanded] = useState(false);
+  const [showInspector, setShowInspector] = useState(true);
+  const [showTicker, setShowTicker] = useState(true);
+  const [showHeader, setShowHeader] = useState(true);
 
   // Persist rail expansion preference
   useEffect(() => {
@@ -147,6 +165,10 @@ const GameShell = ({ children }) => {
     localStorage.setItem('commandRailExpanded', String(newState));
   };
 
+  const toggleInspector = () => {
+    setShowInspector((prev) => !prev);
+  };
+
   // Log page views
   useEffect(() => {
     analyticsHelpers.logPageView(location.pathname);
@@ -155,91 +177,112 @@ const GameShell = ({ children }) => {
   const shellContextValue = {
     isRailExpanded,
     toggleRail,
-    railWidth: isRailExpanded ? 240 : 80
+    railWidth: isRailExpanded ? 240 : 80,
+    showInspector,
+    toggleInspector,
+    showTicker,
+    setShowTicker,
+    showHeader,
+    setShowHeader,
   };
 
-  // Calculate grid template columns based on rail state
-  // Desktop: Sidebar (fixed width) + Main Content (flex-1)
-  // Mobile: Full width (sidebar hidden, bottom nav visible)
-  const gridCols = isRailExpanded ? '240px 1fr' : '80px 1fr';
+  // Calculate grid classes based on state
+  const gridClasses = [
+    'bento-grid-container',
+    showHeader && showTicker ? 'with-header-ticker' : showHeader ? 'with-header' : showTicker ? 'with-ticker' : '',
+    showInspector ? 'desktop-layout' : 'no-inspector',
+    isRailExpanded ? 'nav-expanded' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      {/* =================================================================
-          ONE-SCREEN GAME UI: Global Console Wrapper
-          Fixed viewport - browser window NEVER scrolls
-          ================================================================= */}
-      <div className="h-screen w-screen overflow-hidden bg-stadium-black text-cream font-sans">
-
-        {/* Atmospheric Background Layer */}
-        <AtmosphericBackground />
-
+      <InspectorProvider>
         {/* =================================================================
-            VIEWPORT CONSTRAINT: Console Frame for Ultra-Wide Monitors
-            - Max width 1920px keeps the "console" feel on large screens
-            - Centered with subtle border framing on desktop
+            ONE-SCREEN GAME UI: Global Console Wrapper
+            Fixed viewport - browser window NEVER scrolls
+            Uses 100dvh for mobile browser compatibility
             ================================================================= */}
-        <div className="h-full w-full">
+        <div className="h-dvh w-screen overflow-hidden bg-stadium-black text-cream font-sans">
+
+          {/* Atmospheric Background Layer */}
+          <AtmosphericBackground />
+
           {/* =================================================================
-              APP SHELL LAYOUT: CSS Grid Structure
-              - Mobile: Single column (100vw) with bottom nav
-              - Desktop: Sidebar (fixed) + Main Content (1fr)
+              BENTO GRID CONTAINER
+              12-column CSS Grid with 1px gap borders
+              Named areas: header, nav, main, inspect, ticker
               ================================================================= */}
           <div
-            className="relative z-10 h-full w-full grid grid-cols-1 lg:grid-cols-[var(--sidebar-width)_1fr]"
-            style={{ '--sidebar-width': isRailExpanded ? '240px' : '80px' }}
+            className={`relative z-10 h-full w-full ${gridClasses}`}
+            style={{
+              '--nav-width': isRailExpanded ? '240px' : '80px',
+            }}
           >
+            {/* HEADER ZONE: Global Ticker */}
+            {showHeader && (
+              <div className="bento-area-header hidden lg:block">
+                <GlobalTicker />
+              </div>
+            )}
 
-          {/* Desktop Command Rail - Fixed Width Sidebar */}
-          <motion.aside
-            className="hidden lg:flex flex-col h-full relative z-20 border-r border-white/5"
-            initial={false}
-            animate={{ width: isRailExpanded ? 240 : 80 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          >
-            <CommandRail
-              isExpanded={isRailExpanded}
-              onToggle={toggleRail}
-            />
-          </motion.aside>
+            {/* NAV ZONE: Command Rail (Desktop) */}
+            <motion.aside
+              className="bento-area-nav hidden lg:flex flex-col h-full relative z-20"
+              initial={false}
+              animate={{ width: isRailExpanded ? 240 : 80 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <CommandRail
+                isExpanded={isRailExpanded}
+                onToggle={toggleRail}
+              />
+            </motion.aside>
 
-          {/* =================================================================
-              MAIN CONTENT AREA: Canvas Logic
-              - Position: relative (for absolute children)
-              - Uses h-full flex flex-col for proper height management
-              - Work Surface handles internal scrolling ONLY
-              ================================================================= */}
-          <main className="relative h-full w-full overflow-hidden flex flex-col pb-20 lg:pb-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial="initial"
-                animate="in"
-                exit="out"
-                variants={pageVariants}
-                transition={pageTransition}
-                className="h-full w-full flex flex-col"
-              >
-                {/* =============================================================
-                    WORK SURFACE: Page Content Container
-                    - flex-1: Takes remaining height after top bar
-                    - overflow-hidden: Frame remains static
-                    - Internal scroll via .hud-scroll applied to scrollable areas
-                    ============================================================= */}
-                <div className="flex-1 overflow-hidden">
-                  {children}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </main>
+            {/* MAIN ZONE: Primary Content Area */}
+            <main className="bento-area-main relative h-full w-full overflow-hidden flex flex-col pb-20 lg:pb-0">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial="initial"
+                  animate="in"
+                  exit="out"
+                  variants={pageVariants}
+                  transition={pageTransition}
+                  className="h-full w-full flex flex-col"
+                >
+                  {/* Work Surface: Page Content Container
+                      - flex-1: Takes remaining height
+                      - overflow-hidden: Frame remains static
+                      - Internal scroll via .hud-scroll applied to scrollable areas
+                  */}
+                  <div className="flex-1 overflow-hidden">
+                    {children}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </main>
+
+            {/* INSPECT ZONE: Inspector Panel (Desktop) */}
+            {showInspector && (
+              <div className="bento-area-inspect hidden lg:block">
+                <InspectorPanel />
+              </div>
+            )}
+
+            {/* TICKER ZONE: World Ticker */}
+            {showTicker && (
+              <div className="bento-area-ticker hidden lg:block">
+                <WorldTicker />
+              </div>
+            )}
+          </div>
 
           {/* Mobile Bottom Navigation - Fixed at bottom, hidden on desktop */}
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
             <BottomNav />
           </div>
         </div>
-        </div>
-      </div>
+      </InspectorProvider>
     </ShellContext.Provider>
   );
 };
