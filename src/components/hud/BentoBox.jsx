@@ -164,8 +164,7 @@ const BentoBox = ({
  * Grid Layout (Desktop):
  * - header: spans 12 columns (56px fixed height)
  * - nav: spans ~1 column (80px collapsed / 240px expanded)
- * - main: spans 7-9 columns (flexible)
- * - inspect: spans 3-5 columns (flexible)
+ * - main: spans 11 columns (flexible)
  * - ticker: spans 12 columns (32px fixed height)
  */
 const BentoGrid = ({

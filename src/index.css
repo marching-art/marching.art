@@ -3074,14 +3074,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 }
 
 /* Named grid areas - Desktop layout */
-.bento-grid-container.desktop-layout {
-  grid-template-areas:
-    "header header header header header header header header header header header header"
-    "nav    main   main   main   main   main   main   main   main   inspect inspect inspect"
-    "ticker ticker ticker ticker ticker ticker ticker ticker ticker ticker  ticker  ticker";
-}
-
-/* Named grid areas - No inspector */
 .bento-grid-container.no-inspector {
   grid-template-areas:
     "header header header header header header header header header header header header"
@@ -3093,7 +3085,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 .bento-area-header { grid-area: header; }
 .bento-area-nav { grid-area: nav; }
 .bento-area-main { grid-area: main; }
-.bento-area-inspect { grid-area: inspect; }
 .bento-area-ticker { grid-area: ticker; }
 
 /* ===========================================
@@ -3332,57 +3323,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 }
 
 /* ===========================================
-   INSPECTOR PANEL
-   Context-sensitive detail panel
-   =========================================== */
-
-.inspector-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: rgba(17, 17, 17, 0.6);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.inspector-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-}
-
-.inspector-content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0.75rem;
-}
-
-.inspector-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 0.75rem;
-  text-align: center;
-  padding: 1rem;
-}
-
-.inspector-empty-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ===========================================
    HEAT-MAPPED DATA CELLS
    Color-coded data values for instant scanning
    =========================================== */
@@ -3563,10 +3503,6 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
   .bento-area-nav {
     display: none; /* Hidden on mobile, use BottomNav */
-  }
-
-  .bento-area-inspect {
-    display: none; /* Collapsed on mobile */
   }
 
   .bento-area-header {
