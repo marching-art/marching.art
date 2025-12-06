@@ -13,7 +13,6 @@
 // - header: Global Ticker (56px) - Season clock, resources, alerts
 // - nav: Command Rail (80px/240px) - Persistent sidebar navigation
 // - main: Main Stage (flexible) - Primary content area
-// - inspect: Inspector Panel (3 cols) - Context-sensitive details
 // - ticker: World Ticker (32px) - Scrolling news marquee
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
@@ -24,7 +23,6 @@ import CommandRail from '../CommandRail';
 import BottomNav from '../BottomNav';
 import GlobalTicker from '../hud/GlobalTicker';
 import WorldTicker from '../hud/WorldTicker';
-import InspectorPanel, { InspectorProvider } from '../hud/InspectorPanel';
 
 // =============================================================================
 // SHELL CONTEXT - For managing HUD state across components
@@ -147,7 +145,6 @@ const AtmosphericBackground = () => {
 const GameShell = ({ children }) => {
   const location = useLocation();
   const [isRailExpanded, setIsRailExpanded] = useState(false);
-  const [showInspector, setShowInspector] = useState(true);
   const [showTicker, setShowTicker] = useState(true);
   const [showHeader, setShowHeader] = useState(true);
 
@@ -165,10 +162,6 @@ const GameShell = ({ children }) => {
     localStorage.setItem('commandRailExpanded', String(newState));
   };
 
-  const toggleInspector = () => {
-    setShowInspector((prev) => !prev);
-  };
-
   // Log page views
   useEffect(() => {
     analyticsHelpers.logPageView(location.pathname);
@@ -178,8 +171,6 @@ const GameShell = ({ children }) => {
     isRailExpanded,
     toggleRail,
     railWidth: isRailExpanded ? 240 : 80,
-    showInspector,
-    toggleInspector,
     showTicker,
     setShowTicker,
     showHeader,
@@ -190,19 +181,18 @@ const GameShell = ({ children }) => {
   const gridClasses = [
     'bento-grid-container',
     showHeader && showTicker ? 'with-header-ticker' : showHeader ? 'with-header' : showTicker ? 'with-ticker' : '',
-    showInspector ? 'desktop-layout' : 'no-inspector',
+    'no-inspector',
     isRailExpanded ? 'nav-expanded' : '',
   ].filter(Boolean).join(' ');
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <InspectorProvider>
-        {/* =================================================================
-            ONE-SCREEN GAME UI: Global Console Wrapper
-            Fixed viewport - browser window NEVER scrolls
-            Uses 100dvh for mobile browser compatibility
-            ================================================================= */}
-        <div className="h-dvh w-screen overflow-hidden bg-stadium-black text-cream font-sans">
+      {/* =================================================================
+          ONE-SCREEN GAME UI: Global Console Wrapper
+          Fixed viewport - browser window NEVER scrolls
+          Uses 100dvh for mobile browser compatibility
+          ================================================================= */}
+      <div className="h-dvh w-screen overflow-hidden bg-stadium-black text-cream font-sans">
 
           {/* Atmospheric Background Layer */}
           <AtmosphericBackground />
@@ -210,7 +200,7 @@ const GameShell = ({ children }) => {
           {/* =================================================================
               BENTO GRID CONTAINER
               12-column CSS Grid with 1px gap borders
-              Named areas: header, nav, main, inspect, ticker
+              Named areas: header, nav, main, ticker
               ================================================================= */}
           <div
             className={`relative z-10 h-full w-full ${gridClasses}`}
@@ -262,13 +252,6 @@ const GameShell = ({ children }) => {
               </AnimatePresence>
             </main>
 
-            {/* INSPECT ZONE: Inspector Panel (Desktop) */}
-            {showInspector && (
-              <div className="bento-area-inspect hidden lg:block">
-                <InspectorPanel />
-              </div>
-            )}
-
             {/* TICKER ZONE: World Ticker */}
             {showTicker && (
               <div className="bento-area-ticker hidden lg:block">
@@ -281,8 +264,7 @@ const GameShell = ({ children }) => {
           <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
             <BottomNav />
           </div>
-        </div>
-      </InspectorProvider>
+      </div>
     </ShellContext.Provider>
   );
 };
