@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 
 // Layout Components
 import ResourceHeader from '../components/hud/ResourceHeader';
+import DashboardFooter from '../components/hud/DashboardFooter';
 import {
   CommandCenterLayout,
   IntelligenceColumn,
@@ -63,9 +64,12 @@ import {
   TrendingUp,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Coffee,
   Square,
   Settings,
+  LayoutGrid,
 } from 'lucide-react';
 
 // =============================================================================
@@ -448,6 +452,7 @@ const HUDDashboard = () => {
   const [opsStatus, setOpsStatus] = useState(null);
   const [opsLoading, setOpsLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
+  const [showMobileLogistics, setShowMobileLogistics] = useState(false);
 
   // Destructure dashboard data
   const {
@@ -468,6 +473,7 @@ const HUDDashboard = () => {
     handleCorpsSwitch,
     completeDailyChallenge,
     refreshProfile,
+    recentScores,
   } = dashboardData;
 
   // Calculate staff assigned to active corps
@@ -825,89 +831,128 @@ const HUDDashboard = () => {
 
           {/* ================================================================
               RIGHT COLUMN: LOGISTICS - Staff & Equipment
+              Mobile: Collapsible with "Show Details" toggle
               ================================================================ */}
           <LogisticsColumn>
             <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
 
-              {/* Staff Summary */}
-              <Panel
-                title="Staff"
-                subtitle={`${assignedStaff.length}/8 assigned`}
-                variant="default"
-                className="flex-1 min-h-0"
-                scrollable
-                actions={
-                  <button
-                    onClick={() => setShowStaffPanel(true)}
-                    className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                  >
-                    Manage →
-                  </button>
-                }
+              {/* Mobile Toggle Button */}
+              <button
+                onClick={() => setShowMobileLogistics(!showMobileLogistics)}
+                className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10"
               >
-                {/* Aggregate Effectiveness */}
-                <StaffEffectivenessDisplay assignedStaff={assignedStaff} />
-
-                {/* Staff Slots */}
-                <div className="mt-3 space-y-1">
-                  {CAPTIONS.slice(0, 4).map(caption => {
-                    const staff = assignedStaff.find(s =>
-                      s.assignedTo?.caption === caption || s.caption === caption
-                    );
-                    return <StaffSlot key={caption} staff={staff} caption={caption} />;
-                  })}
-                  {assignedStaff.length > 4 && (
-                    <div className="text-[9px] text-cream/40 text-center py-1">
-                      +{assignedStaff.length - 4} more staff assigned
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="w-4 h-4 text-gold-400" />
+                  <span className="text-xs font-display font-bold text-cream uppercase">
+                    Logistics Details
+                  </span>
+                  <span className="text-[9px] text-cream/40">
+                    Staff, Equipment, Schedule
+                  </span>
                 </div>
-              </Panel>
+                {showMobileLogistics ? (
+                  <ChevronUp className="w-4 h-4 text-cream/40" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-cream/40" />
+                )}
+              </button>
 
-              {/* Equipment Status */}
-              <Panel
-                title="Equipment"
-                variant="default"
-                className="flex-none"
-                actions={
-                  <button
-                    onClick={() => setShowEquipmentPanel(true)}
-                    className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                  >
-                    Repair →
-                  </button>
-                }
-              >
-                <EquipmentStatus equipment={executionState?.equipment} />
-              </Panel>
+              {/* Collapsible Content (always visible on desktop, toggleable on mobile) */}
+              <div className={`
+                flex flex-col gap-1 flex-1 min-h-0
+                ${showMobileLogistics ? 'flex' : 'hidden lg:flex'}
+              `}>
+                {/* Staff Summary */}
+                <Panel
+                  title="Staff"
+                  subtitle={`${assignedStaff.length}/8 assigned`}
+                  variant="default"
+                  className="flex-1 min-h-0"
+                  scrollable
+                  actions={
+                    <button
+                      onClick={() => setShowStaffPanel(true)}
+                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+                    >
+                      Manage →
+                    </button>
+                  }
+                >
+                  {/* Aggregate Effectiveness */}
+                  <StaffEffectivenessDisplay assignedStaff={assignedStaff} />
 
-              {/* Schedule Quick View */}
-              <Panel
-                title="Schedule"
-                subtitle={`Week ${currentWeek}`}
-                variant="sunken"
-                className="flex-none"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm font-display font-bold text-cream">
-                      {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} Shows
-                    </span>
+                  {/* Staff Slots */}
+                  <div className="mt-3 space-y-1">
+                    {CAPTIONS.slice(0, 4).map(caption => {
+                      const staff = assignedStaff.find(s =>
+                        s.assignedTo?.caption === caption || s.caption === caption
+                      );
+                      return <StaffSlot key={caption} staff={staff} caption={caption} />;
+                    })}
+                    {assignedStaff.length > 4 && (
+                      <div className="text-[9px] text-cream/40 text-center py-1">
+                        +{assignedStaff.length - 4} more staff assigned
+                      </div>
+                    )}
                   </div>
-                  <Link
-                    to="/schedule"
-                    className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                  >
-                    View →
-                  </Link>
-                </div>
-              </Panel>
+                </Panel>
+
+                {/* Equipment Status */}
+                <Panel
+                  title="Equipment"
+                  variant="default"
+                  className="flex-none"
+                  actions={
+                    <button
+                      onClick={() => setShowEquipmentPanel(true)}
+                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+                    >
+                      Repair →
+                    </button>
+                  }
+                >
+                  <EquipmentStatus equipment={executionState?.equipment} />
+                </Panel>
+
+                {/* Schedule Quick View */}
+                <Panel
+                  title="Schedule"
+                  subtitle={`Week ${currentWeek}`}
+                  variant="sunken"
+                  className="flex-none"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm font-display font-bold text-cream">
+                        {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} Shows
+                      </span>
+                    </div>
+                    <Link
+                      to="/schedule"
+                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+                    >
+                      View →
+                    </Link>
+                  </div>
+                </Panel>
+              </div>
             </motion.div>
           </LogisticsColumn>
 
         </CommandCenterLayout>
       </motion.div>
+
+      {/* ====================================================================
+          DASHBOARD FOOTER - Score Summary & League Ticker
+          ==================================================================== */}
+      <DashboardFooter
+        recentScores={recentScores}
+        activeCorps={activeCorps}
+        multiplier={multiplier}
+        seasonData={seasonData}
+        currentWeek={currentWeek}
+      />
 
       {/* ======================================================================
           SLIDE-OUT PANELS
