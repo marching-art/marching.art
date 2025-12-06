@@ -1,37 +1,28 @@
 // src/pages/Dashboard.jsx
-// ARCHITECTURE FIX: Single Source of Truth - Fixed-Height Game HUD
-// Bento Grid Layout: 100vh viewport with TopBar + 2-column grid (Cockpit | Context Panel)
-import React, { useState, useEffect } from 'react';
+// ARCHITECTURE: High-Density HUD (Heads-Up Display) - One-Page Command Center
+// Three-Column Layout: Intelligence | Command | Logistics
+// No scrolling on desktop - everything fits in viewport
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
   TrendingUp, Play, Check, X, Crown, Flame, Coins,
   Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
-  CheckCircle, Circle, ArrowUp, AlertTriangle
+  CheckCircle, Circle, ArrowUp, AlertTriangle, ChevronRight,
+  Shield, Eye, Drum, Flag, Activity, Radio, Gauge
 } from 'lucide-react';
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import {
   EquipmentManager,
   DashboardStaffPanel,
   ExecutionInsightsPanel,
   SectionGauges,
-  // HUD Hover Insights - Phase 3 Transparent Gameplay
-  TacticalGaugeWithInsight,
-  MultiplierFactorPills,
-  ScoreBreakdownTooltip,
-  StaffEffectivenessTooltip,
-  // Glass Box Multiplier - Interactive breakdown
   MultiplierGlassBoxLarge,
-  // Segmented Metric Bars - Split-signal display
-  SegmentedMetricBar,
-  ClusterBar,
-  // Difficulty Confidence Meter - Risk/Reward visualization
   ConfidenceBadge,
-  DifficultyConfidenceMeter,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
@@ -45,41 +36,119 @@ import {
   AchievementModal,
   MorningReport,
   DailyOperations,
-  RichActionModule
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
+import { useScoresData } from '../hooks/useScoresData';
 import { retireCorps } from '../firebase/functions';
+import { useSeasonStore } from '../store/seasonStore';
 
 // ============================================================================
-// DENSE BENTO-GRID HUD COMPONENTS
-// "Rack" style widgets with glassmorphism and tight spacing
+// DESIGN TOKENS (from audit)
+// ============================================================================
+const classColors = {
+  worldClass: 'bg-gold-500 text-charcoal-900',
+  openClass: 'bg-purple-500 text-white',
+  aClass: 'bg-blue-500 text-white',
+  soundSport: 'bg-green-500 text-white',
+};
+
+const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+
+// ============================================================================
+// REUSABLE HUD COMPONENTS
 // ============================================================================
 
-// Glassmorphism Widget wrapper - consistent styling for all bento cells
-const Widget = ({ children, className = '', noPadding = false }) => (
-  <div className={`
-    bg-black/50 backdrop-blur-md
-    border border-white/10
-    rounded-lg overflow-hidden
-    ${noPadding ? '' : 'p-3'}
-    ${className}
-  `}>
-    {children}
+// Resource Pill - Compact stat display for header
+const ResourcePill = ({ icon: Icon, value, label, color = 'gold', onClick, pulse = false }) => {
+  const colorMap = {
+    gold: 'text-gold-400 bg-gold-500/15 border-gold-500/30',
+    blue: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
+    green: 'text-green-400 bg-green-500/15 border-green-500/30',
+    purple: 'text-purple-400 bg-purple-500/15 border-purple-500/30',
+    orange: 'text-orange-400 bg-orange-500/15 border-orange-500/30',
+  };
+
+  const Wrapper = onClick ? 'button' : 'div';
+
+  return (
+    <Wrapper
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border backdrop-blur-sm transition-all ${colorMap[color]} ${onClick ? 'hover:bg-white/10 cursor-pointer' : ''} ${pulse ? 'animate-pulse' : ''}`}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      <span className="text-sm font-data font-bold tabular-nums">{value}</span>
+      {label && <span className="text-[9px] text-cream/50 uppercase tracking-wide">{label}</span>}
+    </Wrapper>
+  );
+};
+
+// Section Progress Bar - Compact progress with label
+const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }) => {
+  const bgMap = {
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    gold: 'bg-gold-500',
+    purple: 'bg-purple-500',
+    orange: 'bg-orange-500',
+    red: 'bg-red-500',
+  };
+  const textMap = {
+    blue: 'text-blue-400',
+    green: 'text-green-400',
+    gold: 'text-gold-400',
+    purple: 'text-purple-400',
+    orange: 'text-orange-400',
+    red: 'text-red-400',
+  };
+
+  const percent = Math.round(value * 100);
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wide w-14 shrink-0">
+        {label}
+      </span>
+      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className={`h-full ${bgMap[color]} rounded-full`}
+        />
+      </div>
+      {showPercent && (
+        <span className={`text-[10px] font-data font-bold w-8 text-right ${textMap[color]}`}>
+          {percent}%
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Multiplier Badge - Shows active buff/debuff
+const MultiplierBadge = ({ label, value, positive = true }) => (
+  <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-data font-bold ${
+    positive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+  }`}>
+    <span>{label}:</span>
+    <span>{positive ? '+' : ''}{value}</span>
   </div>
 );
 
-// Compact Action Tile - Square clickable tile for actions grid
-const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed, color = 'gold' }) => {
-  const colorClasses = {
-    gold: 'text-gold-400 bg-gold-500/20 border-gold-500/30 hover:bg-gold-500/30',
-    blue: 'text-blue-400 bg-blue-500/20 border-blue-500/30 hover:bg-blue-500/30',
-    green: 'text-green-400 bg-green-500/20 border-green-500/30 hover:bg-green-500/30',
-    purple: 'text-purple-400 bg-purple-500/20 border-purple-500/30 hover:bg-purple-500/30',
-    orange: 'text-orange-400 bg-orange-500/20 border-orange-500/30 hover:bg-orange-500/30',
+// Action Button - Primary action tile
+const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed, color = 'gold', size = 'md' }) => {
+  const colorMap = {
+    gold: { bg: 'bg-gold-500/20', border: 'border-gold-500/40', icon: 'text-gold-400', hover: 'hover:bg-gold-500/30' },
+    blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/40', icon: 'text-blue-400', hover: 'hover:bg-blue-500/30' },
+    green: { bg: 'bg-green-500/20', border: 'border-green-500/40', icon: 'text-green-400', hover: 'hover:bg-green-500/30' },
+    purple: { bg: 'bg-purple-500/20', border: 'border-purple-500/40', icon: 'text-purple-400', hover: 'hover:bg-purple-500/30' },
+    orange: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', icon: 'text-orange-400', hover: 'hover:bg-orange-500/30' },
   };
+  const c = colorMap[color];
+  const sizeClass = size === 'sm' ? 'p-2' : size === 'lg' ? 'p-4' : 'p-3';
 
   return (
     <motion.button
@@ -88,187 +157,203 @@ const ActionTile = ({ icon: Icon, label, subtitle, onClick, disabled, processing
       whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
       whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
       className={`
-        h-full w-full flex flex-col items-center justify-center gap-1.5
-        bg-black/50 backdrop-blur-md border border-white/10 rounded-lg
+        ${sizeClass} flex items-center gap-3 w-full
+        bg-black/40 backdrop-blur-md border border-white/10 rounded-lg
         transition-all duration-200
-        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}
+        ${disabled ? 'opacity-40 cursor-not-allowed' : `cursor-pointer hover:border-white/20 ${c.hover}`}
         ${completed ? 'border-green-500/40 bg-green-500/10' : ''}
       `}
     >
-      <div className={`p-2 rounded-lg ${completed ? 'bg-green-500/20' : colorClasses[color]}`}>
+      <div className={`p-2 rounded-lg ${completed ? 'bg-green-500/20' : c.bg} border ${completed ? 'border-green-500/40' : c.border}`}>
         {processing ? (
           <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
         ) : completed ? (
           <Check className="w-5 h-5 text-green-400" />
         ) : (
-          <Icon className={`w-5 h-5 ${colorClasses[color].split(' ')[0]}`} />
+          <Icon className={`w-5 h-5 ${c.icon}`} />
         )}
       </div>
-      <span className="text-[10px] font-display font-bold text-cream uppercase tracking-wide text-center leading-tight">
-        {label}
-      </span>
-      {subtitle && (
-        <span className="text-[8px] text-data-muted">
-          {subtitle}
-        </span>
-      )}
+      <div className="flex-1 text-left">
+        <div className="text-sm font-display font-bold text-cream uppercase tracking-wide">{label}</div>
+        {subtitle && <div className="text-[10px] text-cream/50">{subtitle}</div>}
+      </div>
+      <ChevronRight className="w-4 h-4 text-cream/30" />
     </motion.button>
   );
 };
 
-// Compact Stat Pill - For inline stats display
-const StatPill = ({ icon: Icon, value, label, color = 'gold' }) => {
-  const colorClasses = {
-    gold: 'text-data-gold',
-    blue: 'text-data-blue',
-    green: 'text-data-success',
-    purple: 'text-data-purple',
-    orange: 'text-data-orange',
-  };
-
-  return (
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/10">
-      <Icon className={`w-3 h-3 ${color === 'gold' ? 'text-gold-400' : color === 'blue' ? 'text-blue-400' : color === 'green' ? 'text-green-400' : color === 'purple' ? 'text-purple-400' : 'text-orange-400'}`} />
-      <span className={`text-xs font-bold ${colorClasses[color]}`}>{value}</span>
-      <span className="text-[9px] text-cream/40 uppercase">{label}</span>
+// Task Checkbox - Daily task checklist item
+const TaskCheckbox = ({ title, reward, completed, onClick, loading }) => (
+  <button
+    onClick={onClick}
+    disabled={completed || loading}
+    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+      completed ? 'opacity-50 cursor-default' : 'hover:bg-white/5 cursor-pointer'
+    }`}
+  >
+    <div className={`w-5 h-5 flex items-center justify-center rounded border transition-all ${
+      completed
+        ? 'bg-green-500/20 border-green-500/60 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+        : 'bg-transparent border-white/20'
+    }`}>
+      {loading ? (
+        <div className="w-3 h-3 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+      ) : completed ? (
+        <Check className="w-3 h-3 text-green-400" />
+      ) : null}
     </div>
-  );
-};
+    <span className={`flex-1 text-left text-sm font-mono ${completed ? 'text-cream/50 line-through' : 'text-cream'}`}>
+      {title}
+    </span>
+    <span className={`text-xs font-data font-bold ${completed ? 'text-gold-400/50' : 'text-gold-400'}`}>
+      {reward}
+    </span>
+  </button>
+);
 
-// Compact Progress Bar - Reduced height for dense layout
-const CompactProgressBar = ({ value, label, color = 'gold', showPercent = true }) => {
-  const bgClasses = {
-    gold: 'bg-gold-500',
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    purple: 'bg-purple-500',
-    orange: 'bg-orange-500',
-    red: 'bg-red-500',
+// Stat Card - Compact stat display for logistics
+const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabel }) => {
+  const colorMap = {
+    gold: 'text-gold-400',
+    blue: 'text-blue-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400',
+    orange: 'text-orange-400',
+    red: 'text-red-400',
   };
-
-  const textDataClasses = {
-    gold: 'text-data-gold',
-    blue: 'text-data-blue',
-    green: 'text-data-success',
-    purple: 'text-data-purple',
-    orange: 'text-data-orange',
-    red: 'text-data-error',
-  };
-
-  const percent = Math.round(value * 100);
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wide w-16 shrink-0">
-        {label}
-      </span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          className={`h-full ${bgClasses[color]} rounded-full`}
-        />
+    <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">{label}</span>
+        {Icon && <Icon className={`w-4 h-4 ${colorMap[color]}`} />}
       </div>
-      {showPercent && (
-        <span className={`text-[10px] font-bold w-8 text-right ${textDataClasses[color]}`}>
-          {percent}%
-        </span>
+      <div className={`text-2xl font-data font-bold ${colorMap[color]} tabular-nums`}>{value}</div>
+      {action && (
+        <button
+          onClick={action}
+          className="mt-2 text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide hover:text-gold-300 transition-colors"
+        >
+          {actionLabel} →
+        </button>
       )}
     </div>
   );
 };
 
-// Class colors for badges
-const classColors = {
-  worldClass: 'bg-gold-500 text-charcoal-900',
-  openClass: 'bg-purple-500 text-white',
-  aClass: 'bg-blue-500 text-white',
-  soundSport: 'bg-green-500 text-white',
+// ============================================================================
+// LEAGUE TICKER COMPONENT - Live Data Footer
+// ============================================================================
+const LeagueTicker = ({ seasonData, currentDay }) => {
+  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null });
+  const { allShows, loading: scoresLoading } = useScoresData();
+
+  // Get recent show results for ticker
+  useEffect(() => {
+    if (!scoresLoading && allShows.length > 0) {
+      // Get scores from yesterday and today
+      const recentShows = allShows
+        .filter(show => show.offSeasonDay >= currentDay - 1 && show.offSeasonDay <= currentDay)
+        .flatMap(show =>
+          show.scores.slice(0, 5).map(score => ({
+            corpsName: score.corpsName || score.corps,
+            totalScore: score.totalScore || score.score,
+            eventName: show.eventName,
+            day: show.offSeasonDay,
+            corpsClass: score.corpsClass,
+          }))
+        )
+        .sort((a, b) => b.totalScore - a.totalScore)
+        .slice(0, 10);
+
+      setTickerData({ scores: recentShows, loading: false, error: null });
+    } else if (!scoresLoading && allShows.length === 0) {
+      setTickerData({ scores: [], loading: false, error: null });
+    }
+  }, [allShows, scoresLoading, currentDay]);
+
+  // No data state
+  if (tickerData.loading) {
+    return (
+      <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center">
+        <span className="text-[10px] font-mono text-cream/40 uppercase tracking-wider">Loading league data...</span>
+      </div>
+    );
+  }
+
+  if (tickerData.scores.length === 0) {
+    const isOffSeason = !seasonData || seasonData.seasonType === 'off';
+    return (
+      <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center gap-2">
+        <Radio className="w-3 h-3 text-cream/30" />
+        <span className="text-[10px] font-mono text-cream/40 uppercase tracking-wider">
+          {isOffSeason ? 'Off-Season • No Active Shows' : 'Season Pending • Check Schedule'}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
+      {/* Ticker Label */}
+      <div className="flex items-center gap-2 px-3 border-r border-white/10 h-full shrink-0">
+        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Live</span>
+      </div>
+
+      {/* Scrolling Ticker */}
+      <div className="flex-1 overflow-hidden relative">
+        <motion.div
+          className="flex items-center gap-6 whitespace-nowrap"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ x: { repeat: Infinity, duration: 30, ease: 'linear' } }}
+        >
+          {/* Double the content for seamless loop */}
+          {[...tickerData.scores, ...tickerData.scores].map((score, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <span className="text-[10px] font-display font-bold text-cream uppercase">
+                {score.corpsName}
+              </span>
+              <span className="text-[11px] font-data font-bold text-gold-400 tabular-nums">
+                {typeof score.totalScore === 'number' ? score.totalScore.toFixed(3) : score.totalScore}
+              </span>
+              <span className="text-[9px] text-cream/30">•</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Day Indicator */}
+      <div className="flex items-center gap-1.5 px-3 border-l border-white/10 h-full shrink-0">
+        <Calendar className="w-3 h-3 text-cream/40" />
+        <span className="text-[9px] font-mono text-cream/50">Day {currentDay}</span>
+      </div>
+    </div>
+  );
 };
 
-// Class order for sorting
-const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
-
-// ===========================================================================
-// SYSTEM BOOT ANIMATION VARIANTS
-// Mechanical, snappy feel with staggered timing
-// ===========================================================================
-const bootEase = [0.25, 0.1, 0.25, 1.0]; // Mechanical ease
-
+// ============================================================================
+// ANIMATION VARIANTS
+// ============================================================================
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      duration: 0.2,
-      ease: bootEase,
-      staggerChildren: 0.1,
-      delayChildren: 0.05,
-    },
+    transition: { duration: 0.2, staggerChildren: 0.05, delayChildren: 0.1 },
   },
 };
 
-const heroVariants = {
+const columnVariants = {
   hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: bootEase },
-  },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] } },
 };
 
-const insightsVariants = {
-  hidden: { opacity: 0, x: 20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.35, ease: bootEase, delay: 0.1 },
-  },
-};
-
-const statusVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: bootEase, delay: 0.2 },
-  },
-};
-
-const actionsContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.2,
-      ease: bootEase,
-      delay: 0.25,
-      staggerChildren: 0.05,
-      delayChildren: 0.3,
-    },
-  },
-};
-
-const actionTileVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.25, ease: bootEase },
-  },
-};
-
-// ===========================================================================
+// ============================================================================
 // MAIN DASHBOARD COMPONENT
-// ===========================================================================
-
+// ============================================================================
 const Dashboard = () => {
   const { user } = useAuth();
-
-  // Use centralized dashboard hook
   const dashboardData = useDashboardData();
-
-  // Get assigned staff for CommandCenter
   const { ownedStaff } = useStaffMarketplace(user?.uid);
 
   // Modal states
@@ -283,23 +368,14 @@ const Dashboard = () => {
   const [retiring, setRetiring] = useState(false);
   const [showMorningReport, setShowMorningReport] = useState(false);
 
-  // Slide-out panel states (mobile only)
+  // Panel states
   const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
   const [showStaffPanel, setShowStaffPanel] = useState(false);
-
-  // Daily activities panel
   const [showDailyActivities, setShowDailyActivities] = useState(false);
-
-  // Execution Insights panel (Transparent Gameplay)
   const [showExecutionInsights, setShowExecutionInsights] = useState(false);
-
-  // Synergy configuration panel
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
-  // Context Panel tab state (desktop right column)
-  const [contextPanelTab, setContextPanelTab] = useState('insights');
-
-  // Destructure commonly used values
+  // Destructure dashboard data
   const {
     profile,
     corps,
@@ -340,33 +416,72 @@ const Dashboard = () => {
   } = dashboardData;
 
   // Get staff assigned to active corps
-  const assignedStaff = ownedStaff?.filter(
-    s => s.assignedTo?.corpsClass === activeCorpsClass
-  ) || [];
+  const assignedStaff = useMemo(() =>
+    ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
+    [ownedStaff, activeCorpsClass]
+  );
 
-  // Calculate metrics
-  const readiness = executionState?.readiness ?? 0.75;
-  const morale = executionState?.morale ?? 0.80;
-  const equipment = executionState?.equipment || {};
+  // Calculate execution metrics
+  const readiness = useMemo(() => {
+    if (typeof executionState?.readiness === 'object') {
+      const { brass = 0.75, percussion = 0.75, guard = 0.75, ensemble = 0.75 } = executionState.readiness;
+      return { brass, percussion, guard, ensemble, avg: (brass + percussion + guard + ensemble) / 4 };
+    }
+    const val = executionState?.readiness ?? 0.75;
+    return { brass: val, percussion: val, guard: val, ensemble: val, avg: val };
+  }, [executionState?.readiness]);
 
-  // Calculate average equipment condition
-  const equipmentValues = Object.entries(equipment)
-    .filter(([k, v]) => typeof v === 'number' && !k.includes('Max'))
-    .map(([, v]) => v);
-  const avgEquipment = equipmentValues.length > 0
-    ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
-    : 0.90;
+  const morale = useMemo(() => {
+    if (typeof executionState?.morale === 'object') {
+      const { brass = 0.80, percussion = 0.80, guard = 0.80, overall = 0.80 } = executionState.morale;
+      return { brass, percussion, guard, overall, avg: (brass + percussion + guard) / 3 };
+    }
+    const val = executionState?.morale ?? 0.80;
+    return { brass: val, percussion: val, guard: val, overall: val, avg: val };
+  }, [executionState?.morale]);
 
-  // Staff bonus from assigned staff (max 5%)
-  const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
+  const equipment = useMemo(() => {
+    const eq = executionState?.equipment || {};
+    const instruments = eq.instruments ?? 0.90;
+    const uniforms = eq.uniforms ?? 0.90;
+    const props = eq.props ?? 0.90;
+    const bus = eq.bus ?? 0.90;
+    const truck = eq.truck ?? 0.90;
+    const avg = (instruments + uniforms + props) / 3;
+    return { instruments, uniforms, props, bus, truck, avg };
+  }, [executionState?.equipment]);
+
+  // Calculate aggregate staff efficiency
+  const staffEfficiency = useMemo(() => {
+    if (assignedStaff.length === 0) return { value: 0.80, bonus: -0.04, label: 'No Staff' };
+
+    // Base efficiency + bonuses
+    let efficiency = 0.80;
+    assignedStaff.forEach(staff => {
+      // Caption match bonus
+      if (staff.assignedTo?.caption === staff.caption) efficiency += 0.02;
+      // Experience bonus (cap at 10%)
+      const expBonus = Math.min((staff.seasonsCompleted || 0) * 0.01, 0.10);
+      efficiency += expBonus;
+    });
+
+    // Staff count bonus
+    const countBonus = assignedStaff.length >= 6 ? 0.04 : assignedStaff.length >= 4 ? 0.02 : -0.04;
+    efficiency = Math.min(1.0, efficiency);
+
+    return {
+      value: efficiency,
+      bonus: countBonus,
+      label: assignedStaff.length >= 6 ? 'Full Roster' : assignedStaff.length >= 4 ? 'Adequate' : 'Understaffed'
+    };
+  }, [assignedStaff]);
 
   // Calculate multiplier
-  const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
-  const multiplier = Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
-
-  const rehearsalsThisWeek = executionState?.rehearsalsThisWeek ?? 0;
-  const showsThisWeek = activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0;
-  const equipmentNeedsRepair = avgEquipment < 0.85;
+  const multiplier = useMemo(() => {
+    const base = (readiness.avg * 0.4) + (morale.avg * 0.3) + (equipment.avg * 0.3);
+    const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
+    return Math.max(0.70, Math.min(1.10, base + staffBonus));
+  }, [readiness.avg, morale.avg, equipment.avg, assignedStaff.length]);
 
   // Track assigned staff for retirement flow
   const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
@@ -376,7 +491,6 @@ const Dashboard = () => {
     if (profile && activeCorps) {
       const today = new Date().toDateString();
       const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
-
       if (lastVisit !== today) {
         setShowMorningReport(true);
         localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
@@ -386,16 +500,12 @@ const Dashboard = () => {
 
   // Show class unlock congrats when newly unlocked
   useEffect(() => {
-    if (newlyUnlockedClass) {
-      setShowClassUnlockCongrats(true);
-    }
+    if (newlyUnlockedClass) setShowClassUnlockCongrats(true);
   }, [newlyUnlockedClass]);
 
   // Show achievement modal when new achievement
   useEffect(() => {
-    if (newAchievement) {
-      setShowAchievementModal(true);
-    }
+    if (newAchievement) setShowAchievementModal(true);
   }, [newAchievement]);
 
   // Handler functions
@@ -429,9 +539,7 @@ const Dashboard = () => {
   const handleDeleteCorps = async () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      await updateDoc(profileRef, {
-        [`corps.${activeCorpsClass}`]: null
-      });
+      await updateDoc(profileRef, { [`corps.${activeCorpsClass}`]: null });
       toast.success(`${activeCorps.corpsName || activeCorps.name} has been deleted`);
       setShowDeleteConfirm(false);
     } catch (error) {
@@ -443,11 +551,7 @@ const Dashboard = () => {
   const handleOpenRetireModal = async () => {
     try {
       const result = await retireCorps({ corpsClass: activeCorpsClass, checkOnly: true });
-      if (result.data.assignedStaff) {
-        setAssignedStaffForRetire(result.data.assignedStaff);
-      } else {
-        setAssignedStaffForRetire([]);
-      }
+      setAssignedStaffForRetire(result.data.assignedStaff || []);
       setShowRetireConfirm(true);
     } catch (error) {
       console.error('Error checking assigned staff:', error);
@@ -517,9 +621,7 @@ const Dashboard = () => {
         score: 0,
         rank: null
       };
-      await updateDoc(profileRef, {
-        [`corps.${formData.class}`]: corpsData
-      });
+      await updateDoc(profileRef, { [`corps.${formData.class}`]: corpsData });
       analyticsHelpers.logCorpsCreated(formData.class);
       toast.success(`${formData.name} registered successfully!`);
       setShowRegistration(false);
@@ -539,7 +641,6 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
-  // Handle rehearsal
   const handleRehearsal = async () => {
     if (canRehearseToday()) {
       const result = await rehearse();
@@ -550,12 +651,10 @@ const Dashboard = () => {
   };
 
   // ============================================================================
-  // RENDER: DENSE BENTO-GRID LAYOUT - 12x6 Fixed-Height Command Center
-  // No scrolling required - everything fits in viewport
+  // RENDER: THREE-COLUMN HUD LAYOUT
   // ============================================================================
-
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-charcoal-950">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -569,425 +668,497 @@ const Dashboard = () => {
         />
       )}
 
-      {/* ======================================================================
-          BENTO GRID: 12-column, 6-row dense layout
-          - Hero (cols 1-8, rows 1-2)
-          - Insights Panel (cols 9-12, rows 1-6) - Full height sidebar
-          - Status Bars (cols 1-8, row 3)
-          - Quick Actions (cols 1-8, rows 4-6)
-          ====================================================================== */}
-      <motion.div
-        className="h-full w-full grid grid-cols-12 grid-rows-6 gap-2 p-2"
+      {/* ================================================================
+          GLOBAL HEADER - Resource Monitor Bar
+          Sticky, low-profile bar displaying real-time constraints
+          ================================================================ */}
+      <header className="shrink-0 h-12 bg-black/60 backdrop-blur-xl border-b border-white/10 px-4 flex items-center justify-between z-20">
+        {/* Left: Corps Name & Class */}
+        <div className="flex items-center gap-3">
+          {activeCorps ? (
+            <>
+              {hasMultipleCorps ? (
+                <div className="flex items-center gap-1">
+                  {Object.entries(corps)
+                    .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+                    .map(([classId, corpsData]) => (
+                      <button
+                        key={classId}
+                        onClick={() => handleCorpsSwitch(classId)}
+                        className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wide transition-all ${
+                          activeCorpsClass === classId
+                            ? `${classColors[classId]} shadow-sm`
+                            : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
+                        }`}
+                      >
+                        {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
+                    {getCorpsClassName(activeCorpsClass)}
+                  </span>
+                  <span className="text-sm font-display font-bold text-cream truncate max-w-[120px]">
+                    {activeCorps.corpsName || activeCorps.name}
+                  </span>
+                </div>
+              )}
+              {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[9px] font-bold">
+                  <Crown size={8} /> #{activeCorps.rank}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-sm font-display text-cream/50">No Corps Registered</span>
+          )}
+        </div>
+
+        {/* Center: Season Progress */}
+        <div className="hidden md:flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-3.5 h-3.5 text-cream/40" />
+            <span className="text-[10px] font-mono text-cream/60">
+              {formatSeasonName(seasonData?.name)} • Week {currentWeek} • Day {currentDay}
+            </span>
+          </div>
+          {weeksRemaining !== null && (
+            <div className="flex items-center gap-1">
+              <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gold-500 rounded-full transition-all"
+                  style={{ width: `${((7 - weeksRemaining) / 7) * 100}%` }}
+                />
+              </div>
+              <span className="text-[9px] font-mono text-cream/40">{weeksRemaining}w left</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Resource Pills */}
+        <div className="flex items-center gap-2">
+          {engagementData?.loginStreak > 0 && (
+            <ResourcePill icon={Flame} value={engagementData.loginStreak} label="streak" color="orange" />
+          )}
+          <ResourcePill icon={Zap} value={`L${profile?.xpLevel || 1}`} color="gold" />
+          <ResourcePill icon={Coins} value={(profile?.corpsCoin || 0).toLocaleString()} color="gold" />
+          {unclaimedRewardsCount > 0 && (
+            <Link to="/battlepass">
+              <ResourcePill icon={Gift} value={unclaimedRewardsCount} color="purple" pulse />
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {/* ================================================================
+          HUD BODY - Three-Column Layout
+          Left: Intelligence | Center: Command | Right: Logistics
+          ================================================================ */}
+      <motion.main
+        className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2 p-2 overflow-hidden"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
+        {/* ================================================================
+            COLUMN A: INTELLIGENCE (The "Read" Zone)
+            Section Readiness, Multipliers, Performance Insights
+            ================================================================ */}
+        <motion.aside
+          variants={columnVariants}
+          className="hidden lg:flex lg:col-span-3 flex-col gap-2 overflow-hidden"
+        >
+          {/* Section Readiness */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Section Readiness</span>
+              <Target className="w-3.5 h-3.5 text-blue-400" />
+            </div>
+            <div className="space-y-2">
+              <SectionProgressBar value={readiness.brass} label="Brass" color="blue" />
+              <SectionProgressBar value={readiness.percussion} label="Perc" color="blue" />
+              <SectionProgressBar value={readiness.guard} label="Guard" color="blue" />
+              <SectionProgressBar value={readiness.ensemble} label="Ensemble" color="blue" />
+            </div>
+          </div>
+
+          {/* Section Morale */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Section Morale</span>
+              <Heart className="w-3.5 h-3.5 text-green-400" />
+            </div>
+            <div className="space-y-2">
+              <SectionProgressBar value={morale.brass} label="Brass" color="green" />
+              <SectionProgressBar value={morale.percussion} label="Perc" color="green" />
+              <SectionProgressBar value={morale.guard} label="Guard" color="green" />
+            </div>
+          </div>
+
+          {/* Active Multipliers */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Active Modifiers</span>
+              <Activity className="w-3.5 h-3.5 text-purple-400" />
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {readiness.avg >= 0.85 && <MultiplierBadge label="Ready" value="+5%" positive />}
+              {readiness.avg < 0.70 && <MultiplierBadge label="Unprepared" value="-8%" positive={false} />}
+              {morale.avg >= 0.85 && <MultiplierBadge label="High Morale" value="+3%" positive />}
+              {morale.avg < 0.70 && <MultiplierBadge label="Low Morale" value="-5%" positive={false} />}
+              {assignedStaff.length >= 6 && <MultiplierBadge label="Full Staff" value="+4%" positive />}
+              {assignedStaff.length < 4 && <MultiplierBadge label="Understaffed" value="-4%" positive={false} />}
+              {equipment.avg < 0.80 && <MultiplierBadge label="Worn Equipment" value="-3%" positive={false} />}
+              {executionState?.synergyBonus > 0 && (
+                <MultiplierBadge label="Synergy" value={`+${(executionState.synergyBonus).toFixed(1)}`} positive />
+              )}
+            </div>
+          </div>
+
+          {/* Show Difficulty */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
+            </div>
+            <ConfidenceBadge
+              currentDifficulty={executionState?.showDesign || 'moderate'}
+              currentReadiness={readiness.avg}
+              onClick={() => setShowExecutionInsights(true)}
+            />
+          </div>
+
+          {/* Full Analysis Link */}
+          <button
+            onClick={() => setShowExecutionInsights(true)}
+            className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex items-center justify-between hover:border-gold-500/30 transition-colors"
+          >
+            <span className="text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide">Full Analysis</span>
+            <BarChart3 className="w-4 h-4 text-gold-400" />
+          </button>
+        </motion.aside>
 
         {/* ================================================================
-            HERO SECTION (cols 1-8, rows 1-2)
-            Compact corps header with multiplier
+            COLUMN B: COMMAND (The "Act" Zone)
+            Action Deck, Daily Tasks, Show Concept/Synergy
             ================================================================ */}
-        <motion.div variants={heroVariants} className="col-span-12 lg:col-span-8 row-span-2">
-        <Widget className="h-full flex flex-col" noPadding>
+        <motion.section
+          variants={columnVariants}
+          className="col-span-1 lg:col-span-6 flex flex-col gap-2 overflow-y-auto lg:overflow-hidden"
+        >
           {activeCorps ? (
-            <div className="h-full flex flex-col p-3">
-              {/* Top row: Corps selector + User stats */}
-              <div className="flex items-center justify-between gap-3 mb-2">
-                {/* Corps selector or single corps badge */}
-                <div className="flex items-center gap-2 min-w-0">
-                  {hasMultipleCorps ? (
-                    <div className="flex items-center gap-1 overflow-x-auto scroll-hide">
-                      {Object.entries(corps)
-                        .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                        .map(([classId, corpsData]) => (
-                          <button
-                            key={classId}
-                            onClick={() => handleCorpsSwitch(classId)}
-                            className={`flex-shrink-0 px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wide transition-all ${
-                              activeCorpsClass === classId
-                                ? `${classColors[classId]} shadow-sm`
-                                : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
-                            }`}
-                          >
-                            {corpsData.corpsName || corpsData.name || ''}
-                          </button>
-                        ))}
+            <>
+              {/* Corps Hero Card */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 flex-shrink-0">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl lg:text-2xl font-display font-black text-cream uppercase tracking-tight truncate">
+                        {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
+                      </h1>
+                      <button
+                        onClick={() => setShowEditCorps(true)}
+                        className="p-1 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  ) : (
-                    <span className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
-                      {getCorpsClassName(activeCorpsClass)}
-                    </span>
-                  )}
-                  {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[9px] font-bold">
-                      <Crown size={8} /> TOP 10
-                    </span>
-                  )}
+                    {/* Show Concept */}
+                    <div className="flex items-center gap-2 mt-1">
+                      {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
+                        <button
+                          onClick={() => setShowSynergyPanel(true)}
+                          className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors group"
+                        >
+                          <Sparkles className="w-3 h-3 text-purple-400" />
+                          <span className="text-[10px] text-cream/60 group-hover:text-purple-400 capitalize">
+                            {activeCorps.showConcept.theme}
+                          </span>
+                          {(executionState?.synergyBonus || 0) > 0 && (
+                            <span className="text-[10px] font-bold text-purple-400">
+                              +{(executionState?.synergyBonus || 0).toFixed(1)}
+                            </span>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setShowSynergyPanel(true)}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px]"
+                        >
+                          <Sparkles className="w-3 h-3" /> Configure Show
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Multiplier Display */}
+                  <div className="shrink-0 ml-4">
+                    <MultiplierGlassBoxLarge
+                      multiplier={multiplier}
+                      breakdown={{
+                        readiness: (readiness.avg - 0.80) * 0.60,
+                        staff: staffEfficiency.bonus,
+                        equipment: (equipment.avg - 1.00) * 0.50,
+                        travelCondition: (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0,
+                        morale: (morale.avg - 0.75) * 0.32,
+                        showDifficulty: readiness.avg >= (executionState?.showDesign?.preparednessThreshold || 0.80)
+                          ? (executionState?.showDesign?.ceilingBonus || 0.08)
+                          : (executionState?.showDesign?.riskPenalty || -0.10),
+                      }}
+                      currentDay={currentDay}
+                      showDifficulty={executionState?.showDesign}
+                      avgReadiness={readiness.avg}
+                    />
+                  </div>
                 </div>
 
-                {/* User stats pills */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {engagementData?.loginStreak > 0 && (
-                    <StatPill icon={Flame} value={engagementData.loginStreak} label="streak" color="orange" />
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/10">
+                  <div className="text-center">
+                    <div className="text-lg font-data font-bold text-blue-400">{executionState?.rehearsalsThisWeek || 0}/7</div>
+                    <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-data font-bold text-purple-400">
+                      {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
+                    </div>
+                    <div className="text-[8px] text-cream/40 uppercase">Shows</div>
+                  </div>
+                  {activeCorpsClass !== 'soundSport' && (
+                    <div className="text-center">
+                      <div className="text-lg font-data font-bold text-gold-400">
+                        {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                      </div>
+                      <div className="text-[8px] text-cream/40 uppercase">Score</div>
+                    </div>
                   )}
-                  <StatPill icon={Zap} value={`L${profile?.xpLevel || 1}`} label="xp" color="gold" />
-                  <StatPill icon={Coins} value={(profile?.corpsCoin || 0).toLocaleString()} label="" color="gold" />
-                  {unclaimedRewardsCount > 0 && (
-                    <Link to="/battlepass" className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded border border-purple-500/30 animate-pulse">
-                      <Gift className="w-3 h-3 text-purple-400" />
-                      <span className="text-[10px] font-bold text-purple-400">{unclaimedRewardsCount}</span>
-                    </Link>
-                  )}
+                  <div className="text-center">
+                    <div className="text-lg font-data font-bold text-green-400">{assignedStaff.length}/8</div>
+                    <div className="text-[8px] text-cream/40 uppercase">Staff</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Main hero content: Corps name + Multiplier */}
-              <div className="flex-1 flex items-center justify-between gap-4 min-h-0">
-                {/* Corps Identity - Left */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-xl lg:text-2xl xl:text-3xl font-display font-black text-cream uppercase tracking-tight truncate">
-                      {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
-                    </h1>
-                    <button
-                      onClick={() => setShowEditCorps(true)}
-                      className="p-1 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors shrink-0"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  {/* Show concept / synergy */}
-                  <div className="flex items-center gap-2 mt-1">
-                    {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
-                      <button
-                        onClick={() => setShowSynergyPanel(true)}
-                        className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gold-500/10 border border-gold-500/20 hover:bg-gold-500/20 transition-colors group"
-                      >
-                        <Sparkles className="w-3 h-3 text-gold-400" />
-                        <span className="text-[10px] text-cream/60 group-hover:text-gold-400">
-                          {activeCorps.showConcept.theme}
-                        </span>
-                        {(executionState?.synergyBonus || 0) > 0 && (
-                          <span className="text-[10px] font-bold text-data-gold">
-                            +{(executionState?.synergyBonus || 0).toFixed(1)}
-                          </span>
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowSynergyPanel(true)}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px]"
-                      >
-                        <Sparkles className="w-3 h-3" /> Configure
-                      </button>
-                    )}
-                    {/* Season info */}
-                    <span className="text-[10px] text-cream/40">
-                      {formatSeasonName(seasonData?.name)} • Week {currentWeek}
-                    </span>
-                  </div>
-                  {/* Quick stats inline */}
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-data-blue">{rehearsalsThisWeek}/7</div>
-                      <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-data-purple">{showsThisWeek}</div>
-                      <div className="text-[8px] text-cream/40 uppercase">Shows</div>
-                    </div>
-                    {activeCorpsClass !== 'soundSport' && (
-                      <div className="text-center">
-                        <div className="text-sm font-bold text-data-gold">{activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}</div>
-                        <div className="text-[8px] text-cream/40 uppercase">Score</div>
-                      </div>
-                    )}
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-data-success">{assignedStaff.length}/8</div>
-                      <div className="text-[8px] text-cream/40 uppercase">Staff</div>
-                    </div>
-                  </div>
+              {/* Action Deck - Primary Actions */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
                 </div>
-
-                {/* Performance Multiplier - Right */}
-                <div className="shrink-0 flex flex-col items-center">
-                  <MultiplierGlassBoxLarge
-                    multiplier={multiplier}
-                    breakdown={{
-                      readiness: (readiness - 0.80) * 0.60,
-                      staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
-                      equipment: (avgEquipment - 1.00) * 0.50,
-                      travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
-                      morale: (morale - 0.75) * 0.32,
-                      showDifficulty: readiness >= (executionState?.showDesign?.preparednessThreshold || 0.80)
-                        ? (executionState?.showDesign?.ceilingBonus || 0.08)
-                        : (executionState?.showDesign?.riskPenalty || -0.10),
-                    }}
-                    currentDay={currentDay}
-                    showDifficulty={executionState?.showDesign}
-                    avgReadiness={readiness}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Rehearsal */}
+                  <ActionButton
+                    icon={Music}
+                    label="Rehearse"
+                    subtitle={canRehearseToday() ? '+5% readiness' : 'Complete'}
+                    onClick={handleRehearsal}
+                    disabled={!canRehearseToday()}
+                    processing={executionProcessing}
+                    completed={!canRehearseToday()}
+                    color="blue"
+                  />
+                  {/* Staff */}
+                  <ActionButton
+                    icon={Users}
+                    label="Staff"
+                    subtitle={`${assignedStaff.length}/8 assigned`}
+                    onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
+                    color="green"
+                  />
+                  {/* Equipment */}
+                  <ActionButton
+                    icon={Wrench}
+                    label="Equipment"
+                    subtitle={`${Math.round(equipment.avg * 100)}% condition`}
+                    onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
+                    color={equipment.avg < 0.85 ? 'orange' : 'gold'}
+                  />
+                  {/* Synergy */}
+                  <ActionButton
+                    icon={Sparkles}
+                    label="Synergy"
+                    subtitle={activeCorps?.showConcept?.theme || 'Configure'}
+                    onClick={() => setShowSynergyPanel(true)}
+                    color="purple"
                   />
                 </div>
               </div>
-            </div>
+
+              {/* Daily Tasks Checklist */}
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Daily Tasks</span>
+                  <button
+                    onClick={() => setShowDailyActivities(true)}
+                    className="text-[9px] font-display text-gold-400 uppercase tracking-wide hover:text-gold-300"
+                  >
+                    View All →
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-1">
+                  {dailyChallenges?.slice(0, 4).map((challenge) => (
+                    <TaskCheckbox
+                      key={challenge.id}
+                      title={challenge.title}
+                      reward={challenge.reward || `+${challenge.xpReward || 25} XP`}
+                      completed={challenge.completed}
+                      onClick={challenge.action}
+                    />
+                  ))}
+                  {(!dailyChallenges || dailyChallenges.length === 0) && (
+                    <div className="text-center py-4 text-cream/40 text-sm">No tasks available</div>
+                  )}
+                </div>
+              </div>
+            </>
           ) : (
             /* No Corps State */
-            <div className="h-full flex items-center justify-center p-4">
-              <div className="text-center">
-                <BrandLogo className="w-12 h-12 mx-auto mb-3" color="text-cream/20" />
-                <h2 className="text-lg font-display font-bold text-cream mb-1">No Corps Registered</h2>
-                <p className="text-xs text-cream/50 mb-3">Create your first corps to begin!</p>
-                <button onClick={() => setShowRegistration(true)} className="px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg text-sm font-bold">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center p-8 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg">
+                <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-cream/20" />
+                <h2 className="text-xl font-display font-bold text-cream mb-2">No Corps Registered</h2>
+                <p className="text-sm text-cream/50 mb-4">Create your first corps to begin your journey!</p>
+                <button
+                  onClick={() => setShowRegistration(true)}
+                  className="px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
+                >
                   Register Corps
                 </button>
               </div>
             </div>
           )}
-        </Widget>
-        </motion.div>
+        </motion.section>
 
         {/* ================================================================
-            INSIGHTS PANEL (cols 9-12, rows 1-6) - Full height right sidebar
-            No scrolling - tight vertical spacing
+            COLUMN C: LOGISTICS (The "Manage" Zone)
+            Staff Efficiency, Equipment Status, Management
             ================================================================ */}
-        <motion.div variants={insightsVariants} className="hidden lg:block col-span-4 row-span-6">
-        <Widget className="h-full flex flex-col" noPadding>
-          <div className="h-full flex flex-col">
-            {/* Panel Header */}
-            <div className="shrink-0 px-3 py-2 border-b border-white/10 flex items-center justify-between">
-              <span className="text-[10px] font-display font-bold text-cream/60 uppercase tracking-wider">Performance Insights</span>
-              <button
-                onClick={() => setShowExecutionInsights(true)}
-                className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-              >
-                Full Analysis →
-              </button>
-            </div>
-
-            {/* Insights Content - No scroll, tight spacing */}
-            <div className="flex-1 p-3 space-y-3 overflow-hidden">
-              {/* Difficulty Badge */}
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-cream/50 uppercase">Show Difficulty</span>
-                <ConfidenceBadge
-                  currentDifficulty={executionState?.showDesign || 'moderate'}
-                  currentReadiness={readiness}
-                  onClick={() => setShowExecutionInsights(true)}
-                />
-              </div>
-
-              {/* Readiness Bars */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Readiness</span>
-                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.brass : readiness} label="Brass" color="blue" />
-                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.percussion : readiness} label="Perc" color="blue" />
-                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.guard : readiness} label="Guard" color="blue" />
-                <CompactProgressBar value={typeof executionState?.readiness === 'object' ? executionState.readiness.ensemble : readiness} label="Ensemble" color="blue" />
-              </div>
-
-              {/* Morale Bars */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Morale</span>
-                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.brass : morale} label="Brass" color="green" />
-                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.percussion : morale} label="Perc" color="green" />
-                <CompactProgressBar value={typeof executionState?.morale === 'object' ? executionState.morale.guard : morale} label="Guard" color="green" />
-              </div>
-
-              {/* Equipment Condition */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Equipment</span>
-                <CompactProgressBar value={executionState?.equipment?.instruments || 0.90} label="Instruments" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
-                <CompactProgressBar value={executionState?.equipment?.uniforms || 0.90} label="Uniforms" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
-                <CompactProgressBar value={executionState?.equipment?.props || 0.90} label="Props" color={avgEquipment < 0.85 ? 'orange' : 'gold'} />
-              </div>
-
-              {/* Multiplier Factors */}
-              <div className="space-y-1 pt-2 border-t border-white/5">
-                <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">Multiplier Factors</span>
-                <div className="grid grid-cols-2 gap-1 text-[9px]">
-                  <div className="flex justify-between">
-                    <span className="text-cream/40">Readiness</span>
-                    <span className={readiness >= 0.80 ? 'text-data-success' : 'text-data-orange'}>
-                      {readiness >= 0.80 ? '+' : ''}{((readiness - 0.80) * 0.60 * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-cream/40">Morale</span>
-                    <span className={morale >= 0.75 ? 'text-data-success' : 'text-data-orange'}>
-                      {morale >= 0.75 ? '+' : ''}{((morale - 0.75) * 0.32 * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-cream/40">Staff</span>
-                    <span className={assignedStaff.length >= 4 ? 'text-data-success' : 'text-data-orange'}>
-                      {assignedStaff.length >= 6 ? '+4%' : assignedStaff.length >= 4 ? '+2%' : '-4%'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-cream/40">Equipment</span>
-                    <span className={avgEquipment >= 0.90 ? 'text-data-success' : 'text-data-orange'}>
-                      {((avgEquipment - 1.00) * 0.50 * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Widget>
-        </motion.div>
-
-        {/* ================================================================
-            STATUS BARS (cols 1-8, row 3) - Readiness/Morale module
-            ================================================================ */}
-        <motion.div variants={statusVariants} className="col-span-12 lg:col-span-8 row-span-1">
-        <Widget className="h-full flex items-center">
-          <div className="w-full grid grid-cols-3 gap-4">
-            {/* Readiness */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-display font-bold text-blue-400 uppercase tracking-wide">Readiness</span>
-                <span className="text-xs font-bold text-data-blue">{Math.round(readiness * 100)}%</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${readiness * 100}%` }}
-                  className="h-full bg-blue-500 rounded-full"
-                />
-              </div>
-            </div>
-            {/* Morale */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-display font-bold text-green-400 uppercase tracking-wide">Morale</span>
-                <span className="text-xs font-bold text-data-success">{Math.round(morale * 100)}%</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${morale * 100}%` }}
-                  className="h-full bg-green-500 rounded-full"
-                />
-              </div>
-            </div>
-            {/* Equipment */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-display font-bold text-orange-400 uppercase tracking-wide">Equipment</span>
-                <span className="text-xs font-bold text-data-orange">{Math.round(avgEquipment * 100)}%</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${avgEquipment * 100}%` }}
-                  className={`h-full rounded-full ${avgEquipment < 0.85 ? 'bg-orange-500' : 'bg-gold-500'}`}
-                />
-              </div>
-            </div>
-          </div>
-        </Widget>
-        </motion.div>
-
-        {/* ================================================================
-            QUICK ACTIONS (cols 1-8, rows 4-6) - Rich 3x2 action grid
-            Data-dense modules with inline graphics
-            ================================================================ */}
-        <motion.div
-          variants={actionsContainerVariants}
-          className="col-span-12 lg:col-span-8 row-span-3 grid grid-cols-2 lg:grid-cols-3 grid-rows-2 gap-2"
+        <motion.aside
+          variants={columnVariants}
+          className="hidden lg:flex lg:col-span-3 flex-col gap-2 overflow-hidden"
         >
-          {/* Row 1 */}
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={Music}
-              label="Rehearse"
-              onClick={handleRehearsal}
-              disabled={!canRehearseToday()}
-              processing={executionProcessing}
-              completed={!canRehearseToday()}
-              color="blue"
-              moduleType="rehearse"
-              moduleData={{
-                currentReadiness: readiness,
-                potentialGain: canRehearseToday() ? 0.05 : 0,
-              }}
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={Users}
-              label="Staff"
-              onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
-              color="green"
-              moduleType="staff"
-              moduleData={{
-                filled: assignedStaff.length,
-                max: 8,
-              }}
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={Wrench}
-              label="Equipment"
-              onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
-              color={equipmentNeedsRepair ? 'orange' : 'gold'}
-              moduleType="equipment"
-              moduleData={{
-                condition: avgEquipment,
-              }}
-            />
-          </motion.div>
+          {/* Aggregate Staff Efficiency */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Staff Efficiency</span>
+              <Users className="w-3.5 h-3.5 text-green-400" />
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl font-data font-bold text-green-400">{Math.round(staffEfficiency.value * 100)}%</span>
+              <span className={`text-[10px] font-display font-bold uppercase ${
+                staffEfficiency.bonus >= 0 ? 'text-green-400' : 'text-orange-400'
+              }`}>
+                {staffEfficiency.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mb-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 h-2 rounded-sm transition-colors ${
+                    i < assignedStaff.length ? 'bg-green-500' : 'bg-white/10'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setShowStaffPanel(true)}
+              className="w-full text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide py-2 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
+            >
+              Manage Staff →
+            </button>
+          </div>
 
-          {/* Row 2 */}
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={Sparkles}
-              label="Synergy"
-              onClick={() => setShowSynergyPanel(true)}
-              color="purple"
-              moduleType="synergy"
-              moduleData={{
-                bonus: executionState?.synergyBonus || 0,
-                themeName: activeCorps?.showConcept?.theme || '',
-              }}
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={Zap}
-              label="Activities"
-              onClick={() => setShowDailyActivities(true)}
-              color="gold"
-              moduleType="activities"
-              moduleData={{
-                completed: dailyChallenges?.filter(c => c.completed)?.length || 0,
-                total: dailyChallenges?.length || 3,
-              }}
-            />
-          </motion.div>
-          <motion.div variants={actionTileVariants}>
-            <RichActionModule
-              icon={BarChart3}
-              label="Insights"
-              onClick={() => setShowExecutionInsights(true)}
-              color="blue"
-              moduleType="insights"
-              moduleData={{
-                trend: recentScores?.length >= 2
-                  ? (recentScores[0]?.totalScore > recentScores[1]?.totalScore ? 'up' : recentScores[0]?.totalScore < recentScores[1]?.totalScore ? 'down' : 'flat')
-                  : 'flat',
-                projectedScore: (activeCorps?.totalSeasonScore || 0) * multiplier || 62.5,
-              }}
-            />
-          </motion.div>
-        </motion.div>
+          {/* Equipment Status */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
+              <Wrench className="w-3.5 h-3.5 text-orange-400" />
+            </div>
+            <div className="space-y-2">
+              <SectionProgressBar value={equipment.instruments} label="Instruments" color={equipment.instruments < 0.85 ? 'orange' : 'gold'} />
+              <SectionProgressBar value={equipment.uniforms} label="Uniforms" color={equipment.uniforms < 0.85 ? 'orange' : 'gold'} />
+              <SectionProgressBar value={equipment.props} label="Props" color={equipment.props < 0.85 ? 'orange' : 'gold'} />
+            </div>
+            <button
+              onClick={() => setShowEquipmentPanel(true)}
+              className="w-full mt-3 text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide py-2 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
+            >
+              Manage Equipment →
+            </button>
+          </div>
 
-      </motion.div>
+          {/* Travel Fleet */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Travel Fleet</span>
+              <Gauge className="w-3.5 h-3.5 text-blue-400" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-center">
+                <div className={`text-xl font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                  {Math.round(equipment.bus * 100)}%
+                </div>
+                <div className="text-[8px] text-cream/40 uppercase">Bus</div>
+              </div>
+              <div className="text-center">
+                <div className={`text-xl font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                  {Math.round(equipment.truck * 100)}%
+                </div>
+                <div className="text-[8px] text-cream/40 uppercase">Truck</div>
+              </div>
+            </div>
+            {(equipment.bus + equipment.truck) < 1.40 && (
+              <div className="mt-2 text-[9px] text-orange-400 text-center">
+                ⚠ Travel condition affecting performance
+              </div>
+            )}
+          </div>
 
-      {/* ======================================================================
-          SLIDE-OUT PANELS (Mobile Only)
-          ====================================================================== */}
+          {/* Quick Links */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
+            </div>
+            <div className="space-y-1">
+              <Link
+                to="/schedule"
+                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+              >
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-cream">Schedule</span>
+                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
+              </Link>
+              <Link
+                to="/scores"
+                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+              >
+                <Trophy className="w-4 h-4 text-gold-400" />
+                <span className="text-sm text-cream">Scores</span>
+                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
+              </Link>
+              <Link
+                to="/staff"
+                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+              >
+                <Users className="w-4 h-4 text-green-400" />
+                <span className="text-sm text-cream">Market</span>
+                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
+              </Link>
+            </div>
+          </div>
+        </motion.aside>
+      </motion.main>
+
+      {/* ================================================================
+          LIVE DATA FOOTER - League Ticker
+          Real scores from database, no placeholder data
+          ================================================================ */}
+      <LeagueTicker seasonData={seasonData} currentDay={currentDay} />
+
+      {/* ================================================================
+          SLIDE-OUT PANELS
+          ================================================================ */}
 
       {/* Equipment Panel */}
       <AnimatePresence>
@@ -1005,21 +1176,11 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-                `,
-                backgroundSize: '20px 20px'
-              }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
             >
               <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-cream-100 uppercase tracking-tight">Equipment Manager</h2>
-                <button
-                  onClick={() => setShowEquipmentPanel(false)}
-                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-                >
+                <h2 className="text-xl font-display font-black text-cream uppercase tracking-tight">Equipment Manager</h2>
+                <button onClick={() => setShowEquipmentPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream/60 hover:text-red-400 transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -1053,21 +1214,11 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-                `,
-                backgroundSize: '20px 20px'
-              }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
             >
               <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Staff Roster</h2>
-                <button
-                  onClick={() => setShowStaffPanel(false)}
-                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-                >
+                <button onClick={() => setShowStaffPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream/60 hover:text-red-400 transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -1095,21 +1246,11 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-                `,
-                backgroundSize: '20px 20px'
-              }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
             >
               <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-cream-100 uppercase tracking-tight">Daily Activities</h2>
-                <button
-                  onClick={() => setShowDailyActivities(false)}
-                  className="p-2 rounded-none border border-transparent hover:border-red-500/50 hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-                >
+                <h2 className="text-xl font-display font-black text-cream uppercase tracking-tight">Daily Activities</h2>
+                <button onClick={() => setShowDailyActivities(false)} className="p-2 rounded hover:bg-red-500/20 text-cream/60 hover:text-red-400 transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -1149,21 +1290,11 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-                `,
-                backgroundSize: '20px 20px'
-              }}
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
             >
               <div className="panel-header">
                 <h2 className="panel-title">Show Concept Synergy</h2>
-                <button
-                  onClick={() => setShowSynergyPanel(false)}
-                  className="panel-close"
-                >
+                <button onClick={() => setShowSynergyPanel(false)} className="panel-close">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -1200,24 +1331,17 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.8)]"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-                `,
-                backgroundSize: '20px 20px'
-              }}
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-hidden"
             >
               <ExecutionInsightsPanel
                 executionState={executionState}
                 multiplierBreakdown={{
-                  readiness: (executionState?.readiness || 0.75) - 0.75 > 0 ? ((executionState?.readiness || 0.75) - 0.75) * 0.48 : ((executionState?.readiness || 0.75) - 0.75) * 0.48,
-                  morale: (executionState?.morale || 0.80) - 0.80 > 0 ? ((executionState?.morale || 0.80) - 0.80) * 0.32 : ((executionState?.morale || 0.80) - 0.80) * 0.32,
-                  equipment: ((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90 > 0 ? (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20 : (((executionState?.equipment?.instruments || 0.90) + (executionState?.equipment?.uniforms || 0.90) + (executionState?.equipment?.props || 0.90)) / 3 - 0.90) * 0.20,
-                  staff: assignedStaff?.length >= 6 ? 0.04 : assignedStaff?.length >= 4 ? 0.02 : -0.04,
+                  readiness: (readiness.avg - 0.75) * 0.48,
+                  morale: (morale.avg - 0.80) * 0.32,
+                  equipment: (equipment.avg - 0.90) * 0.20,
+                  staff: staffEfficiency.bonus,
                   showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
-                  travelCondition: ((executionState?.equipment?.bus || 0.90) + (executionState?.equipment?.truck || 0.90)) < 1.40 ? -0.03 : 0,
+                  travelCondition: (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0,
                 }}
                 finalMultiplier={multiplier}
                 currentDay={currentDay}
@@ -1242,9 +1366,9 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* ======================================================================
+      {/* ================================================================
           MODALS
-          ====================================================================== */}
+          ================================================================ */}
       <AnimatePresence>
         {showClassUnlockCongrats && newlyUnlockedClass && (
           <ClassUnlockCongratsModal
