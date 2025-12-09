@@ -16,6 +16,3 @@ export {
   LogisticsColumn,
   Panel,
 } from './CommandCenterLayout';
-
-// Phase 4: Dashboard Footer
-export { default as DashboardFooter } from './DashboardFooter';
