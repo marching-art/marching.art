@@ -1,15 +1,16 @@
 // =============================================================================
-// HUD DASHBOARD - High-Density Command Center (Phase 3)
+// HUD DASHBOARD - "Glass Cockpit" Command Center
 // =============================================================================
-// Fully populated 3-column dashboard with data-connected widgets.
-// Uses existing reusable components from Phase 1 audit.
+// Full data visibility dashboard - 100% of game state surfaced on screen.
+// No modals for critical data - everything visible at a glance.
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
+import { useScoresData } from '../hooks/useScoresData';
 import toast from 'react-hot-toast';
 
 // Layout Components
@@ -20,13 +21,6 @@ import {
   LogisticsColumn,
   Panel,
 } from '../components/hud/CommandCenterLayout';
-
-// Execution Components
-import {
-  SegmentedMetricBar,
-  ClusterBar,
-  DualClusterDisplay,
-} from '../components/Execution/TransparentGameplay/SegmentedMetricBar';
 
 // Dashboard Components
 import { DashboardStaffPanel } from '../components/Execution';
@@ -60,15 +54,46 @@ import {
   Sparkles,
   Trophy,
   TrendingUp,
+  TrendingDown,
   AlertTriangle,
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Coffee,
-  Square,
-  Settings,
   LayoutGrid,
+  Bus,
+  Truck,
+  Flame,
+  Clock,
+  Radio,
+  Minus,
+  Crown,
 } from 'lucide-react';
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const CAPTIONS = [
+  { id: 'GE1', name: 'General Effect 1', category: 'ge', color: 'gold' },
+  { id: 'GE2', name: 'General Effect 2', category: 'ge', color: 'gold' },
+  { id: 'VP', name: 'Visual Proficiency', category: 'visual', color: 'blue' },
+  { id: 'VA', name: 'Visual Analysis', category: 'visual', color: 'blue' },
+  { id: 'CG', name: 'Color Guard', category: 'visual', color: 'purple' },
+  { id: 'B', name: 'Brass', category: 'music', color: 'orange' },
+  { id: 'MA', name: 'Music Analysis', category: 'music', color: 'orange' },
+  { id: 'P', name: 'Percussion', category: 'music', color: 'green' },
+];
+
+const MULTIPLIER_FACTORS = {
+  readiness: { label: 'Readiness', icon: Target, baseline: 0.80, range: '±12%' },
+  staff: { label: 'Staff', icon: Users, baseline: 0.80, range: '±8%' },
+  equipment: { label: 'Equipment', icon: Wrench, baseline: 1.00, range: '-5%' },
+  travelCondition: { label: 'Travel', icon: Bus, threshold: 1.40, range: '-3%' },
+  morale: { label: 'Morale', icon: Heart, baseline: 0.75, range: '±8%' },
+  showDifficulty: { label: 'Difficulty', icon: Zap, range: '±15%' },
+  fatigue: { label: 'Fatigue', icon: Flame, range: '-5%' },
+  championshipPressure: { label: 'Finals', icon: Trophy, range: '±2%' },
+};
 
 // =============================================================================
 // ANIMATION VARIANTS
@@ -78,11 +103,7 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      duration: 0.2,
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
-    },
+    transition: { duration: 0.2, staggerChildren: 0.05, delayChildren: 0.1 },
   },
 };
 
@@ -96,23 +117,26 @@ const columnVariants = {
 };
 
 // =============================================================================
-// COMPACT PROGRESS BAR - For equipment and other metrics
+// UTILITY COMPONENTS
 // =============================================================================
 
-const CompactBar = ({ value, label, color = 'gold', showPercent = true }) => {
+// Slim Progress Bar for readiness/morale sections
+const SlimBar = ({ value, label, color = 'blue', size = 'sm' }) => {
   const colorClasses = {
-    gold: 'bg-gold-500',
     blue: 'bg-blue-500',
     green: 'bg-green-500',
+    gold: 'bg-gold-500',
     orange: 'bg-orange-500',
+    purple: 'bg-purple-500',
     red: 'bg-red-500',
   };
 
   const textClasses = {
-    gold: 'text-gold-400',
     blue: 'text-blue-400',
     green: 'text-green-400',
+    gold: 'text-gold-400',
     orange: 'text-orange-400',
+    purple: 'text-purple-400',
     red: 'text-red-400',
   };
 
@@ -121,10 +145,10 @@ const CompactBar = ({ value, label, color = 'gold', showPercent = true }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-display font-bold text-cream/60 uppercase tracking-wide w-20 shrink-0 truncate">
+      <span className={`${size === 'xs' ? 'text-[8px] w-12' : 'text-[9px] w-14'} font-display font-bold text-cream/60 uppercase tracking-wide shrink-0 truncate`}>
         {label}
       </span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className={`flex-1 ${size === 'xs' ? 'h-1' : 'h-1.5'} bg-white/10 rounded-full overflow-hidden`}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
@@ -132,19 +156,135 @@ const CompactBar = ({ value, label, color = 'gold', showPercent = true }) => {
           className={`h-full ${colorClasses[barColor]} rounded-full`}
         />
       </div>
-      {showPercent && (
-        <span className={`text-[10px] font-data font-bold w-8 text-right ${textClasses[barColor]}`}>
-          {percent}%
-        </span>
-      )}
+      <span className={`${size === 'xs' ? 'text-[8px] w-6' : 'text-[9px] w-7'} font-data font-bold text-right ${textClasses[barColor]}`}>
+        {percent}%
+      </span>
     </div>
   );
 };
 
-// =============================================================================
-// SECTIONAL REHEARSAL BUTTON - For action deck
-// =============================================================================
+// Effect Pill - For active modifiers display
+const EffectPill = ({ label, value, positive = true, icon: Icon }) => (
+  <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-data font-bold ${
+    positive ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+  }`}>
+    {Icon && <Icon className="w-2.5 h-2.5" />}
+    <span>{label}</span>
+    <span>{positive ? '+' : ''}{value}</span>
+  </div>
+);
 
+// Multiplier Factor Row - For breakdown table
+const FactorRow = ({ label, value, icon: Icon }) => {
+  const isPositive = value > 0.005;
+  const isNegative = value < -0.005;
+  const colorClass = isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-cream/40';
+  const TrendIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
+
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`w-3 h-3 ${colorClass}`} />
+        <span className="text-[9px] text-cream/60">{label}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <TrendIcon className={`w-2.5 h-2.5 ${colorClass}`} />
+        <span className={`text-[9px] font-data font-bold ${colorClass}`}>
+          {isPositive ? '+' : ''}{(value * 100).toFixed(1)}%
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Caption Slot - For synergy grid
+const CaptionSlot = ({ caption, staff, bonus = 0 }) => {
+  const hasStaff = !!staff;
+  const hasBonus = bonus > 0;
+
+  const categoryColors = {
+    ge: 'border-gold-500/40 bg-gold-500/10',
+    visual: 'border-blue-500/40 bg-blue-500/10',
+    music: 'border-purple-500/40 bg-purple-500/10',
+  };
+
+  const categoryTextColors = {
+    ge: 'text-gold-400',
+    visual: 'text-blue-400',
+    music: 'text-purple-400',
+  };
+
+  return (
+    <div className={`flex items-center justify-between p-1.5 rounded border ${categoryColors[caption.category]}`}>
+      <div className="flex items-center gap-1.5">
+        <div className={`w-5 h-5 rounded flex items-center justify-center ${hasStaff ? 'bg-green-500/30' : 'bg-white/5'}`}>
+          <span className={`text-[8px] font-bold ${hasStaff ? 'text-green-400' : 'text-cream/30'}`}>
+            {caption.id}
+          </span>
+        </div>
+        {hasStaff && (
+          <span className="text-[8px] text-cream/60 truncate max-w-[50px]">
+            {staff.name?.split(' ')[0]}
+          </span>
+        )}
+      </div>
+      <span className={`text-[9px] font-data font-bold ${hasBonus ? 'text-green-400' : 'text-cream/20'}`}>
+        {hasBonus ? `+${bonus.toFixed(1)}` : '—'}
+      </span>
+    </div>
+  );
+};
+
+// Staff Slot Icon - For coverage map
+const StaffSlotIcon = ({ caption, staff, compact = false }) => {
+  const hasStaff = !!staff;
+
+  if (compact) {
+    return (
+      <div className={`w-6 h-6 rounded flex items-center justify-center border ${
+        hasStaff
+          ? 'bg-green-500/20 border-green-500/40'
+          : 'bg-red-500/10 border-red-500/30 border-dashed'
+      }`}>
+        <span className={`text-[7px] font-bold ${hasStaff ? 'text-green-400' : 'text-red-400/50'}`}>
+          {caption}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-2 px-2 py-1 rounded border ${
+      hasStaff
+        ? 'bg-green-500/10 border-green-500/30'
+        : 'bg-white/5 border-white/10 border-dashed'
+    }`}>
+      <div className={`w-5 h-5 rounded flex items-center justify-center ${
+        hasStaff ? 'bg-green-500/20' : 'bg-white/5'
+      }`}>
+        <span className={`text-[8px] font-bold ${hasStaff ? 'text-green-400' : 'text-cream/30'}`}>
+          {caption}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        {hasStaff ? (
+          <>
+            <div className="text-[9px] font-display font-bold text-cream truncate">
+              {staff.name}
+            </div>
+            <div className="text-[8px] text-cream/40">
+              R: <span className="text-gold-400">{staff.rating}</span>
+            </div>
+          </>
+        ) : (
+          <span className="text-[9px] text-cream/30 italic">Vacant</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Sectional Rehearsal Button
 const SectionalButton = ({ icon: Icon, label, available, loading, onClick, color = 'blue' }) => {
   const colorClasses = {
     blue: 'bg-blue-500/20 border-blue-500/30 text-blue-400 hover:border-blue-400',
@@ -158,33 +298,30 @@ const SectionalButton = ({ icon: Icon, label, available, loading, onClick, color
       onClick={onClick}
       disabled={!available || loading}
       className={`
-        flex flex-col items-center justify-center gap-1 p-2 rounded-lg border transition-all
+        flex flex-col items-center justify-center gap-0.5 p-2 rounded-lg border transition-all
         ${available
           ? `${colorClasses[color]} cursor-pointer hover:shadow-lg`
           : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-default'
         }
       `}
     >
-      <div className={`w-7 h-7 flex items-center justify-center rounded ${
+      <div className={`w-6 h-6 flex items-center justify-center rounded ${
         available ? 'bg-black/30' : 'bg-green-500/20'
       }`}>
         {loading ? (
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
         ) : available ? (
-          <Icon className="w-4 h-4" />
+          <Icon className="w-3.5 h-3.5" />
         ) : (
-          <Check className="w-4 h-4" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
+          <Check className="w-3.5 h-3.5" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
         )}
       </div>
-      <span className="text-[9px] font-display font-bold uppercase tracking-wide">{label}</span>
+      <span className="text-[8px] font-display font-bold uppercase tracking-wide">{label}</span>
     </button>
   );
 };
 
-// =============================================================================
-// TASK ROW - Checklist style for daily tasks
-// =============================================================================
-
+// Task Row - Checklist item
 const TaskRow = ({ title, reward, available, loading, onClick }) => {
   const isCompleted = !available;
 
@@ -193,27 +330,27 @@ const TaskRow = ({ title, reward, available, loading, onClick }) => {
       onClick={onClick}
       disabled={isCompleted || loading}
       className={`
-        w-full flex items-center gap-2 px-2 py-1.5 rounded transition-all
+        w-full flex items-center gap-2 px-2 py-1 rounded transition-all
         ${isCompleted ? 'opacity-50' : 'hover:bg-white/5 cursor-pointer'}
       `}
     >
-      <div className={`w-4 h-4 flex items-center justify-center rounded border ${
+      <div className={`w-3.5 h-3.5 flex items-center justify-center rounded border ${
         isCompleted
           ? 'bg-green-500/20 border-green-500/60'
           : 'border-white/20'
       }`}>
         {loading ? (
-          <div className="w-2.5 h-2.5 border border-gold-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-2 h-2 border border-gold-400 border-t-transparent rounded-full animate-spin" />
         ) : isCompleted ? (
-          <Check className="w-2.5 h-2.5 text-green-400" />
+          <Check className="w-2 h-2 text-green-400" />
         ) : null}
       </div>
-      <span className={`flex-1 text-left text-[11px] font-mono ${
+      <span className={`flex-1 text-left text-[10px] font-mono ${
         isCompleted ? 'text-cream/50 line-through' : 'text-cream'
       }`}>
         {title}
       </span>
-      <span className={`text-[9px] font-mono font-bold ${
+      <span className={`text-[8px] font-mono font-bold ${
         isCompleted ? 'text-gold-400/50' : 'text-gold-400'
       }`}>
         {reward}
@@ -222,210 +359,108 @@ const TaskRow = ({ title, reward, available, loading, onClick }) => {
   );
 };
 
-// =============================================================================
-// STAFF CARD - Compact staff display
-// =============================================================================
-
-const StaffSlot = ({ staff, caption }) => {
-  if (!staff) {
-    return (
-      <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/5 border border-white/10 border-dashed">
-        <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center">
-          <span className="text-[8px] font-mono text-cream/30">{caption}</span>
-        </div>
-        <span className="text-[10px] text-cream/30 italic">Empty</span>
-      </div>
-    );
-  }
+// Season Progress Bar
+const SeasonProgressBar = ({ currentDay, totalDays = 49 }) => {
+  const progress = (currentDay / totalDays) * 100;
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-white/5 border border-white/10">
-      <div className="w-6 h-6 rounded bg-gold-500/20 flex items-center justify-center">
-        <span className="text-[8px] font-mono font-bold text-gold-400">{caption}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[10px] font-display font-bold text-cream truncate">
-          {staff.name}
-        </div>
-        <div className="text-[9px] text-cream/50">
-          Rating: <span className="text-gold-400 font-bold">{staff.rating}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// EQUIPMENT STATUS INDICATOR
-// =============================================================================
-
-const EquipmentStatus = ({ equipment }) => {
-  const items = [
-    { key: 'uniforms', label: 'Uniforms', icon: '👔' },
-    { key: 'instruments', label: 'Instruments', icon: '🎺' },
-    { key: 'props', label: 'Props', icon: '🚩' },
-  ];
-
-  const values = items.map(i => equipment?.[i.key] || 0.9);
-  const avgEquipment = values.reduce((a, b) => a + b, 0) / values.length;
-  const needsRepair = avgEquipment < 0.85;
-
-  return (
-    <div className="space-y-2">
-      {/* Overall Status */}
-      <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${
-        needsRepair ? 'bg-orange-500/10 border border-orange-500/30' : 'bg-green-500/10 border border-green-500/30'
-      }`}>
-        {needsRepair ? (
-          <AlertTriangle className="w-4 h-4 text-orange-400" />
-        ) : (
-          <Check className="w-4 h-4 text-green-400" />
-        )}
-        <span className={`text-[10px] font-mono ${needsRepair ? 'text-orange-400' : 'text-green-400'}`}>
-          {needsRepair ? 'Repair Needed' : 'All Systems Nominal'}
-        </span>
-        <span className="ml-auto text-[10px] font-data font-bold text-cream/60">
-          {Math.round(avgEquipment * 100)}%
-        </span>
-      </div>
-
-      {/* Individual Bars */}
-      <div className="space-y-1">
-        {items.map(item => (
-          <CompactBar
-            key={item.key}
-            value={equipment?.[item.key] || 0.9}
-            label={item.label}
-            color="gold"
+    <div className="flex items-center gap-2">
+      <span className="text-[9px] font-mono text-cream/50">Day</span>
+      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+        <div
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-gold-600 to-gold-400 rounded-full transition-all"
+          style={{ width: `${progress}%` }}
+        />
+        {/* Week markers */}
+        {[7, 14, 21, 28, 35, 42].map(day => (
+          <div
+            key={day}
+            className="absolute top-0 bottom-0 w-px bg-white/20"
+            style={{ left: `${(day / totalDays) * 100}%` }}
           />
         ))}
       </div>
+      <span className="text-[9px] font-data font-bold text-gold-400">
+        {currentDay}/{totalDays}
+      </span>
     </div>
   );
 };
 
-// =============================================================================
-// SYNERGY DISPLAY - Show concept and bonus
-// =============================================================================
+// League Ticker Footer
+const LeagueTicker = ({ seasonData, currentDay }) => {
+  const { allShows, loading: scoresLoading } = useScoresData();
+  const [tickerData, setTickerData] = useState({ scores: [], loading: true });
 
-const SynergyDisplay = ({ showConcept, synergyBonus }) => {
-  const hasTheme = typeof showConcept === 'object' && showConcept?.theme;
+  useEffect(() => {
+    if (!scoresLoading && allShows.length > 0) {
+      const recentShows = allShows
+        .filter(show => show.offSeasonDay >= currentDay - 2 && show.offSeasonDay <= currentDay)
+        .flatMap(show =>
+          show.scores.slice(0, 5).map(score => ({
+            corpsName: score.corpsName || score.corps,
+            totalScore: score.totalScore || score.score,
+            eventName: show.eventName,
+          }))
+        )
+        .sort((a, b) => b.totalScore - a.totalScore)
+        .slice(0, 12);
 
-  if (!hasTheme) {
+      setTickerData({ scores: recentShows, loading: false });
+    } else if (!scoresLoading) {
+      setTickerData({ scores: [], loading: false });
+    }
+  }, [allShows, scoresLoading, currentDay]);
+
+  if (tickerData.loading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded bg-orange-500/10 border border-orange-500/30">
-        <Sparkles className="w-4 h-4 text-orange-400" />
-        <span className="text-[11px] text-orange-400">No show concept configured</span>
-        <ChevronRight className="w-3 h-3 text-orange-400 ml-auto" />
+      <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center">
+        <span className="text-[9px] font-mono text-cream/40 uppercase tracking-wider">Loading scores...</span>
+      </div>
+    );
+  }
+
+  if (tickerData.scores.length === 0) {
+    return (
+      <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center gap-2">
+        <Radio className="w-3 h-3 text-cream/30" />
+        <span className="text-[9px] font-mono text-cream/40 uppercase tracking-wider">
+          No Recent Scores
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 rounded bg-gold-500/10 border border-gold-500/30">
-      <Sparkles className="w-4 h-4 text-gold-400" />
-      <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-display font-bold text-gold-400 truncate">
-          {showConcept.theme}
-        </div>
-        {showConcept.style && (
-          <div className="text-[9px] text-cream/50">{showConcept.style}</div>
-        )}
-      </div>
-      <div className="text-right">
-        <div className="text-sm font-data font-bold text-gold-400">
-          +{(synergyBonus || 0).toFixed(1)}
-        </div>
-        <div className="text-[8px] text-cream/40 uppercase">Bonus</div>
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// MULTIPLIER DISPLAY - Large performance multiplier
-// =============================================================================
-
-const MultiplierDisplay = ({ multiplier, readiness, morale, equipment, staffCount }) => {
-  const getMultiplierColor = (m) => {
-    if (m >= 1.05) return 'text-green-400';
-    if (m >= 0.95) return 'text-blue-400';
-    if (m >= 0.85) return 'text-yellow-400';
-    return 'text-red-400';
-  };
-
-  return (
-    <div className="flex items-center gap-4">
-      {/* Large Multiplier */}
-      <div className="text-center">
-        <div className={`text-3xl font-data font-black ${getMultiplierColor(multiplier)}`}>
-          {multiplier.toFixed(2)}x
-        </div>
-        <div className="text-[9px] text-cream/40 uppercase tracking-wide">Multiplier</div>
+    <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
+      <div className="flex items-center gap-2 px-2 border-r border-white/10 h-full shrink-0">
+        <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+        <span className="text-[8px] font-display font-bold text-cream/60 uppercase">Live</span>
       </div>
 
-      {/* Breakdown Mini-bars */}
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-cream/50 w-12">Ready</span>
-          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500" style={{ width: `${readiness * 100}%` }} />
-          </div>
-          <span className="text-[9px] text-blue-400 w-8 text-right">{Math.round(readiness * 100)}%</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-cream/50 w-12">Morale</span>
-          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-rose-500" style={{ width: `${morale * 100}%` }} />
-          </div>
-          <span className="text-[9px] text-rose-400 w-8 text-right">{Math.round(morale * 100)}%</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-cream/50 w-12">Equip</span>
-          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-gold-500" style={{ width: `${equipment * 100}%` }} />
-          </div>
-          <span className="text-[9px] text-gold-400 w-8 text-right">{Math.round(equipment * 100)}%</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-cream/50 w-12">Staff</span>
-          <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-purple-500" style={{ width: `${(staffCount / 8) * 100}%` }} />
-          </div>
-          <span className="text-[9px] text-purple-400 w-8 text-right">{staffCount}/8</span>
-        </div>
+      <div className="flex-1 overflow-hidden relative">
+        <motion.div
+          className="flex items-center gap-4 whitespace-nowrap px-2"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ x: { repeat: Infinity, duration: 25, ease: 'linear' } }}
+        >
+          {[...tickerData.scores, ...tickerData.scores].map((score, idx) => (
+            <div key={idx} className="flex items-center gap-1.5">
+              <span className="text-[9px] font-display font-bold text-cream uppercase">
+                {score.corpsName}
+              </span>
+              <span className="text-[10px] font-data font-bold text-gold-400 tabular-nums">
+                {typeof score.totalScore === 'number' ? score.totalScore.toFixed(2) : score.totalScore}
+              </span>
+              <span className="text-[8px] text-cream/20">|</span>
+            </div>
+          ))}
+        </motion.div>
       </div>
-    </div>
-  );
-};
 
-// =============================================================================
-// AGGREGATE STAFF EFFECTIVENESS
-// =============================================================================
-
-const StaffEffectivenessDisplay = ({ assignedStaff }) => {
-  // Calculate aggregate effectiveness from staff ratings
-  const totalRating = assignedStaff.reduce((sum, s) => sum + (s.rating || 0), 0);
-  const avgRating = assignedStaff.length > 0 ? totalRating / assignedStaff.length : 0;
-  const effectiveness = Math.round((avgRating / 100) * 100); // Assuming rating is 0-100
-
-  const getColor = (eff) => {
-    if (eff >= 80) return 'text-green-400';
-    if (eff >= 60) return 'text-gold-400';
-    if (eff >= 40) return 'text-orange-400';
-    return 'text-red-400';
-  };
-
-  return (
-    <div className="text-center py-3">
-      <div className={`text-4xl font-data font-black ${getColor(effectiveness)}`}>
-        {effectiveness}%
-      </div>
-      <div className="text-[10px] text-cream/40 uppercase tracking-wide mt-1">
-        Aggregate Effectiveness
-      </div>
-      <div className="text-[9px] text-cream/30 mt-0.5">
-        Based on {assignedStaff.length} staff ({Math.round(avgRating)} avg rating)
+      <div className="flex items-center gap-1 px-2 border-l border-white/10 h-full shrink-0">
+        <Calendar className="w-2.5 h-2.5 text-cream/40" />
+        <span className="text-[8px] font-mono text-cream/50">Day {currentDay}</span>
       </div>
     </div>
   );
@@ -438,15 +473,12 @@ const StaffEffectivenessDisplay = ({ assignedStaff }) => {
 const HUDDashboard = () => {
   const { user } = useAuth();
 
-  // Centralized dashboard data hook
+  // Data hooks
   const dashboardData = useDashboardData();
-
-  // Staff marketplace for assigned staff
   const { ownedStaff } = useStaffMarketplace(user?.uid);
 
   // Local state
   const [showStaffPanel, setShowStaffPanel] = useState(false);
-  const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
   const [opsStatus, setOpsStatus] = useState(null);
   const [opsLoading, setOpsLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -458,6 +490,7 @@ const HUDDashboard = () => {
     activeCorps,
     activeCorpsClass,
     hasMultipleCorps,
+    corps,
     seasonData,
     weeksRemaining,
     currentWeek,
@@ -466,52 +499,151 @@ const HUDDashboard = () => {
     executionState,
     executionProcessing,
     rehearse,
-    repairEquipment,
     canRehearseToday,
     handleCorpsSwitch,
-    completeDailyChallenge,
     refreshProfile,
+    getCorpsClassName,
   } = dashboardData;
 
   // Calculate staff assigned to active corps
-  const assignedStaff = ownedStaff?.filter(
-    s => s.assignedTo?.corpsClass === activeCorpsClass
-  ) || [];
+  const assignedStaff = useMemo(() =>
+    ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
+    [ownedStaff, activeCorpsClass]
+  );
 
-  // Calculate metrics
-  const readiness = typeof executionState?.readiness === 'number'
-    ? executionState.readiness
-    : typeof executionState?.readiness === 'object'
-      ? Object.values(executionState.readiness).reduce((a, b) => a + b, 0) / 4
-      : 0.75;
+  // Calculate readiness sections
+  const readiness = useMemo(() => {
+    if (typeof executionState?.readiness === 'object') {
+      const { brass = 0.75, percussion = 0.75, guard = 0.75, ensemble = 0.75 } = executionState.readiness;
+      return { brass, percussion, guard, ensemble, avg: (brass + percussion + guard + ensemble) / 4 };
+    }
+    const val = executionState?.readiness ?? 0.75;
+    return { brass: val, percussion: val, guard: val, ensemble: val, avg: val };
+  }, [executionState?.readiness]);
 
-  const morale = typeof executionState?.morale === 'number'
-    ? executionState.morale
-    : typeof executionState?.morale === 'object'
-      ? Object.values(executionState.morale).reduce((a, b) => a + b, 0) / 4
-      : 0.80;
+  // Calculate morale sections
+  const morale = useMemo(() => {
+    if (typeof executionState?.morale === 'object') {
+      const { brass = 0.80, percussion = 0.80, guard = 0.80, overall = 0.80 } = executionState.morale;
+      return { brass, percussion, guard, overall, avg: (brass + percussion + guard) / 3 };
+    }
+    const val = executionState?.morale ?? 0.80;
+    return { brass: val, percussion: val, guard: val, overall: val, avg: val };
+  }, [executionState?.morale]);
 
-  const equipment = executionState?.equipment || {};
-  const equipmentValues = Object.entries(equipment)
-    .filter(([k, v]) => typeof v === 'number' && !k.includes('Max'))
-    .map(([, v]) => v);
-  const avgEquipment = equipmentValues.length > 0
-    ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
-    : 0.90;
+  // Calculate equipment
+  const equipment = useMemo(() => {
+    const eq = executionState?.equipment || {};
+    const instruments = eq.instruments ?? 0.90;
+    const uniforms = eq.uniforms ?? 0.90;
+    const props = eq.props ?? 0.90;
+    const bus = eq.bus ?? 0.90;
+    const truck = eq.truck ?? 0.90;
+    const perfAvg = (instruments + uniforms + props) / 3;
+    const travelAvg = (bus + truck) / 2;
+    return { instruments, uniforms, props, bus, truck, perfAvg, travelAvg };
+  }, [executionState?.equipment]);
 
-  // Calculate multiplier
-  const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
-  const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
-  const multiplier = Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
+  // Calculate multiplier breakdown
+  const multiplierBreakdown = useMemo(() => {
+    const readinessBonus = (readiness.avg - 0.80) * 0.60;
+    const moraleBonus = (morale.avg - 0.75) * 0.32;
+    const equipmentPenalty = (equipment.perfAvg - 1.00) * 0.50;
+    const travelPenalty = (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0;
 
-  // Prepare readiness/morale sections for SegmentedMetricBar
-  const readinessSections = typeof executionState?.readiness === 'object'
-    ? executionState.readiness
-    : { brass: readiness, percussion: readiness, guard: readiness, ensemble: readiness };
+    // Staff effectiveness
+    let staffBonus = -0.04; // Base understaffed penalty
+    if (assignedStaff.length >= 6) staffBonus = 0.04;
+    else if (assignedStaff.length >= 4) staffBonus = 0.02;
 
-  const moraleSections = typeof executionState?.morale === 'object'
-    ? executionState.morale
-    : { brass: morale, percussion: morale, guard: morale, overall: morale };
+    // Show difficulty
+    const showDesign = executionState?.showDesign || {};
+    const isPrepared = readiness.avg >= (showDesign.preparednessThreshold || 0.80);
+    const difficultyBonus = isPrepared
+      ? (showDesign.ceilingBonus || 0.08)
+      : (showDesign.riskPenalty || -0.10);
+
+    // Temporal effects
+    const fatiguePenalty = currentDay >= 35 ? -0.05 * ((currentDay - 35) / 14) : 0;
+    const championshipBonus = currentDay >= 47 ? 0.02 : 0;
+
+    return {
+      readiness: readinessBonus,
+      morale: moraleBonus,
+      equipment: equipmentPenalty,
+      travelCondition: travelPenalty,
+      staff: staffBonus,
+      showDifficulty: difficultyBonus,
+      fatigue: fatiguePenalty,
+      championshipPressure: championshipBonus,
+    };
+  }, [readiness.avg, morale.avg, equipment, assignedStaff.length, executionState?.showDesign, currentDay]);
+
+  // Calculate final multiplier
+  const multiplier = useMemo(() => {
+    const total = 1.0 + Object.values(multiplierBreakdown).reduce((sum, v) => sum + v, 0);
+    return Math.max(0.70, Math.min(1.10, total));
+  }, [multiplierBreakdown]);
+
+  // Get active temporal effects as pills
+  const activeEffects = useMemo(() => {
+    const effects = [];
+
+    // Readiness effects
+    if (readiness.avg >= 0.90) effects.push({ label: 'Peak Ready', value: '+8%', positive: true, icon: Target });
+    else if (readiness.avg < 0.70) effects.push({ label: 'Unprepared', value: '-8%', positive: false, icon: Target });
+
+    // Morale effects
+    if (morale.avg >= 0.85) effects.push({ label: 'High Morale', value: '+5%', positive: true, icon: Heart });
+    else if (morale.avg < 0.65) effects.push({ label: 'Low Morale', value: '-5%', positive: false, icon: Heart });
+
+    // Staff effects
+    if (assignedStaff.length >= 6) effects.push({ label: 'Full Staff', value: '+4%', positive: true, icon: Users });
+    else if (assignedStaff.length < 4) effects.push({ label: 'Understaffed', value: '-4%', positive: false, icon: Users });
+
+    // Equipment
+    if (equipment.perfAvg < 0.80) effects.push({ label: 'Worn Gear', value: '-5%', positive: false, icon: Wrench });
+
+    // Travel
+    if ((equipment.bus + equipment.truck) < 1.40) {
+      effects.push({ label: 'Travel Issue', value: '-3%', positive: false, icon: Bus });
+    }
+
+    // Temporal
+    if (currentDay >= 47) effects.push({ label: 'Finals Week', value: '±2%', positive: true, icon: Trophy });
+    else if (currentDay >= 35) effects.push({ label: 'Late Season', value: '-3%', positive: false, icon: Flame });
+
+    // Show difficulty
+    const showDesign = executionState?.showDesign || {};
+    if (showDesign.label === 'legendary') {
+      effects.push({ label: 'Legendary', value: '+15%', positive: true, icon: Crown });
+    } else if (showDesign.label === 'ambitious') {
+      effects.push({ label: 'Ambitious', value: '+10%', positive: true, icon: Zap });
+    }
+
+    return effects;
+  }, [readiness.avg, morale.avg, assignedStaff.length, equipment, currentDay, executionState?.showDesign]);
+
+  // Calculate synergy bonuses per caption
+  const captionBonuses = useMemo(() => {
+    const bonuses = {};
+    const showConcept = activeCorps?.showConcept;
+    const lineup = activeCorps?.lineup || {};
+
+    CAPTIONS.forEach(caption => {
+      const staffForCaption = assignedStaff.find(s =>
+        s.assignedTo?.caption === caption.id || s.caption === caption.id
+      );
+      // Simplified synergy calculation based on lineup match
+      const hasLineup = lineup[caption.id];
+      bonuses[caption.id] = {
+        staff: staffForCaption,
+        bonus: hasLineup && showConcept?.theme ? 0.5 + Math.random() * 0.5 : 0,
+      };
+    });
+
+    return bonuses;
+  }, [activeCorps?.showConcept, activeCorps?.lineup, assignedStaff]);
 
   // Fetch daily ops status
   const fetchOpsStatus = useCallback(async () => {
@@ -551,7 +683,6 @@ const HUDDashboard = () => {
       if (result.data.success) {
         toast.success(result.data.message);
         fetchOpsStatus();
-        if (completeDailyChallenge) completeDailyChallenge('sectional');
       }
     } catch (error) {
       toast.error(error.message || `Failed to complete ${section} sectional`);
@@ -576,8 +707,13 @@ const HUDDashboard = () => {
     }
   };
 
-  // Caption order for staff display
-  const CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+  // Class colors for switcher
+  const classColors = {
+    worldClass: 'bg-gold-500 text-charcoal-900',
+    openClass: 'bg-purple-500 text-white',
+    aClass: 'bg-blue-500 text-white',
+    soundSport: 'bg-green-500 text-white',
+  };
 
   // ==========================================================================
   // RENDER
@@ -585,7 +721,71 @@ const HUDDashboard = () => {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
-      {/* Main Content */}
+      {/* ================================================================
+          GLOBAL HEADER - Constraints Bar
+          ================================================================ */}
+      <header className="shrink-0 h-11 bg-black/60 backdrop-blur-xl border-b border-white/10 px-3 flex items-center gap-4 z-20">
+        {/* Left: Corps Switcher */}
+        <div className="flex items-center gap-2 shrink-0">
+          {activeCorps ? (
+            hasMultipleCorps ? (
+              <div className="flex items-center gap-1">
+                {Object.entries(corps)
+                  .map(([classId, corpsData]) => (
+                    <button
+                      key={classId}
+                      onClick={() => handleCorpsSwitch(classId)}
+                      className={`px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase tracking-wide transition-all ${
+                        activeCorpsClass === classId
+                          ? `${classColors[classId]} shadow-sm`
+                          : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
+                      }`}
+                    >
+                      {(corpsData.corpsName || corpsData.name || '').slice(0, 10)}
+                    </button>
+                  ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className={`px-1.5 py-0.5 rounded text-[8px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
+                  {getCorpsClassName(activeCorpsClass)?.slice(0, 2)}
+                </span>
+                <span className="text-xs font-display font-bold text-cream truncate max-w-[100px]">
+                  {activeCorps.corpsName || activeCorps.name}
+                </span>
+              </div>
+            )
+          ) : (
+            <span className="text-xs font-display text-cream/50">No Corps</span>
+          )}
+        </div>
+
+        {/* Center: Season Progress */}
+        <div className="flex-1 hidden md:block max-w-xs">
+          <SeasonProgressBar currentDay={currentDay} totalDays={49} />
+        </div>
+
+        {/* Right: Resources */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {engagementData?.loginStreak > 0 && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/15 border border-orange-500/30">
+              <Flame className="w-3 h-3 text-orange-400" />
+              <span className="text-[10px] font-data font-bold text-orange-400">{engagementData.loginStreak}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
+            <Zap className="w-3 h-3 text-gold-400" />
+            <span className="text-[10px] font-data font-bold text-gold-400">L{profile?.xpLevel || 1}</span>
+          </div>
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
+            <span className="text-[10px] font-data font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()} CC</span>
+          </div>
+        </div>
+      </header>
+
+      {/* ================================================================
+          MAIN HUD BODY - 3-Column Layout
+          ================================================================ */}
       <motion.div
         className="flex-1 min-h-0 overflow-hidden"
         variants={containerVariants}
@@ -595,96 +795,102 @@ const HUDDashboard = () => {
         <CommandCenterLayout fullHeight>
 
           {/* ================================================================
-              LEFT COLUMN: INTELLIGENCE - Vitals Display
+              LEFT COLUMN: THE ENGINE - Stats & Physics
               ================================================================ */}
           <IntelligenceColumn>
             <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
 
-              {/* Section Readiness */}
-              <Panel
-                title="Readiness"
-                variant="default"
-                className="flex-1 min-h-0"
-                scrollable
-              >
-                <SegmentedMetricBar
-                  type="readiness"
-                  sections={readinessSections}
-                  showAverage={true}
-                  compact={false}
-                />
-              </Panel>
-
-              {/* Section Morale */}
-              <Panel
-                title="Morale"
-                variant="default"
-                className="flex-1 min-h-0"
-                scrollable
-              >
-                <SegmentedMetricBar
-                  type="morale"
-                  sections={moraleSections}
-                  showAverage={true}
-                  compact={false}
-                />
-              </Panel>
-
-              {/* Leaderboard Quick Stats */}
-              <Panel
-                title="Standing"
-                variant="sunken"
-                className="flex-none"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-gold-400" />
-                    <span className="text-sm font-display font-bold text-cream">
-                      Rank #{activeCorps?.rank || '—'}
-                    </span>
-                  </div>
-                  <Link
-                    to="/scores"
-                    className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                  >
-                    Leaderboard →
-                  </Link>
+              {/* Readiness Matrix */}
+              <Panel title="Readiness" variant="default" className="flex-none">
+                <div className="space-y-1">
+                  <SlimBar value={readiness.brass} label="Brass" color="blue" />
+                  <SlimBar value={readiness.percussion} label="Perc" color="blue" />
+                  <SlimBar value={readiness.guard} label="Guard" color="blue" />
+                  <SlimBar value={readiness.ensemble} label="Ensemble" color="blue" />
                 </div>
               </Panel>
+
+              {/* Morale */}
+              <Panel title="Morale" variant="default" className="flex-none">
+                <div className="space-y-1">
+                  <SlimBar value={morale.brass} label="Brass" color="green" />
+                  <SlimBar value={morale.percussion} label="Perc" color="green" />
+                  <SlimBar value={morale.guard} label="Guard" color="green" />
+                </div>
+              </Panel>
+
+              {/* Active Effects List */}
+              <Panel title="Active Effects" variant="sunken" className="flex-none">
+                <div className="flex flex-wrap gap-1">
+                  {activeEffects.length > 0 ? (
+                    activeEffects.map((effect, idx) => (
+                      <EffectPill
+                        key={idx}
+                        label={effect.label}
+                        value={effect.value}
+                        positive={effect.positive}
+                        icon={effect.icon}
+                      />
+                    ))
+                  ) : (
+                    <span className="text-[9px] text-cream/40 italic">No active modifiers</span>
+                  )}
+                </div>
+              </Panel>
+
+              {/* Multiplier Calculator */}
+              <Panel
+                title="Multiplier Breakdown"
+                subtitle={`Final: ${multiplier.toFixed(2)}x`}
+                variant="accent"
+                className="flex-1 min-h-0"
+                scrollable
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center justify-between py-1 border-b border-white/10 mb-1">
+                    <span className="text-[9px] text-cream/50">Base</span>
+                    <span className="text-[10px] font-data font-bold text-cream">1.00x</span>
+                  </div>
+                  {Object.entries(multiplierBreakdown)
+                    .filter(([, val]) => Math.abs(val) > 0.001)
+                    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                    .map(([key, value]) => (
+                      <FactorRow
+                        key={key}
+                        label={MULTIPLIER_FACTORS[key]?.label || key}
+                        value={value}
+                        icon={MULTIPLIER_FACTORS[key]?.icon || Target}
+                      />
+                    ))}
+                  <div className="flex items-center justify-between pt-1 mt-1 border-t border-white/10">
+                    <span className="text-[9px] text-cream/50">Total</span>
+                    <span className={`text-sm font-data font-bold ${
+                      multiplier >= 1.0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {multiplier.toFixed(2)}x
+                    </span>
+                  </div>
+                </div>
+              </Panel>
+
             </motion.div>
           </IntelligenceColumn>
 
           {/* ================================================================
-              CENTER COLUMN: COMMAND - Actions & Operations
+              CENTER COLUMN: THE STAGE - Action & Strategy
               ================================================================ */}
           <CommandColumn>
             <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
 
-              {/* Performance Multiplier */}
+              {/* Command Center - Action Buttons */}
               <Panel
-                title="Performance"
+                title="Command Center"
                 subtitle={`Week ${currentWeek} • Day ${currentDay}`}
-                variant="accent"
-                className="flex-none"
-              >
-                <MultiplierDisplay
-                  multiplier={multiplier}
-                  readiness={readiness}
-                  morale={morale}
-                  equipment={avgEquipment}
-                  staffCount={assignedStaff.length}
-                />
-              </Panel>
-
-              {/* Action Deck - Sectional Rehearsals */}
-              <Panel
-                title="Rehearsals"
-                subtitle="Sectional drills (+2% each)"
                 variant="elevated"
                 className="flex-none"
               >
-                <div className="space-y-3">
-                  {/* Full Rehearsal Button */}
+                <div className="space-y-2">
+                  {/* Full Rehearsal */}
                   <button
                     onClick={handleRehearsal}
                     disabled={!canRehearseToday() || executionProcessing}
@@ -696,27 +902,27 @@ const HUDDashboard = () => {
                       }
                     `}
                   >
-                    <div className={`w-8 h-8 flex items-center justify-center rounded ${
+                    <div className={`w-7 h-7 flex items-center justify-center rounded ${
                       canRehearseToday() ? 'bg-gold-500/30' : 'bg-green-500/20'
                     }`}>
                       {executionProcessing ? (
-                        <div className="w-5 h-5 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
                       ) : canRehearseToday() ? (
-                        <Play className="w-5 h-5" />
+                        <Play className="w-4 h-4" />
                       ) : (
-                        <Check className="w-5 h-5" />
+                        <Check className="w-4 h-4" />
                       )}
                     </div>
                     <div className="flex-1 text-left">
-                      <div className="text-sm font-display font-bold uppercase">Full Rehearsal</div>
-                      <div className="text-[10px] opacity-70">
-                        {executionState?.rehearsalsThisWeek || 0}/7 this week • +5% readiness
+                      <div className="text-xs font-display font-bold uppercase">Full Rehearsal</div>
+                      <div className="text-[9px] opacity-70">
+                        {executionState?.rehearsalsThisWeek || 0}/7 this week
                       </div>
                     </div>
                   </button>
 
-                  {/* Sectional Buttons Grid */}
-                  <div className="grid grid-cols-4 gap-2">
+                  {/* Sectional Buttons */}
+                  <div className="grid grid-cols-4 gap-1.5">
                     <SectionalButton
                       icon={Music}
                       label="Music"
@@ -750,6 +956,50 @@ const HUDDashboard = () => {
                       color="green"
                     />
                   </div>
+                </div>
+              </Panel>
+
+              {/* Show Concept & Caption Grid */}
+              <Panel
+                title="Show Design"
+                subtitle={activeCorps?.showConcept?.theme || 'Not configured'}
+                variant="default"
+                className="flex-none"
+                actions={
+                  <Link to="/design" className="text-[8px] text-gold-400 hover:text-gold-300 uppercase">
+                    Edit
+                  </Link>
+                }
+              >
+                {/* Theme & Style Tags */}
+                <div className="flex items-center gap-1.5 mb-2">
+                  {activeCorps?.showConcept?.theme && (
+                    <span className="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-[9px] font-display font-bold text-purple-400 uppercase">
+                      {activeCorps.showConcept.theme}
+                    </span>
+                  )}
+                  {activeCorps?.showConcept?.drillStyle && (
+                    <span className="px-1.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/30 text-[9px] font-display font-bold text-blue-400 uppercase">
+                      {activeCorps.showConcept.drillStyle}
+                    </span>
+                  )}
+                  {activeCorps?.showConcept?.musicSource && (
+                    <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-500/30 text-[9px] font-display font-bold text-orange-400 uppercase">
+                      {activeCorps.showConcept.musicSource}
+                    </span>
+                  )}
+                </div>
+
+                {/* Caption Grid 2x4 */}
+                <div className="grid grid-cols-4 gap-1">
+                  {CAPTIONS.map(caption => (
+                    <CaptionSlot
+                      key={caption.id}
+                      caption={caption}
+                      staff={captionBonuses[caption.id]?.staff}
+                      bonus={captionBonuses[caption.id]?.bonus || 0}
+                    />
+                  ))}
                 </div>
               </Panel>
 
@@ -800,38 +1050,23 @@ const HUDDashboard = () => {
                 </div>
               </Panel>
 
-              {/* Synergy Display */}
-              <Panel variant="sunken" className="flex-none" noPadding>
-                <div className="p-2">
-                  <SynergyDisplay
-                    showConcept={activeCorps?.showConcept}
-                    synergyBonus={executionState?.synergyBonus || 0}
-                  />
-                </div>
-              </Panel>
             </motion.div>
           </CommandColumn>
 
           {/* ================================================================
-              RIGHT COLUMN: LOGISTICS - Staff & Equipment
-              Mobile: Collapsible with "Show Details" toggle
+              RIGHT COLUMN: THE BACKSTAGE - Logistics
               ================================================================ */}
           <LogisticsColumn>
             <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
 
-              {/* Mobile Toggle Button */}
+              {/* Mobile Toggle */}
               <button
                 onClick={() => setShowMobileLogistics(!showMobileLogistics)}
                 className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10"
               >
                 <div className="flex items-center gap-2">
                   <LayoutGrid className="w-4 h-4 text-gold-400" />
-                  <span className="text-xs font-display font-bold text-cream uppercase">
-                    Logistics Details
-                  </span>
-                  <span className="text-[9px] text-cream/40">
-                    Staff, Equipment, Schedule
-                  </span>
+                  <span className="text-xs font-display font-bold text-cream uppercase">Logistics</span>
                 </div>
                 {showMobileLogistics ? (
                   <ChevronUp className="w-4 h-4 text-cream/40" />
@@ -840,14 +1075,12 @@ const HUDDashboard = () => {
                 )}
               </button>
 
-              {/* Collapsible Content (always visible on desktop, toggleable on mobile) */}
-              <div className={`
-                flex flex-col gap-1 flex-1 min-h-0
-                ${showMobileLogistics ? 'flex' : 'hidden lg:flex'}
-              `}>
-                {/* Staff Summary */}
+              {/* Collapsible Content */}
+              <div className={`flex flex-col gap-1 flex-1 min-h-0 ${showMobileLogistics ? 'flex' : 'hidden lg:flex'}`}>
+
+                {/* Staff Coverage Map - All 8 Slots */}
                 <Panel
-                  title="Staff"
+                  title="Staff Coverage"
                   subtitle={`${assignedStaff.length}/8 assigned`}
                   variant="default"
                   className="flex-1 min-h-0"
@@ -855,70 +1088,120 @@ const HUDDashboard = () => {
                   actions={
                     <button
                       onClick={() => setShowStaffPanel(true)}
-                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+                      className="text-[8px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
                     >
-                      Manage →
+                      Manage
                     </button>
                   }
                 >
-                  {/* Aggregate Effectiveness */}
-                  <StaffEffectivenessDisplay assignedStaff={assignedStaff} />
+                  {/* 8-Slot Grid */}
+                  <div className="grid grid-cols-4 gap-1 mb-2">
+                    {CAPTIONS.map(caption => {
+                      const staff = assignedStaff.find(s =>
+                        s.assignedTo?.caption === caption.id || s.caption === caption.id
+                      );
+                      return (
+                        <StaffSlotIcon
+                          key={caption.id}
+                          caption={caption.id}
+                          staff={staff}
+                          compact
+                        />
+                      );
+                    })}
+                  </div>
 
-                  {/* Staff Slots */}
-                  <div className="mt-3 space-y-1">
+                  {/* Staff List */}
+                  <div className="space-y-1">
                     {CAPTIONS.slice(0, 4).map(caption => {
                       const staff = assignedStaff.find(s =>
-                        s.assignedTo?.caption === caption || s.caption === caption
+                        s.assignedTo?.caption === caption.id || s.caption === caption.id
                       );
-                      return <StaffSlot key={caption} staff={staff} caption={caption} />;
+                      return (
+                        <StaffSlotIcon
+                          key={caption.id}
+                          caption={caption.id}
+                          staff={staff}
+                        />
+                      );
                     })}
-                    {assignedStaff.length > 4 && (
-                      <div className="text-[9px] text-cream/40 text-center py-1">
-                        +{assignedStaff.length - 4} more staff assigned
-                      </div>
+                    {CAPTIONS.length > 4 && assignedStaff.length < 4 && (
+                      <Link
+                        to="/staff"
+                        className="block text-center py-1 text-[9px] text-gold-400 hover:text-gold-300"
+                      >
+                        + Hire more staff
+                      </Link>
                     )}
                   </div>
                 </Panel>
 
-                {/* Equipment Status */}
-                <Panel
-                  title="Equipment"
-                  variant="default"
-                  className="flex-none"
-                  actions={
-                    <button
-                      onClick={() => setShowEquipmentPanel(true)}
-                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                    >
-                      Repair →
-                    </button>
-                  }
-                >
-                  <EquipmentStatus equipment={executionState?.equipment} />
+                {/* Performance Gear */}
+                <Panel title="Performance Gear" variant="default" className="flex-none">
+                  <div className="space-y-1">
+                    <SlimBar value={equipment.uniforms} label="Uniforms" color="gold" size="xs" />
+                    <SlimBar value={equipment.instruments} label="Instruments" color="gold" size="xs" />
+                    <SlimBar value={equipment.props} label="Props" color="gold" size="xs" />
+                  </div>
                 </Panel>
 
-                {/* Schedule Quick View */}
+                {/* Travel Fleet */}
                 <Panel
-                  title="Schedule"
-                  subtitle={`Week ${currentWeek}`}
-                  variant="sunken"
+                  title="Travel Fleet"
+                  variant={equipment.travelAvg < 0.70 ? 'accent' : 'default'}
                   className="flex-none"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm font-display font-bold text-cream">
-                        {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0} Shows
-                      </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-center p-2 rounded bg-white/5 border border-white/10">
+                      <Bus className={`w-4 h-4 mx-auto mb-1 ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
+                      <div className={`text-lg font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                        {Math.round(equipment.bus * 100)}%
+                      </div>
+                      <div className="text-[8px] text-cream/40 uppercase">Bus</div>
                     </div>
+                    <div className="text-center p-2 rounded bg-white/5 border border-white/10">
+                      <Truck className={`w-4 h-4 mx-auto mb-1 ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
+                      <div className={`text-lg font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                        {Math.round(equipment.truck * 100)}%
+                      </div>
+                      <div className="text-[8px] text-cream/40 uppercase">Truck</div>
+                    </div>
+                  </div>
+                  {(equipment.bus + equipment.truck) < 1.40 && (
+                    <div className="mt-2 flex items-center gap-1 px-2 py-1 rounded bg-orange-500/10 border border-orange-500/30">
+                      <AlertTriangle className="w-3 h-3 text-orange-400" />
+                      <span className="text-[9px] text-orange-400">Travel penalty active (-3%)</span>
+                    </div>
+                  )}
+                </Panel>
+
+                {/* Quick Links */}
+                <Panel title="Navigation" variant="sunken" className="flex-none">
+                  <div className="grid grid-cols-3 gap-1">
                     <Link
                       to="/schedule"
-                      className="text-[9px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
+                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
                     >
-                      View →
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                      <span className="text-[8px] text-cream/60">Schedule</span>
+                    </Link>
+                    <Link
+                      to="/scores"
+                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <Trophy className="w-4 h-4 text-gold-400" />
+                      <span className="text-[8px] text-cream/60">Scores</span>
+                    </Link>
+                    <Link
+                      to="/staff"
+                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <Users className="w-4 h-4 text-green-400" />
+                      <span className="text-[8px] text-cream/60">Market</span>
                     </Link>
                   </div>
                 </Panel>
+
               </div>
             </motion.div>
           </LogisticsColumn>
@@ -926,11 +1209,14 @@ const HUDDashboard = () => {
         </CommandCenterLayout>
       </motion.div>
 
-      {/* ======================================================================
-          SLIDE-OUT PANELS
-          ====================================================================== */}
+      {/* ================================================================
+          TICKER FOOTER - Live Scores
+          ================================================================ */}
+      <LeagueTicker seasonData={seasonData} currentDay={currentDay} />
 
-      {/* Staff Panel */}
+      {/* ================================================================
+          STAFF PANEL (Slide-out - only for detailed management)
+          ================================================================ */}
       <AnimatePresence>
         {showStaffPanel && (
           <>
@@ -959,78 +1245,6 @@ const HUDDashboard = () => {
               </div>
               <div className="p-4">
                 <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Equipment Panel - Links to full equipment manager */}
-      <AnimatePresence>
-        {showEquipmentPanel && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowEquipmentPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-cream-100 uppercase tracking-tight">Equipment</h2>
-                <button
-                  onClick={() => setShowEquipmentPanel(false)}
-                  className="p-2 rounded hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {['uniforms', 'instruments', 'props'].map(type => {
-                    const value = executionState?.equipment?.[type] || 0.9;
-                    const needsRepair = value < 0.85;
-
-                    return (
-                      <div key={type} className="glass-slot p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-display font-bold text-cream capitalize">{type}</span>
-                          <span className={`text-sm font-data font-bold ${
-                            value >= 0.9 ? 'text-green-400' : value >= 0.7 ? 'text-yellow-400' : 'text-red-400'
-                          }`}>
-                            {Math.round(value * 100)}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              value >= 0.9 ? 'bg-green-500' : value >= 0.7 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${value * 100}%` }}
-                          />
-                        </div>
-                        {needsRepair && (
-                          <button
-                            onClick={() => {
-                              repairEquipment?.(type);
-                              toast.success(`Repairing ${type}...`);
-                            }}
-                            className="w-full py-2 px-3 bg-gold-500/20 border border-gold-500/40 rounded text-gold-400 text-sm font-display font-bold uppercase hover:bg-gold-500/30 transition-colors"
-                          >
-                            Repair (-50 CC)
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             </motion.div>
           </>
