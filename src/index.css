@@ -3052,12 +3052,21 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
 
 .bento-grid-container {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  /* Use CSS variable for nav width so grid responds to expansion */
+  --nav-width: 80px;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
   gap: 1px;
   /* Border color shows through the gap */
   background-color: rgba(31, 41, 55, 0.3);
   height: 100%;
   width: 100%;
+  /* Smooth transition when nav expands/collapses */
+  transition: grid-template-columns 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/* Expanded nav state - main content contracts */
+.bento-grid-container.nav-expanded {
+  --nav-width: 240px;
 }
 
 /* Grid row configurations */
@@ -3073,12 +3082,12 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   grid-template-rows: minmax(0, 1fr) 32px;
 }
 
-/* Named grid areas - Desktop layout */
+/* Named grid areas - Desktop layout (2-column: nav + main) */
 .bento-grid-container.no-inspector {
   grid-template-areas:
-    "header header header header header header header header header header header header"
-    "nav    main   main   main   main   main   main   main   main   main   main   main"
-    "ticker ticker ticker ticker ticker ticker ticker ticker ticker ticker  ticker  ticker";
+    "header header"
+    "nav    main"
+    "ticker ticker";
 }
 
 /* Grid area assignments */
@@ -3519,15 +3528,11 @@ h6 { @apply text-lg md:text-xl lg:text-2xl; }
   }
 }
 
-/* Desktop: Full bento layout */
+/* Desktop: 2-column layout with variable nav width */
 @media (min-width: 1024px) {
-  .bento-grid-container.desktop-layout {
-    grid-template-columns: 80px repeat(8, minmax(0, 1fr)) repeat(3, minmax(0, 1fr));
-  }
-
-  /* Expanded nav variant */
-  .bento-grid-container.nav-expanded {
-    grid-template-columns: 240px repeat(7, minmax(0, 1fr)) repeat(3, minmax(0, 1fr));
+  .bento-grid-container {
+    /* Restore desktop grid with nav column */
+    grid-template-columns: var(--nav-width) minmax(0, 1fr);
   }
 }
 
