@@ -13,8 +13,6 @@ import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import toast from 'react-hot-toast';
 
 // Layout Components
-import ResourceHeader from '../components/hud/ResourceHeader';
-import DashboardFooter from '../components/hud/DashboardFooter';
 import {
   CommandCenterLayout,
   IntelligenceColumn,
@@ -473,7 +471,6 @@ const HUDDashboard = () => {
     handleCorpsSwitch,
     completeDailyChallenge,
     refreshProfile,
-    recentScores,
   } = dashboardData;
 
   // Calculate staff assigned to active corps
@@ -587,21 +584,7 @@ const HUDDashboard = () => {
   // ==========================================================================
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-surface">
-      {/* Resource Header */}
-      <ResourceHeader
-        profile={profile}
-        activeCorps={activeCorps}
-        activeCorpsClass={activeCorpsClass}
-        hasMultipleCorps={hasMultipleCorps}
-        seasonData={seasonData}
-        currentWeek={currentWeek}
-        currentDay={currentDay}
-        weeksRemaining={weeksRemaining}
-        engagementData={engagementData}
-        onCorpsSwitch={() => hasMultipleCorps && handleCorpsSwitch}
-      />
-
+    <div className="h-full w-full flex flex-col overflow-hidden">
       {/* Main Content */}
       <motion.div
         className="flex-1 min-h-0 overflow-hidden"
@@ -942,17 +925,6 @@ const HUDDashboard = () => {
 
         </CommandCenterLayout>
       </motion.div>
-
-      {/* ====================================================================
-          DASHBOARD FOOTER - Score Summary & League Ticker
-          ==================================================================== */}
-      <DashboardFooter
-        recentScores={recentScores}
-        activeCorps={activeCorps}
-        multiplier={multiplier}
-        seasonData={seasonData}
-        currentWeek={currentWeek}
-      />
 
       {/* ======================================================================
           SLIDE-OUT PANELS
