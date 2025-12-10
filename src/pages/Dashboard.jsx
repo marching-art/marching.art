@@ -19,10 +19,8 @@ import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } fro
 import {
   EquipmentManager,
   DashboardStaffPanel,
-  ExecutionInsightsPanel,
   SectionGauges,
   MultiplierGlassBoxLarge,
-  ConfidenceBadge,
 } from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
@@ -136,16 +134,6 @@ const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }
     </div>
   );
 };
-
-// Multiplier Badge - Shows active buff/debuff
-const MultiplierBadge = ({ label, value, positive = true }) => (
-  <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-data font-bold ${
-    positive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-  }`}>
-    <span>{label}:</span>
-    <span>{positive ? '+' : ''}{value}</span>
-  </div>
-);
 
 // Action Button - Primary action tile
 const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed, color = 'gold', size = 'md' }) => {
@@ -379,7 +367,6 @@ const Dashboard = () => {
   // Panel states
   const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
   const [showStaffPanel, setShowStaffPanel] = useState(false);
-  const [showExecutionInsights, setShowExecutionInsights] = useState(false);
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
   // Daily operations state
@@ -903,46 +890,145 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Active Multipliers */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Active Modifiers</span>
-              <Activity className="w-4 h-4 text-purple-400" />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {readiness.avg >= 0.85 && <MultiplierBadge label="Ready" value="+5%" positive />}
-              {readiness.avg < 0.70 && <MultiplierBadge label="Unprepared" value="-8%" positive={false} />}
-              {morale.avg >= 0.85 && <MultiplierBadge label="High Morale" value="+3%" positive />}
-              {morale.avg < 0.70 && <MultiplierBadge label="Low Morale" value="-5%" positive={false} />}
-              {assignedStaff.length >= 6 && <MultiplierBadge label="Full Staff" value="+4%" positive />}
-              {assignedStaff.length < 4 && <MultiplierBadge label="Understaffed" value="-4%" positive={false} />}
-              {equipment.avg < 0.80 && <MultiplierBadge label="Worn Equipment" value="-3%" positive={false} />}
-              {executionState?.synergyBonus > 0 && (
-                <MultiplierBadge label="Synergy" value={`+${(executionState.synergyBonus).toFixed(1)}`} positive />
-              )}
-            </div>
-          </div>
-
-          {/* Show Difficulty */}
+          {/* Multiplier Breakdown - Receipt Style */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Multiplier Breakdown</span>
+              <TrendingUp className="w-4 h-4 text-gold-400" />
             </div>
-            <ConfidenceBadge
-              currentDifficulty={executionState?.showDesign || 'moderate'}
-              currentReadiness={readiness.avg}
-              onClick={() => setShowExecutionInsights(true)}
-            />
+            <div className="space-y-0 border-t border-white/10">
+              {/* Readiness Factor */}
+              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3 h-3 text-blue-400" />
+                  <span className="text-xs text-cream/60">Readiness</span>
+                </div>
+                <span className={`text-xs font-mono font-bold ${(readiness.avg - 0.80) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(readiness.avg - 0.80) >= 0 ? '+' : ''}{((readiness.avg - 0.80) * 60).toFixed(1)}%
+                </span>
+              </div>
+              {/* Morale Factor */}
+              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <Heart className="w-3 h-3 text-green-400" />
+                  <span className="text-xs text-cream/60">Morale</span>
+                </div>
+                <span className={`text-xs font-mono font-bold ${(morale.avg - 0.75) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(morale.avg - 0.75) >= 0 ? '+' : ''}{((morale.avg - 0.75) * 32).toFixed(1)}%
+                </span>
+              </div>
+              {/* Staff Factor */}
+              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3 h-3 text-purple-400" />
+                  <span className="text-xs text-cream/60">Staff</span>
+                </div>
+                <span className={`text-xs font-mono font-bold ${staffEfficiency.bonus >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {staffEfficiency.bonus >= 0 ? '+' : ''}{(staffEfficiency.bonus * 100).toFixed(1)}%
+                </span>
+              </div>
+              {/* Equipment Factor */}
+              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                <div className="flex items-center gap-1.5">
+                  <Wrench className="w-3 h-3 text-orange-400" />
+                  <span className="text-xs text-cream/60">Equipment</span>
+                </div>
+                <span className={`text-xs font-mono font-bold ${(equipment.avg - 1.0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(equipment.avg - 1.0) >= 0 ? '+' : ''}{((equipment.avg - 1.0) * 50).toFixed(1)}%
+                </span>
+              </div>
+              {/* Difficulty Bonus/Penalty */}
+              {(() => {
+                const difficultyConfig = executionState?.showDesign || { preparednessThreshold: 0.80, ceilingBonus: 0.08, riskPenalty: -0.10 };
+                const threshold = difficultyConfig.preparednessThreshold || 0.80;
+                const isPrepared = readiness.avg >= threshold;
+                const diffValue = isPrepared ? (difficultyConfig.ceilingBonus || 0.08) : (difficultyConfig.riskPenalty || -0.10);
+                return (
+                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3 h-3 text-yellow-400" />
+                      <span className="text-xs text-cream/60">Difficulty</span>
+                    </div>
+                    <span className={`text-xs font-mono font-bold ${isPrepared ? 'text-green-400' : 'text-red-400'}`}>
+                      {isPrepared ? '+' : ''}{(diffValue * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                );
+              })()}
+              {/* Synergy if present */}
+              {executionState?.synergyBonus > 0 && (
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-purple-400" />
+                    <span className="text-xs text-cream/60">Synergy</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-green-400">
+                    +{executionState.synergyBonus.toFixed(1)}%
+                  </span>
+                </div>
+              )}
+              {/* Total */}
+              <div className="flex items-center justify-between py-2 mt-1 bg-gold-500/10 rounded px-2 -mx-1">
+                <span className="text-xs font-display font-bold text-gold-400 uppercase">Total</span>
+                <span className="text-lg font-mono font-bold text-gold-400" style={{ textShadow: '0 0 8px rgba(255, 215, 0, 0.4)' }}>
+                  {multiplier.toFixed(2)}x
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Full Analysis Link */}
-          <button
-            onClick={() => setShowExecutionInsights(true)}
-            className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex items-center justify-between hover:border-gold-500/30 transition-colors"
-          >
-            <span className="text-xs font-display font-bold text-gold-400 uppercase tracking-wide">Full Analysis</span>
-            <BarChart3 className="w-5 h-5 text-gold-400" />
-          </button>
+          {/* Show Difficulty Threshold */}
+          {(() => {
+            const difficultyConfig = executionState?.showDesign || { preparednessThreshold: 0.80, ceilingBonus: 0.08, riskPenalty: -0.10, label: 'Moderate' };
+            const threshold = difficultyConfig.preparednessThreshold || 0.80;
+            const isPrepared = readiness.avg >= threshold;
+            const gap = Math.abs(readiness.avg - threshold);
+            const diffLabel = difficultyConfig.label || (threshold <= 0.70 ? 'Conservative' : threshold <= 0.80 ? 'Moderate' : threshold <= 0.85 ? 'Ambitious' : 'Legendary');
+            return (
+              <div className={`bg-black/40 backdrop-blur-md border rounded-lg p-3.5 flex-shrink-0 ${
+                isPrepared ? 'border-green-500/30' : 'border-red-500/30'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                    isPrepared ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    {isPrepared ? 'Ready' : 'Not Ready'}
+                  </span>
+                </div>
+                {/* Mini threshold gauge */}
+                <div className="relative h-3 bg-charcoal-800 rounded-full overflow-hidden mb-2">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                      isPrepared ? 'bg-gradient-to-r from-green-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-orange-500'
+                    }`}
+                    style={{ width: `${Math.round(readiness.avg * 100)}%` }}
+                  />
+                  <div
+                    className="absolute top-0 bottom-0 w-0.5 bg-white z-10"
+                    style={{ left: `${Math.round(threshold * 100)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-cream/40 uppercase">{diffLabel} • {Math.round(threshold * 100)}% threshold</div>
+                    <div className="text-xs text-cream/60">
+                      {isPrepared
+                        ? `${Math.round(gap * 100)}% above threshold`
+                        : `Need ${Math.round(gap * 100)}% more readiness`
+                      }
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-mono font-bold ${isPrepared ? 'text-green-400' : 'text-red-400'}`}>
+                      {isPrepared ? '+' : ''}{Math.round((isPrepared ? (difficultyConfig.ceilingBonus || 0.08) : (difficultyConfig.riskPenalty || -0.10)) * 100)}%
+                    </div>
+                    <div className="text-[9px] text-cream/40 uppercase">{isPrepared ? 'Bonus' : 'Penalty'}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </motion.aside>
 
         {/* ================================================================
@@ -1479,57 +1565,6 @@ const Dashboard = () => {
                   compact={false}
                 />
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Execution Insights Panel */}
-      <AnimatePresence>
-        {showExecutionInsights && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowExecutionInsights(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-hidden"
-            >
-              <ExecutionInsightsPanel
-                executionState={executionState}
-                multiplierBreakdown={{
-                  readiness: (readiness.avg - 0.75) * 0.48,
-                  morale: (morale.avg - 0.80) * 0.32,
-                  equipment: (equipment.avg - 0.90) * 0.20,
-                  staff: staffEfficiency.bonus,
-                  showDifficulty: executionState?.showDesign?.ceilingBonus || 0,
-                  travelCondition: (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0,
-                }}
-                finalMultiplier={multiplier}
-                currentDay={currentDay}
-                showDifficulty={executionState?.showDesign || 'moderate'}
-                showConcept={activeCorps?.showConcept}
-                lineup={activeCorps?.lineup}
-                assignedStaff={assignedStaff}
-                activeCorpsClass={activeCorpsClass}
-                onBoostStaffMorale={async (staffId) => {
-                  try {
-                    const { boostStaffMorale } = await import('../api/functions');
-                    await boostStaffMorale({ staffId });
-                    refreshProfile();
-                  } catch (error) {
-                    console.error('Failed to boost staff morale:', error);
-                  }
-                }}
-                onClose={() => setShowExecutionInsights(false)}
-              />
             </motion.div>
           </>
         )}
