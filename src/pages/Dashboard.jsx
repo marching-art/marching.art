@@ -66,7 +66,8 @@ const classColors = {
 const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
 // ============================================================================
-// REUSABLE HUD COMPONENTS
+// REUSABLE HUD COMPONENTS - Optimized for information density
+// Uses clamp() for responsive scaling based on viewport
 // ============================================================================
 
 // Resource Pill - Compact stat display for header
@@ -84,11 +85,11 @@ const ResourcePill = ({ icon: Icon, value, label, color = 'gold', onClick, pulse
   return (
     <Wrapper
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border backdrop-blur-sm transition-all ${colorMap[color]} ${onClick ? 'hover:bg-white/10 cursor-pointer' : ''} ${pulse ? 'animate-pulse' : ''}`}
+      className={`flex items-center gap-1.5 px-2 py-1 rounded border backdrop-blur-sm transition-all ${colorMap[color]} ${onClick ? 'hover:bg-white/10 cursor-pointer' : ''} ${pulse ? 'animate-pulse' : ''}`}
     >
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className="w-4 h-4" />
       <span className="text-sm font-data font-bold tabular-nums">{value}</span>
-      {label && <span className="text-[9px] text-cream/50 uppercase tracking-wide">{label}</span>}
+      {label && <span className="text-xs text-cream/50 uppercase tracking-wide hidden xl:inline">{label}</span>}
     </Wrapper>
   );
 };
@@ -116,10 +117,10 @@ const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wide w-14 shrink-0">
+      <span className="text-xs font-display font-bold text-cream/70 uppercase tracking-wide w-20 shrink-0">
         {label}
       </span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
@@ -128,7 +129,7 @@ const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }
         />
       </div>
       {showPercent && (
-        <span className={`text-[10px] font-data font-bold w-8 text-right ${textMap[color]}`}>
+        <span className={`text-sm font-data font-bold w-12 text-right tabular-nums ${textMap[color]}`}>
           {percent}%
         </span>
       )}
@@ -138,7 +139,7 @@ const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }
 
 // Multiplier Badge - Shows active buff/debuff
 const MultiplierBadge = ({ label, value, positive = true }) => (
-  <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-data font-bold ${
+  <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-data font-bold ${
     positive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
   }`}>
     <span>{label}:</span>
@@ -156,16 +157,15 @@ const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processi
     orange: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', icon: 'text-orange-400', hover: 'hover:bg-orange-500/30' },
   };
   const c = colorMap[color];
-  const sizeClass = size === 'sm' ? 'p-2' : size === 'lg' ? 'p-4' : 'p-3';
 
   return (
     <motion.button
       onClick={onClick}
       disabled={disabled || processing}
-      whileHover={!disabled && !processing ? { scale: 1.02 } : {}}
-      whileTap={!disabled && !processing ? { scale: 0.98 } : {}}
+      whileHover={!disabled && !processing ? { scale: 1.01 } : {}}
+      whileTap={!disabled && !processing ? { scale: 0.99 } : {}}
       className={`
-        ${sizeClass} flex items-center gap-3 w-full
+        p-2.5 flex items-center gap-2.5 w-full
         bg-black/40 backdrop-blur-md border border-white/10 rounded-lg
         transition-all duration-200
         ${disabled ? 'opacity-40 cursor-not-allowed' : `cursor-pointer hover:border-white/20 ${c.hover}`}
@@ -181,11 +181,11 @@ const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processi
           <Icon className={`w-5 h-5 ${c.icon}`} />
         )}
       </div>
-      <div className="flex-1 text-left">
-        <div className="text-sm font-display font-bold text-cream uppercase tracking-wide">{label}</div>
-        {subtitle && <div className="text-[10px] text-cream/50">{subtitle}</div>}
+      <div className="flex-1 text-left min-w-0">
+        <div className="text-sm font-display font-bold text-cream uppercase tracking-wide truncate">{label}</div>
+        {subtitle && <div className="text-xs text-cream/50 truncate">{subtitle}</div>}
       </div>
-      <ChevronRight className="w-4 h-4 text-cream/30" />
+      <ChevronRight className="w-4 h-4 text-cream/30 shrink-0" />
     </motion.button>
   );
 };
@@ -195,11 +195,11 @@ const TaskCheckbox = ({ title, reward, completed, onClick, loading }) => (
   <button
     onClick={onClick}
     disabled={completed || loading}
-    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded transition-all ${
       completed ? 'opacity-50 cursor-default' : 'hover:bg-white/5 cursor-pointer'
     }`}
   >
-    <div className={`w-5 h-5 flex items-center justify-center rounded border transition-all ${
+    <div className={`w-5 h-5 flex items-center justify-center rounded border transition-all shrink-0 ${
       completed
         ? 'bg-green-500/20 border-green-500/60 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
         : 'bg-transparent border-white/20'
@@ -210,10 +210,10 @@ const TaskCheckbox = ({ title, reward, completed, onClick, loading }) => (
         <Check className="w-3 h-3 text-green-400" />
       ) : null}
     </div>
-    <span className={`flex-1 text-left text-sm font-mono ${completed ? 'text-cream/50 line-through' : 'text-cream'}`}>
+    <span className={`flex-1 text-left text-sm font-mono truncate ${completed ? 'text-cream/50 line-through' : 'text-cream'}`}>
       {title}
     </span>
-    <span className={`text-xs font-data font-bold ${completed ? 'text-gold-400/50' : 'text-gold-400'}`}>
+    <span className={`text-xs font-data font-bold shrink-0 ${completed ? 'text-gold-400/50' : 'text-gold-400'}`}>
       {reward}
     </span>
   </button>
@@ -231,16 +231,16 @@ const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabe
   };
 
   return (
-    <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] font-display font-bold text-cream/50 uppercase tracking-wide">{label}</span>
+    <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg p-2.5">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-display font-bold text-cream/50 uppercase tracking-wide">{label}</span>
         {Icon && <Icon className={`w-4 h-4 ${colorMap[color]}`} />}
       </div>
       <div className={`text-2xl font-data font-bold ${colorMap[color]} tabular-nums`}>{value}</div>
       {action && (
         <button
           onClick={action}
-          className="mt-2 text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide hover:text-gold-300 transition-colors"
+          className="mt-1.5 text-xs font-display font-bold text-gold-400 uppercase tracking-wide hover:text-gold-300 transition-colors"
         >
           {actionLabel} →
         </button>
@@ -778,20 +778,20 @@ const Dashboard = () => {
           GLOBAL HEADER - Resource Monitor Bar
           Sticky, low-profile bar displaying real-time constraints
           ================================================================ */}
-      <header className="shrink-0 h-12 bg-black/60 backdrop-blur-xl border-b border-white/10 px-4 flex items-center justify-between z-20">
+      <header className="shrink-0 h-14 bg-black/60 backdrop-blur-xl border-b border-white/10 px-4 flex items-center justify-between z-20">
         {/* Left: Corps Name & Class */}
         <div className="flex items-center gap-3">
           {activeCorps ? (
             <>
               {hasMultipleCorps ? (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   {Object.entries(corps)
                     .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
                     .map(([classId, corpsData]) => (
                       <button
                         key={classId}
                         onClick={() => handleCorpsSwitch(classId)}
-                        className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wide transition-all ${
+                        className={`px-3 py-1.5 rounded text-xs font-display font-bold uppercase tracking-wide transition-all ${
                           activeCorpsClass === classId
                             ? `${classColors[classId]} shadow-sm`
                             : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
@@ -803,42 +803,42 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
+                  <span className={`px-2.5 py-1 rounded text-xs font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
                     {getCorpsClassName(activeCorpsClass)}
                   </span>
-                  <span className="text-sm font-display font-bold text-cream truncate max-w-[120px]">
+                  <span className="text-base font-display font-bold text-cream truncate max-w-[160px]">
                     {activeCorps.corpsName || activeCorps.name}
                   </span>
                 </div>
               )}
               {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[9px] font-bold">
-                  <Crown size={8} /> #{activeCorps.rank}
+                <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 text-gold-400 text-xs font-bold">
+                  <Crown size={10} /> #{activeCorps.rank}
                 </span>
               )}
             </>
           ) : (
-            <span className="text-sm font-display text-cream/50">No Corps Registered</span>
+            <span className="text-base font-display text-cream/50">No Corps Registered</span>
           )}
         </div>
 
         {/* Center: Season Progress */}
         <div className="hidden md:flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-cream/40" />
-            <span className="text-[10px] font-mono text-cream/60">
+            <Calendar className="w-4 h-4 text-cream/40" />
+            <span className="text-xs font-mono text-cream/60">
               {formatSeasonName(seasonData?.name)} • Week {currentWeek} • Day {currentDay}
             </span>
           </div>
           {weeksRemaining !== null && (
-            <div className="flex items-center gap-1">
-              <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="flex items-center gap-1.5">
+              <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gold-500 rounded-full transition-all"
                   style={{ width: `${((7 - weeksRemaining) / 7) * 100}%` }}
                 />
               </div>
-              <span className="text-[9px] font-mono text-cream/40">{weeksRemaining}w left</span>
+              <span className="text-xs font-mono text-cream/40">{weeksRemaining}w left</span>
             </div>
           )}
         </div>
@@ -874,15 +874,15 @@ const Dashboard = () => {
             ================================================================ */}
         <motion.aside
           variants={columnVariants}
-          className="hidden lg:flex lg:col-span-3 flex-col gap-2 overflow-hidden"
+          className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
         >
           {/* Section Readiness */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Section Readiness</span>
-              <Target className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Readiness</span>
+              <Target className="w-4 h-4 text-blue-400" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <SectionProgressBar value={readiness.brass} label="Brass" color="blue" />
               <SectionProgressBar value={readiness.percussion} label="Perc" color="blue" />
               <SectionProgressBar value={readiness.guard} label="Guard" color="blue" />
@@ -891,12 +891,12 @@ const Dashboard = () => {
           </div>
 
           {/* Section Morale */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Section Morale</span>
-              <Heart className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Morale</span>
+              <Heart className="w-4 h-4 text-green-400" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <SectionProgressBar value={morale.brass} label="Brass" color="green" />
               <SectionProgressBar value={morale.percussion} label="Perc" color="green" />
               <SectionProgressBar value={morale.guard} label="Guard" color="green" />
@@ -904,12 +904,12 @@ const Dashboard = () => {
           </div>
 
           {/* Active Multipliers */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Active Modifiers</span>
-              <Activity className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Active Modifiers</span>
+              <Activity className="w-4 h-4 text-purple-400" />
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {readiness.avg >= 0.85 && <MultiplierBadge label="Ready" value="+5%" positive />}
               {readiness.avg < 0.70 && <MultiplierBadge label="Unprepared" value="-8%" positive={false} />}
               {morale.avg >= 0.85 && <MultiplierBadge label="High Morale" value="+3%" positive />}
@@ -924,9 +924,9 @@ const Dashboard = () => {
           </div>
 
           {/* Show Difficulty */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
             </div>
             <ConfidenceBadge
               currentDifficulty={executionState?.showDesign || 'moderate'}
@@ -938,10 +938,10 @@ const Dashboard = () => {
           {/* Full Analysis Link */}
           <button
             onClick={() => setShowExecutionInsights(true)}
-            className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex items-center justify-between hover:border-gold-500/30 transition-colors"
+            className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex items-center justify-between hover:border-gold-500/30 transition-colors"
           >
-            <span className="text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide">Full Analysis</span>
-            <BarChart3 className="w-4 h-4 text-gold-400" />
+            <span className="text-xs font-display font-bold text-gold-400 uppercase tracking-wide">Full Analysis</span>
+            <BarChart3 className="w-5 h-5 text-gold-400" />
           </button>
         </motion.aside>
 
@@ -951,7 +951,7 @@ const Dashboard = () => {
             ================================================================ */}
         <motion.section
           variants={columnVariants}
-          className="col-span-1 lg:col-span-6 flex flex-col gap-2 overflow-y-auto lg:overflow-hidden"
+          className="col-span-1 lg:col-span-6 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden"
         >
           {activeCorps ? (
             <>
@@ -960,29 +960,29 @@ const Dashboard = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-xl lg:text-2xl font-display font-black text-cream uppercase tracking-tight truncate">
+                      <h1 className="text-2xl lg:text-3xl font-display font-black text-cream uppercase tracking-tight truncate">
                         {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
                       </h1>
                       <button
                         onClick={() => setShowEditCorps(true)}
-                        className="p-1 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors"
                       >
-                        <Edit className="w-3.5 h-3.5" />
+                        <Edit className="w-4 h-4" />
                       </button>
                     </div>
                     {/* Show Concept */}
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1.5">
                       {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
                         <button
                           onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors group"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors group"
                         >
-                          <Sparkles className="w-3 h-3 text-purple-400" />
-                          <span className="text-[10px] text-cream/60 group-hover:text-purple-400 capitalize">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                          <span className="text-xs text-cream/60 group-hover:text-purple-400 capitalize">
                             {activeCorps.showConcept.theme}
                           </span>
                           {(executionState?.synergyBonus || 0) > 0 && (
-                            <span className="text-[10px] font-bold text-purple-400">
+                            <span className="text-xs font-bold text-purple-400">
                               +{(executionState?.synergyBonus || 0).toFixed(1)}
                             </span>
                           )}
@@ -990,9 +990,9 @@ const Dashboard = () => {
                       ) : (
                         <button
                           onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px]"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs"
                         >
-                          <Sparkles className="w-3 h-3" /> Configure Show
+                          <Sparkles className="w-3.5 h-3.5" /> Configure Show
                         </button>
                       )}
                     </div>
@@ -1020,38 +1020,38 @@ const Dashboard = () => {
                 </div>
 
                 {/* Quick Stats Row */}
-                <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/10">
+                <div className="grid grid-cols-4 gap-3 mt-3 pt-3 border-t border-white/10">
                   <div className="text-center">
-                    <div className="text-lg font-data font-bold text-blue-400">{executionState?.rehearsalsThisWeek || 0}/7</div>
-                    <div className="text-[8px] text-cream/40 uppercase">Rehearsals</div>
+                    <div className="text-xl font-data font-bold text-blue-400">{executionState?.rehearsalsThisWeek || 0}/7</div>
+                    <div className="text-[10px] text-cream/40 uppercase">Rehearsals</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-data font-bold text-purple-400">
+                    <div className="text-xl font-data font-bold text-purple-400">
                       {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
                     </div>
-                    <div className="text-[8px] text-cream/40 uppercase">Shows</div>
+                    <div className="text-[10px] text-cream/40 uppercase">Shows</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <div className="text-center">
-                      <div className="text-lg font-data font-bold text-gold-400">
+                      <div className="text-xl font-data font-bold text-gold-400">
                         {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                       </div>
-                      <div className="text-[8px] text-cream/40 uppercase">Score</div>
+                      <div className="text-[10px] text-cream/40 uppercase">Score</div>
                     </div>
                   )}
                   <div className="text-center">
-                    <div className="text-lg font-data font-bold text-green-400">{assignedStaff.length}/8</div>
-                    <div className="text-[8px] text-cream/40 uppercase">Staff</div>
+                    <div className="text-xl font-data font-bold text-green-400">{assignedStaff.length}/8</div>
+                    <div className="text-[10px] text-cream/40 uppercase">Staff</div>
                   </div>
                 </div>
               </div>
 
               {/* Action Deck - Primary Actions */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
+                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {/* Rehearsal */}
                   <ActionButton
                     icon={Music}
@@ -1091,14 +1091,14 @@ const Dashboard = () => {
               </div>
 
               {/* Daily Tasks - Real Firebase Operations */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
-                  <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Daily Tasks</span>
-                  <span className="text-[10px] font-data font-bold text-gold-400">
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 min-h-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2.5 shrink-0">
+                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Daily Tasks</span>
+                  <span className="text-sm font-data font-bold text-gold-400">
                     {taskStats.completed}<span className="text-cream/40">/{taskStats.total}</span>
                   </span>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-1">
+                <div className="flex-1 overflow-y-auto space-y-1.5">
                   {opsLoading ? (
                     <div className="text-center py-4 text-cream/40 text-sm">Loading tasks...</div>
                   ) : (
@@ -1141,80 +1141,80 @@ const Dashboard = () => {
                       />
 
                       {/* Sectional Rehearsals */}
-                      <div className="pt-2 mt-1 border-t border-white/5">
-                        <div className="text-[8px] font-display text-cream/40 uppercase tracking-wider mb-1">Sectionals (+2% readiness each)</div>
-                        <div className="grid grid-cols-4 gap-1">
+                      <div className="pt-2.5 mt-1.5 border-t border-white/5">
+                        <div className="text-[10px] font-display text-cream/40 uppercase tracking-wider mb-1.5">Sectionals (+2% readiness each)</div>
+                        <div className="grid grid-cols-4 gap-1.5">
                           <button
                             onClick={() => handleSectionalRehearsal('music')}
                             disabled={!getSectionalAvailability('music') || opsProcessing === 'sectional_music'}
-                            className={`flex flex-col items-center gap-0.5 p-1.5 rounded border transition-all ${
+                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
                               !getSectionalAvailability('music')
                                 ? 'bg-green-500/10 border-green-500/30 opacity-60'
                                 : 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 cursor-pointer'
                             }`}
                           >
                             {opsProcessing === 'sectional_music' ? (
-                              <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
                             ) : !getSectionalAvailability('music') ? (
-                              <Check className="w-3 h-3 text-green-400" />
+                              <Check className="w-4 h-4 text-green-400" />
                             ) : (
-                              <Music className="w-3 h-3 text-blue-400" />
+                              <Music className="w-4 h-4 text-blue-400" />
                             )}
-                            <span className={`text-[8px] font-bold ${!getSectionalAvailability('music') ? 'text-green-400' : 'text-blue-400'}`}>Music</span>
+                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('music') ? 'text-green-400' : 'text-blue-400'}`}>Music</span>
                           </button>
                           <button
                             onClick={() => handleSectionalRehearsal('visual')}
                             disabled={!getSectionalAvailability('visual') || opsProcessing === 'sectional_visual'}
-                            className={`flex flex-col items-center gap-0.5 p-1.5 rounded border transition-all ${
+                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
                               !getSectionalAvailability('visual')
                                 ? 'bg-green-500/10 border-green-500/30 opacity-60'
                                 : 'bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 cursor-pointer'
                             }`}
                           >
                             {opsProcessing === 'sectional_visual' ? (
-                              <div className="w-3 h-3 border border-purple-400 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border border-purple-400 border-t-transparent rounded-full animate-spin" />
                             ) : !getSectionalAvailability('visual') ? (
-                              <Check className="w-3 h-3 text-green-400" />
+                              <Check className="w-4 h-4 text-green-400" />
                             ) : (
-                              <Eye className="w-3 h-3 text-purple-400" />
+                              <Eye className="w-4 h-4 text-purple-400" />
                             )}
-                            <span className={`text-[8px] font-bold ${!getSectionalAvailability('visual') ? 'text-green-400' : 'text-purple-400'}`}>Visual</span>
+                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('visual') ? 'text-green-400' : 'text-purple-400'}`}>Visual</span>
                           </button>
                           <button
                             onClick={() => handleSectionalRehearsal('guard')}
                             disabled={!getSectionalAvailability('guard') || opsProcessing === 'sectional_guard'}
-                            className={`flex flex-col items-center gap-0.5 p-1.5 rounded border transition-all ${
+                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
                               !getSectionalAvailability('guard')
                                 ? 'bg-green-500/10 border-green-500/30 opacity-60'
                                 : 'bg-pink-500/10 border-pink-500/30 hover:bg-pink-500/20 cursor-pointer'
                             }`}
                           >
                             {opsProcessing === 'sectional_guard' ? (
-                              <div className="w-3 h-3 border border-pink-400 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border border-pink-400 border-t-transparent rounded-full animate-spin" />
                             ) : !getSectionalAvailability('guard') ? (
-                              <Check className="w-3 h-3 text-green-400" />
+                              <Check className="w-4 h-4 text-green-400" />
                             ) : (
-                              <Flag className="w-3 h-3 text-pink-400" />
+                              <Flag className="w-4 h-4 text-pink-400" />
                             )}
-                            <span className={`text-[8px] font-bold ${!getSectionalAvailability('guard') ? 'text-green-400' : 'text-pink-400'}`}>Guard</span>
+                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('guard') ? 'text-green-400' : 'text-pink-400'}`}>Guard</span>
                           </button>
                           <button
                             onClick={() => handleSectionalRehearsal('percussion')}
                             disabled={!getSectionalAvailability('percussion') || opsProcessing === 'sectional_percussion'}
-                            className={`flex flex-col items-center gap-0.5 p-1.5 rounded border transition-all ${
+                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
                               !getSectionalAvailability('percussion')
                                 ? 'bg-green-500/10 border-green-500/30 opacity-60'
                                 : 'bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 cursor-pointer'
                             }`}
                           >
                             {opsProcessing === 'sectional_percussion' ? (
-                              <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border border-orange-400 border-t-transparent rounded-full animate-spin" />
                             ) : !getSectionalAvailability('percussion') ? (
-                              <Check className="w-3 h-3 text-green-400" />
+                              <Check className="w-4 h-4 text-green-400" />
                             ) : (
-                              <Drum className="w-3 h-3 text-orange-400" />
+                              <Drum className="w-4 h-4 text-orange-400" />
                             )}
-                            <span className={`text-[8px] font-bold ${!getSectionalAvailability('percussion') ? 'text-green-400' : 'text-orange-400'}`}>Perc</span>
+                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('percussion') ? 'text-green-400' : 'text-orange-400'}`}>Perc</span>
                           </button>
                         </div>
                       </div>
@@ -1247,27 +1247,27 @@ const Dashboard = () => {
             ================================================================ */}
         <motion.aside
           variants={columnVariants}
-          className="hidden lg:flex lg:col-span-3 flex-col gap-2 overflow-hidden"
+          className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
         >
           {/* Aggregate Staff Efficiency */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Staff Efficiency</span>
-              <Users className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Staff Efficiency</span>
+              <Users className="w-4 h-4 text-green-400" />
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-3xl font-data font-bold text-green-400">{Math.round(staffEfficiency.value * 100)}%</span>
-              <span className={`text-[10px] font-display font-bold uppercase ${
+              <span className="text-4xl font-data font-bold text-green-400">{Math.round(staffEfficiency.value * 100)}%</span>
+              <span className={`text-xs font-display font-bold uppercase ${
                 staffEfficiency.bonus >= 0 ? 'text-green-400' : 'text-orange-400'
               }`}>
                 {staffEfficiency.label}
               </span>
             </div>
-            <div className="flex items-center gap-1 mb-3">
+            <div className="flex items-center gap-1.5 mb-3">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-2 rounded-sm transition-colors ${
+                  className={`flex-1 h-2.5 rounded-sm transition-colors ${
                     i < assignedStaff.length ? 'bg-green-500' : 'bg-white/10'
                   }`}
                 />
@@ -1275,86 +1275,86 @@ const Dashboard = () => {
             </div>
             <button
               onClick={() => setShowStaffPanel(true)}
-              className="w-full text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide py-2 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
+              className="w-full text-xs font-display font-bold text-gold-400 uppercase tracking-wide py-2.5 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
             >
               Manage Staff →
             </button>
           </div>
 
           {/* Equipment Status */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
-              <Wrench className="w-3.5 h-3.5 text-orange-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
+              <Wrench className="w-4 h-4 text-orange-400" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <SectionProgressBar value={equipment.instruments} label="Instruments" color={equipment.instruments < 0.85 ? 'orange' : 'gold'} />
               <SectionProgressBar value={equipment.uniforms} label="Uniforms" color={equipment.uniforms < 0.85 ? 'orange' : 'gold'} />
               <SectionProgressBar value={equipment.props} label="Props" color={equipment.props < 0.85 ? 'orange' : 'gold'} />
             </div>
             <button
               onClick={() => setShowEquipmentPanel(true)}
-              className="w-full mt-3 text-[10px] font-display font-bold text-gold-400 uppercase tracking-wide py-2 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
+              className="w-full mt-3 text-xs font-display font-bold text-gold-400 uppercase tracking-wide py-2.5 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
             >
               Manage Equipment →
             </button>
           </div>
 
           {/* Travel Fleet */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Travel Fleet</span>
-              <Gauge className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Travel Fleet</span>
+              <Gauge className="w-4 h-4 text-blue-400" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div className="text-center">
-                <div className={`text-xl font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                <div className={`text-2xl font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
                   {Math.round(equipment.bus * 100)}%
                 </div>
-                <div className="text-[8px] text-cream/40 uppercase">Bus</div>
+                <div className="text-[10px] text-cream/40 uppercase">Bus</div>
               </div>
               <div className="text-center">
-                <div className={`text-xl font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
+                <div className={`text-2xl font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
                   {Math.round(equipment.truck * 100)}%
                 </div>
-                <div className="text-[8px] text-cream/40 uppercase">Truck</div>
+                <div className="text-[10px] text-cream/40 uppercase">Truck</div>
               </div>
             </div>
             {(equipment.bus + equipment.truck) < 1.40 && (
-              <div className="mt-2 text-[9px] text-orange-400 text-center">
+              <div className="mt-2.5 text-xs text-orange-400 text-center">
                 ⚠ Travel condition affecting performance
               </div>
             )}
           </div>
 
           {/* Quick Links */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3 flex-shrink-0">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Link
                 to="/schedule"
-                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
               >
-                <Calendar className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-cream">Schedule</span>
+                <Calendar className="w-5 h-5 text-purple-400" />
+                <span className="text-sm font-display text-cream">Schedule</span>
                 <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
               </Link>
               <Link
                 to="/scores"
-                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
               >
-                <Trophy className="w-4 h-4 text-gold-400" />
-                <span className="text-sm text-cream">Scores</span>
+                <Trophy className="w-5 h-5 text-gold-400" />
+                <span className="text-sm font-display text-cream">Scores</span>
                 <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
               </Link>
               <Link
                 to="/staff"
-                className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
               >
-                <Users className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-cream">Market</span>
+                <Users className="w-5 h-5 text-green-400" />
+                <span className="text-sm font-display text-cream">Market</span>
                 <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
               </Link>
             </div>
