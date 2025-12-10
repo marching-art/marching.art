@@ -1,8 +1,8 @@
 // =============================================================================
-// HUD DASHBOARD - "Glass Cockpit" Command Center
+// HUD DASHBOARD - Director's Daily Briefing (Glass Cockpit v2)
 // =============================================================================
-// Full data visibility dashboard - 100% of game state surfaced on screen.
-// No modals for critical data - everything visible at a glance.
+// Comprehensive command center showing 100% of game state and mechanics.
+// Every factor that affects scoring, operations, and progression is visible.
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,448 +51,387 @@ import {
   Play,
   Check,
   X,
-  Sparkles,
   Trophy,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  ChevronRight,
+  AlertCircle,
   ChevronDown,
   ChevronUp,
   LayoutGrid,
   Bus,
   Truck,
   Flame,
-  Clock,
   Radio,
   Minus,
   Crown,
+  DollarSign,
+  Shield,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 
 // =============================================================================
-// CONSTANTS
+// GAME CONSTANTS - All the rules the director needs to know
 // =============================================================================
 
+// 8 Caption positions that need staff
 const CAPTIONS = [
-  { id: 'GE1', name: 'General Effect 1', category: 'ge', color: 'gold' },
-  { id: 'GE2', name: 'General Effect 2', category: 'ge', color: 'gold' },
-  { id: 'VP', name: 'Visual Proficiency', category: 'visual', color: 'blue' },
-  { id: 'VA', name: 'Visual Analysis', category: 'visual', color: 'blue' },
-  { id: 'CG', name: 'Color Guard', category: 'visual', color: 'purple' },
-  { id: 'B', name: 'Brass', category: 'music', color: 'orange' },
-  { id: 'MA', name: 'Music Analysis', category: 'music', color: 'orange' },
-  { id: 'P', name: 'Percussion', category: 'music', color: 'green' },
+  { id: 'GE1', name: 'General Effect 1', category: 'ge', section: 'ensemble' },
+  { id: 'GE2', name: 'General Effect 2', category: 'ge', section: 'ensemble' },
+  { id: 'VP', name: 'Visual Proficiency', category: 'visual', section: 'guard' },
+  { id: 'VA', name: 'Visual Analysis', category: 'visual', section: 'guard' },
+  { id: 'CG', name: 'Color Guard', category: 'visual', section: 'guard' },
+  { id: 'B', name: 'Brass', category: 'music', section: 'brass' },
+  { id: 'MA', name: 'Music Analysis', category: 'music', section: 'brass' },
+  { id: 'P', name: 'Percussion', category: 'music', section: 'percussion' },
 ];
 
-const MULTIPLIER_FACTORS = {
-  readiness: { label: 'Readiness', icon: Target, baseline: 0.80, range: '±12%' },
-  staff: { label: 'Staff', icon: Users, baseline: 0.80, range: '±8%' },
-  equipment: { label: 'Equipment', icon: Wrench, baseline: 1.00, range: '-5%' },
-  travelCondition: { label: 'Travel', icon: Bus, threshold: 1.40, range: '-3%' },
-  morale: { label: 'Morale', icon: Heart, baseline: 0.75, range: '±8%' },
-  showDifficulty: { label: 'Difficulty', icon: Zap, range: '±15%' },
-  fatigue: { label: 'Fatigue', icon: Flame, range: '-5%' },
-  championshipPressure: { label: 'Finals', icon: Trophy, range: '±2%' },
+// 5 Equipment items with their properties
+const EQUIPMENT_CONFIG = {
+  instruments: { name: 'Instruments', captions: ['B', 'MA', 'P'], repairCost: 50, upgradeCost: 500, icon: Music },
+  uniforms: { name: 'Uniforms', captions: ['VP', 'VA'], repairCost: 30, upgradeCost: 300, icon: Shield },
+  props: { name: 'Props', captions: ['CG'], repairCost: 75, upgradeCost: 750, icon: Flag },
+  bus: { name: 'Tour Bus', captions: [], repairCost: 200, upgradeCost: 2000, icon: Bus, isTravel: true },
+  truck: { name: 'Equip Truck', captions: [], repairCost: 250, upgradeCost: 2500, icon: Truck, isTravel: true },
 };
 
-// =============================================================================
-// ANIMATION VARIANTS
-// =============================================================================
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.2, staggerChildren: 0.05, delayChildren: 0.1 },
-  },
+// Show difficulty presets
+const DIFFICULTY_PRESETS = {
+  conservative: { label: 'Conservative', threshold: 0.70, ceiling: 0.04, risk: -0.05, color: 'green' },
+  moderate: { label: 'Moderate', threshold: 0.80, ceiling: 0.08, risk: -0.10, color: 'blue' },
+  ambitious: { label: 'Ambitious', threshold: 0.85, ceiling: 0.12, risk: -0.15, color: 'orange' },
+  legendary: { label: 'Legendary', threshold: 0.90, ceiling: 0.15, risk: -0.20, color: 'red' },
 };
 
-const columnVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] },
-  },
-};
+// 9 Daily operations with details
+const DAILY_OPS = [
+  { id: 'login', name: 'Login Bonus', reward: '+10-20 XP', rewardDetail: '+5-10 CC (streak bonus)', icon: Zap },
+  { id: 'staff', name: 'Staff Check-in', reward: '+15 XP', rewardDetail: '+2% staff morale', icon: Users },
+  { id: 'wellness', name: 'Wellness Check', reward: '+15 XP', rewardDetail: '+3% corps morale', icon: Heart },
+  { id: 'equipment', name: 'Equipment Check', reward: '+10 XP', rewardDetail: '+5 CC, 15% event', icon: Wrench },
+  { id: 'review', name: 'Show Review', reward: '+20 XP', rewardDetail: 'Get insights', icon: Eye },
+  { id: 'music', name: 'Music Sectional', reward: '+20 XP', rewardDetail: '+2% brass readiness', icon: Music },
+  { id: 'visual', name: 'Visual Sectional', reward: '+20 XP', rewardDetail: '+2% guard readiness', icon: Eye },
+  { id: 'guard', name: 'Guard Sectional', reward: '+20 XP', rewardDetail: '+2% guard readiness', icon: Flag },
+  { id: 'percussion', name: 'Percussion Sect.', reward: '+20 XP', rewardDetail: '+2% perc readiness', icon: Drum },
+];
 
 // =============================================================================
 // UTILITY COMPONENTS
 // =============================================================================
 
-// Slim Progress Bar for readiness/morale sections
-const SlimBar = ({ value, label, color = 'blue', size = 'sm' }) => {
-  const colorClasses = {
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    gold: 'bg-gold-500',
-    orange: 'bg-orange-500',
-    purple: 'bg-purple-500',
-    red: 'bg-red-500',
-  };
+// Compact stat bar with label
+const StatBar = ({ value, label, color = 'blue', showValue = true, size = 'sm' }) => {
+  const percent = Math.round((value || 0) * 100);
+  const barColor = percent < 60 ? 'red' : percent < 80 ? 'orange' : color;
 
-  const textClasses = {
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    gold: 'text-gold-400',
-    orange: 'text-orange-400',
-    purple: 'text-purple-400',
-    red: 'text-red-400',
+  const colors = {
+    blue: 'bg-blue-500', green: 'bg-green-500', gold: 'bg-gold-500',
+    orange: 'bg-orange-500', purple: 'bg-purple-500', red: 'bg-red-500',
   };
-
-  const percent = Math.round(value * 100);
-  const barColor = value < 0.6 ? 'red' : value < 0.8 ? 'orange' : color;
+  const textColors = {
+    blue: 'text-blue-400', green: 'text-green-400', gold: 'text-gold-400',
+    orange: 'text-orange-400', purple: 'text-purple-400', red: 'text-red-400',
+  };
 
   return (
     <div className="flex items-center gap-2">
-      <span className={`${size === 'xs' ? 'text-[8px] w-12' : 'text-[9px] w-14'} font-display font-bold text-cream/60 uppercase tracking-wide shrink-0 truncate`}>
+      <span className={`${size === 'xs' ? 'text-[8px] w-16' : 'text-[9px] w-20'} font-display font-bold text-cream/60 uppercase tracking-wide shrink-0 truncate`}>
         {label}
       </span>
       <div className={`flex-1 ${size === 'xs' ? 'h-1' : 'h-1.5'} bg-white/10 rounded-full overflow-hidden`}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.5 }}
-          className={`h-full ${colorClasses[barColor]} rounded-full`}
+          className={`h-full ${colors[barColor]} rounded-full`}
         />
       </div>
-      <span className={`${size === 'xs' ? 'text-[8px] w-6' : 'text-[9px] w-7'} font-data font-bold text-right ${textClasses[barColor]}`}>
-        {percent}%
-      </span>
+      {showValue && (
+        <span className={`${size === 'xs' ? 'text-[8px] w-6' : 'text-[9px] w-8'} font-data font-bold text-right ${textColors[barColor]}`}>
+          {percent}%
+        </span>
+      )}
     </div>
   );
 };
 
-// Effect Pill - For active modifiers display
-const EffectPill = ({ label, value, positive = true, icon: Icon }) => (
-  <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-data font-bold ${
-    positive ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-  }`}>
-    {Icon && <Icon className="w-2.5 h-2.5" />}
-    <span>{label}</span>
-    <span>{positive ? '+' : ''}{value}</span>
-  </div>
-);
-
-// Multiplier Factor Row - For breakdown table
-const FactorRow = ({ label, value, icon: Icon }) => {
-  const isPositive = value > 0.005;
-  const isNegative = value < -0.005;
-  const colorClass = isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-cream/40';
-  const TrendIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
+// Factor row for multiplier breakdown showing the actual math
+const MultiplierFactorRow = ({ label, contribution, range, icon: Icon, explanation, isActive = true }) => {
+  const isPositive = contribution > 0.005;
+  const isNegative = contribution < -0.005;
+  const colorClass = !isActive ? 'text-cream/20' : isPositive ? 'text-green-400' : isNegative ? 'text-red-400' : 'text-cream/40';
+  const bgClass = !isActive ? 'bg-white/[0.02]' : isPositive ? 'bg-green-500/10' : isNegative ? 'bg-red-500/10' : 'bg-white/5';
 
   return (
-    <div className="flex items-center justify-between py-0.5">
-      <div className="flex items-center gap-1.5">
-        <Icon className={`w-3 h-3 ${colorClass}`} />
-        <span className="text-[9px] text-cream/60">{label}</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <TrendIcon className={`w-2.5 h-2.5 ${colorClass}`} />
-        <span className={`text-[9px] font-data font-bold ${colorClass}`}>
-          {isPositive ? '+' : ''}{(value * 100).toFixed(1)}%
-        </span>
-      </div>
-    </div>
-  );
-};
-
-// Caption Slot - For synergy grid
-const CaptionSlot = ({ caption, staff, bonus = 0 }) => {
-  const hasStaff = !!staff;
-  const hasBonus = bonus > 0;
-
-  const categoryColors = {
-    ge: 'border-gold-500/40 bg-gold-500/10',
-    visual: 'border-blue-500/40 bg-blue-500/10',
-    music: 'border-purple-500/40 bg-purple-500/10',
-  };
-
-  const categoryTextColors = {
-    ge: 'text-gold-400',
-    visual: 'text-blue-400',
-    music: 'text-purple-400',
-  };
-
-  return (
-    <div className={`flex items-center justify-between p-1.5 rounded border ${categoryColors[caption.category]}`}>
-      <div className="flex items-center gap-1.5">
-        <div className={`w-5 h-5 rounded flex items-center justify-center ${hasStaff ? 'bg-green-500/30' : 'bg-white/5'}`}>
-          <span className={`text-[8px] font-bold ${hasStaff ? 'text-green-400' : 'text-cream/30'}`}>
-            {caption.id}
-          </span>
-        </div>
-        {hasStaff && (
-          <span className="text-[8px] text-cream/60 truncate max-w-[50px]">
-            {staff.name?.split(' ')[0]}
-          </span>
-        )}
-      </div>
-      <span className={`text-[9px] font-data font-bold ${hasBonus ? 'text-green-400' : 'text-cream/20'}`}>
-        {hasBonus ? `+${bonus.toFixed(1)}` : '—'}
-      </span>
-    </div>
-  );
-};
-
-// Staff Slot Icon - For coverage map
-const StaffSlotIcon = ({ caption, staff, compact = false }) => {
-  const hasStaff = !!staff;
-
-  if (compact) {
-    return (
-      <div className={`w-6 h-6 rounded flex items-center justify-center border ${
-        hasStaff
-          ? 'bg-green-500/20 border-green-500/40'
-          : 'bg-red-500/10 border-red-500/30 border-dashed'
-      }`}>
-        <span className={`text-[7px] font-bold ${hasStaff ? 'text-green-400' : 'text-red-400/50'}`}>
-          {caption}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex items-center gap-2 px-2 py-1 rounded border ${
-      hasStaff
-        ? 'bg-green-500/10 border-green-500/30'
-        : 'bg-white/5 border-white/10 border-dashed'
-    }`}>
-      <div className={`w-5 h-5 rounded flex items-center justify-center ${
-        hasStaff ? 'bg-green-500/20' : 'bg-white/5'
-      }`}>
-        <span className={`text-[8px] font-bold ${hasStaff ? 'text-green-400' : 'text-cream/30'}`}>
-          {caption}
-        </span>
-      </div>
+    <div className={`flex items-center gap-2 px-2 py-1.5 rounded ${bgClass} border border-white/5`}>
+      <Icon className={`w-3.5 h-3.5 shrink-0 ${colorClass}`} />
       <div className="flex-1 min-w-0">
-        {hasStaff ? (
-          <>
-            <div className="text-[9px] font-display font-bold text-cream truncate">
-              {staff.name}
-            </div>
-            <div className="text-[8px] text-cream/40">
-              R: <span className="text-gold-400">{staff.rating}</span>
-            </div>
-          </>
-        ) : (
-          <span className="text-[9px] text-cream/30 italic">Vacant</span>
+        <div className="flex items-center justify-between">
+          <span className={`text-[9px] font-display font-bold ${isActive ? 'text-cream' : 'text-cream/30'} truncate`}>{label}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-[7px] text-cream/30">{range}</span>
+            <span className={`text-[10px] font-data font-bold ${colorClass} tabular-nums`}>
+              {isPositive ? '+' : ''}{(contribution * 100).toFixed(1)}%
+            </span>
+          </div>
+        </div>
+        {explanation && (
+          <div className={`text-[8px] ${isActive ? 'text-cream/50' : 'text-cream/20'} truncate`}>{explanation}</div>
         )}
       </div>
     </div>
   );
 };
 
-// Sectional Rehearsal Button
-const SectionalButton = ({ icon: Icon, label, available, loading, onClick, color = 'blue' }) => {
-  const colorClasses = {
-    blue: 'bg-blue-500/20 border-blue-500/30 text-blue-400 hover:border-blue-400',
-    green: 'bg-green-500/20 border-green-500/30 text-green-400 hover:border-green-400',
-    purple: 'bg-purple-500/20 border-purple-500/30 text-purple-400 hover:border-purple-400',
-    orange: 'bg-orange-500/20 border-orange-500/30 text-orange-400 hover:border-orange-400',
-  };
+// Staff slot showing assignment and effectiveness
+const StaffSlotDetail = ({ caption, staff, isMatched }) => {
+  const hasStaff = !!staff;
 
   return (
-    <button
-      onClick={onClick}
-      disabled={!available || loading}
-      className={`
-        flex flex-col items-center justify-center gap-0.5 p-2 rounded-lg border transition-all
-        ${available
-          ? `${colorClasses[color]} cursor-pointer hover:shadow-lg`
-          : 'bg-green-500/10 border-green-500/30 text-green-400 cursor-default'
-        }
-      `}
-    >
-      <div className={`w-6 h-6 flex items-center justify-center rounded ${
-        available ? 'bg-black/30' : 'bg-green-500/20'
-      }`}>
-        {loading ? (
-          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        ) : available ? (
-          <Icon className="w-3.5 h-3.5" />
+    <div className={`p-2 rounded border ${
+      hasStaff
+        ? isMatched ? 'bg-green-500/10 border-green-500/30' : 'bg-orange-500/10 border-orange-500/30'
+        : 'bg-red-500/5 border-red-500/20 border-dashed'
+    }`}>
+      <div className="flex items-center justify-between mb-1">
+        <span className={`text-[10px] font-display font-bold ${hasStaff ? 'text-cream' : 'text-red-400/60'}`}>
+          {caption.id}
+        </span>
+        {hasStaff ? (
+          <span className={`text-[8px] px-1 rounded ${isMatched ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
+            {isMatched ? '+15%' : '-5%'}
+          </span>
         ) : (
-          <Check className="w-3.5 h-3.5" style={{ filter: 'drop-shadow(0 0 4px rgba(34,197,94,0.8))' }} />
+          <span className="text-[8px] text-red-400/60">-25%</span>
         )}
       </div>
-      <span className="text-[8px] font-display font-bold uppercase tracking-wide">{label}</span>
-    </button>
+      {hasStaff ? (
+        <>
+          <div className="text-[9px] text-cream/80 truncate">{staff.name}</div>
+          <div className="flex items-center gap-2 mt-1 text-[8px] text-cream/40">
+            <span>Rating: {staff.rating || '?'}</span>
+            <span>Morale: {Math.round((staff.morale || 0.9) * 100)}%</span>
+          </div>
+        </>
+      ) : (
+        <div className="text-[8px] text-cream/30 italic">No staff - scoring penalty!</div>
+      )}
+    </div>
   );
 };
 
-// Task Row - Checklist item
-const TaskRow = ({ title, reward, available, loading, onClick }) => {
-  const isCompleted = !available;
+// Equipment item with full details
+const EquipmentDetail = ({ id, config, condition, maxCondition }) => {
+  const percent = Math.round((condition || 0.9) * 100);
+  const needsRepair = percent < 80;
+  const repairCost = Math.ceil(((maxCondition || 1) - (condition || 0.9)) / 0.10) * config.repairCost;
+  const Icon = config.icon;
+
+  return (
+    <div className={`p-2 rounded border ${needsRepair ? 'bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10'}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon className={`w-3.5 h-3.5 ${needsRepair ? 'text-orange-400' : 'text-cream/60'}`} />
+        <span className="text-[9px] font-display font-bold text-cream flex-1">{config.name}</span>
+        <span className={`text-[10px] font-data font-bold ${needsRepair ? 'text-orange-400' : 'text-green-400'}`}>
+          {percent}%
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-1.5">
+        <div
+          className={`h-full rounded-full ${needsRepair ? 'bg-orange-500' : 'bg-green-500'}`}
+          style={{ width: `${(condition / (maxCondition || 1)) * 100}%` }}
+        />
+      </div>
+
+      {/* Details */}
+      <div className="flex items-center justify-between text-[8px]">
+        <span className="text-cream/40">
+          {config.captions.length > 0 ? `Affects: ${config.captions.join(', ')}` : config.isTravel ? 'Travel Health' : ''}
+        </span>
+        {needsRepair && repairCost > 0 && (
+          <span className="text-orange-400">Repair: {repairCost} CC</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Daily task checkbox with full details
+const DailyTaskRow = ({ task, available, loading, onClick }) => {
+  const isComplete = !available;
+  const Icon = task.icon;
 
   return (
     <button
       onClick={onClick}
-      disabled={isCompleted || loading}
-      className={`
-        w-full flex items-center gap-2 px-2 py-1 rounded transition-all
-        ${isCompleted ? 'opacity-50' : 'hover:bg-white/5 cursor-pointer'}
-      `}
+      disabled={isComplete || loading}
+      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
+        isComplete ? 'opacity-40' : 'hover:bg-white/5 cursor-pointer'
+      }`}
     >
-      <div className={`w-3.5 h-3.5 flex items-center justify-center rounded border ${
-        isCompleted
-          ? 'bg-green-500/20 border-green-500/60'
-          : 'border-white/20'
+      <div className={`w-4 h-4 flex items-center justify-center rounded border ${
+        isComplete ? 'bg-green-500/20 border-green-500/50' : 'border-white/20'
       }`}>
         {loading ? (
           <div className="w-2 h-2 border border-gold-400 border-t-transparent rounded-full animate-spin" />
-        ) : isCompleted ? (
-          <Check className="w-2 h-2 text-green-400" />
+        ) : isComplete ? (
+          <Check className="w-2.5 h-2.5 text-green-400" />
         ) : null}
       </div>
-      <span className={`flex-1 text-left text-[10px] font-mono ${
-        isCompleted ? 'text-cream/50 line-through' : 'text-cream'
-      }`}>
-        {title}
-      </span>
-      <span className={`text-[8px] font-mono font-bold ${
-        isCompleted ? 'text-gold-400/50' : 'text-gold-400'
-      }`}>
-        {reward}
+      <Icon className={`w-3 h-3 shrink-0 ${isComplete ? 'text-cream/20' : 'text-cream/60'}`} />
+      <div className="flex-1 text-left min-w-0">
+        <div className={`text-[9px] font-mono truncate ${isComplete ? 'text-cream/30 line-through' : 'text-cream'}`}>
+          {task.name}
+        </div>
+        <div className={`text-[7px] truncate ${isComplete ? 'text-cream/20' : 'text-cream/40'}`}>
+          {task.rewardDetail}
+        </div>
+      </div>
+      <span className={`text-[9px] font-data font-bold shrink-0 ${isComplete ? 'text-gold-400/30' : 'text-gold-400'}`}>
+        {task.reward}
       </span>
     </button>
   );
 };
 
-// Season Progress Bar
-const SeasonProgressBar = ({ currentDay, totalDays = 49 }) => {
+// Season progress bar with milestones
+const SeasonTimeline = ({ currentDay, totalDays = 49 }) => {
   const progress = (currentDay / totalDays) * 100;
+  const currentWeek = Math.ceil(currentDay / 7);
+
+  const milestones = [
+    { day: 10, label: 'Difficulty Lock', passed: currentDay > 10 },
+    { day: 35, label: 'Fatigue Starts', passed: currentDay > 35 },
+    { day: 47, label: 'Finals', passed: currentDay >= 47 },
+  ];
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[9px] font-mono text-cream/50">Day</span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[8px]">
+        <span className="text-cream/50">Season Progress</span>
+        <span className="font-data font-bold text-gold-400">Week {currentWeek} • Day {currentDay}/{totalDays}</span>
+      </div>
+      <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-gold-600 to-gold-400 rounded-full transition-all"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
           style={{ width: `${progress}%` }}
         />
-        {/* Week markers */}
-        {[7, 14, 21, 28, 35, 42].map(day => (
+        {milestones.map(m => (
           <div
-            key={day}
-            className="absolute top-0 bottom-0 w-px bg-white/20"
-            style={{ left: `${(day / totalDays) * 100}%` }}
+            key={m.day}
+            className={`absolute top-0 bottom-0 w-0.5 ${m.passed ? 'bg-cream/20' : 'bg-white/40'}`}
+            style={{ left: `${(m.day / totalDays) * 100}%` }}
           />
         ))}
       </div>
-      <span className="text-[9px] font-data font-bold text-gold-400">
-        {currentDay}/{totalDays}
-      </span>
+      <div className="flex justify-between text-[7px] text-cream/30">
+        {milestones.map(m => (
+          <span key={m.day} className={m.passed ? 'text-cream/20' : 'text-cream/50'}>
+            D{m.day}: {m.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 };
 
-// League Ticker Footer
-const LeagueTicker = ({ seasonData, currentDay }) => {
-  const { allShows, loading: scoresLoading } = useScoresData();
-  const [tickerData, setTickerData] = useState({ scores: [], loading: true });
+// Warning/Alert banner
+const AlertBanner = ({ type = 'warning', children }) => {
+  const styles = {
+    warning: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
+    danger: 'bg-red-500/10 border-red-500/30 text-red-400',
+    success: 'bg-green-500/10 border-green-500/30 text-green-400',
+    info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+  };
+  const icons = { warning: AlertTriangle, danger: AlertCircle, success: Check, info: Info };
+  const Icon = icons[type];
+
+  return (
+    <div className={`flex items-center gap-2 px-2 py-1.5 rounded border ${styles[type]}`}>
+      <Icon className="w-3 h-3 shrink-0" />
+      <span className="text-[9px]">{children}</span>
+    </div>
+  );
+};
+
+// Live ticker footer
+const LeagueTicker = ({ currentDay }) => {
+  const { allShows, loading } = useScoresData();
+  const [scores, setScores] = useState([]);
 
   useEffect(() => {
-    if (!scoresLoading && allShows.length > 0) {
-      const recentShows = allShows
-        .filter(show => show.offSeasonDay >= currentDay - 2 && show.offSeasonDay <= currentDay)
-        .flatMap(show =>
-          show.scores.slice(0, 5).map(score => ({
-            corpsName: score.corpsName || score.corps,
-            totalScore: score.totalScore || score.score,
-            eventName: show.eventName,
-          }))
-        )
-        .sort((a, b) => b.totalScore - a.totalScore)
-        .slice(0, 12);
-
-      setTickerData({ scores: recentShows, loading: false });
-    } else if (!scoresLoading) {
-      setTickerData({ scores: [], loading: false });
+    if (!loading && allShows?.length > 0) {
+      const recent = allShows
+        .filter(show => show.offSeasonDay >= currentDay - 3 && show.offSeasonDay <= currentDay)
+        .flatMap(show => (show.scores || []).slice(0, 5).map(s => ({
+          corps: s.corpsName || s.corps,
+          score: s.totalScore || s.score,
+        })))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 15);
+      setScores(recent);
     }
-  }, [allShows, scoresLoading, currentDay]);
+  }, [allShows, loading, currentDay]);
 
-  if (tickerData.loading) {
+  if (scores.length === 0) {
     return (
-      <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center">
-        <span className="text-[9px] font-mono text-cream/40 uppercase tracking-wider">Loading scores...</span>
-      </div>
-    );
-  }
-
-  if (tickerData.scores.length === 0) {
-    return (
-      <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center gap-2">
-        <Radio className="w-3 h-3 text-cream/30" />
-        <span className="text-[9px] font-mono text-cream/40 uppercase tracking-wider">
-          No Recent Scores
-        </span>
+      <div className="h-6 bg-black/60 border-t border-white/10 flex items-center justify-center">
+        <Radio className="w-3 h-3 text-cream/30 mr-2" />
+        <span className="text-[8px] text-cream/40">No Recent Scores</span>
       </div>
     );
   }
 
   return (
-    <div className="h-7 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
-      <div className="flex items-center gap-2 px-2 border-r border-white/10 h-full shrink-0">
+    <div className="h-6 bg-black/60 border-t border-white/10 flex items-center overflow-hidden">
+      <div className="flex items-center gap-1.5 px-2 border-r border-white/10 h-full shrink-0">
         <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-        <span className="text-[8px] font-display font-bold text-cream/60 uppercase">Live</span>
+        <span className="text-[7px] font-bold text-cream/60">LIVE</span>
       </div>
-
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden">
         <motion.div
-          className="flex items-center gap-4 whitespace-nowrap px-2"
+          className="flex items-center gap-3 whitespace-nowrap px-2"
           animate={{ x: ['0%', '-50%'] }}
-          transition={{ x: { repeat: Infinity, duration: 25, ease: 'linear' } }}
+          transition={{ x: { repeat: Infinity, duration: 20, ease: 'linear' } }}
         >
-          {[...tickerData.scores, ...tickerData.scores].map((score, idx) => (
-            <div key={idx} className="flex items-center gap-1.5">
-              <span className="text-[9px] font-display font-bold text-cream uppercase">
-                {score.corpsName}
-              </span>
-              <span className="text-[10px] font-data font-bold text-gold-400 tabular-nums">
-                {typeof score.totalScore === 'number' ? score.totalScore.toFixed(2) : score.totalScore}
-              </span>
-              <span className="text-[8px] text-cream/20">|</span>
-            </div>
+          {[...scores, ...scores].map((s, i) => (
+            <span key={i} className="text-[9px]">
+              <span className="font-display font-bold text-cream">{s.corps}</span>
+              {' '}
+              <span className="font-data text-gold-400">{typeof s.score === 'number' ? s.score.toFixed(2) : s.score}</span>
+              <span className="text-cream/20 mx-1">|</span>
+            </span>
           ))}
         </motion.div>
-      </div>
-
-      <div className="flex items-center gap-1 px-2 border-l border-white/10 h-full shrink-0">
-        <Calendar className="w-2.5 h-2.5 text-cream/40" />
-        <span className="text-[8px] font-mono text-cream/50">Day {currentDay}</span>
       </div>
     </div>
   );
 };
 
 // =============================================================================
-// HUD DASHBOARD COMPONENT
+// MAIN HUD DASHBOARD
 // =============================================================================
 
 const HUDDashboard = () => {
   const { user } = useAuth();
-
-  // Data hooks
   const dashboardData = useDashboardData();
   const { ownedStaff } = useStaffMarketplace(user?.uid);
 
-  // Local state
   const [showStaffPanel, setShowStaffPanel] = useState(false);
   const [opsStatus, setOpsStatus] = useState(null);
   const [opsLoading, setOpsLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
   const [showMobileLogistics, setShowMobileLogistics] = useState(false);
 
-  // Destructure dashboard data
   const {
     profile,
     activeCorps,
     activeCorpsClass,
     hasMultipleCorps,
     corps,
-    seasonData,
-    weeksRemaining,
     currentWeek,
     currentDay,
     engagementData,
@@ -505,172 +444,240 @@ const HUDDashboard = () => {
     getCorpsClassName,
   } = dashboardData;
 
-  // Calculate staff assigned to active corps
+  // ==========================================================================
+  // COMPUTED DATA
+  // ==========================================================================
+
   const assignedStaff = useMemo(() =>
     ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
     [ownedStaff, activeCorpsClass]
   );
 
-  // Calculate readiness sections
+  const staffByCaption = useMemo(() => {
+    const map = {};
+    CAPTIONS.forEach(c => {
+      const staff = assignedStaff.find(s =>
+        s.assignedTo?.caption === c.id || s.caption === c.id
+      );
+      map[c.id] = { staff, isMatched: staff?.caption === c.id };
+    });
+    return map;
+  }, [assignedStaff]);
+
   const readiness = useMemo(() => {
-    if (typeof executionState?.readiness === 'object') {
-      const { brass = 0.75, percussion = 0.75, guard = 0.75, ensemble = 0.75 } = executionState.readiness;
-      return { brass, percussion, guard, ensemble, avg: (brass + percussion + guard + ensemble) / 4 };
+    const r = executionState?.readiness;
+    if (typeof r === 'object') {
+      return {
+        brass: r.brass ?? 0.75, percussion: r.percussion ?? 0.75,
+        guard: r.guard ?? 0.75, ensemble: r.ensemble ?? 0.75,
+        avg: ((r.brass ?? 0.75) + (r.percussion ?? 0.75) + (r.guard ?? 0.75) + (r.ensemble ?? 0.75)) / 4,
+      };
     }
-    const val = executionState?.readiness ?? 0.75;
+    const val = r ?? 0.75;
     return { brass: val, percussion: val, guard: val, ensemble: val, avg: val };
   }, [executionState?.readiness]);
 
-  // Calculate morale sections
   const morale = useMemo(() => {
-    if (typeof executionState?.morale === 'object') {
-      const { brass = 0.80, percussion = 0.80, guard = 0.80, overall = 0.80 } = executionState.morale;
-      return { brass, percussion, guard, overall, avg: (brass + percussion + guard) / 3 };
+    const m = executionState?.morale;
+    if (typeof m === 'object') {
+      return {
+        brass: m.brass ?? 0.80, percussion: m.percussion ?? 0.80,
+        guard: m.guard ?? 0.80, overall: m.overall ?? 0.80,
+        avg: ((m.brass ?? 0.80) + (m.percussion ?? 0.80) + (m.guard ?? 0.80)) / 3,
+      };
     }
-    const val = executionState?.morale ?? 0.80;
+    const val = m ?? 0.80;
     return { brass: val, percussion: val, guard: val, overall: val, avg: val };
   }, [executionState?.morale]);
 
-  // Calculate equipment
   const equipment = useMemo(() => {
     const eq = executionState?.equipment || {};
-    const instruments = eq.instruments ?? 0.90;
-    const uniforms = eq.uniforms ?? 0.90;
-    const props = eq.props ?? 0.90;
-    const bus = eq.bus ?? 0.90;
-    const truck = eq.truck ?? 0.90;
-    const perfAvg = (instruments + uniforms + props) / 3;
-    const travelAvg = (bus + truck) / 2;
-    return { instruments, uniforms, props, bus, truck, perfAvg, travelAvg };
+    return {
+      instruments: eq.instruments ?? 0.90, instrumentsMax: eq.instrumentsMax ?? 1.00,
+      uniforms: eq.uniforms ?? 0.90, uniformsMax: eq.uniformsMax ?? 1.00,
+      props: eq.props ?? 0.90, propsMax: eq.propsMax ?? 1.00,
+      bus: eq.bus ?? 0.90, busMax: eq.busMax ?? 1.00,
+      truck: eq.truck ?? 0.90, truckMax: eq.truckMax ?? 1.00,
+    };
   }, [executionState?.equipment]);
 
-  // Calculate multiplier breakdown
-  const multiplierBreakdown = useMemo(() => {
-    const readinessBonus = (readiness.avg - 0.80) * 0.60;
-    const moraleBonus = (morale.avg - 0.75) * 0.32;
-    const equipmentPenalty = (equipment.perfAvg - 1.00) * 0.50;
-    const travelPenalty = (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0;
-
-    // Staff effectiveness
-    let staffBonus = -0.04; // Base understaffed penalty
-    if (assignedStaff.length >= 6) staffBonus = 0.04;
-    else if (assignedStaff.length >= 4) staffBonus = 0.02;
-
-    // Show difficulty
-    const showDesign = executionState?.showDesign || {};
-    const isPrepared = readiness.avg >= (showDesign.preparednessThreshold || 0.80);
-    const difficultyBonus = isPrepared
-      ? (showDesign.ceilingBonus || 0.08)
-      : (showDesign.riskPenalty || -0.10);
-
-    // Temporal effects
-    const fatiguePenalty = currentDay >= 35 ? -0.05 * ((currentDay - 35) / 14) : 0;
-    const championshipBonus = currentDay >= 47 ? 0.02 : 0;
-
+  const showDifficulty = useMemo(() => {
+    const sd = executionState?.showDesign || {};
+    const preset = Object.entries(DIFFICULTY_PRESETS).find(([_, p]) =>
+      Math.abs(p.threshold - (sd.preparednessThreshold || 0.80)) < 0.02
+    );
     return {
-      readiness: readinessBonus,
-      morale: moraleBonus,
-      equipment: equipmentPenalty,
-      travelCondition: travelPenalty,
-      staff: staffBonus,
-      showDifficulty: difficultyBonus,
-      fatigue: fatiguePenalty,
-      championshipPressure: championshipBonus,
+      key: preset?.[0] || 'moderate',
+      label: preset?.[1]?.label || 'Moderate',
+      threshold: sd.preparednessThreshold ?? 0.80,
+      ceiling: sd.ceilingBonus ?? 0.08,
+      risk: sd.riskPenalty ?? -0.10,
+      isPrepared: readiness.avg >= (sd.preparednessThreshold ?? 0.80),
     };
-  }, [readiness.avg, morale.avg, equipment, assignedStaff.length, executionState?.showDesign, currentDay]);
+  }, [executionState?.showDesign, readiness.avg]);
 
-  // Calculate final multiplier
-  const multiplier = useMemo(() => {
-    const total = 1.0 + Object.values(multiplierBreakdown).reduce((sum, v) => sum + v, 0);
-    return Math.max(0.70, Math.min(1.10, total));
-  }, [multiplierBreakdown]);
+  // ==========================================================================
+  // MULTIPLIER BREAKDOWN - All 9 factors
+  // ==========================================================================
 
-  // Get active temporal effects as pills
-  const activeEffects = useMemo(() => {
-    const effects = [];
+  const multiplierFactors = useMemo(() => {
+    const factors = [];
+    const eqAvg = (equipment.instruments + equipment.uniforms + equipment.props) / 3;
+    const travelHealth = equipment.bus + equipment.truck;
+    const staffCount = assignedStaff.length;
+    const matchedCount = Object.values(staffByCaption).filter(s => s.isMatched).length;
 
-    // Readiness effects
-    if (readiness.avg >= 0.90) effects.push({ label: 'Peak Ready', value: '+8%', positive: true, icon: Target });
-    else if (readiness.avg < 0.70) effects.push({ label: 'Unprepared', value: '-8%', positive: false, icon: Target });
-
-    // Morale effects
-    if (morale.avg >= 0.85) effects.push({ label: 'High Morale', value: '+5%', positive: true, icon: Heart });
-    else if (morale.avg < 0.65) effects.push({ label: 'Low Morale', value: '-5%', positive: false, icon: Heart });
-
-    // Staff effects
-    if (assignedStaff.length >= 6) effects.push({ label: 'Full Staff', value: '+4%', positive: true, icon: Users });
-    else if (assignedStaff.length < 4) effects.push({ label: 'Understaffed', value: '-4%', positive: false, icon: Users });
-
-    // Equipment
-    if (equipment.perfAvg < 0.80) effects.push({ label: 'Worn Gear', value: '-5%', positive: false, icon: Wrench });
-
-    // Travel
-    if ((equipment.bus + equipment.truck) < 1.40) {
-      effects.push({ label: 'Travel Issue', value: '-3%', positive: false, icon: Bus });
-    }
-
-    // Temporal
-    if (currentDay >= 47) effects.push({ label: 'Finals Week', value: '±2%', positive: true, icon: Trophy });
-    else if (currentDay >= 35) effects.push({ label: 'Late Season', value: '-3%', positive: false, icon: Flame });
-
-    // Show difficulty
-    const showDesign = executionState?.showDesign || {};
-    if (showDesign.label === 'legendary') {
-      effects.push({ label: 'Legendary', value: '+15%', positive: true, icon: Crown });
-    } else if (showDesign.label === 'ambitious') {
-      effects.push({ label: 'Ambitious', value: '+10%', positive: true, icon: Zap });
-    }
-
-    return effects;
-  }, [readiness.avg, morale.avg, assignedStaff.length, equipment, currentDay, executionState?.showDesign]);
-
-  // Calculate synergy bonuses per caption
-  const captionBonuses = useMemo(() => {
-    const bonuses = {};
-    const showConcept = activeCorps?.showConcept;
-    const lineup = activeCorps?.lineup || {};
-
-    CAPTIONS.forEach(caption => {
-      const staffForCaption = assignedStaff.find(s =>
-        s.assignedTo?.caption === caption.id || s.caption === caption.id
-      );
-      // Simplified synergy calculation based on lineup match
-      const hasLineup = lineup[caption.id];
-      bonuses[caption.id] = {
-        staff: staffForCaption,
-        bonus: hasLineup && showConcept?.theme ? 0.5 + Math.random() * 0.5 : 0,
-      };
+    // 1. Section Readiness (±12%)
+    const readinessContrib = (readiness.avg - 0.80) * 0.60;
+    factors.push({
+      id: 'readiness', label: 'Section Readiness', range: '±12%',
+      contribution: readinessContrib, icon: Target,
+      explanation: `${Math.round(readiness.avg * 100)}% avg vs 80% baseline`,
+      isActive: true,
     });
 
-    return bonuses;
-  }, [activeCorps?.showConcept, activeCorps?.lineup, assignedStaff]);
+    // 2. Staff Effectiveness (±8%)
+    const staffEff = staffCount === 0 ? 0.75 : 0.80 + (matchedCount * 0.019) + (staffCount >= 6 ? 0.05 : staffCount >= 4 ? 0.02 : 0);
+    const staffContrib = (Math.min(staffEff, 1.0) - 0.80) * 0.40;
+    factors.push({
+      id: 'staff', label: 'Staff Effectiveness', range: '±8%',
+      contribution: staffContrib, icon: Users,
+      explanation: `${staffCount}/8 filled, ${matchedCount} specialty match`,
+      isActive: true,
+    });
 
-  // Fetch daily ops status
+    // 3. Equipment Condition (-5% to 0%)
+    const eqContrib = (eqAvg - 1.00) * 0.50;
+    factors.push({
+      id: 'equipment', label: 'Equipment Condition', range: '-5% to 0%',
+      contribution: eqContrib, icon: Wrench,
+      explanation: `${Math.round(eqAvg * 100)}% avg (100% = no penalty)`,
+      isActive: true,
+    });
+
+    // 4. Travel Health (-3% if combined < 140%)
+    const travelContrib = travelHealth < 1.40 ? -0.03 : 0;
+    factors.push({
+      id: 'travel', label: 'Travel Health', range: '-3%',
+      contribution: travelContrib, icon: Bus,
+      explanation: `Bus+Truck = ${Math.round(travelHealth * 50)}% (need ≥140%)`,
+      isActive: travelContrib !== 0,
+    });
+
+    // 5. Corps Morale (±8%)
+    const moraleContrib = (morale.avg - 0.75) * 0.32;
+    factors.push({
+      id: 'morale', label: 'Corps Morale', range: '±8%',
+      contribution: moraleContrib, icon: Heart,
+      explanation: `${Math.round(morale.avg * 100)}% avg vs 75% baseline`,
+      isActive: true,
+    });
+
+    // 6. Show Difficulty (±15%)
+    const diffContrib = showDifficulty.isPrepared ? showDifficulty.ceiling : showDifficulty.risk;
+    factors.push({
+      id: 'difficulty', label: `Show: ${showDifficulty.label}`, range: '±15%',
+      contribution: diffContrib, icon: showDifficulty.isPrepared ? Crown : AlertTriangle,
+      explanation: showDifficulty.isPrepared
+        ? `Ready! Need ${Math.round(showDifficulty.threshold * 100)}%, have ${Math.round(readiness.avg * 100)}%`
+        : `NOT READY! Need ${Math.round(showDifficulty.threshold * 100)}%, have ${Math.round(readiness.avg * 100)}%`,
+      isActive: true,
+    });
+
+    // 7. Random Variance (±2%)
+    factors.push({
+      id: 'variance', label: 'Daily Variance', range: '±2%',
+      contribution: 0, icon: Sparkles,
+      explanation: 'Random each show (weather, nerves)',
+      isActive: false,
+    });
+
+    // 8. Championship Pressure (±2%, finals only)
+    const champContrib = currentDay >= 47 ? (morale.overall - 0.80) * 0.10 : 0;
+    factors.push({
+      id: 'championship', label: 'Championship Pressure', range: '±2%',
+      contribution: champContrib, icon: Trophy,
+      explanation: currentDay >= 47 ? `Finals week! Morale ${Math.round(morale.overall * 100)}%` : 'Days 47-49 only',
+      isActive: currentDay >= 47,
+    });
+
+    // 9. Late Season Fatigue (-5% max)
+    const fatigueContrib = currentDay > 35 ? -0.05 * ((currentDay - 35) / 14) : 0;
+    factors.push({
+      id: 'fatigue', label: 'Late Season Fatigue', range: '-5% max',
+      contribution: fatigueContrib, icon: Flame,
+      explanation: currentDay > 35 ? `Day ${currentDay}: ${Math.round(((currentDay - 35) / 14) * 100)}% fatigue` : 'Starts day 35',
+      isActive: currentDay > 35,
+    });
+
+    return factors;
+  }, [readiness, morale, equipment, assignedStaff.length, staffByCaption, showDifficulty, currentDay]);
+
+  const finalMultiplier = useMemo(() => {
+    const total = 1.0 + multiplierFactors.reduce((sum, f) => sum + f.contribution, 0);
+    return Math.max(0.70, Math.min(1.10, total));
+  }, [multiplierFactors]);
+
+  // ==========================================================================
+  // ALERTS
+  // ==========================================================================
+
+  const alerts = useMemo(() => {
+    const list = [];
+    const vacancies = 8 - assignedStaff.length;
+
+    if (vacancies >= 4) {
+      list.push({ type: 'danger', msg: `${vacancies} staff positions vacant! Major scoring penalty.` });
+    } else if (vacancies > 0) {
+      list.push({ type: 'warning', msg: `${vacancies} staff position${vacancies > 1 ? 's' : ''} vacant.` });
+    }
+
+    const lowEquipment = Object.entries(equipment)
+      .filter(([k, v]) => !k.includes('Max') && v < 0.70)
+      .map(([k]) => EQUIPMENT_CONFIG[k]?.name || k);
+    if (lowEquipment.length > 0) {
+      list.push({ type: 'warning', msg: `Low equipment: ${lowEquipment.join(', ')}` });
+    }
+
+    if ((equipment.bus + equipment.truck) < 1.40) {
+      list.push({ type: 'danger', msg: 'Travel penalty active (-3%)! Repair Bus/Truck.' });
+    }
+
+    if (!showDifficulty.isPrepared) {
+      list.push({ type: 'warning', msg: `Not ready for ${showDifficulty.label} show (${Math.round(showDifficulty.risk * 100)}% penalty).` });
+    }
+
+    if (morale.avg < 0.65) {
+      list.push({ type: 'warning', msg: 'Corps morale is critically low.' });
+    }
+
+    return list;
+  }, [assignedStaff.length, equipment, showDifficulty, morale.avg]);
+
+  // ==========================================================================
+  // HANDLERS
+  // ==========================================================================
+
   const fetchOpsStatus = useCallback(async () => {
     if (!activeCorpsClass) return;
+    setOpsLoading(true);
     try {
-      setOpsLoading(true);
       const result = await getDailyOpsStatus({ corpsClass: activeCorpsClass });
-      if (result.data.success) {
-        setOpsStatus(result.data.status);
-      }
-    } catch (error) {
-      console.error('Error fetching ops status:', error);
+      if (result.data.success) setOpsStatus(result.data.status);
+    } catch (e) {
+      console.error('Error fetching ops status:', e);
     } finally {
       setOpsLoading(false);
     }
   }, [activeCorpsClass]);
 
-  useEffect(() => {
-    fetchOpsStatus();
-  }, [fetchOpsStatus]);
+  useEffect(() => { fetchOpsStatus(); }, [fetchOpsStatus]);
 
-  // Handlers
   const handleRehearsal = async () => {
     if (canRehearseToday()) {
       const result = await rehearse();
       if (result?.success) {
-        toast.success(`Rehearsal complete! +${result.data?.xpGained || 50} XP`);
+        toast.success(`Rehearsal complete! +${result.data?.xpGained || 25} XP`);
         fetchOpsStatus();
       }
     }
@@ -680,39 +687,47 @@ const HUDDashboard = () => {
     setProcessing(`sectional_${section}`);
     try {
       const result = await sectionalRehearsal({ corpsClass: activeCorpsClass, section });
-      if (result.data.success) {
-        toast.success(result.data.message);
-        fetchOpsStatus();
-      }
-    } catch (error) {
-      toast.error(error.message || `Failed to complete ${section} sectional`);
-    } finally {
-      setProcessing(null);
-    }
+      if (result.data.success) { toast.success(result.data.message); fetchOpsStatus(); }
+    } catch (e) { toast.error(e.message || 'Sectional failed'); }
+    finally { setProcessing(null); }
   };
 
   const handleDailyTask = async (taskId, taskFn) => {
     setProcessing(taskId);
     try {
       const result = await taskFn();
-      if (result.data.success) {
-        toast.success(result.data.message);
-        fetchOpsStatus();
-        refreshProfile?.();
-      }
-    } catch (error) {
-      toast.error(error.message || 'Task failed');
-    } finally {
-      setProcessing(null);
+      if (result.data.success) { toast.success(result.data.message); fetchOpsStatus(); refreshProfile?.(); }
+    } catch (e) { toast.error(e.message || 'Task failed'); }
+    finally { setProcessing(null); }
+  };
+
+  const getTaskAvailability = (taskId) => {
+    if (!opsStatus) return false;
+    const sectMap = { music: 'music', visual: 'visual', guard: 'guard', percussion: 'percussion' };
+    if (sectMap[taskId]) return opsStatus.sectionalRehearsals?.[taskId]?.available;
+    const opMap = { login: 'loginBonus', staff: 'staffCheckin', wellness: 'memberWellness', equipment: 'equipmentInspection', review: 'showReview' };
+    return opsStatus[opMap[taskId]]?.available;
+  };
+
+  const handleTaskClick = (taskId) => {
+    const handlers = {
+      login: () => claimDailyLogin(),
+      staff: () => staffCheckin({ corpsClass: activeCorpsClass }),
+      wellness: () => memberWellnessCheck({ corpsClass: activeCorpsClass }),
+      equipment: () => equipmentInspection({ corpsClass: activeCorpsClass }),
+      review: () => showReview({ corpsClass: activeCorpsClass }),
+      music: () => handleSectional('music'), visual: () => handleSectional('visual'),
+      guard: () => handleSectional('guard'), percussion: () => handleSectional('percussion'),
+    };
+    if (handlers[taskId]) {
+      if (['music', 'visual', 'guard', 'percussion'].includes(taskId)) handlers[taskId]();
+      else handleDailyTask(taskId, handlers[taskId]);
     }
   };
 
-  // Class colors for switcher
   const classColors = {
-    worldClass: 'bg-gold-500 text-charcoal-900',
-    openClass: 'bg-purple-500 text-white',
-    aClass: 'bg-blue-500 text-white',
-    soundSport: 'bg-green-500 text-white',
+    worldClass: 'bg-gold-500 text-charcoal-900', openClass: 'bg-purple-500 text-white',
+    aClass: 'bg-blue-500 text-white', soundSport: 'bg-green-500 text-white',
   };
 
   // ==========================================================================
@@ -721,531 +736,246 @@ const HUDDashboard = () => {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
-      {/* ================================================================
-          GLOBAL HEADER - Constraints Bar
-          ================================================================ */}
-      <header className="shrink-0 h-11 bg-black/60 backdrop-blur-xl border-b border-white/10 px-3 flex items-center gap-4 z-20">
-        {/* Left: Corps Switcher */}
-        <div className="flex items-center gap-2 shrink-0">
-          {activeCorps ? (
-            hasMultipleCorps ? (
-              <div className="flex items-center gap-1">
-                {Object.entries(corps)
-                  .map(([classId, corpsData]) => (
-                    <button
-                      key={classId}
-                      onClick={() => handleCorpsSwitch(classId)}
-                      className={`px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase tracking-wide transition-all ${
-                        activeCorpsClass === classId
-                          ? `${classColors[classId]} shadow-sm`
-                          : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
-                      }`}
-                    >
-                      {(corpsData.corpsName || corpsData.name || '').slice(0, 10)}
-                    </button>
+      {/* HEADER */}
+      <header className="shrink-0 bg-black/60 backdrop-blur-xl border-b border-white/10 px-3 py-2 z-20">
+        <div className="flex items-center gap-4 mb-2">
+          {/* Corps Switcher */}
+          <div className="flex items-center gap-2 shrink-0">
+            {activeCorps && (
+              hasMultipleCorps ? (
+                <div className="flex items-center gap-1">
+                  {Object.entries(corps).map(([classId, data]) => (
+                    <button key={classId} onClick={() => handleCorpsSwitch(classId)}
+                      className={`px-2 py-0.5 rounded text-[9px] font-display font-bold uppercase ${
+                        activeCorpsClass === classId ? `${classColors[classId]} shadow-sm` : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
+                      }`}>{(data.corpsName || data.name || '').slice(0, 10)}</button>
                   ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className={`px-1.5 py-0.5 rounded text-[8px] font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
-                  {getCorpsClassName(activeCorpsClass)?.slice(0, 2)}
-                </span>
-                <span className="text-xs font-display font-bold text-cream truncate max-w-[100px]">
-                  {activeCorps.corpsName || activeCorps.name}
-                </span>
-              </div>
-            )
-          ) : (
-            <span className="text-xs font-display text-cream/50">No Corps</span>
-          )}
-        </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${classColors[activeCorpsClass]}`}>
+                    {getCorpsClassName(activeCorpsClass)?.slice(0, 2)}</span>
+                  <span className="text-xs font-display font-bold text-cream truncate max-w-[120px]">{activeCorps.corpsName || activeCorps.name}</span>
+                </div>
+              )
+            )}
+          </div>
 
-        {/* Center: Season Progress */}
-        <div className="flex-1 hidden md:block max-w-xs">
-          <SeasonProgressBar currentDay={currentDay} totalDays={49} />
-        </div>
-
-        {/* Right: Resources */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
-          {engagementData?.loginStreak > 0 && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/15 border border-orange-500/30">
-              <Flame className="w-3 h-3 text-orange-400" />
-              <span className="text-[10px] font-data font-bold text-orange-400">{engagementData.loginStreak}</span>
+          {/* Resources */}
+          <div className="flex items-center gap-2 ml-auto">
+            {engagementData?.loginStreak > 0 && (
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/15 border border-orange-500/30">
+                <Flame className="w-3 h-3 text-orange-400" />
+                <span className="text-[10px] font-data font-bold text-orange-400">{engagementData.loginStreak}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
+              <Zap className="w-3 h-3 text-gold-400" />
+              <span className="text-[10px] font-data font-bold text-gold-400">L{profile?.xpLevel || 1}</span>
             </div>
-          )}
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
-            <Zap className="w-3 h-3 text-gold-400" />
-            <span className="text-[10px] font-data font-bold text-gold-400">L{profile?.xpLevel || 1}</span>
-          </div>
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
-            <span className="text-[10px] font-data font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()} CC</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/15 border border-gold-500/30">
+              <DollarSign className="w-3 h-3 text-gold-400" />
+              <span className="text-[10px] font-data font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
+            </div>
           </div>
         </div>
+        <SeasonTimeline currentDay={currentDay} />
       </header>
 
-      {/* ================================================================
-          MAIN HUD BODY - 3-Column Layout
-          ================================================================ */}
-      <motion.div
-        className="flex-1 min-h-0 overflow-hidden"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      {/* ALERTS */}
+      {alerts.length > 0 && (
+        <div className="shrink-0 px-3 py-1.5 bg-black/40 border-b border-white/5 space-y-1">
+          {alerts.slice(0, 2).map((a, i) => <AlertBanner key={i} type={a.type}>{a.msg}</AlertBanner>)}
+        </div>
+      )}
+
+      {/* MAIN BODY */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <CommandCenterLayout fullHeight>
 
-          {/* ================================================================
-              LEFT COLUMN: THE ENGINE - Stats & Physics
-              ================================================================ */}
+          {/* LEFT: SCORING INTELLIGENCE */}
           <IntelligenceColumn>
-            <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
+            <div className="h-full flex flex-col gap-1 overflow-y-auto">
 
-              {/* Readiness Matrix */}
-              <Panel title="Readiness" variant="default" className="flex-none">
-                <div className="space-y-1">
-                  <SlimBar value={readiness.brass} label="Brass" color="blue" />
-                  <SlimBar value={readiness.percussion} label="Perc" color="blue" />
-                  <SlimBar value={readiness.guard} label="Guard" color="blue" />
-                  <SlimBar value={readiness.ensemble} label="Ensemble" color="blue" />
-                </div>
-              </Panel>
-
-              {/* Morale */}
-              <Panel title="Morale" variant="default" className="flex-none">
-                <div className="space-y-1">
-                  <SlimBar value={morale.brass} label="Brass" color="green" />
-                  <SlimBar value={morale.percussion} label="Perc" color="green" />
-                  <SlimBar value={morale.guard} label="Guard" color="green" />
-                </div>
-              </Panel>
-
-              {/* Active Effects List */}
-              <Panel title="Active Effects" variant="sunken" className="flex-none">
-                <div className="flex flex-wrap gap-1">
-                  {activeEffects.length > 0 ? (
-                    activeEffects.map((effect, idx) => (
-                      <EffectPill
-                        key={idx}
-                        label={effect.label}
-                        value={effect.value}
-                        positive={effect.positive}
-                        icon={effect.icon}
-                      />
-                    ))
-                  ) : (
-                    <span className="text-[9px] text-cream/40 italic">No active modifiers</span>
-                  )}
-                </div>
-              </Panel>
-
-              {/* Multiplier Calculator */}
-              <Panel
-                title="Multiplier Breakdown"
-                subtitle={`Final: ${multiplier.toFixed(2)}x`}
-                variant="accent"
-                className="flex-1 min-h-0"
-                scrollable
-              >
-                <div className="space-y-0.5">
-                  <div className="flex items-center justify-between py-1 border-b border-white/10 mb-1">
-                    <span className="text-[9px] text-cream/50">Base</span>
-                    <span className="text-[10px] font-data font-bold text-cream">1.00x</span>
-                  </div>
-                  {Object.entries(multiplierBreakdown)
-                    .filter(([, val]) => Math.abs(val) > 0.001)
-                    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-                    .map(([key, value]) => (
-                      <FactorRow
-                        key={key}
-                        label={MULTIPLIER_FACTORS[key]?.label || key}
-                        value={value}
-                        icon={MULTIPLIER_FACTORS[key]?.icon || Target}
-                      />
-                    ))}
-                  <div className="flex items-center justify-between pt-1 mt-1 border-t border-white/10">
-                    <span className="text-[9px] text-cream/50">Total</span>
-                    <span className={`text-sm font-data font-bold ${
-                      multiplier >= 1.0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {multiplier.toFixed(2)}x
-                    </span>
-                  </div>
-                </div>
-              </Panel>
-
-            </motion.div>
-          </IntelligenceColumn>
-
-          {/* ================================================================
-              CENTER COLUMN: THE STAGE - Action & Strategy
-              ================================================================ */}
-          <CommandColumn>
-            <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
-
-              {/* Command Center - Action Buttons */}
-              <Panel
-                title="Command Center"
-                subtitle={`Week ${currentWeek} • Day ${currentDay}`}
-                variant="elevated"
-                className="flex-none"
-              >
-                <div className="space-y-2">
-                  {/* Full Rehearsal */}
-                  <button
-                    onClick={handleRehearsal}
-                    disabled={!canRehearseToday() || executionProcessing}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2 rounded-lg border transition-all
-                      ${canRehearseToday()
-                        ? 'bg-gold-500/20 border-gold-500/40 text-gold-400 hover:bg-gold-500/30'
-                        : 'bg-green-500/10 border-green-500/30 text-green-400'
-                      }
-                    `}
-                  >
-                    <div className={`w-7 h-7 flex items-center justify-center rounded ${
-                      canRehearseToday() ? 'bg-gold-500/30' : 'bg-green-500/20'
-                    }`}>
-                      {executionProcessing ? (
-                        <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
-                      ) : canRehearseToday() ? (
-                        <Play className="w-4 h-4" />
-                      ) : (
-                        <Check className="w-4 h-4" />
-                      )}
+              {/* Final Multiplier */}
+              <Panel variant="accent" className="flex-none">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-cream/50 uppercase">Score Multiplier</div>
+                    <div className={`text-2xl font-data font-black ${finalMultiplier >= 1.0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {finalMultiplier.toFixed(3)}x
                     </div>
-                    <div className="flex-1 text-left">
-                      <div className="text-xs font-display font-bold uppercase">Full Rehearsal</div>
-                      <div className="text-[9px] opacity-70">
-                        {executionState?.rehearsalsThisWeek || 0}/7 this week
-                      </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] text-cream/40">Range: 0.70 - 1.10</div>
+                    <div className={`text-[10px] font-bold ${finalMultiplier >= 1.0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {finalMultiplier >= 1.0 ? '+' : ''}{((finalMultiplier - 1) * 100).toFixed(1)}% from base
                     </div>
-                  </button>
-
-                  {/* Sectional Buttons */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    <SectionalButton
-                      icon={Music}
-                      label="Music"
-                      available={opsStatus?.sectionalRehearsals?.music?.available}
-                      loading={processing === 'sectional_music'}
-                      onClick={() => handleSectional('music')}
-                      color="blue"
-                    />
-                    <SectionalButton
-                      icon={Eye}
-                      label="Visual"
-                      available={opsStatus?.sectionalRehearsals?.visual?.available}
-                      loading={processing === 'sectional_visual'}
-                      onClick={() => handleSectional('visual')}
-                      color="purple"
-                    />
-                    <SectionalButton
-                      icon={Flag}
-                      label="Guard"
-                      available={opsStatus?.sectionalRehearsals?.guard?.available}
-                      loading={processing === 'sectional_guard'}
-                      onClick={() => handleSectional('guard')}
-                      color="orange"
-                    />
-                    <SectionalButton
-                      icon={Drum}
-                      label="Battery"
-                      available={opsStatus?.sectionalRehearsals?.percussion?.available}
-                      loading={processing === 'sectional_percussion'}
-                      onClick={() => handleSectional('percussion')}
-                      color="green"
-                    />
                   </div>
                 </div>
               </Panel>
 
-              {/* Show Concept & Caption Grid */}
-              <Panel
-                title="Show Design"
-                subtitle={activeCorps?.showConcept?.theme || 'Not configured'}
-                variant="default"
-                className="flex-none"
-                actions={
-                  <Link to="/design" className="text-[8px] text-gold-400 hover:text-gold-300 uppercase">
-                    Edit
-                  </Link>
-                }
-              >
-                {/* Theme & Style Tags */}
-                <div className="flex items-center gap-1.5 mb-2">
-                  {activeCorps?.showConcept?.theme && (
-                    <span className="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-[9px] font-display font-bold text-purple-400 uppercase">
-                      {activeCorps.showConcept.theme}
-                    </span>
-                  )}
-                  {activeCorps?.showConcept?.drillStyle && (
-                    <span className="px-1.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/30 text-[9px] font-display font-bold text-blue-400 uppercase">
-                      {activeCorps.showConcept.drillStyle}
-                    </span>
-                  )}
-                  {activeCorps?.showConcept?.musicSource && (
-                    <span className="px-1.5 py-0.5 rounded bg-orange-500/20 border border-orange-500/30 text-[9px] font-display font-bold text-orange-400 uppercase">
-                      {activeCorps.showConcept.musicSource}
-                    </span>
-                  )}
-                </div>
-
-                {/* Caption Grid 2x4 */}
-                <div className="grid grid-cols-4 gap-1">
-                  {CAPTIONS.map(caption => (
-                    <CaptionSlot
-                      key={caption.id}
-                      caption={caption}
-                      staff={captionBonuses[caption.id]?.staff}
-                      bonus={captionBonuses[caption.id]?.bonus || 0}
-                    />
+              {/* 9 Scoring Factors */}
+              <Panel title="9 Scoring Factors" subtitle="How your score multiplier is calculated" variant="default" className="flex-1 min-h-0" scrollable>
+                <div className="space-y-1">
+                  {multiplierFactors.map(f => (
+                    <MultiplierFactorRow key={f.id} {...f} />
                   ))}
                 </div>
               </Panel>
 
-              {/* Daily Tasks */}
-              <Panel
-                title="Daily Tasks"
-                subtitle={opsLoading ? 'Loading...' : undefined}
-                variant="default"
-                className="flex-1 min-h-0"
-                scrollable
-              >
-                <div className="space-y-0.5">
-                  <TaskRow
-                    title="Login Bonus"
-                    reward="+10 XP"
-                    available={opsStatus?.loginBonus?.available}
-                    loading={processing === 'login'}
-                    onClick={() => handleDailyTask('login', claimDailyLogin)}
-                  />
-                  <TaskRow
-                    title="Staff Check-in"
-                    reward="+15 XP"
-                    available={opsStatus?.staffCheckin?.available}
-                    loading={processing === 'staff'}
-                    onClick={() => handleDailyTask('staff', () => staffCheckin({ corpsClass: activeCorpsClass }))}
-                  />
-                  <TaskRow
-                    title="Wellness Check"
-                    reward="+3% morale"
-                    available={opsStatus?.memberWellness?.available}
-                    loading={processing === 'wellness'}
-                    onClick={() => handleDailyTask('wellness', () => memberWellnessCheck({ corpsClass: activeCorpsClass }))}
-                  />
-                  <TaskRow
-                    title="Equipment Inspection"
-                    reward="+5 CC"
-                    available={opsStatus?.equipmentInspection?.available}
-                    loading={processing === 'equipment'}
-                    onClick={() => handleDailyTask('equipment', () => equipmentInspection({ corpsClass: activeCorpsClass }))}
-                  />
-                  <TaskRow
-                    title="Show Review"
-                    reward="+20 XP"
-                    available={opsStatus?.showReview?.available}
-                    loading={processing === 'review'}
-                    onClick={() => handleDailyTask('review', () => showReview({ corpsClass: activeCorpsClass }))}
-                  />
+              {/* Section Stats */}
+              <Panel title="Section Readiness" variant="default" className="flex-none">
+                <div className="space-y-1">
+                  <StatBar value={readiness.brass} label="Brass (B,MA)" color="blue" />
+                  <StatBar value={readiness.percussion} label="Percussion (P)" color="blue" />
+                  <StatBar value={readiness.guard} label="Guard (VP,VA,CG)" color="blue" />
+                  <StatBar value={readiness.ensemble} label="Ensemble (GE)" color="blue" />
                 </div>
               </Panel>
 
-            </motion.div>
+              <Panel title="Corps Morale" variant="default" className="flex-none">
+                <div className="space-y-1">
+                  <StatBar value={morale.brass} label="Brass" color="green" />
+                  <StatBar value={morale.percussion} label="Percussion" color="green" />
+                  <StatBar value={morale.guard} label="Guard" color="green" />
+                </div>
+              </Panel>
+
+            </div>
+          </IntelligenceColumn>
+
+          {/* CENTER: OPERATIONS */}
+          <CommandColumn>
+            <div className="h-full flex flex-col gap-1 overflow-y-auto">
+
+              {/* Full Rehearsal */}
+              <Panel title="Daily Rehearsal" subtitle="+5% readiness, -2% morale, -1% equipment wear" variant="elevated" className="flex-none">
+                <button onClick={handleRehearsal} disabled={!canRehearseToday() || executionProcessing}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg border ${
+                    canRehearseToday() ? 'bg-gold-500/20 border-gold-500/40 text-gold-400 hover:bg-gold-500/30' : 'bg-green-500/10 border-green-500/30 text-green-400'
+                  }`}>
+                  <div className={`w-8 h-8 flex items-center justify-center rounded ${canRehearseToday() ? 'bg-gold-500/30' : 'bg-green-500/20'}`}>
+                    {executionProcessing ? <div className="w-4 h-4 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+                      : canRehearseToday() ? <Play className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-display font-bold uppercase">{canRehearseToday() ? 'Run Full Rehearsal' : 'Done Today'}</div>
+                    <div className="text-[9px] opacity-70">{executionState?.rehearsalsThisWeek || 0}/7 this week • +25 XP • Perfect week = +50 bonus</div>
+                  </div>
+                </button>
+              </Panel>
+
+              {/* 9 Daily Operations */}
+              <Panel title="9 Daily Operations" subtitle={`${opsStatus ? DAILY_OPS.filter(t => getTaskAvailability(t.id)).length : '?'}/9 remaining`}
+                variant="default" className="flex-1 min-h-0" scrollable>
+                <div className="space-y-0.5">
+                  {DAILY_OPS.map(task => (
+                    <DailyTaskRow key={task.id} task={task} available={getTaskAvailability(task.id)}
+                      loading={processing === task.id || processing === `sectional_${task.id}`}
+                      onClick={() => handleTaskClick(task.id)} />
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Show Difficulty */}
+              <Panel title="Show Configuration" variant="default" className="flex-none">
+                <div className={`p-2 rounded border ${showDifficulty.isPrepared ? 'bg-green-500/10 border-green-500/30' : 'bg-orange-500/10 border-orange-500/30'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-display font-bold text-cream uppercase">{showDifficulty.label} Difficulty</span>
+                    <span className={`text-[9px] px-1.5 rounded ${showDifficulty.isPrepared ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                      {showDifficulty.isPrepared ? 'PREPARED' : 'NOT READY'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-[8px]">
+                    <div><div className="text-cream/40">Threshold</div><div className="font-data font-bold text-cream">{Math.round(showDifficulty.threshold * 100)}%</div></div>
+                    <div><div className="text-cream/40">If Ready</div><div className="font-data font-bold text-green-400">+{Math.round(showDifficulty.ceiling * 100)}%</div></div>
+                    <div><div className="text-cream/40">If Not</div><div className="font-data font-bold text-red-400">{Math.round(showDifficulty.risk * 100)}%</div></div>
+                  </div>
+                </div>
+                <div className="mt-2 text-[8px] text-cream/40">
+                  Current readiness: {Math.round(readiness.avg * 100)}%
+                  {!showDifficulty.isPrepared && ` (need ${Math.round(showDifficulty.threshold * 100)}%)`}
+                  {currentDay <= 10 && ' • Can change difficulty until Day 10'}
+                </div>
+              </Panel>
+
+            </div>
           </CommandColumn>
 
-          {/* ================================================================
-              RIGHT COLUMN: THE BACKSTAGE - Logistics
-              ================================================================ */}
+          {/* RIGHT: LOGISTICS */}
           <LogisticsColumn>
-            <motion.div variants={columnVariants} className="h-full flex flex-col gap-1">
+            <div className="h-full flex flex-col gap-1 overflow-y-auto">
 
               {/* Mobile Toggle */}
-              <button
-                onClick={() => setShowMobileLogistics(!showMobileLogistics)}
-                className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10"
-              >
+              <button onClick={() => setShowMobileLogistics(!showMobileLogistics)}
+                className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-2">
                   <LayoutGrid className="w-4 h-4 text-gold-400" />
                   <span className="text-xs font-display font-bold text-cream uppercase">Logistics</span>
                 </div>
-                {showMobileLogistics ? (
-                  <ChevronUp className="w-4 h-4 text-cream/40" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-cream/40" />
-                )}
+                {showMobileLogistics ? <ChevronUp className="w-4 h-4 text-cream/40" /> : <ChevronDown className="w-4 h-4 text-cream/40" />}
               </button>
 
-              {/* Collapsible Content */}
               <div className={`flex flex-col gap-1 flex-1 min-h-0 ${showMobileLogistics ? 'flex' : 'hidden lg:flex'}`}>
 
-                {/* Staff Coverage Map - All 8 Slots */}
-                <Panel
-                  title="Staff Coverage"
-                  subtitle={`${assignedStaff.length}/8 assigned`}
-                  variant="default"
-                  className="flex-1 min-h-0"
-                  scrollable
-                  actions={
-                    <button
-                      onClick={() => setShowStaffPanel(true)}
-                      className="text-[8px] text-gold-400 hover:text-gold-300 uppercase tracking-wide"
-                    >
-                      Manage
-                    </button>
-                  }
-                >
-                  {/* 8-Slot Grid */}
-                  <div className="grid grid-cols-4 gap-1 mb-2">
-                    {CAPTIONS.map(caption => {
-                      const staff = assignedStaff.find(s =>
-                        s.assignedTo?.caption === caption.id || s.caption === caption.id
-                      );
-                      return (
-                        <StaffSlotIcon
-                          key={caption.id}
-                          caption={caption.id}
-                          staff={staff}
-                          compact
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* Staff List */}
-                  <div className="space-y-1">
-                    {CAPTIONS.slice(0, 4).map(caption => {
-                      const staff = assignedStaff.find(s =>
-                        s.assignedTo?.caption === caption.id || s.caption === caption.id
-                      );
-                      return (
-                        <StaffSlotIcon
-                          key={caption.id}
-                          caption={caption.id}
-                          staff={staff}
-                        />
-                      );
-                    })}
-                    {CAPTIONS.length > 4 && assignedStaff.length < 4 && (
-                      <Link
-                        to="/staff"
-                        className="block text-center py-1 text-[9px] text-gold-400 hover:text-gold-300"
-                      >
-                        + Hire more staff
-                      </Link>
-                    )}
+                {/* Staff Coverage - All 8 */}
+                <Panel title="8 Staff Positions" subtitle={`${assignedStaff.length}/8 filled • +15% match, -5% mismatch, -25% vacant`}
+                  variant="default" className="flex-1 min-h-0" scrollable
+                  actions={<button onClick={() => setShowStaffPanel(true)} className="text-[8px] text-gold-400 hover:text-gold-300 uppercase">Manage</button>}>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {CAPTIONS.map(c => (
+                      <StaffSlotDetail key={c.id} caption={c} staff={staffByCaption[c.id]?.staff} isMatched={staffByCaption[c.id]?.isMatched} />
+                    ))}
                   </div>
                 </Panel>
 
-                {/* Performance Gear */}
-                <Panel title="Performance Gear" variant="default" className="flex-none">
-                  <div className="space-y-1">
-                    <SlimBar value={equipment.uniforms} label="Uniforms" color="gold" size="xs" />
-                    <SlimBar value={equipment.instruments} label="Instruments" color="gold" size="xs" />
-                    <SlimBar value={equipment.props} label="Props" color="gold" size="xs" />
+                {/* Equipment - All 5 */}
+                <Panel title="5 Equipment Items" subtitle="Performance gear + Travel fleet" variant="default" className="flex-none">
+                  <div className="space-y-1.5">
+                    {Object.entries(EQUIPMENT_CONFIG).map(([id, config]) => (
+                      <EquipmentDetail key={id} id={id} config={config} condition={equipment[id]} maxCondition={equipment[`${id}Max`]} />
+                    ))}
                   </div>
-                </Panel>
-
-                {/* Travel Fleet */}
-                <Panel
-                  title="Travel Fleet"
-                  variant={equipment.travelAvg < 0.70 ? 'accent' : 'default'}
-                  className="flex-none"
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center p-2 rounded bg-white/5 border border-white/10">
-                      <Bus className={`w-4 h-4 mx-auto mb-1 ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
-                      <div className={`text-lg font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
-                        {Math.round(equipment.bus * 100)}%
-                      </div>
-                      <div className="text-[8px] text-cream/40 uppercase">Bus</div>
-                    </div>
-                    <div className="text-center p-2 rounded bg-white/5 border border-white/10">
-                      <Truck className={`w-4 h-4 mx-auto mb-1 ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
-                      <div className={`text-lg font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
-                        {Math.round(equipment.truck * 100)}%
-                      </div>
-                      <div className="text-[8px] text-cream/40 uppercase">Truck</div>
-                    </div>
-                  </div>
-                  {(equipment.bus + equipment.truck) < 1.40 && (
-                    <div className="mt-2 flex items-center gap-1 px-2 py-1 rounded bg-orange-500/10 border border-orange-500/30">
-                      <AlertTriangle className="w-3 h-3 text-orange-400" />
-                      <span className="text-[9px] text-orange-400">Travel penalty active (-3%)</span>
-                    </div>
-                  )}
                 </Panel>
 
                 {/* Quick Links */}
-                <Panel title="Navigation" variant="sunken" className="flex-none">
+                <Panel variant="sunken" className="flex-none">
                   <div className="grid grid-cols-3 gap-1">
-                    <Link
-                      to="/schedule"
-                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <Calendar className="w-4 h-4 text-purple-400" />
-                      <span className="text-[8px] text-cream/60">Schedule</span>
-                    </Link>
-                    <Link
-                      to="/scores"
-                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <Trophy className="w-4 h-4 text-gold-400" />
-                      <span className="text-[8px] text-cream/60">Scores</span>
-                    </Link>
-                    <Link
-                      to="/staff"
-                      className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <Users className="w-4 h-4 text-green-400" />
-                      <span className="text-[8px] text-cream/60">Market</span>
-                    </Link>
+                    <Link to="/schedule" className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10">
+                      <Calendar className="w-4 h-4 text-purple-400" /><span className="text-[8px] text-cream/60">Schedule</span></Link>
+                    <Link to="/scores" className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10">
+                      <Trophy className="w-4 h-4 text-gold-400" /><span className="text-[8px] text-cream/60">Scores</span></Link>
+                    <Link to="/staff" className="flex flex-col items-center gap-1 p-2 rounded bg-white/5 hover:bg-white/10">
+                      <Users className="w-4 h-4 text-green-400" /><span className="text-[8px] text-cream/60">Market</span></Link>
                   </div>
                 </Panel>
 
               </div>
-            </motion.div>
+            </div>
           </LogisticsColumn>
 
         </CommandCenterLayout>
-      </motion.div>
+      </div>
 
-      {/* ================================================================
-          TICKER FOOTER - Live Scores
-          ================================================================ */}
-      <LeagueTicker seasonData={seasonData} currentDay={currentDay} />
+      {/* FOOTER */}
+      <LeagueTicker currentDay={currentDay} />
 
-      {/* ================================================================
-          STAFF PANEL (Slide-out - only for detailed management)
-          ================================================================ */}
+      {/* STAFF PANEL */}
       <AnimatePresence>
         {showStaffPanel && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowStaffPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowStaffPanel(false)} className="fixed inset-0 bg-black/80 backdrop-blur-md z-40" />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Staff Roster</h2>
-                <button
-                  onClick={() => setShowStaffPanel(false)}
-                  className="p-2 rounded hover:bg-red-500/20 text-cream-muted hover:text-red-400 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto">
+              <div className="sticky top-0 bg-charcoal-950/95 border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-display font-black text-gold-400 uppercase">Staff Roster</h2>
+                <button onClick={() => setShowStaffPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream-muted hover:text-red-400">
+                  <X className="w-6 h-6" /></button>
               </div>
-              <div className="p-4">
-                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
-              </div>
+              <div className="p-4"><DashboardStaffPanel activeCorpsClass={activeCorpsClass} /></div>
             </motion.div>
           </>
         )}
