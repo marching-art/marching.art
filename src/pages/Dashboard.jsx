@@ -248,12 +248,13 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
   const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null });
   const { allShows, loading: scoresLoading } = useScoresData();
 
-  // Get recent show results for ticker
+  // Get historical show results for ticker (previous day's data)
+  const previousDay = currentDay - 1;
   useEffect(() => {
     if (!scoresLoading && allShows.length > 0) {
-      // Get scores from yesterday and today
-      const recentShows = allShows
-        .filter(show => show.offSeasonDay >= currentDay - 1 && show.offSeasonDay <= currentDay)
+      // Get scores from the previous day only (historical data)
+      const historicalShows = allShows
+        .filter(show => show.offSeasonDay === previousDay)
         .flatMap(show =>
           show.scores.slice(0, 5).map(score => ({
             corpsName: score.corpsName || score.corps,
@@ -266,11 +267,11 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
         .sort((a, b) => b.totalScore - a.totalScore)
         .slice(0, 10);
 
-      setTickerData({ scores: recentShows, loading: false, error: null });
+      setTickerData({ scores: historicalShows, loading: false, error: null });
     } else if (!scoresLoading && allShows.length === 0) {
       setTickerData({ scores: [], loading: false, error: null });
     }
-  }, [allShows, scoresLoading, currentDay]);
+  }, [allShows, scoresLoading, previousDay]);
 
   // No data state
   if (tickerData.loading) {
@@ -297,8 +298,8 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
     <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
       {/* Ticker Label */}
       <div className="flex items-center gap-2 px-3 border-r border-white/10 h-full shrink-0">
-        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Live</span>
+        <div className="w-2 h-2 bg-gold-400 rounded-full" />
+        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Yesterday</span>
       </div>
 
       {/* Scrolling Ticker */}
@@ -326,7 +327,7 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
       {/* Day Indicator */}
       <div className="flex items-center gap-1.5 px-3 border-l border-white/10 h-full shrink-0">
         <Calendar className="w-3 h-3 text-cream/40" />
-        <span className="text-[9px] font-mono text-cream/50">Day {currentDay}</span>
+        <span className="text-[9px] font-mono text-cream/50">Day {previousDay}</span>
       </div>
     </div>
   );
