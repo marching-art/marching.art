@@ -1,7 +1,7 @@
 // =============================================================================
 // WORLD TICKER COMPONENT (Footer Marquee Zone)
 // =============================================================================
-// A scrolling marquee displaying live scores and events from the drum corps world.
+// A scrolling marquee displaying historical DCI scores from the previous day.
 // Mimics ESPN BottomLine or stock tickers - adds life to the simulation.
 //
 // Fixed at 32px height. Spans full width at bottom of viewport.
@@ -9,6 +9,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useSeasonStore } from '../../store/seasonStore';
+import { getSeasonProgress } from '../../hooks/useSeason';
 
 // =============================================================================
 // TICKER ITEM TYPES
@@ -122,6 +126,104 @@ const WorldTicker = ({ items = [], className = '' }) => {
   const controls = useAnimationControls();
   const [contentWidth, setContentWidth] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [historicalItems, setHistoricalItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Get season data from store
+  const seasonData = useSeasonStore((state) => state.seasonData);
+  const { currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentDay: 1 };
+  const previousDay = currentDay - 1;
+
+  // Fetch historical DCI scores from the previous day
+  useEffect(() => {
+    const fetchHistoricalScores = async () => {
+      if (!seasonData?.dataDocId || previousDay < 1) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // 1. Get corps data to find source years
+        const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
+        if (!corpsDataDoc.exists()) {
+          setLoading(false);
+          return;
+        }
+
+        const corpsData = corpsDataDoc.data();
+        const corpsValues = corpsData.corpsValues || [];
+        const yearsToFetch = [...new Set(corpsValues.map(c => c.sourceYear))];
+
+        // 2. Fetch historical scores for each year
+        const historicalPromises = yearsToFetch.map(year =>
+          getDoc(doc(db, `historical_scores/${year}`))
+        );
+        const historicalDocs = await Promise.all(historicalPromises);
+
+        // 3. Find scores and events for the previous day
+        const tickerData = [];
+        let eventInfo = null;
+
+        historicalDocs.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            const yearData = docSnap.data().data || [];
+            yearData.forEach(event => {
+              if (event.offSeasonDay === previousDay && event.scores) {
+                // Store event info
+                if (!eventInfo) {
+                  eventInfo = {
+                    type: 'event',
+                    eventName: event.eventName,
+                    location: event.location,
+                    isLive: false
+                  };
+                }
+                // Add scores
+                event.scores.forEach(score => {
+                  tickerData.push({
+                    type: 'score',
+                    corps: score.corps,
+                    score: score.score || 0,
+                    change: 0,
+                    showName: null
+                  });
+                });
+              }
+            });
+          }
+        });
+
+        // Sort by score descending
+        tickerData.sort((a, b) => b.score - a.score);
+
+        // Build final items array with event interspersed
+        const finalItems = [];
+        if (eventInfo) {
+          finalItems.push(eventInfo);
+        }
+        tickerData.forEach((item, idx) => {
+          finalItems.push(item);
+          // Add event reminder every 5 scores
+          if (eventInfo && (idx + 1) % 5 === 0 && idx < tickerData.length - 1) {
+            finalItems.push({ ...eventInfo });
+          }
+        });
+
+        setHistoricalItems(finalItems);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching historical scores for ticker:', err);
+        setLoading(false);
+      }
+    };
+
+    fetchHistoricalScores();
+  }, [seasonData?.dataDocId, previousDay]);
+
+  // Use historical items if available, otherwise use provided items or fallback
+  const tickerItems = historicalItems.length > 0 ? historicalItems : (items.length > 0 ? items : [
+    { type: 'event', eventName: 'Loading DCI Scores...', location: '', isLive: false }
+  ]);
 
   // Calculate widths for animation
   useEffect(() => {
@@ -129,7 +231,7 @@ const WorldTicker = ({ items = [], className = '' }) => {
       setContentWidth(contentRef.current.scrollWidth);
       setContainerWidth(containerRef.current.offsetWidth);
     }
-  }, [items]);
+  }, [tickerItems]);
 
   // Animate the ticker
   useEffect(() => {
@@ -148,18 +250,6 @@ const WorldTicker = ({ items = [], className = '' }) => {
 
     return () => controls.stop();
   }, [contentWidth, containerWidth, controls]);
-
-  // Default items if none provided
-  const tickerItems = items.length > 0 ? items : [
-    { type: 'score', corps: 'Blue Devils', score: 97.125, change: 0.8, showName: 'Tempus Blue' },
-    { type: 'score', corps: 'Carolina Crown', score: 96.800, change: 1.2, showName: 'King of Dreams' },
-    { type: 'event', eventName: 'DCI Southwestern', location: 'San Antonio, TX', isLive: true },
-    { type: 'score', corps: 'Bluecoats', score: 96.450, change: -0.3, showName: 'Lucy' },
-    { type: 'ranking', corps: 'Santa Clara Vanguard', rank: 3, className: 'World Class' },
-    { type: 'score', corps: 'Boston Crusaders', score: 95.900, change: 0.5, showName: 'YOUtopia' },
-    { type: 'event', eventName: 'DCI Eastern Classic', location: 'Allentown, PA', isLive: false },
-    { type: 'score', corps: 'The Cadets', score: 95.650, change: 0, showName: 'This I Believe' },
-  ];
 
   // Render item based on type
   const renderItem = (item, index) => {
