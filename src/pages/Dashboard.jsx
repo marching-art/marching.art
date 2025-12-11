@@ -15,7 +15,7 @@ import {
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
-import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import {
   DashboardStaffPanel,
   SectionGauges,
@@ -37,7 +37,6 @@ import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
-import { useScoresData } from '../hooks/useScoresData';
 import {
   retireCorps,
   claimDailyLogin,
@@ -242,36 +241,75 @@ const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabe
 };
 
 // ============================================================================
-// LEAGUE TICKER COMPONENT - Live Data Footer
+// LEAGUE TICKER COMPONENT - Historical DCI Data Footer
 // ============================================================================
 const LeagueTicker = ({ seasonData, currentDay }) => {
-  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null });
-  const { allShows, loading: scoresLoading } = useScoresData();
+  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null, eventName: null });
 
-  // Get historical show results for ticker (previous day's data)
+  // Get historical DCI scores from the previous day
   const previousDay = currentDay - 1;
   useEffect(() => {
-    if (!scoresLoading && allShows.length > 0) {
-      // Get scores from the previous day only (historical data)
-      const historicalShows = allShows
-        .filter(show => show.offSeasonDay === previousDay)
-        .flatMap(show =>
-          show.scores.slice(0, 5).map(score => ({
-            corpsName: score.corpsName || score.corps,
-            totalScore: score.totalScore || score.score,
-            eventName: show.eventName,
-            day: show.offSeasonDay,
-            corpsClass: score.corpsClass,
-          }))
-        )
-        .sort((a, b) => b.totalScore - a.totalScore)
-        .slice(0, 10);
+    const fetchHistoricalScores = async () => {
+      if (!seasonData?.dataDocId || previousDay < 1) {
+        setTickerData({ scores: [], loading: false, error: null, eventName: null });
+        return;
+      }
 
-      setTickerData({ scores: historicalShows, loading: false, error: null });
-    } else if (!scoresLoading && allShows.length === 0) {
-      setTickerData({ scores: [], loading: false, error: null });
-    }
-  }, [allShows, scoresLoading, previousDay]);
+      try {
+        // 1. Get corps data to find source years
+        const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
+        if (!corpsDataDoc.exists()) {
+          setTickerData({ scores: [], loading: false, error: 'No corps data found', eventName: null });
+          return;
+        }
+
+        const corpsData = corpsDataDoc.data();
+        const corpsValues = corpsData.corpsValues || [];
+        const yearsToFetch = [...new Set(corpsValues.map(c => c.sourceYear))];
+
+        // 2. Fetch historical scores for each year
+        const historicalPromises = yearsToFetch.map(year =>
+          getDoc(doc(db, `historical_scores/${year}`))
+        );
+        const historicalDocs = await Promise.all(historicalPromises);
+
+        // 3. Find scores for the previous day
+        let previousDayScores = [];
+        let eventName = null;
+
+        historicalDocs.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            const yearData = docSnap.data().data || [];
+            yearData.forEach(event => {
+              if (event.offSeasonDay === previousDay && event.scores) {
+                eventName = event.eventName;
+                event.scores.forEach(score => {
+                  previousDayScores.push({
+                    corpsName: score.corps,
+                    totalScore: score.score || 0,
+                    eventName: event.eventName,
+                    day: event.offSeasonDay,
+                  });
+                });
+              }
+            });
+          }
+        });
+
+        // 4. Sort by score and take top results
+        const sortedScores = previousDayScores
+          .sort((a, b) => b.totalScore - a.totalScore)
+          .slice(0, 15);
+
+        setTickerData({ scores: sortedScores, loading: false, error: null, eventName });
+      } catch (err) {
+        console.error('Error fetching historical scores:', err);
+        setTickerData({ scores: [], loading: false, error: err.message, eventName: null });
+      }
+    };
+
+    fetchHistoricalScores();
+  }, [seasonData?.dataDocId, previousDay]);
 
   // No data state
   if (tickerData.loading) {
@@ -299,7 +337,9 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
       {/* Ticker Label */}
       <div className="flex items-center gap-2 px-3 border-r border-white/10 h-full shrink-0">
         <div className="w-2 h-2 bg-gold-400 rounded-full" />
-        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Yesterday</span>
+        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">
+          {tickerData.eventName ? tickerData.eventName : 'DCI Scores'}
+        </span>
       </div>
 
       {/* Scrolling Ticker */}
