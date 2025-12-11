@@ -92,8 +92,8 @@ const ResourcePill = ({ icon: Icon, value, label, color = 'gold', onClick, pulse
   );
 };
 
-// Section Progress Bar - Compact progress with label
-const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }) => {
+// Section Progress Bar - Compact progress with label and optional caption
+const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true, caption = null }) => {
   const bgMap = {
     blue: 'bg-blue-500',
     green: 'bg-green-500',
@@ -115,9 +115,14 @@ const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true }
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-display font-bold text-cream/70 uppercase tracking-wide w-20 shrink-0">
-        {label}
-      </span>
+      <div className="w-24 shrink-0">
+        <span className="text-xs font-display font-bold text-cream/70 uppercase tracking-wide">
+          {label}
+        </span>
+        {caption && (
+          <span className="text-[9px] text-cream/40 ml-1">({caption})</span>
+        )}
+      </div>
       <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
@@ -863,30 +868,38 @@ const Dashboard = () => {
           variants={columnVariants}
           className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
         >
-          {/* Section Readiness */}
+          {/* Section Readiness - with caption associations */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Readiness</span>
-              <Target className="w-4 h-4 text-blue-400" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl font-data font-bold text-blue-400">{Math.round(readiness.avg * 100)}%</span>
+                <Target className="w-4 h-4 text-blue-400" />
+              </div>
             </div>
-            <div className="space-y-2.5">
-              <SectionProgressBar value={readiness.brass} label="Brass" color="blue" />
-              <SectionProgressBar value={readiness.percussion} label="Perc" color="blue" />
-              <SectionProgressBar value={readiness.guard} label="Guard" color="blue" />
-              <SectionProgressBar value={readiness.ensemble} label="Ensemble" color="blue" />
+            <div className="text-[9px] text-cream/40 mb-2">Affects scoring captions shown in parentheses</div>
+            <div className="space-y-2">
+              <SectionProgressBar value={readiness.brass} label="Brass" caption="B, MA" color="blue" />
+              <SectionProgressBar value={readiness.percussion} label="Perc" caption="P" color="blue" />
+              <SectionProgressBar value={readiness.guard} label="Guard" caption="VP, VA, CG" color="blue" />
+              <SectionProgressBar value={readiness.ensemble} label="Ensemble" caption="GE1, GE2" color="blue" />
             </div>
           </div>
 
-          {/* Section Morale */}
+          {/* Section Morale - with caption associations */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Morale</span>
-              <Heart className="w-4 h-4 text-green-400" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl font-data font-bold text-green-400">{Math.round(morale.avg * 100)}%</span>
+                <Heart className="w-4 h-4 text-green-400" />
+              </div>
             </div>
-            <div className="space-y-2.5">
-              <SectionProgressBar value={morale.brass} label="Brass" color="green" />
-              <SectionProgressBar value={morale.percussion} label="Perc" color="green" />
-              <SectionProgressBar value={morale.guard} label="Guard" color="green" />
+            <div className="text-[9px] text-cream/40 mb-2">±8% impact on caption scores</div>
+            <div className="space-y-2">
+              <SectionProgressBar value={morale.brass} label="Brass" caption="B, MA" color="green" />
+              <SectionProgressBar value={morale.percussion} label="Perc" caption="P" color="green" />
+              <SectionProgressBar value={morale.guard} label="Guard" caption="VP, VA, CG" color="green" />
             </div>
           </div>
 
@@ -955,6 +968,16 @@ const Dashboard = () => {
                   </div>
                 );
               })()}
+              {/* Travel Condition */}
+              {(equipment.bus + equipment.truck) < 1.40 && (
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Gauge className="w-3 h-3 text-red-400" />
+                    <span className="text-xs text-cream/60">Travel</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-red-400">-3.0%</span>
+                </div>
+              )}
               {/* Synergy if present */}
               {executionState?.synergyBonus > 0 && (
                 <div className="flex items-center justify-between py-1.5 border-b border-white/5">
@@ -964,6 +987,18 @@ const Dashboard = () => {
                   </div>
                   <span className="text-xs font-mono font-bold text-green-400">
                     +{executionState.synergyBonus.toFixed(1)}%
+                  </span>
+                </div>
+              )}
+              {/* Late Season Fatigue (Days 35-49) */}
+              {currentDay > 35 && (
+                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Coffee className="w-3 h-3 text-orange-400" />
+                    <span className="text-xs text-cream/60">Fatigue</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-orange-400">
+                    -{(Math.min((currentDay - 35) / 14, 1) * 5).toFixed(1)}%
                   </span>
                 </div>
               )}
@@ -1029,6 +1064,53 @@ const Dashboard = () => {
               </div>
             );
           })()}
+
+          {/* Temporal Effects - Season Phase Indicators */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Season Effects</span>
+              <span className="text-xs font-mono text-cream/40">Day {currentDay}/49</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {/* Fatigue Status */}
+              <div className="text-center p-2 rounded bg-black/20">
+                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay > 35 ? 'bg-orange-500 animate-pulse' : 'bg-gray-600'}`} />
+                <div className="text-[9px] text-cream/50 uppercase">Fatigue</div>
+                <div className={`text-[10px] font-mono font-bold ${currentDay > 35 ? 'text-orange-400' : 'text-cream/30'}`}>
+                  {currentDay > 35 ? 'Active' : 'Day 35+'}
+                </div>
+              </div>
+              {/* Championship Pressure */}
+              <div className="text-center p-2 rounded bg-black/20">
+                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay >= 47 ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`} />
+                <div className="text-[9px] text-cream/50 uppercase">Finals</div>
+                <div className={`text-[10px] font-mono font-bold ${currentDay >= 47 ? 'text-red-400' : 'text-cream/30'}`}>
+                  {currentDay >= 47 ? 'Active' : 'Day 47+'}
+                </div>
+              </div>
+              {/* Difficulty Lock */}
+              <div className="text-center p-2 rounded bg-black/20">
+                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay > 10 ? 'bg-red-500' : 'bg-green-500'}`} />
+                <div className="text-[9px] text-cream/50 uppercase">Difficulty</div>
+                <div className={`text-[10px] font-mono font-bold ${currentDay > 10 ? 'text-red-400' : 'text-green-400'}`}>
+                  {currentDay > 10 ? 'Locked' : `${10 - currentDay}d left`}
+                </div>
+              </div>
+            </div>
+            {/* Season Progress Bar */}
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between text-[9px] text-cream/40 mb-1">
+                <span>Season Progress</span>
+                <span>{Math.round((currentDay / 49) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-gold-500 rounded-full transition-all"
+                  style={{ width: `${(currentDay / 49) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </motion.aside>
 
         {/* ================================================================
@@ -1367,16 +1449,20 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Equipment Status */}
+          {/* Equipment Status - with caption associations */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
-              <Wrench className="w-4 h-4 text-orange-400" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-xl font-data font-bold text-orange-400">{Math.round(equipment.avg * 100)}%</span>
+                <Wrench className="w-4 h-4 text-orange-400" />
+              </div>
             </div>
-            <div className="space-y-2.5">
-              <SectionProgressBar value={equipment.instruments} label="Instruments" color={equipment.instruments < 0.85 ? 'orange' : 'gold'} />
-              <SectionProgressBar value={equipment.uniforms} label="Uniforms" color={equipment.uniforms < 0.85 ? 'orange' : 'gold'} />
-              <SectionProgressBar value={equipment.props} label="Props" color={equipment.props < 0.85 ? 'orange' : 'gold'} />
+            <div className="text-[9px] text-cream/40 mb-2">Affects caption scores shown in parentheses</div>
+            <div className="space-y-2">
+              <SectionProgressBar value={equipment.instruments} label="Instruments" caption="B, MA, P" color={equipment.instruments < 0.85 ? 'orange' : 'gold'} />
+              <SectionProgressBar value={equipment.uniforms} label="Uniforms" caption="VP, VA" color={equipment.uniforms < 0.85 ? 'orange' : 'gold'} />
+              <SectionProgressBar value={equipment.props} label="Props" caption="CG" color={equipment.props < 0.85 ? 'orange' : 'gold'} />
             </div>
             <button
               onClick={() => setShowEquipmentPanel(true)}
