@@ -17,7 +17,6 @@ import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import {
-  EquipmentManager,
   DashboardStaffPanel,
   SectionGauges,
   MultiplierGlassBoxLarge,
@@ -370,7 +369,6 @@ const Dashboard = () => {
   const [showMorningReport, setShowMorningReport] = useState(false);
 
   // Panel states
-  const [showEquipmentPanel, setShowEquipmentPanel] = useState(false);
   const [showStaffPanel, setShowStaffPanel] = useState(false);
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
@@ -1449,86 +1447,151 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Equipment Status - with caption associations */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
+          {/* Equipment Management - Full Interactive */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-data font-bold text-orange-400">{Math.round(equipment.avg * 100)}%</span>
-                <Wrench className="w-4 h-4 text-orange-400" />
-              </div>
-            </div>
-            <div className="text-[9px] text-cream/40 mb-2">Affects caption scores shown in parentheses</div>
-            <div className="space-y-2">
-              <SectionProgressBar value={equipment.instruments} label="Instruments" caption="B, MA, P" color={equipment.instruments < 0.85 ? 'orange' : 'gold'} />
-              <SectionProgressBar value={equipment.uniforms} label="Uniforms" caption="VP, VA" color={equipment.uniforms < 0.85 ? 'orange' : 'gold'} />
-              <SectionProgressBar value={equipment.props} label="Props" caption="CG" color={equipment.props < 0.85 ? 'orange' : 'gold'} />
-            </div>
-            <button
-              onClick={() => setShowEquipmentPanel(true)}
-              className="w-full mt-3 text-xs font-display font-bold text-gold-400 uppercase tracking-wide py-2.5 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
-            >
-              Manage Equipment →
-            </button>
-          </div>
-
-          {/* Travel Fleet */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Travel Fleet</span>
-              <Gauge className="w-4 h-4 text-blue-400" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center">
-                <div className={`text-2xl font-data font-bold ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
-                  {Math.round(equipment.bus * 100)}%
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-gold-400">
+                  <Coins className="w-3.5 h-3.5" />
+                  <span className="text-sm font-mono font-bold">{profile?.corpsCoin || 0}</span>
                 </div>
-                <div className="text-[10px] text-cream/40 uppercase">Bus</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl font-data font-bold ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`}>
-                  {Math.round(equipment.truck * 100)}%
-                </div>
-                <div className="text-[10px] text-cream/40 uppercase">Truck</div>
               </div>
             </div>
-            {(equipment.bus + equipment.truck) < 1.40 && (
-              <div className="mt-2.5 text-xs text-orange-400 text-center">
-                ⚠ Travel condition affecting performance
-              </div>
-            )}
-          </div>
 
-          {/* Quick Links */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
+            {/* Performance Equipment */}
+            <div className="text-[9px] text-cream/40 uppercase tracking-wider mb-1.5">Performance (affects captions)</div>
+            <div className="space-y-1.5 mb-3">
+              {/* Instruments */}
+              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
+                <span className="text-lg">🎺</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-cream truncate">Instruments</span>
+                    <span className="text-[8px] text-cream/40">(B, MA, P)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${equipment.instruments >= 0.85 ? 'bg-green-500' : equipment.instruments >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.instruments * 100}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold ${equipment.instruments >= 0.85 ? 'text-green-400' : equipment.instruments >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.instruments * 100)}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => repairEquipment('instruments')}
+                  disabled={executionProcessing || equipment.instruments >= 0.95}
+                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Repair 150cc
+                </button>
+              </div>
+
+              {/* Uniforms */}
+              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
+                <span className="text-lg">👔</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-cream truncate">Uniforms</span>
+                    <span className="text-[8px] text-cream/40">(VP, VA)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${equipment.uniforms >= 0.85 ? 'bg-green-500' : equipment.uniforms >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.uniforms * 100}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold ${equipment.uniforms >= 0.85 ? 'text-green-400' : equipment.uniforms >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.uniforms * 100)}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => repairEquipment('uniforms')}
+                  disabled={executionProcessing || equipment.uniforms >= 0.95}
+                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Repair 100cc
+                </button>
+              </div>
+
+              {/* Props */}
+              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
+                <span className="text-lg">🎨</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-cream truncate">Props</span>
+                    <span className="text-[8px] text-cream/40">(CG)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${equipment.props >= 0.85 ? 'bg-green-500' : equipment.props >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.props * 100}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold ${equipment.props >= 0.85 ? 'text-green-400' : equipment.props >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.props * 100)}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => repairEquipment('props')}
+                  disabled={executionProcessing || equipment.props >= 0.95}
+                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Repair 120cc
+                </button>
+              </div>
+            </div>
+
+            {/* Travel Equipment */}
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] text-cream/40 uppercase tracking-wider">Travel Fleet</span>
+              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${(equipment.bus + equipment.truck) >= 1.40 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                {(equipment.bus + equipment.truck) >= 1.40 ? 'OK' : '-3% penalty'}
+              </span>
             </div>
             <div className="space-y-1.5">
-              <Link
-                to="/schedule"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
-              >
-                <Calendar className="w-5 h-5 text-purple-400" />
-                <span className="text-sm font-display text-cream">Schedule</span>
-                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
-              </Link>
-              <Link
-                to="/scores"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
-              >
-                <Trophy className="w-5 h-5 text-gold-400" />
-                <span className="text-sm font-display text-cream">Scores</span>
-                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
-              </Link>
-              <Link
-                to="/staff"
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5 transition-colors"
-              >
-                <Users className="w-5 h-5 text-green-400" />
-                <span className="text-sm font-display text-cream">Market</span>
-                <ChevronRight className="w-4 h-4 text-cream/30 ml-auto" />
-              </Link>
+              {/* Bus */}
+              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <Radio className={`w-4 h-4 ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-cream truncate">Tour Bus</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${equipment.bus >= 0.85 ? 'bg-green-500' : equipment.bus >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.bus * 100}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold ${equipment.bus >= 0.85 ? 'text-green-400' : equipment.bus >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.bus * 100)}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => repairEquipment('bus')}
+                  disabled={executionProcessing || equipment.bus >= 0.95}
+                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Repair 200cc
+                </button>
+              </div>
+
+              {/* Truck */}
+              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <Gauge className={`w-4 h-4 ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-cream truncate">Equipment Truck</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${equipment.truck >= 0.85 ? 'bg-green-500' : equipment.truck >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.truck * 100}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold ${equipment.truck >= 0.85 ? 'text-green-400' : equipment.truck >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.truck * 100)}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => repairEquipment('truck')}
+                  disabled={executionProcessing || equipment.truck >= 0.95}
+                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Repair 250cc
+                </button>
+              </div>
             </div>
           </div>
         </motion.aside>
@@ -1543,44 +1606,6 @@ const Dashboard = () => {
       {/* ================================================================
           SLIDE-OUT PANELS
           ================================================================ */}
-
-      {/* Equipment Panel */}
-      <AnimatePresence>
-        {showEquipmentPanel && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowEquipmentPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-cream uppercase tracking-tight">Equipment Manager</h2>
-                <button onClick={() => setShowEquipmentPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream/60 hover:text-red-400 transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-4">
-                <EquipmentManager
-                  equipment={executionState?.equipment}
-                  onRepair={repairEquipment}
-                  onUpgrade={upgradeEquipment}
-                  processing={executionProcessing}
-                  corpsCoin={profile?.corpsCoin || 0}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* Staff Panel */}
       <AnimatePresence>
