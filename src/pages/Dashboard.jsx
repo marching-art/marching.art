@@ -15,7 +15,7 @@ import {
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
-import { doc, getDoc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import {
   DashboardStaffPanel,
   SectionGauges,
@@ -37,6 +37,7 @@ import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
+import { useScoresData } from '../hooks/useScoresData';
 import {
   retireCorps,
   claimDailyLogin,
@@ -241,75 +242,35 @@ const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabe
 };
 
 // ============================================================================
-// LEAGUE TICKER COMPONENT - Historical DCI Data Footer
+// LEAGUE TICKER COMPONENT - User's Corps Game Data Footer
 // ============================================================================
 const LeagueTicker = ({ seasonData, currentDay }) => {
-  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null, eventName: null });
+  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null });
+  const { allShows, loading: scoresLoading } = useScoresData();
 
-  // Get historical DCI scores from the previous day
-  const previousDay = currentDay - 1;
+  // Get recent game show results for ticker
   useEffect(() => {
-    const fetchHistoricalScores = async () => {
-      if (!seasonData?.dataDocId || previousDay < 1) {
-        setTickerData({ scores: [], loading: false, error: null, eventName: null });
-        return;
-      }
+    if (!scoresLoading && allShows.length > 0) {
+      // Get scores from yesterday and today
+      const recentShows = allShows
+        .filter(show => show.offSeasonDay >= currentDay - 1 && show.offSeasonDay <= currentDay)
+        .flatMap(show =>
+          show.scores.slice(0, 5).map(score => ({
+            corpsName: score.corpsName || score.corps,
+            totalScore: score.totalScore || score.score,
+            eventName: show.eventName,
+            day: show.offSeasonDay,
+            corpsClass: score.corpsClass,
+          }))
+        )
+        .sort((a, b) => b.totalScore - a.totalScore)
+        .slice(0, 10);
 
-      try {
-        // 1. Get corps data to find source years
-        const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
-        if (!corpsDataDoc.exists()) {
-          setTickerData({ scores: [], loading: false, error: 'No corps data found', eventName: null });
-          return;
-        }
-
-        const corpsData = corpsDataDoc.data();
-        const corpsValues = corpsData.corpsValues || [];
-        const yearsToFetch = [...new Set(corpsValues.map(c => c.sourceYear))];
-
-        // 2. Fetch historical scores for each year
-        const historicalPromises = yearsToFetch.map(year =>
-          getDoc(doc(db, `historical_scores/${year}`))
-        );
-        const historicalDocs = await Promise.all(historicalPromises);
-
-        // 3. Find scores for the previous day
-        let previousDayScores = [];
-        let eventName = null;
-
-        historicalDocs.forEach((docSnap) => {
-          if (docSnap.exists()) {
-            const yearData = docSnap.data().data || [];
-            yearData.forEach(event => {
-              if (event.offSeasonDay === previousDay && event.scores) {
-                eventName = event.eventName;
-                event.scores.forEach(score => {
-                  previousDayScores.push({
-                    corpsName: score.corps,
-                    totalScore: score.score || 0,
-                    eventName: event.eventName,
-                    day: event.offSeasonDay,
-                  });
-                });
-              }
-            });
-          }
-        });
-
-        // 4. Sort by score and take top results
-        const sortedScores = previousDayScores
-          .sort((a, b) => b.totalScore - a.totalScore)
-          .slice(0, 15);
-
-        setTickerData({ scores: sortedScores, loading: false, error: null, eventName });
-      } catch (err) {
-        console.error('Error fetching historical scores:', err);
-        setTickerData({ scores: [], loading: false, error: err.message, eventName: null });
-      }
-    };
-
-    fetchHistoricalScores();
-  }, [seasonData?.dataDocId, previousDay]);
+      setTickerData({ scores: recentShows, loading: false, error: null });
+    } else if (!scoresLoading && allShows.length === 0) {
+      setTickerData({ scores: [], loading: false, error: null });
+    }
+  }, [allShows, scoresLoading, currentDay]);
 
   // No data state
   if (tickerData.loading) {
@@ -336,10 +297,8 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
     <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
       {/* Ticker Label */}
       <div className="flex items-center gap-2 px-3 border-r border-white/10 h-full shrink-0">
-        <div className="w-2 h-2 bg-gold-400 rounded-full" />
-        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">
-          {tickerData.eventName ? tickerData.eventName : 'DCI Scores'}
-        </span>
+        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Live</span>
       </div>
 
       {/* Scrolling Ticker */}
@@ -367,7 +326,7 @@ const LeagueTicker = ({ seasonData, currentDay }) => {
       {/* Day Indicator */}
       <div className="flex items-center gap-1.5 px-3 border-l border-white/10 h-full shrink-0">
         <Calendar className="w-3 h-3 text-cream/40" />
-        <span className="text-[9px] font-mono text-cream/50">Day {previousDay}</span>
+        <span className="text-[9px] font-mono text-cream/50">Day {currentDay}</span>
       </div>
     </div>
   );
