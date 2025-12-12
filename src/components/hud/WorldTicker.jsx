@@ -160,32 +160,27 @@ const WorldTicker = ({ items = [], className = '' }) => {
         );
         const historicalDocs = await Promise.all(historicalPromises);
 
-        // 3. Find scores and events for the previous day
-        const tickerData = [];
-        let eventInfo = null;
+        // 3. Find ALL events and scores for the previous day (multiple shows possible)
+        const eventsByName = new Map(); // Group by event name to handle multiple shows
 
         historicalDocs.forEach((docSnap) => {
           if (docSnap.exists()) {
             const yearData = docSnap.data().data || [];
             yearData.forEach(event => {
               if (event.offSeasonDay === previousDay && event.scores) {
-                // Store event info
-                if (!eventInfo) {
-                  eventInfo = {
-                    type: 'event',
+                const eventKey = event.eventName;
+                if (!eventsByName.has(eventKey)) {
+                  eventsByName.set(eventKey, {
                     eventName: event.eventName,
                     location: event.location,
-                    isLive: false
-                  };
+                    scores: []
+                  });
                 }
-                // Add scores
+                // Add scores for this event
                 event.scores.forEach(score => {
-                  tickerData.push({
-                    type: 'score',
+                  eventsByName.get(eventKey).scores.push({
                     corps: score.corps,
-                    score: score.score || 0,
-                    change: 0,
-                    showName: null
+                    score: score.score || 0
                   });
                 });
               }
@@ -193,20 +188,38 @@ const WorldTicker = ({ items = [], className = '' }) => {
           }
         });
 
-        // Sort by score descending
-        tickerData.sort((a, b) => b.score - a.score);
-
-        // Build final items array with event interspersed
+        // 4. Build ticker items - show each event with its scores
         const finalItems = [];
-        if (eventInfo) {
-          finalItems.push(eventInfo);
-        }
-        tickerData.forEach((item, idx) => {
-          finalItems.push(item);
-          // Add event reminder every 5 scores
-          if (eventInfo && (idx + 1) % 5 === 0 && idx < tickerData.length - 1) {
-            finalItems.push({ ...eventInfo });
-          }
+
+        eventsByName.forEach((eventData) => {
+          // Add event header
+          finalItems.push({
+            type: 'event',
+            eventName: eventData.eventName,
+            location: eventData.location,
+            isLive: false
+          });
+
+          // Sort scores for this event and add them
+          const sortedScores = eventData.scores.sort((a, b) => b.score - a.score);
+          sortedScores.forEach((score, idx) => {
+            finalItems.push({
+              type: 'score',
+              corps: score.corps,
+              score: score.score,
+              change: 0,
+              showName: eventData.eventName
+            });
+            // Re-add event header every 5 scores for context
+            if ((idx + 1) % 5 === 0 && idx < sortedScores.length - 1) {
+              finalItems.push({
+                type: 'event',
+                eventName: eventData.eventName,
+                location: eventData.location,
+                isLive: false
+              });
+            }
+          });
         });
 
         setHistoricalItems(finalItems);
