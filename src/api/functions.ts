@@ -64,23 +64,10 @@ export const retireCorps = createCallable<RetireCorpsData, { success: boolean }>
 export const unretireCorps = createCallable<{ corpsClass: string }, { success: boolean }>('unretireCorps');
 
 // =============================================================================
-// ECONOMY & STAFF
+// ECONOMY
 // =============================================================================
 
 export const unlockClassWithCorpsCoin = createCallable<{ corpsClass: string }, { success: boolean }>('unlockClassWithCorpsCoin');
-export const purchaseStaff = createCallable<{ staffId: string; price: number }, { success: boolean }>('purchaseStaff');
-export const assignStaff = createCallable<{ staffId: string; corpsClass: string; caption: string }, void>('assignStaff');
-export const getStaffMarketplace = createCallable<void, unknown>('getStaffMarketplace');
-
-// =============================================================================
-// STAFF AUCTIONS
-// =============================================================================
-
-export const listStaffForAuction = createCallable<{ staffId: string; startingBid: number }, { auctionId: string }>('listStaffForAuction');
-export const bidOnStaff = createCallable<{ auctionId: string; bidAmount: number }, { success: boolean }>('bidOnStaff');
-export const completeAuction = createCallable<{ auctionId: string }, { success: boolean }>('completeAuction');
-export const getActiveAuctions = createCallable<void, unknown>('getActiveAuctions');
-export const cancelAuction = createCallable<{ auctionId: string }, { success: boolean }>('cancelAuction');
 
 // =============================================================================
 // EXECUTION SYSTEM
@@ -120,7 +107,6 @@ export const awardXP = createCallable<{ amount: number; reason: string }, { newX
 // =============================================================================
 
 export const claimDailyLogin = createCallable<void, { rewards: unknown }>('claimDailyLogin');
-export const staffCheckin = createCallable<{ corpsClass: string }, { success: boolean }>('staffCheckin');
 export const memberWellnessCheck = createCallable<{ corpsClass: string }, { success: boolean }>('memberWellnessCheck');
 export const equipmentInspection = createCallable<{ corpsClass: string }, { success: boolean }>('equipmentInspection');
 export const sectionalRehearsal = createCallable<{ corpsClass: string; section: string }, { success: boolean }>('sectionalRehearsal');
@@ -144,15 +130,13 @@ export interface CreateLeagueData {
   maxMembers: number;
 }
 
-// Note: createLeague, joinLeague, leaveLeague, proposeStaffTrade are in leagues.ts with higher-level wrappers
+// Note: createLeague, joinLeague, leaveLeague are in leagues.ts with higher-level wrappers
 // These raw CF exports are available with CF suffix if needed
 export const createLeagueCF = createCallable<CreateLeagueData, { leagueId: string }>('createLeague');
 export const joinLeagueCF = createCallable<{ leagueId: string } | { inviteCode: string }, { success: boolean }>('joinLeague');
 export const leaveLeagueCF = createCallable<{ leagueId: string }, { success: boolean }>('leaveLeague');
 export const generateMatchups = createCallable<{ leagueId: string }, { matchups: unknown[] }>('generateMatchups');
 export const updateMatchupResults = createCallable<{ matchupId: string; results: unknown }, void>('updateMatchupResults');
-export const proposeStaffTradeCF = createCallable<{ leagueId: string; targetUid: string; offeredStaffId: string; requestedStaffId: string }, { tradeId: string }>('proposeStaffTrade');
-export const respondToStaffTradeCF = createCallable<{ tradeId: string; accept: boolean }, { success: boolean }>('respondToStaffTrade');
 export const postLeagueMessageCF = createCallable<{ leagueId: string; message: string }, { messageId: string }>('postLeagueMessage');
 export const sendCommentNotification = createCallable<{ targetUid: string; commentId: string }, void>('sendCommentNotification');
 export const deleteComment = createCallable<{ commentId: string }, { success: boolean }>('deleteComment');

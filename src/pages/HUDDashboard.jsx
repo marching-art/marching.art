@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { useDashboardData } from '../hooks/useDashboardData';
-import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { useScoresData } from '../hooks/useScoresData';
 import toast from 'react-hot-toast';
 
@@ -29,7 +28,6 @@ import {
   sectionalRehearsal,
   getDailyOpsStatus,
   claimDailyLogin,
-  staffCheckin,
   memberWellnessCheck,
   equipmentInspection,
   showReview,
@@ -74,17 +72,6 @@ import {
 // GAME CONSTANTS - All the rules the director needs to know
 // =============================================================================
 
-// 8 Caption positions that need staff
-const CAPTIONS = [
-  { id: 'GE1', name: 'General Effect 1', category: 'ge', section: 'ensemble' },
-  { id: 'GE2', name: 'General Effect 2', category: 'ge', section: 'ensemble' },
-  { id: 'VP', name: 'Visual Proficiency', category: 'visual', section: 'guard' },
-  { id: 'VA', name: 'Visual Analysis', category: 'visual', section: 'guard' },
-  { id: 'CG', name: 'Color Guard', category: 'visual', section: 'guard' },
-  { id: 'B', name: 'Brass', category: 'music', section: 'brass' },
-  { id: 'MA', name: 'Music Analysis', category: 'music', section: 'brass' },
-  { id: 'P', name: 'Percussion', category: 'music', section: 'percussion' },
-];
 
 // 5 Equipment items with their properties
 const EQUIPMENT_CONFIG = {
@@ -417,9 +404,7 @@ const LeagueTicker = ({ currentDay }) => {
 const HUDDashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { ownedStaff } = useStaffMarketplace(user?.uid);
 
-  const [showStaffPanel, setShowStaffPanel] = useState(false);
   const [opsStatus, setOpsStatus] = useState(null);
   const [opsLoading, setOpsLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -446,22 +431,6 @@ const HUDDashboard = () => {
   // ==========================================================================
   // COMPUTED DATA
   // ==========================================================================
-
-  const assignedStaff = useMemo(() =>
-    ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
-    [ownedStaff, activeCorpsClass]
-  );
-
-  const staffByCaption = useMemo(() => {
-    const map = {};
-    CAPTIONS.forEach(c => {
-      const staff = assignedStaff.find(s =>
-        s.assignedTo?.caption === c.id || s.caption === c.id
-      );
-      map[c.id] = { staff, isMatched: staff?.caption === c.id };
-    });
-    return map;
-  }, [assignedStaff]);
 
   const readiness = useMemo(() => {
     const r = executionState?.readiness;
@@ -523,8 +492,6 @@ const HUDDashboard = () => {
     const factors = [];
     const eqAvg = (equipment.instruments + equipment.uniforms + equipment.props) / 3;
     const travelHealth = equipment.bus + equipment.truck;
-    const staffCount = assignedStaff.length;
-    const matchedCount = Object.values(staffByCaption).filter(s => s.isMatched).length;
 
     // 1. Section Readiness (±12%)
     const readinessContrib = (readiness.avg - 0.80) * 0.60;
@@ -535,17 +502,7 @@ const HUDDashboard = () => {
       isActive: true,
     });
 
-    // 2. Staff Effectiveness (±8%)
-    const staffEff = staffCount === 0 ? 0.75 : 0.80 + (matchedCount * 0.019) + (staffCount >= 6 ? 0.05 : staffCount >= 4 ? 0.02 : 0);
-    const staffContrib = (Math.min(staffEff, 1.0) - 0.80) * 0.40;
-    factors.push({
-      id: 'staff', label: 'Staff Effectiveness', range: '±8%',
-      contribution: staffContrib, icon: Users,
-      explanation: `${staffCount}/8 filled, ${matchedCount} specialty match`,
-      isActive: true,
-    });
-
-    // 3. Equipment Condition (-5% to 0%)
+    // 2. Equipment Condition (-5% to 0%)
     const eqContrib = (eqAvg - 1.00) * 0.50;
     factors.push({
       id: 'equipment', label: 'Equipment Condition', range: '-5% to 0%',
@@ -554,7 +511,7 @@ const HUDDashboard = () => {
       isActive: true,
     });
 
-    // 4. Travel Health (-3% if combined < 140%)
+    // 3. Travel Health (-3% if combined < 140%)
     const travelContrib = travelHealth < 1.40 ? -0.03 : 0;
     factors.push({
       id: 'travel', label: 'Travel Health', range: '-3%',
@@ -563,7 +520,7 @@ const HUDDashboard = () => {
       isActive: travelContrib !== 0,
     });
 
-    // 5. Corps Morale (±8%)
+    // 4. Corps Morale (±8%)
     const moraleContrib = (morale.avg - 0.75) * 0.32;
     factors.push({
       id: 'morale', label: 'Corps Morale', range: '±8%',
@@ -572,7 +529,7 @@ const HUDDashboard = () => {
       isActive: true,
     });
 
-    // 6. Show Difficulty (±15%)
+    // 5. Show Difficulty (±15%)
     const diffContrib = showDifficulty.isPrepared ? showDifficulty.ceiling : showDifficulty.risk;
     factors.push({
       id: 'difficulty', label: `Show: ${showDifficulty.label}`, range: '±15%',
@@ -583,7 +540,7 @@ const HUDDashboard = () => {
       isActive: true,
     });
 
-    // 7. Random Variance (±2%)
+    // 6. Random Variance (±2%)
     factors.push({
       id: 'variance', label: 'Daily Variance', range: '±2%',
       contribution: 0, icon: Sparkles,
@@ -591,7 +548,7 @@ const HUDDashboard = () => {
       isActive: false,
     });
 
-    // 8. Championship Pressure (±2%, finals only)
+    // 7. Championship Pressure (±2%, finals only)
     const champContrib = currentDay >= 47 ? (morale.overall - 0.80) * 0.10 : 0;
     factors.push({
       id: 'championship', label: 'Championship Pressure', range: '±2%',
@@ -600,7 +557,7 @@ const HUDDashboard = () => {
       isActive: currentDay >= 47,
     });
 
-    // 9. Late Season Fatigue (-5% max)
+    // 8. Late Season Fatigue (-5% max)
     const fatigueContrib = currentDay > 35 ? -0.05 * ((currentDay - 35) / 14) : 0;
     factors.push({
       id: 'fatigue', label: 'Late Season Fatigue', range: '-5% max',
@@ -623,13 +580,6 @@ const HUDDashboard = () => {
 
   const alerts = useMemo(() => {
     const list = [];
-    const vacancies = 8 - assignedStaff.length;
-
-    if (vacancies >= 4) {
-      list.push({ type: 'danger', msg: `${vacancies} staff positions vacant! Major scoring penalty.` });
-    } else if (vacancies > 0) {
-      list.push({ type: 'warning', msg: `${vacancies} staff position${vacancies > 1 ? 's' : ''} vacant.` });
-    }
 
     const lowEquipment = Object.entries(equipment)
       .filter(([k, v]) => !k.includes('Max') && v < 0.70)
@@ -651,7 +601,7 @@ const HUDDashboard = () => {
     }
 
     return list;
-  }, [assignedStaff.length, equipment, showDifficulty, morale.avg]);
+  }, [equipment, showDifficulty, morale.avg]);
 
   // ==========================================================================
   // HANDLERS
@@ -704,14 +654,13 @@ const HUDDashboard = () => {
     if (!opsStatus) return false;
     const sectMap = { music: 'music', visual: 'visual', guard: 'guard', percussion: 'percussion' };
     if (sectMap[taskId]) return opsStatus.sectionalRehearsals?.[taskId]?.available;
-    const opMap = { login: 'loginBonus', staff: 'staffCheckin', wellness: 'memberWellness', equipment: 'equipmentInspection', review: 'showReview' };
+    const opMap = { login: 'loginBonus', wellness: 'memberWellness', equipment: 'equipmentInspection', review: 'showReview' };
     return opsStatus[opMap[taskId]]?.available;
   };
 
   const handleTaskClick = (taskId) => {
     const handlers = {
       login: () => claimDailyLogin(),
-      staff: () => staffCheckin({ corpsClass: activeCorpsClass }),
       wellness: () => memberWellnessCheck({ corpsClass: activeCorpsClass }),
       equipment: () => equipmentInspection({ corpsClass: activeCorpsClass }),
       review: () => showReview({ corpsClass: activeCorpsClass }),
@@ -960,37 +909,6 @@ const HUDDashboard = () => {
       {/* FOOTER */}
       <LeagueTicker currentDay={currentDay} />
 
-      {/* STAFF PANEL */}
-      <AnimatePresence>
-        {showStaffPanel && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowStaffPanel(false)} className="fixed inset-0 bg-black/80 backdrop-blur-md z-40" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto">
-              <div className="sticky top-0 bg-charcoal-950/95 border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-gold-400 uppercase">Staff Roster</h2>
-                <button onClick={() => setShowStaffPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream-muted hover:text-red-400">
-                  <X className="w-6 h-6" /></button>
-              </div>
-              <div className="p-4">
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-cream-muted/40" />
-                  <p className="text-sm text-cream-muted/60 mb-4">Manage your staff roster from the Staff Market page.</p>
-                  <Link
-                    to="/staff"
-                    className="inline-block px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
-                    onClick={() => setShowStaffPanel(false)}
-                  >
-                    Go to Staff Market
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

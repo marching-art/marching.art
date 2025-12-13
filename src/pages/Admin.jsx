@@ -11,7 +11,7 @@ import { doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/fi
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { StaffManagement, ScoresSpreadsheet } from '../components/Admin';
+import { ScoresSpreadsheet } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 const Admin = () => {
@@ -23,7 +23,6 @@ const Admin = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeCorps: 0,
-    totalStaff: 0,
     activeSeasons: 0
   });
 
@@ -52,12 +51,10 @@ const Admin = () => {
 
       // Load stats
       const usersSnapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
-      const staffSnapshot = await getDocs(collection(db, 'staff_database'));
 
       setStats({
         totalUsers: usersSnapshot.size,
         activeCorps: 0, // Calculate from user profiles
-        totalStaff: staffSnapshot.size,
         activeSeasons: 1
       });
     } catch (error) {
@@ -126,7 +123,7 @@ const Admin = () => {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           icon={Users}
           label="Total Users"
@@ -138,12 +135,6 @@ const Admin = () => {
           label="Active Corps"
           value={stats.activeCorps}
           color="green"
-        />
-        <StatCard
-          icon={Award}
-          label="Staff Members"
-          value={stats.totalStaff}
-          color="purple"
         />
         <StatCard
           icon={Calendar}
@@ -159,7 +150,6 @@ const Admin = () => {
           { id: 'overview', label: 'Overview', icon: Database },
           { id: 'season', label: 'Season Management', icon: Calendar },
           { id: 'scores', label: 'Scores Reference', icon: Table },
-          { id: 'staff', label: 'Staff Database', icon: Award },
           { id: 'users', label: 'User Management', icon: Users },
           { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
         ].map((tab) => (
@@ -188,7 +178,6 @@ const Admin = () => {
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
         {activeTab === 'season' && <SeasonManagementTab seasonData={seasonData} callAdminFunction={callAdminFunction} />}
         {activeTab === 'scores' && <ScoresSpreadsheet />}
-        {activeTab === 'staff' && <StaffManagement />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
       </motion.div>
@@ -343,7 +332,6 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
   );
 };
 
-// Note: StaffManagement component now imported from components/Admin
 
 // User Management Tab
 const UserManagementTab = () => {

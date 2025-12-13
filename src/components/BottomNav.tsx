@@ -11,7 +11,6 @@ import {
   Calendar,
   Trophy,
   Users,
-  ShoppingCart,
   Crown,
   User,
   Settings,
@@ -38,13 +37,12 @@ interface NavItem {
 const primaryNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Home', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
-  { path: '/staff', label: 'Market', icon: ShoppingCart },
   { path: '/scores', label: 'Scores', icon: Trophy },
   { path: '/leagues', label: 'Leagues', icon: Users },
+  { path: '/battlepass', label: 'Pass', icon: Crown },
 ];
 
 const moreMenuItems: NavItem[] = [
-  { path: '/battlepass', label: 'Season Pass', icon: Crown },
   { path: '/profile', label: 'Profile', icon: User },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];

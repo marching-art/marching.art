@@ -8,7 +8,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, ChevronRight, Sparkles,
-  Star, Shield, ShoppingCart, Crown, LucideIcon
+  Star, Shield, Crown, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, adminHelpers } from '../firebase';
@@ -102,13 +102,6 @@ const Navigation: React.FC = () => {
     {
       section: 'Manage',
       items: [
-        {
-          path: '/staff',
-          label: 'Staff Market',
-          icon: ShoppingCart,
-          badge: null,
-          premium: false,
-        },
         {
           path: '/battlepass',
           label: 'Battle Pass',

@@ -26,19 +26,6 @@ export const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
 // ========================================
 
 export const unlockClassWithCorpsCoin = httpsCallable(functions, 'unlockClassWithCorpsCoin');
-export const purchaseStaff = httpsCallable(functions, 'purchaseStaff');
-export const assignStaff = httpsCallable(functions, 'assignStaff');
-export const getStaffMarketplace = httpsCallable(functions, 'getStaffMarketplace');
-
-// ========================================
-// STAFF AUCTIONS
-// ========================================
-
-export const listStaffForAuction = httpsCallable(functions, 'listStaffForAuction');
-export const bidOnStaff = httpsCallable(functions, 'bidOnStaff');
-export const completeAuction = httpsCallable(functions, 'completeAuction');
-export const getActiveAuctions = httpsCallable(functions, 'getActiveAuctions');
-export const cancelAuction = httpsCallable(functions, 'cancelAuction');
 
 // ========================================
 // EXECUTION SYSTEM
@@ -73,7 +60,6 @@ export const unretireCorps = httpsCallable(functions, 'unretireCorps');
 // ========================================
 
 export const claimDailyLogin = httpsCallable(functions, 'claimDailyLogin');
-export const staffCheckin = httpsCallable(functions, 'staffCheckin');
 export const memberWellnessCheck = httpsCallable(functions, 'memberWellnessCheck');
 export const equipmentInspection = httpsCallable(functions, 'equipmentInspection');
 export const sectionalRehearsal = httpsCallable(functions, 'sectionalRehearsal');
@@ -95,8 +81,6 @@ export const joinLeague = httpsCallable(functions, 'joinLeague');
 export const leaveLeague = httpsCallable(functions, 'leaveLeague');
 export const generateMatchups = httpsCallable(functions, 'generateMatchups');
 export const updateMatchupResults = httpsCallable(functions, 'updateMatchupResults');
-export const proposeStaffTrade = httpsCallable(functions, 'proposeStaffTrade');
-export const respondToStaffTrade = httpsCallable(functions, 'respondToStaffTrade');
 export const postLeagueMessage = httpsCallable(functions, 'postLeagueMessage');
 export const updateProfile = httpsCallable(functions, 'updateProfile');
 export const getPublicProfile = httpsCallable(functions, 'getPublicProfile');
