@@ -426,6 +426,84 @@ export interface MatchupNotification {
 }
 
 // =============================================================================
+// LEAGUE NOTIFICATION TYPES
+// =============================================================================
+
+export type LeagueNotificationType =
+  | 'matchup_result'      // Matchup results posted
+  | 'standings_change'    // Someone passed you in standings
+  | 'new_message'         // New message in league chat
+  | 'trade_proposal'      // Trade proposal received
+  | 'trade_response'      // Trade accepted/rejected
+  | 'member_joined'       // New member joined league
+  | 'rivalry_matchup';    // Matchup with a rival
+
+export interface LeagueNotification {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  userId: string;
+  type: LeagueNotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: Timestamp;
+
+  // Optional contextual data
+  metadata?: {
+    // For matchup results
+    matchupId?: string;
+    week?: number;
+    opponentId?: string;
+    opponentName?: string;
+    userScore?: number;
+    opponentScore?: number;
+    won?: boolean;
+
+    // For standings changes
+    previousRank?: number;
+    newRank?: number;
+    passedBy?: string;
+
+    // For trades
+    tradeId?: string;
+    tradingWith?: string;
+
+    // For rivalry
+    isRival?: boolean;
+    rivalryRecord?: string;
+  };
+}
+
+export interface LeagueActivity {
+  id: string;
+  leagueId: string;
+  type: LeagueNotificationType | 'show_result' | 'week_start' | 'week_end';
+  timestamp: Timestamp;
+  actorId?: string;
+  actorName?: string;
+  title: string;
+  description: string;
+
+  // Contextual data
+  metadata?: Record<string, unknown>;
+}
+
+export interface RivalryData {
+  rivalId: string;
+  rivalName: string;
+  matchupCount: number;
+  userWins: number;
+  rivalWins: number;
+  ties: number;
+  lastMatchupWeek?: number;
+  streak?: {
+    count: number;
+    type: 'W' | 'L';
+  };
+}
+
+// =============================================================================
 // LEADERBOARD TYPES
 // =============================================================================
 

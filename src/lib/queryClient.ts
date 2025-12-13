@@ -50,6 +50,11 @@ export const queryKeys = {
   leagueStandings: (leagueId: string) => ['leagueStandings', leagueId] as const,
   leagueChat: (leagueId: string) => ['leagueChat', leagueId] as const,
   leagueTrades: (leagueId: string) => ['leagueTrades', leagueId] as const,
+  leagueActivity: (leagueId: string) => ['leagueActivity', leagueId] as const,
+
+  // Notification queries
+  leagueNotifications: (uid: string) => ['leagueNotifications', uid] as const,
+  unreadNotificationCount: (uid: string) => ['unreadNotificationCount', uid] as const,
 
   // Staff queries
   staffMarketplace: () => ['staffMarketplace'] as const,

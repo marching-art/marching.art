@@ -8,6 +8,8 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Trophy, Users, User, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../App';
+import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 
 // =============================================================================
 // TYPES
@@ -17,6 +19,7 @@ interface NavItem {
   path: string;
   label: string;
   icon: LucideIcon;
+  badgeKey?: 'leagues'; // Used to show notification badges
 }
 
 // =============================================================================
@@ -27,7 +30,7 @@ const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Home', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/leagues', label: 'Leagues', icon: Users },
+  { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
@@ -37,6 +40,10 @@ const navItems: NavItem[] = [
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Get notification badge count for leagues
+  const leagueBadge = useLeagueNotificationBadge(user?.uid);
 
   const isActive = (path: string) => {
     if (path === '/profile') {
@@ -62,6 +69,7 @@ const BottomNav: React.FC = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
+            const badgeCount = item.badgeKey === 'leagues' ? leagueBadge.count : 0;
 
             return (
               <Link
@@ -80,7 +88,7 @@ const BottomNav: React.FC = () => {
                   />
                 )}
 
-                {/* Icon */}
+                {/* Icon with badge */}
                 <div className={`relative z-10 p-1.5 rounded-lg transition-all duration-300 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
                     className={`w-5 h-5 transition-all duration-300 ${
@@ -88,6 +96,12 @@ const BottomNav: React.FC = () => {
                     }`}
                     aria-hidden="true"
                   />
+                  {/* Notification badge */}
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
                 </div>
 
                 {/* Label */}
