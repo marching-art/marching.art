@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Crown, ChevronDown, MapPin, Award,
-  ArrowLeftRight, MessageSquare, Settings
+  ArrowLeftRight, MessageSquare, Settings, Swords
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -12,6 +12,7 @@ import { db } from '../../firebase';
 import {
   CircuitStandingsTab,
   TourStopsTab,
+  MatchupsTab,
   AwardsTab,
   TradesTab,
   ChatTab,
@@ -63,7 +64,8 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   }, [league.id]);
 
   const tabs = [
-    { id: 'standings', label: 'Circuit Standings', icon: Trophy },
+    { id: 'standings', label: 'Standings', icon: Trophy },
+    { id: 'matchups', label: 'Matchups', icon: Swords },
     { id: 'tour', label: 'Tour Stops', icon: MapPin },
     { id: 'awards', label: 'Awards', icon: Award },
     { id: 'trades', label: 'Trades', icon: ArrowLeftRight },
@@ -170,6 +172,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
       <AnimatePresence mode="wait">
         {activeTab === 'standings' && (
           <CircuitStandingsTab key="standings" league={league} />
+        )}
+        {activeTab === 'matchups' && (
+          <MatchupsTab key="matchups" league={league} userProfile={userProfile} />
         )}
         {activeTab === 'tour' && (
           <TourStopsTab key="tour" league={league} />
