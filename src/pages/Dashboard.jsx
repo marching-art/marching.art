@@ -561,15 +561,27 @@ const Dashboard = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <Users className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                  <p className="text-sm text-cream/50 mb-4">Not in a league yet</p>
-                  <Link
-                    to="/leagues"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg font-display font-bold uppercase text-sm hover:bg-blue-400 transition-colors"
-                  >
-                    Join a League
-                  </Link>
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h4 className="font-display font-bold text-cream mb-1">Compete with Friends</h4>
+                  <p className="text-xs text-cream/50 mb-4">Create or join a league to start competing</p>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      to="/leagues?action=create"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-xs hover:bg-gold-400 transition-colors shadow-[0_0_10px_rgba(234,179,8,0.2)]"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Create League
+                    </Link>
+                    <Link
+                      to="/leagues"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors"
+                    >
+                      Or browse public leagues <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 </div>
               )}
             </motion.div>
