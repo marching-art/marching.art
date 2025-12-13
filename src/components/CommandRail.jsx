@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home,
   Calendar,
-  ShoppingCart,
   Trophy,
   Users,
   Crown,
@@ -63,13 +62,6 @@ const primaryNavItems = [
     shortLabel: 'Schedule',
     icon: Calendar,
     description: 'Manage shows & events'
-  },
-  {
-    path: '/staff',
-    label: 'Staff Market',
-    shortLabel: 'Market',
-    icon: ShoppingCart,
-    description: 'Recruit & trade staff'
   },
   {
     path: '/scores',

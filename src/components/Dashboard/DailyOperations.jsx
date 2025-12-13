@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Target, Users, Wrench, Heart, Music, Eye, Flag,
+  Target, Wrench, Heart, Music, Eye, Flag,
   Drum, Zap, ChevronRight, Play, Square,
   Coffee, ChevronDown, ChevronUp, Check,
   TrendingUp, AlertTriangle, CheckCircle, Lightbulb, Activity
@@ -10,11 +10,9 @@ import {
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../App';
-import { useStaffMarketplace } from '../../hooks/useStaffMarketplace';
 import BrandLogo from '../BrandLogo';
 import {
   claimDailyLogin,
-  staffCheckin,
   memberWellnessCheck,
   equipmentInspection,
   sectionalRehearsal,
@@ -37,7 +35,6 @@ const DailyOperations = ({
   onActivityComplete
 }) => {
   const { user } = useAuth();
-  const { ownedStaff } = useStaffMarketplace(user?.uid);
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -47,13 +44,8 @@ const DailyOperations = ({
   const [showRehearsalAnimation, setShowRehearsalAnimation] = useState(false);
   const [rehearsalResults, setRehearsalResults] = useState(null);
 
-  // Get staff assigned to this corps from marketplace
-  const assignedStaff = ownedStaff.filter(
-    s => s.assignedTo?.corpsClass === corpsClass
-  );
-
-  // Calculate multiplier using correct staff count from marketplace
-  const calculateMultiplierWithStaff = () => {
+  // Calculate multiplier using execution state
+  const calculateMultiplierValue = () => {
     if (!executionState) return 1.0;
 
     const { readiness = 0.75, morale = 0.80, equipment = {} } = executionState;
@@ -66,17 +58,14 @@ const DailyOperations = ({
       ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
       : 0.90;
 
-    // Staff bonus from marketplace assigned staff (max 5%)
-    const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
-
     // Base calculation: (readiness * 40%) + (morale * 30%) + (equipment * 30%)
     const baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (avgEquipment * 0.3);
 
     // Clamp to 0.70-1.10 range
-    return Math.max(0.70, Math.min(1.10, baseMultiplier + staffBonus));
+    return Math.max(0.70, Math.min(1.10, baseMultiplier));
   };
 
-  const multiplier = calculateMultiplierWithStaff();
+  const multiplier = calculateMultiplierValue();
 
   // Fetch daily ops status
   const fetchStatus = useCallback(async () => {
@@ -101,7 +90,7 @@ const DailyOperations = ({
 
   // Get execution metrics
   const getMetrics = () => {
-    if (!executionState) return { readiness: 0.75, morale: 0.80, equipment: 0.85, staffCount: 0 };
+    if (!executionState) return { readiness: 0.75, morale: 0.80, equipment: 0.85 };
 
     const readiness = typeof executionState.readiness === 'number' ? executionState.readiness : 0.75;
     const morale = typeof executionState.morale === 'number' ? executionState.morale : 0.80;
@@ -115,37 +104,10 @@ const DailyOperations = ({
       ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
       : 0.85;
 
-    // Get staff count from marketplace assigned staff
-    const staffCount = assignedStaff.length;
-
-    return { readiness, morale, equipment: avgEquipment, staffCount };
+    return { readiness, morale, equipment: avgEquipment };
   };
 
   const metrics = getMetrics();
-
-  // Calculate actual multiplier breakdown that matches useExecution.calculateMultiplier
-  const getMultiplierBreakdownData = () => {
-    // Actual formula: baseMultiplier = (readiness * 0.4) + (morale * 0.3) + (equipment * 0.3) + staffBonus
-    // Then clamped to 0.70 - 1.10
-    const readinessContrib = metrics.readiness * 0.4;
-    const moraleContrib = metrics.morale * 0.3;
-    const equipmentContrib = metrics.equipment * 0.3;
-    const staffBonus = Math.min(metrics.staffCount * 0.01, 0.05);
-
-    // Show deviation from perfect (1.0 for each factor)
-    const readinessDelta = (metrics.readiness - 1.0) * 0.4;
-    const moraleDelta = (metrics.morale - 1.0) * 0.3;
-    const equipmentDelta = (metrics.equipment - 1.0) * 0.3;
-
-    return {
-      readiness: { value: readinessContrib, delta: readinessDelta, weight: 40, current: metrics.readiness },
-      morale: { value: moraleContrib, delta: moraleDelta, weight: 30, current: metrics.morale },
-      equipment: { value: equipmentContrib, delta: equipmentDelta, weight: 30, current: metrics.equipment },
-      staff: { value: staffBonus, count: metrics.staffCount, maxBonus: 0.05 }
-    };
-  };
-
-  const breakdownData = getMultiplierBreakdownData();
 
   // Handle main rehearsal
   const handleRehearsal = async () => {
@@ -180,22 +142,6 @@ const DailyOperations = ({
       }
     } catch (error) {
       toast.error(error.message || 'Failed to claim login bonus');
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  const handleStaffCheckin = async () => {
-    setProcessing('staff');
-    try {
-      const result = await staffCheckin({ corpsClass });
-      if (result.data.success) {
-        toast.success(result.data.message);
-        fetchStatus();
-        if (onActivityComplete) onActivityComplete('staff', result.data);
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to complete staff check-in');
     } finally {
       setProcessing(null);
     }
@@ -288,13 +234,12 @@ const DailyOperations = ({
 
   // Calculate completion
   const getCompletionStats = () => {
-    if (!opsStatus) return { completed: 0, total: 6 };
+    if (!opsStatus) return { completed: 0, total: 5 };
 
     let completed = 0;
-    let total = 6; // login, staff, wellness, equipment, review, rehearsal
+    let total = 5; // login, wellness, equipment, review, rehearsal
 
     if (!opsStatus.loginBonus?.available) completed++;
-    if (!opsStatus.staffCheckin?.available) completed++;
     if (!opsStatus.memberWellness?.available) completed++;
     if (!opsStatus.equipmentInspection?.available) completed++;
     if (!opsStatus.showReview?.available) completed++;
@@ -386,7 +331,6 @@ const DailyOperations = ({
           {(() => {
             const activities = [
               { id: 'login', icon: Coffee, title: 'Login Bonus', reward: '+10 XP, +5 CC', available: opsStatus?.loginBonus?.available, loading: processing === 'login', onClick: handleClaimLogin },
-              { id: 'staff', icon: Users, title: 'Staff Check-in', reward: '+15 XP', available: opsStatus?.staffCheckin?.available, loading: processing === 'staff', onClick: handleStaffCheckin },
               { id: 'wellness', icon: Heart, title: 'Member Wellness', reward: '+15 XP, +3% morale', available: opsStatus?.memberWellness?.available, loading: processing === 'wellness', onClick: handleWellnessCheck },
               { id: 'equipment', icon: Wrench, title: 'Equipment Check', reward: '+10 XP, +5 CC', available: opsStatus?.equipmentInspection?.available, loading: processing === 'equipment', onClick: handleEquipmentInspection },
               { id: 'review', icon: Eye, title: 'Show Review', reward: '+20 XP', available: opsStatus?.showReview?.available, loading: processing === 'review', onClick: handleShowReview },

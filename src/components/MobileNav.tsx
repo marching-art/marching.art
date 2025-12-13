@@ -9,7 +9,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
   Users, Award, HelpCircle, X, Menu, Bell, Star,
-  ShoppingCart, Crown, LucideIcon
+  Crown, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -57,7 +57,6 @@ const navSections: NavSection[] = [
   {
     title: 'Manage',
     items: [
-      { path: '/staff', label: 'Staff Market', icon: ShoppingCart },
       { path: '/battlepass', label: 'Battle Pass', icon: Crown },
     ],
   },

@@ -31,12 +31,10 @@ import {
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
-import { useStaffMarketplace } from '../hooks/useStaffMarketplace';
 import { useScoresData } from '../hooks/useScoresData';
 import {
   retireCorps,
   claimDailyLogin,
-  staffCheckin,
   memberWellnessCheck,
   equipmentInspection,
   showReview,
@@ -349,7 +347,6 @@ const columnVariants = {
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { ownedStaff } = useStaffMarketplace(user?.uid);
 
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
@@ -364,7 +361,6 @@ const Dashboard = () => {
   const [showMorningReport, setShowMorningReport] = useState(false);
 
   // Panel states
-  const [showStaffPanel, setShowStaffPanel] = useState(false);
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
   // Daily operations state
@@ -403,15 +399,6 @@ const Dashboard = () => {
     completeDailyChallenge,
     refreshProfile
   } = dashboardData;
-
-  // Get staff assigned to active corps
-  const assignedStaff = useMemo(() =>
-    ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
-    [ownedStaff, activeCorpsClass]
-  );
-
-  // Track assigned staff for retirement flow
-  const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
 
   // ============================================================================
   // DAILY OPERATIONS HANDLERS
@@ -477,7 +464,6 @@ const Dashboard = () => {
     if (!opsStatus) return false;
     const opMap = {
       login: 'loginBonus',
-      staff: 'staffCheckin',
       wellness: 'memberWellness',
       equipment: 'equipmentInspection',
       review: 'showReview'
@@ -491,10 +477,9 @@ const Dashboard = () => {
 
   // Count completed tasks
   const getCompletedTasksCount = () => {
-    if (!opsStatus) return { completed: 0, total: 9 };
+    if (!opsStatus) return { completed: 0, total: 8 };
     let completed = 0;
     if (!opsStatus.loginBonus?.available) completed++;
-    if (!opsStatus.staffCheckin?.available) completed++;
     if (!opsStatus.memberWellness?.available) completed++;
     if (!opsStatus.equipmentInspection?.available) completed++;
     if (!opsStatus.showReview?.available) completed++;
@@ -502,7 +487,7 @@ const Dashboard = () => {
     if (!opsStatus.sectionalRehearsals?.visual?.available) completed++;
     if (!opsStatus.sectionalRehearsals?.guard?.available) completed++;
     if (!opsStatus.sectionalRehearsals?.percussion?.available) completed++;
-    return { completed, total: 9 };
+    return { completed, total: 8 };
   };
 
   const taskStats = getCompletedTasksCount();
@@ -569,32 +554,19 @@ const Dashboard = () => {
     }
   };
 
-  const handleOpenRetireModal = async () => {
-    try {
-      const result = await retireCorps({ corpsClass: activeCorpsClass, checkOnly: true });
-      setAssignedStaffForRetire(result.data.assignedStaff || []);
-      setShowRetireConfirm(true);
-    } catch (error) {
-      console.error('Error checking assigned staff:', error);
-      setAssignedStaffForRetire([]);
-      setShowRetireConfirm(true);
-    }
+  const handleOpenRetireModal = () => {
+    setShowRetireConfirm(true);
   };
 
-  const handleRetireCorps = async (staffActions = {}) => {
+  const handleRetireCorps = async () => {
     setRetiring(true);
     try {
       const result = await retireCorps({
-        corpsClass: activeCorpsClass,
-        staffActions: Object.keys(staffActions).length > 0 ? staffActions : undefined
+        corpsClass: activeCorpsClass
       });
       if (result.data.success) {
         toast.success(result.data.message);
         setShowRetireConfirm(false);
-        setAssignedStaffForRetire([]);
-      } else if (result.data.needsStaffHandling) {
-        setAssignedStaffForRetire(result.data.assignedStaff || []);
-        toast.error('Please specify what to do with assigned staff.');
       }
     } catch (error) {
       console.error('Error retiring corps:', error);
@@ -824,7 +796,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Quick Stats Row */}
-                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-white/10">
                   <div className="text-center">
                     <div className="text-xl font-data font-bold text-purple-400">
                       {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
@@ -839,10 +811,6 @@ const Dashboard = () => {
                       <div className="text-[10px] text-cream/40 uppercase">Season Score</div>
                     </div>
                   )}
-                  <div className="text-center">
-                    <div className="text-xl font-data font-bold text-green-400">{assignedStaff.length}/8</div>
-                    <div className="text-[10px] text-cream/40 uppercase">Staff</div>
-                  </div>
                 </div>
               </div>
 
@@ -852,14 +820,6 @@ const Dashboard = () => {
                   <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {/* Staff */}
-                  <ActionButton
-                    icon={Users}
-                    label="Staff"
-                    subtitle={`${assignedStaff.length}/8 assigned`}
-                    onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
-                    color="green"
-                  />
                   {/* Show Concept / Synergy */}
                   <ActionButton
                     icon={Sparkles}
@@ -868,6 +828,15 @@ const Dashboard = () => {
                     onClick={() => setShowSynergyPanel(true)}
                     color="purple"
                   />
+                  {/* Schedule */}
+                  <Link to="/schedule">
+                    <ActionButton
+                      icon={Calendar}
+                      label="Schedule"
+                      subtitle="View shows"
+                      color="blue"
+                    />
+                  </Link>
                 </div>
               </div>
 
@@ -891,13 +860,6 @@ const Dashboard = () => {
                         completed={!getTaskAvailability('login')}
                         loading={opsProcessing === 'login'}
                         onClick={() => handleDailyTask('login', claimDailyLogin)}
-                      />
-                      <TaskCheckbox
-                        title="Staff Check-in"
-                        reward="+15 XP"
-                        completed={!getTaskAvailability('staff')}
-                        loading={opsProcessing === 'staff'}
-                        onClick={() => handleDailyTask('staff', () => staffCheckin({ corpsClass: activeCorpsClass }))}
                       />
                       <TaskCheckbox
                         title="Member Wellness"
@@ -1024,44 +986,12 @@ const Dashboard = () => {
 
         {/* ================================================================
             COLUMN C: LOGISTICS (The "Manage" Zone)
-            Staff and Navigation
+            Season Progress and Navigation
             ================================================================ */}
         <motion.aside
           variants={columnVariants}
           className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
         >
-          {/* Staff Overview */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Staff Roster</span>
-              <Users className="w-4 h-4 text-green-400" />
-            </div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-4xl font-data font-bold text-green-400">{assignedStaff.length}/8</span>
-              <span className={`text-xs font-display font-bold uppercase ${
-                assignedStaff.length >= 6 ? 'text-green-400' : assignedStaff.length >= 4 ? 'text-yellow-400' : 'text-orange-400'
-              }`}>
-                {assignedStaff.length >= 6 ? 'Full Roster' : assignedStaff.length >= 4 ? 'Adequate' : 'Understaffed'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 mb-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`flex-1 h-2.5 rounded-sm transition-colors ${
-                    i < assignedStaff.length ? 'bg-green-500' : 'bg-white/10'
-                  }`}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => setShowStaffPanel(true)}
-              className="w-full text-xs font-display font-bold text-gold-400 uppercase tracking-wide py-2.5 border border-gold-500/30 rounded hover:bg-gold-500/10 transition-colors"
-            >
-              Manage Staff →
-            </button>
-          </div>
-
           {/* Season Progress */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
@@ -1105,13 +1035,6 @@ const Dashboard = () => {
                 <Gift className="w-4 h-4 text-blue-400" />
                 <span className="text-sm text-cream group-hover:text-blue-400">Battle Pass</span>
               </Link>
-              <Link
-                to="/staff"
-                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-green-500/30 hover:bg-green-500/10 transition-colors group"
-              >
-                <Users className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-cream group-hover:text-green-400">Staff Market</span>
-              </Link>
             </div>
           </div>
         </motion.aside>
@@ -1126,65 +1049,6 @@ const Dashboard = () => {
       {/* ================================================================
           SLIDE-OUT PANELS
           ================================================================ */}
-
-      {/* Staff Panel */}
-      <AnimatePresence>
-        {showStaffPanel && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowStaffPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-charcoal-950/95 backdrop-blur-xl border-b border-gold-500/30 p-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-display font-black text-gold-400 uppercase tracking-tight">Staff Roster</h2>
-                <button onClick={() => setShowStaffPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream/60 hover:text-red-400 transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-4">
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-cream/40" />
-                  <p className="text-sm text-cream/60 mb-4">Manage your staff roster from the Staff Market page.</p>
-                  <Link
-                    to="/staff"
-                    className="inline-block px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
-                    onClick={() => setShowStaffPanel(false)}
-                  >
-                    Go to Staff Market
-                  </Link>
-                </div>
-                {assignedStaff.length > 0 && (
-                  <div className="mt-6 space-y-2">
-                    <div className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider mb-2">Currently Assigned</div>
-                    {assignedStaff.map(staff => (
-                      <div key={staff.id} className="flex items-center gap-3 p-3 bg-black/30 rounded border border-white/5">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-lg">
-                          {staff.caption?.charAt(0) || '?'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-cream truncate">{staff.name}</div>
-                          <div className="text-xs text-cream/50">{staff.caption || 'Unassigned'}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
 
       {/* Synergy Panel */}
       <AnimatePresence>
@@ -1282,16 +1146,11 @@ const Dashboard = () => {
 
         {showRetireConfirm && activeCorps && (
           <RetireConfirmModal
-            onClose={() => {
-              setShowRetireConfirm(false);
-              setAssignedStaffForRetire([]);
-            }}
+            onClose={() => setShowRetireConfirm(false)}
             onConfirm={handleRetireCorps}
             corpsName={activeCorps.corpsName || activeCorps.name}
             corpsClass={activeCorpsClass}
             retiring={retiring}
-            assignedStaff={assignedStaffForRetire}
-            otherCorps={corps || {}}
             inLeague={false}
           />
         )}
@@ -1329,10 +1188,6 @@ const Dashboard = () => {
         engagementData={engagementData}
         dailyChallenges={dailyChallenges}
         recentScores={recentScores}
-        onNavigateToStaff={() => {
-          setShowMorningReport(false);
-          setShowStaffPanel(true);
-        }}
       />
     </div>
   );

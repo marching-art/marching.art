@@ -276,16 +276,6 @@ export const useUserStore = create((set, get) => ({
           reward: '30 XP',
           icon: 'wrench',
           completed: true
-        },
-        staff_meeting: {
-          id: 'staff_meeting',
-          title: 'Staff Meeting',
-          description: 'Visit the staff market',
-          progress: 1,
-          target: 1,
-          reward: '25 XP',
-          icon: 'users',
-          completed: true
         }
       };
 

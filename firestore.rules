@@ -186,18 +186,4 @@ match /seasons/{seasonId} {
   allow write: if isAdmin();
 }
 
-// --- STAFF MANAGEMENT ---
-// Staff database for marketplace
-match /staff_database/{staffId} {
-  allow read: if true; // Public marketplace
-  allow write: if isAdmin(); // Admin only
-}
-
-// Staff marketplace listings (user-to-user sales)
-match /staff_marketplace/{listingId} {
-  allow read: if true;
-  allow create: if isAuthenticated();
-  allow update, delete: if isAuthenticated() &&
-    (request.auth.uid == resource.data.sellerId || isAdmin());
-}
 }}

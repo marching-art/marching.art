@@ -25,7 +25,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const HowToPlay = lazy(() => import('./pages/HowToPlay'));
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
 const Admin = lazy(() => import('./pages/Admin'));
-const Staff = lazy(() => import('./pages/Staff'));
 const BattlePass = lazy(() => import('./pages/BattlePass'));
 const Leagues = lazy(() => import('./pages/Leagues'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
@@ -250,14 +249,6 @@ function App() {
             <ProtectedRoute>
               <GameShell>
                 <Page name="Admin"><Admin /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/staff" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="Staff"><Staff /></Page>
               </GameShell>
             </ProtectedRoute>
           } />
