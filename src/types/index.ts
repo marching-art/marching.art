@@ -338,6 +338,94 @@ export interface LeagueStanding {
 }
 
 // =============================================================================
+// MATCHUP TYPES
+// =============================================================================
+
+export type MatchupStatus = 'scheduled' | 'live' | 'completed';
+
+export interface Matchup {
+  id: string;
+  leagueId: string;
+  week: number;
+  seasonId: string;
+
+  // Participants
+  homeUserId: string;
+  awayUserId: string;
+
+  // Status
+  status: MatchupStatus;
+  startTime?: Timestamp;
+  endTime?: Timestamp;
+
+  // Scores (updated during/after week)
+  homeScore: number;
+  awayScore: number;
+
+  // Caption breakdowns
+  homeCaptions?: CaptionScores;
+  awayCaptions?: CaptionScores;
+
+  // Result (after completion)
+  winnerId?: string;
+  margin?: number;
+
+  // Metadata
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface MatchupResult {
+  matchupId: string;
+  week: number;
+
+  // User info
+  homeUser: {
+    uid: string;
+    displayName: string;
+    corpsName: string;
+  };
+  awayUser: {
+    uid: string;
+    displayName: string;
+    corpsName: string;
+  };
+
+  // Final scores
+  homeScore: number;
+  awayScore: number;
+
+  // Caption breakdown
+  homeCaptions: CaptionScores;
+  awayCaptions: CaptionScores;
+
+  // Winner
+  winnerId: string;
+  winnerName: string;
+  margin: number;
+}
+
+export interface HeadToHeadRecord {
+  user1Id: string;
+  user2Id: string;
+  user1Wins: number;
+  user2Wins: number;
+  ties: number;
+  totalMatchups: number;
+  lastMatchup?: MatchupResult;
+}
+
+export interface MatchupNotification {
+  id: string;
+  matchupId: string;
+  userId: string;
+  type: 'score_update' | 'matchup_start' | 'matchup_end' | 'opponent_lead';
+  message: string;
+  read: boolean;
+  createdAt: Timestamp;
+}
+
+// =============================================================================
 // LEADERBOARD TYPES
 // =============================================================================
 
