@@ -5,7 +5,6 @@ const admin = require("firebase-admin");
 const { shuffleArray } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { awardCorpsCoin } = require("../callable/economy");
-const { calculateExecutionMultiplier } = require("./executionMultiplier");
 
 
 async function fetchHistoricalData(dataDocId) {
@@ -298,19 +297,10 @@ async function processAndArchiveOffSeasonScoresLogic() {
             const [corpsName, sourceYear, points] = corps.lineup[caption].split("|");
             const baseCaptionScore = getRealisticCaptionScore(corpsName, sourceYear, caption, scoredDay, historicalData);
 
-            // Apply execution multiplier (0.70 - 1.10 based on player decisions)
-            const executionMultiplier = await calculateExecutionMultiplier(
-              uid,
-              corpsClass,
-              caption,
-              scoredDay,
-              show.eventName
-            );
-
             // Apply synergy bonus (0 - 1.0 based on show concept match)
             const synergyBonus = captionBonuses[caption] || 0;
             // Hard cap each caption at 20 points
-            const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
+            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
 
             if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
             else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
@@ -691,19 +681,10 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                     baseCaptionScore = await getLiveCaptionScore(selectedCorps, sourceYear, caption, scoredDay, historicalData);
                 }
 
-                // Apply execution multiplier (0.70 - 1.10 based on player decisions)
-                const executionMultiplier = await calculateExecutionMultiplier(
-                    uid,
-                    corpsClass,
-                    caption,
-                    scoredDay,
-                    attendedShow.eventName
-                );
-
                 // Apply synergy bonus (0 - 1.0 based on show concept match)
                 const synergyBonus = captionBonuses[caption] || 0;
                 // Hard cap each caption at 20 points
-                const captionScore = Math.min(20, (baseCaptionScore * executionMultiplier) + synergyBonus);
+                const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
 
                 if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
                 else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;

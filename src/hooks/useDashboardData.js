@@ -4,7 +4,6 @@ import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { getBattlePassProgress, retireCorps } from '../firebase/functions';
-import { useExecution } from './useExecution';
 import { useSeason, getSeasonProgress } from './useSeason';
 import { useUserStore, getGameDay } from '../store/userStore';
 import toast from 'react-hot-toast';
@@ -46,11 +45,9 @@ export const useDashboardData = () => {
   // Challenges
   const [dailyChallenges, setDailyChallenges] = useState([]);
   const [weeklyProgress, setWeeklyProgress] = useState({
-    rehearsalsCompleted: 0,
     scoreImprovement: 0,
     rankChange: 0,
-    challengesCompleted: 0,
-    equipmentMaintained: 0
+    challengesCompleted: 0
   });
 
   // Season setup
@@ -65,9 +62,6 @@ export const useDashboardData = () => {
   const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
   const { currentWeek, currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1, currentDay: 1 };
-
-  // Use execution hook
-  const executionHook = useExecution(user?.uid, activeCorpsClass);
 
   // Utility functions
   const formatSeasonName = (name) => {
@@ -361,33 +355,6 @@ export const useDashboardData = () => {
             }
           }
 
-          // Track rehearsal milestones
-          if (executionHook.executionState?.rehearsalsCompleted) {
-            const rehearsalMilestones = [5, 10, 25, 50, 100];
-            const currentRehearsals = executionHook.executionState.rehearsalsCompleted;
-            const trackedRehearsals = classMilestones.rehearsalMilestones || [];
-
-            for (const milestone of rehearsalMilestones) {
-              if (currentRehearsals >= milestone && !trackedRehearsals.includes(milestone)) {
-                updatedMilestones[classKey].rehearsalMilestones = [...trackedRehearsals, milestone];
-                hasNewMilestone = true;
-
-                const achievementId = `rehearsals_${milestone}_${classKey}`;
-                const existingAchievements = profile.achievements || [];
-                if (!existingAchievements.find(a => a.id === achievementId)) {
-                  newAchievements.push({
-                    id: achievementId,
-                    title: `${milestone} Rehearsals!`,
-                    description: `Completed ${milestone} rehearsals in ${getCorpsClassName(classKey)}`,
-                    icon: 'star',
-                    earnedAt: new Date().toISOString(),
-                    rarity: milestone >= 50 ? 'epic' : milestone >= 25 ? 'rare' : 'common'
-                  });
-                }
-              }
-            }
-          }
-
           if (hasNewMilestone) {
             const updateData = {
               milestones: updatedMilestones
@@ -413,7 +380,7 @@ export const useDashboardData = () => {
 
       trackMilestones();
     }
-  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore, executionHook.executionState?.rehearsalsCompleted]);
+  }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore]);
 
   // Generate and track daily challenges
   useEffect(() => {
@@ -429,23 +396,6 @@ export const useDashboardData = () => {
         }
 
         const challenges = [];
-        const lastRehearsalDate = executionHook.executionState?.lastRehearsalDate?.toDate?.();
-        const rehearsedToday = lastRehearsalDate &&
-          new Date(lastRehearsalDate.getTime()).toDateString() === new Date().toDateString() &&
-          new Date().getHours() >= 2;
-
-        if (executionHook.canRehearseToday && activeCorpsClass !== 'soundSport') {
-          challenges.push({
-            id: 'rehearse_today',
-            title: 'Daily Practice',
-            description: 'Complete a rehearsal with your corps',
-            progress: rehearsedToday ? 1 : 0,
-            target: 1,
-            reward: '50 XP',
-            icon: 'target',
-            completed: rehearsedToday
-          });
-        }
 
         challenges.push({
           id: 'check_leaderboard',
@@ -458,19 +408,6 @@ export const useDashboardData = () => {
           completed: false,
           action: () => window.location.href = '/leaderboard'
         });
-
-        if (executionHook.executionState?.equipment) {
-          challenges.push({
-            id: 'maintain_equipment',
-            title: 'Equipment Care',
-            description: 'Check your equipment status',
-            progress: 0,
-            target: 1,
-            reward: '30 XP',
-            icon: 'wrench',
-            completed: false
-          });
-        }
 
         challenges.push({
           id: 'staff_meeting',
@@ -511,7 +448,7 @@ export const useDashboardData = () => {
 
       generateChallenges();
     }
-  }, [user, profile, activeCorps, executionHook.canRehearseToday, executionHook.executionState?.lastRehearsalDate, executionHook.executionState?.equipment, saveDailyChallenges]);
+  }, [user, profile, activeCorps, activeCorpsClass, saveDailyChallenges]);
 
   // Sync challenges from store when updated
   useEffect(() => {
@@ -537,9 +474,6 @@ export const useDashboardData = () => {
         const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || {};
         const previousWeekData = weekData.previous || {};
 
-        const rehearsalsThisWeek = executionHook.executionState?.rehearsalsCompleted || 0;
-        const rehearsalsLastWeek = previousWeekData.rehearsalsCompleted || 0;
-
         const currentScore = activeCorps.totalSeasonScore || 0;
         const previousScore = previousWeekData.totalScore || 0;
         const scoreImprovement = currentScore - previousScore;
@@ -548,35 +482,18 @@ export const useDashboardData = () => {
         const previousRank = previousWeekData.rank || currentRank;
         const rankChange = previousRank - currentRank;
 
-        let equipmentMaintained = 0;
-        if (executionHook.executionState?.equipment) {
-          const equipment = executionHook.executionState.equipment;
-          // Equipment values are flat numbers (0.0-1.0), filter out Max keys
-          const equipmentConditions = Object.entries(equipment)
-            .filter(([key, value]) => !key.includes('Max') && typeof value === 'number')
-            .map(([, value]) => value);
-
-          if (equipmentConditions.length > 0) {
-            // Calculate average equipment condition as percentage
-            const avgCondition = equipmentConditions.reduce((sum, c) => sum + c, 0) / equipmentConditions.length;
-            equipmentMaintained = avgCondition * 100;
-          }
-        }
-
         const challengesCompleted = dailyChallenges.filter(c => c.completed).length;
 
         setWeeklyProgress({
-          rehearsalsCompleted: rehearsalsThisWeek - rehearsalsLastWeek,
           scoreImprovement,
           rankChange,
-          challengesCompleted,
-          equipmentMaintained
+          challengesCompleted
         });
       };
 
       calculateWeeklyProgressData();
     }
-  }, [user, profile, activeCorps, activeCorpsClass, executionHook.executionState, dailyChallenges]);
+  }, [user, profile, activeCorps, activeCorpsClass, dailyChallenges]);
 
   // Fetch available corps
   const fetchAvailableCorps = useCallback(async () => {
@@ -760,17 +677,6 @@ export const useDashboardData = () => {
     // Achievements
     newAchievement,
     clearNewAchievement,
-
-    // Execution hook (pass through)
-    executionState: executionHook.executionState,
-    executionLoading: executionHook.loading,
-    executionProcessing: executionHook.processing,
-    rehearse: executionHook.rehearse,
-    repairEquipment: executionHook.repairEquipment,
-    upgradeEquipment: executionHook.upgradeEquipment,
-    boostMorale: executionHook.boostMorale,
-    calculateMultiplier: executionHook.calculateMultiplier,
-    canRehearseToday: executionHook.canRehearseToday,
 
     // Utility functions
     getCorpsClassName,

@@ -6,21 +6,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Zap, Music, Users, Wrench, Heart, Target, Trophy, Calendar,
+  Zap, Music, Users, Trophy, Calendar,
   TrendingUp, Play, Check, X, Crown, Flame, Coins,
   Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
   CheckCircle, Circle, ArrowUp, AlertTriangle, ChevronRight,
-  Shield, Eye, Drum, Flag, Activity, Radio, Gauge, Coffee
+  Shield, Eye, Drum, Flag, Activity, Radio
 } from 'lucide-react';
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
 import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import {
-  DashboardStaffPanel,
-  SectionGauges,
-  MultiplierGlassBoxLarge,
-} from '../components/Execution';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
 import {
@@ -403,14 +398,6 @@ const Dashboard = () => {
     newAchievement,
     clearNewAchievement,
     recentScores,
-    executionState,
-    executionProcessing,
-    rehearse,
-    repairEquipment,
-    upgradeEquipment,
-    boostMorale,
-    calculateMultiplier,
-    canRehearseToday,
     getCorpsClassName,
     getCorpsClassColor,
     completeDailyChallenge,
@@ -422,68 +409,6 @@ const Dashboard = () => {
     ownedStaff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass) || [],
     [ownedStaff, activeCorpsClass]
   );
-
-  // Calculate execution metrics
-  const readiness = useMemo(() => {
-    if (typeof executionState?.readiness === 'object') {
-      const { brass = 0.75, percussion = 0.75, guard = 0.75, ensemble = 0.75 } = executionState.readiness;
-      return { brass, percussion, guard, ensemble, avg: (brass + percussion + guard + ensemble) / 4 };
-    }
-    const val = executionState?.readiness ?? 0.75;
-    return { brass: val, percussion: val, guard: val, ensemble: val, avg: val };
-  }, [executionState?.readiness]);
-
-  const morale = useMemo(() => {
-    if (typeof executionState?.morale === 'object') {
-      const { brass = 0.80, percussion = 0.80, guard = 0.80, overall = 0.80 } = executionState.morale;
-      return { brass, percussion, guard, overall, avg: (brass + percussion + guard) / 3 };
-    }
-    const val = executionState?.morale ?? 0.80;
-    return { brass: val, percussion: val, guard: val, overall: val, avg: val };
-  }, [executionState?.morale]);
-
-  const equipment = useMemo(() => {
-    const eq = executionState?.equipment || {};
-    const instruments = eq.instruments ?? 0.90;
-    const uniforms = eq.uniforms ?? 0.90;
-    const props = eq.props ?? 0.90;
-    const bus = eq.bus ?? 0.90;
-    const truck = eq.truck ?? 0.90;
-    const avg = (instruments + uniforms + props) / 3;
-    return { instruments, uniforms, props, bus, truck, avg };
-  }, [executionState?.equipment]);
-
-  // Calculate aggregate staff efficiency
-  const staffEfficiency = useMemo(() => {
-    if (assignedStaff.length === 0) return { value: 0.80, bonus: -0.04, label: 'No Staff' };
-
-    // Base efficiency + bonuses
-    let efficiency = 0.80;
-    assignedStaff.forEach(staff => {
-      // Caption match bonus
-      if (staff.assignedTo?.caption === staff.caption) efficiency += 0.02;
-      // Experience bonus (cap at 10%)
-      const expBonus = Math.min((staff.seasonsCompleted || 0) * 0.01, 0.10);
-      efficiency += expBonus;
-    });
-
-    // Staff count bonus
-    const countBonus = assignedStaff.length >= 6 ? 0.04 : assignedStaff.length >= 4 ? 0.02 : -0.04;
-    efficiency = Math.min(1.0, efficiency);
-
-    return {
-      value: efficiency,
-      bonus: countBonus,
-      label: assignedStaff.length >= 6 ? 'Full Roster' : assignedStaff.length >= 4 ? 'Adequate' : 'Understaffed'
-    };
-  }, [assignedStaff]);
-
-  // Calculate multiplier
-  const multiplier = useMemo(() => {
-    const base = (readiness.avg * 0.4) + (morale.avg * 0.3) + (equipment.avg * 0.3);
-    const staffBonus = Math.min(assignedStaff.length * 0.01, 0.05);
-    return Math.max(0.70, Math.min(1.10, base + staffBonus));
-  }, [readiness.avg, morale.avg, equipment.avg, assignedStaff.length]);
 
   // Track assigned staff for retirement flow
   const [assignedStaffForRetire, setAssignedStaffForRetire] = useState([]);
@@ -737,15 +662,6 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
-  const handleRehearsal = async () => {
-    if (canRehearseToday()) {
-      const result = await rehearse();
-      if (result.success) {
-        toast.success(`Rehearsal complete! +${result.data?.xpGained || 50} XP`);
-      }
-    }
-  };
-
   // ============================================================================
   // RENDER: THREE-COLUMN HUD LAYOUT
   // ============================================================================
@@ -859,265 +775,12 @@ const Dashboard = () => {
         animate="visible"
       >
         {/* ================================================================
-            COLUMN A: INTELLIGENCE (The "Read" Zone)
-            Section Readiness, Multipliers, Performance Insights
-            ================================================================ */}
-        <motion.aside
-          variants={columnVariants}
-          className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
-        >
-          {/* Section Readiness - with caption associations */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Readiness</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-data font-bold text-blue-400">{Math.round(readiness.avg * 100)}%</span>
-                <Target className="w-4 h-4 text-blue-400" />
-              </div>
-            </div>
-            <div className="text-[9px] text-cream/40 mb-2">Affects scoring captions shown in parentheses</div>
-            <div className="space-y-2">
-              <SectionProgressBar value={readiness.brass} label="Brass" caption="B, MA" color="blue" />
-              <SectionProgressBar value={readiness.percussion} label="Perc" caption="P" color="blue" />
-              <SectionProgressBar value={readiness.guard} label="Guard" caption="VP, VA, CG" color="blue" />
-              <SectionProgressBar value={readiness.ensemble} label="Ensemble" caption="GE1, GE2" color="blue" />
-            </div>
-          </div>
-
-          {/* Section Morale - with caption associations */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Section Morale</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-data font-bold text-green-400">{Math.round(morale.avg * 100)}%</span>
-                <Heart className="w-4 h-4 text-green-400" />
-              </div>
-            </div>
-            <div className="text-[9px] text-cream/40 mb-2">±8% impact on caption scores</div>
-            <div className="space-y-2">
-              <SectionProgressBar value={morale.brass} label="Brass" caption="B, MA" color="green" />
-              <SectionProgressBar value={morale.percussion} label="Perc" caption="P" color="green" />
-              <SectionProgressBar value={morale.guard} label="Guard" caption="VP, VA, CG" color="green" />
-            </div>
-          </div>
-
-          {/* Multiplier Breakdown - Receipt Style */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Multiplier Breakdown</span>
-              <TrendingUp className="w-4 h-4 text-gold-400" />
-            </div>
-            <div className="space-y-0 border-t border-white/10">
-              {/* Readiness Factor */}
-              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                <div className="flex items-center gap-1.5">
-                  <Target className="w-3 h-3 text-blue-400" />
-                  <span className="text-xs text-cream/60">Readiness</span>
-                </div>
-                <span className={`text-xs font-mono font-bold ${(readiness.avg - 0.80) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {(readiness.avg - 0.80) >= 0 ? '+' : ''}{((readiness.avg - 0.80) * 60).toFixed(1)}%
-                </span>
-              </div>
-              {/* Morale Factor */}
-              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                <div className="flex items-center gap-1.5">
-                  <Heart className="w-3 h-3 text-green-400" />
-                  <span className="text-xs text-cream/60">Morale</span>
-                </div>
-                <span className={`text-xs font-mono font-bold ${(morale.avg - 0.75) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {(morale.avg - 0.75) >= 0 ? '+' : ''}{((morale.avg - 0.75) * 32).toFixed(1)}%
-                </span>
-              </div>
-              {/* Staff Factor */}
-              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-3 h-3 text-purple-400" />
-                  <span className="text-xs text-cream/60">Staff</span>
-                </div>
-                <span className={`text-xs font-mono font-bold ${staffEfficiency.bonus >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {staffEfficiency.bonus >= 0 ? '+' : ''}{(staffEfficiency.bonus * 100).toFixed(1)}%
-                </span>
-              </div>
-              {/* Equipment Factor */}
-              <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                <div className="flex items-center gap-1.5">
-                  <Wrench className="w-3 h-3 text-orange-400" />
-                  <span className="text-xs text-cream/60">Equipment</span>
-                </div>
-                <span className={`text-xs font-mono font-bold ${(equipment.avg - 1.0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {(equipment.avg - 1.0) >= 0 ? '+' : ''}{((equipment.avg - 1.0) * 50).toFixed(1)}%
-                </span>
-              </div>
-              {/* Difficulty Bonus/Penalty */}
-              {(() => {
-                const difficultyConfig = executionState?.showDesign || { preparednessThreshold: 0.80, ceilingBonus: 0.08, riskPenalty: -0.10 };
-                const threshold = difficultyConfig.preparednessThreshold || 0.80;
-                const isPrepared = readiness.avg >= threshold;
-                const diffValue = isPrepared ? (difficultyConfig.ceilingBonus || 0.08) : (difficultyConfig.riskPenalty || -0.10);
-                return (
-                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="w-3 h-3 text-yellow-400" />
-                      <span className="text-xs text-cream/60">Difficulty</span>
-                    </div>
-                    <span className={`text-xs font-mono font-bold ${isPrepared ? 'text-green-400' : 'text-red-400'}`}>
-                      {isPrepared ? '+' : ''}{(diffValue * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                );
-              })()}
-              {/* Travel Condition */}
-              {(equipment.bus + equipment.truck) < 1.40 && (
-                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <Gauge className="w-3 h-3 text-red-400" />
-                    <span className="text-xs text-cream/60">Travel</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-red-400">-3.0%</span>
-                </div>
-              )}
-              {/* Synergy if present */}
-              {executionState?.synergyBonus > 0 && (
-                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-purple-400" />
-                    <span className="text-xs text-cream/60">Synergy</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-green-400">
-                    +{executionState.synergyBonus.toFixed(1)}%
-                  </span>
-                </div>
-              )}
-              {/* Late Season Fatigue (Days 35-49) */}
-              {currentDay > 35 && (
-                <div className="flex items-center justify-between py-1.5 border-b border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <Coffee className="w-3 h-3 text-orange-400" />
-                    <span className="text-xs text-cream/60">Fatigue</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-orange-400">
-                    -{(Math.min((currentDay - 35) / 14, 1) * 5).toFixed(1)}%
-                  </span>
-                </div>
-              )}
-              {/* Total */}
-              <div className="flex items-center justify-between py-2 mt-1 bg-gold-500/10 rounded px-2 -mx-1">
-                <span className="text-xs font-display font-bold text-gold-400 uppercase">Total</span>
-                <span className="text-lg font-mono font-bold text-gold-400" style={{ textShadow: '0 0 8px rgba(255, 215, 0, 0.4)' }}>
-                  {multiplier.toFixed(2)}x
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Show Difficulty Threshold */}
-          {(() => {
-            const difficultyConfig = executionState?.showDesign || { preparednessThreshold: 0.80, ceilingBonus: 0.08, riskPenalty: -0.10, label: 'Moderate' };
-            const threshold = difficultyConfig.preparednessThreshold || 0.80;
-            const isPrepared = readiness.avg >= threshold;
-            const gap = Math.abs(readiness.avg - threshold);
-            const diffLabel = difficultyConfig.label || (threshold <= 0.70 ? 'Conservative' : threshold <= 0.80 ? 'Moderate' : threshold <= 0.85 ? 'Ambitious' : 'Legendary');
-            return (
-              <div className={`bg-black/40 backdrop-blur-md border rounded-lg p-3.5 flex-shrink-0 ${
-                isPrepared ? 'border-green-500/30' : 'border-red-500/30'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Show Difficulty</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                    isPrepared ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                  }`}>
-                    {isPrepared ? 'Ready' : 'Not Ready'}
-                  </span>
-                </div>
-                {/* Mini threshold gauge */}
-                <div className="relative h-3 bg-charcoal-800 rounded-full overflow-hidden mb-2">
-                  <div
-                    className={`absolute inset-y-0 left-0 rounded-full transition-all ${
-                      isPrepared ? 'bg-gradient-to-r from-green-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-orange-500'
-                    }`}
-                    style={{ width: `${Math.round(readiness.avg * 100)}%` }}
-                  />
-                  <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-white z-10"
-                    style={{ left: `${Math.round(threshold * 100)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-cream/40 uppercase">{diffLabel} • {Math.round(threshold * 100)}% threshold</div>
-                    <div className="text-xs text-cream/60">
-                      {isPrepared
-                        ? `${Math.round(gap * 100)}% above threshold`
-                        : `Need ${Math.round(gap * 100)}% more readiness`
-                      }
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-mono font-bold ${isPrepared ? 'text-green-400' : 'text-red-400'}`}>
-                      {isPrepared ? '+' : ''}{Math.round((isPrepared ? (difficultyConfig.ceilingBonus || 0.08) : (difficultyConfig.riskPenalty || -0.10)) * 100)}%
-                    </div>
-                    <div className="text-[9px] text-cream/40 uppercase">{isPrepared ? 'Bonus' : 'Penalty'}</div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Temporal Effects - Season Phase Indicators */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Season Effects</span>
-              <span className="text-xs font-mono text-cream/40">Day {currentDay}/49</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {/* Fatigue Status */}
-              <div className="text-center p-2 rounded bg-black/20">
-                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay > 35 ? 'bg-orange-500 animate-pulse' : 'bg-gray-600'}`} />
-                <div className="text-[9px] text-cream/50 uppercase">Fatigue</div>
-                <div className={`text-[10px] font-mono font-bold ${currentDay > 35 ? 'text-orange-400' : 'text-cream/30'}`}>
-                  {currentDay > 35 ? 'Active' : 'Day 35+'}
-                </div>
-              </div>
-              {/* Championship Pressure */}
-              <div className="text-center p-2 rounded bg-black/20">
-                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay >= 47 ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`} />
-                <div className="text-[9px] text-cream/50 uppercase">Finals</div>
-                <div className={`text-[10px] font-mono font-bold ${currentDay >= 47 ? 'text-red-400' : 'text-cream/30'}`}>
-                  {currentDay >= 47 ? 'Active' : 'Day 47+'}
-                </div>
-              </div>
-              {/* Difficulty Lock */}
-              <div className="text-center p-2 rounded bg-black/20">
-                <div className={`w-2 h-2 rounded-full mx-auto mb-1 ${currentDay > 10 ? 'bg-red-500' : 'bg-green-500'}`} />
-                <div className="text-[9px] text-cream/50 uppercase">Difficulty</div>
-                <div className={`text-[10px] font-mono font-bold ${currentDay > 10 ? 'text-red-400' : 'text-green-400'}`}>
-                  {currentDay > 10 ? 'Locked' : `${10 - currentDay}d left`}
-                </div>
-              </div>
-            </div>
-            {/* Season Progress Bar */}
-            <div className="mt-2 pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between text-[9px] text-cream/40 mb-1">
-                <span>Season Progress</span>
-                <span>{Math.round((currentDay / 49) * 100)}%</span>
-              </div>
-              <div className="h-1.5 bg-charcoal-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-gold-500 rounded-full transition-all"
-                  style={{ width: `${(currentDay / 49) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </motion.aside>
-
-        {/* ================================================================
             COLUMN B: COMMAND (The "Act" Zone)
             Action Deck, Daily Tasks, Show Concept/Synergy
             ================================================================ */}
         <motion.section
           variants={columnVariants}
-          className="col-span-1 lg:col-span-6 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden"
+          className="col-span-1 lg:col-span-9 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden"
         >
           {activeCorps ? (
             <>
@@ -1147,11 +810,6 @@ const Dashboard = () => {
                           <span className="text-xs text-cream/60 group-hover:text-purple-400 capitalize">
                             {activeCorps.showConcept.theme}
                           </span>
-                          {(executionState?.synergyBonus || 0) > 0 && (
-                            <span className="text-xs font-bold text-purple-400">
-                              +{(executionState?.synergyBonus || 0).toFixed(1)}
-                            </span>
-                          )}
                         </button>
                       ) : (
                         <button
@@ -1163,46 +821,22 @@ const Dashboard = () => {
                       )}
                     </div>
                   </div>
-
-                  {/* Multiplier Display */}
-                  <div className="shrink-0 ml-4">
-                    <MultiplierGlassBoxLarge
-                      multiplier={multiplier}
-                      breakdown={{
-                        readiness: (readiness.avg - 0.80) * 0.60,
-                        staff: staffEfficiency.bonus,
-                        equipment: (equipment.avg - 1.00) * 0.50,
-                        travelCondition: (equipment.bus + equipment.truck) < 1.40 ? -0.03 : 0,
-                        morale: (morale.avg - 0.75) * 0.32,
-                        showDifficulty: readiness.avg >= (executionState?.showDesign?.preparednessThreshold || 0.80)
-                          ? (executionState?.showDesign?.ceilingBonus || 0.08)
-                          : (executionState?.showDesign?.riskPenalty || -0.10),
-                      }}
-                      currentDay={currentDay}
-                      showDifficulty={executionState?.showDesign}
-                      avgReadiness={readiness.avg}
-                    />
-                  </div>
                 </div>
 
                 {/* Quick Stats Row */}
-                <div className="grid grid-cols-4 gap-3 mt-3 pt-3 border-t border-white/10">
-                  <div className="text-center">
-                    <div className="text-xl font-data font-bold text-blue-400">{executionState?.rehearsalsThisWeek || 0}/7</div>
-                    <div className="text-[10px] text-cream/40 uppercase">Rehearsals</div>
-                  </div>
+                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/10">
                   <div className="text-center">
                     <div className="text-xl font-data font-bold text-purple-400">
                       {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
                     </div>
-                    <div className="text-[10px] text-cream/40 uppercase">Shows</div>
+                    <div className="text-[10px] text-cream/40 uppercase">Shows This Week</div>
                   </div>
                   {activeCorpsClass !== 'soundSport' && (
                     <div className="text-center">
                       <div className="text-xl font-data font-bold text-gold-400">
                         {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
                       </div>
-                      <div className="text-[10px] text-cream/40 uppercase">Score</div>
+                      <div className="text-[10px] text-cream/40 uppercase">Season Score</div>
                     </div>
                   )}
                   <div className="text-center">
@@ -1218,17 +852,6 @@ const Dashboard = () => {
                   <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {/* Rehearsal */}
-                  <ActionButton
-                    icon={Music}
-                    label="Rehearse"
-                    subtitle={canRehearseToday() ? '+5% readiness' : 'Complete'}
-                    onClick={handleRehearsal}
-                    disabled={!canRehearseToday()}
-                    processing={executionProcessing}
-                    completed={!canRehearseToday()}
-                    color="blue"
-                  />
                   {/* Staff */}
                   <ActionButton
                     icon={Users}
@@ -1237,18 +860,10 @@ const Dashboard = () => {
                     onClick={() => { setShowStaffPanel(true); completeDailyChallenge('staff_meeting'); }}
                     color="green"
                   />
-                  {/* Equipment */}
-                  <ActionButton
-                    icon={Wrench}
-                    label="Equipment"
-                    subtitle={`${Math.round(equipment.avg * 100)}% condition`}
-                    onClick={() => { setShowEquipmentPanel(true); completeDailyChallenge('maintain_equipment'); }}
-                    color={equipment.avg < 0.85 ? 'orange' : 'gold'}
-                  />
-                  {/* Synergy */}
+                  {/* Show Concept / Synergy */}
                   <ActionButton
                     icon={Sparkles}
-                    label="Synergy"
+                    label="Show Concept"
                     subtitle={activeCorps?.showConcept?.theme || 'Configure'}
                     onClick={() => setShowSynergyPanel(true)}
                     color="purple"
@@ -1409,24 +1024,24 @@ const Dashboard = () => {
 
         {/* ================================================================
             COLUMN C: LOGISTICS (The "Manage" Zone)
-            Staff Efficiency, Equipment Status, Management
+            Staff and Navigation
             ================================================================ */}
         <motion.aside
           variants={columnVariants}
           className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
         >
-          {/* Aggregate Staff Efficiency */}
+          {/* Staff Overview */}
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Staff Efficiency</span>
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Staff Roster</span>
               <Users className="w-4 h-4 text-green-400" />
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-4xl font-data font-bold text-green-400">{Math.round(staffEfficiency.value * 100)}%</span>
+              <span className="text-4xl font-data font-bold text-green-400">{assignedStaff.length}/8</span>
               <span className={`text-xs font-display font-bold uppercase ${
-                staffEfficiency.bonus >= 0 ? 'text-green-400' : 'text-orange-400'
+                assignedStaff.length >= 6 ? 'text-green-400' : assignedStaff.length >= 4 ? 'text-yellow-400' : 'text-orange-400'
               }`}>
-                {staffEfficiency.label}
+                {assignedStaff.length >= 6 ? 'Full Roster' : assignedStaff.length >= 4 ? 'Adequate' : 'Understaffed'}
               </span>
             </div>
             <div className="flex items-center gap-1.5 mb-3">
@@ -1447,151 +1062,56 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Equipment Management - Full Interactive */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 overflow-y-auto">
+          {/* Season Progress */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Equipment</span>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-gold-400">
-                  <Coins className="w-3.5 h-3.5" />
-                  <span className="text-sm font-mono font-bold">{profile?.corpsCoin || 0}</span>
-                </div>
-              </div>
+              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Season Progress</span>
+              <span className="text-xs font-mono text-cream/40">Day {currentDay}/49</span>
             </div>
-
-            {/* Performance Equipment */}
-            <div className="text-[9px] text-cream/40 uppercase tracking-wider mb-1.5">Performance (affects captions)</div>
-            <div className="space-y-1.5 mb-3">
-              {/* Instruments */}
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
-                <span className="text-lg">🎺</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-cream truncate">Instruments</span>
-                    <span className="text-[8px] text-cream/40">(B, MA, P)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${equipment.instruments >= 0.85 ? 'bg-green-500' : equipment.instruments >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.instruments * 100}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-mono font-bold ${equipment.instruments >= 0.85 ? 'text-green-400' : equipment.instruments >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.instruments * 100)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => repairEquipment('instruments')}
-                  disabled={executionProcessing || equipment.instruments >= 0.95}
-                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Repair 150cc
-                </button>
-              </div>
-
-              {/* Uniforms */}
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
-                <span className="text-lg">👔</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-cream truncate">Uniforms</span>
-                    <span className="text-[8px] text-cream/40">(VP, VA)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${equipment.uniforms >= 0.85 ? 'bg-green-500' : equipment.uniforms >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.uniforms * 100}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-mono font-bold ${equipment.uniforms >= 0.85 ? 'text-green-400' : equipment.uniforms >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.uniforms * 100)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => repairEquipment('uniforms')}
-                  disabled={executionProcessing || equipment.uniforms >= 0.95}
-                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Repair 100cc
-                </button>
-              </div>
-
-              {/* Props */}
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
-                <span className="text-lg">🎨</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-cream truncate">Props</span>
-                    <span className="text-[8px] text-cream/40">(CG)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${equipment.props >= 0.85 ? 'bg-green-500' : equipment.props >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.props * 100}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-mono font-bold ${equipment.props >= 0.85 ? 'text-green-400' : equipment.props >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.props * 100)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => repairEquipment('props')}
-                  disabled={executionProcessing || equipment.props >= 0.95}
-                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Repair 120cc
-                </button>
-              </div>
+            <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-gradient-to-r from-blue-500 to-gold-500 rounded-full transition-all"
+                style={{ width: `${(currentDay / 49) * 100}%` }}
+              />
             </div>
-
-            {/* Travel Equipment */}
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] text-cream/40 uppercase tracking-wider">Travel Fleet</span>
-              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${(equipment.bus + equipment.truck) >= 1.40 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                {(equipment.bus + equipment.truck) >= 1.40 ? 'OK' : '-3% penalty'}
-              </span>
+            <div className="flex items-center justify-between text-[10px] text-cream/40">
+              <span>Week {currentWeek}</span>
+              <span>{weeksRemaining}w remaining</span>
             </div>
-            <div className="space-y-1.5">
-              {/* Bus */}
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <Radio className={`w-4 h-4 ${equipment.bus >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-cream truncate">Tour Bus</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${equipment.bus >= 0.85 ? 'bg-green-500' : equipment.bus >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.bus * 100}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-mono font-bold ${equipment.bus >= 0.85 ? 'text-green-400' : equipment.bus >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.bus * 100)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => repairEquipment('bus')}
-                  disabled={executionProcessing || equipment.bus >= 0.95}
-                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Repair 200cc
-                </button>
-              </div>
+          </div>
 
-              {/* Truck */}
-              <div className="flex items-center gap-2 p-2 bg-black/30 rounded border border-white/5 hover:border-white/10 transition-colors">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <Gauge className={`w-4 h-4 ${equipment.truck >= 0.70 ? 'text-blue-400' : 'text-red-400'}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-cream truncate">Equipment Truck</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${equipment.truck >= 0.85 ? 'bg-green-500' : equipment.truck >= 0.70 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${equipment.truck * 100}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-mono font-bold ${equipment.truck >= 0.85 ? 'text-green-400' : equipment.truck >= 0.70 ? 'text-yellow-400' : 'text-red-400'}`}>{Math.round(equipment.truck * 100)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => repairEquipment('truck')}
-                  disabled={executionProcessing || equipment.truck >= 0.95}
-                  className="px-2 py-1 text-[9px] font-bold bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Repair 250cc
-                </button>
-              </div>
+          {/* Quick Navigation */}
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 overflow-y-auto">
+            <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider block mb-3">Quick Links</span>
+            <div className="space-y-2">
+              <Link
+                to="/schedule"
+                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors group"
+              >
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-cream group-hover:text-purple-400">Show Schedule</span>
+              </Link>
+              <Link
+                to="/leaderboard"
+                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-gold-500/30 hover:bg-gold-500/10 transition-colors group"
+              >
+                <Trophy className="w-4 h-4 text-gold-400" />
+                <span className="text-sm text-cream group-hover:text-gold-400">Leaderboard</span>
+              </Link>
+              <Link
+                to="/battlepass"
+                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/10 transition-colors group"
+              >
+                <Gift className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-cream group-hover:text-blue-400">Battle Pass</span>
+              </Link>
+              <Link
+                to="/staff"
+                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-green-500/30 hover:bg-green-500/10 transition-colors group"
+              >
+                <Users className="w-4 h-4 text-green-400" />
+                <span className="text-sm text-cream group-hover:text-green-400">Staff Market</span>
+              </Link>
             </div>
           </div>
         </motion.aside>
@@ -1632,7 +1152,33 @@ const Dashboard = () => {
                 </button>
               </div>
               <div className="p-4">
-                <DashboardStaffPanel activeCorpsClass={activeCorpsClass} />
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-cream/40" />
+                  <p className="text-sm text-cream/60 mb-4">Manage your staff roster from the Staff Market page.</p>
+                  <Link
+                    to="/staff"
+                    className="inline-block px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
+                    onClick={() => setShowStaffPanel(false)}
+                  >
+                    Go to Staff Market
+                  </Link>
+                </div>
+                {assignedStaff.length > 0 && (
+                  <div className="mt-6 space-y-2">
+                    <div className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider mb-2">Currently Assigned</div>
+                    {assignedStaff.map(staff => (
+                      <div key={staff.id} className="flex items-center gap-3 p-3 bg-black/30 rounded border border-white/5">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center text-lg">
+                          {staff.caption?.charAt(0) || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-cream truncate">{staff.name}</div>
+                          <div className="text-xs text-cream/50">{staff.caption || 'Unassigned'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           </>
@@ -1780,19 +1326,9 @@ const Dashboard = () => {
         profile={profile}
         activeCorps={activeCorps}
         activeCorpsClass={activeCorpsClass}
-        executionState={executionState}
         engagementData={engagementData}
         dailyChallenges={dailyChallenges}
         recentScores={recentScores}
-        canRehearseToday={canRehearseToday}
-        onStartRehearsal={() => {
-          setShowMorningReport(false);
-          rehearse();
-        }}
-        onNavigateToEquipment={() => {
-          setShowMorningReport(false);
-          setShowEquipmentPanel(true);
-        }}
         onNavigateToStaff={() => {
           setShowMorningReport(false);
           setShowStaffPanel(true);

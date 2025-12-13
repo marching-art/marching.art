@@ -23,7 +23,6 @@ import {
 } from '../components/hud/CommandCenterLayout';
 
 // Dashboard Components
-import { DashboardStaffPanel } from '../components/Execution';
 
 // Firebase Functions
 import {
@@ -975,7 +974,19 @@ const HUDDashboard = () => {
                 <button onClick={() => setShowStaffPanel(false)} className="p-2 rounded hover:bg-red-500/20 text-cream-muted hover:text-red-400">
                   <X className="w-6 h-6" /></button>
               </div>
-              <div className="p-4"><DashboardStaffPanel activeCorpsClass={activeCorpsClass} /></div>
+              <div className="p-4">
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-cream-muted/40" />
+                  <p className="text-sm text-cream-muted/60 mb-4">Manage your staff roster from the Staff Market page.</p>
+                  <Link
+                    to="/staff"
+                    className="inline-block px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
+                    onClick={() => setShowStaffPanel(false)}
+                  >
+                    Go to Staff Market
+                  </Link>
+                </div>
+              </div>
             </motion.div>
           </>
         )}

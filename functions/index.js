@@ -35,15 +35,6 @@ const {
   cancelAuction,
 } = require("./src/callable/economy");
 const {
-  dailyRehearsal,
-  repairEquipment,
-  upgradeEquipment,
-  setShowDifficulty,
-  getExecutionStatus,
-  boostMorale,
-  boostStaffMorale,
-} = require("./src/callable/execution");
-const {
   purchaseBattlePass,
   claimBattlePassReward,
   getBattlePassProgress,
@@ -158,13 +149,6 @@ module.exports = {
   processCorpsDecisions,
   retireCorps,
   unretireCorps,
-  dailyRehearsal,
-  repairEquipment,
-  upgradeEquipment,
-  setShowDifficulty,
-  getExecutionStatus,
-  boostMorale,
-  boostStaffMorale,
   purchaseBattlePass,
   claimBattlePassReward,
   getBattlePassProgress,
