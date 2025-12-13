@@ -237,6 +237,14 @@ export const paths = {
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/trades`,
   leagueChat: (leagueId: string) =>
     `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/chat`,
+  leagueActivity: (leagueId: string) =>
+    `artifacts/${DATA_NAMESPACE}/leagues/${leagueId}/activity`,
+
+  // User notification paths
+  userNotifications: (uid: string) =>
+    `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications`,
+  userLeagueNotifications: (uid: string) =>
+    `artifacts/${DATA_NAMESPACE}/users/${uid}/notifications/leagues`,
 
   // Staff paths
   staffMarketplace: () => `artifacts/${DATA_NAMESPACE}/staff_marketplace`,

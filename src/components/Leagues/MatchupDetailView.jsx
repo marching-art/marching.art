@@ -1,12 +1,13 @@
 // MatchupDetailView - Head-to-head matchup comparison view
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft, Swords, Trophy, TrendingUp, TrendingDown,
-  Flame, Medal, Target, Calendar
+  Flame, Medal, Target, Calendar, Zap
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { RivalryBadge } from './LeagueActivityFeed';
 
 const MatchupDetailView = ({
   matchup,
@@ -15,7 +16,8 @@ const MatchupDetailView = ({
   memberProfiles,
   standings,
   currentWeek,
-  onBack
+  onBack,
+  rivalry = null, // Optional rivalry data for this matchup
 }) => {
   const [weeklyScores, setWeeklyScores] = useState({ user1: 0, user2: 0 });
   const [loading, setLoading] = useState(true);
@@ -136,12 +138,28 @@ const MatchupDetailView = ({
         <div className="flex items-center justify-center gap-2 mb-2">
           <Calendar className="w-4 h-4 text-cream-500/60" />
           <span className="text-sm text-cream-500/60">Week {matchup.week} Matchup</span>
+          {rivalry && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+              <Flame className="w-3 h-3" /> Rivalry
+            </span>
+          )}
         </div>
 
         <h1 className="text-xl font-display font-bold text-cream-100 text-center">
           Head-to-Head
         </h1>
       </motion.div>
+
+      {/* Rivalry Card */}
+      {rivalry && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.05 }}
+        >
+          <RivalryBadge rivalry={rivalry} compact={false} />
+        </motion.div>
+      )}
 
       {/* Score Card */}
       <motion.div

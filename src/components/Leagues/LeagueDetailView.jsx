@@ -1,11 +1,11 @@
 // LeagueDetailView - Social hub for league competition
-// Features: Your status, this week's matchups, standings, chat, history
+// Features: Your status, this week's matchups, standings, chat, history, activity
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Crown, ChevronLeft, Settings, Swords,
   MessageSquare, BarChart3, History, Medal, Flame,
-  TrendingUp, TrendingDown, Minus
+  TrendingUp, TrendingDown, Minus, Bell, Activity
 } from 'lucide-react';
 import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -15,18 +15,30 @@ import StandingsTab from './tabs/StandingsTab';
 import ChatTab from './tabs/ChatTab';
 import HistoryTab from './tabs/HistoryTab';
 import MatchupDetailView from './MatchupDetailView';
+import LeagueActivityFeed, { RivalryBadge } from './LeagueActivityFeed';
+import { useRivalries, isRivalry as checkRivalry } from '../../hooks/useLeagueNotifications';
 
 const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
   const [activeTab, setActiveTab] = useState('standings');
   const [standings, setStandings] = useState([]);
   const [messages, setMessages] = useState([]);
   const [weeklyMatchups, setWeeklyMatchups] = useState([]);
+  const [weeklyResults, setWeeklyResults] = useState({}); // For rivalry calculations
   const [currentWeek, setCurrentWeek] = useState(1);
   const [memberProfiles, setMemberProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
 
   const isCommissioner = league.creatorId === userProfile?.uid;
+
+  // Calculate rivalries using the hook
+  const rivalries = useRivalries(
+    userProfile?.uid,
+    league?.id,
+    weeklyMatchups,
+    weeklyResults,
+    memberProfiles
+  );
 
   // Fetch all data
   useEffect(() => {
@@ -109,6 +121,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             // Generate matchups for each week (round robin style)
             const matchupsPerWeek = generateMatchups(league.members, week);
             setWeeklyMatchups(matchupsPerWeek);
+
+            // Store weekly results for rivalry calculations
+            setWeeklyResults(weeklyResults);
 
             // Calculate head-to-head records
             Object.entries(weeklyResults).forEach(([weekNum, scores]) => {
@@ -282,9 +297,19 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
 
   const tabs = [
     { id: 'standings', label: 'Standings', icon: BarChart3 },
+    { id: 'activity', label: 'Activity', icon: Bell },
     { id: 'chat', label: 'Chat', icon: MessageSquare, badge: messages.length > 0 },
     { id: 'history', label: 'History', icon: History }
   ];
+
+  // Get rivalry for selected matchup
+  const getMatchupRivalry = (matchup) => {
+    if (!userProfile?.uid) return null;
+    const opponentId = matchup.user1 === userProfile.uid ? matchup.user2 :
+                      matchup.user2 === userProfile.uid ? matchup.user1 : null;
+    if (!opponentId) return null;
+    return checkRivalry(rivalries, opponentId);
+  };
 
   // If viewing matchup detail, show that instead
   if (selectedMatchup) {
@@ -297,6 +322,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         standings={standings}
         currentWeek={currentWeek}
         onBack={() => setSelectedMatchup(null)}
+        rivalry={getMatchupRivalry(selectedMatchup)}
       />
     );
   }
@@ -439,8 +465,21 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               week: currentWeek,
               isUserMatchup: true
             })}
-            className="mb-3 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 cursor-pointer hover:border-purple-500/40 transition-all"
+            className={`mb-3 p-4 rounded-xl cursor-pointer transition-all ${
+              getMatchupRivalry(userMatchup)
+                ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30 hover:border-red-500/50'
+                : 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 hover:border-purple-500/40'
+            }`}
           >
+            {/* Rivalry indicator */}
+            {getMatchupRivalry(userMatchup) && (
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-red-500/20">
+                <Flame className="w-4 h-4 text-red-400" />
+                <span className="text-xs font-display font-semibold text-red-400">
+                  Rivalry Matchup - {getMatchupRivalry(userMatchup).matchupCount}x meetings
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-charcoal-800 flex items-center justify-center border-2 border-purple-500/50">
@@ -552,6 +591,61 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             userProfile={userProfile}
             loading={loading}
           />
+        )}
+        {activeTab === 'activity' && (
+          <motion.div
+            key="activity"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-4"
+          >
+            {/* Rivalries Section */}
+            {rivalries.length > 0 && (
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Flame className="w-4 h-4 text-red-400" />
+                  <h3 className="text-sm font-display font-semibold text-cream-100">
+                    Your Rivalries
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {rivalries.map(rivalry => (
+                    <RivalryBadge key={rivalry.rivalId} rivalry={rivalry} compact={false} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Activity Feed */}
+            <LeagueActivityFeed
+              leagueId={league?.id}
+              userId={userProfile?.uid}
+              league={league}
+              showFilters={true}
+              maxItems={15}
+              onActivityTap={(activity) => {
+                // Navigate to relevant content based on activity type
+                if (activity.type === 'matchup_result' && activity.metadata?.week) {
+                  const matchups = weeklyMatchups[activity.metadata.week];
+                  if (matchups) {
+                    const matchup = matchups.find(m =>
+                      (m.user1 === userProfile?.uid || m.user2 === userProfile?.uid)
+                    );
+                    if (matchup) {
+                      setSelectedMatchup({
+                        ...matchup,
+                        week: activity.metadata.week,
+                        isUserMatchup: true
+                      });
+                    }
+                  }
+                } else if (activity.type === 'new_message') {
+                  setActiveTab('chat');
+                }
+              }}
+            />
+          </motion.div>
         )}
         {activeTab === 'chat' && (
           <ChatTab

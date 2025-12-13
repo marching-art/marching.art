@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { adminHelpers } from '../firebase';
+import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 
 // =============================================================================
 // TYPES
@@ -21,6 +22,7 @@ interface NavItem {
   path: string;
   label: string;
   icon: LucideIcon;
+  badgeKey?: 'leagues'; // Used to show notification badges
 }
 
 // =============================================================================
@@ -31,7 +33,7 @@ const navItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/leagues', label: 'Leagues', icon: Users },
+  { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
@@ -45,8 +47,11 @@ const secondaryItems: NavItem[] = [
 
 const Navigation: React.FC = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Get notification badge count for leagues
+  const leagueBadge = useLeagueNotificationBadge(user?.uid);
 
   useEffect(() => {
     adminHelpers.isAdmin().then(setIsAdmin);
@@ -92,20 +97,28 @@ const Navigation: React.FC = () => {
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
+          const badgeCount = item.badgeKey === 'leagues' ? leagueBadge.count : 0;
 
           return (
             <Link
               key={item.path}
               to={item.path}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+                relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
                 ${active
                   ? 'bg-yellow-500/15 text-yellow-400 font-semibold'
                   : 'text-yellow-50/70 hover:bg-white/5 hover:text-yellow-50'
                 }
               `}
             >
-              <Icon className={`w-5 h-5 ${active ? 'text-yellow-400' : ''}`} />
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${active ? 'text-yellow-400' : ''}`} />
+                {badgeCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg">
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                  </span>
+                )}
+              </div>
               <span>{item.label}</span>
             </Link>
           );
