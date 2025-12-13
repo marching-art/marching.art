@@ -211,7 +211,7 @@ export async function createLeague(
 }
 
 /**
- * Join a league
+ * Join a league by ID
  */
 export async function joinLeague(
   leagueId: string
@@ -220,6 +220,21 @@ export async function joinLeague(
     const result = await callFunction<{ leagueId: string }, ApiResponse>(
       'joinLeague',
       { leagueId }
+    );
+    return result.data;
+  }, 'Failed to join league');
+}
+
+/**
+ * Join a league by invite code
+ */
+export async function joinLeagueByCode(
+  inviteCode: string
+): Promise<ApiResponse> {
+  return withErrorHandling(async () => {
+    const result = await callFunction<{ inviteCode: string }, ApiResponse>(
+      'joinLeagueByCode',
+      { inviteCode }
     );
     return result.data;
   }, 'Failed to join league');

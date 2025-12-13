@@ -97,13 +97,30 @@ export function useCreateLeague() {
 }
 
 /**
- * Hook to join a league
+ * Hook to join a league by ID
  */
 export function useJoinLeague(uid: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (leagueId: string) => leaguesApi.joinLeague(leagueId),
+    onSuccess: () => {
+      if (uid) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.publicLeagues() });
+    },
+  });
+}
+
+/**
+ * Hook to join a league by invite code
+ */
+export function useJoinLeagueByCode(uid: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (inviteCode: string) => leaguesApi.joinLeagueByCode(inviteCode),
     onSuccess: () => {
       if (uid) {
         queryClient.invalidateQueries({ queryKey: queryKeys.myLeagues(uid) });
