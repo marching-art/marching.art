@@ -67,12 +67,6 @@ const {
 } = require("./src/callable/profile");
 const {
   claimDailyLogin,
-  staffCheckin,
-  memberWellnessCheck,
-  equipmentInspection,
-  sectionalRehearsal,
-  showReview,
-  getDailyOpsStatus,
 } = require("./src/callable/dailyOps");
 const {
   startNewOffSeason,
@@ -154,12 +148,6 @@ module.exports = {
   getBattlePassProgress,
   getAvailableRewards,
   claimDailyLogin,
-  staffCheckin,
-  memberWellnessCheck,
-  equipmentInspection,
-  sectionalRehearsal,
-  showReview,
-  getDailyOpsStatus,
 
   // Scheduled
   seasonScheduler,

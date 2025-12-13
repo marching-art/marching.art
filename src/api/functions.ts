@@ -106,12 +106,7 @@ export const awardXP = createCallable<{ amount: number; reason: string }, { newX
 // DAILY OPERATIONS
 // =============================================================================
 
-export const claimDailyLogin = createCallable<void, { rewards: unknown }>('claimDailyLogin');
-export const memberWellnessCheck = createCallable<{ corpsClass: string }, { success: boolean }>('memberWellnessCheck');
-export const equipmentInspection = createCallable<{ corpsClass: string }, { success: boolean }>('equipmentInspection');
-export const sectionalRehearsal = createCallable<{ corpsClass: string; section: string }, { success: boolean }>('sectionalRehearsal');
-export const showReview = createCallable<{ showId: string }, { success: boolean }>('showReview');
-export const getDailyOpsStatus = createCallable<{ corpsClass: string }, unknown>('getDailyOpsStatus');
+export const claimDailyLogin = createCallable<void, { success: boolean; loginStreak: number }>('claimDailyLogin');
 
 // =============================================================================
 // LEADERBOARDS

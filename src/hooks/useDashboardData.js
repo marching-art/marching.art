@@ -3,9 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
-import { getBattlePassProgress, retireCorps } from '../firebase/functions';
+import { getBattlePassProgress } from '../firebase/functions';
 import { useSeason, getSeasonProgress } from './useSeason';
-import { useUserStore, getGameDay } from '../store/userStore';
 import toast from 'react-hot-toast';
 
 /**
@@ -14,7 +13,6 @@ import toast from 'react-hot-toast';
  */
 export const useDashboardData = () => {
   const { user } = useAuth();
-  const { saveDailyChallenges, completeDailyChallenge, loggedInProfile } = useUserStore();
   const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
 
   // Core state
@@ -40,14 +38,6 @@ export const useDashboardData = () => {
     totalLogins: 0,
     recentActivity: [],
     weeklyProgress: []
-  });
-
-  // Challenges
-  const [dailyChallenges, setDailyChallenges] = useState([]);
-  const [weeklyProgress, setWeeklyProgress] = useState({
-    scoreImprovement: 0,
-    rankChange: 0,
-    challengesCompleted: 0
   });
 
   // Season setup
@@ -382,119 +372,6 @@ export const useDashboardData = () => {
     }
   }, [user, profile?.uid, activeCorps?.rank, activeCorps?.totalSeasonScore]);
 
-  // Generate and track daily challenges
-  useEffect(() => {
-    if (user && profile && activeCorps) {
-      const generateChallenges = () => {
-        const today = getGameDay();
-        const savedChallenges = profile.challenges || {};
-        const todayChallenges = savedChallenges[today];
-
-        if (todayChallenges) {
-          setDailyChallenges(todayChallenges);
-          return;
-        }
-
-        const challenges = [];
-
-        challenges.push({
-          id: 'check_leaderboard',
-          title: 'Scout the Competition',
-          description: 'Visit the leaderboard page',
-          progress: 0,
-          target: 1,
-          reward: '25 XP',
-          icon: 'trophy',
-          completed: false,
-          action: () => window.location.href = '/leaderboard'
-        });
-
-        challenges.push({
-          id: 'staff_meeting',
-          title: 'Staff Meeting',
-          description: 'Visit the staff market',
-          progress: 0,
-          target: 1,
-          reward: '25 XP',
-          icon: 'users',
-          completed: false
-        });
-
-        if (activeCorps?.selectedShows) {
-          const totalWeeks = 7;
-          const weeksWithShows = Object.keys(activeCorps.selectedShows).filter(
-            weekKey => activeCorps.selectedShows[weekKey]?.length > 0
-          ).length;
-          const hasFullSchedule = weeksWithShows >= totalWeeks;
-
-          challenges.push({
-            id: 'schedule_master',
-            title: 'Schedule Master',
-            description: 'Select shows for all 7 weeks',
-            progress: weeksWithShows,
-            target: totalWeeks,
-            reward: '100 XP',
-            icon: 'calendar',
-            completed: hasFullSchedule
-          });
-        }
-
-        setDailyChallenges(challenges);
-
-        if (challenges.length > 0) {
-          saveDailyChallenges(challenges);
-        }
-      };
-
-      generateChallenges();
-    }
-  }, [user, profile, activeCorps, activeCorpsClass, saveDailyChallenges]);
-
-  // Sync challenges from store when updated
-  useEffect(() => {
-    if (loggedInProfile?.challenges) {
-      const today = getGameDay();
-      const storeChallenges = loggedInProfile.challenges[today];
-      if (storeChallenges && storeChallenges.length > 0) {
-        const hasUpdates = storeChallenges.some((storeChallenge) => {
-          const localChallenge = dailyChallenges.find(c => c.id === storeChallenge.id);
-          return localChallenge && !localChallenge.completed && storeChallenge.completed;
-        });
-        if (hasUpdates) {
-          setDailyChallenges(storeChallenges);
-        }
-      }
-    }
-  }, [loggedInProfile?.challenges, dailyChallenges]);
-
-  // Calculate weekly progress
-  useEffect(() => {
-    if (user && profile && activeCorps && activeCorpsClass !== 'soundSport') {
-      const calculateWeeklyProgressData = () => {
-        const weekData = profile.engagement?.weeklyProgress?.[activeCorpsClass] || {};
-        const previousWeekData = weekData.previous || {};
-
-        const currentScore = activeCorps.totalSeasonScore || 0;
-        const previousScore = previousWeekData.totalScore || 0;
-        const scoreImprovement = currentScore - previousScore;
-
-        const currentRank = activeCorps.rank || 0;
-        const previousRank = previousWeekData.rank || currentRank;
-        const rankChange = previousRank - currentRank;
-
-        const challengesCompleted = dailyChallenges.filter(c => c.completed).length;
-
-        setWeeklyProgress({
-          scoreImprovement,
-          rankChange,
-          challengesCompleted
-        });
-      };
-
-      calculateWeeklyProgressData();
-    }
-  }, [user, profile, activeCorps, activeCorpsClass, dailyChallenges]);
-
   // Fetch available corps
   const fetchAvailableCorps = useCallback(async () => {
     try {
@@ -661,12 +538,6 @@ export const useDashboardData = () => {
 
     // Engagement
     engagementData,
-
-    // Challenges
-    dailyChallenges,
-    setDailyChallenges,
-    weeklyProgress,
-    completeDailyChallenge,
 
     // Season setup
     showSeasonSetupWizard,

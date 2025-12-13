@@ -32,13 +32,6 @@ export {
 } from './useBattlePass';
 
 export {
-  useChallenges,
-  type Challenge,
-  type WeeklyProgress,
-  type UseChallengesReturn,
-} from './useChallenges';
-
-export {
   useSeasonSetup,
   type UseSeasonSetupReturn,
 } from './useSeasonSetup';

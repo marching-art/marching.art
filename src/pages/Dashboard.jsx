@@ -2,20 +2,18 @@
 // ARCHITECTURE: High-Density HUD (Heads-Up Display) - One-Page Command Center
 // Three-Column Layout: Intelligence | Command | Logistics
 // No scrolling on desktop - everything fits in viewport
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Zap, Music, Users, Trophy, Calendar,
-  TrendingUp, Play, Check, X, Crown, Flame, Coins,
-  Sparkles, Gift, Edit, BarChart3, Settings, Clock, RefreshCw,
-  CheckCircle, Circle, ArrowUp, AlertTriangle, ChevronRight,
-  Shield, Eye, Drum, Flag, Activity, Radio
+  Zap, Music, Trophy, Calendar,
+  Check, X, Crown, Flame, Coins,
+  Sparkles, Gift, Edit, ChevronRight, Radio
 } from 'lucide-react';
 import { useAuth } from '../App';
 import BrandLogo from '../components/BrandLogo';
 import { db, analyticsHelpers } from '../firebase';
-import { doc, updateDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
 import {
@@ -34,12 +32,6 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import {
   retireCorps,
-  claimDailyLogin,
-  memberWellnessCheck,
-  equipmentInspection,
-  showReview,
-  sectionalRehearsal,
-  getDailyOpsStatus,
 } from '../firebase/functions';
 import { useSeasonStore } from '../store/seasonStore';
 
@@ -174,35 +166,6 @@ const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processi
     </motion.button>
   );
 };
-
-// Task Checkbox - Daily task checklist item
-const TaskCheckbox = ({ title, reward, completed, onClick, loading }) => (
-  <button
-    onClick={onClick}
-    disabled={completed || loading}
-    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded transition-all ${
-      completed ? 'opacity-50 cursor-default' : 'hover:bg-white/5 cursor-pointer'
-    }`}
-  >
-    <div className={`w-5 h-5 flex items-center justify-center rounded border transition-all shrink-0 ${
-      completed
-        ? 'bg-green-500/20 border-green-500/60 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-        : 'bg-transparent border-white/20'
-    }`}>
-      {loading ? (
-        <div className="w-3 h-3 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
-      ) : completed ? (
-        <Check className="w-3 h-3 text-green-400" />
-      ) : null}
-    </div>
-    <span className={`flex-1 text-left text-sm font-mono truncate ${completed ? 'text-cream/50 line-through' : 'text-cream'}`}>
-      {title}
-    </span>
-    <span className={`text-xs font-data font-bold shrink-0 ${completed ? 'text-gold-400/50' : 'text-gold-400'}`}>
-      {reward}
-    </span>
-  </button>
-);
 
 // Stat Card - Compact stat display for logistics
 const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabel }) => {
@@ -363,11 +326,6 @@ const Dashboard = () => {
   // Panel states
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
-  // Daily operations state
-  const [opsStatus, setOpsStatus] = useState(null);
-  const [opsLoading, setOpsLoading] = useState(true);
-  const [opsProcessing, setOpsProcessing] = useState(null);
-
   // Destructure dashboard data
   const {
     profile,
@@ -381,8 +339,6 @@ const Dashboard = () => {
     currentDay,
     formatSeasonName,
     engagementData,
-    dailyChallenges,
-    weeklyProgress,
     unclaimedRewardsCount,
     showSeasonSetupWizard,
     setShowSeasonSetupWizard,
@@ -396,101 +352,8 @@ const Dashboard = () => {
     recentScores,
     getCorpsClassName,
     getCorpsClassColor,
-    completeDailyChallenge,
     refreshProfile
   } = dashboardData;
-
-  // ============================================================================
-  // DAILY OPERATIONS HANDLERS
-  // ============================================================================
-
-  // Fetch daily ops status
-  const fetchOpsStatus = useCallback(async () => {
-    if (!activeCorpsClass) return;
-    setOpsLoading(true);
-    try {
-      const result = await getDailyOpsStatus({ corpsClass: activeCorpsClass });
-      if (result.data.success) {
-        setOpsStatus(result.data.status);
-      }
-    } catch (error) {
-      console.error('Error fetching daily ops status:', error);
-    } finally {
-      setOpsLoading(false);
-    }
-  }, [activeCorpsClass]);
-
-  // Fetch ops status on corps change
-  useEffect(() => {
-    if (activeCorpsClass) {
-      fetchOpsStatus();
-    }
-  }, [activeCorpsClass, fetchOpsStatus]);
-
-  // Daily task handlers
-  const handleDailyTask = async (taskId, taskFn) => {
-    setOpsProcessing(taskId);
-    try {
-      const result = await taskFn();
-      if (result.data.success) {
-        toast.success(result.data.message);
-        fetchOpsStatus();
-        refreshProfile?.();
-      }
-    } catch (error) {
-      toast.error(error.message || 'Task failed');
-    } finally {
-      setOpsProcessing(null);
-    }
-  };
-
-  const handleSectionalRehearsal = async (section) => {
-    setOpsProcessing(`sectional_${section}`);
-    try {
-      const result = await sectionalRehearsal({ corpsClass: activeCorpsClass, section });
-      if (result.data.success) {
-        toast.success(result.data.message);
-        fetchOpsStatus();
-      }
-    } catch (error) {
-      toast.error(error.message || `Sectional failed`);
-    } finally {
-      setOpsProcessing(null);
-    }
-  };
-
-  // Get task availability from ops status
-  const getTaskAvailability = (taskId) => {
-    if (!opsStatus) return false;
-    const opMap = {
-      login: 'loginBonus',
-      wellness: 'memberWellness',
-      equipment: 'equipmentInspection',
-      review: 'showReview'
-    };
-    return opsStatus[opMap[taskId]]?.available;
-  };
-
-  const getSectionalAvailability = (section) => {
-    return opsStatus?.sectionalRehearsals?.[section]?.available;
-  };
-
-  // Count completed tasks
-  const getCompletedTasksCount = () => {
-    if (!opsStatus) return { completed: 0, total: 8 };
-    let completed = 0;
-    if (!opsStatus.loginBonus?.available) completed++;
-    if (!opsStatus.memberWellness?.available) completed++;
-    if (!opsStatus.equipmentInspection?.available) completed++;
-    if (!opsStatus.showReview?.available) completed++;
-    if (!opsStatus.sectionalRehearsals?.music?.available) completed++;
-    if (!opsStatus.sectionalRehearsals?.visual?.available) completed++;
-    if (!opsStatus.sectionalRehearsals?.guard?.available) completed++;
-    if (!opsStatus.sectionalRehearsals?.percussion?.available) completed++;
-    return { completed, total: 8 };
-  };
-
-  const taskStats = getCompletedTasksCount();
 
   // Show morning report on first visit of the day
   useEffect(() => {
@@ -840,129 +703,45 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Daily Tasks - Real Firebase Operations */}
+              {/* Quick Links - Simple navigation shortcuts */}
               <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 min-h-0 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-2.5 shrink-0">
-                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Daily Tasks</span>
-                  <span className="text-sm font-data font-bold text-gold-400">
-                    {taskStats.completed}<span className="text-cream/40">/{taskStats.total}</span>
-                  </span>
+                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-1.5">
-                  {opsLoading ? (
-                    <div className="text-center py-4 text-cream/40 text-sm">Loading tasks...</div>
-                  ) : (
-                    <>
-                      {/* Core Daily Operations */}
-                      <TaskCheckbox
-                        title="Login Bonus"
-                        reward="+10 XP, +5 CC"
-                        completed={!getTaskAvailability('login')}
-                        loading={opsProcessing === 'login'}
-                        onClick={() => handleDailyTask('login', claimDailyLogin)}
-                      />
-                      <TaskCheckbox
-                        title="Member Wellness"
-                        reward="+15 XP, +3% morale"
-                        completed={!getTaskAvailability('wellness')}
-                        loading={opsProcessing === 'wellness'}
-                        onClick={() => handleDailyTask('wellness', () => memberWellnessCheck({ corpsClass: activeCorpsClass }))}
-                      />
-                      <TaskCheckbox
-                        title="Equipment Check"
-                        reward="+10 XP, +5 CC"
-                        completed={!getTaskAvailability('equipment')}
-                        loading={opsProcessing === 'equipment'}
-                        onClick={() => handleDailyTask('equipment', () => equipmentInspection({ corpsClass: activeCorpsClass }))}
-                      />
-                      <TaskCheckbox
-                        title="Show Review"
-                        reward="+20 XP"
-                        completed={!getTaskAvailability('review')}
-                        loading={opsProcessing === 'review'}
-                        onClick={() => handleDailyTask('review', () => showReview({ corpsClass: activeCorpsClass }))}
-                      />
-
-                      {/* Sectional Rehearsals */}
-                      <div className="pt-2.5 mt-1.5 border-t border-white/5">
-                        <div className="text-[10px] font-display text-cream/40 uppercase tracking-wider mb-1.5">Sectionals (+2% readiness each)</div>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          <button
-                            onClick={() => handleSectionalRehearsal('music')}
-                            disabled={!getSectionalAvailability('music') || opsProcessing === 'sectional_music'}
-                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
-                              !getSectionalAvailability('music')
-                                ? 'bg-green-500/10 border-green-500/30 opacity-60'
-                                : 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20 cursor-pointer'
-                            }`}
-                          >
-                            {opsProcessing === 'sectional_music' ? (
-                              <div className="w-4 h-4 border border-blue-400 border-t-transparent rounded-full animate-spin" />
-                            ) : !getSectionalAvailability('music') ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <Music className="w-4 h-4 text-blue-400" />
-                            )}
-                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('music') ? 'text-green-400' : 'text-blue-400'}`}>Music</span>
-                          </button>
-                          <button
-                            onClick={() => handleSectionalRehearsal('visual')}
-                            disabled={!getSectionalAvailability('visual') || opsProcessing === 'sectional_visual'}
-                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
-                              !getSectionalAvailability('visual')
-                                ? 'bg-green-500/10 border-green-500/30 opacity-60'
-                                : 'bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 cursor-pointer'
-                            }`}
-                          >
-                            {opsProcessing === 'sectional_visual' ? (
-                              <div className="w-4 h-4 border border-purple-400 border-t-transparent rounded-full animate-spin" />
-                            ) : !getSectionalAvailability('visual') ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <Eye className="w-4 h-4 text-purple-400" />
-                            )}
-                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('visual') ? 'text-green-400' : 'text-purple-400'}`}>Visual</span>
-                          </button>
-                          <button
-                            onClick={() => handleSectionalRehearsal('guard')}
-                            disabled={!getSectionalAvailability('guard') || opsProcessing === 'sectional_guard'}
-                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
-                              !getSectionalAvailability('guard')
-                                ? 'bg-green-500/10 border-green-500/30 opacity-60'
-                                : 'bg-pink-500/10 border-pink-500/30 hover:bg-pink-500/20 cursor-pointer'
-                            }`}
-                          >
-                            {opsProcessing === 'sectional_guard' ? (
-                              <div className="w-4 h-4 border border-pink-400 border-t-transparent rounded-full animate-spin" />
-                            ) : !getSectionalAvailability('guard') ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <Flag className="w-4 h-4 text-pink-400" />
-                            )}
-                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('guard') ? 'text-green-400' : 'text-pink-400'}`}>Guard</span>
-                          </button>
-                          <button
-                            onClick={() => handleSectionalRehearsal('percussion')}
-                            disabled={!getSectionalAvailability('percussion') || opsProcessing === 'sectional_percussion'}
-                            className={`flex flex-col items-center gap-1 p-2 rounded border transition-all ${
-                              !getSectionalAvailability('percussion')
-                                ? 'bg-green-500/10 border-green-500/30 opacity-60'
-                                : 'bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 cursor-pointer'
-                            }`}
-                          >
-                            {opsProcessing === 'sectional_percussion' ? (
-                              <div className="w-4 h-4 border border-orange-400 border-t-transparent rounded-full animate-spin" />
-                            ) : !getSectionalAvailability('percussion') ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <Drum className="w-4 h-4 text-orange-400" />
-                            )}
-                            <span className={`text-[10px] font-bold ${!getSectionalAvailability('percussion') ? 'text-green-400' : 'text-orange-400'}`}>Perc</span>
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                <div className="flex-1 overflow-y-auto space-y-2">
+                  <Link
+                    to="/schedule"
+                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors group"
+                  >
+                    <Calendar className="w-5 h-5 text-purple-400" />
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-cream group-hover:text-purple-400">Show Schedule</span>
+                      <span className="text-xs text-cream/40 block">View and select shows</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-purple-400" />
+                  </Link>
+                  <Link
+                    to="/leaderboard"
+                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-gold-500/30 hover:bg-gold-500/10 transition-colors group"
+                  >
+                    <Trophy className="w-5 h-5 text-gold-400" />
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-cream group-hover:text-gold-400">Leaderboard</span>
+                      <span className="text-xs text-cream/40 block">Check standings</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-gold-400" />
+                  </Link>
+                  <Link
+                    to="/battlepass"
+                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/10 transition-colors group"
+                  >
+                    <Gift className="w-5 h-5 text-blue-400" />
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-cream group-hover:text-blue-400">Battle Pass</span>
+                      <span className="text-xs text-cream/40 block">Claim rewards</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-blue-400" />
+                  </Link>
                 </div>
               </div>
             </>
@@ -1186,8 +965,6 @@ const Dashboard = () => {
         activeCorps={activeCorps}
         activeCorpsClass={activeCorpsClass}
         engagementData={engagementData}
-        dailyChallenges={dailyChallenges}
-        recentScores={recentScores}
       />
     </div>
   );
