@@ -1,16 +1,15 @@
 // =============================================================================
 // GAMING HEADER COMPONENT (TypeScript)
 // =============================================================================
-// Global top navigation bar with sports gaming aesthetic
-// Replaces the sidebar navigation with a persistent header
+// Simplified global top navigation bar
+// 5 main items: Dashboard, Schedule, Scores, Leagues, Profile
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, Calendar, ShoppingCart, Users, Crown,
-  User, Menu, ChevronDown, Coins, Zap,
-  Trophy, Settings, LogOut, HelpCircle,
-  Award, Shield, X, Star
+  Home, Calendar, Trophy, Users, User,
+  Menu, Coins, Zap, Settings, LogOut,
+  Shield, X, Star
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, adminHelpers } from '../firebase';
@@ -37,26 +36,15 @@ interface UserProfile {
 }
 
 // =============================================================================
-// CONSTANTS
+// CONSTANTS - Simplified to 5 main items
 // =============================================================================
 
 const mainNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: Home },
   { path: '/schedule', label: 'Schedule', icon: Calendar },
-  { path: '/staff', label: 'Market', icon: ShoppingCart },
-  { path: '/leagues', label: 'Leagues', icon: Users },
-  { path: '/battlepass', label: 'Season Pass', icon: Crown },
-];
-
-const moreNavItems: NavItem[] = [
   { path: '/scores', label: 'Scores', icon: Trophy },
-  { path: '/hall-of-champions', label: 'Hall of Champions', icon: Award },
-  { path: '/how-to-play', label: 'How to Play', icon: HelpCircle },
-];
-
-const accountNavItems: NavItem[] = [
+  { path: '/leagues', label: 'Leagues', icon: Users },
   { path: '/profile', label: 'Profile', icon: User },
-  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 // =============================================================================
@@ -68,8 +56,6 @@ const GamingHeader: React.FC = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Use global season store
@@ -92,25 +78,9 @@ const GamingHeader: React.FC = () => {
     }
   }, [user]);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.dropdown-container')) {
-        setMoreDropdownOpen(false);
-        setProfileDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
-    setMoreDropdownOpen(false);
-    setProfileDropdownOpen(false);
   }, [location]);
 
   // Prevent body scroll when mobile menu is open
@@ -133,21 +103,29 @@ const GamingHeader: React.FC = () => {
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/profile') {
+      return location.pathname.startsWith('/profile');
+    }
+    if (path === '/scores') {
+      return location.pathname.startsWith('/scores');
+    }
+    return location.pathname === path;
+  };
 
   // Calculate XP progress percentage
   const xpProgress = profile?.xp ? ((profile.xp % 1000) / 1000) * 100 : 0;
 
   return (
     <>
-      {/* Main Header - Sleek Dark Glass Navigation */}
+      {/* Main Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
         {/* Subtle golden gradient line at top */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
 
         <div className="h-16 px-4 lg:px-6">
           <div className="flex items-center justify-between h-full max-w-[1920px] mx-auto">
-            {/* Left Section - Glowing Gold Logo */}
+            {/* Left Section - Logo */}
             <Link to="/dashboard" className="flex items-center gap-3 group">
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.25)] group-hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] transition-all duration-300">
@@ -157,8 +135,6 @@ const GamingHeader: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                {/* Pulsing indicator */}
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.8)] animate-pulse" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-display font-bold tracking-tight drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">
@@ -194,234 +170,60 @@ const GamingHeader: React.FC = () => {
                   >
                     <Icon className={`w-4 h-4 transition-all duration-300 ${active ? 'text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]' : 'text-yellow-50/60 group-hover:text-yellow-50/80'}`} />
                     <span className={active ? 'drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]' : ''}>{item.label}</span>
-                    {/* Active under-glow indicator */}
+                    {/* Active indicator */}
                     {active && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6),0_0_20px_rgba(234,179,8,0.3)]"
+                        className="absolute -bottom-1 left-3 right-3 h-[3px] rounded-full bg-gradient-to-r from-yellow-500/80 via-yellow-400 to-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.6)]"
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       />
-                    )}
-                    {/* Hover indicator for inactive links */}
-                    {!active && (
-                      <div className="absolute -bottom-1 left-3 right-3 h-[2px] rounded-full bg-yellow-50/0 group-hover:bg-yellow-50/20 transition-all duration-300" />
-                    )}
-                    {item.label === 'Season Pass' && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.7)] animate-pulse" />
                     )}
                   </Link>
                 );
               })}
 
-              {/* More Dropdown */}
-              <div className="relative dropdown-container">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMoreDropdownOpen(!moreDropdownOpen);
-                    setProfileDropdownOpen(false);
-                  }}
+              {/* Admin Link (Desktop) */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
                   className={`
-                    flex items-center gap-1 px-3 py-2 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
+                    relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
                     transition-all duration-300
-                    ${moreDropdownOpen ? 'text-yellow-400 bg-yellow-500/10' : 'text-yellow-50/60 hover:text-yellow-50'}
+                    ${isActive('/admin')
+                      ? 'text-yellow-400'
+                      : 'text-yellow-50/60 hover:text-yellow-50'
+                    }
                   `}
                 >
-                  <span>More</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${moreDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                <AnimatePresence>
-                  {moreDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full right-0 mt-2 w-56 py-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
-                    >
-                      {moreNavItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`
-                              flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-all duration-200
-                              ${isActive(item.path)
-                                ? 'text-yellow-400 bg-yellow-500/10'
-                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
-                              }
-                            `}
-                          >
-                            <Icon className="w-4 h-4" />
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                      {isAdmin && (
-                        <>
-                          <div className="my-2 border-t border-white/10" />
-                          <Link
-                            to="/admin"
-                            className={`
-                              flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-all duration-200
-                              ${isActive('/admin')
-                                ? 'text-yellow-400 bg-yellow-500/10'
-                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
-                              }
-                            `}
-                          >
-                            <Shield className="w-4 h-4" />
-                            <span>Admin Panel</span>
-                          </Link>
-                        </>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                  <Shield className="w-4 h-4" />
+                  <span>Admin</span>
+                </Link>
+              )}
             </nav>
 
-            {/* Right Section - Player Stats HUD */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Glowing Game Stats Module */}
+            {/* Right Section - User Stats */}
+            <div className="flex items-center gap-2">
+              {/* Level & Coins (Desktop) */}
               {profile && (
-                <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.3)]">
-                  {/* Level Stat */}
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-[0_0_15px_rgba(234,179,8,0.25)] transition-all duration-300 group"
-                  >
-                    <div className="relative">
-                      <Zap className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
-                      <div className="absolute inset-0 animate-ping opacity-30">
-                        <Zap className="w-4 h-4 text-yellow-400" />
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-[9px] text-yellow-50/50 uppercase tracking-wider leading-none">Level</span>
-                      <span className="font-data font-bold text-yellow-400 text-sm leading-none drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
-                        {profile.xpLevel || 1}
-                      </span>
-                    </div>
-                    {/* XP micro progress */}
-                    <div className="w-12 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                      <div
-                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-300 shadow-[0_0_8px_rgba(234,179,8,0.6)] transition-all duration-500"
-                        style={{ width: `${xpProgress}%` }}
-                      />
-                    </div>
-                  </Link>
-
-                  {/* Divider */}
-                  <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-
-                  {/* Currency Stat */}
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-yellow-500/15 to-amber-600/10 border border-yellow-500/15 hover:border-yellow-500/40 hover:shadow-[0_0_15px_rgba(234,179,8,0.25)] transition-all duration-300 group"
-                  >
-                    <div className="relative">
-                      <Coins className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-[9px] text-yellow-50/50 uppercase tracking-wider leading-none">Corps Coin</span>
-                      <span className="font-data font-bold text-yellow-400 text-sm leading-none drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">
-                        {(profile.corpsCoin || 0).toLocaleString()}
-                      </span>
-                    </div>
-                  </Link>
-                </div>
-              )}
-
-              {/* Profile Dropdown (Desktop) */}
-              <div className="relative dropdown-container hidden lg:block">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setProfileDropdownOpen(!profileDropdownOpen);
-                    setMoreDropdownOpen(false);
-                  }}
-                  className="flex items-center gap-2 p-1.5 rounded-xl bg-black/30 border border-white/10 hover:border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300 group"
+                <Link
+                  to="/profile"
+                  className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl hover:border-yellow-500/30 transition-all duration-300"
                 >
-                  <div className="relative">
-                    <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center border border-yellow-500/40 shadow-[0_0_15px_rgba(234,179,8,0.35)] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300">
-                      <User className="w-5 h-5 text-slate-900" />
-                    </div>
-                    {(profile?.xpLevel ?? 0) >= 10 && (
-                      <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]" />
-                    )}
-                    {/* Online indicator */}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-950 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    <span className="font-data font-bold text-yellow-400 text-sm">
+                      {profile.xpLevel || 1}
+                    </span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-yellow-50/60 transition-transform duration-300 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                <AnimatePresence>
-                  {profileDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute top-full right-0 mt-2 w-64 py-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
-                    >
-                      {/* User Info */}
-                      <div className="px-4 py-3 border-b border-white/10">
-                        <p className="font-semibold text-yellow-50 truncate">
-                          {profile?.displayName || 'Director'}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-yellow-50/60">
-                          <span className="flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-yellow-400" />
-                            Level {profile?.xpLevel || 1}
-                          </span>
-                          <span className="flex items-center gap-1 text-yellow-400">
-                            <Coins className="w-3 h-3" />
-                            {(profile?.corpsCoin || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Account Links */}
-                      {accountNavItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`
-                              flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                              transition-all duration-200
-                              ${isActive(item.path)
-                                ? 'text-yellow-400 bg-yellow-500/10'
-                                : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5'
-                              }
-                            `}
-                          >
-                            <Icon className="w-4 h-4" />
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
-
-                      <div className="my-2 border-t border-white/10" />
-
-                      {/* Sign Out */}
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                  <div className="w-px h-4 bg-white/20" />
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="w-4 h-4 text-yellow-400" />
+                    <span className="font-data font-bold text-yellow-400 text-sm">
+                      {(profile.corpsCoin || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </Link>
+              )}
 
               {/* Mobile Menu Toggle */}
               <button
@@ -450,7 +252,7 @@ const GamingHeader: React.FC = () => {
               className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 lg:hidden"
             />
 
-            {/* Menu Panel - Glassmorphism */}
+            {/* Menu Panel */}
             <motion.nav
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -478,7 +280,7 @@ const GamingHeader: React.FC = () => {
                         <User className="w-6 h-6 text-slate-900" />
                       </div>
                       {(profile.xpLevel ?? 0) >= 10 && (
-                        <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
+                        <Star className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400 fill-yellow-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -497,125 +299,67 @@ const GamingHeader: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* XP Progress Bar */}
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-yellow-50/60 mb-1">
-                      <span>XP Progress</span>
-                      <span className="font-data">{Math.round(xpProgress)}%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)] transition-all duration-500"
-                        style={{ width: `${xpProgress}%` }}
-                      />
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {/* Navigation Sections */}
+              {/* Navigation */}
               <div className="py-4">
-                {/* Main Nav */}
-                <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
-                    Main
-                  </h3>
-                  {mainNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`
-                          flex items-center gap-3 px-4 py-3 transition-all duration-200
-                          ${active
-                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]'
-                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
-                          }
-                        `}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* More Nav */}
-                <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
-                    More
-                  </h3>
-                  {moreNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`
-                          flex items-center gap-3 px-4 py-3 transition-all duration-200
-                          ${active
-                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]'
-                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
-                          }
-                        `}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                  {isAdmin && (
+                {mainNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
                     <Link
-                      to="/admin"
+                      key={item.path}
+                      to={item.path}
                       className={`
                         flex items-center gap-3 px-4 py-3 transition-all duration-200
-                        ${isActive('/admin')
+                        ${active
                           ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
                           : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
                         }
                       `}
                     >
-                      <Shield className="w-5 h-5" />
-                      <span className="font-medium">Admin Panel</span>
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
                     </Link>
-                  )}
-                </div>
+                  );
+                })}
 
-                {/* Account Nav */}
-                <div className="mb-4">
-                  <h3 className="px-4 mb-2 text-xs font-semibold text-yellow-50/40 uppercase tracking-wider">
-                    Account
-                  </h3>
-                  {accountNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`
-                          flex items-center gap-3 px-4 py-3 transition-all duration-200
-                          ${active
-                            ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
-                            : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
-                          }
-                        `}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                {/* Settings */}
+                <Link
+                  to="/settings"
+                  className={`
+                    flex items-center gap-3 px-4 py-3 transition-all duration-200
+                    ${isActive('/settings')
+                      ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
+                      : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
+                    }
+                  `}
+                >
+                  <Settings className="w-5 h-5" />
+                  <span className="font-medium">Settings</span>
+                </Link>
+
+                {/* Admin (if applicable) */}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`
+                      flex items-center gap-3 px-4 py-3 transition-all duration-200
+                      ${isActive('/admin')
+                        ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
+                        : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
+                      }
+                    `}
+                  >
+                    <Shield className="w-5 h-5" />
+                    <span className="font-medium">Admin Panel</span>
+                  </Link>
+                )}
               </div>
 
-              {/* Bottom Actions */}
-              <div className="p-4 border-t border-white/10 space-y-3">
-                {/* Sign Out */}
+              {/* Sign Out */}
+              <div className="p-4 border-t border-white/10">
                 <button
                   onClick={handleSignOut}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-all duration-300"
@@ -630,7 +374,7 @@ const GamingHeader: React.FC = () => {
                 <div className="p-4 border-t border-white/10 bg-gradient-to-r from-yellow-500/10 to-transparent">
                   <div className="text-center">
                     <p className="text-xs text-yellow-50/50 uppercase tracking-wider">Current Season</p>
-                    <p className="text-lg font-display font-bold text-yellow-400 mt-1 capitalize drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">
+                    <p className="text-lg font-display font-bold text-yellow-400 mt-1 capitalize">
                       {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
                     </p>
                   </div>

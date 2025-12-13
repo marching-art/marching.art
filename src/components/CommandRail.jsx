@@ -1,181 +1,55 @@
 // =============================================================================
-// COMMAND RAIL COMPONENT
+// COMMAND RAIL COMPONENT (Simplified)
 // =============================================================================
-// Persistent desktop sidebar navigation with gamified "Night Mode Stadium" aesthetic
-// Features: Dark glass, gold accents, distinct active states, expandable with labels
-// Width: 80px (collapsed) or 240px (expanded) - User toggleable
+// Simple desktop sidebar navigation with 5 main items
+// No collapse functionality - always shows icons + labels
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home,
-  Calendar,
-  Trophy,
-  Users,
-  Crown,
-  User,
-  Settings,
-  Shield,
-  ChevronLeft,
-  ChevronRight
+  Home, Calendar, Trophy, Users, User,
+  Settings, LogOut, Shield
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { adminHelpers } from '../firebase';
 
 // =============================================================================
-// MARCHING.ART GAME LOGO
+// CONSTANTS - 5 main navigation items
 // =============================================================================
 
-const MarchingArtLogo = ({ className = '' }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 65 65" className={className}>
-    <g>
-      <circle cx="0" cy="0" r="4" className="fill-cream/80"/>
-      <circle cx="25" cy="0" r="4" className="fill-cream/80"/>
-      <circle cx="50" cy="0" r="4" className="fill-cream/80"/>
-      <circle cx="0" cy="25" r="4" className="fill-cream/80"/>
-      <circle cx="25" cy="25" r="4" className="fill-cream/80"/>
-      <circle cx="50" cy="25" r="4" className="fill-cream/80"/>
-      <circle cx="0" cy="50" r="4" className="fill-cream/80"/>
-      <circle cx="25" cy="50" r="4" className="fill-cream/80"/>
-      <circle cx="50" cy="50" r="4" className="fill-cream/80"/>
-      <path d="M 0 0 Q 50 0, 50 50" className="stroke-gold-400" strokeWidth="6" fill="none" strokeLinecap="round"/>
-    </g>
-  </svg>
-);
-
-// =============================================================================
-// TYPES & CONSTANTS
-// =============================================================================
-
-const primaryNavItems = [
-  {
-    path: '/dashboard',
-    label: 'Command Center',
-    shortLabel: 'Home',
-    icon: Home,
-    description: 'Your HQ dashboard'
-  },
-  {
-    path: '/schedule',
-    label: 'Tour Schedule',
-    shortLabel: 'Schedule',
-    icon: Calendar,
-    description: 'Manage shows & events'
-  },
-  {
-    path: '/scores',
-    label: 'Leaderboards',
-    shortLabel: 'Scores',
-    icon: Trophy,
-    description: 'Global rankings'
-  },
-  {
-    path: '/leagues',
-    label: 'Leagues',
-    shortLabel: 'Leagues',
-    icon: Users,
-    description: 'Multiplayer competitions'
-  },
-  {
-    path: '/battlepass',
-    label: 'Season Pass',
-    shortLabel: 'Pass',
-    icon: Crown,
-    description: 'Unlock rewards'
-  },
+const navItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: Home },
+  { path: '/schedule', label: 'Schedule', icon: Calendar },
+  { path: '/scores', label: 'Scores', icon: Trophy },
+  { path: '/leagues', label: 'Leagues', icon: Users },
+  { path: '/profile', label: 'Profile', icon: User },
 ];
 
-const secondaryNavItems = [
-  {
-    path: '/profile',
-    label: 'Profile',
-    shortLabel: 'Profile',
-    icon: User,
-    description: 'Your achievements'
-  },
-  {
-    path: '/settings',
-    label: 'Settings',
-    shortLabel: 'Settings',
-    icon: Settings,
-    description: 'Preferences'
-  },
+const secondaryItems = [
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 // =============================================================================
 // NAV ITEM COMPONENT
 // =============================================================================
 
-const NavItem = ({ item, isActive, isExpanded }) => {
+const NavItem = ({ item, isActive }) => {
   const Icon = item.icon;
 
   return (
     <Link
       to={item.path}
       className={`
-        relative flex items-center rounded-xl
-        transition-all duration-300 group
-        ${isExpanded ? 'w-full px-3 py-2.5 gap-3' : 'w-12 h-12 justify-center'}
+        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+        ${isActive
+          ? 'bg-yellow-500/15 text-yellow-400 font-semibold'
+          : 'text-yellow-50/70 hover:bg-white/5 hover:text-yellow-50'
+        }
       `}
     >
-      {/* Icon */}
-      <Icon
-        className={`
-          w-5 h-5 transition-all duration-300 shrink-0
-          ${isActive
-            ? 'text-gold-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]'
-            : 'text-cream-muted group-hover:text-gold-400 group-hover:drop-shadow-[0_0_4px_rgba(234,179,8,0.3)]'
-          }
-        `}
-      />
-
-      {/* Label (expanded state) */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
-            className={`
-              text-sm font-medium truncate
-              ${isActive ? 'text-gold-400' : 'text-cream-muted group-hover:text-cream'}
-            `}
-          >
-            {item.label}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      <Icon className={`w-5 h-5 ${isActive ? 'text-yellow-400' : ''}`} />
+      <span className="text-sm">{item.label}</span>
     </Link>
-  );
-};
-
-// =============================================================================
-// TOGGLE BUTTON COMPONENT
-// =============================================================================
-
-const ToggleButton = ({ isExpanded, onToggle }) => {
-  return (
-    <button
-      onClick={onToggle}
-      className="
-        absolute -right-3 top-8 -translate-y-1/2 z-30
-        w-6 h-6 rounded-full
-        bg-charcoal-800 border border-gold-500/30
-        flex items-center justify-center
-        hover:bg-charcoal-700 hover:border-gold-500/50 hover:shadow-[0_0_10px_rgba(234,179,8,0.3)]
-        transition-all duration-200
-        shadow-lg shadow-black/50
-      "
-      aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-    >
-      {isExpanded ? (
-        <ChevronLeft className="w-3.5 h-3.5 text-gold-400" />
-      ) : (
-        <ChevronRight className="w-3.5 h-3.5 text-gold-400" />
-      )}
-    </button>
   );
 };
 
@@ -183,21 +57,22 @@ const ToggleButton = ({ isExpanded, onToggle }) => {
 // COMMAND RAIL COMPONENT
 // =============================================================================
 
-const CommandRail = ({ isExpanded = false, onToggle }) => {
+const CommandRail = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check admin status
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (user) {
-        const adminStatus = await adminHelpers.isAdmin();
-        setIsAdmin(adminStatus);
-      }
-    };
-    checkAdmin();
-  }, [user]);
+    adminHelpers.isAdmin().then(setIsAdmin);
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const isActiveRoute = (path) => {
     if (path === '/dashboard') {
@@ -214,95 +89,74 @@ const CommandRail = ({ isExpanded = false, onToggle }) => {
 
   return (
     <nav
-      className="h-full flex flex-col bg-charcoal-950/80 backdrop-blur-xl relative"
+      className="h-full w-56 flex flex-col bg-slate-950/90 backdrop-blur-xl border-r border-white/5"
       aria-label="Main navigation"
     >
-      {/* Toggle Button */}
-      {onToggle && <ToggleButton isExpanded={isExpanded} onToggle={onToggle} />}
-
-      {/* Logo/Brand Area */}
-      <div className={`
-        flex items-center h-16 border-b border-white/5
-        ${isExpanded ? 'px-4 gap-3' : 'justify-center'}
-      `}>
-        <Link
-          to="/dashboard"
-          className="flex items-center justify-center w-10 h-10 shrink-0 p-1 hover:drop-shadow-[0_0_8px_rgba(234,179,8,0.4)] transition-all"
-        >
-          <MarchingArtLogo className="w-full h-full" />
+      {/* Logo */}
+      <div className="h-16 px-4 flex items-center border-b border-white/5">
+        <Link to="/dashboard" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/30">
+            <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-lg font-display font-bold">
+              <span className="text-yellow-400">Marching</span>
+              <span className="text-yellow-50/90">.art</span>
+            </h1>
+          </div>
         </Link>
-
-        {/* Brand text (expanded) */}
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="text-sm font-display font-bold tracking-wide">
-                <span className="text-cream">MARCHING</span><span className="text-gold-400">.ART</span>
-              </div>
-              <div className="text-xs text-cream-muted font-medium -mt-0.5">
-                Drum Corps Manager
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Primary Navigation */}
-      <div className={`
-        flex-1 flex flex-col py-4 space-y-1 overflow-y-auto overflow-x-hidden
-        ${isExpanded ? 'px-3' : 'items-center px-2'}
-      `}>
-        {primaryNavItems.map((item) => (
+      {/* Main Navigation */}
+      <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        {navItems.map((item) => (
           <NavItem
             key={item.path}
             item={item}
             isActive={isActiveRoute(item.path)}
-            isExpanded={isExpanded}
           />
         ))}
       </div>
 
       {/* Divider */}
-      <div className={`h-px bg-gradient-to-r from-transparent via-white/10 to-transparent ${isExpanded ? 'mx-4' : 'mx-3'}`} />
+      <div className="h-px mx-4 bg-white/10" />
 
       {/* Secondary Navigation */}
-      <div className={`
-        flex flex-col py-4 space-y-1
-        ${isExpanded ? 'px-3' : 'items-center px-2'}
-      `}>
-        {secondaryNavItems.map((item) => (
+      <div className="py-4 px-3 space-y-1">
+        {secondaryItems.map((item) => (
           <NavItem
             key={item.path}
             item={item}
             isActive={isActiveRoute(item.path)}
-            isExpanded={isExpanded}
           />
         ))}
 
-        {/* Admin Link (Conditional) */}
+        {/* Admin Link */}
         {isAdmin && (
-          <NavItem
-            item={{
-              path: '/admin',
-              label: 'Admin Panel',
-              shortLabel: 'Admin',
-              icon: Shield,
-              description: 'System administration'
-            }}
-            isActive={isActiveRoute('/admin')}
-            isExpanded={isExpanded}
-          />
+          <Link
+            to="/admin"
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+              ${isActiveRoute('/admin')
+                ? 'bg-yellow-500/15 text-yellow-400 font-semibold'
+                : 'text-yellow-50/70 hover:bg-white/5 hover:text-yellow-50'
+              }
+            `}
+          >
+            <Shield className="w-5 h-5" />
+            <span className="text-sm">Admin</span>
+          </Link>
         )}
-      </div>
 
-      {/* Stadium Lights Effect - Subtle glow at top */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-stadium-lights-subtle pointer-events-none" />
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-yellow-50/70 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm">Sign Out</span>
+        </button>
+      </div>
     </nav>
   );
 };

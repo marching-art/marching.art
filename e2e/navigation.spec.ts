@@ -2,12 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Navigation', () => {
   test.describe('Public Pages', () => {
-    test('should navigate to How to Play page', async ({ page }) => {
+    test('should redirect How to Play to dashboard', async ({ page }) => {
       await page.goto('/how-to-play');
 
-      // Should load the how to play content
-      await expect(page).toHaveURL(/\/how-to-play/);
-      await expect(page.locator('h1, h2').first()).toBeVisible();
+      // Should redirect to dashboard (or login if not authenticated)
+      await page.waitForTimeout(500);
+      const url = page.url();
+      expect(url.includes('/dashboard') || url.includes('/login')).toBeTruthy();
     });
 
     test('should navigate to Terms page', async ({ page }) => {
