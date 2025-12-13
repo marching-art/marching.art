@@ -1,4 +1,5 @@
 // src/components/Dashboard/index.js
+// Export modal components used by Dashboard
 export {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
@@ -9,10 +10,5 @@ export {
   AchievementModal
 } from './DashboardModals';
 
-// New dashboard components
-export { default as DashboardHeader } from './DashboardHeader';
-export { default as DashboardSidebar } from './DashboardSidebar';
-export { default as DashboardCorpsPanel } from './DashboardCorpsPanel';
+// Morning report component
 export { default as MorningReport } from './MorningReport';
-export { default as CommandCenter } from './CommandCenter';
-export { default as RichActionModule } from './RichActionModule';

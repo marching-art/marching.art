@@ -1,18 +1,14 @@
 // src/pages/Dashboard.jsx
-// ARCHITECTURE: High-Density HUD (Heads-Up Display) - One-Page Command Center
-// Three-Column Layout: Intelligence | Command | Logistics
-// No scrolling on desktop - everything fits in viewport
+// Simplified Fantasy Dashboard - Focus on Corps, Scores, League
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  Zap, Music, Trophy, Calendar,
-  Check, X, Crown, Flame, Coins,
-  Sparkles, Gift, Edit, ChevronRight, Radio
+  Trophy, Calendar, Edit, ChevronRight, Coins, Users,
+  Music, Eye, Sparkles, X, Crown
 } from 'lucide-react';
 import { useAuth } from '../App';
-import BrandLogo from '../components/BrandLogo';
-import { db, analyticsHelpers } from '../firebase';
+import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
@@ -30,14 +26,22 @@ import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
-import {
-  retireCorps,
-} from '../firebase/functions';
-import { useSeasonStore } from '../store/seasonStore';
+import { useMyLeagues } from '../hooks/useLeagues';
+import { retireCorps } from '../firebase/functions';
 
-// ============================================================================
-// DESIGN TOKENS (from audit)
-// ============================================================================
+// Caption definitions for lineup display
+const CAPTIONS = [
+  { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
+  { id: 'GE2', name: 'GE2', fullName: 'General Effect 2', category: 'ge' },
+  { id: 'VP', name: 'VP', fullName: 'Visual Proficiency', category: 'vis' },
+  { id: 'VA', name: 'VA', fullName: 'Visual Analysis', category: 'vis' },
+  { id: 'CG', name: 'CG', fullName: 'Color Guard', category: 'vis' },
+  { id: 'B', name: 'B', fullName: 'Brass', category: 'mus' },
+  { id: 'MA', name: 'MA', fullName: 'Music Analysis', category: 'mus' },
+  { id: 'P', name: 'P', fullName: 'Percussion', category: 'mus' },
+];
+
+// Class badge styles
 const classColors = {
   worldClass: 'bg-gold-500 text-charcoal-900',
   openClass: 'bg-purple-500 text-white',
@@ -47,269 +51,29 @@ const classColors = {
 
 const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
-// ============================================================================
-// REUSABLE HUD COMPONENTS - Optimized for information density
-// Uses clamp() for responsive scaling based on viewport
-// ============================================================================
-
-// Resource Pill - Compact stat display for header
-const ResourcePill = ({ icon: Icon, value, label, color = 'gold', onClick, pulse = false }) => {
-  const colorMap = {
-    gold: 'text-gold-400 bg-gold-500/15 border-gold-500/30',
-    blue: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
-    green: 'text-green-400 bg-green-500/15 border-green-500/30',
-    purple: 'text-purple-400 bg-purple-500/15 border-purple-500/30',
-    orange: 'text-orange-400 bg-orange-500/15 border-orange-500/30',
+// Parse lineup value "CorpsName|Year|Points" -> { name, year, points }
+const parseLineupValue = (value) => {
+  if (!value) return null;
+  const parts = value.split('|');
+  return {
+    name: parts[0] || 'Unknown',
+    year: parts[1] || '',
+    points: parseInt(parts[2]) || 0,
   };
-
-  const Wrapper = onClick ? 'button' : 'div';
-
-  return (
-    <Wrapper
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-2 py-1 rounded border backdrop-blur-sm transition-all ${colorMap[color]} ${onClick ? 'hover:bg-white/10 cursor-pointer' : ''} ${pulse ? 'animate-pulse' : ''}`}
-    >
-      <Icon className="w-4 h-4" />
-      <span className="text-sm font-data font-bold tabular-nums">{value}</span>
-      {label && <span className="text-xs text-cream/50 uppercase tracking-wide hidden xl:inline">{label}</span>}
-    </Wrapper>
-  );
 };
 
-// Section Progress Bar - Compact progress with label and optional caption
-const SectionProgressBar = ({ value, label, color = 'blue', showPercent = true, caption = null }) => {
-  const bgMap = {
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    gold: 'bg-gold-500',
-    purple: 'bg-purple-500',
-    orange: 'bg-orange-500',
-    red: 'bg-red-500',
-  };
-  const textMap = {
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    gold: 'text-gold-400',
-    purple: 'text-purple-400',
-    orange: 'text-orange-400',
-    red: 'text-red-400',
-  };
-
-  const percent = Math.round(value * 100);
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-24 shrink-0">
-        <span className="text-xs font-display font-bold text-cream/70 uppercase tracking-wide">
-          {label}
-        </span>
-        {caption && (
-          <span className="text-[9px] text-cream/40 ml-1">({caption})</span>
-        )}
-      </div>
-      <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className={`h-full ${bgMap[color]} rounded-full`}
-        />
-      </div>
-      {showPercent && (
-        <span className={`text-sm font-data font-bold w-12 text-right tabular-nums ${textMap[color]}`}>
-          {percent}%
-        </span>
-      )}
-    </div>
-  );
+// Animation variants
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-// Action Button - Primary action tile
-const ActionButton = ({ icon: Icon, label, subtitle, onClick, disabled, processing, completed, color = 'gold', size = 'md' }) => {
-  const colorMap = {
-    gold: { bg: 'bg-gold-500/20', border: 'border-gold-500/40', icon: 'text-gold-400', hover: 'hover:bg-gold-500/30' },
-    blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/40', icon: 'text-blue-400', hover: 'hover:bg-blue-500/30' },
-    green: { bg: 'bg-green-500/20', border: 'border-green-500/40', icon: 'text-green-400', hover: 'hover:bg-green-500/30' },
-    purple: { bg: 'bg-purple-500/20', border: 'border-purple-500/40', icon: 'text-purple-400', hover: 'hover:bg-purple-500/30' },
-    orange: { bg: 'bg-orange-500/20', border: 'border-orange-500/40', icon: 'text-orange-400', hover: 'hover:bg-orange-500/30' },
-  };
-  const c = colorMap[color];
-
-  return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled || processing}
-      whileHover={!disabled && !processing ? { scale: 1.01 } : {}}
-      whileTap={!disabled && !processing ? { scale: 0.99 } : {}}
-      className={`
-        p-2.5 flex items-center gap-2.5 w-full
-        bg-black/40 backdrop-blur-md border border-white/10 rounded-lg
-        transition-all duration-200
-        ${disabled ? 'opacity-40 cursor-not-allowed' : `cursor-pointer hover:border-white/20 ${c.hover}`}
-        ${completed ? 'border-green-500/40 bg-green-500/10' : ''}
-      `}
-    >
-      <div className={`p-2 rounded-lg ${completed ? 'bg-green-500/20' : c.bg} border ${completed ? 'border-green-500/40' : c.border}`}>
-        {processing ? (
-          <div className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
-        ) : completed ? (
-          <Check className="w-5 h-5 text-green-400" />
-        ) : (
-          <Icon className={`w-5 h-5 ${c.icon}`} />
-        )}
-      </div>
-      <div className="flex-1 text-left min-w-0">
-        <div className="text-sm font-display font-bold text-cream uppercase tracking-wide truncate">{label}</div>
-        {subtitle && <div className="text-xs text-cream/50 truncate">{subtitle}</div>}
-      </div>
-      <ChevronRight className="w-4 h-4 text-cream/30 shrink-0" />
-    </motion.button>
-  );
-};
-
-// Stat Card - Compact stat display for logistics
-const StatCard = ({ label, value, icon: Icon, color = 'gold', action, actionLabel }) => {
-  const colorMap = {
-    gold: 'text-gold-400',
-    blue: 'text-blue-400',
-    green: 'text-green-400',
-    purple: 'text-purple-400',
-    orange: 'text-orange-400',
-    red: 'text-red-400',
-  };
-
-  return (
-    <div className="bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg p-2.5">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-display font-bold text-cream/50 uppercase tracking-wide">{label}</span>
-        {Icon && <Icon className={`w-4 h-4 ${colorMap[color]}`} />}
-      </div>
-      <div className={`text-2xl font-data font-bold ${colorMap[color]} tabular-nums`}>{value}</div>
-      {action && (
-        <button
-          onClick={action}
-          className="mt-1.5 text-xs font-display font-bold text-gold-400 uppercase tracking-wide hover:text-gold-300 transition-colors"
-        >
-          {actionLabel} →
-        </button>
-      )}
-    </div>
-  );
-};
-
-// ============================================================================
-// LEAGUE TICKER COMPONENT - User's Corps Game Data Footer
-// ============================================================================
-const LeagueTicker = ({ seasonData, currentDay }) => {
-  const [tickerData, setTickerData] = useState({ scores: [], loading: true, error: null });
-  const { allShows, loading: scoresLoading } = useScoresData();
-
-  // Get recent game show results for ticker
-  useEffect(() => {
-    if (!scoresLoading && allShows.length > 0) {
-      // Get scores from yesterday and today
-      const recentShows = allShows
-        .filter(show => show.offSeasonDay >= currentDay - 1 && show.offSeasonDay <= currentDay)
-        .flatMap(show =>
-          show.scores.slice(0, 5).map(score => ({
-            corpsName: score.corpsName || score.corps,
-            totalScore: score.totalScore || score.score,
-            eventName: show.eventName,
-            day: show.offSeasonDay,
-            corpsClass: score.corpsClass,
-          }))
-        )
-        .sort((a, b) => b.totalScore - a.totalScore)
-        .slice(0, 10);
-
-      setTickerData({ scores: recentShows, loading: false, error: null });
-    } else if (!scoresLoading && allShows.length === 0) {
-      setTickerData({ scores: [], loading: false, error: null });
-    }
-  }, [allShows, scoresLoading, currentDay]);
-
-  // No data state
-  if (tickerData.loading) {
-    return (
-      <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center">
-        <span className="text-[10px] font-mono text-cream/40 uppercase tracking-wider">Loading league data...</span>
-      </div>
-    );
-  }
-
-  if (tickerData.scores.length === 0) {
-    const isOffSeason = !seasonData || seasonData.seasonType === 'off';
-    return (
-      <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center justify-center gap-2">
-        <Radio className="w-3 h-3 text-cream/30" />
-        <span className="text-[10px] font-mono text-cream/40 uppercase tracking-wider">
-          {isOffSeason ? 'Off-Season • No Active Shows' : 'Season Pending • Check Schedule'}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-8 bg-black/60 backdrop-blur-md border-t border-white/10 flex items-center overflow-hidden">
-      {/* Ticker Label */}
-      <div className="flex items-center gap-2 px-3 border-r border-white/10 h-full shrink-0">
-        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-        <span className="text-[9px] font-display font-bold text-cream/60 uppercase tracking-wider">Live</span>
-      </div>
-
-      {/* Scrolling Ticker */}
-      <div className="flex-1 overflow-hidden relative">
-        <motion.div
-          className="flex items-center gap-6 whitespace-nowrap"
-          animate={{ x: ['0%', '-50%'] }}
-          transition={{ x: { repeat: Infinity, duration: 30, ease: 'linear' } }}
-        >
-          {/* Double the content for seamless loop */}
-          {[...tickerData.scores, ...tickerData.scores].map((score, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <span className="text-[10px] font-display font-bold text-cream uppercase">
-                {score.corpsName}
-              </span>
-              <span className="text-[11px] font-data font-bold text-gold-400 tabular-nums">
-                {typeof score.totalScore === 'number' ? score.totalScore.toFixed(3) : score.totalScore}
-              </span>
-              <span className="text-[9px] text-cream/30">•</span>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Day Indicator */}
-      <div className="flex items-center gap-1.5 px-3 border-l border-white/10 h-full shrink-0">
-        <Calendar className="w-3 h-3 text-cream/40" />
-        <span className="text-[9px] font-mono text-cream/50">Day {currentDay}</span>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// ANIMATION VARIANTS
-// ============================================================================
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.2, staggerChildren: 0.05, delayChildren: 0.1 },
-  },
-};
-
-const columnVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] } },
-};
-
-// ============================================================================
-// MAIN DASHBOARD COMPONENT
-// ============================================================================
+// Simplified Dashboard Component
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
+  const { allShows } = useScoresData();
+  const { data: myLeagues } = useMyLeagues(user?.uid);
 
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
@@ -322,8 +86,6 @@ const Dashboard = () => {
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [showMorningReport, setShowMorningReport] = useState(false);
-
-  // Panel states
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
   // Destructure dashboard data
@@ -339,7 +101,6 @@ const Dashboard = () => {
     currentDay,
     formatSeasonName,
     engagementData,
-    unclaimedRewardsCount,
     showSeasonSetupWizard,
     setShowSeasonSetupWizard,
     corpsNeedingSetup,
@@ -349,9 +110,7 @@ const Dashboard = () => {
     clearNewlyUnlockedClass,
     newAchievement,
     clearNewAchievement,
-    recentScores,
     getCorpsClassName,
-    getCorpsClassColor,
     refreshProfile
   } = dashboardData;
 
@@ -376,6 +135,40 @@ const Dashboard = () => {
   useEffect(() => {
     if (newAchievement) setShowAchievementModal(true);
   }, [newAchievement]);
+
+  // Get recent scores for active corps
+  const getRecentScores = () => {
+    if (!allShows || !activeCorps) return [];
+    const corpsName = activeCorps.corpsName || activeCorps.name;
+
+    return allShows
+      .flatMap(show =>
+        show.scores
+          .filter(s => s.corpsName === corpsName || s.corps === corpsName)
+          .map(s => ({
+            eventName: show.eventName,
+            date: show.date,
+            totalScore: s.totalScore || s.score,
+            geScore: s.geScore,
+            visualScore: s.visualScore,
+            musicScore: s.musicScore,
+          }))
+      )
+      .slice(0, 3);
+  };
+
+  // Get upcoming shows for this week
+  const getThisWeekShows = () => {
+    if (!activeCorps?.selectedShows) return [];
+    const weekShows = activeCorps.selectedShows[`week${currentWeek}`] || [];
+    return weekShows.slice(0, 3);
+  };
+
+  // Get user's primary league
+  const getPrimaryLeague = () => {
+    if (!myLeagues || myLeagues.length === 0) return null;
+    return myLeagues[0];
+  };
 
   // Handler functions
   const handleSetupNewClass = () => {
@@ -417,16 +210,10 @@ const Dashboard = () => {
     }
   };
 
-  const handleOpenRetireModal = () => {
-    setShowRetireConfirm(true);
-  };
-
   const handleRetireCorps = async () => {
     setRetiring(true);
     try {
-      const result = await retireCorps({
-        corpsClass: activeCorpsClass
-      });
+      const result = await retireCorps({ corpsClass: activeCorpsClass });
       if (result.data.success) {
         toast.success(result.data.message);
         setShowRetireConfirm(false);
@@ -478,7 +265,6 @@ const Dashboard = () => {
         rank: null
       };
       await updateDoc(profileRef, { [`corps.${formData.class}`]: corpsData });
-      analyticsHelpers.logCorpsCreated(formData.class);
       toast.success(`${formData.name} registered successfully!`);
       setShowRegistration(false);
       clearNewlyUnlockedClass();
@@ -488,20 +274,18 @@ const Dashboard = () => {
     }
   };
 
-  const handleCloseRegistration = () => {
-    setShowRegistration(false);
-    clearNewlyUnlockedClass();
-  };
-
   const handleCaptionSelection = async () => {
     setShowCaptionSelection(false);
   };
 
-  // ============================================================================
-  // RENDER: THREE-COLUMN HUD LAYOUT
-  // ============================================================================
+  const recentScores = getRecentScores();
+  const thisWeekShows = getThisWeekShows();
+  const primaryLeague = getPrimaryLeague();
+  const lineup = activeCorps?.lineup || {};
+  const lineupCount = Object.keys(lineup).length;
+
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-charcoal-950">
+    <div className="min-h-full bg-charcoal-950 p-4 md:p-6">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -515,321 +299,352 @@ const Dashboard = () => {
         />
       )}
 
-      {/* ================================================================
-          GLOBAL HEADER - Resource Monitor Bar
-          Sticky, low-profile bar displaying real-time constraints
-          ================================================================ */}
-      <header className="shrink-0 h-14 bg-black/60 backdrop-blur-xl border-b border-white/10 px-4 flex items-center justify-between z-20">
-        {/* Left: Corps Name & Class */}
+      {/* Simple Header */}
+      <header className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-display font-bold text-cream">Dashboard</h1>
+          <span className="text-sm text-cream/50">
+            {formatSeasonName(seasonData?.name)} - Week {currentWeek}
+          </span>
+        </div>
         <div className="flex items-center gap-3">
-          {activeCorps ? (
-            <>
-              {hasMultipleCorps ? (
-                <div className="flex items-center gap-1.5">
-                  {Object.entries(corps)
-                    .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                    .map(([classId, corpsData]) => (
-                      <button
-                        key={classId}
-                        onClick={() => handleCorpsSwitch(classId)}
-                        className={`px-3 py-1.5 rounded text-xs font-display font-bold uppercase tracking-wide transition-all ${
-                          activeCorpsClass === classId
-                            ? `${classColors[classId]} shadow-sm`
-                            : 'bg-white/5 text-cream/60 hover:text-cream border border-white/10'
-                        }`}
-                      >
-                        {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
-                      </button>
-                    ))}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded text-xs font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
-                    {getCorpsClassName(activeCorpsClass)}
-                  </span>
-                  <span className="text-base font-display font-bold text-cream truncate max-w-[160px]">
-                    {activeCorps.corpsName || activeCorps.name}
-                  </span>
-                </div>
-              )}
-              {activeCorpsClass !== 'soundSport' && activeCorps.rank && activeCorps.rank <= 10 && (
-                <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 text-gold-400 text-xs font-bold">
-                  <Crown size={10} /> #{activeCorps.rank}
-                </span>
-              )}
-            </>
-          ) : (
-            <span className="text-base font-display text-cream/50">No Corps Registered</span>
-          )}
-        </div>
-
-        {/* Center: Season Progress */}
-        <div className="hidden md:flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-cream/40" />
-            <span className="text-xs font-mono text-cream/60">
-              {formatSeasonName(seasonData?.name)} • Week {currentWeek} • Day {currentDay}
-            </span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded-lg">
+            <Coins className="w-4 h-4 text-gold-400" />
+            <span className="text-sm font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
           </div>
-          {weeksRemaining !== null && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gold-500 rounded-full transition-all"
-                  style={{ width: `${((7 - weeksRemaining) / 7) * 100}%` }}
-                />
-              </div>
-              <span className="text-xs font-mono text-cream/40">{weeksRemaining}w left</span>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Resource Pills */}
-        <div className="flex items-center gap-2">
-          {engagementData?.loginStreak > 0 && (
-            <ResourcePill icon={Flame} value={engagementData.loginStreak} label="streak" color="orange" />
-          )}
-          <ResourcePill icon={Zap} value={`L${profile?.xpLevel || 1}`} color="gold" />
-          <ResourcePill icon={Coins} value={(profile?.corpsCoin || 0).toLocaleString()} color="gold" />
-          {unclaimedRewardsCount > 0 && (
-            <Link to="/battlepass">
-              <ResourcePill icon={Gift} value={unclaimedRewardsCount} color="purple" pulse />
-            </Link>
-          )}
         </div>
       </header>
 
-      {/* ================================================================
-          HUD BODY - Three-Column Layout
-          Left: Intelligence | Center: Command | Right: Logistics
-          ================================================================ */}
-      <motion.main
-        className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2 p-2 overflow-hidden"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* ================================================================
-            COLUMN B: COMMAND (The "Act" Zone)
-            Action Deck, Daily Tasks, Show Concept/Synergy
-            ================================================================ */}
-        <motion.section
-          variants={columnVariants}
-          className="col-span-1 lg:col-span-9 flex flex-col gap-2.5 overflow-y-auto lg:overflow-hidden"
-        >
-          {activeCorps ? (
-            <>
-              {/* Corps Hero Card */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-4 flex-shrink-0">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-2xl lg:text-3xl font-display font-black text-cream uppercase tracking-tight truncate">
-                        {activeCorps.corpsName || activeCorps.name || 'UNNAMED'}
-                      </h1>
-                      <button
-                        onClick={() => setShowEditCorps(true)}
-                        className="p-1.5 rounded hover:bg-white/10 text-cream/40 hover:text-gold-400 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {/* Show Concept */}
-                    <div className="flex items-center gap-2 mt-1.5">
-                      {typeof activeCorps.showConcept === 'object' && activeCorps.showConcept.theme ? (
-                        <button
-                          onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors group"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                          <span className="text-xs text-cream/60 group-hover:text-purple-400 capitalize">
-                            {activeCorps.showConcept.theme}
-                          </span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setShowSynergyPanel(true)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" /> Configure Show
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick Stats Row */}
-                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-white/10">
-                  <div className="text-center">
-                    <div className="text-xl font-data font-bold text-purple-400">
-                      {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
-                    </div>
-                    <div className="text-[10px] text-cream/40 uppercase">Shows This Week</div>
-                  </div>
-                  {activeCorpsClass !== 'soundSport' && (
-                    <div className="text-center">
-                      <div className="text-xl font-data font-bold text-gold-400">
-                        {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
-                      </div>
-                      <div className="text-[10px] text-cream/40 uppercase">Season Score</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Deck - Primary Actions */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Actions</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* Show Concept / Synergy */}
-                  <ActionButton
-                    icon={Sparkles}
-                    label="Show Concept"
-                    subtitle={activeCorps?.showConcept?.theme || 'Configure'}
-                    onClick={() => setShowSynergyPanel(true)}
-                    color="purple"
-                  />
-                  {/* Schedule */}
-                  <Link to="/schedule">
-                    <ActionButton
-                      icon={Calendar}
-                      label="Schedule"
-                      subtitle="View shows"
-                      color="blue"
-                    />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Quick Links - Simple navigation shortcuts */}
-              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 min-h-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2.5 shrink-0">
-                  <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Quick Links</span>
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-2">
-                  <Link
-                    to="/schedule"
-                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors group"
+      {activeCorps ? (
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Corps Switcher (if multiple corps) */}
+          {hasMultipleCorps && (
+            <div className="flex items-center gap-2">
+              {Object.entries(corps)
+                .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
+                .map(([classId, corpsData]) => (
+                  <button
+                    key={classId}
+                    onClick={() => handleCorpsSwitch(classId)}
+                    className={`px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all ${
+                      activeCorpsClass === classId
+                        ? `${classColors[classId]} shadow-lg`
+                        : 'bg-charcoal-800 text-cream/60 hover:text-cream border border-white/10'
+                    }`}
                   >
-                    <Calendar className="w-5 h-5 text-purple-400" />
-                    <div className="flex-1">
-                      <span className="text-sm font-semibold text-cream group-hover:text-purple-400">Show Schedule</span>
-                      <span className="text-xs text-cream/40 block">View and select shows</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-purple-400" />
-                  </Link>
-                  <Link
-                    to="/leaderboard"
-                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-gold-500/30 hover:bg-gold-500/10 transition-colors group"
-                  >
-                    <Trophy className="w-5 h-5 text-gold-400" />
-                    <div className="flex-1">
-                      <span className="text-sm font-semibold text-cream group-hover:text-gold-400">Leaderboard</span>
-                      <span className="text-xs text-cream/40 block">Check standings</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-gold-400" />
-                  </Link>
-                  <Link
-                    to="/battlepass"
-                    className="flex items-center gap-2.5 p-3 bg-black/30 rounded-lg border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/10 transition-colors group"
-                  >
-                    <Gift className="w-5 h-5 text-blue-400" />
-                    <div className="flex-1">
-                      <span className="text-sm font-semibold text-cream group-hover:text-blue-400">Battle Pass</span>
-                      <span className="text-xs text-cream/40 block">Claim rewards</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-cream/30 group-hover:text-blue-400" />
-                  </Link>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* No Corps State */
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center p-8 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg">
-                <BrandLogo className="w-16 h-16 mx-auto mb-4" color="text-cream/20" />
-                <h2 className="text-xl font-display font-bold text-cream mb-2">No Corps Registered</h2>
-                <p className="text-sm text-cream/50 mb-4">Create your first corps to begin your journey!</p>
-                <button
-                  onClick={() => setShowRegistration(true)}
-                  className="px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
-                >
-                  Register Corps
-                </button>
-              </div>
+                    {(corpsData.corpsName || corpsData.name || '').slice(0, 15)}
+                  </button>
+                ))}
             </div>
           )}
-        </motion.section>
 
-        {/* ================================================================
-            COLUMN C: LOGISTICS (The "Manage" Zone)
-            Season Progress and Navigation
-            ================================================================ */}
-        <motion.aside
-          variants={columnVariants}
-          className="hidden lg:flex lg:col-span-3 flex-col gap-2.5 overflow-hidden"
-        >
-          {/* Season Progress */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider">Season Progress</span>
-              <span className="text-xs font-mono text-cream/40">Day {currentDay}/49</span>
-            </div>
-            <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-gold-500 rounded-full transition-all"
-                style={{ width: `${(currentDay / 49) * 100}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-cream/40">
-              <span>Week {currentWeek}</span>
-              <span>{weeksRemaining}w remaining</span>
-            </div>
-          </div>
+          {/* Top Row: Corps Hero + This Week */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* YOUR CORPS - Hero Card */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="lg:col-span-2 bg-charcoal-900 border border-white/10 rounded-xl p-6"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`px-2.5 py-1 rounded text-xs font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
+                      {getCorpsClassName(activeCorpsClass)}
+                    </span>
+                    {activeCorps.rank && activeCorps.rank <= 10 && (
+                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 text-gold-400 text-xs font-bold">
+                        <Crown size={12} /> Top 10
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-3xl font-display font-black text-cream uppercase tracking-tight">
+                    {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
+                  </h2>
+                  {activeCorps.location && (
+                    <p className="text-sm text-cream/50 mt-1">{activeCorps.location}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowEditCorps(true)}
+                  className="p-2 rounded-lg hover:bg-white/10 text-cream/40 hover:text-cream transition-colors"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+              </div>
 
-          {/* Quick Navigation */}
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3.5 flex-1 overflow-y-auto">
-            <span className="text-xs font-display font-bold text-cream/60 uppercase tracking-wider block mb-3">Quick Links</span>
-            <div className="space-y-2">
+              {/* Season Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-white/10">
+                <div>
+                  <div className="text-2xl font-data font-bold text-gold-400">
+                    {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+                  </div>
+                  <div className="text-xs text-cream/50 uppercase">Season Score</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-data font-bold text-purple-400">
+                    #{activeCorps.rank || '-'}
+                  </div>
+                  <div className="text-xs text-cream/50 uppercase">Rank</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-data font-bold text-blue-400">
+                    {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
+                  </div>
+                  <div className="text-xs text-cream/50 uppercase">Shows This Week</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-data font-bold text-green-400">
+                    {lineupCount}/8
+                  </div>
+                  <div className="text-xs text-cream/50 uppercase">Lineup Set</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* THIS WEEK Card */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">This Week</h3>
+                <Calendar className="w-4 h-4 text-purple-400" />
+              </div>
+
+              {thisWeekShows.length > 0 ? (
+                <div className="space-y-3">
+                  {thisWeekShows.map((show, idx) => (
+                    <div key={idx} className="p-3 bg-charcoal-800 rounded-lg">
+                      <div className="text-sm font-semibold text-cream">{show.eventName || show.name || 'Show'}</div>
+                      <div className="text-xs text-cream/50">{show.location || show.date || ''}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Calendar className="w-8 h-8 text-cream/20 mx-auto mb-2" />
+                  <p className="text-sm text-cream/50">No shows selected</p>
+                </div>
+              )}
+
               <Link
                 to="/schedule"
-                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-colors group"
+                className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-sm font-semibold hover:bg-purple-500/20 transition-colors"
               >
-                <Calendar className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-cream group-hover:text-purple-400">Show Schedule</span>
+                View Schedule <ChevronRight className="w-4 h-4" />
               </Link>
+            </motion.div>
+          </div>
+
+          {/* YOUR LINEUP Section */}
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">Your Lineup</h3>
+                {typeof activeCorps?.showConcept === 'object' && activeCorps.showConcept.theme && (
+                  <button
+                    onClick={() => setShowSynergyPanel(true)}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400 hover:bg-purple-500/20 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {activeCorps.showConcept.theme}
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setShowCaptionSelection(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded-lg text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
+              >
+                <Edit className="w-4 h-4" /> Edit
+              </button>
+            </div>
+
+            {lineupCount > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {CAPTIONS.map((caption) => {
+                  const value = lineup[caption.id];
+                  const parsed = parseLineupValue(value);
+                  const categoryColors = {
+                    ge: 'border-gold-500/30 bg-gold-500/5',
+                    vis: 'border-blue-500/30 bg-blue-500/5',
+                    mus: 'border-purple-500/30 bg-purple-500/5',
+                  };
+                  const textColors = {
+                    ge: 'text-gold-400',
+                    vis: 'text-blue-400',
+                    mus: 'text-purple-400',
+                  };
+
+                  return (
+                    <div
+                      key={caption.id}
+                      className={`p-3 rounded-lg border ${categoryColors[caption.category]}`}
+                    >
+                      <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${textColors[caption.category]}`}>
+                        {caption.name}
+                      </div>
+                      {parsed ? (
+                        <>
+                          <div className="text-sm font-semibold text-cream truncate">
+                            {parsed.name}
+                          </div>
+                          <div className="text-xs text-cream/50">
+                            '{parsed.year?.slice(-2) || '??'}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-cream/30">Not set</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Music className="w-10 h-10 text-cream/20 mx-auto mb-3" />
+                <p className="text-sm text-cream/50 mb-4">No lineup configured yet</p>
+                <button
+                  onClick={() => setShowCaptionSelection(true)}
+                  className="px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors"
+                >
+                  Build Lineup
+                </button>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Bottom Row: League + Recent Scores */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEAGUE Card */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">League</h3>
+                <Users className="w-4 h-4 text-blue-400" />
+              </div>
+
+              {primaryLeague ? (
+                <div>
+                  <h4 className="text-lg font-display font-bold text-cream mb-2">{primaryLeague.name}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xl font-data font-bold text-blue-400">
+                        #{primaryLeague.userRank || '-'}
+                      </div>
+                      <div className="text-xs text-cream/50">Your Position</div>
+                    </div>
+                    <div>
+                      <div className="text-xl font-data font-bold text-cream/60">
+                        {primaryLeague.memberCount || 0}
+                      </div>
+                      <div className="text-xs text-cream/50">Members</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/leagues"
+                    className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm font-semibold hover:bg-blue-500/20 transition-colors"
+                  >
+                    View League <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Users className="w-8 h-8 text-cream/20 mx-auto mb-2" />
+                  <p className="text-sm text-cream/50 mb-4">Not in a league yet</p>
+                  <Link
+                    to="/leagues"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg font-display font-bold uppercase text-sm hover:bg-blue-400 transition-colors"
+                  >
+                    Join a League
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+
+            {/* RECENT SCORES Card */}
+            <motion.div
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">Recent Scores</h3>
+                <Trophy className="w-4 h-4 text-gold-400" />
+              </div>
+
+              {recentScores.length > 0 ? (
+                <div className="space-y-3">
+                  {recentScores.map((score, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-charcoal-800 rounded-lg">
+                      <div>
+                        <div className="text-sm font-semibold text-cream">{score.eventName}</div>
+                        <div className="text-xs text-cream/50">{score.date}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-data font-bold text-gold-400">
+                          {typeof score.totalScore === 'number' ? score.totalScore.toFixed(2) : score.totalScore}
+                        </div>
+                        {(score.geScore || score.visualScore || score.musicScore) && (
+                          <div className="flex items-center gap-2 text-xs text-cream/40">
+                            <span className="text-gold-400/60">GE:{score.geScore?.toFixed(0) || '-'}</span>
+                            <span className="text-blue-400/60">VIS:{score.visualScore?.toFixed(0) || '-'}</span>
+                            <span className="text-purple-400/60">MUS:{score.musicScore?.toFixed(0) || '-'}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Trophy className="w-8 h-8 text-cream/20 mx-auto mb-2" />
+                  <p className="text-sm text-cream/50">No scores yet</p>
+                </div>
+              )}
+
               <Link
                 to="/leaderboard"
-                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-gold-500/30 hover:bg-gold-500/10 transition-colors group"
+                className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-gold-500/10 border border-gold-500/20 rounded-lg text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
               >
-                <Trophy className="w-4 h-4 text-gold-400" />
-                <span className="text-sm text-cream group-hover:text-gold-400">Leaderboard</span>
+                View Leaderboard <ChevronRight className="w-4 h-4" />
               </Link>
-              <Link
-                to="/battlepass"
-                className="flex items-center gap-2 p-2.5 bg-black/30 rounded border border-white/5 hover:border-blue-500/30 hover:bg-blue-500/10 transition-colors group"
-              >
-                <Gift className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-cream group-hover:text-blue-400">Battle Pass</span>
-              </Link>
-            </div>
+            </motion.div>
           </div>
-        </motion.aside>
-      </motion.main>
+        </div>
+      ) : (
+        /* No Corps State */
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center p-8 bg-charcoal-900 border border-white/10 rounded-xl max-w-md">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gold-500/10 rounded-full flex items-center justify-center">
+              <Trophy className="w-8 h-8 text-gold-400" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-cream mb-2">Welcome to Marching.Art</h2>
+            <p className="text-sm text-cream/50 mb-6">Create your first fantasy corps to begin your journey!</p>
+            <button
+              onClick={() => setShowRegistration(true)}
+              className="px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
+            >
+              Register Corps
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* ================================================================
-          LIVE DATA FOOTER - League Ticker
-          Real scores from database, no placeholder data
-          ================================================================ */}
-      <LeagueTicker seasonData={seasonData} currentDay={currentDay} />
-
-      {/* ================================================================
-          SLIDE-OUT PANELS
-          ================================================================ */}
-
-      {/* Synergy Panel */}
+      {/* Show Concept Synergy Panel */}
       <AnimatePresence>
         {showSynergyPanel && (
           <>
@@ -838,19 +653,19 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSynergyPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-40"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-y-auto"
+              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950 border-l border-white/10 z-50 overflow-y-auto"
             >
-              <div className="panel-header">
-                <h2 className="panel-title">Show Concept Synergy</h2>
-                <button onClick={() => setShowSynergyPanel(false)} className="panel-close">
-                  <X className="w-5 h-5" />
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <h2 className="text-lg font-display font-bold text-cream">Show Concept</h2>
+                <button onClick={() => setShowSynergyPanel(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                  <X className="w-5 h-5 text-cream/60" />
                 </button>
               </div>
               <div className="p-4">
@@ -870,9 +685,7 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* ================================================================
-          MODALS
-          ================================================================ */}
+      {/* Modals */}
       <AnimatePresence>
         {showClassUnlockCongrats && newlyUnlockedClass && (
           <ClassUnlockCongratsModal
@@ -885,7 +698,7 @@ const Dashboard = () => {
 
         {showRegistration && (
           <CorpsRegistrationModal
-            onClose={handleCloseRegistration}
+            onClose={() => { setShowRegistration(false); clearNewlyUnlockedClass(); }}
             onSubmit={handleCorpsRegistration}
             unlockedClasses={profile?.unlockedClasses || ['soundSport']}
             defaultClass={newlyUnlockedClass}
@@ -947,10 +760,7 @@ const Dashboard = () => {
 
         {showAchievementModal && (
           <AchievementModal
-            onClose={() => {
-              setShowAchievementModal(false);
-              clearNewAchievement();
-            }}
+            onClose={() => { setShowAchievementModal(false); clearNewAchievement(); }}
             achievements={profile?.achievements || []}
             newAchievement={newAchievement}
           />
