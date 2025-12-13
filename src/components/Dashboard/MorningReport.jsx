@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sun, Moon, Coffee, Target, Wrench, Users, Heart,
-  Check, Flame, ChevronRight, X, Sparkles, ChevronDown
+  Sun, Moon, Coffee, Target, Users,
+  Check, Flame, ChevronRight, X, ChevronDown
 } from 'lucide-react';
 
 /**
@@ -16,13 +16,9 @@ const MorningReport = ({
   profile,
   activeCorps,
   activeCorpsClass,
-  executionState,
   engagementData,
   dailyChallenges,
   recentScores,
-  canRehearseToday,
-  onStartRehearsal,
-  onNavigateToEquipment,
   onNavigateToStaff
 }) => {
   const [showChallenges, setShowChallenges] = useState(false);
@@ -38,63 +34,8 @@ const MorningReport = ({
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
 
-  // Calculate corps health metrics
-  const getCorpsHealth = () => {
-    if (!executionState) return { status: 'loading', metrics: [], avgHealth: 0.75 };
-
-    const readiness = executionState.readiness || 0.75;
-    const morale = executionState.morale || 0.80;
-    const equipment = executionState.equipment || {};
-
-    // Filter out Max keys (uniformsMax, instrumentsMax, propsMax) from equipment average
-    const equipmentValues = Object.entries(equipment)
-      .filter(([key, val]) => typeof val === 'number' && !key.includes('Max'))
-      .map(([, val]) => val);
-    const avgEquipment = equipmentValues.length > 0
-      ? equipmentValues.reduce((a, b) => a + b, 0) / equipmentValues.length
-      : 0.85;
-
-    const metrics = [
-      { name: 'Readiness', value: readiness, icon: Target },
-      { name: 'Morale', value: morale, icon: Heart },
-      { name: 'Equipment', value: avgEquipment, icon: Wrench }
-    ];
-
-    const avgHealth = (readiness + morale + avgEquipment) / 3;
-
-    return { metrics, avgHealth };
-  };
-
-  const corpsHealth = getCorpsHealth();
-
-  // Get the primary action (most important thing to do)
+  // Get the primary action
   const getPrimaryAction = () => {
-    // Rehearsal is always the primary action if available
-    if (canRehearseToday && canRehearseToday()) {
-      return {
-        id: 'rehearse',
-        title: 'Run Daily Rehearsal',
-        subtitle: '+5% readiness • +25 XP',
-        icon: Target,
-        action: onStartRehearsal
-      };
-    }
-
-    // Otherwise check for urgent equipment needs
-    if (executionState?.equipment) {
-      const lowEquipment = Object.entries(executionState.equipment)
-        .filter(([key, val]) => typeof val === 'number' && val < 0.6 && !key.includes('Max'));
-      if (lowEquipment.length > 0) {
-        return {
-          id: 'equipment',
-          title: 'Repair Equipment',
-          subtitle: `${lowEquipment.length} item${lowEquipment.length > 1 ? 's' : ''} need attention`,
-          icon: Wrench,
-          action: onNavigateToEquipment
-        };
-      }
-    }
-
     // Check staffing
     const staffCount = profile?.staff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass)?.length || 0;
     if (staffCount === 0 && activeCorpsClass !== 'soundSport') {
@@ -112,39 +53,6 @@ const MorningReport = ({
 
   const primaryAction = getPrimaryAction();
 
-  // Get secondary quick actions
-  const getSecondaryActions = () => {
-    const actions = [];
-
-    // Only show secondary actions that aren't the primary
-    if (primaryAction?.id !== 'equipment' && executionState?.equipment) {
-      const lowEquipment = Object.entries(executionState.equipment)
-        .filter(([key, val]) => typeof val === 'number' && val < 0.6 && !key.includes('Max'));
-      if (lowEquipment.length > 0) {
-        actions.push({
-          id: 'equipment',
-          title: 'Check Equipment',
-          icon: Wrench,
-          action: onNavigateToEquipment
-        });
-      }
-    }
-
-    const staffCount = profile?.staff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass)?.length || 0;
-    if (primaryAction?.id !== 'staff' && staffCount === 0 && activeCorpsClass !== 'soundSport') {
-      actions.push({
-        id: 'staff',
-        title: 'Staff Market',
-        icon: Users,
-        action: onNavigateToStaff
-      });
-    }
-
-    return actions;
-  };
-
-  const secondaryActions = getSecondaryActions();
-
   // Handle action click
   const handleAction = (action) => {
     if (action?.action) {
@@ -152,15 +60,6 @@ const MorningReport = ({
       onClose();
     }
   };
-
-  // Get health color and status (aligned with EquipmentManager thresholds)
-  const getHealthDisplay = (value) => {
-    if (value >= 0.85) return { color: 'text-green-400', bg: 'bg-green-500/20', ring: 'ring-green-500/30' };
-    if (value >= 0.70) return { color: 'text-amber-400', bg: 'bg-amber-500/20', ring: 'ring-amber-500/30' };
-    return { color: 'text-red-400', bg: 'bg-red-500/20', ring: 'ring-red-500/30' };
-  };
-
-  const overallHealth = getHealthDisplay(corpsHealth.avgHealth);
 
   // Count incomplete challenges
   const incompleteChallenges = dailyChallenges?.filter(c => !c.completed) || [];
@@ -210,50 +109,29 @@ const MorningReport = ({
             </button>
           </div>
 
-          {/* Corps Health - Visual focus */}
+          {/* Corps Status */}
           {activeCorps && (
             <div className="px-6 pb-5">
-              <div className={`rounded-xl p-4 ${overallHealth.bg} ring-1 ${overallHealth.ring}`}>
-                {/* Corps name and overall score */}
-                <div className="flex items-center justify-between mb-4">
+              <div className="rounded-xl p-4 bg-gold-500/10 ring-1 ring-gold-500/30">
+                <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-cream-100 truncate">
                       {activeCorps.corpsName || activeCorps.name}
                     </h3>
                     <p className="text-xs text-cream-500/60 truncate">
-                      {activeCorps.showConcept || 'Ready for competition'}
+                      {typeof activeCorps.showConcept === 'object'
+                        ? activeCorps.showConcept.theme || 'Ready for competition'
+                        : activeCorps.showConcept || 'Ready for competition'}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end ml-4">
-                    <span className={`text-3xl font-bold ${overallHealth.color}`}>
-                      {Math.round(corpsHealth.avgHealth * 100)}%
-                    </span>
-                    <span className="text-xs text-cream-500/60">Overall</span>
-                  </div>
-                </div>
-
-                {/* Three metrics in a row */}
-                <div className="grid grid-cols-3 gap-2">
-                  {corpsHealth.metrics.map((metric) => {
-                    const Icon = metric.icon;
-                    const display = getHealthDisplay(metric.value);
-                    return (
-                      <div
-                        key={metric.name}
-                        className="bg-charcoal-900/40 rounded-lg p-2 text-center"
-                      >
-                        <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                          <Icon className={`w-3.5 h-3.5 ${display.color}`} />
-                          <span className={`text-sm font-bold ${display.color}`}>
-                            {Math.round(metric.value * 100)}%
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-cream-500/50 uppercase tracking-wide">
-                          {metric.name}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  {activeCorpsClass !== 'soundSport' && activeCorps.totalSeasonScore > 0 && (
+                    <div className="flex flex-col items-end ml-4">
+                      <span className="text-3xl font-bold text-gold-400">
+                        {activeCorps.totalSeasonScore?.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-cream-500/60">Season Score</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -276,26 +154,6 @@ const MorningReport = ({
                 </div>
                 <ChevronRight className="w-5 h-5 text-charcoal-900/50 group-hover:translate-x-0.5 transition-transform" />
               </button>
-            </div>
-          )}
-
-          {/* Secondary Actions - Compact row */}
-          {secondaryActions.length > 0 && (
-            <div className="px-6 pb-4 flex gap-2">
-              {secondaryActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.id}
-                    onClick={() => handleAction(action)}
-                    className="flex-1 px-3 py-2 rounded-lg bg-charcoal-800/50 border border-cream-500/10
-                      hover:border-cream-500/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Icon className="w-4 h-4 text-cream-400" />
-                    <span className="text-sm text-cream-300">{action.title}</span>
-                  </button>
-                );
-              })}
             </div>
           )}
 
@@ -354,25 +212,15 @@ const MorningReport = ({
             </div>
           )}
 
-          {/* Footer - Skip option */}
-          <div className="px-6 py-4 border-t border-cream-500/10">
-            {!primaryAction ? (
-              <button
-                onClick={onClose}
-                className="w-full px-4 py-3 bg-gold-500 text-charcoal-900 rounded-xl font-semibold
-                  hover:bg-gold-400 transition-colors flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Let's Go
-              </button>
-            ) : (
-              <button
-                onClick={onClose}
-                className="w-full text-center text-sm text-cream-500/50 hover:text-cream-400 transition-colors py-1"
-              >
-                Skip for now
-              </button>
-            )}
+          {/* Dismiss button */}
+          <div className="px-6 pb-5">
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-lg bg-charcoal-800/50 border border-cream-500/10
+                hover:border-cream-500/20 text-sm text-cream-400 transition-colors"
+            >
+              Let&apos;s Go!
+            </button>
           </div>
         </motion.div>
       </motion.div>
