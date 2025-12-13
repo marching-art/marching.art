@@ -1,14 +1,11 @@
 // src/components/Dashboard/MorningReport.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Sun, Moon, Coffee, Target, Users,
-  Check, Flame, ChevronRight, X, ChevronDown
-} from 'lucide-react';
+import { Sun, Moon, Coffee, Flame, X } from 'lucide-react';
 
 /**
- * Morning Report Modal - Streamlined daily status overview
- * Focused design: Quick scan, clear action, easy dismiss
+ * Morning Report Modal - Simple welcome greeting
+ * No daily tasks or challenges - just a friendly welcome back
  */
 const MorningReport = ({
   isOpen,
@@ -17,12 +14,7 @@ const MorningReport = ({
   activeCorps,
   activeCorpsClass,
   engagementData,
-  dailyChallenges,
-  recentScores,
-  onNavigateToStaff
 }) => {
-  const [showChallenges, setShowChallenges] = useState(false);
-
   // Get time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -33,37 +25,6 @@ const MorningReport = ({
 
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
-
-  // Get the primary action
-  const getPrimaryAction = () => {
-    // Check staffing
-    const staffCount = profile?.staff?.filter(s => s.assignedTo?.corpsClass === activeCorpsClass)?.length || 0;
-    if (staffCount === 0 && activeCorpsClass !== 'soundSport') {
-      return {
-        id: 'staff',
-        title: 'Hire Staff',
-        subtitle: 'Boost your corps performance',
-        icon: Users,
-        action: onNavigateToStaff
-      };
-    }
-
-    return null;
-  };
-
-  const primaryAction = getPrimaryAction();
-
-  // Handle action click
-  const handleAction = (action) => {
-    if (action?.action) {
-      action.action();
-      onClose();
-    }
-  };
-
-  // Count incomplete challenges
-  const incompleteChallenges = dailyChallenges?.filter(c => !c.completed) || [];
-  const completedCount = dailyChallenges?.filter(c => c.completed)?.length || 0;
 
   if (!isOpen) return null;
 
@@ -137,87 +98,12 @@ const MorningReport = ({
             </div>
           )}
 
-          {/* Primary Action */}
-          {primaryAction && (
-            <div className="px-6 pb-4">
-              <button
-                onClick={() => handleAction(primaryAction)}
-                className="w-full p-4 rounded-xl bg-gold-500 hover:bg-gold-400
-                  transition-colors flex items-center gap-3 text-left group"
-              >
-                <div className="p-2 rounded-lg bg-charcoal-900/20">
-                  <primaryAction.icon className="w-5 h-5 text-charcoal-900" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-charcoal-900">{primaryAction.title}</div>
-                  <div className="text-xs text-charcoal-900/70">{primaryAction.subtitle}</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-charcoal-900/50 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          )}
-
-          {/* Challenges - Collapsible */}
-          {dailyChallenges && dailyChallenges.length > 0 && (
-            <div className="px-6 pb-4">
-              <button
-                onClick={() => setShowChallenges(!showChallenges)}
-                className="w-full flex items-center justify-between py-2 text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-medium text-cream-300">Daily Challenges</span>
-                  <span className="text-xs text-cream-500/50">
-                    {completedCount}/{dailyChallenges.length}
-                  </span>
-                </div>
-                <ChevronDown className={`w-4 h-4 text-cream-500/40 transition-transform ${showChallenges ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {showChallenges && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-1.5 pt-2">
-                      {dailyChallenges.map((challenge) => (
-                        <div
-                          key={challenge.id}
-                          className="flex items-center gap-2.5 p-2 rounded-lg bg-charcoal-800/30"
-                        >
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            challenge.completed ? 'bg-green-500/20' : 'bg-charcoal-700'
-                          }`}>
-                            {challenge.completed ? (
-                              <Check className="w-3 h-3 text-green-400" />
-                            ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-cream-500/30" />
-                            )}
-                          </div>
-                          <span className={`flex-1 text-sm ${
-                            challenge.completed ? 'text-cream-500/50 line-through' : 'text-cream-300'
-                          }`}>
-                            {challenge.title}
-                          </span>
-                          <span className="text-xs text-gold-500 flex-shrink-0">{challenge.reward}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
           {/* Dismiss button */}
           <div className="px-6 pb-5">
             <button
               onClick={onClose}
-              className="w-full py-3 rounded-lg bg-charcoal-800/50 border border-cream-500/10
-                hover:border-cream-500/20 text-sm text-cream-400 transition-colors"
+              className="w-full py-3 rounded-lg bg-gold-500 hover:bg-gold-400
+                text-charcoal-900 text-sm font-semibold transition-colors"
             >
               Let&apos;s Go!
             </button>

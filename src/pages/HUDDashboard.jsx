@@ -25,12 +25,7 @@ import {
 
 // Firebase Functions
 import {
-  sectionalRehearsal,
-  getDailyOpsStatus,
-  claimDailyLogin,
-  memberWellnessCheck,
-  equipmentInspection,
-  showReview,
+  // claimDailyLogin is no longer used - login tracking happens automatically in useDashboardData
 } from '../firebase/functions';
 
 // Icons
@@ -90,18 +85,7 @@ const DIFFICULTY_PRESETS = {
   legendary: { label: 'Legendary', threshold: 0.90, ceiling: 0.15, risk: -0.20, color: 'red' },
 };
 
-// 9 Daily operations with details
-const DAILY_OPS = [
-  { id: 'login', name: 'Login Bonus', reward: '+10-20 XP', rewardDetail: '+5-10 CC (streak bonus)', icon: Zap },
-  { id: 'staff', name: 'Staff Check-in', reward: '+15 XP', rewardDetail: '+2% staff morale', icon: Users },
-  { id: 'wellness', name: 'Wellness Check', reward: '+15 XP', rewardDetail: '+3% corps morale', icon: Heart },
-  { id: 'equipment', name: 'Equipment Check', reward: '+10 XP', rewardDetail: '+5 CC, 15% event', icon: Wrench },
-  { id: 'review', name: 'Show Review', reward: '+20 XP', rewardDetail: 'Get insights', icon: Eye },
-  { id: 'music', name: 'Music Sectional', reward: '+20 XP', rewardDetail: '+2% brass readiness', icon: Music },
-  { id: 'visual', name: 'Visual Sectional', reward: '+20 XP', rewardDetail: '+2% guard readiness', icon: Eye },
-  { id: 'guard', name: 'Guard Sectional', reward: '+20 XP', rewardDetail: '+2% guard readiness', icon: Flag },
-  { id: 'percussion', name: 'Percussion Sect.', reward: '+20 XP', rewardDetail: '+2% perc readiness', icon: Drum },
-];
+// Daily operations removed - no daily grind pressure
 
 // =============================================================================
 // UTILITY COMPONENTS
@@ -245,44 +229,6 @@ const EquipmentDetail = ({ id, config, condition, maxCondition }) => {
   );
 };
 
-// Daily task checkbox with full details
-const DailyTaskRow = ({ task, available, loading, onClick }) => {
-  const isComplete = !available;
-  const Icon = task.icon;
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={isComplete || loading}
-      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-all ${
-        isComplete ? 'opacity-40' : 'hover:bg-white/5 cursor-pointer'
-      }`}
-    >
-      <div className={`w-4 h-4 flex items-center justify-center rounded border ${
-        isComplete ? 'bg-green-500/20 border-green-500/50' : 'border-white/20'
-      }`}>
-        {loading ? (
-          <div className="w-2 h-2 border border-gold-400 border-t-transparent rounded-full animate-spin" />
-        ) : isComplete ? (
-          <Check className="w-2.5 h-2.5 text-green-400" />
-        ) : null}
-      </div>
-      <Icon className={`w-3 h-3 shrink-0 ${isComplete ? 'text-cream/20' : 'text-cream/60'}`} />
-      <div className="flex-1 text-left min-w-0">
-        <div className={`text-[9px] font-mono truncate ${isComplete ? 'text-cream/30 line-through' : 'text-cream'}`}>
-          {task.name}
-        </div>
-        <div className={`text-[7px] truncate ${isComplete ? 'text-cream/20' : 'text-cream/40'}`}>
-          {task.rewardDetail}
-        </div>
-      </div>
-      <span className={`text-[9px] font-data font-bold shrink-0 ${isComplete ? 'text-gold-400/30' : 'text-gold-400'}`}>
-        {task.reward}
-      </span>
-    </button>
-  );
-};
-
 // Season progress bar with milestones
 const SeasonTimeline = ({ currentDay, totalDays = 49 }) => {
   const progress = (currentDay / totalDays) * 100;
@@ -405,9 +351,7 @@ const HUDDashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
 
-  const [opsStatus, setOpsStatus] = useState(null);
-  const [opsLoading, setOpsLoading] = useState(true);
-  const [processing, setProcessing] = useState(null);
+  // Daily ops state removed - no daily grind pressure
   const [showMobileLogistics, setShowMobileLogistics] = useState(false);
 
   const {
@@ -607,71 +551,7 @@ const HUDDashboard = () => {
   // HANDLERS
   // ==========================================================================
 
-  const fetchOpsStatus = useCallback(async () => {
-    if (!activeCorpsClass) return;
-    setOpsLoading(true);
-    try {
-      const result = await getDailyOpsStatus({ corpsClass: activeCorpsClass });
-      if (result.data.success) setOpsStatus(result.data.status);
-    } catch (e) {
-      console.error('Error fetching ops status:', e);
-    } finally {
-      setOpsLoading(false);
-    }
-  }, [activeCorpsClass]);
-
-  useEffect(() => { fetchOpsStatus(); }, [fetchOpsStatus]);
-
-  const handleRehearsal = async () => {
-    if (canRehearseToday()) {
-      const result = await rehearse();
-      if (result?.success) {
-        toast.success(`Rehearsal complete! +${result.data?.xpGained || 25} XP`);
-        fetchOpsStatus();
-      }
-    }
-  };
-
-  const handleSectional = async (section) => {
-    setProcessing(`sectional_${section}`);
-    try {
-      const result = await sectionalRehearsal({ corpsClass: activeCorpsClass, section });
-      if (result.data.success) { toast.success(result.data.message); fetchOpsStatus(); }
-    } catch (e) { toast.error(e.message || 'Sectional failed'); }
-    finally { setProcessing(null); }
-  };
-
-  const handleDailyTask = async (taskId, taskFn) => {
-    setProcessing(taskId);
-    try {
-      const result = await taskFn();
-      if (result.data.success) { toast.success(result.data.message); fetchOpsStatus(); refreshProfile?.(); }
-    } catch (e) { toast.error(e.message || 'Task failed'); }
-    finally { setProcessing(null); }
-  };
-
-  const getTaskAvailability = (taskId) => {
-    if (!opsStatus) return false;
-    const sectMap = { music: 'music', visual: 'visual', guard: 'guard', percussion: 'percussion' };
-    if (sectMap[taskId]) return opsStatus.sectionalRehearsals?.[taskId]?.available;
-    const opMap = { login: 'loginBonus', wellness: 'memberWellness', equipment: 'equipmentInspection', review: 'showReview' };
-    return opsStatus[opMap[taskId]]?.available;
-  };
-
-  const handleTaskClick = (taskId) => {
-    const handlers = {
-      login: () => claimDailyLogin(),
-      wellness: () => memberWellnessCheck({ corpsClass: activeCorpsClass }),
-      equipment: () => equipmentInspection({ corpsClass: activeCorpsClass }),
-      review: () => showReview({ corpsClass: activeCorpsClass }),
-      music: () => handleSectional('music'), visual: () => handleSectional('visual'),
-      guard: () => handleSectional('guard'), percussion: () => handleSectional('percussion'),
-    };
-    if (handlers[taskId]) {
-      if (['music', 'visual', 'guard', 'percussion'].includes(taskId)) handlers[taskId]();
-      else handleDailyTask(taskId, handlers[taskId]);
-    }
-  };
+  // Daily ops handlers removed - no daily grind pressure
 
   const classColors = {
     worldClass: 'bg-gold-500 text-charcoal-900', openClass: 'bg-purple-500 text-white',
@@ -812,18 +692,6 @@ const HUDDashboard = () => {
                     <div className="text-[9px] opacity-70">{executionState?.rehearsalsThisWeek || 0}/7 this week • +25 XP • Perfect week = +50 bonus</div>
                   </div>
                 </button>
-              </Panel>
-
-              {/* 9 Daily Operations */}
-              <Panel title="9 Daily Operations" subtitle={`${opsStatus ? DAILY_OPS.filter(t => getTaskAvailability(t.id)).length : '?'}/9 remaining`}
-                variant="default" className="flex-1 min-h-0" scrollable>
-                <div className="space-y-0.5">
-                  {DAILY_OPS.map(task => (
-                    <DailyTaskRow key={task.id} task={task} available={getTaskAvailability(task.id)}
-                      loading={processing === task.id || processing === `sectional_${task.id}`}
-                      onClick={() => handleTaskClick(task.id)} />
-                  ))}
-                </div>
               </Panel>
 
               {/* Show Difficulty */}

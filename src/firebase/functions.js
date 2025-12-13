@@ -60,11 +60,6 @@ export const unretireCorps = httpsCallable(functions, 'unretireCorps');
 // ========================================
 
 export const claimDailyLogin = httpsCallable(functions, 'claimDailyLogin');
-export const memberWellnessCheck = httpsCallable(functions, 'memberWellnessCheck');
-export const equipmentInspection = httpsCallable(functions, 'equipmentInspection');
-export const sectionalRehearsal = httpsCallable(functions, 'sectionalRehearsal');
-export const showReview = httpsCallable(functions, 'showReview');
-export const getDailyOpsStatus = httpsCallable(functions, 'getDailyOpsStatus');
 
 // ========================================
 // LEADERBOARDS
