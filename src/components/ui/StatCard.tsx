@@ -20,7 +20,7 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
 const trendColors: Record<TrendDirection, string> = {
   up: 'text-green-500',
   down: 'text-red-500',
-  neutral: 'text-[#888]',
+  neutral: 'text-neutral-500',
 };
 
 const trendIcons: Record<TrendDirection, string> = {
@@ -45,7 +45,7 @@ export const StatCard = forwardRef<HTMLDivElement, StatCardProps>(
         {...props}
       >
         {/* Label - top, uppercase, muted */}
-        <div className="text-xs uppercase tracking-wider text-[#888] mb-2">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
           {label}
         </div>
 

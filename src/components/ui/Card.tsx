@@ -27,20 +27,32 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
       padding = 'none',
       children,
       className = '',
+      onClick,
       ...props
     },
     ref
   ) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (pressable && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>);
+      }
+    };
+
     return (
       <div
         ref={ref}
+        role={pressable ? 'button' : undefined}
+        tabIndex={pressable ? 0 : undefined}
+        onKeyDown={pressable ? handleKeyDown : undefined}
+        onClick={onClick}
         className={`
           bg-[#1A1A1A]
           border border-[#333]
           rounded-md
           ${paddingStyles[padding]}
-          ${hoverable ? 'cursor-pointer hover:border-[#444] transition-colors duration-200' : ''}
-          ${pressable ? 'cursor-pointer active:scale-[0.99] transition-transform duration-100' : ''}
+          ${hoverable ? 'cursor-pointer hover:border-neutral-600 transition-colors duration-200' : ''}
+          ${pressable ? 'cursor-pointer active:scale-[0.99] transition-transform duration-100 focus:outline-none focus:ring-2 focus:ring-neutral-500' : ''}
           ${className}
         `.trim().replace(/\s+/g, ' ')}
         {...props}
