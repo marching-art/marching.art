@@ -86,7 +86,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
               <BrandLogo className="w-12 h-12" color="text-gold-500" />
             </div>
             {label && (
-              <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">{label}</p>
+              <p className="font-mono text-xs text-gold-500/50 tracking-wide">{label}</p>
             )}
           </div>
         </motion.div>
@@ -105,7 +105,7 @@ export interface FullPageLoadingProps {
 }
 
 export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
-  label = 'INITIALIZING...',
+  label = 'Loading...',
   showLogo = true,
 }) => {
   return (
@@ -116,7 +116,7 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="animate-pulse"
+            className="glow-pulse"
           >
             <BrandLogo className="w-24 h-24" color="text-gold-500" />
           </motion.div>
@@ -125,7 +125,7 @@ export const FullPageLoading: React.FC<FullPageLoadingProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="font-mono text-xs text-gold-500/50 uppercase tracking-widest"
+          className="font-mono text-sm text-gold-400/60 tracking-wide"
         >
           {label}
         </motion.p>

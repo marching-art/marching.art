@@ -124,28 +124,28 @@ export const Modal: React.FC<ModalProps> = ({
             animate="visible"
             exit="exit"
             className={`
-              bg-white dark:bg-charcoal-900 border-2 border-neutral-900 dark:border-gold-500/30 rounded-sm w-full overflow-hidden
-              shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]
+              bg-charcoal-900/95 backdrop-blur-lg border border-white/10 rounded-xl w-full overflow-hidden
+              shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_30px_rgba(234,179,8,0.1)]
               ${sizeStyles[size]}
             `}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-center justify-between p-6 border-b-2 border-neutral-900/20 dark:border-gold-500/20">
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
                 <div className="flex items-center gap-3">
                   {icon && (
-                    <div className="bg-gold-500 p-2.5 rounded-sm border-2 border-neutral-900 dark:border-gold-600">
+                    <div className="bg-gold-500/15 p-2.5 rounded-lg border border-gold-500/30">
                       {icon}
                     </div>
                   )}
                   {title && (
                     <div>
-                      <h2 id="modal-title" className="text-xl font-display font-bold uppercase tracking-tight text-slate-900 dark:text-cream-100">
+                      <h2 id="modal-title" className="text-xl font-semibold text-cream">
                         {title}
                       </h2>
                       {subtitle && (
-                        <p className="text-sm text-slate-500 dark:text-cream-500/70">{subtitle}</p>
+                        <p className="text-sm text-cream/60">{subtitle}</p>
                       )}
                     </div>
                   )}
@@ -169,7 +169,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-6 border-t-2 border-neutral-900/20 dark:border-gold-500/20 flex justify-end gap-3">
+              <div className="p-6 border-t border-white/10 flex justify-end gap-3">
                 {footer}
               </div>
             )}
@@ -222,7 +222,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-sm border-2 border-neutral-900 dark:border-gold-500/30 text-slate-700 dark:text-cream-300 hover:bg-slate-100 dark:hover:bg-cream-900/20 transition-colors font-display font-semibold uppercase tracking-tight shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,212,77,0.3)]"
+            className="px-4 py-2.5 rounded-lg border border-white/15 text-cream/80 hover:bg-white/10 hover:text-cream transition-all duration-300 font-medium"
           >
             {cancelText}
           </button>
@@ -230,10 +230,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              px-4 py-2 rounded-sm font-display font-semibold uppercase tracking-tight transition-all border-2
+              px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 border
               ${variant === 'danger'
-                ? 'bg-red-600 text-white border-neutral-900 dark:border-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)]'
-                : 'bg-gold-500 text-charcoal-900 border-neutral-900 dark:border-gold-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]'}
+                ? 'bg-red-600 text-white border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:bg-red-500 hover:shadow-[0_0_25px_rgba(239,68,68,0.5)]'
+                : 'bg-gold-500 text-charcoal-950 border-gold-400/50 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:bg-gold-400 hover:shadow-[0_0_25px_rgba(234,179,8,0.5)]'}
               disabled:opacity-50 disabled:shadow-none
             `}
           >
@@ -242,7 +242,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </>
       }
     >
-      <p className="text-slate-700 dark:text-cream-300">{message}</p>
+      <p className="text-cream/80">{message}</p>
     </Modal>
   );
 };

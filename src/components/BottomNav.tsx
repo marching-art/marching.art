@@ -106,7 +106,7 @@ const BottomNav: React.FC = () => {
 
                 {/* Label */}
                 <span
-                  className={`relative z-10 text-[10px] font-display font-semibold uppercase tracking-wide transition-all duration-300 ${
+                  className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${
                     active ? 'text-yellow-400' : 'text-yellow-50/50'
                   }`}
                 >

@@ -20,14 +20,13 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
   children: React.ReactNode;
 }
 
-// Tactical Brutalist variant styles - FLAT solid colors, hard shadows, 2px borders
-// NO gradients allowed - all buttons are solid fills
+// Premium Stadium HUD variant styles - Gold glow for action, glass for secondary
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-gold-500 text-charcoal-900 border-2 border-neutral-900 dark:border-gold-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]',
-  secondary: 'bg-charcoal-800 text-cream-100 border-2 border-neutral-900 dark:border-gold-500/30 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,0.5)] hover:bg-charcoal-700 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,0.5)]',
-  outline: 'bg-transparent border-2 border-neutral-900 dark:border-gold-500 text-neutral-900 dark:text-gold-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,212,77,0.5)] hover:bg-gold-500 hover:text-charcoal-900 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(255,212,77,1)]',
-  ghost: 'bg-transparent text-cream-300 border-2 border-transparent hover:bg-cream-900/20 shadow-none',
-  danger: 'bg-red-600 text-white border-2 border-neutral-900 dark:border-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:bg-red-700 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)]',
+  primary: 'bg-gold-500 text-charcoal-950 border border-gold-400/50 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:shadow-[0_0_25px_rgba(234,179,8,0.5)] hover:bg-gold-400',
+  secondary: 'bg-white/10 backdrop-blur-sm text-cream border border-white/15 shadow-[0_2px_15px_rgba(0,0,0,0.2)] hover:bg-white/15 hover:border-white/25 hover:shadow-[0_4px_20px_rgba(0,0,0,0.25)]',
+  outline: 'bg-transparent border border-gold-500/50 text-gold-400 shadow-[0_0_10px_rgba(234,179,8,0.15)] hover:bg-gold-500/10 hover:border-gold-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]',
+  ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream shadow-none',
+  danger: 'bg-red-600 text-white border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:bg-red-500 hover:shadow-[0_0_25px_rgba(239,68,68,0.5)]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -68,9 +67,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled}
         className={`
           inline-flex items-center justify-center gap-2
-          rounded-sm font-display font-semibold uppercase tracking-tight
-          transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-charcoal-900
+          rounded-lg font-semibold
+          transition-all duration-300 ease-out
+          focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:ring-offset-2 focus:ring-offset-charcoal-950
           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
           ${variantStyles[variant]}
           ${sizeStyles[size]}
