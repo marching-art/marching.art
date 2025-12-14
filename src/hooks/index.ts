@@ -40,3 +40,9 @@ export {
   useClassUnlock,
   type UseClassUnlockReturn,
 } from './useClassUnlock';
+
+export {
+  useReducedMotion,
+  useShouldReduceMotion,
+  useIsMobile,
+} from './useReducedMotion';

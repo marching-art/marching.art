@@ -7,6 +7,7 @@ import {
   Trophy, Users, Calendar, Music, Star, Target,
   Flag, Sparkles, Clock, TrendingUp, Award, Play
 } from 'lucide-react';
+import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
 interface EmptyStateBaseProps {
   className?: string;
@@ -147,45 +148,54 @@ export const NewSeasonStartingEmpty: React.FC<EmptyStateBaseProps & { seasonName
   seasonName = 'New Season',
   startDate,
   onAction
-}) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className={`text-center py-12 px-6 bg-gradient-to-br from-gold-500/10 via-charcoal-900/50 to-purple-500/10 border border-gold-500/20 rounded-2xl ${className}`}
-  >
-    <div className="relative w-24 h-24 mx-auto mb-6">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        className="absolute inset-0 rounded-full border-2 border-dashed border-gold-500/30"
-      />
-      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-gold-500/20 to-purple-500/20 flex items-center justify-center">
-        <Star className="w-10 h-10 text-gold-400 fill-gold-400/20" />
+}) => {
+  const shouldReduceMotion = useShouldReduceMotion();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`text-center py-12 px-6 bg-gradient-to-br from-gold-500/10 via-charcoal-900/50 to-purple-500/10 border border-gold-500/20 rounded-2xl ${className}`}
+    >
+      <div className="relative w-24 h-24 mx-auto mb-6">
+        {/* Rotating border - only animate on desktop */}
+        {shouldReduceMotion ? (
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-gold-500/30" />
+        ) : (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 rounded-full border-2 border-dashed border-gold-500/30"
+          />
+        )}
+        <div className="absolute inset-2 rounded-full bg-gradient-to-br from-gold-500/20 to-purple-500/20 flex items-center justify-center">
+          <Star className="w-10 h-10 text-gold-400 fill-gold-400/20" />
+        </div>
       </div>
-    </div>
-    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold-500/20 border border-gold-500/30 rounded-full mb-4">
-      <Sparkles className="w-3 h-3 text-gold-400" />
-      <span className="text-xs font-bold text-gold-400 uppercase tracking-wide">New Season</span>
-    </div>
-    <h3 className="text-2xl font-display font-bold text-cream mb-2">{seasonName}</h3>
-    <p className="text-sm text-cream/60 mb-2">A new season of competition begins!</p>
-    {startDate && (
-      <p className="text-xs text-gold-400 mb-6 flex items-center justify-center gap-2">
-        <Clock className="w-3 h-3" />
-        Starts {startDate}
-      </p>
-    )}
-    {onAction && (
-      <button
-        onClick={onAction}
-        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors shadow-[0_0_20px_rgba(234,179,8,0.3)]"
-      >
-        <Play className="w-4 h-4" />
-        Get Started
-      </button>
-    )}
-  </motion.div>
-);
+      <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold-500/20 border border-gold-500/30 rounded-full mb-4">
+        <Sparkles className="w-3 h-3 text-gold-400" />
+        <span className="text-xs font-bold text-gold-400 uppercase tracking-wide">New Season</span>
+      </div>
+      <h3 className="text-2xl font-display font-bold text-cream mb-2">{seasonName}</h3>
+      <p className="text-sm text-cream/60 mb-2">A new season of competition begins!</p>
+      {startDate && (
+        <p className="text-xs text-gold-400 mb-6 flex items-center justify-center gap-2">
+          <Clock className="w-3 h-3" />
+          Starts {startDate}
+        </p>
+      )}
+      {onAction && (
+        <button
+          onClick={onAction}
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors shadow-[0_0_20px_rgba(234,179,8,0.3)]"
+        >
+          <Play className="w-4 h-4" />
+          Get Started
+        </button>
+      )}
+    </motion.div>
+  );
+};
 
 // =============================================================================
 // NO CORPS CREATED
