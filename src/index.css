@@ -52,10 +52,10 @@
      Night Mode Stadium Aesthetic
      =========================================== */
 
-  /* Primary (Electric Gold) - Action & Value highlights */
-  --color-primary: #FACC15;
-  --color-primary-hover: #FDE047;
-  --color-primary-muted: rgba(250, 204, 21, 0.15);
+  /* Primary (Blue) - Action & Value highlights */
+  --color-primary: #0057B8;
+  --color-primary-hover: #0066D6;
+  --color-primary-muted: rgba(0, 87, 184, 0.15);
 
   /* Danger (Red) */
   --color-danger: #EF4444;
@@ -227,6 +227,21 @@ body {
 }
 
 /* ===========================================
+   GLOBAL FOCUS STATES
+   Accessibility-compliant focus indicators
+   =========================================== */
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Remove default focus ring for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===========================================
    TACTICAL COMMAND SURFACE
    Layered background for depth and atmosphere
    =========================================== */
@@ -387,26 +402,6 @@ p, li, span {
      STADIUM HUD DESIGN SYSTEM COMPONENTS
      "Night Mode Stadium" Aesthetic
      ======================================== */
-
-  /* Glass Panel - Standard container for content modules (Stadium HUD)
-   * Content never sits directly on the background. It resides in
-   * semi-transparent "glass" modules that provide depth.
-   * Refined: Less blur, more clarity, 1px subtle borders
-   */
-  .glass-panel {
-    @apply bg-black/35 backdrop-blur-sm border border-white/8 rounded-xl p-6;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-  }
-
-  .glass-panel-sm {
-    @apply bg-black/35 backdrop-blur-sm border border-white/8 rounded-lg p-4;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
-  }
-
-  .glass-panel-lg {
-    @apply bg-black/35 backdrop-blur-sm border border-white/8 rounded-2xl p-8;
-    box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3);
-  }
 
   /* Primary Action Button - Stadium HUD Style
    * Refined: Gold glow effects, no uppercase, smooth transitions
@@ -665,58 +660,6 @@ p, li, span {
     background-color: #1A1A1A;
     border-color: rgba(255, 212, 77, 0.3);
     box-shadow: 4px 4px 0px 0px rgba(255, 212, 77, 1);
-  }
-
-  /* ===========================================
-     STADIUM BANNER - HERO CARD (Stadium HUD)
-     Premium glass panel with atmospheric gold glow
-     =========================================== */
-  .stadium-banner {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(10, 10, 10, 0.95) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(250, 204, 21, 0.2);
-    border-radius: 20px;
-    box-shadow:
-      0 8px 40px rgba(0, 0, 0, 0.4),
-      0 0 40px rgba(234, 179, 8, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  /* Stadium lights glow from top */
-  .stadium-banner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(250, 204, 21, 0.15) 0%, transparent 60%),
-      linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%);
-    pointer-events: none;
-    border-radius: inherit;
-  }
-
-  /* Inner edge highlight */
-  .stadium-banner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    pointer-events: none;
-  }
-
-
-  /* Silhouette overlay for stadium banner */
-  .stadium-overlay {
-    position: absolute;
-    inset: 0;
-    opacity: 0.08;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 200'%3E%3Cpath d='M0 200 L50 180 L80 190 L120 160 L150 175 L200 140 L250 155 L300 120 L350 145 L400 100 L450 130 L500 90 L550 120 L600 80 L650 110 L700 70 L750 100 L800 60 L800 200 Z' fill='%23FFD44D'/%3E%3C/svg%3E");
-    background-position: bottom center;
-    background-repeat: no-repeat;
-    background-size: cover;
   }
 
   /* ===========================================
@@ -1160,39 +1103,6 @@ p, li, span {
     background: linear-gradient(135deg, rgba(250, 204, 21, 0.3) 0%, rgba(234, 179, 8, 0.2) 100%);
     box-shadow: 0 0 25px rgba(234, 179, 8, 0.4);
     transform: scale(1.05);
-  }
-
-  /* ===========================================
-     STADIUM HUD - GLASSMORPHISM PANELS
-     Premium frosted glass containers
-     =========================================== */
-
-  /* Base Glass Panel - The standard container module */
-  .glass-panel {
-    @apply relative overflow-hidden;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-  }
-
-  .glass-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
-    pointer-events: none;
-    border-radius: inherit;
-  }
-
-  /* Glass Panel with subtle gold glow */
-  .glass-panel-glow {
-    @apply glass-panel;
-    box-shadow:
-      0 4px 30px rgba(0, 0, 0, 0.3),
-      0 0 20px rgba(234, 179, 8, 0.1);
   }
 
   /* Glass Panel for cards/modules */
@@ -3733,6 +3643,46 @@ p, li, span {
 
 .dense-table th.sticky-col {
   z-index: 15;
+}
+
+/* ===========================================
+   DATA TABLE UTILITIES
+   Standard data display tables
+   =========================================== */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th {
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.data-table td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Trend utilities */
+.trend-up {
+  color: var(--color-success);
+}
+
+.trend-down {
+  color: var(--color-danger);
 }
 
 /* ===========================================
