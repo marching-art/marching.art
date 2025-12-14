@@ -1,11 +1,11 @@
 // =============================================================================
-// GAME SHELL COMPONENT (Simplified)
+// GAME SHELL COMPONENT (Dense Layout)
 // =============================================================================
-// Simple layout wrapper with fixed sidebar on desktop and bottom nav on mobile
-// No collapsible rail - straightforward navigation
+// App-like layout with fixed top nav, sidebar on desktop, bottom nav on mobile
+// Dense padding optimized for data-heavy dashboard views
 
 import React, { useEffect, createContext, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { analyticsHelpers } from '../../firebase';
 import CommandRail from '../CommandRail';
@@ -42,52 +42,33 @@ const pageTransition = {
 };
 
 // =============================================================================
-// ATMOSPHERIC BACKGROUND
+// TOP NAV COMPONENT
 // =============================================================================
 
-const AtmosphericBackground = () => (
-  <div className="fixed inset-0 pointer-events-none z-0">
-    {/* Stadium floodlight gradient */}
-    <div
-      className="absolute inset-0"
-      style={{
-        background: `
-          radial-gradient(
-            ellipse 120% 50% at 50% -5%,
-            rgba(234, 179, 8, 0.08) 0%,
-            rgba(234, 179, 8, 0.04) 25%,
-            transparent 50%
-          )
-        `
-      }}
-    />
-    {/* Grid overlay */}
-    <div
-      className="absolute inset-0"
-      style={{
-        backgroundImage: `
-          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
-        `,
-        backgroundSize: '20px 20px'
-      }}
-    />
-    {/* Vignette */}
-    <div
-      className="absolute inset-0"
-      style={{
-        background: `
-          radial-gradient(
-            ellipse 85% 75% at 50% 50%,
-            transparent 25%,
-            rgba(0, 0, 0, 0.1) 50%,
-            rgba(0, 0, 0, 0.3) 85%,
-            rgba(0, 0, 0, 0.4) 100%
-          )
-        `
-      }}
-    />
-  </div>
+const TopNav = () => (
+  <header
+    className="fixed top-0 left-0 right-0 z-30 h-14 bg-surface border-b border-charcoal-700 lg:pl-56"
+    role="banner"
+  >
+    <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
+      {/* Mobile Logo */}
+      <Link to="/dashboard" className="lg:hidden flex items-center gap-2">
+        <img
+          src="/logo192.webp"
+          alt="marching.art"
+          className="w-8 h-8 rounded-lg"
+        />
+        <span className="font-display font-bold text-yellow-400">Marching</span>
+        <span className="font-display font-bold text-yellow-50/90">.art</span>
+      </Link>
+
+      {/* Desktop: empty space or future breadcrumbs */}
+      <div className="hidden lg:block" />
+
+      {/* Spacer for alignment */}
+      <div className="w-8 lg:hidden" />
+    </div>
+  </header>
 );
 
 // =============================================================================
@@ -108,32 +89,36 @@ const GameShell = ({ children }) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="h-dvh w-screen overflow-hidden bg-slate-950 text-cream font-sans overscroll-contain touch-manipulation">
-        {/* Background */}
-        <AtmosphericBackground />
+      <div className="min-h-screen w-screen bg-background text-cream font-sans overscroll-contain touch-manipulation">
+        {/* Fixed Top Navigation */}
+        <TopNav />
 
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-20">
+        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-40">
           <CommandRail />
         </aside>
 
         {/* Main Content Area */}
-        <main className="relative z-10 h-full w-full lg:pl-56 pb-20 lg:pb-0 overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-              className="h-full w-full flex flex-col overflow-hidden"
-            >
-              <div className="flex-1 overflow-hidden">
+        <main
+          id="main-content"
+          role="main"
+          className="relative z-10 min-h-screen w-full lg:pl-56 pt-16 pb-20 lg:pb-4"
+        >
+          <div className="max-w-7xl mx-auto px-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial="initial"
+                animate="in"
+                exit="out"
+                variants={pageVariants}
+                transition={pageTransition}
+                className="w-full"
+              >
                 {children}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </main>
 
         {/* Mobile Bottom Navigation */}
