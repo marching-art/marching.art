@@ -18,56 +18,61 @@ function getStripe() {
 
 /**
  * Battle Pass Configuration
+ * Streamlined: 50 levels, entire season to complete, no daily pressure
  */
 const BATTLE_PASS_CONFIG = {
-  price: 4.99, // $4.99 per season
-  levelCap: 50, // Maximum level
-  xpPerLevel: 100, // XP needed per level
-  seasonDuration: 49, // Days per season (matches DCI off-season)
+  price: 4.99,
+  levelCap: 50,
+  xpPerLevel: 180, // Balanced for ~13 weeks of casual play
+  seasonDuration: 91, // ~3 months per season
 };
 
 /**
- * XP Sources and Amounts
+ * XP Sources - Weekly/Seasonal only (NO daily requirements)
+ * Designed to be completable with casual weekly participation
  */
 const XP_SOURCES = {
-  dailyRehearsal: 25,
-  performance: 50,
-  trophyWin: 100,
-  finalsParticipation: 200,
-  dailyQuest: 50,
-  weeklyQuest: 150,
+  weeklyShowParticipation: 50,  // Participate in any weekly show
+  leagueMatchupWin: 100,        // Win a league matchup
+  seasonPlacementBonus: {       // End-of-season bonus based on placement
+    top10: 500,
+    top25: 300,
+    top50: 150,
+    participated: 50,
+  },
 };
 
 /**
- * Reward tiers with probabilities
+ * Simplified Reward Structure
+ * Free: CorpsCoin + basic badges
+ * Premium: More CC + exclusive cosmetics
  */
-const REWARD_TIERS = {
-  common: { weight: 50, corpsCoinRange: [50, 100] },
-  uncommon: { weight: 30, corpsCoinRange: [100, 250] },
-  rare: { weight: 15, corpsCoinRange: [250, 500] },
-  epic: { weight: 4, corpsCoinRange: [500, 1000] },
-  legendary: { weight: 1, corpsCoinRange: [1000, 2500] },
+const REWARD_CONFIG = {
+  free: {
+    baseCorpsCoin: 25,      // Base CC per level
+    milestoneMultiplier: 3, // 3x CC at milestones
+  },
+  premium: {
+    baseCorpsCoin: 75,      // Premium gets 3x base CC
+    milestoneMultiplier: 4, // 4x CC at milestones
+  },
+  milestones: [10, 25, 50], // Special reward levels
 };
 
 /**
  * Generate battle pass season rewards
+ * Simplified: Clear free/premium tracks with milestone bonuses
  */
 function generateSeasonRewards() {
   const rewards = [];
 
   for (let level = 1; level <= BATTLE_PASS_CONFIG.levelCap; level++) {
-    const freeReward = generateReward('common', level);
-    const premiumReward = generateReward(
-      level % 10 === 0 ? 'legendary' :
-      level % 5 === 0 ? 'epic' :
-      'rare',
-      level
-    );
+    const isMilestone = REWARD_CONFIG.milestones.includes(level);
 
     rewards.push({
       level,
-      free: freeReward,
-      premium: premiumReward,
+      free: generateFreeReward(level, isMilestone),
+      premium: generatePremiumReward(level, isMilestone),
     });
   }
 
@@ -75,36 +80,96 @@ function generateSeasonRewards() {
 }
 
 /**
- * Generate a single reward based on tier
+ * Generate free track reward
  */
-function generateReward(tierName, level) {
-  const tier = REWARD_TIERS[tierName];
-  const [min, max] = tier.corpsCoinRange;
-  const corpsCoin = Math.floor(Math.random() * (max - min + 1)) + min;
+function generateFreeReward(level, isMilestone) {
+  const { baseCorpsCoin, milestoneMultiplier } = REWARD_CONFIG.free;
 
-  const reward = {
-    type: 'corpscoin',
-    amount: corpsCoin,
-    rarity: tierName,
-  };
-
-  // Special rewards at milestones
-  if (level === 10) {
-    reward.type = 'staff_pack';
-    reward.amount = 1;
-    reward.description = 'Rare Staff Member';
-  } else if (level === 25) {
-    reward.type = 'equipment_upgrade';
-    reward.amount = 1;
-    reward.description = 'Premium Equipment Upgrade';
-  } else if (level === 50) {
-    reward.type = 'exclusive_badge';
-    reward.amount = 1;
-    reward.description = 'Battle Pass Champion Badge';
-    reward.badgeId = `bp_champion_${Date.now()}`;
+  if (isMilestone) {
+    // Milestone rewards: badge + bonus CC
+    if (level === 10) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier },
+          { type: 'badge', badgeId: 'bp_rookie', name: 'Season Rookie', rarity: 'uncommon' },
+        ],
+        rarity: 'uncommon',
+      };
+    } else if (level === 25) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier },
+          { type: 'badge', badgeId: 'bp_veteran', name: 'Season Veteran', rarity: 'rare' },
+        ],
+        rarity: 'rare',
+      };
+    } else if (level === 50) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier * 2 },
+          { type: 'badge', badgeId: 'bp_champion', name: 'Season Champion', rarity: 'epic' },
+        ],
+        rarity: 'epic',
+      };
+    }
   }
 
-  return reward;
+  // Regular levels: just CC
+  return {
+    type: 'corpscoin',
+    amount: baseCorpsCoin,
+    rarity: 'common',
+  };
+}
+
+/**
+ * Generate premium track reward
+ */
+function generatePremiumReward(level, isMilestone) {
+  const { baseCorpsCoin, milestoneMultiplier } = REWARD_CONFIG.premium;
+
+  if (isMilestone) {
+    // Premium milestones: exclusive cosmetics + more CC
+    if (level === 10) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier },
+          { type: 'cosmetic', cosmeticId: 'field_gold_trim', name: 'Gold Field Trim', rarity: 'rare' },
+        ],
+        rarity: 'rare',
+      };
+    } else if (level === 25) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier },
+          { type: 'cosmetic', cosmeticId: 'uniform_platinum', name: 'Platinum Uniform Set', rarity: 'epic' },
+        ],
+        rarity: 'epic',
+      };
+    } else if (level === 50) {
+      return {
+        type: 'milestone_bundle',
+        rewards: [
+          { type: 'corpscoin', amount: baseCorpsCoin * milestoneMultiplier * 2 },
+          { type: 'cosmetic', cosmeticId: 'banner_legendary', name: 'Legendary Corps Banner', rarity: 'legendary' },
+          { type: 'badge', badgeId: 'bp_elite', name: 'Elite Completionist', rarity: 'legendary' },
+        ],
+        rarity: 'legendary',
+      };
+    }
+  }
+
+  // Regular premium levels: bonus CC
+  return {
+    type: 'corpscoin',
+    amount: baseCorpsCoin,
+    rarity: 'uncommon',
+  };
 }
 
 /**
@@ -117,6 +182,7 @@ function calculateLevel(xp) {
 
 /**
  * Purchase Battle Pass - Create Stripe Checkout Session
+ * Non-pressuring: optional upgrade that enhances rewards
  */
 const purchaseBattlePass = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
@@ -128,7 +194,6 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
   const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
-    // Get current season
     const seasonDoc = await db.doc("game-settings/battlePassSeason").get();
     if (!seasonDoc.exists) {
       throw new HttpsError("failed-precondition", "No active battle pass season.");
@@ -136,7 +201,6 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
 
     const currentSeason = seasonDoc.data();
 
-    // Check if user already owns battle pass for this season
     const profileDoc = await profileRef.get();
     const battlePass = profileDoc.data()?.battlePass;
 
@@ -144,7 +208,6 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
       throw new HttpsError("already-exists", "You already own this season's battle pass!");
     }
 
-    // Create Stripe Checkout Session
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -153,11 +216,11 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `Battle Pass - ${currentSeason.name}`,
-              description: `Unlock premium rewards for ${currentSeason.name}`,
+              name: `Premium Battle Pass - ${currentSeason.name}`,
+              description: 'Unlock bonus rewards and exclusive cosmetics',
               images: ['https://marching.art/assets/battlepass-icon.png'],
             },
-            unit_amount: Math.round(BATTLE_PASS_CONFIG.price * 100), // Convert to cents
+            unit_amount: Math.round(BATTLE_PASS_CONFIG.price * 100),
           },
           quantity: 1,
         },
@@ -165,7 +228,7 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
       mode: 'payment',
       success_url: `${request.rawRequest.headers.origin || 'https://marching.art'}/battlepass?success=true`,
       cancel_url: `${request.rawRequest.headers.origin || 'https://marching.art'}/battlepass?canceled=true`,
-      client_reference_id: uid, // Link payment to user
+      client_reference_id: uid,
       metadata: {
         uid: uid,
         seasonId: currentSeason.seasonId,
@@ -189,6 +252,7 @@ const purchaseBattlePass = onCall({ cors: true }, async (request) => {
 
 /**
  * Award XP to user (called by other systems)
+ * Only from weekly/seasonal activities - no daily grind
  */
 const awardBattlePassXP = async (uid, xpAmount, source) => {
   const db = getDb();
@@ -201,7 +265,6 @@ const awardBattlePassXP = async (uid, xpAmount, source) => {
 
       const battlePass = profileDoc.data()?.battlePass;
       if (!battlePass || !battlePass.seasonId) {
-        // Initialize battle pass if not present
         const seasonDoc = await db.doc("game-settings/battlePassSeason").get();
         if (!seasonDoc.exists) return;
 
@@ -211,33 +274,34 @@ const awardBattlePassXP = async (uid, xpAmount, source) => {
             seasonId: currentSeason.seasonId,
             seasonName: currentSeason.name,
             xp: xpAmount,
+            totalXpEarned: xpAmount,
             level: calculateLevel(xpAmount),
             isPremium: false,
             claimedRewards: {
               free: [],
               premium: [],
             },
+            xpHistory: [{
+              amount: xpAmount,
+              source,
+              timestamp: new Date(),
+            }],
           },
         });
         return;
       }
 
-      // Add XP
       const newXP = (battlePass.xp || 0) + xpAmount;
       const newLevel = calculateLevel(newXP);
 
       transaction.update(profileRef, {
         'battlePass.xp': newXP,
+        'battlePass.totalXpEarned': (battlePass.totalXpEarned || 0) + xpAmount,
         'battlePass.level': newLevel,
-      });
-
-      // Log XP history
-      transaction.update(profileRef, {
         'battlePass.xpHistory': admin.firestore.FieldValue.arrayUnion({
           amount: xpAmount,
           source,
           timestamp: new Date(),
-          totalXP: newXP,
         }),
       });
     });
@@ -250,13 +314,14 @@ const awardBattlePassXP = async (uid, xpAmount, source) => {
 
 /**
  * Claim Reward - Claim earned battle pass reward
+ * Handles both simple rewards and milestone bundles
  */
 const claimBattlePassReward = onCall({ cors: true }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { level, tier } = request.data; // tier: 'free' or 'premium'
+  const { level, tier } = request.data;
   const uid = request.auth.uid;
 
   if (!level || !tier || !['free', 'premium'].includes(tier)) {
@@ -276,52 +341,42 @@ const claimBattlePassReward = onCall({ cors: true }, async (request) => {
       const profileData = profileDoc.data();
       let battlePass = profileData.battlePass;
 
-      // Get current season info
       const seasonDoc = await db.doc("game-settings/battlePassSeason").get();
       if (!seasonDoc.exists) {
         throw new HttpsError("failed-precondition", "No active battle pass season.");
       }
       const currentSeason = seasonDoc.data();
 
-      // Initialize battle pass for free rewards if it doesn't exist
       if (!battlePass && tier === 'free') {
         battlePass = {
           seasonId: currentSeason.seasonId,
           seasonName: currentSeason.name,
           xp: 0,
+          totalXpEarned: 0,
           level: 1,
           isPremium: false,
-          claimedRewards: {
-            free: [],
-            premium: [],
-          },
+          claimedRewards: { free: [], premium: [] },
         };
-        // Save the initialized battle pass
         transaction.update(profileRef, { battlePass });
       }
 
-      // For premium rewards, battle pass must exist and be premium
       if (!battlePass) {
         throw new HttpsError("failed-precondition", "No active battle pass.");
       }
 
-      // Check if user has reached this level
       if (battlePass.level < level) {
         throw new HttpsError("failed-precondition", `You must reach level ${level} first.`);
       }
 
-      // Check if premium tier and user doesn't own battle pass
       if (tier === 'premium' && !battlePass.isPremium) {
         throw new HttpsError("failed-precondition", "You must own the Battle Pass to claim premium rewards.");
       }
 
-      // Check if already claimed
       const claimedRewards = battlePass.claimedRewards || { free: [], premium: [] };
       if (claimedRewards[tier]?.includes(level)) {
         throw new HttpsError("already-exists", "Reward already claimed.");
       }
 
-      // Verify season match
       if (battlePass.seasonId !== currentSeason.seasonId) {
         throw new HttpsError("failed-precondition", "Season mismatch or expired.");
       }
@@ -334,49 +389,31 @@ const claimBattlePassReward = onCall({ cors: true }, async (request) => {
       }
 
       const reward = levelReward[tier];
-
-      // Apply reward
       const updates = {
         [`battlePass.claimedRewards.${tier}`]: admin.firestore.FieldValue.arrayUnion(level),
       };
 
-      switch (reward.type) {
-        case 'corpscoin':
-          updates.corpsCoin = admin.firestore.FieldValue.increment(reward.amount);
-          break;
-
-        case 'staff_pack':
-          // Award a random rare staff member
-          updates['battlePass.pendingStaffPacks'] = admin.firestore.FieldValue.increment(1);
-          break;
-
-        case 'equipment_upgrade':
-          updates['battlePass.pendingEquipmentUpgrades'] = admin.firestore.FieldValue.increment(1);
-          break;
-
-        case 'exclusive_badge':
-          updates.badges = admin.firestore.FieldValue.arrayUnion({
-            badgeId: reward.badgeId,
-            name: reward.description,
-            earnedDate: new Date(),
-            season: battlePass.seasonName,
-          });
-          break;
+      // Handle reward types
+      if (reward.type === 'milestone_bundle') {
+        // Process each reward in the bundle
+        for (const r of reward.rewards) {
+          applyReward(r, updates, battlePass);
+        }
+      } else {
+        applyReward(reward, updates, battlePass);
       }
 
       transaction.update(profileRef, updates);
 
-      return {
-        reward,
-        level,
-        tier,
-      };
+      return { reward, level, tier };
     });
 
     logger.info(`User ${uid} claimed ${tier} reward at level ${level}`);
     return {
       success: true,
-      message: `Claimed ${result.reward.type}!`,
+      message: result.reward.type === 'milestone_bundle'
+        ? 'Claimed milestone rewards!'
+        : `Claimed ${result.reward.type}!`,
       reward: result.reward,
     };
   } catch (error) {
@@ -385,6 +422,35 @@ const claimBattlePassReward = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Failed to claim reward.");
   }
 });
+
+/**
+ * Apply a single reward to the user profile updates
+ */
+function applyReward(reward, updates, battlePass) {
+  switch (reward.type) {
+    case 'corpscoin':
+      updates.corpsCoin = admin.firestore.FieldValue.increment(reward.amount);
+      break;
+    case 'badge':
+      updates.badges = admin.firestore.FieldValue.arrayUnion({
+        badgeId: reward.badgeId,
+        name: reward.name,
+        rarity: reward.rarity,
+        earnedDate: new Date(),
+        season: battlePass.seasonName,
+      });
+      break;
+    case 'cosmetic':
+      updates.cosmetics = admin.firestore.FieldValue.arrayUnion({
+        cosmeticId: reward.cosmeticId,
+        name: reward.name,
+        rarity: reward.rarity,
+        earnedDate: new Date(),
+        season: battlePass.seasonName,
+      });
+      break;
+  }
+}
 
 /**
  * Get Battle Pass Progress
@@ -411,50 +477,58 @@ const getBattlePassProgress = onCall({ cors: true }, async (request) => {
     const currentSeason = seasonDoc.data();
     const battlePass = profileDoc.data()?.battlePass;
 
-    // Calculate days remaining
     const now = new Date();
     const endDate = currentSeason.endDate.toDate();
+    const startDate = currentSeason.startDate?.toDate() || new Date(endDate - BATTLE_PASS_CONFIG.seasonDuration * 24 * 60 * 60 * 1000);
     const daysRemaining = Math.max(0, Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)));
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const weeksRemaining = Math.ceil(daysRemaining / 7);
 
-    // Initialize if not present
     if (!battlePass || battlePass.seasonId !== currentSeason.seasonId) {
       return {
         success: true,
         season: {
           ...currentSeason,
           daysRemaining,
+          weeksRemaining,
+          totalDays,
         },
         progress: {
           seasonId: currentSeason.seasonId,
           seasonName: currentSeason.name,
           xp: 0,
+          totalXpEarned: 0,
           level: 1,
           isPremium: false,
-          claimedRewards: {
-            free: [],
-            premium: [],
-          },
+          claimedRewards: { free: [], premium: [] },
+          xpTowardsNextLevel: 0,
+          xpNeededForNextLevel: BATTLE_PASS_CONFIG.xpPerLevel,
+          progressPercentage: 0,
+          overallProgress: 0,
         },
       };
     }
 
-    // Calculate progress to next level
     const currentLevelXP = (battlePass.level - 1) * BATTLE_PASS_CONFIG.xpPerLevel;
     const xpTowardsNextLevel = battlePass.xp - currentLevelXP;
     const xpNeededForNextLevel = BATTLE_PASS_CONFIG.xpPerLevel;
     const progressPercentage = (xpTowardsNextLevel / xpNeededForNextLevel) * 100;
+    const overallProgress = ((battlePass.level - 1) / BATTLE_PASS_CONFIG.levelCap) * 100 + (progressPercentage / BATTLE_PASS_CONFIG.levelCap);
 
     return {
       success: true,
       season: {
         ...currentSeason,
         daysRemaining,
+        weeksRemaining,
+        totalDays,
       },
       progress: {
         ...battlePass,
         xpTowardsNextLevel,
         xpNeededForNextLevel,
         progressPercentage: Math.min(100, progressPercentage),
+        overallProgress: Math.min(100, overallProgress),
       },
     };
   } catch (error) {
@@ -493,7 +567,6 @@ const getAvailableRewards = onCall({ cors: true }, async (request) => {
     const claimedRewards = battlePass.claimedRewards || { free: [], premium: [] };
     const availableRewards = [];
 
-    // Find unclaimed rewards up to current level
     for (let level = 1; level <= battlePass.level; level++) {
       const levelReward = seasonData.rewards.find(r => r.level === level);
       if (!levelReward) continue;
@@ -535,4 +608,5 @@ module.exports = {
   generateSeasonRewards,
   BATTLE_PASS_CONFIG,
   XP_SOURCES,
+  REWARD_CONFIG,
 };
