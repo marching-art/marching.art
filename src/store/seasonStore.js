@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { formatSeasonName } from '../utils/season';
 
 /**
  * Global Season Store
@@ -172,8 +173,7 @@ export const useSeasonStore = create((set, get) => ({
    */
   formatSeasonName: () => {
     const { seasonData } = get();
-    if (!seasonData?.name) return 'Loading season...';
-    return seasonData.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return formatSeasonName(seasonData?.name);
   }
 }));
 

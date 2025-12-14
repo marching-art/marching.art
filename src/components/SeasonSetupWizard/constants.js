@@ -1,5 +1,12 @@
 // SeasonSetupWizard constants and configuration
 
+// Import consolidated utility functions
+import { getCorpsClassName } from '../../utils/corps';
+import { formatSeasonName } from '../../utils/season';
+
+// Re-export for backwards compatibility
+export { getCorpsClassName, formatSeasonName };
+
 // Valid classes in hierarchy order (World → Open → A → SoundSport)
 export const ALL_CLASSES = ['worldClass', 'openClass', 'aClass', 'soundSport'];
 
@@ -42,11 +49,3 @@ export const CAPTIONS = [
 // Caption categories
 export const CAPTION_CATEGORIES = ['General Effect', 'Visual', 'Music'];
 
-// Get display name for a class
-export const getCorpsClassName = (classId) => CLASS_NAMES[classId] || classId;
-
-// Format season name for display
-export const formatSeasonName = (name) => {
-  if (!name) return 'New Season';
-  return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-};

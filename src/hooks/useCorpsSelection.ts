@@ -7,6 +7,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CorpsClass, CorpsData } from '../types';
 import toast from 'react-hot-toast';
+import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
+
+// Re-export for backwards compatibility
+export { getCorpsClassName, getCorpsClassColor };
 
 // =============================================================================
 // TYPES
@@ -21,31 +25,8 @@ export interface UseCorpsSelectionReturn {
   handleCorpsSwitch: (classId: CorpsClass) => void;
 }
 
-// =============================================================================
-// UTILITY FUNCTIONS
-// =============================================================================
-
-const CLASS_NAMES: Record<CorpsClass, string> = {
-  soundSport: 'SoundSport',
-  aClass: 'A Class',
-  open: 'Open Class',
-  world: 'World Class',
-};
-
-const CLASS_COLORS: Record<CorpsClass, string> = {
-  soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
-  aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
-  open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
-  world: 'text-gold-500 bg-gold-500/10 border-gold-500/30',
-};
-
-export function getCorpsClassName(classId: CorpsClass | string): string {
-  return CLASS_NAMES[classId as CorpsClass] || classId;
-}
-
-export function getCorpsClassColor(classId: CorpsClass | string): string {
-  return CLASS_COLORS[classId as CorpsClass] || 'text-cream-500 bg-cream-500/10 border-cream-500/30';
-}
+// Valid class names for validation
+const VALID_CLASSES: CorpsClass[] = ['soundSport', 'aClass', 'open', 'world'];
 
 // =============================================================================
 // HOOK
@@ -68,7 +49,7 @@ export function useCorpsSelection(
   useEffect(() => {
     if (uid) {
       const savedCorpsClass = localStorage.getItem(`selectedCorps_${uid}`);
-      if (savedCorpsClass && CLASS_NAMES[savedCorpsClass as CorpsClass]) {
+      if (savedCorpsClass && VALID_CLASSES.includes(savedCorpsClass as CorpsClass)) {
         setSelectedCorpsClass(savedCorpsClass as CorpsClass);
       }
     }
