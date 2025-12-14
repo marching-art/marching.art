@@ -1,19 +1,40 @@
 // src/pages/Schedule.jsx
-// Command Console Layout: Top Week Rail + Bottom Split (Show List | Show Details)
+// Streamlined Schedule - Simple week selector + card-based show list
 import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Zap, Calendar, MapPin, Music, Users, Clock, ChevronRight, Trophy, Star, Check, Info } from 'lucide-react';
+import {
+  AlertCircle, Calendar, MapPin, Check, Star,
+  ChevronLeft, ChevronRight, CalendarDays, List,
+  CheckCircle2, Users
+} from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole';
+import { SystemLoader } from '../components/ui/CommandConsole';
 import { useSeasonStore } from '../store/seasonStore';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
+import toast from 'react-hot-toast';
 
 // Import modular components
-import {
-  ShowRegistrationModal,
-  TourStrip,
-} from '../components/Schedule';
+import { ShowRegistrationModal } from '../components/Schedule';
+
+// Class display colors
+const CLASS_COLORS = {
+  worldClass: 'text-gold-400 bg-gold-500/20 border-gold-500/30',
+  openClass: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
+  aClass: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+  soundSport: 'text-green-400 bg-green-500/20 border-green-500/30'
+};
+
+// DCI-style recommended show days (weekends are typically bigger shows)
+const isRecommendedShow = (dayNumber, getActualDate) => {
+  const date = getActualDate(dayNumber);
+  if (!date) return false;
+  const dayOfWeek = date.getDay();
+  // Saturday (6) and Sunday (0) are recommended - these align with real DCI shows
+  return dayOfWeek === 0 || dayOfWeek === 6;
+};
 
 const Schedule = () => {
   const { user } = useAuth();
@@ -22,8 +43,10 @@ const Schedule = () => {
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+  const [registeringAll, setRegisteringAll] = useState(false);
 
-  // Use global season store instead of fetching independently
+  // Use global season store
   const seasonData = useSeasonStore((state) => state.seasonData);
   const currentWeek = useSeasonStore((state) => state.currentWeek);
   const seasonLoading = useSeasonStore((state) => state.loading);
@@ -37,7 +60,7 @@ const Schedule = () => {
     return actualDate;
   };
 
-  // Format date for display - compact version
+  // Format date for display
   const formatDateCompact = (dayNumber) => {
     const date = getActualDate(dayNumber);
     if (!date) return `Day ${dayNumber}`;
@@ -48,16 +71,21 @@ const Schedule = () => {
     });
   };
 
-  // Format date for detail view
   const formatDateFull = (dayNumber) => {
     const date = getActualDate(dayNumber);
     if (!date) return `Day ${dayNumber}`;
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
-      day: 'numeric',
-      year: 'numeric'
+      day: 'numeric'
     });
+  };
+
+  // Get day of week name
+  const getDayName = (dayNumber) => {
+    const date = getActualDate(dayNumber);
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
   useEffect(() => {
@@ -73,7 +101,7 @@ const Schedule = () => {
     }
   }, [currentWeek]);
 
-  // Update loading state based on season store and user profile
+  // Update loading state
   useEffect(() => {
     if (!seasonLoading && userProfile !== null) {
       setLoading(false);
@@ -86,7 +114,6 @@ const Schedule = () => {
     try {
       const profileRef = doc(db, `artifacts/marching-art/users/${user.uid}/profile/data`);
       const profileSnap = await getDoc(profileRef);
-
       if (profileSnap.exists()) {
         setUserProfile(profileSnap.data());
       }
@@ -150,6 +177,70 @@ const Schedule = () => {
     setRegistrationModal(true);
   };
 
+  // Register All - register all user's corps for all shows in the week
+  const handleRegisterAll = async () => {
+    if (!userProfile?.corps || selectedWeekShows.length === 0) {
+      toast.error('No corps or shows available');
+      return;
+    }
+
+    const corpsClasses = Object.keys(userProfile.corps);
+    if (corpsClasses.length === 0) {
+      toast.error('You need to register a corps first');
+      return;
+    }
+
+    setRegisteringAll(true);
+
+    try {
+      const selectUserShows = httpsCallable(functions, 'selectUserShows');
+
+      // For each corps, register for shows (up to 4 per week)
+      for (const corpsClass of corpsClasses) {
+        const corpsData = userProfile.corps[corpsClass];
+        const weekKey = `week${selectedWeek}`;
+        const currentShows = corpsData.selectedShows?.[weekKey] || [];
+
+        // Calculate how many more shows we can add
+        const slotsAvailable = 4 - currentShows.length;
+        if (slotsAvailable <= 0) continue;
+
+        // Get shows not already registered for
+        const unregisteredShows = selectedWeekShows.filter(show =>
+          !currentShows.some(s => s.eventName === show.eventName && s.date === show.date)
+        );
+
+        // Add up to slotsAvailable shows
+        const showsToAdd = unregisteredShows.slice(0, slotsAvailable);
+        if (showsToAdd.length === 0) continue;
+
+        const newShows = [
+          ...currentShows,
+          ...showsToAdd.map(show => ({
+            eventName: show.eventName,
+            date: show.date,
+            location: show.location,
+            day: show.day
+          }))
+        ];
+
+        await selectUserShows({
+          week: selectedWeek,
+          shows: newShows,
+          corpsClass
+        });
+      }
+
+      toast.success('Registered for all available shows!');
+      await loadUserProfile();
+    } catch (error) {
+      console.error('Error registering for all:', error);
+      toast.error('Failed to register for all shows');
+    } finally {
+      setRegisteringAll(false);
+    }
+  };
+
   // Get count of user's registrations for a week
   const getWeekRegistrationCount = (weekNumber) => {
     if (!userProfile?.corps) return 0;
@@ -169,16 +260,22 @@ const Schedule = () => {
     [allShows, selectedWeek]
   );
 
-  // Class display helpers
-  const getClassColor = (corpsClass) => {
-    const colors = {
-      worldClass: 'text-gold-400 bg-gold-500/20',
-      openClass: 'text-purple-400 bg-purple-500/20',
-      aClass: 'text-blue-400 bg-blue-500/20',
-      soundSport: 'text-green-400 bg-green-500/20'
-    };
-    return colors[corpsClass] || 'text-cream-400 bg-cream-500/20';
-  };
+  // Check if all shows in week are registered
+  const allShowsRegistered = useMemo(() => {
+    if (!userProfile?.corps || selectedWeekShows.length === 0) return false;
+    return selectedWeekShows.every(show => getMyCorpsAtShow(show).length > 0);
+  }, [userProfile, selectedWeekShows]);
+
+  // Get shows organized by day for calendar view
+  const showsByDay = useMemo(() => {
+    const grouped = {};
+    selectedWeekShows.forEach(show => {
+      const dayKey = show.day;
+      if (!grouped[dayKey]) grouped[dayKey] = [];
+      grouped[dayKey].push(show);
+    });
+    return grouped;
+  }, [selectedWeekShows]);
 
   if (loading) {
     return (
@@ -218,27 +315,51 @@ const Schedule = () => {
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       {/* ================================================================
-          TOP BAR: Week Selector (Fixed Height, Compact)
+          HEADER: Title + Week indicator + View toggle
           ================================================================ */}
-      <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md">
-        {/* Header Bar - Compact */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gold-400" />
-            <h1 className="text-sm font-display font-bold text-cream uppercase tracking-wide">Tour Schedule</h1>
-            <span className="text-[9px] text-data-muted">
-              Wk <span className="text-data-gold">{currentWeek}</span> • <span className="text-data">{allShows.length}</span> shows
+      <div className="shrink-0 border-b border-white/5 bg-black/30 backdrop-blur-md px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-gold-400" />
+            <h1 className="text-lg font-display font-bold text-cream uppercase tracking-wide">Schedule</h1>
+            <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-xs font-bold text-gold-400">
+              Week {currentWeek} of 7
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-[10px] font-bold text-data-gold">
-              {getWeekRegistrationCount(selectedWeek)} Reg
-            </span>
+
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 bg-black/30 rounded-lg p-1 border border-white/10">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-all ${
+                viewMode === 'list'
+                  ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
+                  : 'text-cream/60 hover:text-cream'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-all ${
+                viewMode === 'calendar'
+                  ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
+                  : 'text-cream/60 hover:text-cream'
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              Calendar
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Week Tabs - Compact Horizontal Scroll */}
-        <div className="flex gap-1 p-1.5 overflow-x-auto hud-scroll">
+      {/* ================================================================
+          WEEK SELECTOR: Horizontal scroll week tabs
+          ================================================================ */}
+      <div className="shrink-0 border-b border-white/5 bg-black/20 px-4 py-3">
+        <div className="flex items-center gap-2 overflow-x-auto hud-scroll pb-1">
           {[1, 2, 3, 4, 5, 6, 7].map((week) => {
             const status = getWeekStatus(week);
             const regCount = getWeekRegistrationCount(week);
@@ -249,262 +370,331 @@ const Schedule = () => {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`relative flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded transition-all ${
-                  isSelected
-                    ? 'bg-gold-500/20 border border-gold-500/50'
+                className={`
+                  relative flex-shrink-0 flex flex-col items-center px-4 py-2 rounded-lg transition-all
+                  ${isSelected
+                    ? 'bg-gold-500/20 border-2 border-gold-500/50'
                     : status === 'current'
                     ? 'bg-purple-500/10 border border-purple-500/30 hover:border-purple-500/50'
                     : status === 'past'
-                    ? 'bg-white/5 border border-white/5 opacity-50 hover:opacity-70'
+                    ? 'bg-white/5 border border-white/5 opacity-60 hover:opacity-80'
                     : 'bg-white/5 border border-white/10 hover:border-white/20'
-                }`}
+                  }
+                `}
               >
-                <span className={`text-sm font-bold ${
-                  isSelected ? 'text-data-gold' : status === 'current' ? 'text-data-purple' : 'text-data-muted'
-                }`}>
-                  {week}
-                </span>
+                {/* Current week indicator */}
+                {status === 'current' && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                )}
+
+                {/* Week number with star for selected */}
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-data-muted">{showCount}</span>
+                  {isSelected && <Star className="w-3 h-3 text-gold-400 fill-gold-400" />}
+                  <span className={`text-base font-bold ${
+                    isSelected ? 'text-gold-400' : status === 'current' ? 'text-purple-400' : 'text-cream/70'
+                  }`}>
+                    Wk {week}
+                  </span>
+                </div>
+
+                {/* Stats */}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] text-cream/50">{showCount} shows</span>
                   {regCount > 0 && (
-                    <span className="px-1 py-0.5 rounded text-[8px] font-bold text-data-success bg-green-500/20">
-                      {regCount}
+                    <span className="flex items-center gap-0.5 text-[10px] text-green-400">
+                      <Check className="w-2.5 h-2.5" />{regCount}
                     </span>
                   )}
                 </div>
-                {status === 'current' && (
-                  <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                )}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ============================================================
-          WORK SURFACE: Show List + Show Detail (Split View)
-          ============================================================ */}
-      <div className="flex-1 flex overflow-hidden">
-
-        {/* LEFT: Show List - High Density Table */}
-        <div className={`flex flex-col overflow-hidden border-r border-white/5 bg-black/20 ${
-          selectedShow ? 'hidden lg:flex lg:w-[400px]' : 'w-full lg:w-[400px]'
-        }`}>
-          {/* Week Status Bar - Compact */}
-          <div className="shrink-0 px-2 py-1.5 border-b border-white/5 bg-black/30 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                weekStatus === 'current' ? 'bg-purple-500/20 text-data-purple' :
-                weekStatus === 'past' ? 'bg-white/5 text-data-muted' :
-                'bg-blue-500/20 text-data-blue'
-              }`}>
-                {weekStatus === 'current' ? 'Active' : weekStatus === 'past' ? 'Past' : 'Soon'}
-              </span>
-              <span className="text-xs text-data-muted">Week <span className="text-data">{selectedWeek}</span></span>
-            </div>
-            <span className="text-[9px] text-data-muted"><span className="text-data">{selectedWeekShows.length}</span> shows</span>
+      {/* ================================================================
+          WEEK HEADER: Status + Register All button
+          ================================================================ */}
+      <div className="shrink-0 px-4 py-3 border-b border-white/5 bg-black/10">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-display font-bold text-cream">
+              Week {selectedWeek} Shows
+            </h2>
+            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
+              weekStatus === 'current' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+              weekStatus === 'past' ? 'bg-white/10 text-cream/50' :
+              'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+            }`}>
+              {weekStatus === 'current' ? 'Active' : weekStatus === 'past' ? 'Past' : 'Upcoming'}
+            </span>
+            <span className="text-sm text-cream/50">
+              {selectedWeekShows.length} {selectedWeekShows.length === 1 ? 'show' : 'shows'} available
+            </span>
           </div>
 
-          {/* Show Table - High Density with internal scroll */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            {selectedWeekShows.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <ConsoleEmptyState
-                  variant="minimal"
-                  title="NO SHOWS DETECTED"
-                  subtitle={`Week ${selectedWeek} has no scheduled events.`}
-                />
-              </div>
-            ) : (
-              <>
-                {/* Table Header - Sticky */}
-                <div className="shrink-0 border-b border-white/10 bg-black/60">
-                  <div className="grid grid-cols-[1fr_80px_60px] gap-2 px-2 py-1">
-                    <span className="text-[9px] font-mono text-cream/40 uppercase">Event</span>
-                    <span className="text-[9px] font-mono text-cream/40 uppercase text-center">Date</span>
-                    <span className="text-[9px] font-mono text-cream/40 uppercase text-right">Action</span>
-                  </div>
-                </div>
-
-                {/* Scrollable Show Rows */}
-                <div className="flex-1 overflow-y-auto hud-scroll">
-                  {selectedWeekShows.map((show, idx) => {
-                    const myCorps = getMyCorpsAtShow(show);
-                    const isSelected = selectedShow?.eventName === show.eventName && selectedShow?.day === show.day;
-
-                    return (
-                      <div
-                        key={`${show.eventName}-${show.day}-${idx}`}
-                        onClick={() => setSelectedShow(show)}
-                        className={`
-                          grid grid-cols-[1fr_80px_60px] gap-2 px-2 py-2 cursor-pointer
-                          transition-colors duration-100 border-b border-white/5
-                          ${idx % 2 === 0 ? 'bg-white/5' : 'bg-transparent'}
-                          ${isSelected ? 'bg-gold-500/15' : 'hover:bg-white/[0.08]'}
-                        `}
-                      >
-                        {/* Event Name + Corps badges */}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className={`w-3 h-3 shrink-0 ${
-                              myCorps.length > 0 ? 'text-green-400' : 'text-cream/40'
-                            }`} />
-                            <span className={`text-xs font-display font-bold truncate ${
-                              isSelected ? 'text-gold-400' : 'text-cream'
-                            }`}>
-                              {show.eventName}
-                            </span>
-                          </div>
-                          {myCorps.length > 0 && (
-                            <div className="flex gap-1 mt-1 ml-4">
-                              {myCorps.slice(0, 2).map(c => (
-                                <span
-                                  key={c.corpsClass}
-                                  className={`px-1 py-0.5 rounded text-[8px] font-mono font-bold ${getClassColor(c.corpsClass)}`}
-                                >
-                                  {c.corpsName.slice(0, 8)}
-                                </span>
-                              ))}
-                              {myCorps.length > 2 && (
-                                <span className="text-[8px] text-cream/40">+{myCorps.length - 2}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Date - Monospace */}
-                        <div className="flex items-center justify-center">
-                          <span className="text-[10px] text-data-muted">{formatDateCompact(show.day)}</span>
-                        </div>
-
-                        {/* Action Button - Fixed Right */}
-                        <div className="flex items-center justify-end">
-                          {myCorps.length > 0 ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleRegisterCorps(show); }}
-                              className="px-2 py-1 text-[8px] font-mono font-bold uppercase bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30 rounded"
-                            >
-                              Reg
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          {/* Register All Button */}
+          {weekStatus !== 'past' && selectedWeekShows.length > 0 && userProfile?.corps && (
+            <button
+              onClick={handleRegisterAll}
+              disabled={registeringAll || allShowsRegistered}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                allShowsRegistered
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30 cursor-default'
+                  : 'bg-gold-500 text-charcoal-900 hover:bg-gold-400 disabled:opacity-50'
+              }`}
+            >
+              {registeringAll ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                  Registering...
+                </>
+              ) : allShowsRegistered ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  All Registered
+                </>
+              ) : (
+                <>
+                  <Users className="w-4 h-4" />
+                  Register All
+                </>
+              )}
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* RIGHT: Show Detail - Compact */}
-        <div className={`flex-1 flex flex-col overflow-hidden ${!selectedShow ? 'hidden lg:flex' : 'flex'}`}>
-          {selectedShow ? (
-            <div className="h-full flex flex-col overflow-hidden">
-              {/* Mobile Back Button - Compact */}
-              <div className="lg:hidden shrink-0 px-2 py-1.5 border-b border-white/5 bg-black/30">
-                <button
-                  onClick={() => setSelectedShow(null)}
-                  className="flex items-center gap-1.5 text-cream/60 hover:text-cream text-xs"
-                >
-                  <ChevronRight className="w-3 h-3 rotate-180" />
-                  <span>Back</span>
-                </button>
-              </div>
+      {/* ================================================================
+          SHOW LIST / CALENDAR VIEW
+          ================================================================ */}
+      <div className="flex-1 overflow-y-auto hud-scroll p-4">
+        {selectedWeekShows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <Calendar className="w-16 h-16 text-cream/20 mb-4" />
+            <h3 className="text-lg font-display font-bold text-cream/60 mb-2">No Shows This Week</h3>
+            <p className="text-sm text-cream/40">Week {selectedWeek} has no scheduled events.</p>
+          </div>
+        ) : viewMode === 'list' ? (
+          /* LIST VIEW */
+          <div className="space-y-3 max-w-3xl mx-auto">
+            {selectedWeekShows.map((show, idx) => {
+              const myCorps = getMyCorpsAtShow(show);
+              const isRegistered = myCorps.length > 0;
+              const recommended = isRecommendedShow(show.day, getActualDate);
+              const showDate = getActualDate(show.day);
+              const isPast = showDate && showDate < new Date();
 
-              {/* Show Detail Content - Internal Scroll */}
-              <div className="flex-1 overflow-y-auto hud-scroll p-3">
+              return (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-3"
+                  key={`${show.eventName}-${show.day}-${idx}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`
+                    relative bg-black/30 border rounded-xl overflow-hidden
+                    ${isRegistered
+                      ? 'border-green-500/40 bg-green-500/5'
+                      : isPast
+                        ? 'border-white/10 opacity-60'
+                        : 'border-white/10 hover:border-gold-500/30'
+                    }
+                  `}
                 >
-                  {/* Show Header - Compact */}
-                  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center shrink-0">
-                        <Trophy className="w-5 h-5 text-gold-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-display font-bold text-cream truncate">
-                          {selectedShow.eventName}
-                        </h2>
-                        <div className="flex items-center gap-3 text-xs text-cream/60 mt-1">
-                          <span className="flex items-center gap-1 text-data-muted">
-                            <Calendar className="w-3 h-3 text-gold-400" />
-                            {formatDateFull(selectedShow.day)}
-                          </span>
-                          {selectedShow.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-purple-400" />
-                              {selectedShow.location}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* My Corps at Show - Compact */}
-                  {getMyCorpsAtShow(selectedShow).length > 0 && (
-                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Check className="w-3.5 h-3.5 text-green-400" />
-                        <span className="text-[10px] font-mono font-bold text-green-400 uppercase">Attending</span>
-                      </div>
-                      <div className="space-y-1">
-                        {getMyCorpsAtShow(selectedShow).map(c => (
-                          <div key={c.corpsClass} className="flex items-center gap-2 px-2 py-1.5 bg-black/30 rounded">
-                            <Music className="w-3 h-3 text-green-400" />
-                            <span className="text-xs font-display font-bold text-cream">{c.corpsName}</span>
-                            <span className="text-[9px] text-cream/40 capitalize ml-auto">{c.corpsClass.replace(/([A-Z])/g, ' $1').trim()}</span>
-                          </div>
-                        ))}
-                      </div>
+                  {/* Recommended Badge */}
+                  {recommended && !isPast && (
+                    <div className="absolute top-3 right-3">
+                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-[10px] font-bold text-gold-400">
+                        <Star className="w-3 h-3 fill-gold-400" />
+                        Recommended
+                      </span>
                     </div>
                   )}
 
-                  {/* Show Info - Compact Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-black/30 border border-white/10 rounded-lg p-2">
-                      <span className="text-[9px] text-data-muted uppercase">Type</span>
-                      <p className="text-sm font-bold text-data text-cream">{selectedShow.type || 'Standard'}</p>
-                    </div>
-                    <div className="bg-black/30 border border-white/10 rounded-lg p-2">
-                      <span className="text-[9px] text-data-muted uppercase">Classes</span>
-                      <p className="text-sm font-bold text-data text-cream">{selectedShow.classes?.join(', ') || 'All'}</p>
-                    </div>
-                  </div>
+                  <div className="p-4">
+                    {/* Show Header */}
+                    <div className="flex items-start gap-4">
+                      {/* Location Icon */}
+                      <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                        isRegistered ? 'bg-green-500/20' : 'bg-gold-500/20'
+                      }`}>
+                        <MapPin className={`w-5 h-5 ${isRegistered ? 'text-green-400' : 'text-gold-400'}`} />
+                      </div>
 
-                  {/* Register Button */}
-                  <button
-                    onClick={() => handleRegisterCorps(selectedShow)}
-                    className="w-full py-3 rounded-lg bg-gold-500 text-charcoal-900 font-display font-bold uppercase text-sm tracking-wide hover:bg-gold-400 transition-colors"
-                  >
-                    Register Corps
-                  </button>
+                      {/* Show Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-display font-bold text-cream truncate pr-24">
+                          {show.eventName}
+                        </h3>
+                        <p className="text-sm text-cream/60 mt-0.5">
+                          {formatDateFull(show.day)}
+                        </p>
+                        {show.location && (
+                          <p className="text-xs text-cream/40 mt-1">{show.location}</p>
+                        )}
+                      </div>
+                    </div>
 
-                  {/* Tip - Compact */}
-                  <div className="flex items-center gap-2 px-2 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded text-[10px] text-cream/60">
-                    <Info className="w-3 h-3 text-gold-400 shrink-0" />
-                    <span>Max <span className="font-bold text-data-gold">4</span> shows/week per corps</span>
+                    {/* Registration Status */}
+                    <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
+                      {isRegistered ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="flex items-center gap-1.5 text-sm text-green-400 font-bold">
+                            <Check className="w-4 h-4" />
+                            Registered
+                          </span>
+                          <span className="text-cream/30">—</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {myCorps.map((c, i) => (
+                              <span
+                                key={i}
+                                className={`px-2 py-0.5 rounded text-xs font-bold border ${CLASS_COLORS[c.corpsClass] || 'text-cream/60 bg-white/10 border-white/20'}`}
+                              >
+                                {c.corpsName}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : isPast ? (
+                        <span className="text-sm text-cream/40">Show completed</span>
+                      ) : (
+                        <span className="text-sm text-cream/50">Not registered</span>
+                      )}
+
+                      {/* Action Button */}
+                      {!isPast && (
+                        <button
+                          onClick={() => handleRegisterCorps(show)}
+                          className={`
+                            flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all
+                            ${isRegistered
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                              : 'bg-gold-500 text-charcoal-900 hover:bg-gold-400'
+                            }
+                          `}
+                        >
+                          {isRegistered ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Edit
+                            </>
+                          ) : (
+                            <>
+                              <ChevronRight className="w-4 h-4" />
+                              Register
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          /* CALENDAR VIEW - Monthly Overview */
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-7 gap-2">
+              {/* Day Headers */}
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center py-2 text-xs font-bold text-cream/50 uppercase">
+                  {day}
+                </div>
+              ))}
+
+              {/* Calendar Days */}
+              {(() => {
+                const weekStart = (selectedWeek - 1) * 7 + 1;
+                const weekEnd = selectedWeek * 7;
+                const days = [];
+
+                // Get the starting day of week for proper calendar alignment
+                const firstDayDate = getActualDate(weekStart);
+                const startDayOfWeek = firstDayDate ? firstDayDate.getDay() : 0;
+
+                // Add empty cells for alignment
+                for (let i = 0; i < startDayOfWeek; i++) {
+                  days.push(<div key={`empty-${i}`} className="h-32" />);
+                }
+
+                // Add actual days
+                for (let day = weekStart; day <= weekEnd; day++) {
+                  const dayShows = showsByDay[day] || [];
+                  const hasShows = dayShows.length > 0;
+                  const isToday = getActualDate(day)?.toDateString() === new Date().toDateString();
+                  const allRegistered = hasShows && dayShows.every(s => getMyCorpsAtShow(s).length > 0);
+                  const someRegistered = hasShows && dayShows.some(s => getMyCorpsAtShow(s).length > 0);
+                  const isPast = getActualDate(day) < new Date();
+
+                  days.push(
+                    <div
+                      key={day}
+                      className={`
+                        h-32 rounded-lg border p-2 overflow-hidden
+                        ${isToday ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10 bg-black/20'}
+                        ${hasShows && !isPast ? 'hover:border-gold-500/30 cursor-pointer' : ''}
+                        ${isPast ? 'opacity-50' : ''}
+                      `}
+                    >
+                      {/* Day Number */}
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-lg font-bold ${isToday ? 'text-purple-400' : 'text-cream/70'}`}>
+                          {getActualDate(day)?.getDate()}
+                        </span>
+                        {allRegistered && <Check className="w-4 h-4 text-green-400" />}
+                        {someRegistered && !allRegistered && <div className="w-2 h-2 rounded-full bg-gold-400" />}
+                      </div>
+
+                      {/* Shows */}
+                      <div className="space-y-1">
+                        {dayShows.slice(0, 2).map((show, i) => {
+                          const isReg = getMyCorpsAtShow(show).length > 0;
+                          return (
+                            <div
+                              key={i}
+                              onClick={() => !isPast && handleRegisterCorps(show)}
+                              className={`
+                                text-[10px] px-1.5 py-1 rounded truncate
+                                ${isReg
+                                  ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                  : 'bg-gold-500/10 text-cream/70 border border-gold-500/20'
+                                }
+                              `}
+                            >
+                              {show.eventName}
+                            </div>
+                          );
+                        })}
+                        {dayShows.length > 2 && (
+                          <span className="text-[10px] text-cream/40">+{dayShows.length - 2} more</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return days;
+              })()}
+            </div>
+
+            {/* Calendar Legend */}
+            <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-500/30 border border-green-500/50" />
+                <span className="text-xs text-cream/50">Registered</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-gold-500/20 border border-gold-500/30" />
+                <span className="text-xs text-cream/50">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded border border-purple-500/50 bg-purple-500/20" />
+                <span className="text-xs text-cream/50">Today</span>
               </div>
             </div>
-          ) : (
-            /* Empty State - No Show Selected */
-            <div className="h-full flex items-center justify-center bg-black/20">
-              <div className="text-center p-4">
-                <MapPin className="w-10 h-10 text-cream/20 mx-auto mb-2" />
-                <h3 className="text-sm font-display font-bold text-cream/60 mb-1">Select a Show</h3>
-                <p className="text-[10px] text-cream/40">Click a show to view details</p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Registration Modal */}
