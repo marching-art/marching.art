@@ -123,7 +123,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg overflow-hidden border border-yellow-500/30">
+            <div className="w-8 h-8 rounded-lg overflow-hidden">
               <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-lg font-display font-bold">

@@ -108,7 +108,7 @@ const GameShell = ({ children }) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="h-dvh w-screen overflow-hidden bg-slate-950 text-cream font-sans">
+      <div className="h-dvh w-screen overflow-hidden bg-slate-950 text-cream font-sans overscroll-contain touch-manipulation">
         {/* Background */}
         <AtmosphericBackground />
 

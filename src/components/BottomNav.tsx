@@ -57,7 +57,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 safe-area-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 safe-area-bottom select-none"
       aria-label="Mobile navigation"
     >
       {/* Golden accent line at top */}

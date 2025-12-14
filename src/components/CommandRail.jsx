@@ -94,7 +94,7 @@ const CommandRail = () => {
       {/* Logo */}
       <div className="h-16 px-4 flex items-center border-b border-white/5">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/30">
+          <div className="w-10 h-10 rounded-xl overflow-hidden">
             <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
           </div>
           <div>
