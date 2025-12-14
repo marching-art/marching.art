@@ -232,7 +232,7 @@ body {
    =========================================== */
 
 *:focus-visible {
-  outline: 2px solid #0057B8;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -3660,7 +3660,7 @@ p, li, span {
   text-transform: uppercase;
   color: var(--color-text-muted);
   padding: 8px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   font-weight: 500;
   font-size: 12px;
@@ -3678,11 +3678,11 @@ p, li, span {
 
 /* Trend utilities */
 .trend-up {
-  color: #22c55e;
+  color: var(--color-success);
 }
 
 .trend-down {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* ===========================================
