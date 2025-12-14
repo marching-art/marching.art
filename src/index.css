@@ -372,8 +372,9 @@ p, li, span {
 
 /* Section headers - uppercase only for major sections */
 .section-header {
-  @apply text-sm font-semibold uppercase tracking-wider text-gold-400;
+  @apply text-sm font-semibold uppercase tracking-wider;
   letter-spacing: 0.05em;
+  color: var(--gold-400);
 }
 
 /* Page titles - no uppercase */
@@ -407,34 +408,44 @@ p, li, span {
    * Refined: Gold glow effects, no uppercase, smooth transitions
    */
   .btn-primary-hud {
-    @apply bg-gold-500 text-charcoal-950 font-semibold px-6 py-3 rounded-lg;
-    box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
+    @apply font-semibold px-6 py-3 rounded-lg;
     @apply hover:-translate-y-0.5 transition-all duration-300;
+    background-color: var(--gold-500);
+    color: var(--charcoal-950);
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
   }
 
   .btn-primary-hud:hover {
-    @apply bg-gold-400;
+    background-color: var(--gold-400);
     box-shadow: 0 0 25px rgba(234, 179, 8, 0.5);
   }
 
   .btn-primary-hud-sm {
-    @apply bg-gold-500 text-charcoal-950 font-semibold px-4 py-2 rounded-lg text-sm;
-    box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+    @apply font-semibold px-4 py-2 rounded-lg text-sm;
     @apply hover:-translate-y-0.5 transition-all duration-300;
+    background-color: var(--gold-500);
+    color: var(--charcoal-950);
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
   }
 
   .btn-primary-hud-lg {
-    @apply bg-gold-500 text-charcoal-950 font-semibold px-8 py-4 rounded-xl text-lg;
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.35);
+    @apply font-semibold px-8 py-4 rounded-xl text-lg;
     @apply hover:-translate-y-0.5 transition-all duration-300;
+    background-color: var(--gold-500);
+    color: var(--charcoal-950);
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.35);
   }
 
   /* Secondary Button - Glass Style */
   .btn-secondary-hud {
     @apply bg-white/10 backdrop-blur-sm text-cream font-medium px-6 py-3 rounded-lg;
-    @apply border border-white/15 hover:border-gold-500/40;
+    @apply border border-white/15;
     @apply hover:bg-white/15 transition-all duration-300;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-secondary-hud:hover {
+    border-color: rgba(234, 179, 8, 0.4);
   }
 
   .btn-secondary-hud:hover {
@@ -461,7 +472,8 @@ p, li, span {
 
   /* Semantic color variants for data values */
   .text-data-gold {
-    @apply text-data text-gold-400;
+    @apply text-data;
+    color: var(--gold-400);
   }
 
   .text-data-success {
@@ -499,28 +511,32 @@ p, li, span {
   }
 
   .data-value {
-    @apply text-5xl font-bold text-gold-400;
+    @apply text-5xl font-bold;
+    color: var(--gold-400);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-sm {
-    @apply text-3xl font-bold text-gold-400;
+    @apply text-3xl font-bold;
+    color: var(--gold-400);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-lg {
-    @apply text-6xl font-bold text-gold-400;
+    @apply text-6xl font-bold;
+    color: var(--gold-400);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-xl {
-    @apply text-7xl font-bold text-gold-400;
+    @apply text-7xl font-bold;
+    color: var(--gold-400);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
@@ -621,7 +637,8 @@ p, li, span {
 
   /* Rarity border colors for avatars */
   .rarity-legendary {
-    @apply border-gold-500 shadow-gold-glow-sm;
+    @apply shadow-gold-glow-sm;
+    border-color: var(--gold-500);
   }
 
   .rarity-rare {
@@ -1211,13 +1228,14 @@ p, li, span {
 
   /* Panel Title - Standardized typography */
   .panel-title {
-    @apply text-lg font-display font-bold uppercase tracking-wider text-cream-100;
+    @apply text-lg font-display font-bold uppercase tracking-wider;
+    color: var(--cream-100);
   }
 
   /* Panel Close Button */
   .panel-close {
-    @apply p-2 transition-colors;
-    @apply text-cream-100/50 hover:text-red-400;
+    @apply p-2 transition-colors hover:text-red-400;
+    color: rgba(253, 249, 237, 0.5);
   }
 
   /* Panel Body - Scrollable content area with tactical grid */
@@ -1251,7 +1269,8 @@ p, li, span {
 
   /* Data Value - Monospace bold values */
   .data-value-sm {
-    @apply text-sm font-mono font-bold text-cream-100;
+    @apply text-sm font-mono font-bold;
+    color: var(--cream-100);
   }
 
   /* Accordion Section - Collapsible panel section */
@@ -1269,7 +1288,8 @@ p, li, span {
   }
 
   .accordion-chevron {
-    @apply w-4 h-4 text-cream-100/50 transition-transform duration-200;
+    @apply w-4 h-4 transition-transform duration-200;
+    color: rgba(253, 249, 237, 0.5);
   }
 
   .accordion-chevron.open {
@@ -1478,7 +1498,7 @@ p, li, span {
   }
 
   .checkbox:checked {
-    @apply bg-gold-500;
+    background-color: var(--gold-500);
     border-color: rgba(250, 204, 21, 0.6);
   }
 
@@ -1495,7 +1515,8 @@ p, li, span {
   }
 
   .badge-gold {
-    @apply badge text-gold-400;
+    @apply badge;
+    color: var(--gold-400);
     background: rgba(250, 204, 21, 0.12);
     border-color: rgba(250, 204, 21, 0.3);
   }
@@ -1582,20 +1603,23 @@ p, li, span {
   }
   
   .spinner {
-    @apply inline-block w-6 h-6 border-2 border-gold-900 border-t-gold-500 rounded-full animate-spin;
+    @apply inline-block w-6 h-6 border-2 rounded-full animate-spin;
+    border-color: var(--gold-900);
+    border-top-color: var(--gold-500);
   }
-  
+
   /* Dividers */
   .divider {
     @apply relative my-8;
   }
-  
+
   .divider::before {
     @apply absolute inset-0 flex items-center content-[''];
   }
-  
+
   .divider::before {
-    @apply border-t border-cream-900;
+    @apply border-t;
+    border-color: var(--cream-900);
   }
   
   /* Animations */
@@ -1650,11 +1674,12 @@ p, li, span {
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gold-700 rounded-full;
+    @apply rounded-full;
+    background-color: var(--gold-700);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gold-600;
+    background-color: var(--gold-600);
   }
 
   /* ===========================================
@@ -2227,7 +2252,7 @@ p, li, span {
 
   /* Rarity Borders */
   .rarity-legendary {
-    @apply border-gold-400;
+    border-color: var(--gold-400);
     animation: pulse-legendary 2s ease-in-out infinite;
   }
 
@@ -2530,13 +2555,14 @@ p, li, span {
 /* Player status module styles */
 .player-stat-module {
   @apply flex items-center gap-2 px-3 py-1.5;
-  @apply bg-charcoal-900 rounded;
-  @apply border border-gold-500/30;
+  @apply rounded;
   @apply transition-all duration-200;
+  background-color: var(--charcoal-900);
+  border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
 .player-stat-module:hover {
-  @apply border-gold-500/50;
+  border-color: rgba(234, 179, 8, 0.5);
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
 }
 
@@ -2550,7 +2576,8 @@ p, li, span {
 /* Level badge with animated border */
 .level-badge {
   @apply relative px-3 py-1 rounded;
-  @apply bg-charcoal-900 border border-cream-500/20;
+  background-color: var(--charcoal-900);
+  border: 1px solid rgba(234, 220, 171, 0.2);
 }
 
 .level-badge::before {
@@ -2568,7 +2595,8 @@ p, li, span {
 
 /* XP progress bar with striped fill */
 .xp-progress-bar {
-  @apply h-1.5 bg-charcoal-800 rounded-full overflow-hidden;
+  @apply h-1.5 rounded-full overflow-hidden;
+  background-color: var(--charcoal-800);
 }
 
 .xp-progress-fill {
@@ -2585,13 +2613,15 @@ p, li, span {
 
 /* Dropdown menu gaming style */
 .dropdown-gaming {
-  @apply bg-charcoal-900 border-2 border-gold-500/30 rounded;
+  @apply rounded;
+  background-color: var(--charcoal-900);
+  border: 2px solid rgba(234, 179, 8, 0.3);
   box-shadow: 4px 4px 0px 0px rgba(255, 215, 0, 0.5);
 }
 
 /* Mobile menu slide panel */
 .mobile-menu-panel {
-  @apply bg-charcoal-950;
+  background-color: var(--charcoal-950);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
 }
 
@@ -2645,7 +2675,8 @@ p, li, span {
 
 /* Notification badge pulse */
 .notification-pulse {
-  @apply absolute -top-1 -right-1 w-2.5 h-2.5 bg-gold-500 rounded-full;
+  @apply absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full;
+  background-color: var(--gold-500);
 }
 
 .notification-pulse::before {
