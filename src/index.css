@@ -556,7 +556,8 @@ p, li, span {
    * It requires atmospheric lighting.
    */
   .stadium-bg {
-    @apply min-h-screen bg-stadium-black text-cream;
+    @apply min-h-screen text-cream;
+    background-color: var(--stadium-black, #0A0A0A);
     background-image: radial-gradient(ellipse at top, var(--tw-gradient-stops));
     --tw-gradient-from: #0f172a;
     --tw-gradient-to: #000000;
@@ -637,8 +638,8 @@ p, li, span {
 
   /* Rarity border colors for avatars */
   .rarity-legendary {
-    @apply shadow-gold-glow-sm;
     border-color: var(--gold-500);
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
   }
 
   .rarity-rare {
@@ -1593,7 +1594,8 @@ p, li, span {
   }
   
   .nav-link-active::after {
-    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-gold content-[''];
+    @apply absolute bottom-0 left-0 right-0 h-0.5 content-[''];
+    background: var(--gradient-gold);
   }
   
   /* Loading States */
@@ -1656,11 +1658,13 @@ p, li, span {
   }
 
   [data-theme="dark"] .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-gold;
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-gold);
   }
 
   .text-gradient-cream {
-    @apply bg-clip-text text-transparent bg-gradient-cream;
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-cream);
   }
   
   /* Scrollbar Styling */
