@@ -47,7 +47,7 @@ const pageTransition = {
 
 const TopNav = () => (
   <header
-    className="fixed top-0 left-0 right-0 z-30 h-14 bg-[#1A1A1A] border-b border-[#333] lg:pl-56"
+    className="fixed top-0 left-0 right-0 z-30 h-14 bg-surface border-b border-charcoal-700 lg:pl-56"
     role="banner"
   >
     <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
@@ -89,7 +89,7 @@ const GameShell = ({ children }) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="min-h-screen w-screen bg-[#0A0A0A] text-cream font-sans overscroll-contain touch-manipulation">
+      <div className="min-h-screen w-screen bg-background text-cream font-sans overscroll-contain touch-manipulation">
         {/* Fixed Top Navigation */}
         <TopNav />
 
