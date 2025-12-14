@@ -170,8 +170,9 @@ export const seasonHelpers = {
     }
   },
 
-  // Format season display name
-  formatSeasonName: (season) => {
+  // Format season display name with week info
+  // Note: Use utils/season.ts formatSeasonName for simple string formatting
+  formatSeasonWithWeek: (season) => {
     if (season.type === 'live') {
       return `${season.year} Live Season - Week ${season.week}`;
     } else {

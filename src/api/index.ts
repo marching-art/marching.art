@@ -75,7 +75,7 @@ export {
   calculateSeasonProgress,
   isRegistrationOpen,
   getSeasonTypeInfo,
-  formatSeasonName,
+  formatSeasonDisplayName,
   getGameDay,
   getGameDayDate,
 } from './season';
