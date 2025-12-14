@@ -325,20 +325,7 @@ const GamingHeader: React.FC = () => {
                   );
                 })}
 
-                {/* Settings */}
-                <Link
-                  to="/settings"
-                  className={`
-                    flex items-center gap-3 px-4 py-3 transition-all duration-200
-                    ${isActive('/settings')
-                      ? 'text-yellow-400 bg-yellow-500/10 border-l-2 border-yellow-500'
-                      : 'text-yellow-50/70 hover:text-yellow-50 hover:bg-white/5 border-l-2 border-transparent'
-                    }
-                  `}
-                >
-                  <Settings className="w-5 h-5" />
-                  <span className="font-medium">Settings</span>
-                </Link>
+                {/* Settings is now integrated into Profile page */}
 
                 {/* Admin (if applicable) */}
                 {isAdmin && (

@@ -47,9 +47,8 @@ const navItems: NavItem[] = [
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
-const secondaryItems: NavItem[] = [
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
+// Settings is now integrated into Profile page - no separate nav item needed
+const secondaryItems: NavItem[] = [];
 
 const menuVariants: Variants = {
   closed: {
