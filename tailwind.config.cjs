@@ -135,27 +135,6 @@ module.exports = {
         'glow-success': '0 0 15px rgba(34, 197, 94, 0.4)',
         'glow-danger': '0 0 15px rgba(239, 68, 68, 0.4)',
         'glow-warning': '0 0 15px rgba(245, 158, 11, 0.4)',
-        // Legacy brutalist shadows (deprecated - kept for backwards compatibility)
-        'hard': '4px 4px 0px 0px #000000',
-        'hard-sm': '2px 2px 0px 0px #000000',
-        'brutal-xs': '2px 2px 0px 0px #000000',
-        'brutal-sm': '3px 3px 0px 0px #000000',
-        'brutal': '4px 4px 0px 0px #000000',
-        'brutal-md': '4px 4px 0px 0px #000000',
-        'brutal-lg': '6px 6px 0px 0px #000000',
-        'brutal-xl': '8px 8px 0px 0px #000000',
-        'brutal-gold-xs': '2px 2px 0px 0px #FFD700',
-        'brutal-gold-sm': '3px 3px 0px 0px #FFD700',
-        'brutal-gold': '4px 4px 0px 0px #FFD700',
-        'brutal-gold-md': '4px 4px 0px 0px #FFD700',
-        'brutal-gold-lg': '6px 6px 0px 0px #FFD700',
-        'brutal-gold-xl': '8px 8px 0px 0px #FFD700',
-        'brutal-danger': '4px 4px 0px 0px #ef4444',
-        'brutal-danger-lg': '6px 6px 0px 0px #ef4444',
-        'brutal-success': '4px 4px 0px 0px #22c55e',
-        'brutal-success-lg': '6px 6px 0px 0px #22c55e',
-        'brutal-warning': '4px 4px 0px 0px #f59e0b',
-        'brutal-warning-lg': '6px 6px 0px 0px #f59e0b',
       },
       borderWidth: {
         DEFAULT: '1px', // Refined: 1px subtle borders for premium feel
@@ -184,7 +163,6 @@ module.exports = {
       letterSpacing: {
         'tighter': '-0.05em',
         'tight': '-0.025em',
-        'brutal': '-0.04em',
       },
       animation: {
         'fade-up': 'fadeUp 0.5s ease-out',
@@ -197,7 +175,6 @@ module.exports = {
         'spin-slow': 'spin 8s linear infinite',
         'bounce-slow': 'bounce 2s infinite',
         'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
-        'hazard': 'hazardScroll 1s linear infinite',
         // System Boot animations - snappy, mechanical feel
         'slide-in-bottom': 'slideInBottom 0.35s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
         'slide-in-right': 'slideInRight 0.35s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
@@ -259,10 +236,6 @@ module.exports = {
           '0%': { transform: 'scale(1)', opacity: '0.5' },
           '75%, 100%': { transform: 'scale(1.5)', opacity: '0' }
         },
-        hazardScroll: {
-          '0%': { backgroundPosition: '0 0' },
-          '100%': { backgroundPosition: '20px 0' }
-        }
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -271,7 +244,6 @@ module.exports = {
         'gradient-cream': 'linear-gradient(135deg, #FAF6EA 0%, #E5D396 50%, #C3A54E 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1A1A1A 0%, #3B3B3B 50%, #545454 100%)',
         'shimmer-gradient': 'linear-gradient(to right, transparent 0%, rgba(255, 212, 77, 0.2) 50%, transparent 100%)',
-        'hazard-stripe': 'repeating-linear-gradient(45deg, #FFD700, #FFD700 10px, #000000 10px, #000000 20px)',
         // STADIUM HUD - Stadium lights atmospheric backgrounds
         'stadium-lights': 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(234, 179, 8, 0.15) 0%, transparent 50%)',
         'stadium-lights-subtle': 'radial-gradient(ellipse 100% 60% at 50% -10%, rgba(234, 179, 8, 0.08) 0%, transparent 40%)',

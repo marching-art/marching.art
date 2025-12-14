@@ -10,7 +10,6 @@ import LoadingScreen from './components/LoadingScreen';
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
-import Tutorial from './components/Tutorial';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -160,9 +159,6 @@ function App() {
 
         {/* Celebration System - for achievements and level ups */}
         <CelebrationContainer />
-
-        {/* First-Time Tutorial - shows on first login */}
-        {user && <Tutorial />}
 
         <Routes>
           {/* Public Routes */}
