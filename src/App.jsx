@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect, createContext, useContext, lazy, Suspense } from 'react';
+import React, { useEffect, createContext, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -67,7 +67,6 @@ const ProtectedRoute = ({ children }) => {
 // Main App Component
 function App() {
   const [user, loading, error] = useAuthState(auth);
-  const [initialAuthChecked, setInitialAuthChecked] = useState(false);
   const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
   const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
 
@@ -80,29 +79,7 @@ function App() {
     };
   }, [initSeasonListener, cleanupSeasonListener]);
 
-  useEffect(() => {
-    // Check for initial auth token (from URL parameters)
-    const urlParams = new URLSearchParams(window.location.search);
-    const authToken = urlParams.get('__initial_auth_token');
-
-    if (authToken && !user && !loading) {
-      authHelpers.signInWithToken(authToken)
-        .then(() => {
-          // Remove token from URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        })
-        .catch((err) => {
-          console.error('Error with initial auth token:', err);
-        })
-        .finally(() => {
-          setInitialAuthChecked(true);
-        });
-    } else {
-      setInitialAuthChecked(true);
-    }
-  }, [user, loading]);
-
-  if (!initialAuthChecked || loading) {
+  if (loading) {
     return <LoadingScreen fullScreen />;
   }
 
