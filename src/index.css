@@ -372,19 +372,19 @@ p, li, span {
 
 /* Section headers - uppercase only for major sections */
 .section-header {
-  @apply text-sm font-semibold uppercase tracking-wider;
+  @apply text-sm font-semibold uppercase tracking-wider text-dci-blue;
   letter-spacing: 0.05em;
   color: var(--gold-400);
 }
 
 /* Page titles - no uppercase */
 .page-title {
-  @apply text-2xl md:text-3xl font-bold text-cream;
+  @apply text-2xl md:text-3xl font-bold text-white;
 }
 
 /* Subtitle - muted, readable */
 .page-subtitle {
-  @apply text-base text-cream/70;
+  @apply text-base text-white/70;
 }
 
 /* Custom Component Classes */
@@ -408,7 +408,8 @@ p, li, span {
    * Refined: Gold glow effects, no uppercase, smooth transitions
    */
   .btn-primary-hud {
-    @apply font-semibold px-6 py-3 rounded-lg;
+    @apply bg-dci-blue text-charcoal-950 font-semibold px-6 py-3 rounded-lg;
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
     @apply hover:-translate-y-0.5 transition-all duration-300;
     background-color: var(--gold-500);
     color: var(--charcoal-950);
@@ -416,12 +417,13 @@ p, li, span {
   }
 
   .btn-primary-hud:hover {
-    background-color: var(--gold-400);
+    @apply bg-dci-blue;
     box-shadow: 0 0 25px rgba(234, 179, 8, 0.5);
   }
 
   .btn-primary-hud-sm {
-    @apply font-semibold px-4 py-2 rounded-lg text-sm;
+    @apply bg-dci-blue text-charcoal-950 font-semibold px-4 py-2 rounded-lg text-sm;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
     @apply hover:-translate-y-0.5 transition-all duration-300;
     background-color: var(--gold-500);
     color: var(--charcoal-950);
@@ -429,7 +431,8 @@ p, li, span {
   }
 
   .btn-primary-hud-lg {
-    @apply font-semibold px-8 py-4 rounded-xl text-lg;
+    @apply bg-dci-blue text-charcoal-950 font-semibold px-8 py-4 rounded-xl text-lg;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.35);
     @apply hover:-translate-y-0.5 transition-all duration-300;
     background-color: var(--gold-500);
     color: var(--charcoal-950);
@@ -438,8 +441,8 @@ p, li, span {
 
   /* Secondary Button - Glass Style */
   .btn-secondary-hud {
-    @apply bg-white/10 backdrop-blur-sm text-cream font-medium px-6 py-3 rounded-lg;
-    @apply border border-white/15;
+    @apply bg-white/10 backdrop-blur-sm text-white font-medium px-6 py-3 rounded-lg;
+    @apply border border-white/15 hover:border-dci-blue/40;
     @apply hover:bg-white/15 transition-all duration-300;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
   }
@@ -472,8 +475,7 @@ p, li, span {
 
   /* Semantic color variants for data values */
   .text-data-gold {
-    @apply text-data;
-    color: var(--gold-400);
+    @apply text-data text-dci-blue;
   }
 
   .text-data-success {
@@ -511,32 +513,28 @@ p, li, span {
   }
 
   .data-value {
-    @apply text-5xl font-bold;
-    color: var(--gold-400);
+    @apply text-5xl font-bold text-dci-blue;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-sm {
-    @apply text-3xl font-bold;
-    color: var(--gold-400);
+    @apply text-3xl font-bold text-dci-blue;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-lg {
-    @apply text-6xl font-bold;
-    color: var(--gold-400);
+    @apply text-6xl font-bold text-dci-blue;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
   }
 
   .data-value-xl {
-    @apply text-7xl font-bold;
-    color: var(--gold-400);
+    @apply text-7xl font-bold text-dci-blue;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: var(--font-data-tracking);
@@ -556,8 +554,7 @@ p, li, span {
    * It requires atmospheric lighting.
    */
   .stadium-bg {
-    @apply min-h-screen text-cream;
-    background-color: var(--stadium-black, #0A0A0A);
+    @apply min-h-screen bg-background text-white;
     background-image: radial-gradient(ellipse at top, var(--tw-gradient-stops));
     --tw-gradient-from: #0f172a;
     --tw-gradient-to: #000000;
@@ -638,8 +635,7 @@ p, li, span {
 
   /* Rarity border colors for avatars */
   .rarity-legendary {
-    border-color: var(--gold-500);
-    box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
+    @apply border-dci-blue shadow-sm;
   }
 
   .rarity-rare {
@@ -1229,14 +1225,13 @@ p, li, span {
 
   /* Panel Title - Standardized typography */
   .panel-title {
-    @apply text-lg font-display font-bold uppercase tracking-wider;
-    color: var(--cream-100);
+    @apply text-lg font-display font-bold uppercase tracking-wider text-white;
   }
 
   /* Panel Close Button */
   .panel-close {
-    @apply p-2 transition-colors hover:text-red-400;
-    color: rgba(253, 249, 237, 0.5);
+    @apply p-2 transition-colors;
+    @apply text-white/50 hover:text-red-400;
   }
 
   /* Panel Body - Scrollable content area with tactical grid */
@@ -1258,8 +1253,7 @@ p, li, span {
 
   /* Section Header - For accordion/section titles */
   .section-label {
-    @apply text-xs font-bold uppercase tracking-widest mb-2;
-    color: var(--gold-500);
+    @apply text-xs font-bold text-dci-blue uppercase tracking-widest mb-2;
   }
 
   /* Data Label - Small muted labels */
@@ -1270,8 +1264,7 @@ p, li, span {
 
   /* Data Value - Monospace bold values */
   .data-value-sm {
-    @apply text-sm font-mono font-bold;
-    color: var(--cream-100);
+    @apply text-sm font-mono font-bold text-white;
   }
 
   /* Accordion Section - Collapsible panel section */
@@ -1283,14 +1276,13 @@ p, li, span {
 
   .accordion-header {
     @apply w-full p-3 flex items-center justify-between;
-    @apply text-xs font-bold uppercase tracking-widest;
+    @apply text-xs font-bold text-dci-blue uppercase tracking-widest;
     @apply hover:bg-white/5 transition-colors cursor-pointer;
     color: var(--gold-500);
   }
 
   .accordion-chevron {
-    @apply w-4 h-4 transition-transform duration-200;
-    color: rgba(253, 249, 237, 0.5);
+    @apply w-4 h-4 text-white/50 transition-transform duration-200;
   }
 
   .accordion-chevron.open {
@@ -1486,8 +1478,7 @@ p, li, span {
   }
 
   .checkbox {
-    @apply w-5 h-5 cursor-pointer;
-    color: var(--gold-500);
+    @apply w-5 h-5 text-dci-blue cursor-pointer;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
@@ -1499,7 +1490,7 @@ p, li, span {
   }
 
   .checkbox:checked {
-    background-color: var(--gold-500);
+    @apply bg-dci-blue;
     border-color: rgba(250, 204, 21, 0.6);
   }
 
@@ -1516,14 +1507,13 @@ p, li, span {
   }
 
   .badge-gold {
-    @apply badge;
-    color: var(--gold-400);
+    @apply badge text-dci-blue;
     background: rgba(250, 204, 21, 0.12);
     border-color: rgba(250, 204, 21, 0.3);
   }
 
   .badge-cream {
-    @apply badge text-cream;
+    @apply badge text-white;
     background: rgba(245, 245, 220, 0.1);
     border-color: rgba(245, 245, 220, 0.2);
   }
@@ -1580,7 +1570,7 @@ p, li, span {
   
   /* Navigation */
   .nav-link {
-    @apply relative px-4 py-2 font-medium transition-all duration-300;
+    @apply relative px-4 py-2 font-medium transition-all duration-300 hover:text-dci-blue;
     color: var(--text-secondary);
   }
 
@@ -1589,13 +1579,11 @@ p, li, span {
   }
 
   .nav-link-active {
-    @apply nav-link;
-    color: var(--gold-500);
+    @apply nav-link text-dci-blue;
   }
   
   .nav-link-active::after {
-    @apply absolute bottom-0 left-0 right-0 h-0.5 content-[''];
-    background: var(--gradient-gold);
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-dci-blue content-[''];
   }
   
   /* Loading States */
@@ -1605,9 +1593,7 @@ p, li, span {
   }
   
   .spinner {
-    @apply inline-block w-6 h-6 border-2 rounded-full animate-spin;
-    border-color: var(--gold-900);
-    border-top-color: var(--gold-500);
+    @apply inline-block w-6 h-6 border-2 border-dci-blue/30 border-t-dci-blue rounded-full animate-spin;
   }
 
   /* Dividers */
@@ -1620,8 +1606,7 @@ p, li, span {
   }
 
   .divider::before {
-    @apply border-t;
-    border-color: var(--cream-900);
+    @apply border-t border-charcoal-700;
   }
   
   /* Animations */
@@ -1658,13 +1643,11 @@ p, li, span {
   }
 
   [data-theme="dark"] .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-gold);
+    @apply bg-clip-text text-transparent bg-dci-blue;
   }
 
   .text-gradient-cream {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-cream);
+    @apply bg-clip-text text-transparent bg-white;
   }
   
   /* Scrollbar Styling */
@@ -1678,12 +1661,11 @@ p, li, span {
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full;
-    background-color: var(--gold-700);
+    @apply bg-dci-blue/70 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--gold-600);
+    @apply bg-dci-blue/80;
   }
 
   /* ===========================================
@@ -2256,7 +2238,7 @@ p, li, span {
 
   /* Rarity Borders */
   .rarity-legendary {
-    border-color: var(--gold-400);
+    @apply border-dci-blue;
     animation: pulse-legendary 2s ease-in-out infinite;
   }
 
@@ -2559,29 +2541,28 @@ p, li, span {
 /* Player status module styles */
 .player-stat-module {
   @apply flex items-center gap-2 px-3 py-1.5;
-  @apply rounded;
+  @apply bg-charcoal-900 rounded;
+  @apply border border-dci-blue/30;
   @apply transition-all duration-200;
   background-color: var(--charcoal-900);
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
 .player-stat-module:hover {
-  border-color: rgba(234, 179, 8, 0.5);
+  @apply border-dci-blue/50;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
 }
 
 /* Currency display with glow */
 .currency-display {
-  @apply font-data font-bold;
-  color: var(--gold-500);
+  @apply font-data font-bold text-dci-blue;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 /* Level badge with animated border */
 .level-badge {
   @apply relative px-3 py-1 rounded;
-  background-color: var(--charcoal-900);
-  border: 1px solid rgba(234, 220, 171, 0.2);
+  @apply bg-charcoal-900 border border-white/20;
 }
 
 .level-badge::before {
@@ -2617,9 +2598,7 @@ p, li, span {
 
 /* Dropdown menu gaming style */
 .dropdown-gaming {
-  @apply rounded;
-  background-color: var(--charcoal-900);
-  border: 2px solid rgba(234, 179, 8, 0.3);
+  @apply bg-charcoal-900 border-2 border-dci-blue/30 rounded;
   box-shadow: 4px 4px 0px 0px rgba(255, 215, 0, 0.5);
 }
 
@@ -2679,8 +2658,7 @@ p, li, span {
 
 /* Notification badge pulse */
 .notification-pulse {
-  @apply absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full;
-  background-color: var(--gold-500);
+  @apply absolute -top-1 -right-1 w-2.5 h-2.5 bg-dci-blue rounded-full;
 }
 
 .notification-pulse::before {
