@@ -158,7 +158,8 @@ module.exports = {
         'brutal-warning-lg': '6px 6px 0px 0px #f59e0b',
       },
       borderWidth: {
-        DEFAULT: '2px', // Global default border is 2px
+        DEFAULT: '1px', // Refined: 1px subtle borders for premium feel
+        '2': '2px',
         '3': '3px',
       },
       borderRadius: {

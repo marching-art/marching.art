@@ -35,11 +35,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   // Inline loading with centered brand logo
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4">
-      <div className="animate-pulse">
+      <div className="glow-pulse">
         <BrandLogo className="w-16 h-16" color="text-gold-500" />
       </div>
       {message && (
-        <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">{message}</p>
+        <p className="font-mono text-sm text-gold-400/60 tracking-wide">{message}</p>
       )}
     </div>
   );
