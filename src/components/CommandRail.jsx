@@ -25,9 +25,8 @@ const navItems = [
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
-const secondaryItems = [
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
+// Settings is now integrated into Profile page - no separate nav item needed
+const secondaryItems = [];
 
 // =============================================================================
 // NAV ITEM COMPONENT

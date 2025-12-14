@@ -294,10 +294,11 @@ const ResourceHeader = ({
             color="gold"
           />
 
-          {/* Settings (compact) */}
+          {/* Profile/Settings (compact) */}
           <Link
-            to="/settings"
+            to="/profile"
             className="p-1.5 rounded text-cream/40 hover:text-cream hover:bg-white/5 transition-colors hidden lg:block"
+            title="Profile & Settings"
           >
             <Settings className="w-4 h-4" />
           </Link>

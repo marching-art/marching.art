@@ -1,58 +1,361 @@
 // src/pages/Profile.jsx
-// Dossier Layout: Left Fixed Identity Card + Right Flexible Tabbed Content
+// Redesigned Profile: Clean profile showing your fantasy career with integrated settings
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  User, Trophy, History, BarChart3, Star, TrendingUp, Calendar, Crown,
-  DollarSign, AlertTriangle, RefreshCw, Zap, Flame, MapPin, Edit, Check, X
+  User, Trophy, History, Settings, Star, TrendingUp, Calendar, Crown,
+  DollarSign, AlertTriangle, RefreshCw, Zap, Flame, MapPin, Edit, Check, X,
+  ChevronRight, Medal, Sparkles, Bell, Shield, LogOut, Gift
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
+import { db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 
-// Import modular Profile components
-import { ProfileHeader, OverviewTab, AchievementsTab, HistoryTab, StatsTab } from '../components/Profile';
+// =============================================================================
+// AVATAR CUSTOMIZATION - Simple avatar options
+// =============================================================================
+const AVATAR_COLORS = [
+  { id: 'gold', from: 'from-gold-500/30', to: 'to-amber-500/30', border: 'border-gold-500/50', icon: 'text-gold-400' },
+  { id: 'purple', from: 'from-purple-500/30', to: 'to-violet-500/30', border: 'border-purple-500/50', icon: 'text-purple-400' },
+  { id: 'blue', from: 'from-blue-500/30', to: 'to-cyan-500/30', border: 'border-blue-500/50', icon: 'text-blue-400' },
+  { id: 'green', from: 'from-green-500/30', to: 'to-emerald-500/30', border: 'border-green-500/50', icon: 'text-green-400' },
+  { id: 'red', from: 'from-red-500/30', to: 'to-orange-500/30', border: 'border-red-500/50', icon: 'text-red-400' },
+  { id: 'pink', from: 'from-pink-500/30', to: 'to-rose-500/30', border: 'border-pink-500/50', icon: 'text-pink-400' },
+];
 
-const Profile = () => {
-  const { userId } = useParams();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+// =============================================================================
+// MEANINGFUL MILESTONE ACHIEVEMENTS
+// =============================================================================
+const getMilestoneAchievements = (profile) => {
+  const achievements = [];
+
+  // First Championship Win
+  if ((profile?.stats?.championships || 0) >= 1) {
+    achievements.push({
+      id: 'first-champ',
+      name: 'Champion',
+      description: 'Won your first championship',
+      icon: Trophy,
+      color: 'text-gold-400',
+      bgColor: 'bg-gold-500/20',
+      borderColor: 'border-gold-500/30'
+    });
+  }
+
+  // Dynasty Builder - 3+ Championships
+  if ((profile?.stats?.championships || 0) >= 3) {
+    achievements.push({
+      id: 'dynasty',
+      name: 'Dynasty Builder',
+      description: 'Won 3+ championships',
+      icon: Crown,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/20',
+      borderColor: 'border-purple-500/30'
+    });
+  }
+
+  // Season milestones
+  if ((profile?.stats?.seasonsPlayed || 0) >= 1) {
+    achievements.push({
+      id: 'first-season',
+      name: 'Rookie Season',
+      description: 'Completed your first season',
+      icon: Star,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/20',
+      borderColor: 'border-blue-500/30'
+    });
+  }
+
+  if ((profile?.stats?.seasonsPlayed || 0) >= 5) {
+    achievements.push({
+      id: 'veteran',
+      name: 'Veteran Director',
+      description: 'Completed 5+ seasons',
+      icon: Medal,
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      borderColor: 'border-green-500/30'
+    });
+  }
+
+  if ((profile?.stats?.seasonsPlayed || 0) >= 10) {
+    achievements.push({
+      id: 'legend',
+      name: 'Living Legend',
+      description: 'Completed 10+ seasons',
+      icon: Sparkles,
+      color: 'text-amber-400',
+      bgColor: 'bg-amber-500/20',
+      borderColor: 'border-amber-500/30'
+    });
+  }
+
+  // League winning streak (if tracked)
+  if ((profile?.stats?.longestWinStreak || 0) >= 5) {
+    achievements.push({
+      id: 'streak',
+      name: 'On Fire',
+      description: '5+ league win streak',
+      icon: Flame,
+      color: 'text-orange-400',
+      bgColor: 'bg-orange-500/20',
+      borderColor: 'border-orange-500/30'
+    });
+  }
+
+  // Class unlocks
+  const unlockedClasses = profile?.unlockedClasses || [];
+  if (unlockedClasses.includes('world')) {
+    achievements.push({
+      id: 'world-unlock',
+      name: 'World Class',
+      description: 'Unlocked World Class',
+      icon: TrendingUp,
+      color: 'text-gold-400',
+      bgColor: 'bg-gold-500/20',
+      borderColor: 'border-gold-500/30'
+    });
+  }
+
+  return achievements;
+};
+
+// =============================================================================
+// CLASS DISPLAY HELPERS
+// =============================================================================
+const CLASS_DISPLAY = {
+  worldClass: { name: 'World', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
+  openClass: { name: 'Open', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+  aClass: { name: 'A Class', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+  soundSport: { name: 'SoundSport', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+};
+
+// =============================================================================
+// SETTINGS PANEL COMPONENT
+// =============================================================================
+const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
   const [saving, setSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({});
+  const [activeSection, setActiveSection] = useState('account');
+  const { signOut } = useAuth();
 
-  const isOwnProfile = !userId || userId === user?.uid;
-  const profileUserId = userId || user?.uid;
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: profile?.settings?.emailNotifications ?? true,
+    showReminders: profile?.settings?.showReminders ?? true,
+    leagueUpdates: profile?.settings?.leagueUpdates ?? true,
+    weeklyRecap: profile?.settings?.weeklyRecap ?? true
+  });
 
-  // React Query hooks
-  const { data: profile, isLoading: loading, error, isError, refetch } = useProfile(profileUserId);
-  const updateProfileMutation = useUpdateProfile(profileUserId || '');
+  const [privacySettings, setPrivacySettings] = useState({
+    publicProfile: profile?.privacy?.publicProfile ?? true,
+    showLocation: profile?.privacy?.showLocation ?? true,
+    showStats: profile?.privacy?.showStats ?? true
+  });
 
-  // Calculate streak data
-  const currentStreak = useMemo(() => {
-    if (!profile?.lastRehearsal) return 0;
-    const lastRehearsal = profile.lastRehearsal?.toDate?.() || new Date(profile.lastRehearsal);
-    const now = new Date();
-    const diffHours = (now - lastRehearsal) / (1000 * 60 * 60);
-    if (diffHours > 48) return 0;
-    return profile.currentStreak || 1;
-  }, [profile]);
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        settings: notificationSettings,
+        privacy: privacySettings
+      });
+      toast.success('Settings saved');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  // Calculate XP progress to next level
-  const xpProgress = useMemo(() => {
-    if (!profile) return { progress: 0, needed: 1000, percentage: 0 };
-    const currentXP = profile.xp || 0;
-    const currentLevel = profile.xpLevel || 1;
-    const xpForCurrentLevel = (currentLevel - 1) * 1000;
-    const xpForNextLevel = currentLevel * 1000;
-    const progress = currentXP - xpForCurrentLevel;
-    const needed = xpForNextLevel - xpForCurrentLevel;
-    return { progress, needed, percentage: Math.min((progress / needed) * 100, 100) };
-  }, [profile]);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
 
-  // Get season history from corps
+  const ToggleSwitch = ({ checked, onChange, label, description }) => (
+    <label className="flex items-center justify-between p-3 bg-charcoal-900/50 border border-cream-500/10 rounded-lg cursor-pointer hover:border-cream-500/20 transition-colors">
+      <div className="flex-1 mr-4">
+        <p className="text-sm font-medium text-cream-100">{label}</p>
+        <p className="text-xs text-cream-500/60">{description}</p>
+      </div>
+      <div className="relative">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          checked={checked}
+          onChange={onChange}
+        />
+        <div className="w-11 h-6 bg-charcoal-800 peer-focus:outline-none rounded-full peer peer-checked:bg-gold-500/30 transition-colors" />
+        <div className={`absolute left-0.5 top-0.5 w-5 h-5 bg-cream-500/50 rounded-full transition-all peer-checked:translate-x-5 peer-checked:bg-gold-400`} />
+      </div>
+    </label>
+  );
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
+            <h2 className="text-lg font-display font-bold text-cream-100">Settings</h2>
+            <button
+              onClick={onClose}
+              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex border-b border-cream-500/10">
+            {[
+              { id: 'account', label: 'Account', icon: User },
+              { id: 'notifications', label: 'Notifications', icon: Bell },
+              { id: 'privacy', label: 'Privacy', icon: Shield },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSection(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                  activeSection === tab.id
+                    ? 'text-gold-400 border-b-2 border-gold-400'
+                    : 'text-cream-500/60 hover:text-cream-300'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            {activeSection === 'account' && (
+              <div className="space-y-4">
+                <div className="p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-lg">
+                  <p className="text-xs text-cream-500/60 mb-1">Email</p>
+                  <p className="text-cream-100 font-mono text-sm">{user?.email || 'Anonymous'}</p>
+                </div>
+                <div className="p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-lg">
+                  <p className="text-xs text-cream-500/60 mb-1">Member Since</p>
+                  <p className="text-cream-100">
+                    {user?.metadata?.creationTime
+                      ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                      : 'Unknown'
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg font-medium hover:bg-red-500/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+
+            {activeSection === 'notifications' && (
+              <div className="space-y-3">
+                <ToggleSwitch
+                  label="Email Notifications"
+                  description="Receive updates via email"
+                  checked={notificationSettings.emailNotifications}
+                  onChange={(e) => setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }))}
+                />
+                <ToggleSwitch
+                  label="Show Reminders"
+                  description="Get reminded about upcoming shows"
+                  checked={notificationSettings.showReminders}
+                  onChange={(e) => setNotificationSettings(prev => ({ ...prev, showReminders: e.target.checked }))}
+                />
+                <ToggleSwitch
+                  label="League Updates"
+                  description="Notifications about league activity"
+                  checked={notificationSettings.leagueUpdates}
+                  onChange={(e) => setNotificationSettings(prev => ({ ...prev, leagueUpdates: e.target.checked }))}
+                />
+                <ToggleSwitch
+                  label="Weekly Recap"
+                  description="Receive weekly performance summaries"
+                  checked={notificationSettings.weeklyRecap}
+                  onChange={(e) => setNotificationSettings(prev => ({ ...prev, weeklyRecap: e.target.checked }))}
+                />
+              </div>
+            )}
+
+            {activeSection === 'privacy' && (
+              <div className="space-y-3">
+                <ToggleSwitch
+                  label="Public Profile"
+                  description="Allow others to view your profile"
+                  checked={privacySettings.publicProfile}
+                  onChange={(e) => setPrivacySettings(prev => ({ ...prev, publicProfile: e.target.checked }))}
+                />
+                <ToggleSwitch
+                  label="Show Location"
+                  description="Display your location on profile"
+                  checked={privacySettings.showLocation}
+                  onChange={(e) => setPrivacySettings(prev => ({ ...prev, showLocation: e.target.checked }))}
+                />
+                <ToggleSwitch
+                  label="Show Stats"
+                  description="Display your stats publicly"
+                  checked={privacySettings.showStats}
+                  onChange={(e) => setPrivacySettings(prev => ({ ...prev, showStats: e.target.checked }))}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {activeSection !== 'account' && (
+            <div className="p-4 border-t border-cream-500/10">
+              <button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="w-full py-3 bg-gold-500 text-charcoal-900 rounded-lg font-bold hover:bg-gold-400 transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// =============================================================================
+// SEASON HISTORY MODAL
+// =============================================================================
+const SeasonHistoryModal = ({ profile, isOpen, onClose }) => {
   const seasonHistory = useMemo(() => {
     if (!profile?.corps) return [];
     const history = [];
@@ -61,35 +364,216 @@ const Profile = () => {
         corps.seasonHistory.forEach(season => {
           history.push({
             ...season,
-            corpsName: corps.name,
+            corpsName: corps.name || corps.corpsName,
             classKey
           });
         });
       }
     });
-    return history.sort((a, b) => (b.seasonNumber || 0) - (a.seasonNumber || 0)).slice(0, 10);
+    return history.sort((a, b) => (b.seasonNumber || 0) - (a.seasonNumber || 0));
   }, [profile]);
 
-  // Define milestone achievements
-  const milestones = useMemo(() => {
-    if (!profile) return [];
-    return [
-      { name: 'First Steps', description: 'Reach Level 2', requirement: 2, current: profile.xpLevel || 1, type: 'level', icon: Star },
-      { name: 'Rising Director', description: 'Reach Level 5', requirement: 5, current: profile.xpLevel || 1, type: 'level', icon: TrendingUp },
-      { name: 'Veteran Director', description: 'Reach Level 10', requirement: 10, current: profile.xpLevel || 1, type: 'level', icon: Crown },
-      { name: 'Season Starter', description: 'Complete 1 season', requirement: 1, current: profile.stats?.seasonsPlayed || 0, type: 'seasons', icon: Calendar },
-      { name: 'Season Regular', description: 'Complete 5 seasons', requirement: 5, current: profile.stats?.seasonsPlayed || 0, type: 'seasons', icon: Calendar },
-      { name: 'First Victory', description: 'Win a championship', requirement: 1, current: profile.stats?.championships || 0, type: 'championships', icon: Trophy },
-      { name: 'Dynasty Builder', description: 'Win 3 championships', requirement: 3, current: profile.stats?.championships || 0, type: 'championships', icon: Crown },
-      { name: 'Coin Collector', description: 'Earn 1,000 CorpsCoin', requirement: 1000, current: profile.corpsCoin || 0, type: 'corpsCoin', icon: DollarSign },
-    ];
-  }, [profile]);
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
+            <h2 className="text-lg font-display font-bold text-cream-100 flex items-center gap-2">
+              <History className="w-5 h-5 text-purple-400" />
+              Season History
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            {seasonHistory.length > 0 ? (
+              <div className="space-y-3">
+                {seasonHistory.map((season, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="flex items-center gap-4 p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      season.placement === 1 ? 'bg-gold-500/20 text-gold-400' :
+                      season.placement <= 3 ? 'bg-purple-500/20 text-purple-400' :
+                      'bg-charcoal-800 text-cream-500/60'
+                    }`}>
+                      {season.placement === 1 ? <Trophy className="w-5 h-5" /> :
+                       season.placement ? `#${season.placement}` : <Calendar className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-cream-100 truncate">{season.corpsName || 'Corps'}</p>
+                      <p className="text-xs text-cream-500/60">
+                        {CLASS_DISPLAY[season.classKey]?.name || season.classKey} • Season {season.seasonNumber || '?'}
+                      </p>
+                    </div>
+                    {season.finalScore && (
+                      <p className="text-lg font-mono font-bold text-gold-400">{season.finalScore.toFixed(1)}</p>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <History className="w-12 h-12 text-cream-500/30 mx-auto mb-3" />
+                <p className="text-cream-500/60">No season history yet</p>
+                <p className="text-sm text-cream-500/40 mt-1">Complete seasons to build your history</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// =============================================================================
+// AVATAR CUSTOMIZATION MODAL
+// =============================================================================
+const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) => {
+  const [selectedColor, setSelectedColor] = useState(profile?.avatarColor || 'gold');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave({ avatarColor: selectedColor });
+      toast.success('Avatar updated');
+      onClose();
+    } catch (error) {
+      toast.error('Failed to update avatar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const currentColor = AVATAR_COLORS.find(c => c.id === selectedColor) || AVATAR_COLORS[0];
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="w-full max-w-sm bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
+            <h2 className="text-lg font-display font-bold text-cream-100">Customize Avatar</h2>
+            <button
+              onClick={onClose}
+              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6">
+            {/* Preview */}
+            <div className="flex justify-center mb-6">
+              <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${currentColor.from} ${currentColor.to} border-2 ${currentColor.border} flex items-center justify-center`}>
+                {profile?.photoURL ? (
+                  <img src={profile.photoURL} alt="" className="w-full h-full rounded-2xl object-cover" />
+                ) : (
+                  <User className={`w-12 h-12 ${currentColor.icon}`} />
+                )}
+              </div>
+            </div>
+
+            {/* Color Options */}
+            <p className="text-sm text-cream-500/60 mb-3 text-center">Choose a color theme</p>
+            <div className="grid grid-cols-6 gap-2">
+              {AVATAR_COLORS.map((color) => (
+                <button
+                  key={color.id}
+                  onClick={() => setSelectedColor(color.id)}
+                  className={`aspect-square rounded-lg bg-gradient-to-br ${color.from} ${color.to} border-2 transition-all ${
+                    selectedColor === color.id ? `${color.border} scale-110` : 'border-transparent hover:scale-105'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-cream-500/10">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-3 bg-gold-500 text-charcoal-900 rounded-lg font-bold hover:bg-gold-400 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Avatar'}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// =============================================================================
+// MAIN PROFILE COMPONENT
+// =============================================================================
+const Profile = () => {
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [showSettings, setShowSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showAvatarCustomization, setShowAvatarCustomization] = useState(false);
+
+  const isOwnProfile = !userId || userId === user?.uid;
+  const profileUserId = userId || user?.uid;
+
+  // React Query hooks
+  const { data: profile, isLoading: loading, error, isError, refetch } = useProfile(profileUserId);
+  const updateProfileMutation = useUpdateProfile(profileUserId || '');
+
+  // Get milestone achievements
+  const achievements = useMemo(() => getMilestoneAchievements(profile), [profile]);
+
+  // Get avatar color
+  const avatarColor = useMemo(() => {
+    return AVATAR_COLORS.find(c => c.id === profile?.avatarColor) || AVATAR_COLORS[0];
+  }, [profile?.avatarColor]);
 
   const handleStartEdit = () => {
     setEditData({
       displayName: profile?.displayName || '',
       location: profile?.location || '',
-      bio: profile?.bio || '',
       favoriteCorps: profile?.favoriteCorps || ''
     });
     setIsEditing(true);
@@ -101,10 +585,9 @@ const Profile = () => {
       await updateProfileMutation.mutateAsync({
         displayName: editData.displayName,
         location: editData.location,
-        bio: editData.bio,
         favoriteCorps: editData.favoriteCorps
       });
-      toast.success('Profile updated successfully!');
+      toast.success('Profile updated');
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -114,12 +597,9 @@ const Profile = () => {
     }
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: User },
-    { id: 'achievements', label: 'Achievements', icon: Trophy },
-    { id: 'history', label: 'History', icon: History },
-    { id: 'stats', label: 'Analytics', icon: BarChart3 }
-  ];
+  const handleAvatarSave = async (updates) => {
+    await updateProfileMutation.mutateAsync(updates);
+  };
 
   if (loading) {
     return <LoadingScreen fullScreen={false} />;
@@ -157,257 +637,286 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* ================================================================
-          DOSSIER LAYOUT: Fixed Identity Card + Tabbed Content
-          ================================================================ */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+    <div className="flex-1 overflow-y-auto hud-scroll">
+      <div className="max-w-3xl mx-auto p-4 lg:p-6 space-y-6">
 
-        {/* ============================================================
-            LEFT: Identity Card (Fixed on Desktop, Collapsible on Mobile)
-            ============================================================ */}
-        <div className="flex-shrink-0 lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-cream-500/10 bg-charcoal-950/50">
-          <div className="p-4 lg:p-6 lg:sticky lg:top-0">
-            {/* Avatar & Name */}
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="relative mb-4">
-                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl bg-gradient-to-br from-gold-500/30 to-purple-500/30 border-2 border-gold-500/50 flex items-center justify-center">
-                  {profile.photoURL ? (
-                    <img
-                      src={profile.photoURL}
-                      alt={profile.displayName}
-                      className="w-full h-full rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 lg:w-16 lg:h-16 text-gold-400" />
-                  )}
-                </div>
-                {/* Level Badge */}
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-gold-500 border-2 border-charcoal-900 flex items-center justify-center">
-                  <span className="text-sm font-mono font-black text-charcoal-900">
-                    {profile.xpLevel || 1}
-                  </span>
-                </div>
+        {/* ================================================================
+            HEADER: Profile Title + Settings Button
+            ================================================================ */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-display font-bold text-cream-100">Profile</h1>
+          {isOwnProfile && (
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* ================================================================
+            IDENTITY SECTION: Avatar, Name, Location, Favorite Corps
+            ================================================================ */}
+        <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => isOwnProfile && setShowAvatarCustomization(true)}
+                className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${avatarColor.from} ${avatarColor.to} border-2 ${avatarColor.border} flex items-center justify-center transition-transform ${isOwnProfile ? 'hover:scale-105 cursor-pointer' : ''}`}
+              >
+                {profile.photoURL ? (
+                  <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full rounded-2xl object-cover" />
+                ) : (
+                  <User className={`w-12 h-12 ${avatarColor.icon}`} />
+                )}
+              </button>
+              {/* Level Badge */}
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-gold-500 border-2 border-charcoal-900 flex items-center justify-center">
+                <span className="text-xs font-mono font-black text-charcoal-900">
+                  {profile.xpLevel || 1}
+                </span>
               </div>
+            </div>
 
+            {/* Identity Info */}
+            <div className="flex-1 text-center sm:text-left">
               {isEditing ? (
-                <input
-                  type="text"
-                  value={editData.displayName}
-                  onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
-                  className="text-xl lg:text-2xl font-display font-bold text-center bg-charcoal-800 border border-cream-500/20 rounded-lg px-3 py-1 text-cream-100 focus:outline-none focus:border-gold-500"
-                />
-              ) : (
-                <h1 className="text-xl lg:text-2xl font-display font-bold text-cream-100 mb-1">
-                  {profile.displayName || 'Anonymous Director'}
-                </h1>
-              )}
-
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editData.location}
-                  onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                  placeholder="Location"
-                  className="text-sm bg-charcoal-800 border border-cream-500/20 rounded-lg px-3 py-1 text-cream-400 focus:outline-none focus:border-gold-500 mt-2"
-                />
-              ) : profile.location && (
-                <div className="flex items-center gap-1 text-sm text-cream-500/60">
-                  <MapPin className="w-3 h-3" />
-                  <span>{profile.location}</span>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editData.displayName}
+                    onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+                    placeholder="Display Name"
+                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                  />
+                  <input
+                    type="text"
+                    value={editData.location}
+                    onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                    placeholder="Location (e.g., Austin, TX)"
+                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                  />
+                  <input
+                    type="text"
+                    value={editData.favoriteCorps}
+                    onChange={(e) => setEditData({ ...editData, favoriteCorps: e.target.value })}
+                    placeholder="Favorite Corps (e.g., Blue Devils)"
+                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm font-bold hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                    >
+                      {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-bold hover:bg-charcoal-700 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  <h2 className="text-xl font-display font-bold text-cream-100">
+                    {profile.displayName || 'Anonymous Director'}
+                  </h2>
 
-              {/* Edit/Save Buttons */}
-              {isOwnProfile && (
-                <div className="flex items-center gap-2 mt-4">
-                  {isEditing ? (
-                    <>
-                      <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm font-bold hover:bg-green-500/30 transition-colors disabled:opacity-50"
-                      >
-                        {saving ? (
-                          <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Check className="w-4 h-4" />
-                        )}
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-bold hover:bg-charcoal-700 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
+                  {profile.location && (
+                    <p className="flex items-center justify-center sm:justify-start gap-1 text-sm text-cream-500/60 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      {profile.location}
+                    </p>
+                  )}
+
+                  {profile.favoriteCorps && (
+                    <p className="text-sm text-cream-500/60 mt-1">
+                      Favorite: <span className="text-gold-400">{profile.favoriteCorps}</span>
+                    </p>
+                  )}
+
+                  <p className="text-xs text-cream-500/40 mt-2">
+                    Member since {profile.createdAt ? new Date(profile.createdAt?.toDate?.() || profile.createdAt).getFullYear() : '2024'}
+                  </p>
+
+                  {isOwnProfile && (
                     <button
                       onClick={handleStartEdit}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-bold hover:bg-charcoal-700 transition-colors"
+                      className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors mx-auto sm:mx-0"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3 h-3" />
                       Edit Profile
                     </button>
                   )}
-                </div>
+                </>
               )}
             </div>
-
-            {/* XP Progress */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="flex items-center gap-1 text-gold-400 font-bold">
-                  <Zap className="w-3 h-3" />
-                  Level {profile.xpLevel || 1}
-                </span>
-                <span className="text-cream-500/60">
-                  {xpProgress.progress} / {xpProgress.needed} XP
-                </span>
-              </div>
-              <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-gold-500 to-amber-400"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${xpProgress.percentage}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-            </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-orange-400 mb-1">
-                  <Flame className="w-4 h-4" />
-                  <span className="text-lg font-mono font-bold">{currentStreak}</span>
-                </div>
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Day Streak</p>
-              </div>
-              <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-gold-400 mb-1">
-                  <DollarSign className="w-4 h-4" />
-                  <span className="text-lg font-mono font-bold">{(profile.corpsCoin || 0).toLocaleString()}</span>
-                </div>
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">CorpsCoin</p>
-              </div>
-              <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-purple-400 mb-1">
-                  <Trophy className="w-4 h-4" />
-                  <span className="text-lg font-mono font-bold">{profile.stats?.championships || 0}</span>
-                </div>
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Championships</p>
-              </div>
-              <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-blue-400 mb-1">
-                  <Calendar className="w-4 h-4" />
-                  <span className="text-lg font-mono font-bold">{profile.stats?.seasonsPlayed || 0}</span>
-                </div>
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Seasons</p>
-              </div>
-            </div>
-
-            {/* Bio */}
-            {isEditing ? (
-              <textarea
-                value={editData.bio}
-                onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
-                placeholder="Tell us about yourself..."
-                rows={3}
-                className="w-full bg-charcoal-800 border border-cream-500/20 rounded-lg px-3 py-2 text-sm text-cream-300 focus:outline-none focus:border-gold-500 resize-none"
-              />
-            ) : profile.bio && (
-              <div className="bg-charcoal-900/30 border border-cream-500/10 rounded-xl p-4">
-                <p className="text-sm text-cream-400 italic">"{profile.bio}"</p>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* ============================================================
-            RIGHT: Tabbed Content Area
-            ============================================================ */}
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Tab Navigation */}
-          <div className="flex-shrink-0 border-b border-cream-500/10 bg-charcoal-950/30">
-            <div className="flex gap-1 p-2 overflow-x-auto hud-scroll">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+        {/* ================================================================
+            STATS SECTION: XP, Seasons, Championships, CorpsCoin
+            ================================================================ */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
+            <div className="flex items-center justify-center gap-1 text-gold-400 mb-1">
+              <Zap className="w-4 h-4" />
+              <span className="text-lg font-mono font-bold">{(profile.xp || 0).toLocaleString()}</span>
+            </div>
+            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">XP</p>
+          </div>
+          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
+            <div className="flex items-center justify-center gap-1 text-blue-400 mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-lg font-mono font-bold">{profile.stats?.seasonsPlayed || 0}</span>
+            </div>
+            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Seasons</p>
+          </div>
+          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
+            <div className="flex items-center justify-center gap-1 text-purple-400 mb-1">
+              <Trophy className="w-4 h-4" />
+              <span className="text-lg font-mono font-bold">{profile.stats?.championships || 0}</span>
+            </div>
+            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Champs</p>
+          </div>
+          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
+            <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="text-lg font-mono font-bold">{(profile.corpsCoin || 0).toLocaleString()}</span>
+            </div>
+            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">CC</p>
+          </div>
+        </div>
 
+        {/* ================================================================
+            MY CORPS GALLERY
+            ================================================================ */}
+        {profile.corps && Object.keys(profile.corps).length > 0 && (
+          <div>
+            <h3 className="text-sm font-display font-bold text-cream-500/60 uppercase tracking-wide mb-3">My Corps</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Object.entries(profile.corps)
+                .sort((a, b) => {
+                  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+                  return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+                })
+                .map(([classKey, corps]) => {
+                  const classInfo = CLASS_DISPLAY[classKey] || { name: classKey, color: 'text-cream-400', bg: 'bg-cream-500/10', border: 'border-cream-500/20' };
+                  return (
+                    <motion.div
+                      key={classKey}
+                      whileHover={{ scale: 1.02 }}
+                      className={`${classInfo.bg} border ${classInfo.border} rounded-xl p-4 transition-all`}
+                    >
+                      <p className={`text-xs ${classInfo.color} uppercase tracking-wide font-medium mb-1`}>
+                        {classInfo.name}
+                      </p>
+                      <p className="font-display font-bold text-cream-100 truncate">
+                        {corps.corpsName || corps.name || 'Unnamed Corps'}
+                      </p>
+                      {corps.ranking && (
+                        <p className="text-sm text-cream-500/60 mt-1">#{corps.ranking}</p>
+                      )}
+                      {corps.totalSeasonScore !== undefined && (
+                        <p className={`text-lg font-mono font-bold ${classInfo.color} mt-2`}>
+                          {corps.totalSeasonScore.toFixed(1)}
+                        </p>
+                      )}
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================
+            ACHIEVEMENTS: Meaningful Milestones
+            ================================================================ */}
+        <div>
+          <h3 className="text-sm font-display font-bold text-cream-500/60 uppercase tracking-wide mb-3">Achievements</h3>
+          {achievements.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {achievements.map((achievement) => {
+                const Icon = achievement.icon;
                 return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-bold text-sm uppercase tracking-wide transition-all whitespace-nowrap ${
-                      isActive
-                        ? 'bg-gold-500/20 text-gold-400'
-                        : 'text-cream-500/60 hover:text-cream-300 hover:bg-charcoal-900/50'
-                    }`}
+                  <motion.div
+                    key={achievement.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`flex items-center gap-3 p-4 ${achievement.bgColor} border ${achievement.borderColor} rounded-xl`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    {isActive && (
-                      <motion.div
-                        layoutId="profileTab"
-                        className="absolute bottom-0 left-2 right-2 h-0.5 bg-gold-400 rounded-full"
-                      />
-                    )}
-                  </button>
+                    <div className={`w-10 h-10 rounded-lg ${achievement.bgColor} flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 ${achievement.color}`} />
+                    </div>
+                    <div>
+                      <p className={`font-display font-bold ${achievement.color}`}>{achievement.name}</p>
+                      <p className="text-xs text-cream-500/60">{achievement.description}</p>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
-          </div>
+          ) : (
+            <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6 text-center">
+              <Medal className="w-10 h-10 text-cream-500/30 mx-auto mb-2" />
+              <p className="text-cream-500/60">No achievements yet</p>
+              <p className="text-sm text-cream-500/40 mt-1">Complete seasons and win championships to earn achievements</p>
+            </div>
+          )}
+        </div>
 
-          {/* Tab Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto hud-scroll p-4 lg:p-6">
-            <AnimatePresence mode="wait">
-              {activeTab === 'overview' && (
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <OverviewTab profile={profile} milestones={milestones} />
-                </motion.div>
-              )}
-              {activeTab === 'achievements' && (
-                <motion.div
-                  key="achievements"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <AchievementsTab profile={profile} milestones={milestones} />
-                </motion.div>
-              )}
-              {activeTab === 'history' && (
-                <motion.div
-                  key="history"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <HistoryTab profile={profile} seasonHistory={seasonHistory} />
-                </motion.div>
-              )}
-              {activeTab === 'stats' && (
-                <motion.div
-                  key="stats"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <StatsTab profile={profile} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+        {/* ================================================================
+            ACTION BUTTONS: Battle Pass + Season History
+            ================================================================ */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate('/battlepass')}
+            className="flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-purple-500/20 to-gold-500/20 border border-purple-500/30 rounded-xl text-cream-100 font-medium hover:from-purple-500/30 hover:to-gold-500/30 transition-all"
+          >
+            <Gift className="w-5 h-5 text-gold-400" />
+            Battle Pass
+          </button>
+          <button
+            onClick={() => setShowHistory(true)}
+            className="flex items-center justify-center gap-2 p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-xl text-cream-100 font-medium hover:border-cream-500/20 transition-all"
+          >
+            <History className="w-5 h-5 text-purple-400" />
+            Season History
+          </button>
         </div>
       </div>
+
+      {/* ================================================================
+          MODALS
+          ================================================================ */}
+      <SettingsPanel
+        profile={profile}
+        user={user}
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+
+      <SeasonHistoryModal
+        profile={profile}
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
+
+      <AvatarCustomizationModal
+        profile={profile}
+        user={user}
+        isOpen={showAvatarCustomization}
+        onClose={() => setShowAvatarCustomization(false)}
+        onSave={handleAvatarSave}
+      />
     </div>
   );
 };
