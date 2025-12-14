@@ -4,8 +4,8 @@ function isAuthenticated() {
 }
 
 function isAdmin() {
-  // Check for the admin UID from your development guidelines
-  return isAuthenticated() && (request.auth.uid == 'o8vfRCOevjTKBY0k2dISlpiYiIH2' || request.auth.token.admin == true);
+  // Admin access is determined by custom claims set via Firebase Admin SDK
+  return isAuthenticated() && request.auth.token.admin == true;
 }
 
 function isOwner(userId) {
