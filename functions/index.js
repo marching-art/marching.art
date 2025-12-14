@@ -25,14 +25,8 @@ const {
 } = require("./src/callable/lineups");
 const {
   unlockClassWithCorpsCoin,
-  purchaseStaff,
-  assignStaff,
-  getStaffMarketplace,
-  listStaffForAuction,
-  bidOnStaff,
-  completeAuction,
-  getActiveAuctions,
-  cancelAuction,
+  getCorpsCoinHistory,
+  getEarningOpportunities,
 } = require("./src/callable/economy");
 const {
   purchaseBattlePass,
@@ -131,14 +125,8 @@ module.exports = {
   dailyXPCheckIn,
   awardXP,
   unlockClassWithCorpsCoin,
-  purchaseStaff,
-  assignStaff,
-  getStaffMarketplace,
-  listStaffForAuction,
-  bidOnStaff,
-  completeAuction,
-  getActiveAuctions,
-  cancelAuction,
+  getCorpsCoinHistory,
+  getEarningOpportunities,
   registerCorps,
   processCorpsDecisions,
   retireCorps,

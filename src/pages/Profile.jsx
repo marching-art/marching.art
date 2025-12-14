@@ -1,12 +1,13 @@
 // src/pages/Profile.jsx
 // Redesigned Profile: Clean profile showing your fantasy career with integrated settings
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   User, Trophy, History, Settings, Star, TrendingUp, Calendar, Crown,
   DollarSign, AlertTriangle, RefreshCw, Zap, Flame, MapPin, Edit, Check, X,
-  ChevronRight, Medal, Sparkles, Bell, Shield, LogOut, Gift
+  ChevronRight, Medal, Sparkles, Bell, Shield, LogOut, Gift, Coins,
+  ArrowUp, ArrowDown, Award, Target
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -14,6 +15,7 @@ import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
+import { getCorpsCoinHistory } from '../firebase/functions';
 
 // =============================================================================
 // AVATAR CUSTOMIZATION - Simple avatar options
@@ -542,6 +544,205 @@ const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) =>
 };
 
 // =============================================================================
+// CORPSCOIN EARNING OPPORTUNITIES
+// =============================================================================
+const EARNING_OPPORTUNITIES = [
+  {
+    id: 'shows',
+    title: 'Show Participation',
+    description: 'Perform at shows to earn CC',
+    rewards: { soundSport: 50, aClass: 100, open: 150, world: 200 },
+    icon: Target,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20'
+  },
+  {
+    id: 'league',
+    title: 'Weekly League Win',
+    description: 'Win your weekly matchup',
+    reward: 100,
+    icon: Trophy,
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/20'
+  },
+  {
+    id: 'season',
+    title: 'Season Finish Bonus',
+    description: 'Based on final ranking',
+    rewards: { '1st': 1000, '2nd': 750, '3rd': 500, 'Top 10': 350, 'Top 25': 250 },
+    icon: Award,
+    color: 'text-gold-400',
+    bgColor: 'bg-gold-500/20'
+  },
+  {
+    id: 'battlepass',
+    title: 'Battle Pass',
+    description: 'Claim rewards as you level up',
+    note: 'Varies by level',
+    icon: Gift,
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/20'
+  }
+];
+
+// =============================================================================
+// CORPSCOIN HISTORY MODAL
+// =============================================================================
+const CorpsCoinHistoryModal = ({ isOpen, onClose, balance }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadHistory();
+    }
+  }, [isOpen]);
+
+  const loadHistory = async () => {
+    setLoading(true);
+    try {
+      const result = await getCorpsCoinHistory({ limit: 50 });
+      if (result.data?.success) {
+        setHistory(result.data.history || []);
+      }
+    } catch (error) {
+      console.error('Error loading CC history:', error);
+      toast.error('Failed to load history');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTransactionIcon = (type) => {
+    switch (type) {
+      case 'show_participation': return Target;
+      case 'league_win': return Trophy;
+      case 'season_bonus': return Award;
+      case 'battle_pass': return Gift;
+      case 'class_unlock': return TrendingUp;
+      case 'league_entry': return Coins;
+      default: return DollarSign;
+    }
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp?.toDate?.() || new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
+            <div>
+              <h2 className="text-lg font-display font-bold text-cream-100 flex items-center gap-2">
+                <Coins className="w-5 h-5 text-green-400" />
+                CorpsCoin History
+              </h2>
+              <p className="text-sm text-cream-500/60 mt-1">
+                Balance: <span className="text-green-400 font-mono font-bold">{(balance || 0).toLocaleString()} CC</span>
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-6 h-6 text-cream-500/40 animate-spin" />
+              </div>
+            ) : history.length > 0 ? (
+              <div className="space-y-2">
+                {history.map((entry, idx) => {
+                  const Icon = getTransactionIcon(entry.type);
+                  const isPositive = entry.amount > 0;
+                  return (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="flex items-center gap-3 p-3 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        isPositive ? 'bg-green-500/20' : 'bg-red-500/20'
+                      }`}>
+                        <Icon className={`w-5 h-5 ${isPositive ? 'text-green-400' : 'text-red-400'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-cream-100 truncate">
+                          {entry.description}
+                        </p>
+                        <p className="text-xs text-cream-500/60">
+                          {formatDate(entry.timestamp)}
+                        </p>
+                      </div>
+                      <div className={`text-right ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                        <p className="font-mono font-bold">
+                          {isPositive ? '+' : ''}{entry.amount}
+                        </p>
+                        <p className="text-xs text-cream-500/40 font-mono">
+                          {entry.balance?.toLocaleString()} CC
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Coins className="w-12 h-12 text-cream-500/30 mx-auto mb-3" />
+                <p className="text-cream-500/60">No transaction history yet</p>
+                <p className="text-sm text-cream-500/40 mt-1">Earn CC by participating in shows</p>
+              </div>
+            )}
+          </div>
+
+          {/* Earning Opportunities Footer */}
+          <div className="p-4 border-t border-cream-500/10 bg-charcoal-900/30">
+            <p className="text-xs text-cream-500/60 mb-3 font-medium uppercase tracking-wide">How to Earn</p>
+            <div className="grid grid-cols-2 gap-2">
+              {EARNING_OPPORTUNITIES.slice(0, 4).map((opp) => {
+                const Icon = opp.icon;
+                return (
+                  <div key={opp.id} className="flex items-center gap-2 p-2 bg-charcoal-800/50 rounded-lg">
+                    <Icon className={`w-4 h-4 ${opp.color}`} />
+                    <span className="text-xs text-cream-300">{opp.title}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// =============================================================================
 // MAIN PROFILE COMPONENT
 // =============================================================================
 const Profile = () => {
@@ -554,6 +755,7 @@ const Profile = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showAvatarCustomization, setShowAvatarCustomization] = useState(false);
+  const [showCCHistory, setShowCCHistory] = useState(false);
 
   const isOwnProfile = !userId || userId === user?.uid;
   const profileUserId = userId || user?.uid;
@@ -787,14 +989,63 @@ const Profile = () => {
             </div>
             <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Champs</p>
           </div>
-          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
+          <button
+            onClick={() => isOwnProfile && setShowCCHistory(true)}
+            className={`bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center transition-all ${
+              isOwnProfile ? 'hover:border-green-500/30 hover:bg-green-500/5 cursor-pointer' : ''
+            }`}
+          >
             <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
-              <DollarSign className="w-4 h-4" />
+              <Coins className="w-4 h-4" />
               <span className="text-lg font-mono font-bold">{(profile.corpsCoin || 0).toLocaleString()}</span>
             </div>
-            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">CC</p>
-          </div>
+            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">
+              {isOwnProfile ? 'CC (tap)' : 'CC'}
+            </p>
+          </button>
         </div>
+
+        {/* ================================================================
+            CORPSCOIN EARNING OPPORTUNITIES - Show how to earn CC
+            ================================================================ */}
+        {isOwnProfile && (
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-display font-bold text-green-400 flex items-center gap-2">
+                <Coins className="w-4 h-4" />
+                Earn CorpsCoin
+              </h3>
+              <button
+                onClick={() => setShowCCHistory(true)}
+                className="text-xs text-cream-500/60 hover:text-cream-300 flex items-center gap-1 transition-colors"
+              >
+                View History
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {EARNING_OPPORTUNITIES.map((opp) => {
+                const Icon = opp.icon;
+                return (
+                  <div
+                    key={opp.id}
+                    className="flex items-start gap-3 p-3 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${opp.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`w-4 h-4 ${opp.color}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-cream-100">{opp.title}</p>
+                      <p className="text-[10px] text-cream-500/60 mt-0.5">
+                        {opp.reward ? `${opp.reward} CC` : opp.note || opp.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ================================================================
             MY CORPS GALLERY
@@ -916,6 +1167,12 @@ const Profile = () => {
         isOpen={showAvatarCustomization}
         onClose={() => setShowAvatarCustomization(false)}
         onSave={handleAvatarSave}
+      />
+
+      <CorpsCoinHistoryModal
+        isOpen={showCCHistory}
+        onClose={() => setShowCCHistory(false)}
+        balance={profile?.corpsCoin}
       />
     </div>
   );
