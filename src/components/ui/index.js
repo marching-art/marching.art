@@ -1,13 +1,3 @@
 // src/components/ui/index.js
 // Centralized exports for UI component library
-export {
-  BrutalistCard,
-  BrutalistButton,
-  MetricBadge,
-  BrutalistDivider,
-  BrutalistHeader,
-  BrutalistIconBox,
-  BrutalistTimeline,
-  BrutalistTip,
-  BrutalistStamp,
-} from './Brutalist';
+// Note: Brutalist components have been removed in favor of ESPN Fantasy-style design
