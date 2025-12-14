@@ -4,9 +4,11 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react';
+import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
 const NotFound = () => {
   const navigate = useNavigate();
+  const shouldReduceMotion = useShouldReduceMotion();
 
   return (
     <div className="min-h-screen bg-charcoal-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -37,13 +39,15 @@ const NotFound = () => {
         </span>
       </div>
 
-      {/* Scanning Line */}
-      <motion.div
-        className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent pointer-events-none"
-        initial={{ top: '10%' }}
-        animate={{ top: ['10%', '90%', '10%'] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-      />
+      {/* Scanning Line - skip on mobile */}
+      {!shouldReduceMotion && (
+        <motion.div
+          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent pointer-events-none"
+          initial={{ top: '10%' }}
+          animate={{ top: ['10%', '90%', '10%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
 
       {/* Corner Decorations */}
       <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-red-500/30" />

@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, AlertTriangle, Radar, Shield, Server, Wifi, WifiOff } from 'lucide-react';
+import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
 
 // =============================================================================
 // SYSTEM INITIALIZATION LOADER
@@ -44,14 +45,15 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [internalProgress, setInternalProgress] = useState(0);
+  const shouldReduceMotion = useShouldReduceMotion();
 
-  // Cycle through messages
+  // Cycle through messages - slower interval on mobile
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentMessageIndex((prev) => (prev + 1) % messages.length);
-    }, 1800);
+    }, shouldReduceMotion ? 3000 : 1800); // Slower on mobile
     return () => clearInterval(interval);
-  }, [messages.length]);
+  }, [messages.length, shouldReduceMotion]);
 
   // Animate internal progress if no external progress provided
   useEffect(() => {
@@ -61,31 +63,39 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
           if (prev >= 95) return 15; // Loop back
           return prev + Math.random() * 8 + 2;
         });
-      }, 400);
+      }, shouldReduceMotion ? 800 : 400); // Slower on mobile
       return () => clearInterval(interval);
     }
-  }, [progress]);
+  }, [progress, shouldReduceMotion]);
 
   const displayProgress = progress ?? internalProgress;
 
   const content = (
     <div className={`flex flex-col items-center justify-center gap-6 ${className}`}>
-      {/* Terminal Header */}
+      {/* Terminal Header - simplified on mobile */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 0.8, repeat: Infinity }}
-            className="w-2 h-2 bg-gold-500 rounded-full"
-          />
+          {shouldReduceMotion ? (
+            <div className="w-2 h-2 bg-gold-500 rounded-full" />
+          ) : (
+            <motion.div
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+              className="w-2 h-2 bg-gold-500 rounded-full"
+            />
+          )}
           <span className="font-mono text-[10px] text-gold-500/80 uppercase tracking-[0.3em]">
             System Boot
           </span>
-          <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-            className="w-2 h-2 bg-gold-500 rounded-full"
-          />
+          {shouldReduceMotion ? (
+            <div className="w-2 h-2 bg-gold-500 rounded-full" />
+          ) : (
+            <motion.div
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+              className="w-2 h-2 bg-gold-500 rounded-full"
+            />
+          )}
         </div>
       </div>
 
@@ -93,28 +103,37 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       <div className="relative min-w-[280px] max-w-md">
         {/* Message Container with Border */}
         <div className="border border-gold-500/30 bg-black/60 backdrop-blur-sm px-4 py-3">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentMessageIndex}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-3"
-            >
-              {/* Blinking Cursor */}
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-                className="text-gold-500 font-mono"
-              >
-                &gt;
-              </motion.span>
+          {shouldReduceMotion ? (
+            <div className="flex items-center gap-3">
+              <span className="text-gold-500 font-mono">&gt;</span>
               <span className="font-mono text-sm text-cream tracking-wide">
                 {messages[currentMessageIndex]}
               </span>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentMessageIndex}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-3"
+              >
+                {/* Blinking Cursor */}
+                <motion.span
+                  animate={{ opacity: [1, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  className="text-gold-500 font-mono"
+                >
+                  &gt;
+                </motion.span>
+                <span className="font-mono text-sm text-cream tracking-wide">
+                  {messages[currentMessageIndex]}
+                </span>
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
 
         {/* Corner Brackets */}
@@ -128,7 +147,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
       {showProgress && (
         <div className="w-full max-w-md">
           {/* Progress Container */}
-          <div className="relative h-1.5 bg-charcoal-800 border border-gold-500/20">
+          <div className="relative h-1.5 bg-charcoal-800 border border-gold-500/20 overflow-hidden">
             {/* Progress Fill */}
             <motion.div
               className="absolute inset-y-0 left-0 bg-gold-500"
@@ -136,12 +155,14 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
               animate={{ width: `${displayProgress}%` }}
               transition={{ duration: 0.3, ease: 'linear' }}
             />
-            {/* Scanline Effect */}
-            <motion.div
-              className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-gold-400/50 to-transparent"
-              animate={{ left: ['-10%', '110%'] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-            />
+            {/* Scanline Effect - skip on mobile */}
+            {!shouldReduceMotion && (
+              <motion.div
+                className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-gold-400/50 to-transparent"
+                animate={{ left: ['-10%', '110%'] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              />
+            )}
           </div>
           {/* Progress Percentage */}
           <div className="flex justify-between mt-1.5">
@@ -161,12 +182,16 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
         <span className="text-gold-500/40">|</span>
         <span>v2.4.1</span>
         <span className="text-gold-500/40">|</span>
-        <motion.span
-          animate={{ opacity: [0.2, 0.6, 0.2] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
-          STANDBY
-        </motion.span>
+        {shouldReduceMotion ? (
+          <span className="opacity-60">STANDBY</span>
+        ) : (
+          <motion.span
+            animate={{ opacity: [0.2, 0.6, 0.2] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            STANDBY
+          </motion.span>
+        )}
       </div>
     </div>
   );
@@ -390,6 +415,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
   const IconComponent = CustomIcon || config.icon;
   const displayTitle = title || config.defaultTitle;
   const displaySubtitle = subtitle || config.defaultSubtitle;
+  const shouldReduceMotion = useShouldReduceMotion();
 
   // Minimal variant - compact version
   if (variant === 'minimal') {
@@ -409,15 +435,13 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
             {displaySubtitle}
           </p>
           {actionLabel && onAction && (
-            <motion.button
+            <button
               onClick={onAction}
-              animate={{ boxShadow: ['0 0 10px rgba(234, 179, 8, 0.2)', '0 0 20px rgba(234, 179, 8, 0.4)', '0 0 10px rgba(234, 179, 8, 0.2)'] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gold-500 text-charcoal-900 font-mono font-bold text-xs uppercase tracking-wider hover:bg-gold-400 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gold-500 text-charcoal-900 font-mono font-bold text-xs uppercase tracking-wider hover:bg-gold-400 transition-colors shadow-lg"
             >
               <Plus className="w-3 h-3" />
               {actionLabel}
-            </motion.button>
+            </button>
           )}
         </div>
       </div>
@@ -443,32 +467,26 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         </span>
       </div>
 
-      {/* Scanning Line Animation */}
-      <motion.div
-        className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-warning/40 to-transparent pointer-events-none"
-        initial={{ top: '10%' }}
-        animate={{ top: ['10%', '90%', '10%'] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-      />
+      {/* Scanning Line Animation - skip on mobile */}
+      {!shouldReduceMotion && (
+        <motion.div
+          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-warning/40 to-transparent pointer-events-none"
+          initial={{ top: '10%' }}
+          animate={{ top: ['10%', '90%', '10%'] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
 
       {/* Main Content */}
       <div className="relative z-10 text-center px-4 py-8 max-w-md mx-auto">
-        {/* Technical Icon */}
-        <motion.div
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className="mb-6"
-        >
+        {/* Technical Icon - static on mobile */}
+        <div className="mb-6">
           <IconComponent className="w-20 h-20 md:w-28 md:h-28 text-warning/40 mx-auto" />
-        </motion.div>
+        </div>
 
-        {/* Status Indicator */}
+        {/* Status Indicator - static on mobile */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-2 h-2 bg-warning rounded-full"
-          />
+          <div className="w-2 h-2 bg-warning rounded-full" />
           <span className="font-mono text-[9px] text-warning/60 uppercase tracking-[0.2em]">
             Status: Awaiting Input
           </span>
@@ -484,23 +502,15 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
           {displaySubtitle}
         </p>
 
-        {/* Action Button - Pulsing */}
+        {/* Action Button - static shadow instead of pulsing */}
         {actionLabel && onAction && (
-          <motion.button
+          <button
             onClick={onAction}
-            animate={{
-              boxShadow: [
-                '0 0 15px rgba(234, 179, 8, 0.2)',
-                '0 0 30px rgba(234, 179, 8, 0.5)',
-                '0 0 15px rgba(234, 179, 8, 0.2)',
-              ],
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-500 text-charcoal-900 font-mono font-bold text-sm uppercase tracking-wider border border-gold-400 hover:bg-gold-400 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-500 text-charcoal-900 font-mono font-bold text-sm uppercase tracking-wider border border-gold-400 hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}
-          </motion.button>
+          </button>
         )}
 
         {/* Technical Footer */}

@@ -3812,3 +3812,85 @@ p, li, span {
     margin: 0 auto;
   }
 }
+
+/* ===========================================
+   REDUCED MOTION & MOBILE PERFORMANCE
+   Disable heavy animations for accessibility
+   and to prevent mobile freezing
+   =========================================== */
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep essential visual feedback but no infinite animations */
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .animate-ping,
+  .animate-shimmer,
+  .animate-bounce-gift,
+  .animate-pulse-glow,
+  .animate-hazard {
+    animation: none !important;
+  }
+
+  /* Disable backdrop blur which is GPU-intensive */
+  .backdrop-blur-xl,
+  .backdrop-blur-lg,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(0, 0, 0, 0.9) !important;
+  }
+}
+
+/* Mobile-specific performance optimizations */
+@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
+  /* Reduce animation intensity on touch devices */
+  .animate-pulse {
+    animation-duration: 3s !important;
+  }
+
+  .animate-spin {
+    animation-duration: 2s !important;
+  }
+
+  /* Disable expensive box-shadow animations */
+  [class*="shadow-glow"],
+  [class*="glow-pulse"] {
+    box-shadow: none !important;
+  }
+
+  /* Reduce backdrop blur intensity for better performance */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .backdrop-blur-lg {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* Disable expensive text-shadow animations */
+  [class*="neon"],
+  .neon-flicker {
+    text-shadow: none !important;
+    animation: none !important;
+  }
+
+  /* Simplify gradients for GPU optimization */
+  .bg-gradient-radial {
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+}

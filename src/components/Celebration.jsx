@@ -1,59 +1,82 @@
 // src/components/Celebration.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
 /**
  * Celebration Component
  * Triggers confetti and celebratory animations for achievements
  * Usage: <Celebration trigger={true} message="Level Up!" />
+ *
+ * Performance optimizations:
+ * - Skips confetti on mobile/reduced motion devices
+ * - Reduced interval frequency (500ms instead of 250ms)
+ * - Fewer particles on mobile
  */
 const Celebration = ({ trigger, message, type = 'default' }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const shouldReduceMotion = useShouldReduceMotion();
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     if (trigger) {
       setIsVisible(true);
-      triggerConfetti(type);
+
+      // Only trigger confetti if not reducing motion
+      if (!shouldReduceMotion) {
+        triggerConfetti(type);
+      }
 
       const timer = setTimeout(() => {
         setIsVisible(false);
       }, 3000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
     }
-  }, [trigger, type]);
+  }, [trigger, type, shouldReduceMotion]);
 
   const triggerConfetti = (celebrationType) => {
-    const duration = 3000;
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    const duration = 2000; // Reduced from 3000ms
     const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+    // Reduced ticks for better performance
+    const defaults = { startVelocity: 25, spread: 360, ticks: 40, zIndex: 1000 };
 
     function randomInRange(min, max) {
       return Math.random() * (max - min) + min;
     }
 
-    const interval = setInterval(function() {
+    // Use 500ms interval instead of 250ms for better performance
+    intervalRef.current = setInterval(function() {
       const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
-        return clearInterval(interval);
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        return;
       }
 
-      const particleCount = 50 * (timeLeft / duration);
+      // Reduced particle count (max 25 instead of 50)
+      const particleCount = Math.min(25, 25 * (timeLeft / duration));
 
       switch (celebrationType) {
         case 'achievement':
+          // Single burst instead of double
           confetti({
             ...defaults,
             particleCount,
-            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-            colors: ['#FFD44D', '#FFCA26', '#D9A300', '#E5D396']
-          });
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+            origin: { x: randomInRange(0.3, 0.7), y: Math.random() - 0.2 },
             colors: ['#FFD44D', '#FFCA26', '#D9A300', '#E5D396']
           });
           break;
@@ -71,7 +94,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
         case 'victory':
           confetti({
             ...defaults,
-            particleCount: particleCount * 2,
+            particleCount: Math.min(40, particleCount * 1.5), // Reduced from *2
             origin: { x: 0.5, y: 0.2 },
             colors: ['#FFD44D', '#E5D396', '#FAF6EA', '#C3A54E'],
             scalar: 1.2,
@@ -87,7 +110,7 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
             colors: ['#FFD44D', '#E5D396']
           });
       }
-    }, 250);
+    }, 500); // Increased from 250ms to 500ms
   };
 
   return (
@@ -106,18 +129,18 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
           className="fixed inset-0 flex items-center justify-center pointer-events-none z-[999]"
         >
           <div className="relative">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gold-500/30 blur-3xl rounded-full animate-pulse" />
+            {/* Glow effect - static on mobile */}
+            <div className={`absolute inset-0 bg-gold-500/30 blur-3xl rounded-full ${shouldReduceMotion ? '' : 'animate-pulse'}`} />
 
-            {/* Message */}
+            {/* Message - no wiggle animation on mobile */}
             <motion.div
-              animate={{
+              animate={shouldReduceMotion ? {} : {
                 scale: [1, 1.05, 1],
                 rotate: [-2, 2, -2]
               }}
-              transition={{
+              transition={shouldReduceMotion ? {} : {
                 duration: 0.5,
-                repeat: Infinity,
+                repeat: 2, // Only repeat twice instead of Infinity
                 repeatType: 'reverse'
               }}
               className="relative bg-gradient-gold rounded-2xl px-12 py-8 shadow-2xl border-4 border-gold-300"
@@ -127,22 +150,21 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
               </h2>
             </motion.div>
 
-            {/* Sparkles */}
-            {[...Array(8)].map((_, i) => (
+            {/* Sparkles - skip on mobile for performance */}
+            {!shouldReduceMotion && [...Array(4)].map((_, i) => ( // Reduced from 8 to 4 sparkles
               <motion.div
                 key={i}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{
                   scale: [0, 1, 0],
                   opacity: [0, 1, 0],
-                  x: [0, Math.cos(i * 45 * Math.PI / 180) * 100],
-                  y: [0, Math.sin(i * 45 * Math.PI / 180) * 100]
+                  x: [0, Math.cos(i * 90 * Math.PI / 180) * 80], // Simplified angles
+                  y: [0, Math.sin(i * 90 * Math.PI / 180) * 80]
                 }}
                 transition={{
                   duration: 1.5,
-                  delay: i * 0.1,
-                  repeat: Infinity,
-                  repeatDelay: 0.5
+                  delay: i * 0.15,
+                  repeat: 1, // Only repeat once instead of Infinity
                 }}
                 className="absolute top-1/2 left-1/2 w-4 h-4"
                 style={{ transformOrigin: 'center' }}

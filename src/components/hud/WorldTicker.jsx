@@ -13,6 +13,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useSeasonStore } from '../../store/seasonStore';
 import { getSeasonProgress } from '../../hooks/useSeason';
+import { useShouldReduceMotion } from '../../hooks/useReducedMotion';
 
 // =============================================================================
 // TICKER ITEM TYPES
@@ -56,12 +57,12 @@ const ScoreItem = ({ corps, score, change, showName }) => {
  * Event Item - Shows an upcoming or live event
  * Format: "🔴 LIVE: [EVENT NAME] • [LOCATION]"
  */
-const EventItem = ({ eventName, location, isLive }) => {
+const EventItem = ({ eventName, location, isLive, reducedMotion = false }) => {
   return (
     <div className="flex items-center gap-2 px-4 whitespace-nowrap">
       {isLive ? (
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className={`w-2 h-2 bg-red-500 rounded-full ${reducedMotion ? '' : 'animate-pulse'}`} />
           <span className="text-[10px] font-bold uppercase text-red-400">LIVE</span>
         </span>
       ) : (
@@ -128,11 +129,30 @@ const WorldTicker = ({ items = [], className = '' }) => {
   const [containerWidth, setContainerWidth] = useState(0);
   const [historicalItems, setHistoricalItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Check if we should reduce motion (mobile/low-performance devices)
+  const shouldReduceMotion = useShouldReduceMotion();
 
   // Get season data from store
   const seasonData = useSeasonStore((state) => state.seasonData);
   const { currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentDay: 1 };
   const previousDay = currentDay - 1;
+
+  // Use Intersection Observer to pause animation when ticker is not visible
+  useEffect(() => {
+    if (!containerRef.current || shouldReduceMotion) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [shouldReduceMotion]);
 
   // Fetch historical DCI scores from the previous day
   useEffect(() => {
@@ -246,8 +266,21 @@ const WorldTicker = ({ items = [], className = '' }) => {
     }
   }, [tickerItems]);
 
-  // Animate the ticker
+  // Animate the ticker - respects reduced motion and visibility
   useEffect(() => {
+    // Don't animate on mobile/reduced motion devices
+    if (shouldReduceMotion) {
+      controls.stop();
+      controls.set({ x: 0 });
+      return;
+    }
+
+    // Pause animation when not visible
+    if (!isVisible) {
+      controls.stop();
+      return;
+    }
+
     if (contentWidth > containerWidth) {
       const duration = contentWidth / 50; // Speed: 50px per second
 
@@ -262,7 +295,7 @@ const WorldTicker = ({ items = [], className = '' }) => {
     }
 
     return () => controls.stop();
-  }, [contentWidth, containerWidth, controls]);
+  }, [contentWidth, containerWidth, controls, shouldReduceMotion, isVisible]);
 
   // Render item based on type
   const renderItem = (item, index) => {
@@ -284,6 +317,7 @@ const WorldTicker = ({ items = [], className = '' }) => {
             eventName={item.eventName}
             location={item.location}
             isLive={item.isLive}
+            reducedMotion={shouldReduceMotion}
           />
         );
       case 'ranking':

@@ -4,10 +4,36 @@
 // A reusable tooltip component for providing contextual help
 // Uses a Portal to ensure tooltip renders above all other content
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, HelpCircle } from 'lucide-react';
+
+// Throttle helper for scroll/resize events
+const throttle = <T extends (...args: unknown[]) => void>(fn: T, ms: number): T => {
+  let lastCall = 0;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  return ((...args: unknown[]) => {
+    const now = Date.now();
+    const remaining = ms - (now - lastCall);
+
+    if (remaining <= 0) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      lastCall = now;
+      fn(...args);
+    } else if (!timeoutId) {
+      timeoutId = setTimeout(() => {
+        lastCall = Date.now();
+        timeoutId = null;
+        fn(...args);
+      }, remaining);
+    }
+  }) as T;
+};
 
 // =============================================================================
 // TYPES
@@ -93,17 +119,28 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     setCoords({ top, left });
   }, [position]);
 
+  // Throttled version of calculatePosition for scroll/resize events (100ms throttle)
+  const throttledCalculatePosition = useMemo(
+    () => throttle(calculatePosition, 100),
+    [calculatePosition]
+  );
+
   useEffect(() => {
     if (isVisible) {
+      // Initial calculation is immediate
       calculatePosition();
-      window.addEventListener('scroll', calculatePosition, true);
-      window.addEventListener('resize', calculatePosition);
+
+      // Throttled listeners prevent mobile freezing
+      // Using passive: true for better scroll performance
+      window.addEventListener('scroll', throttledCalculatePosition, { capture: true, passive: true });
+      window.addEventListener('resize', throttledCalculatePosition, { passive: true });
+
       return () => {
-        window.removeEventListener('scroll', calculatePosition, true);
-        window.removeEventListener('resize', calculatePosition);
+        window.removeEventListener('scroll', throttledCalculatePosition, true);
+        window.removeEventListener('resize', throttledCalculatePosition);
       };
     }
-  }, [isVisible, calculatePosition]);
+  }, [isVisible, calculatePosition, throttledCalculatePosition]);
 
   const handleMouseEnter = () => {
     setIsVisible(true);

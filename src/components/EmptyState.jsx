@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { useShouldReduceMotion } from '../hooks/useReducedMotion';
 
 // =============================================================================
 // TACTICAL SVG ICONS - Technical, in-world graphics
@@ -126,6 +127,8 @@ const EmptyState = ({
   icon: CustomIcon,
   className = ''
 }) => {
+  const shouldReduceMotion = useShouldReduceMotion();
+
   // Select icon based on variant
   const IconComponent = CustomIcon || (
     variant === 'signal' ? SignalScannerIcon :
@@ -170,32 +173,26 @@ const EmptyState = ({
         </span>
       </div>
 
-      {/* Scanning line animation */}
-      <motion.div
-        className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-gold-500/30 to-transparent pointer-events-none"
-        initial={{ top: '10%' }}
-        animate={{ top: ['10%', '90%', '10%'] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-      />
+      {/* Scanning line animation - skip on mobile */}
+      {!shouldReduceMotion && (
+        <motion.div
+          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-gold-500/30 to-transparent pointer-events-none"
+          initial={{ top: '10%' }}
+          animate={{ top: ['10%', '90%', '10%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
 
       {/* Main content container */}
       <div className="relative z-10 text-center px-4 py-12 max-w-lg mx-auto">
-        {/* Technical icon with slow pulse */}
-        <motion.div
-          animate={{ opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className="mb-6"
-        >
+        {/* Technical icon - static on mobile */}
+        <div className="mb-6">
           <IconComponent className={`${iconSize} text-cream/30 mx-auto`} />
-        </motion.div>
+        </div>
 
-        {/* Status indicator */}
+        {/* Status indicator - static on mobile */}
         <div className="flex items-center justify-center gap-2 mb-4">
-          <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-2 h-2 bg-gold-500/60 rounded-full"
-          />
+          <div className="w-2 h-2 bg-gold-500/60 rounded-full" />
           <span className="font-mono text-[10px] text-cream/40 uppercase tracking-widest">
             System Status
           </span>
@@ -211,23 +208,15 @@ const EmptyState = ({
           {subtitle}
         </p>
 
-        {/* Action button - pulsing */}
+        {/* Action button - static shadow instead of pulsing */}
         {actionLabel && onAction && (
-          <motion.button
+          <button
             onClick={onAction}
-            animate={{
-              boxShadow: [
-                '0 0 20px rgba(234, 179, 8, 0.2)',
-                '0 0 40px rgba(234, 179, 8, 0.4)',
-                '0 0 20px rgba(234, 179, 8, 0.2)'
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-black font-mono font-bold text-sm uppercase tracking-widest border-2 border-gold-400 hover:bg-gold-400 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-black font-mono font-bold text-sm uppercase tracking-widest border-2 border-gold-400 hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}
-          </motion.button>
+          </button>
         )}
 
         {/* Technical readout footer */}
