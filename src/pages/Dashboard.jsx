@@ -21,6 +21,9 @@ import {
   MoveCorpsModal,
   AchievementModal,
   MorningReport,
+  OnboardingTour,
+  QuickStartGuide,
+  QuickStartButton,
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
@@ -88,6 +91,10 @@ const Dashboard = () => {
   const [showMorningReport, setShowMorningReport] = useState(false);
   const [showSynergyPanel, setShowSynergyPanel] = useState(false);
 
+  // Onboarding tour and quick start guide states
+  const [showOnboardingTour, setShowOnboardingTour] = useState(false);
+  const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
+
   // Destructure dashboard data
   const {
     profile,
@@ -125,6 +132,30 @@ const Dashboard = () => {
       }
     }
   }, [profile, activeCorps, user?.uid]);
+
+  // Show onboarding tour on first dashboard visit (after onboarding completion)
+  useEffect(() => {
+    if (profile?.isFirstVisit && activeCorps && !showMorningReport) {
+      // Delay tour slightly to let UI settle
+      const timer = setTimeout(() => {
+        setShowOnboardingTour(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [profile?.isFirstVisit, activeCorps, showMorningReport]);
+
+  // Mark first visit as complete when tour ends
+  const handleTourComplete = async () => {
+    setShowOnboardingTour(false);
+    if (profile?.isFirstVisit && user) {
+      try {
+        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+        await updateDoc(profileRef, { isFirstVisit: false });
+      } catch (error) {
+        console.error('Error updating first visit flag:', error);
+      }
+    }
+  };
 
   // Show class unlock congrats when newly unlocked
   useEffect(() => {
@@ -345,6 +376,7 @@ const Dashboard = () => {
               variants={cardVariants}
               initial="hidden"
               animate="visible"
+              data-tour="corps-card"
               className="lg:col-span-2 bg-charcoal-900 border border-white/10 rounded-xl p-6"
             >
               <div className="flex items-start justify-between mb-4">
@@ -408,6 +440,7 @@ const Dashboard = () => {
               variants={cardVariants}
               initial="hidden"
               animate="visible"
+              data-tour="schedule"
               className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
@@ -445,6 +478,7 @@ const Dashboard = () => {
             variants={cardVariants}
             initial="hidden"
             animate="visible"
+            data-tour="lineup"
             className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
@@ -529,6 +563,7 @@ const Dashboard = () => {
               variants={cardVariants}
               initial="hidden"
               animate="visible"
+              data-tour="league"
               className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
@@ -562,24 +597,30 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-400" />
+                  {/* Pulsing indicator for new users */}
+                  <div className="relative w-14 h-14 mx-auto mb-3">
+                    <div className="absolute inset-0 rounded-full bg-gold-500/20 animate-ping" />
+                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-gold-500/20 to-blue-500/20 flex items-center justify-center border border-gold-500/30">
+                      <Users className="w-7 h-7 text-gold-400" />
+                    </div>
                   </div>
-                  <h4 className="font-display font-bold text-cream mb-1">Compete with Friends</h4>
-                  <p className="text-xs text-cream/50 mb-4">Create or join a league to start competing</p>
+                  <h4 className="font-display font-bold text-gold-400 text-lg mb-1">Join a League!</h4>
+                  <p className="text-sm text-cream/60 mb-4">
+                    Compete with friends and track your rankings together
+                  </p>
                   <div className="flex flex-col gap-2">
                     <Link
                       to="/leagues?action=create"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-xs hover:bg-gold-400 transition-colors shadow-[0_0_10px_rgba(234,179,8,0.2)]"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
                     >
                       <Trophy className="w-4 h-4" />
-                      Create League
+                      Create a League
                     </Link>
                     <Link
                       to="/leagues"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm font-semibold hover:bg-blue-500/20 transition-colors"
                     >
-                      Or browse public leagues <ChevronRight className="w-3 h-3" />
+                      Browse Public Leagues <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -787,6 +828,35 @@ const Dashboard = () => {
         activeCorps={activeCorps}
         activeCorpsClass={activeCorpsClass}
         engagementData={engagementData}
+      />
+
+      {/* Onboarding Tour for first-time users */}
+      <OnboardingTour
+        isOpen={showOnboardingTour}
+        onClose={() => setShowOnboardingTour(false)}
+        onComplete={handleTourComplete}
+      />
+
+      {/* Quick Start Guide */}
+      <QuickStartGuide
+        isOpen={showQuickStartGuide}
+        onClose={() => setShowQuickStartGuide(false)}
+        onAction={(action) => {
+          if (action === 'lineup') {
+            setShowCaptionSelection(true);
+          }
+        }}
+        completedSteps={[
+          ...(activeCorps?.lineup && Object.keys(activeCorps.lineup).length === 8 ? ['lineup'] : []),
+          ...(activeCorps?.selectedShows && Object.values(activeCorps.selectedShows).flat().length > 0 ? ['schedule'] : []),
+          ...(myLeagues && myLeagues.length > 0 ? ['league'] : []),
+        ]}
+      />
+
+      {/* Quick Start Button (floating) - show for new users */}
+      <QuickStartButton
+        onClick={() => setShowQuickStartGuide(true)}
+        show={!primaryLeague || (activeCorps?.lineup && Object.keys(activeCorps.lineup).length < 8)}
       />
     </div>
   );

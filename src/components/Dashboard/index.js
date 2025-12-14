@@ -12,3 +12,7 @@ export {
 
 // Morning report component
 export { default as MorningReport } from './MorningReport';
+
+// Onboarding and quick start components
+export { default as OnboardingTour } from './OnboardingTour';
+export { default as QuickStartGuide, QuickStartButton } from './QuickStartGuide';
