@@ -1,40 +1,88 @@
 {
   "short_name": "marching.art",
-  "name": "marching.art",
+  "name": "marching.art - Fantasy Drum Corps",
+  "description": "Build your dream corps and compete with directors worldwide.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "theme_color": "#EAB308",
+  "background_color": "#0A0A0A",
+  "orientation": "any",
+  "categories": ["games", "entertainment", "sports"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "/logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "/logo192.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#EAB308",
-  "background_color": "#0A0A0A",
-  "orientation": "portrait",
-  "description": "Build your dream corps and compete with directors worldwide.",
-  "categories": ["games", "entertainment", "sports"],
   "screenshots": [
     {
       "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
       "type": "image/png",
-      "sizes": "1280x720"
+      "form_factor": "wide",
+      "label": "Dashboard view showing your corps performance"
     },
     {
       "src": "/screenshots/leaderboard.png",
+      "sizes": "1280x720",
       "type": "image/png",
-      "sizes": "1280x720"
+      "form_factor": "wide",
+      "label": "Leaderboard showing top directors"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your corps dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Schedule",
+      "short_name": "Schedule",
+      "description": "View upcoming shows",
+      "url": "/schedule",
+      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Scores",
+      "short_name": "Scores",
+      "description": "View latest scores",
+      "url": "/scores",
+      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

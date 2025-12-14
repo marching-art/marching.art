@@ -128,7 +128,7 @@ const GamingHeader: React.FC = () => {
             {/* Left Section - Logo */}
             <Link to="/dashboard" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.25)] group-hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] transition-all duration-300">
+                <div className="w-10 h-10 rounded-xl overflow-hidden transition-all duration-300">
                   <img
                     src="/logo192.webp"
                     alt="marching.art"
