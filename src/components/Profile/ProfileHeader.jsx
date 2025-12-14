@@ -1,15 +1,15 @@
 // ProfileHeader - Profile header with avatar, info, and edit functionality
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, MapPin, Edit, Save, X, Heart, Star, TrendingUp, DollarSign, Calendar, Flame } from 'lucide-react';
+import { User, MapPin, Edit, Save, X, Heart, TrendingUp, DollarSign, Calendar, Flame, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getNextClassProgress } from '../../utils/captionPricing';
 
 const ProfileHeader = ({
   profile,
   isOwnProfile,
   onSave,
   saving,
-  xpProgress,
   currentStreak
 }) => {
   const [editing, setEditing] = useState(false);
@@ -49,11 +49,28 @@ const ProfileHeader = ({
     setEditing(false);
   };
 
+  // Get highest unlocked class for display
+  const getHighestClass = () => {
+    const classes = profile.unlockedClasses || ['soundSport'];
+    if (classes.includes('world') || classes.includes('worldClass')) return { name: 'World', color: 'gold', abbrev: 'W' };
+    if (classes.includes('open') || classes.includes('openClass')) return { name: 'Open', color: 'purple', abbrev: 'O' };
+    if (classes.includes('aClass')) return { name: 'A', color: 'blue', abbrev: 'A' };
+    return { name: 'SS', color: 'green', abbrev: 'SS' };
+  };
+  const highestClass = getHighestClass();
+
+  // Get next class progress
+  const nextClassProgress = getNextClassProgress(
+    profile.xp || 0,
+    profile.unlockedClasses || ['soundSport'],
+    profile.corpsCoin || 0
+  );
+
   const stats = [
-    { label: 'Level', value: profile.xpLevel || 1, icon: Star, color: 'gold' },
     { label: 'XP', value: profile.xp || 0, icon: TrendingUp, color: 'blue' },
-    { label: 'CorpsCoin', value: profile.corpsCoin || 0, icon: DollarSign, color: 'green' },
-    { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, icon: Calendar, color: 'purple' }
+    { label: 'CorpsCoin', value: profile.corpsCoin || 0, icon: DollarSign, color: 'gold' },
+    { label: 'Seasons', value: profile.stats?.seasonsPlayed || 0, icon: Calendar, color: 'purple' },
+    { label: 'Wins', value: profile.stats?.leagueWins || 0, icon: Trophy, color: 'green' }
   ];
 
   const colorClasses = {
@@ -73,8 +90,12 @@ const ProfileHeader = ({
         {/* Avatar */}
         <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-amber-400 to-amber-600 dark:from-gold-400 dark:to-gold-600 rounded-2xl flex items-center justify-center flex-shrink-0 relative shadow-lg">
           <User className="w-10 h-10 sm:w-12 sm:h-12 text-white dark:text-charcoal-900" />
-          <div className="absolute -bottom-2 -right-2 bg-amber-500 dark:bg-gold-500 text-white dark:text-charcoal-900 text-xs font-bold px-2 py-1 rounded-full shadow">
-            Lv.{profile.xpLevel || 1}
+          <div className={`absolute -bottom-2 -right-2 ${
+            highestClass.color === 'gold' ? 'bg-gold-500' :
+            highestClass.color === 'purple' ? 'bg-purple-500' :
+            highestClass.color === 'blue' ? 'bg-blue-500' : 'bg-green-500'
+          } text-white text-xs font-bold px-2 py-1 rounded-full shadow`}>
+            {highestClass.abbrev}
           </div>
         </div>
 
@@ -114,20 +135,36 @@ const ProfileHeader = ({
                 <p className="text-slate-600 dark:text-cream-300 mt-4">{profile.bio}</p>
               )}
 
-              {/* XP Progress Bar */}
-              <div className="mt-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-500 dark:text-cream-400">Level {profile.xpLevel || 1}</span>
-                  <span className="text-slate-500 dark:text-cream-400">{xpProgress.progress.toLocaleString()} / {xpProgress.needed.toLocaleString()} XP</span>
+              {/* Class Progress Bar */}
+              {nextClassProgress ? (
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-slate-500 dark:text-cream-400">
+                      Next: {nextClassProgress.className}
+                    </span>
+                    <span className="text-slate-500 dark:text-cream-400">
+                      {nextClassProgress.currentXP.toLocaleString()} / {nextClassProgress.requiredXP.toLocaleString()} XP
+                    </span>
+                  </div>
+                  <div className="w-full bg-stone-200 dark:bg-charcoal-700 rounded-full h-2">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${nextClassProgress.xpProgress}%` }}
+                      className={`${
+                        nextClassProgress.color === 'gold' ? 'bg-gradient-to-r from-gold-500 to-gold-400' :
+                        nextClassProgress.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-400' :
+                        'bg-gradient-to-r from-blue-500 to-blue-400'
+                      } h-2 rounded-full`}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-stone-200 dark:bg-charcoal-700 rounded-full h-2">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${xpProgress.percentage}%` }}
-                    className="bg-gradient-to-r from-amber-500 dark:from-gold-500 to-amber-400 dark:to-gold-400 h-2 rounded-full"
-                  />
+              ) : (
+                <div className="mt-4 px-3 py-2 bg-gold-500/10 border border-gold-500/20 rounded-lg">
+                  <span className="text-sm font-semibold text-gold-500 dark:text-gold-400">
+                    🏆 All Classes Unlocked!
+                  </span>
                 </div>
-              </div>
+              )}
             </>
           ) : (
             <div className="space-y-4">

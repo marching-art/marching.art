@@ -425,9 +425,9 @@ const BattlePass = () => {
                   <Calendar className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <p className="font-bold text-cream-100">Weekly Shows</p>
-                  <p className="text-sm text-cream-500">Participate in weekly shows</p>
-                  <p className="text-sm font-mono text-gold-400 mt-1">+50 XP</p>
+                  <p className="font-bold text-cream-100">Weekly Participation</p>
+                  <p className="text-sm text-cream-500">Submit lineup & play weekly</p>
+                  <p className="text-sm font-mono text-gold-400 mt-1">+100 XP</p>
                 </div>
               </div>
 
@@ -437,8 +437,8 @@ const BattlePass = () => {
                 </div>
                 <div>
                   <p className="font-bold text-cream-100">League Wins</p>
-                  <p className="text-sm text-cream-500">Win league matchups</p>
-                  <p className="text-sm font-mono text-gold-400 mt-1">+100 XP</p>
+                  <p className="text-sm text-cream-500">Win weekly matchups</p>
+                  <p className="text-sm font-mono text-gold-400 mt-1">+50 XP</p>
                 </div>
               </div>
 
@@ -448,8 +448,8 @@ const BattlePass = () => {
                 </div>
                 <div>
                   <p className="font-bold text-cream-100">Season Finish</p>
-                  <p className="text-sm text-cream-500">End-of-season bonus</p>
-                  <p className="text-sm font-mono text-gold-400 mt-1">up to +500 XP</p>
+                  <p className="text-sm text-cream-500">Bonus based on final rank</p>
+                  <p className="text-sm font-mono text-gold-400 mt-1">200-500 XP</p>
                 </div>
               </div>
             </div>
