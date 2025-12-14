@@ -15,6 +15,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
+import OfflineBanner from './components/OfflineBanner';
+import { SkipToContent } from './components/a11y';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -34,6 +36,7 @@ const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
 const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Helper component to wrap pages with error boundaries
 const Page = ({ name, children }) => (
@@ -120,6 +123,12 @@ function App() {
         <ThemeProvider>
           <AuthContext.Provider value={authContextValue}>
             <Router>
+          {/* Skip to Content - Accessibility */}
+          <SkipToContent />
+
+          {/* Offline Banner - Shows when network is unavailable */}
+          <OfflineBanner />
+
           {/* Global Components */}
           <Toaster
             position="top-right"
@@ -270,15 +279,9 @@ function App() {
 
           {/* 404 Route */}
           <Route path="*" element={
-            <div className="min-h-screen bg-gradient-main flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-6xl font-display font-bold text-gradient mb-4">404</h1>
-                <p className="text-cream-300 mb-8">Page not found</p>
-                <a href="/" className="btn-primary">
-                  Return Home
-                </a>
-              </div>
-            </div>
+            <Suspense fallback={<LoadingScreen fullScreen />}>
+              <NotFound />
+            </Suspense>
           } />
           </Routes>
           </Router>
