@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, Eye, Sparkles, X, Crown
+  Music, Eye, Sparkles, X, Crown, Lock, Unlock, TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -31,6 +31,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
+import { getNextClassProgress, XP_SOURCES } from '../utils/captionPricing';
 
 // Caption definitions for lineup display
 const CAPTIONS = [
@@ -315,6 +316,13 @@ const Dashboard = () => {
   const lineup = activeCorps?.lineup || {};
   const lineupCount = Object.keys(lineup).length;
 
+  // Calculate next class unlock progress
+  const nextClassProgress = getNextClassProgress(
+    profile?.xp || 0,
+    profile?.unlockedClasses || ['soundSport'],
+    profile?.corpsCoin || 0
+  );
+
   return (
     <div className="min-h-full bg-charcoal-950 p-4 md:p-6">
       {/* Season Setup Wizard */}
@@ -345,6 +353,104 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Next Class Unlock Progress */}
+      {nextClassProgress && (() => {
+        // Static class mappings for Tailwind
+        const colorStyles = {
+          blue: {
+            border: 'border-blue-500/20',
+            iconBg: 'bg-blue-500/20',
+            iconText: 'text-blue-400',
+            text: 'text-blue-400',
+            gradient: 'from-blue-500 to-blue-400',
+            buttonBg: 'bg-blue-500/10',
+            buttonBorder: 'border-blue-500/20',
+            buttonHover: 'hover:bg-blue-500/20'
+          },
+          purple: {
+            border: 'border-purple-500/20',
+            iconBg: 'bg-purple-500/20',
+            iconText: 'text-purple-400',
+            text: 'text-purple-400',
+            gradient: 'from-purple-500 to-purple-400',
+            buttonBg: 'bg-purple-500/10',
+            buttonBorder: 'border-purple-500/20',
+            buttonHover: 'hover:bg-purple-500/20'
+          },
+          gold: {
+            border: 'border-gold-500/20',
+            iconBg: 'bg-gold-500/20',
+            iconText: 'text-gold-400',
+            text: 'text-gold-400',
+            gradient: 'from-gold-500 to-gold-400',
+            buttonBg: 'bg-gold-500/10',
+            buttonBorder: 'border-gold-500/20',
+            buttonHover: 'hover:bg-gold-500/20'
+          }
+        };
+        const styles = colorStyles[nextClassProgress.color] || colorStyles.blue;
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-6xl mx-auto mb-6"
+          >
+            <div className={`bg-charcoal-900 border ${styles.border} rounded-xl p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg ${styles.iconBg} flex items-center justify-center`}>
+                    <Lock className={`w-5 h-5 ${styles.iconText}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-cream/70">Next Unlock</p>
+                    <p className={`font-display font-bold ${styles.text}`}>
+                      {nextClassProgress.className}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-cream/70">Progress</p>
+                  <p className="font-data font-bold text-cream">
+                    {nextClassProgress.currentXP.toLocaleString()} / {nextClassProgress.requiredXP.toLocaleString()} XP
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-3">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${nextClassProgress.xpProgress}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className={`h-full bg-gradient-to-r ${styles.gradient} rounded-full`}
+                />
+              </div>
+
+              {/* XP Sources Hint */}
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-4 text-cream/50">
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Weekly: +{XP_SOURCES.weeklyParticipation} XP
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Trophy className="w-3 h-3" />
+                    League Wins: +{XP_SOURCES.leagueWin} XP
+                  </span>
+                </div>
+                {nextClassProgress.canUnlockWithCC && (
+                  <button className={`flex items-center gap-1.5 px-3 py-1 ${styles.buttonBg} border ${styles.buttonBorder} rounded ${styles.text} ${styles.buttonHover} transition-colors`}>
+                    <Coins className="w-3 h-3" />
+                    Unlock with {nextClassProgress.requiredCC.toLocaleString()} CC
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {activeCorps ? (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -745,7 +851,6 @@ const Dashboard = () => {
             unlockedClass={newlyUnlockedClass}
             onSetup={handleSetupNewClass}
             onDecline={handleDeclineSetup}
-            xpLevel={profile?.xpLevel || 1}
           />
         )}
 

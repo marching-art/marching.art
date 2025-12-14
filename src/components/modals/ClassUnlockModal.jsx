@@ -10,25 +10,25 @@ const CLASS_INFO = {
     description: 'Intermediate level corps with higher point limits and more competitive shows',
     icon: '\uD83C\uDFBA',
     color: 'from-blue-500 to-blue-600',
-    requiredLevel: 3
+    xpRequired: '3,000 XP'
   },
   open: {
     name: 'Open Class',
     description: 'Advanced level corps with expanded opportunities and prestigious competitions',
     icon: '\uD83C\uDF96\uFE0F',
     color: 'from-purple-500 to-purple-600',
-    requiredLevel: 5
+    xpRequired: '5,000 XP'
   },
   world: {
     name: 'World Class',
     description: 'Elite level corps competing at the highest tier of drum corps activity',
     icon: '\uD83D\uDC51',
     color: 'from-gold-500 to-gold-600',
-    requiredLevel: 10
+    xpRequired: '10,000 XP'
   }
 };
 
-const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline, xpLevel }) => {
+const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
   const classInfo = CLASS_INFO[unlockedClass] || CLASS_INFO.aClass;
 
   return (
@@ -71,7 +71,7 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline, xpLevel }) => {
                     Congratulations!
                   </h2>
                   <p className="text-xl text-cream-100 font-semibold">
-                    You've reached Level {xpLevel}!
+                    You've earned {classInfo.xpRequired}!
                   </p>
                 </motion.div>
               </div>

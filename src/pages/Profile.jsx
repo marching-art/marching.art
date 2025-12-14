@@ -16,6 +16,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
 import { getCorpsCoinHistory } from '../firebase/functions';
+import { getNextClassProgress } from '../utils/captionPricing';
 
 // =============================================================================
 // AVATAR CUSTOMIZATION - Simple avatar options
@@ -875,12 +876,27 @@ const Profile = () => {
                   <User className={`w-12 h-12 ${avatarColor.icon}`} />
                 )}
               </button>
-              {/* Level Badge */}
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-gold-500 border-2 border-charcoal-900 flex items-center justify-center">
-                <span className="text-xs font-mono font-black text-charcoal-900">
-                  {profile.xpLevel || 1}
-                </span>
-              </div>
+              {/* Highest Class Badge */}
+              {(() => {
+                const classes = profile.unlockedClasses || ['soundSport'];
+                let badgeColor, abbrev;
+                if (classes.includes('world') || classes.includes('worldClass')) {
+                  badgeColor = 'bg-gold-500'; abbrev = 'W';
+                } else if (classes.includes('open') || classes.includes('openClass')) {
+                  badgeColor = 'bg-purple-500'; abbrev = 'O';
+                } else if (classes.includes('aClass')) {
+                  badgeColor = 'bg-blue-500'; abbrev = 'A';
+                } else {
+                  badgeColor = 'bg-green-500'; abbrev = 'SS';
+                }
+                return (
+                  <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-lg ${badgeColor} border-2 border-charcoal-900 flex items-center justify-center`}>
+                    <span className="text-xs font-mono font-black text-white">
+                      {abbrev}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Identity Info */}
@@ -1004,6 +1020,73 @@ const Profile = () => {
             </p>
           </button>
         </div>
+
+        {/* ================================================================
+            CLASS PROGRESSION - Show progress toward next class
+            ================================================================ */}
+        {(() => {
+          const nextProgress = getNextClassProgress(
+            profile.xp || 0,
+            profile.unlockedClasses || ['soundSport'],
+            profile.corpsCoin || 0
+          );
+          if (!nextProgress) {
+            return (
+              <div className="bg-gradient-to-r from-gold-500/10 to-amber-500/10 border border-gold-500/20 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-gold-400" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-gold-400">All Classes Unlocked!</p>
+                    <p className="text-xs text-cream-500/60">You've mastered every level of competition</p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          const colorStyles = {
+            blue: { border: 'border-blue-500/20', bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-400', gradient: 'from-blue-500 to-blue-400', iconBg: 'bg-blue-500/20' },
+            purple: { border: 'border-purple-500/20', bg: 'from-purple-500/10 to-violet-500/10', text: 'text-purple-400', gradient: 'from-purple-500 to-purple-400', iconBg: 'bg-purple-500/20' },
+            gold: { border: 'border-gold-500/20', bg: 'from-gold-500/10 to-amber-500/10', text: 'text-gold-400', gradient: 'from-gold-500 to-gold-400', iconBg: 'bg-gold-500/20' }
+          };
+          const style = colorStyles[nextProgress.color] || colorStyles.blue;
+          return (
+            <div className={`bg-gradient-to-r ${style.bg} border ${style.border} rounded-xl p-4`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg ${style.iconBg} flex items-center justify-center`}>
+                    <TrendingUp className={`w-5 h-5 ${style.text}`} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-cream-500/60">Next Unlock</p>
+                    <p className={`font-display font-bold ${style.text}`}>{nextProgress.className}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-cream-500/60">Progress</p>
+                  <p className="font-mono font-bold text-cream-100">
+                    {nextProgress.currentXP.toLocaleString()} / {nextProgress.requiredXP.toLocaleString()} XP
+                  </p>
+                </div>
+              </div>
+              <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${nextProgress.xpProgress}%` }}
+                  transition={{ duration: 0.8 }}
+                  className={`h-full bg-gradient-to-r ${style.gradient} rounded-full`}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-cream-500/60">{nextProgress.xpRemaining.toLocaleString()} XP to go</span>
+                {nextProgress.canUnlockWithCC && (
+                  <span className={`${style.text}`}>or {nextProgress.requiredCC.toLocaleString()} CC</span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ================================================================
             CORPSCOIN EARNING OPPORTUNITIES - Show how to earn CC

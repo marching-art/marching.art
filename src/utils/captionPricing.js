@@ -14,12 +14,23 @@ export const CLASS_POINT_LIMITS = {
 
 /**
  * XP level requirements for class unlocks
+ * Level 1 = 1000 XP, so Level 3 = 3000 XP, etc.
  */
 export const CLASS_UNLOCK_REQUIREMENTS = {
-  soundSport: 0,  // Always available
-  aClass: 3,      // Level 3
-  openClass: 5,   // Level 5
-  worldClass: 10  // Level 10
+  soundSport: 0,  // Always available (0 XP)
+  aClass: 3,      // Level 3 (3000 XP)
+  openClass: 5,   // Level 5 (5000 XP)
+  worldClass: 10  // Level 10 (10000 XP)
+};
+
+/**
+ * XP thresholds for class unlocks (for display purposes)
+ */
+export const CLASS_XP_THRESHOLDS = {
+  soundSport: 0,
+  aClass: 3000,      // Level 3
+  openClass: 5000,   // Level 5
+  worldClass: 10000  // Level 10
 };
 
 /**
@@ -39,6 +50,21 @@ export const CLASS_UNLOCK_COSTS = {
   aClass: 1000,
   openClass: 2500,
   worldClass: 5000
+};
+
+/**
+ * Simplified XP Sources - Clear, achievable amounts
+ * Matches backend configuration for consistency
+ */
+export const XP_SOURCES = {
+  weeklyParticipation: 100,  // Submit lineup and participate weekly
+  leagueWin: 50,             // Win a weekly league matchup
+  seasonCompletion: {
+    top10: 500,              // Top 10 finish
+    top25: 400,              // Top 25 finish
+    top50: 300,              // Top 50 finish
+    completed: 200           // Just finishing the season
+  }
 };
 
 /**
@@ -288,7 +314,8 @@ export const getClassInfo = (corpsClass) => {
       textClass: 'text-green-500',
       description: 'Entry level - Perfect for beginners',
       pointLimit: 90,
-      requiredLevel: 0
+      requiredLevel: 0,
+      requiredXP: 0
     },
     aClass: {
       name: 'A Class',
@@ -296,9 +323,11 @@ export const getClassInfo = (corpsClass) => {
       color: 'blue',
       bgClass: 'bg-blue-500',
       textClass: 'text-blue-500',
-      description: 'Intermediate - Requires Level 3',
+      description: '3,000 XP or 1,000 CC',
       pointLimit: 60,
-      requiredLevel: 3
+      requiredLevel: 3,
+      requiredXP: 3000,
+      unlockCost: 1000
     },
     open: {
       name: 'Open Class',
@@ -306,9 +335,11 @@ export const getClassInfo = (corpsClass) => {
       color: 'purple',
       bgClass: 'bg-purple-500',
       textClass: 'text-purple-500',
-      description: 'Advanced - Requires Level 5',
+      description: '5,000 XP or 2,500 CC',
       pointLimit: 120,
-      requiredLevel: 5
+      requiredLevel: 5,
+      requiredXP: 5000,
+      unlockCost: 2500
     },
     world: {
       name: 'World Class',
@@ -316,20 +347,72 @@ export const getClassInfo = (corpsClass) => {
       color: 'gold',
       bgClass: 'bg-gold-500',
       textClass: 'text-gold-500',
-      description: 'Elite - Requires Level 10',
+      description: '10,000 XP or 5,000 CC',
       pointLimit: 150,
-      requiredLevel: 10
+      requiredLevel: 10,
+      requiredXP: 10000,
+      unlockCost: 5000
     }
   };
 
   return info[corpsClass] || info.soundSport;
 };
 
+/**
+ * Class progression order (from beginner to elite)
+ */
+const CLASS_PROGRESSION = ['soundSport', 'aClass', 'openClass', 'worldClass'];
+
+/**
+ * Get progress toward next class unlock
+ * @param {number} currentXP - User's current total XP
+ * @param {Array} unlockedClasses - Array of unlocked class IDs
+ * @param {number} corpsCoin - User's CorpsCoin balance
+ * @returns {Object|null} Progress info or null if all classes unlocked
+ */
+export const getNextClassProgress = (currentXP, unlockedClasses = ['soundSport'], corpsCoin = 0) => {
+  // Find the next class to unlock
+  const nextClass = CLASS_PROGRESSION.find(cls => !unlockedClasses.includes(cls));
+
+  if (!nextClass) {
+    return null; // All classes unlocked
+  }
+
+  const thresholds = {
+    aClass: { xp: 3000, cc: 1000, name: 'A Class', color: 'blue' },
+    openClass: { xp: 5000, cc: 2500, name: 'Open Class', color: 'purple' },
+    worldClass: { xp: 10000, cc: 5000, name: 'World Class', color: 'gold' }
+  };
+
+  const threshold = thresholds[nextClass];
+  if (!threshold) return null;
+
+  const xpProgress = Math.min(currentXP / threshold.xp, 1);
+  const xpRemaining = Math.max(threshold.xp - currentXP, 0);
+  const canUnlockWithCC = corpsCoin >= threshold.cc;
+
+  return {
+    nextClass,
+    className: threshold.name,
+    color: threshold.color,
+    requiredXP: threshold.xp,
+    currentXP,
+    xpProgress: Math.round(xpProgress * 100),
+    xpRemaining,
+    requiredCC: threshold.cc,
+    currentCC: corpsCoin,
+    canUnlockWithCC,
+    ccRemaining: Math.max(threshold.cc - corpsCoin, 0)
+  };
+};
+
 export default {
   CLASS_POINT_LIMITS,
   CLASS_UNLOCK_REQUIREMENTS,
+  CLASS_XP_THRESHOLDS,
   CLASS_REGISTRATION_LOCKS,
   CLASS_UNLOCK_COSTS,
+  XP_SOURCES,
   REQUIRED_CAPTIONS,
   CAPTION_CATEGORIES,
   calculateLineupValue,
@@ -340,5 +423,6 @@ export default {
   getXPProgress,
   getCaptionChangesAllowed,
   formatCorpsName,
-  getClassInfo
+  getClassInfo,
+  getNextClassProgress
 };

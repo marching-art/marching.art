@@ -8,25 +8,25 @@ const CLASSES = [
   {
     id: 'world',
     name: 'World Class',
-    description: 'Elite - Requires Level 10',
+    description: '10,000 XP or 5,000 CC',
     color: 'bg-gold-500'
   },
   {
     id: 'open',
     name: 'Open Class',
-    description: 'Advanced - Requires Level 5',
+    description: '5,000 XP or 2,500 CC',
     color: 'bg-purple-500'
   },
   {
     id: 'aClass',
     name: 'A Class',
-    description: 'Intermediate - Requires Level 3',
+    description: '3,000 XP or 1,000 CC',
     color: 'bg-blue-500'
   },
   {
     id: 'soundSport',
     name: 'SoundSport',
-    description: 'Entry level - Perfect for beginners',
+    description: 'Always available',
     color: 'bg-green-500'
   }
 ];
