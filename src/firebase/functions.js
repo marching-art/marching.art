@@ -22,21 +22,14 @@ export const validateAndSaveLineup = httpsCallable(functions, 'validateAndSaveLi
 export const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
 
 // ========================================
-// ECONOMY
+// ECONOMY (Simplified CorpsCoin System)
+// Earning: Shows, League Wins, Season Bonus, Battle Pass
+// Spending: Class Unlocks, League Entry Fees
 // ========================================
 
 export const unlockClassWithCorpsCoin = httpsCallable(functions, 'unlockClassWithCorpsCoin');
-
-// ========================================
-// EXECUTION SYSTEM
-// ========================================
-
-export const dailyRehearsal = httpsCallable(functions, 'dailyRehearsal');
-export const repairEquipment = httpsCallable(functions, 'repairEquipment');
-export const upgradeEquipment = httpsCallable(functions, 'upgradeEquipment');
-export const setShowDifficulty = httpsCallable(functions, 'setShowDifficulty');
-export const boostMorale = httpsCallable(functions, 'boostMorale');
-export const getExecutionStatus = httpsCallable(functions, 'getExecutionStatus');
+export const getCorpsCoinHistory = httpsCallable(functions, 'getCorpsCoinHistory');
+export const getEarningOpportunities = httpsCallable(functions, 'getEarningOpportunities');
 
 // ========================================
 // BATTLE PASS
