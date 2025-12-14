@@ -1,11 +1,12 @@
 // src/pages/Landing.jsx
-import React, { useState } from 'react';
+// Launch-ready landing page with clear value proposition
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Users, Star, ArrowRight, Target, Calendar,
   Wrench, Music, Shield, Flag, ChevronDown, Play,
-  Zap, TrendingUp, Award, Clock, Sparkles
+  Zap, TrendingUp, Award, Clock, Sparkles, Check
 } from 'lucide-react';
 
 const Landing = () => {
@@ -463,9 +464,25 @@ const Landing = () => {
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
               Ready to Lead Your Corps to Glory?
             </h2>
-            <p className="text-cream-400 mb-8 max-w-xl mx-auto">
-              Join thousands of directors building their dream corps. Free to play, no credit card required.
+            <p className="text-cream-400 mb-6 max-w-xl mx-auto">
+              Join directors building their dream corps. Free to play, no credit card required.
             </p>
+
+            {/* Benefits checklist */}
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              {[
+                'Free to play forever',
+                'No credit card needed',
+                'Play on any device',
+                'Join leagues instantly'
+              ].map((benefit, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm text-cream-300">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+
             <Link to="/register" className="btn-primary text-lg px-8 py-4 inline-flex items-center">
               <Play className="w-5 h-5 mr-2" />
               Start Your Journey
