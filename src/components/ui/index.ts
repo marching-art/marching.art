@@ -111,3 +111,11 @@ export {
   type ErrorFallbackProps,
   type FeatureErrorBoundaryProps,
 } from './ErrorBoundary';
+
+// DataTable Components
+export {
+  DataTable,
+  type DataTableProps,
+  type DataTableColumn,
+  type ColumnAlign,
+} from './DataTable';
