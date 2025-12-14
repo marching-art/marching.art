@@ -1239,7 +1239,8 @@ p, li, span {
 
   /* Section Header - For accordion/section titles */
   .section-label {
-    @apply text-xs font-bold text-gold-500 uppercase tracking-widest mb-2;
+    @apply text-xs font-bold uppercase tracking-widest mb-2;
+    color: var(--gold-500);
   }
 
   /* Data Label - Small muted labels */
@@ -1262,8 +1263,9 @@ p, li, span {
 
   .accordion-header {
     @apply w-full p-3 flex items-center justify-between;
-    @apply text-xs font-bold text-gold-500 uppercase tracking-widest;
+    @apply text-xs font-bold uppercase tracking-widest;
     @apply hover:bg-white/5 transition-colors cursor-pointer;
+    color: var(--gold-500);
   }
 
   .accordion-chevron {
@@ -1463,7 +1465,8 @@ p, li, span {
   }
 
   .checkbox {
-    @apply w-5 h-5 text-gold-500 cursor-pointer;
+    @apply w-5 h-5 cursor-pointer;
+    color: var(--gold-500);
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
@@ -1555,12 +1558,17 @@ p, li, span {
   
   /* Navigation */
   .nav-link {
-    @apply relative px-4 py-2 font-medium transition-all duration-300 hover:text-gold-500;
+    @apply relative px-4 py-2 font-medium transition-all duration-300;
     color: var(--text-secondary);
   }
 
+  .nav-link:hover {
+    color: var(--gold-500);
+  }
+
   .nav-link-active {
-    @apply nav-link text-gold-500;
+    @apply nav-link;
+    color: var(--gold-500);
   }
   
   .nav-link-active::after {
@@ -2534,7 +2542,8 @@ p, li, span {
 
 /* Currency display with glow */
 .currency-display {
-  @apply font-data font-bold text-gold-500;
+  @apply font-data font-bold;
+  color: var(--gold-500);
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
