@@ -553,7 +553,7 @@ const Scores = () => {
               <Trophy className="w-5 h-5 text-gold-400" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-black uppercase tracking-tight text-cream-100">
+              <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
                 Scores
               </h1>
               <p className="text-xs text-cream-500/60 font-mono uppercase tracking-wide">
