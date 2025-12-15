@@ -106,7 +106,7 @@ const getSeasonHistoryColumns = () => [
   {
     key: 'seasonNumber',
     header: 'Season',
-    width: '80px',
+    width: '5rem',
     align: 'center',
     render: (row) => (
       <span className="font-mono text-cream-300">S{row.seasonNumber || '?'}</span>
@@ -124,7 +124,7 @@ const getSeasonHistoryColumns = () => [
   {
     key: 'className',
     header: 'Class',
-    width: '100px',
+    width: '6.25rem',
     render: (row) => {
       const classColors = {
         worldClass: 'text-gold-400',
@@ -148,7 +148,7 @@ const getSeasonHistoryColumns = () => [
   {
     key: 'placement',
     header: 'Rank',
-    width: '80px',
+    width: '5rem',
     align: 'center',
     render: (row) => {
       if (!row.placement) return <span className="text-cream-500/50">—</span>;
@@ -163,7 +163,7 @@ const getSeasonHistoryColumns = () => [
   {
     key: 'finalScore',
     header: 'Score',
-    width: '80px',
+    width: '5rem',
     align: 'right',
     render: (row) => (
       <span className="font-mono font-bold text-cream-100">
@@ -262,13 +262,14 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
             <h2 className="text-lg font-display font-bold text-cream-100">Settings</h2>
             <button
               onClick={onClose}
+              aria-label="Close settings"
               className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="flex border-b border-cream-500/10">
+          <div className="flex border-b border-cream-500/10" role="tablist">
             {[
               { id: 'account', label: 'Account', icon: User },
               { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -429,6 +430,7 @@ const AvatarCustomizationModal = ({ profile, isOpen, onClose, onSave }) => {
             <h2 className="text-lg font-display font-bold text-cream-100">Customize Avatar</h2>
             <button
               onClick={onClose}
+              aria-label="Close avatar customization"
               className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -447,11 +449,14 @@ const AvatarCustomizationModal = ({ profile, isOpen, onClose, onSave }) => {
             </div>
 
             <p className="text-sm text-cream-500/60 mb-3 text-center">Choose a color theme</p>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Avatar color options">
               {AVATAR_COLORS.map((color) => (
                 <button
                   key={color.id}
                   onClick={() => setSelectedColor(color.id)}
+                  aria-label={`Select ${color.id} color`}
+                  aria-checked={selectedColor === color.id}
+                  role="radio"
                   className={`aspect-square rounded-lg bg-gradient-to-br ${color.from} ${color.to} border-2 transition-all ${
                     selectedColor === color.id ? `${color.border} scale-110` : 'border-transparent hover:scale-105'
                   }`}
@@ -653,10 +658,11 @@ const Profile = () => {
             {/* Avatar */}
             <button
               onClick={() => isOwnProfile && setShowAvatarCustomization(true)}
+              aria-label={isOwnProfile ? 'Customize avatar' : `${profile.displayName || 'User'} avatar`}
               className={`w-16 h-16 rounded-full bg-gradient-to-br ${avatarColor.from} ${avatarColor.to} border-2 ${avatarColor.border} flex items-center justify-center transition-transform ${isOwnProfile ? 'hover:scale-105 cursor-pointer' : ''}`}
             >
               {profile.photoURL ? (
-                <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full rounded-full object-cover" />
+                <img src={profile.photoURL} alt={profile.displayName || 'User avatar'} className="w-full h-full rounded-full object-cover" />
               ) : (
                 <User className={`w-8 h-8 ${avatarColor.icon}`} />
               )}
@@ -688,8 +694,8 @@ const Profile = () => {
             {isOwnProfile && !isEditing && (
               <button
                 onClick={handleStartEdit}
+                aria-label="Edit Profile"
                 className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
-                title="Edit Profile"
               >
                 <Edit className="w-5 h-5" />
               </button>
@@ -697,8 +703,8 @@ const Profile = () => {
             {isOwnProfile && (
               <button
                 onClick={() => setShowSettings(true)}
+                aria-label="Open settings"
                 className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
-                title="Settings"
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -803,7 +809,7 @@ const Profile = () => {
                 return (
                   <div
                     key={achievement.id}
-                    className="flex flex-col items-center p-3 bg-[#1A1A1A] border border-[#333] rounded-lg"
+                    className="flex flex-col items-center p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg"
                     title={`${achievement.name}: ${achievement.description}`}
                   >
                     <Icon className={`w-6 h-6 ${achievement.color} mb-1`} />
@@ -815,7 +821,7 @@ const Profile = () => {
               })}
             </div>
           ) : (
-            <div className="bg-[#1A1A1A] border border-[#333] rounded-lg p-6 text-center">
+            <div className="bg-charcoal-900 border border-charcoal-700 rounded-lg p-6 text-center">
               <Medal className="w-8 h-8 text-cream-500/30 mx-auto mb-2" />
               <p className="text-cream-500/50 text-sm">No achievements yet</p>
               <p className="text-cream-500/40 text-xs mt-1">Complete seasons to earn achievements</p>
@@ -829,14 +835,14 @@ const Profile = () => {
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/battlepass')}
-            className="flex-1 flex items-center justify-center gap-2 p-3 bg-[#1A1A1A] border border-[#333] rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
           >
             <Gift className="w-4 h-4 text-gold-400" />
             Battle Pass
           </button>
           <button
             onClick={() => navigate('/leagues')}
-            className="flex-1 flex items-center justify-center gap-2 p-3 bg-[#1A1A1A] border border-[#333] rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
           >
             <Trophy className="w-4 h-4 text-purple-400" />
             Leagues
@@ -844,7 +850,7 @@ const Profile = () => {
           {isOwnProfile && (
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex-1 flex items-center justify-center gap-2 p-3 bg-[#1A1A1A] border border-[#333] rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
             >
               <Coins className="w-4 h-4 text-green-400" />
               {(profile.corpsCoin || 0).toLocaleString()} CC
