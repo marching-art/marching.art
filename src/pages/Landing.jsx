@@ -7,7 +7,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Lock, Mail, ArrowRight } from 'lucide-react';
-import { DataTable } from '../components/ui/DataTable';
 
 // =============================================================================
 // DUMMY SCOREBOARD DATA
@@ -22,72 +21,6 @@ const LIVE_SCORES = [
   { rank: 6, corps: 'Boston Crusaders', score: 93.800, ge: 18.80, visual: 18.60, music: 36.40, change: '+0.5' },
   { rank: 7, corps: 'Phantom Regiment', score: 92.150, ge: 18.50, visual: 18.30, music: 35.35, change: '-0.2' },
   { rank: 8, corps: 'Blue Knights', score: 91.425, ge: 18.35, visual: 18.10, music: 34.98, change: '+0.1' },
-];
-
-const scoreboardColumns = [
-  {
-    key: 'rank',
-    header: 'RK',
-    width: '40px',
-    isRank: true,
-  },
-  {
-    key: 'corps',
-    header: 'Corps',
-    render: (row) => (
-      <span className="text-white font-medium">{row.corps}</span>
-    ),
-  },
-  {
-    key: 'ge',
-    header: 'GE',
-    width: '55px',
-    align: 'right',
-    render: (row) => (
-      <span className="text-gray-400 tabular-nums text-xs">{row.ge.toFixed(2)}</span>
-    ),
-  },
-  {
-    key: 'visual',
-    header: 'VIS',
-    width: '55px',
-    align: 'right',
-    render: (row) => (
-      <span className="text-gray-400 tabular-nums text-xs">{row.visual.toFixed(2)}</span>
-    ),
-  },
-  {
-    key: 'music',
-    header: 'MUS',
-    width: '55px',
-    align: 'right',
-    render: (row) => (
-      <span className="text-gray-400 tabular-nums text-xs">{row.music.toFixed(2)}</span>
-    ),
-  },
-  {
-    key: 'score',
-    header: 'Total',
-    width: '70px',
-    align: 'right',
-    render: (row) => (
-      <span className="text-white font-bold tabular-nums">{row.score.toFixed(3)}</span>
-    ),
-  },
-  {
-    key: 'change',
-    header: '+/-',
-    width: '45px',
-    align: 'center',
-    render: (row) => (
-      <span className={`text-xs tabular-nums ${
-        row.change.startsWith('+') ? 'text-green-500' :
-        row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
-      }`}>
-        {row.change}
-      </span>
-    ),
-  },
 ];
 
 // =============================================================================
@@ -140,9 +73,9 @@ const Landing = () => {
             </p>
           </div>
 
-          {/* Live Scoreboard */}
+          {/* Live Scoreboard - Simple Static Table */}
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="bg-[#1a1a1a] border border-[#333] flex-1 flex flex-col">
+            <div className="bg-[#1a1a1a] border border-[#333] flex-1 flex flex-col overflow-hidden">
               {/* Scoreboard Header */}
               <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -154,14 +87,48 @@ const Landing = () => {
                 </div>
               </div>
 
-              {/* DataTable */}
+              {/* Static Table */}
               <div className="flex-1 overflow-auto">
-                <DataTable
-                  columns={scoreboardColumns}
-                  data={LIVE_SCORES}
-                  getRowKey={(row) => row.rank}
-                  zebraStripes={true}
-                />
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#1a1a1a] border-b border-[#333]">
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-left w-10">RK</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-left">Corps</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">GE</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">VIS</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">MUS</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-16">Total</th>
+                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center w-12">+/-</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LIVE_SCORES.map((row, idx) => (
+                      <tr
+                        key={row.rank}
+                        className={`border-b border-[#333]/50 h-10 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+                      >
+                        <td className="px-2 py-1">
+                          <span className="inline-flex items-center justify-center w-6 h-6 bg-[#222] text-xs font-bold text-gray-400 tabular-nums">
+                            {row.rank}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1 text-sm text-white font-medium">{row.corps}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.ge.toFixed(2)}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.visual.toFixed(2)}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.music.toFixed(2)}</td>
+                        <td className="px-2 py-1 text-sm text-white font-bold tabular-nums text-right">{row.score.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-center">
+                          <span className={`text-xs tabular-nums ${
+                            row.change.startsWith('+') ? 'text-green-500' :
+                            row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
+                          }`}>
+                            {row.change}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -231,7 +198,7 @@ const Landing = () => {
                 {/* Sign In Button */}
                 <Link
                   to="/login"
-                  className="block w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors"
+                  className="w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors"
                 >
                   Sign In
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -247,7 +214,7 @@ const Landing = () => {
                 {/* Register Link */}
                 <Link
                   to="/register"
-                  className="block w-full h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-colors"
+                  className="w-full h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-colors"
                 >
                   Create Account
                 </Link>
