@@ -57,14 +57,14 @@ const BottomNav: React.FC = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 safe-area-bottom select-none"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom select-none"
       aria-label="Mobile navigation"
     >
       {/* Golden accent line at top */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-yellow-500/40 to-transparent" />
 
       {/* Nav container */}
-      <div className="bg-black/80 backdrop-blur-xl border-t border-white/10">
+      <div className="bg-[#1A1A1A] border-t border-white/10">
         <div className="flex items-center justify-around px-1 py-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -77,7 +77,7 @@ const BottomNav: React.FC = () => {
                 to={item.path}
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
-                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 min-w-[56px]"
+                className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 min-w-[56px] min-h-[44px]"
               >
                 {/* Active indicator */}
                 {active && (
