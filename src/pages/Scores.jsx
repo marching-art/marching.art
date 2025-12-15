@@ -544,13 +544,23 @@ const Scores = () => {
   ], []);
 
   return (
-    <GameShell>
+    <div className="h-full flex flex-col overflow-hidden bg-charcoal-950">
       {/* Page Header */}
-      <header className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-gold-400" />
+      <div className="flex-shrink-0 border-b border-cream-500/10 bg-charcoal-950/80 backdrop-blur-sm">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-gold-400" />
+              </div>
+              <div>
+                <h1 className="text-xl font-display font-black uppercase tracking-tight text-cream-100">
+                  Scores
+                </h1>
+                <p className="text-xs text-cream-500/60 font-mono uppercase tracking-wide">
+                  {currentSeasonName}
+                </p>
+              </div>
             </div>
             <div>
               <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
@@ -600,63 +610,65 @@ const Scores = () => {
           activeTab={activeTab}
           onChange={setActiveTab}
         />
-      </header>
+      </div>
 
       {/* Main Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <SystemLoader
-            messages={[
-              'Loading scores...',
-              'Calculating rankings...',
-              'Almost there...'
-            ]}
-            showProgress={true}
-          />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center py-20">
-          <ConsoleEmptyState
-            variant="network"
-            title="CONNECTION ERROR"
-            subtitle={error}
-          />
-        </div>
-      ) : (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === 'latest' && (
-              <LatestTab
-                shows={allShows}
-                userCorpsName={userCorpsName}
-                onShowClick={handleShowClick}
-              />
-            )}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <SystemLoader
+              messages={[
+                'Loading scores...',
+                'Calculating rankings...',
+                'Almost there...'
+              ]}
+              showProgress={true}
+            />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-20">
+            <ConsoleEmptyState
+              variant="network"
+              title="CONNECTION ERROR"
+              subtitle={error}
+            />
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'latest' && (
+                <LatestTab
+                  shows={allShows}
+                  userCorpsName={userCorpsName}
+                  onShowClick={handleShowClick}
+                />
+              )}
 
-            {activeTab === 'standings' && (
-              <StandingsTab
-                aggregatedScores={aggregatedScores}
-                userCorpsName={userCorpsName}
-                onEntryClick={handleEntryClick}
-                isLoading={loading}
-              />
-            )}
+              {activeTab === 'standings' && (
+                <StandingsTab
+                  aggregatedScores={aggregatedScores}
+                  userCorpsName={userCorpsName}
+                  onEntryClick={handleEntryClick}
+                  isLoading={loading}
+                />
+              )}
 
-            {activeTab === 'history' && (
-              <HistoryTab
-                archivedSeasons={archivedSeasons}
-                onSeasonSelect={handleSeasonSelect}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      )}
+              {activeTab === 'history' && (
+                <HistoryTab
+                  archivedSeasons={archivedSeasons}
+                  onSeasonSelect={handleSeasonSelect}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </div>
 
       {/* Score Breakdown Modal */}
       <ScoreBreakdown
@@ -667,7 +679,7 @@ const Scores = () => {
         showInfo={selectedShowInfo}
         previousShowInfo={previousShowInfo}
       />
-    </GameShell>
+    </div>
   );
 };
 

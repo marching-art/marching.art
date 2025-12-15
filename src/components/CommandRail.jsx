@@ -88,7 +88,7 @@ const CommandRail = () => {
 
   return (
     <nav
-      className="h-full w-56 flex flex-col bg-slate-950/90 backdrop-blur-xl border-r border-white/5"
+      className="h-full w-56 flex flex-col bg-charcoal-900/95 backdrop-blur-xl border-r border-white/10"
       aria-label="Main navigation"
     >
       {/* Logo */}

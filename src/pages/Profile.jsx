@@ -647,8 +647,8 @@ const Profile = () => {
   const historyColumns = getSeasonHistoryColumns();
 
   return (
-    <div className="flex-1 overflow-y-auto hud-scroll">
-      <div className="max-w-3xl mx-auto p-4 lg:p-6 space-y-6">
+    <div className="h-full overflow-y-auto hud-scroll">
+      <div className="p-4 lg:p-6 space-y-6">
 
         {/* ================================================================
             HEADER: Simple Avatar + Name + Team Name

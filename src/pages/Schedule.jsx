@@ -477,7 +477,7 @@ const Schedule = () => {
           </div>
         ) : viewMode === 'list' ? (
           /* LIST VIEW */
-          <div className="space-y-3 max-w-3xl mx-auto">
+          <div className="space-y-3">
             {selectedWeekShows.map((show, idx) => {
               const myCorps = getMyCorpsAtShow(show);
               const isRegistered = myCorps.length > 0;
@@ -594,7 +594,7 @@ const Schedule = () => {
           </div>
         ) : (
           /* CALENDAR VIEW - Monthly Overview */
-          <div className="max-w-4xl mx-auto">
+          <div>
             <div className="grid grid-cols-7 gap-2">
               {/* Day Headers */}
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
