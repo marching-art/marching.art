@@ -206,10 +206,10 @@ const BattlePass = () => {
         <div className="space-y-6">
 
           {/* Progress Section */}
-          <div className="bg-charcoal-800/50 rounded-2xl border border-white/5 p-6">
+          <div className="bg-charcoal-800/50 rounded-sm border border-white/5 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gold-500 to-amber-500 flex items-center justify-center shadow-lg shadow-gold-500/20">
+                <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-gold-500 to-amber-500 flex items-center justify-center">
                   <span className="font-display text-2xl font-bold text-charcoal-900">{currentLevel}</span>
                 </div>
                 <div>
@@ -269,7 +269,7 @@ const BattlePass = () => {
           </div>
 
           {/* Rewards Preview */}
-          <div className="bg-charcoal-800/50 rounded-2xl border border-white/5 p-6">
+          <div className="bg-charcoal-800/50 rounded-sm border border-white/5 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-bold text-cream-100 uppercase tracking-wide">
                 Rewards
@@ -303,9 +303,9 @@ const BattlePass = () => {
                     key={level}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`relative rounded-xl border-2 transition-all ${
+                    className={`relative rounded-sm border-2 transition-all ${
                       isCurrent
-                        ? 'border-gold-500 bg-gold-500/10 shadow-lg shadow-gold-500/20'
+                        ? 'border-gold-500 bg-gold-500/10'
                         : isUnlocked
                         ? 'border-green-500/30 bg-green-500/5'
                         : 'border-white/10 bg-charcoal-900/50 opacity-60'
@@ -412,7 +412,7 @@ const BattlePass = () => {
           </div>
 
           {/* How to Earn XP */}
-          <div className="bg-charcoal-800/50 rounded-2xl border border-white/5 p-6">
+          <div className="bg-charcoal-800/50 rounded-sm border border-white/5 p-6">
             <h2 className="font-display text-lg font-bold text-cream-100 uppercase tracking-wide mb-4">
               Earning XP This Season
             </h2>
@@ -420,7 +420,7 @@ const BattlePass = () => {
               No daily grind required. Earn XP at your own pace through weekly activities.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-xl border border-white/5">
+              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-sm border border-white/5">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
                   <Calendar className="w-5 h-5 text-blue-400" />
                 </div>
@@ -431,7 +431,7 @@ const BattlePass = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-xl border border-white/5">
+              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-sm border border-white/5">
                 <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
                   <Trophy className="w-5 h-5 text-green-400" />
                 </div>
@@ -442,7 +442,7 @@ const BattlePass = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-xl border border-white/5">
+              <div className="flex items-start gap-3 p-4 bg-charcoal-900/50 rounded-sm border border-white/5">
                 <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
                   <Award className="w-5 h-5 text-purple-400" />
                 </div>
@@ -457,10 +457,10 @@ const BattlePass = () => {
 
           {/* Premium Upgrade (Non-pressuring) */}
           {!isPremium && (
-            <div className="bg-gradient-to-r from-purple-500/10 to-gold-500/10 rounded-2xl border border-purple-500/20 p-6">
+            <div className="bg-gradient-to-r from-purple-500/10 to-gold-500/10 rounded-sm border border-purple-500/20 p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-gold-500 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-purple-500 to-gold-500 flex items-center justify-center">
                     <Crown className="w-7 h-7 text-white" />
                   </div>
                   <div>

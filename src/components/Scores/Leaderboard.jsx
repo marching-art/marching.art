@@ -76,7 +76,7 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 mt-2 min-w-[150px] bg-charcoal-900 border border-cream-500/10 rounded-lg shadow-xl z-20 overflow-hidden"
+              className="absolute top-full left-0 mt-2 min-w-[150px] bg-[#1a1a1a] border border-[#333] rounded-sm z-20 overflow-hidden"
             >
               {options.map(option => (
                 <button

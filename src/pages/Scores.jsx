@@ -297,7 +297,7 @@ const Scores = () => {
       {/* Tab Bar */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
         <div className="max-w-[1400px] mx-auto px-4">
-          <nav className="flex gap-6">
+          <nav className="flex gap-4">
             {[
               { id: 'latest', label: 'Latest' },
               { id: 'standings', label: 'Standings' },

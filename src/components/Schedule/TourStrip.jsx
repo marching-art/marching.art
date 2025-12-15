@@ -112,7 +112,7 @@ const TourStrip = ({
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-charcoal-900/90 border border-gold-500/30 flex items-center justify-center text-gold-400 hover:bg-charcoal-800 hover:border-gold-500/50 transition-all shadow-lg"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-sm bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -122,7 +122,7 @@ const TourStrip = ({
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-charcoal-900/90 border border-gold-500/30 flex items-center justify-center text-gold-400 hover:bg-charcoal-800 hover:border-gold-500/50 transition-all shadow-lg"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-sm bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

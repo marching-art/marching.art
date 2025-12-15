@@ -98,7 +98,7 @@ const BottomNav: React.FC = () => {
                   />
                   {/* Notification badge */}
                   {badgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg">
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}

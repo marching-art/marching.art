@@ -200,7 +200,7 @@ const Landing = () => {
       {/* Quick Features Section */}
       <section className="py-12 sm:py-16 relative">
         <div className="container-responsive px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -247,7 +247,7 @@ const Landing = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
             {howItWorks.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -506,7 +506,7 @@ const Landing = () => {
             <p className="text-cream-500/60 text-xs sm:text-sm text-center">
               © 2025 marching.art
             </p>
-            <div className="flex gap-4 sm:gap-6">
+            <div className="flex gap-4">
               <Link to="/privacy" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
                 Privacy
               </Link>

@@ -61,7 +61,7 @@ const OverviewTab = ({ profile, milestones }) => {
           <Target className="w-6 h-6 text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]" />
           Career Stats
         </h2>
-        <div className="grid grid-cols-3 gap-3 md:gap-6">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
           <div className="text-center bg-black/30 border border-yellow-500/20 rounded-xl p-4">
             <p className="text-2xl md:text-4xl font-display font-bold text-yellow-400 mb-1 md:mb-2 drop-shadow-[0_0_12px_rgba(234,179,8,0.5)]">{profile.stats?.championships || 0}</p>
             <p className="text-yellow-50/60 text-xs md:text-base font-display">Championships</p>

@@ -188,7 +188,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="bg-charcoal-800 border border-cream-500/20 rounded-lg shadow-xl p-3 max-w-xs sm:max-w-sm">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-3 max-w-xs sm:max-w-sm">
                 {title && (
                   <p className="text-cream-100 font-semibold text-sm mb-1">{title}</p>
                 )}

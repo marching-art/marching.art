@@ -102,10 +102,10 @@ const ShowSelectionStep = ({
                 <button
                   key={day}
                   onClick={() => onDayChange(day)}
-                  className={`relative flex-shrink-0 min-w-[4.5rem] px-3 py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all ${
+                  className={`relative flex-shrink-0 min-w-[4.5rem] px-3 py-2 rounded-sm text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-gold-500 text-charcoal-900 shadow-lg shadow-gold-500/20'
-                      : 'bg-charcoal-800 text-cream-300 hover:bg-charcoal-700'
+                      ? 'bg-[#0057B8] text-white'
+                      : 'bg-[#222] text-gray-300 hover:bg-[#333]'
                   }`}
                 >
                   <div className="text-center">

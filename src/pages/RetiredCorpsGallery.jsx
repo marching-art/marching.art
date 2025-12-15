@@ -211,7 +211,7 @@ const RetiredCorpsGallery = () => {
       )}
 
       {/* Corps Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         <AnimatePresence>
           {filteredCorps.map((corps, index) => (
             <motion.div
@@ -220,7 +220,7 @@ const RetiredCorpsGallery = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-all duration-300 group cursor-pointer"
+              className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden hover:border-[#444] transition-all cursor-pointer"
               onClick={() => setSelectedCorps({ ...corps, index: corps.originalIndex })}
             >
               {/* Class Badge Header */}
@@ -296,7 +296,7 @@ const RetiredCorpsGallery = () => {
                     setSelectedCorps({ ...corps, index: corps.originalIndex });
                     setShowUnretireModal(true);
                   }}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/50"
+                  className="w-full py-2 px-4 bg-[#0057B8] hover:bg-[#0066d6] text-white font-bold text-sm rounded-sm transition-all flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Bring Out of Retirement

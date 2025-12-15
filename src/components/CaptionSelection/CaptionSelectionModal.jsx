@@ -866,7 +866,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   <p className="font-mono text-xs text-gold-500/50 uppercase tracking-wide">Loading available corps...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Left Column - Draft Helper & Selected Lineup Overview */}
                   <div className="lg:col-span-1 space-y-4">
                     {/* Draft Helper */}
