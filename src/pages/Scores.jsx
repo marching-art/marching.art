@@ -186,10 +186,10 @@ const Scores = () => {
   };
 
   return (
-    <div className="min-h-full bg-charcoal-950">
+    <div className="h-full flex flex-col overflow-hidden bg-charcoal-950">
       {/* Page Header */}
-      <div className="border-b border-cream-500/10 bg-charcoal-950/80 sticky top-0 z-10 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="flex-shrink-0 border-b border-cream-500/10 bg-charcoal-950/80 backdrop-blur-sm">
+        <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
@@ -221,7 +221,7 @@ const Scores = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <SystemLoader

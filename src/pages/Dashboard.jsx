@@ -324,7 +324,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-full bg-charcoal-950 p-4 md:p-6">
+    <div className="h-full overflow-y-auto bg-charcoal-950 p-4 md:p-6">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -395,7 +395,7 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-6xl mx-auto mb-6"
+            className="mb-6"
           >
             <div className={`bg-charcoal-900 border ${styles.border} rounded-xl p-4`}>
               <div className="flex items-center justify-between mb-3">
@@ -453,7 +453,7 @@ const Dashboard = () => {
       })()}
 
       {activeCorps ? (
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="space-y-6">
           {/* Corps Switcher (if multiple corps) */}
           {hasMultipleCorps && (
             <div className="flex items-center gap-2">

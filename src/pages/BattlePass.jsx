@@ -169,7 +169,7 @@ const BattlePass = () => {
     <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-b from-charcoal-900 to-charcoal-950">
       {/* Header: Season Info */}
       <div className="shrink-0 border-b border-white/10 bg-black/30 backdrop-blur-md px-6 py-4">
-        <div className="max-w-4xl mx-auto">
+        <div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-display text-2xl font-bold text-cream-100 uppercase tracking-wide">
@@ -203,7 +203,7 @@ const BattlePass = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="space-y-6">
 
           {/* Progress Section */}
           <div className="bg-charcoal-800/50 rounded-2xl border border-white/5 p-6">
