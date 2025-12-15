@@ -40,7 +40,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   width,
   height,
 }) => {
-  const baseClasses = 'animate-pulse bg-charcoal-700/50 rounded';
+  const baseClasses = 'animate-pulse bg-charcoal-800 rounded';
 
   const style: React.CSSProperties = {};
   if (width) style.width = width;
@@ -176,6 +176,44 @@ export const ScoresSkeleton: React.FC<ScoresSkeletonProps> = ({ rows = 5 }) => (
         </div>
       ))}
     </div>
+  </div>
+);
+
+// =============================================================================
+// TABLE SKELETON COMPONENT
+// =============================================================================
+
+export interface TableSkeletonProps {
+  /** Number of rows to render (default: 5) */
+  rows?: number;
+  /** Number of columns to render (default: 4) */
+  columns?: number;
+}
+
+export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns = 4 }) => (
+  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
+    <table className="w-full">
+      <thead className="bg-charcoal-900/95">
+        <tr className="border-b border-cream-500/10">
+          {Array.from({ length: columns }).map((_, i) => (
+            <th key={i} className="px-4 py-3">
+              <div className="animate-pulse bg-charcoal-800 h-3 w-16 rounded" />
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <tr key={rowIndex} className="h-12 border-b border-cream-500/5">
+            {Array.from({ length: columns }).map((_, colIndex) => (
+              <td key={colIndex} className="px-4 py-2">
+                <div className="animate-pulse bg-charcoal-800 h-4 w-4/5 rounded" />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 );
 
