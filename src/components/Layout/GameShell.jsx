@@ -153,9 +153,9 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="pt-20 pb-20 lg:pb-4 min-h-screen bg-[#0a0a0a]"
+          className="pt-20 pb-20 lg:pb-4 min-h-screen w-full bg-[#0a0a0a]"
         >
-          <div className="max-w-[1400px] mx-auto px-4">
+          <div className="w-full px-2 md:px-4">
             {children}
           </div>
         </main>

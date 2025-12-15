@@ -304,7 +304,7 @@ const Dashboard = () => {
   // =============================================================================
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="w-full h-full min-h-screen bg-[#0a0a0a]">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -339,8 +339,8 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* MAIN GRID - gap-px creates borders */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-[#333]">
+          {/* MAIN GRID - gap-px creates borders, full width fluid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-px bg-[#333]">
 
             {/* LEFT COLUMN - My Team */}
             <div className="bg-[#1a1a1a] p-4">

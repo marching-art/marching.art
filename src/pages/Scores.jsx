@@ -273,7 +273,7 @@ const Scores = () => {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header Bar */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Trophy className="w-5 h-5 text-[#0057B8]" />
             <div>
@@ -296,7 +296,7 @@ const Scores = () => {
 
       {/* Tab Bar */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
-        <div className="max-w-[1400px] mx-auto px-4">
+        <div className="w-full px-4">
           <nav className="flex gap-4">
             {[
               { id: 'latest', label: 'Latest' },
@@ -322,7 +322,7 @@ const Scores = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-[1400px] mx-auto">
+      <div className="w-full">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading scores...</div>
         ) : error ? (
