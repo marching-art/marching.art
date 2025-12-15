@@ -1,37 +1,48 @@
+// =============================================================================
+// CARD COMPONENT - ESPN RIGID BOX STYLE
+// =============================================================================
+// Rigid boxes, not floating bubbles. No shadows, no glow.
+// Laws: No padding in body (p-0), let child content define spacing
+
 import React, { forwardRef } from 'react';
 
 // =============================================================================
-// CARD COMPONENT - Clean, flat design
+// TYPES
 // =============================================================================
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Make card clickable with hover state */
   hoverable?: boolean;
+  /** Make card act as a button */
   pressable?: boolean;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
 
-const paddingStyles: Record<string, string> = {
-  none: '',
-  sm: 'p-3',
-  md: 'p-4',
-  lg: 'p-6',
-};
+export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Header content - use with CardTitle or custom content */
+  children: React.ReactNode;
+  /** Right-side actions slot */
+  action?: React.ReactNode;
+}
 
-// Main Card Component
+export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  children: React.ReactNode;
+}
+
+export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+// =============================================================================
+// CARD ROOT - bg-[#1a1a1a] border border-[#333] rounded-sm
+// =============================================================================
+
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(
-  (
-    {
-      hoverable = false,
-      pressable = false,
-      padding = 'none',
-      children,
-      className = '',
-      onClick,
-      ...props
-    },
-    ref
-  ) => {
+  ({ hoverable = false, pressable = false, children, className = '', onClick, ...props }, ref) => {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (pressable && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
@@ -47,12 +58,9 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
         onKeyDown={pressable ? handleKeyDown : undefined}
         onClick={onClick}
         className={`
-          bg-[#1A1A1A]
-          border border-[#333]
-          rounded-md
-          ${paddingStyles[padding]}
-          ${hoverable ? 'cursor-pointer hover:border-neutral-600 transition-colors duration-200' : ''}
-          ${pressable ? 'cursor-pointer active:scale-[0.99] transition-transform duration-100 focus:outline-none focus:ring-2 focus:ring-neutral-500' : ''}
+          bg-[#1a1a1a] border border-[#333] rounded-sm
+          ${hoverable ? 'cursor-pointer hover:border-[#555]' : ''}
+          ${pressable ? 'cursor-pointer active:bg-[#222] focus:outline-none focus:border-[#0057B8]' : ''}
           ${className}
         `.trim().replace(/\s+/g, ' ')}
         {...props}
@@ -66,22 +74,19 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(
 CardRoot.displayName = 'Card';
 
 // =============================================================================
-// CARD HEADER COMPONENT - With border-bottom
+// CARD HEADER - px-3 py-2 border-b border-[#333] bg-[#222]
 // =============================================================================
 
-export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
-
 const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
-  ({ children, className = '', ...props }, ref) => {
+  ({ children, action, className = '', ...props }, ref) => {
     return (
       <div
         ref={ref}
-        className={`px-4 py-3 border-b border-[#333] ${className}`}
+        className={`px-3 py-2 border-b border-[#333] bg-[#222] flex justify-between items-center ${className}`}
         {...props}
       >
-        {children}
+        <div className="flex items-center gap-2">{children}</div>
+        {action && <div className="flex items-center gap-1">{action}</div>}
       </div>
     );
   }
@@ -90,21 +95,33 @@ const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 CardHeader.displayName = 'CardHeader';
 
 // =============================================================================
-// CARD BODY COMPONENT - p-4 padding
+// CARD TITLE - text-xs font-bold uppercase text-gray-400
 // =============================================================================
 
-export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
+const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
+  ({ children, className = '', ...props }, ref) => {
+    return (
+      <h3
+        ref={ref}
+        className={`text-xs font-bold uppercase text-gray-400 tracking-wider ${className}`}
+        {...props}
+      >
+        {children}
+      </h3>
+    );
+  }
+);
+
+CardTitle.displayName = 'CardTitle';
+
+// =============================================================================
+// CARD BODY - p-0 (child content defines padding)
+// =============================================================================
 
 const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
   ({ children, className = '', ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={`p-4 ${className}`}
-        {...props}
-      >
+      <div ref={ref} className={className} {...props}>
         {children}
       </div>
     );
@@ -114,19 +131,15 @@ const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
 CardBody.displayName = 'CardBody';
 
 // =============================================================================
-// CARD FOOTER COMPONENT
+// CARD FOOTER - px-3 py-2 border-t border-[#333] bg-[#222]
 // =============================================================================
-
-export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
 
 const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   ({ children, className = '', ...props }, ref) => {
     return (
       <div
         ref={ref}
-        className={`px-4 py-3 border-t border-[#333] ${className}`}
+        className={`px-3 py-2 border-t border-[#333] bg-[#222] ${className}`}
         {...props}
       >
         {children}
@@ -138,23 +151,10 @@ const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
 CardFooter.displayName = 'CardFooter';
 
 // =============================================================================
-// CARD CONTENT COMPONENT (Legacy support)
+// CARD CONTENT (Legacy - alias for CardBody)
 // =============================================================================
 
-export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
-
-const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
-  ({ children, className = '', ...props }, ref) => {
-    return (
-      <div ref={ref} className={className} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
-
+const CardContent = CardBody;
 CardContent.displayName = 'CardContent';
 
 // =============================================================================
@@ -163,11 +163,12 @@ CardContent.displayName = 'CardContent';
 
 export const Card = Object.assign(CardRoot, {
   Header: CardHeader,
+  Title: CardTitle,
   Body: CardBody,
   Footer: CardFooter,
 });
 
 // Named exports for backwards compatibility
-export { CardHeader, CardContent, CardFooter, CardBody };
+export { CardHeader, CardTitle, CardContent, CardFooter, CardBody };
 
 export default Card;
