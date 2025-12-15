@@ -25,10 +25,11 @@ import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole
 const UnderlineTabs = ({ tabs, activeTab, onChange, className = '' }) => {
   return (
     <div className={`border-b border-cream-500/10 ${className}`}>
-      <nav className="flex gap-6" aria-label="Tabs">
+      <nav className="flex gap-6" aria-label="Score tabs" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            id={`tab-${tab.id}`}
             onClick={() => onChange(tab.id)}
             className={`
               relative pb-3 text-sm font-display font-semibold uppercase tracking-wide
@@ -39,6 +40,7 @@ const UnderlineTabs = ({ tabs, activeTab, onChange, className = '' }) => {
               }
             `}
             aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
             role="tab"
           >
             <span className="flex items-center gap-2">
@@ -308,7 +310,12 @@ StandingsTable.displayName = 'StandingsTable';
 const LatestTab = memo(({ shows, userCorpsName, onShowClick }) => {
   if (!shows || shows.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div
+        role="tabpanel"
+        id="tabpanel-latest"
+        aria-labelledby="tab-latest"
+        className="flex items-center justify-center py-16"
+      >
         <div className="text-center">
           <Calendar className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
           <p className="text-cream-500/50 text-sm">No recent shows</p>
@@ -318,7 +325,12 @@ const LatestTab = memo(({ shows, userCorpsName, onShowClick }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div
+      role="tabpanel"
+      id="tabpanel-latest"
+      aria-labelledby="tab-latest"
+      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+    >
       {shows.slice(0, 6).map((show, idx) => (
         <motion.div
           key={`${show.eventName}-${idx}`}
@@ -345,7 +357,11 @@ LatestTab.displayName = 'LatestTab';
 
 const StandingsTab = memo(({ aggregatedScores, userCorpsName, onEntryClick, isLoading }) => {
   return (
-    <div className="space-y-4">
+    <div
+      role="tabpanel"
+      id="tabpanel-standings"
+      aria-labelledby="tab-standings"
+    >
       <StandingsTable
         data={aggregatedScores}
         userCorpsName={userCorpsName}
@@ -365,7 +381,12 @@ StandingsTab.displayName = 'StandingsTab';
 const HistoryTab = memo(({ archivedSeasons, onSeasonSelect }) => {
   if (!archivedSeasons || archivedSeasons.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div
+        role="tabpanel"
+        id="tabpanel-history"
+        aria-labelledby="tab-history"
+        className="flex items-center justify-center py-16"
+      >
         <div className="text-center">
           <Archive className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
           <p className="text-cream-500/50 text-sm">No archived seasons yet</p>
@@ -376,7 +397,12 @@ const HistoryTab = memo(({ archivedSeasons, onSeasonSelect }) => {
   }
 
   return (
-    <div className="space-y-3">
+    <div
+      role="tabpanel"
+      id="tabpanel-history"
+      aria-labelledby="tab-history"
+      className="space-y-3"
+    >
       {archivedSeasons.map((season) => (
         <Card
           key={season.id}
@@ -506,8 +532,8 @@ const Scores = () => {
 
   // Handle archived season selection
   const handleSeasonSelect = useCallback((seasonId) => {
-    // TODO: Navigate to archived season view
-    console.log('Selected season:', seasonId);
+    // TODO: Navigate to archived season view with router
+    // Future: navigate(`/scores/archive/${seasonId}`)
   }, []);
 
   // Tab definitions
