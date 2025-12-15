@@ -1,11 +1,15 @@
+// =============================================================================
+// MODAL COMPONENT - ESPN DATA STYLE
+// =============================================================================
+// Rigid system modal. Dead-center. High contrast overlay. No glow.
+// Laws: z-[100], bg-black/80 overlay, border-[#333], no backdrop-blur
+
 import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { IconButton } from './Button';
 
 // =============================================================================
-// MODAL COMPONENT
+// TYPES
 // =============================================================================
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -14,8 +18,6 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  subtitle?: string;
-  icon?: React.ReactNode;
   size?: ModalSize;
   closeOnOverlayClick?: boolean;
   closeOnEscape?: boolean;
@@ -24,51 +26,23 @@ export interface ModalProps {
   footer?: React.ReactNode;
 }
 
+// Size mapping
 const sizeStyles: Record<ModalSize, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
-  full: 'max-w-[95vw] max-h-[90vh]',
+  lg: 'max-w-lg',
+  xl: 'max-w-2xl',
+  full: 'max-w-4xl',
 };
 
-// Content height limits based on size - larger modals get more content space
-const contentHeightStyles: Record<ModalSize, string> = {
-  sm: 'max-h-[50vh]',
-  md: 'max-h-[60vh]',
-  lg: 'max-h-[65vh]',
-  xl: 'max-h-[70vh]',
-  full: 'max-h-[calc(90vh-140px)]', // Full modal minus header/footer space
-};
-
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-  exit: { opacity: 0 },
-};
-
-const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: 20 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: 'spring', duration: 0.5, bounce: 0.3 },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-    transition: { duration: 0.2 },
-  },
-};
+// =============================================================================
+// MODAL COMPONENT
+// =============================================================================
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
-  subtitle,
-  icon,
   size = 'md',
   closeOnOverlayClick = true,
   closeOnEscape = true,
@@ -86,101 +60,171 @@ export const Modal: React.FC<ModalProps> = ({
     [closeOnEscape, onClose]
   );
 
+  // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     }
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
   }, [isOpen, handleKeyDown]);
 
+  // Handle overlay click
   const handleOverlayClick = (event: React.MouseEvent) => {
     if (event.target === event.currentTarget && closeOnOverlayClick) {
       onClose();
     }
   };
 
+  if (!isOpen) return null;
+
   const modalContent = (
-    <AnimatePresence mode="wait">
-      {isOpen && (
-        <motion.div
-          variants={overlayVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="fixed inset-0 bg-charcoal-950/95 flex items-center justify-center z-50 p-4"
-          onClick={handleOverlayClick}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={title ? 'modal-title' : undefined}
-        >
-          <motion.div
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className={`
-              bg-charcoal-900/95 backdrop-blur-lg border border-white/10 rounded-xl w-full overflow-hidden
-              shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_30px_rgba(234,179,8,0.1)]
-              ${sizeStyles[size]}
-            `}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            {(title || showCloseButton) && (
-              <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  {icon && (
-                    <div className="bg-gold-500/15 p-2.5 rounded-lg border border-gold-500/30">
-                      {icon}
-                    </div>
-                  )}
-                  {title && (
-                    <div>
-                      <h2 id="modal-title" className="text-xl font-semibold text-cream">
-                        {title}
-                      </h2>
-                      {subtitle && (
-                        <p className="text-sm text-cream/60">{subtitle}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {showCloseButton && (
-                  <IconButton
-                    icon={X}
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    aria-label="Close modal"
-                  />
-                )}
-              </div>
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? 'modal-title' : undefined}
+    >
+      {/* Modal Container */}
+      <div
+        className={`
+          bg-[#1a1a1a] border border-[#333] rounded-sm w-full overflow-hidden
+          shadow-2xl transform transition-all duration-150
+          ${sizeStyles[size]}
+        `}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          animation: 'modalIn 150ms ease-out',
+        }}
+      >
+        {/* Header */}
+        {(title || showCloseButton) && (
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+            {title && (
+              <h2
+                id="modal-title"
+                className="text-xs font-bold uppercase tracking-wider text-gray-300"
+              >
+                {title}
+              </h2>
             )}
-
-            {/* Content */}
-            <div className={`p-6 ${contentHeightStyles[size]} overflow-y-auto hud-scroll`}>
-              {children}
-            </div>
-
-            {/* Footer */}
-            {footer && (
-              <div className="p-6 border-t border-white/10 flex justify-end gap-3">
-                {footer}
-              </div>
+            {!title && <div />}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="p-1 text-gray-500 hover:text-white transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+        )}
+
+        {/* Body - Let children define padding */}
+        <div className="max-h-[70vh] overflow-y-auto">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+            {footer}
+          </div>
+        )}
+      </div>
+
+      {/* Animation keyframes injected via style tag */}
+      <style>{`
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+    </div>
   );
 
   return createPortal(modalContent, document.body);
 };
+
+// =============================================================================
+// MODAL HEADER COMPONENT (for custom headers)
+// =============================================================================
+
+export interface ModalHeaderProps {
+  children: React.ReactNode;
+  onClose?: () => void;
+  showCloseButton?: boolean;
+}
+
+export const ModalHeader: React.FC<ModalHeaderProps> = ({
+  children,
+  onClose,
+  showCloseButton = true,
+}) => (
+  <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+    <div className="text-xs font-bold uppercase tracking-wider text-gray-300">
+      {children}
+    </div>
+    {showCloseButton && onClose && (
+      <button
+        onClick={onClose}
+        className="p-1 text-gray-500 hover:text-white transition-colors"
+        aria-label="Close modal"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    )}
+  </div>
+);
+
+// =============================================================================
+// MODAL BODY COMPONENT
+// =============================================================================
+
+export interface ModalBodyProps {
+  children: React.ReactNode;
+  className?: string;
+  noPadding?: boolean;
+}
+
+export const ModalBody: React.FC<ModalBodyProps> = ({
+  children,
+  className = '',
+  noPadding = false,
+}) => (
+  <div className={`${noPadding ? '' : 'p-4'} ${className}`}>
+    {children}
+  </div>
+);
+
+// =============================================================================
+// MODAL FOOTER COMPONENT
+// =============================================================================
+
+export interface ModalFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const ModalFooter: React.FC<ModalFooterProps> = ({
+  children,
+  className = '',
+}) => (
+  <div className={`px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2 ${className}`}>
+    {children}
+  </div>
+);
 
 // =============================================================================
 // CONFIRMATION MODAL
@@ -209,8 +253,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   variant = 'default',
   isLoading = false,
 }) => {
-  const buttonVariant = variant === 'danger' ? 'danger' : 'primary';
-
   return (
     <Modal
       isOpen={isOpen}
@@ -222,7 +264,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 rounded-lg border border-white/15 text-cream/80 hover:bg-white/10 hover:text-cream transition-all duration-300 font-medium"
+            className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-colors disabled:opacity-50"
           >
             {cancelText}
           </button>
@@ -230,11 +272,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 border
+              h-9 px-4 text-sm font-bold uppercase tracking-wider transition-colors disabled:opacity-50
               ${variant === 'danger'
-                ? 'bg-red-600 text-white border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:bg-red-500 hover:shadow-[0_0_25px_rgba(239,68,68,0.5)]'
-                : 'bg-gold-500 text-charcoal-950 border-gold-400/50 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:bg-gold-400 hover:shadow-[0_0_25px_rgba(234,179,8,0.5)]'}
-              disabled:opacity-50 disabled:shadow-none
+                ? 'bg-red-600 text-white hover:bg-red-500'
+                : 'bg-[#0057B8] text-white hover:bg-[#0066d6]'}
             `}
           >
             {isLoading ? 'Loading...' : confirmText}
@@ -242,7 +283,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </>
       }
     >
-      <p className="text-cream/80">{message}</p>
+      <div className="p-4">
+        <p className="text-sm text-gray-300">{message}</p>
+      </div>
     </Modal>
   );
 };

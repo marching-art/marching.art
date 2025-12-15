@@ -1,47 +1,29 @@
-// CorpsRegistrationModal - Modal for registering a new corps
+// =============================================================================
+// CORPS REGISTRATION MODAL - ESPN DATA STYLE
+// =============================================================================
+
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Lock, Check } from 'lucide-react';
+import { Lock, Check, X } from 'lucide-react';
 import Portal from '../Portal';
 
 const CLASSES = [
-  {
-    id: 'world',
-    name: 'World Class',
-    description: '10,000 XP or 5,000 CC',
-    color: 'bg-gold-500'
-  },
-  {
-    id: 'open',
-    name: 'Open Class',
-    description: '5,000 XP or 2,500 CC',
-    color: 'bg-purple-500'
-  },
-  {
-    id: 'aClass',
-    name: 'A Class',
-    description: '3,000 XP or 1,000 CC',
-    color: 'bg-blue-500'
-  },
-  {
-    id: 'soundSport',
-    name: 'SoundSport',
-    description: 'Always available',
-    color: 'bg-green-500'
-  }
+  { id: 'worldClass', name: 'World Class', budget: '150 pts', reqLevel: 6 },
+  { id: 'openClass', name: 'Open Class', budget: '120 pts', reqLevel: 5 },
+  { id: 'aClass', name: 'A Class', budget: '60 pts', reqLevel: 4 },
+  { id: 'soundSport', name: 'SoundSport', budget: '90 pts', reqLevel: 0 },
 ];
 
-const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, defaultClass }) => {
+const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSport'], defaultClass }) => {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
     showConcept: '',
-    class: defaultClass || 'soundSport'
+    class: defaultClass || 'soundSport',
   });
 
-  const classes = CLASSES.map(cls => ({
+  const classes = CLASSES.map((cls) => ({
     ...cls,
-    unlocked: cls.id === 'soundSport' || unlockedClasses.includes(cls.id)
+    unlocked: cls.id === 'soundSport' || unlockedClasses.includes(cls.id),
   }));
 
   const handleSubmit = (e) => {
@@ -51,127 +33,134 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses, defaultCla
 
   return (
     <Portal>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-2xl"
+        <div
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="glass-dark rounded-2xl p-8">
-            <h2 className="text-3xl font-display font-bold text-gradient mb-6">
-              Register Your Corps
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+              Register Corps
             </h2>
+            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Body */}
+          <form onSubmit={handleSubmit}>
+            <div className="p-4 space-y-4">
               {/* Corps Name */}
               <div>
-                <label className="label">Corps Name</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Corps Name *
+                </label>
                 <input
                   type="text"
-                  className="input"
-                  placeholder="Enter your corps name"
+                  placeholder="Enter corps name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   maxLength={50}
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
               {/* Location */}
               <div>
-                <label className="label">Home Location</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Home Location *
+                </label>
                 <input
                   type="text"
-                  className="input"
                   placeholder="City, State"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
                   maxLength={50}
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
               {/* Show Concept */}
               <div>
-                <label className="label">Show Concept</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Show Concept
+                </label>
                 <textarea
-                  className="textarea h-24"
-                  placeholder="Describe your show concept for this season..."
+                  placeholder="Describe your show concept..."
                   value={formData.showConcept}
                   onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
-                  required
                   maxLength={500}
+                  className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
-                <p className="text-xs text-cream-500/40 mt-1">
-                  {formData.showConcept.length}/500 characters
+                <p className="text-[10px] text-gray-600 mt-1">
+                  {formData.showConcept.length}/500
                 </p>
               </div>
 
-              {/* Class Selection */}
+              {/* Class Selection Table */}
               <div>
-                <label className="label">Competition Class</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {classes.map((cls) => (
-                    <button
-                      key={cls.id}
-                      type="button"
-                      className={`
-                        relative p-4 rounded-lg border-2 transition-all duration-300
-                        ${formData.class === cls.id
-                          ? 'border-gold-500 bg-gold-500/10'
-                          : 'border-cream-500/20 hover:border-cream-500/40'
-                        }
-                        ${!cls.unlocked ? 'opacity-50 cursor-not-allowed' : ''}
-                      `}
-                      onClick={() => cls.unlocked && setFormData({ ...formData, class: cls.id })}
-                      disabled={!cls.unlocked}
-                    >
-                      {!cls.unlocked && (
-                        <div className="absolute top-2 right-2">
-                          <Lock className="w-4 h-4 text-cream-500/40" />
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Competition Class
+                </label>
+                <div className="border border-[#333] divide-y divide-[#333]">
+                  {classes.map((cls) => {
+                    const isSelected = formData.class === cls.id;
+                    return (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        disabled={!cls.unlocked}
+                        onClick={() => cls.unlocked && setFormData({ ...formData, class: cls.id })}
+                        className={`
+                          w-full flex items-center justify-between px-3 py-2 text-left
+                          ${cls.unlocked ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                          ${isSelected ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            isSelected ? 'border-[#0057B8] bg-[#0057B8]' : 'border-[#444]'
+                          }`}>
+                            {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                          </div>
+                          <span className="text-sm font-medium text-white">{cls.name}</span>
                         </div>
-                      )}
-                      {cls.unlocked && formData.class === cls.id && (
-                        <div className="absolute top-2 right-2">
-                          <Check className="w-4 h-4 text-gold-500" />
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 tabular-nums">{cls.budget}</span>
+                          {!cls.unlocked && <Lock className="w-3 h-3 text-gray-600" />}
                         </div>
-                      )}
-                      <div className={`w-2 h-2 ${cls.color} rounded-full mb-2`} />
-                      <p className="font-semibold text-cream-100">{cls.name}</p>
-                      <p className="text-xs text-cream-500/60 mt-1">{cls.description}</p>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="btn-ghost flex-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                >
-                  Register Corps
-                </button>
-              </div>
-            </form>
-          </div>
-        </motion.div>
-      </motion.div>
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+              >
+                Register
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </Portal>
   );
 };

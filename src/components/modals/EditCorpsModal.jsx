@@ -1,14 +1,16 @@
-// EditCorpsModal - Modal for editing existing corps details
+// =============================================================================
+// EDIT CORPS MODAL - ESPN DATA STYLE
+// =============================================================================
+
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import Portal from '../Portal';
 
 const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
   const [formData, setFormData] = useState({
-    name: currentData.name || '',
-    location: currentData.location || '',
-    showConcept: currentData.showConcept || ''
+    name: currentData?.name || '',
+    location: currentData?.location || '',
+    showConcept: currentData?.showConcept || '',
   });
 
   const handleSubmit = (e) => {
@@ -18,95 +20,96 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
 
   return (
     <Portal>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-2xl"
+        <div
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="glass-dark rounded-2xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-display font-bold text-gradient">
-                Edit Corps Details
-              </h2>
-              <button onClick={onClose} className="btn-ghost p-2">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+              Edit Corps Details
+            </h2>
+            <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Body */}
+          <form onSubmit={handleSubmit}>
+            <div className="p-4 space-y-4">
               {/* Corps Name */}
               <div>
-                <label className="label">Corps Name</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Corps Name
+                </label>
                 <input
                   type="text"
-                  className="input"
-                  placeholder="Enter your corps name"
+                  placeholder="Corps name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   maxLength={50}
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
               {/* Location */}
               <div>
-                <label className="label">Home Location</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Home Location
+                </label>
                 <input
                   type="text"
-                  className="input"
                   placeholder="City, State"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   required
                   maxLength={50}
+                  className="w-full h-10 px-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
 
               {/* Show Concept */}
               <div>
-                <label className="label">Show Concept</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Show Concept
+                </label>
                 <textarea
-                  className="textarea h-24"
-                  placeholder="Describe your show concept for this season..."
+                  placeholder="Describe your show concept..."
                   value={formData.showConcept}
                   onChange={(e) => setFormData({ ...formData, showConcept: e.target.value })}
-                  required
                   maxLength={500}
+                  className="w-full h-20 px-3 py-2 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] resize-none"
                 />
-                <p className="text-xs text-cream-500/40 mt-1">
-                  {formData.showConcept.length}/500 characters
+                <p className="text-[10px] text-gray-600 mt-1">
+                  {formData.showConcept.length}/500
                 </p>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="btn-ghost flex-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </motion.div>
-      </motion.div>
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6]"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </Portal>
   );
 };
