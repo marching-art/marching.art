@@ -536,10 +536,15 @@ const Dashboard = () => {
                 ) : (
                   <Link
                     to="/leagues"
-                    className="flex items-center justify-center gap-2 p-2 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+                    className="flex flex-col items-center gap-1 p-3 bg-blue-500/5 border border-dashed border-blue-500/30 rounded hover:bg-blue-500/10 transition-colors group"
                   >
-                    <Users className="w-4 h-4" />
-                    Join a League
+                    <div className="flex items-center gap-2 text-blue-400">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm font-semibold">No Active Leagues</span>
+                    </div>
+                    <span className="text-xs text-cream-500/50 group-hover:text-blue-400/70 transition-colors">
+                      Join a league to compete with other directors!
+                    </span>
                   </Link>
                 )}
               </Card.Body>

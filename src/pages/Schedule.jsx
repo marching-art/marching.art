@@ -321,7 +321,7 @@ const Schedule = () => {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-gold-400" />
-            <h1 className="text-lg font-display font-bold text-cream uppercase tracking-wide">Schedule</h1>
+            <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">Schedule</h1>
             <span className="px-2 py-1 rounded bg-gold-500/20 border border-gold-500/30 text-xs font-bold text-gold-400">
               Week {currentWeek} of 7
             </span>

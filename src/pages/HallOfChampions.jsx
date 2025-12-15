@@ -117,7 +117,7 @@ const HallOfChampions = () => {
                 <Trophy className="w-5 h-5 text-gold-400" />
               </div>
               <div>
-                <h1 className="text-lg font-display font-bold text-cream-100 uppercase tracking-wide">
+                <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
                   Hall of Champions
                 </h1>
                 <p className="text-xs text-cream-500/60">

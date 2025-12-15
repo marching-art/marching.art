@@ -1650,22 +1650,28 @@ p, li, span {
     @apply bg-clip-text text-transparent bg-white;
   }
   
-  /* Scrollbar Styling */
+  /* Scrollbar Styling - Thin and Dark */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-dci-blue/70 rounded-full;
+    @apply bg-charcoal-700 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-dci-blue/80;
+    @apply bg-charcoal-600 rounded-full;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--charcoal-700) transparent;
   }
 
   /* ===========================================
@@ -1699,13 +1705,13 @@ p, li, span {
   }
 
   /* ===========================================
-     SCROLL STYLING: Thin gold scrollbar
+     SCROLL STYLING: Thin dark scrollbar
      =========================================== */
 
   /* HUD Scroll Container - Thin, subtle scrollbar for internal content */
   .hud-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(250, 204, 21, 0.3) transparent;
+    scrollbar-color: var(--charcoal-700) transparent;
   }
 
   .hud-scroll::-webkit-scrollbar {
@@ -1718,12 +1724,12 @@ p, li, span {
   }
 
   .hud-scroll::-webkit-scrollbar-thumb {
-    background: rgba(250, 204, 21, 0.3);
+    background: var(--charcoal-700);
     border-radius: 3px;
   }
 
   .hud-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(250, 204, 21, 0.5);
+    background: var(--charcoal-600);
   }
 
   /* ===========================================
@@ -3364,15 +3370,15 @@ p, li, span {
 }
 
 /* ===========================================
-   HUD CUSTOM SCROLLBARS - Sci-Fi Tactical Style
-   Thin, unobtrusive, accent-colored
+   HUD CUSTOM SCROLLBARS - Thin and Dark
+   Consistent with global scrollbar styling
    =========================================== */
 
 /* Global scrollbar overrides for HUD components */
 .hud-scroll,
 .bento-box-content.scrollable {
   scrollbar-width: thin;
-  scrollbar-color: rgba(69, 162, 158, 0.5) rgba(11, 12, 16, 0.3);
+  scrollbar-color: var(--charcoal-700) transparent;
 }
 
 .hud-scroll::-webkit-scrollbar,
@@ -3383,23 +3389,23 @@ p, li, span {
 
 .hud-scroll::-webkit-scrollbar-track,
 .bento-box-content.scrollable::-webkit-scrollbar-track {
-  background: rgba(11, 12, 16, 0.3);
+  background: transparent;
   border-radius: 3px;
 }
 
 .hud-scroll::-webkit-scrollbar-thumb,
 .bento-box-content.scrollable::-webkit-scrollbar-thumb {
-  background: rgba(69, 162, 158, 0.5);
+  background: var(--charcoal-700);
   border-radius: 3px;
   transition: background 0.2s ease;
 }
 
 .hud-scroll::-webkit-scrollbar-thumb:hover,
 .bento-box-content.scrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 252, 241, 0.7);
+  background: var(--charcoal-600);
 }
 
-/* Gold variant scrollbar */
+/* Gold variant scrollbar - for special accent areas */
 .hud-scroll-gold {
   scrollbar-color: rgba(250, 204, 21, 0.4) transparent;
 }
