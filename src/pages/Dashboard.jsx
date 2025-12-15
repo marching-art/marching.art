@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, Sparkles, X, Crown
+  Music, Sparkles, X, Crown, TrendingUp, Lock
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -36,7 +36,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { TableSkeleton } from '../components/Skeleton';
-import { getNextClassProgress } from '../utils/captionPricing';
+import { getNextClassProgress, XP_SOURCES } from '../utils/captionPricing';
 
 // Caption definitions for lineup display
 const CAPTIONS = [
