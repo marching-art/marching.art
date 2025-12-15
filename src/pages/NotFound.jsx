@@ -1,6 +1,6 @@
 // src/pages/NotFound.jsx
 // Enhanced 404 Page with tactical/diegetic styling
-import React from 'react';
+import React, { startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react';
@@ -113,7 +113,7 @@ const NotFound = () => {
           className="flex flex-col sm:flex-row gap-3 justify-center"
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => startTransition(() => navigate(-1))}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-charcoal-800 border border-cream/20 rounded-lg text-cream font-display font-semibold hover:bg-charcoal-700 hover:border-cream/30 transition-all"
           >
             <ArrowLeft className="w-4 h-4" />

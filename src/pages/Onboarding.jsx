@@ -1,6 +1,6 @@
 // src/pages/Onboarding.jsx
 // Streamlined 3-step onboarding: Welcome+Name, Create Corps, Draft Lineup
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -412,7 +412,9 @@ const Onboarding = () => {
 
   const handleCelebrationComplete = () => {
     toast.success("Welcome to marching.art! Here's 100 CorpsCoin to get started!");
-    navigate('/dashboard');
+    startTransition(() => {
+      navigate('/dashboard');
+    });
   };
 
   const steps = [

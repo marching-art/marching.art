@@ -1,5 +1,5 @@
 // src/pages/Register.jsx
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -62,7 +62,9 @@ const Register = () => {
     try {
       await signUp(formData.email, formData.password);
       toast.success('Account created successfully!');
-      navigate('/onboarding');
+      startTransition(() => {
+        navigate('/onboarding');
+      });
     } catch (err) {
       console.error('Registration error:', err);
 
