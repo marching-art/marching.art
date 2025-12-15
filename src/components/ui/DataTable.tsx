@@ -1,6 +1,10 @@
+// =============================================================================
+// DATA TABLE - ESPN SPREADSHEET STYLE
+// =============================================================================
+// The heart of the app. Excel, not SaaS.
+// Laws: Dense cells (px-2), no rounded corners, zebra striping, sticky header
+
 import React, { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Skeleton } from './Spinner';
 
 // =============================================================================
 // TYPES & INTERFACES
@@ -19,12 +23,14 @@ export interface DataTableColumn<T = Record<string, unknown>> {
   width?: string;
   /** Text alignment */
   align?: ColumnAlign;
-  /** Whether this column should be sticky on mobile horizontal scroll */
+  /** Whether this column should be sticky on horizontal scroll */
   sticky?: boolean;
   /** Additional class names for header cell */
   headerClassName?: string;
   /** Additional class names for body cells */
   cellClassName?: string;
+  /** Is this a rank column? (special bold centered styling) */
+  isRank?: boolean;
 }
 
 export interface DataTableProps<T = Record<string, unknown>> {
@@ -40,21 +46,13 @@ export interface DataTableProps<T = Record<string, unknown>> {
   isLoading?: boolean;
   /** Number of skeleton rows to show when loading */
   skeletonRows?: number;
-  /** Enable zebra striping (alternating row backgrounds) */
+  /** Enable zebra striping (default: true) */
   zebraStripes?: boolean;
-  /** Mobile card renderer - renders cards instead of table rows on mobile */
-  mobileCardRenderer?: (row: T, index: number) => React.ReactNode;
-  /** Breakpoint for mobile card view (default: 'md') */
-  mobileBreakpoint?: 'sm' | 'md' | 'lg';
   /** Empty state content when no data */
   emptyState?: React.ReactNode;
   /** Additional class name for the container */
   className?: string;
-  /** Additional class name for the table */
-  tableClassName?: string;
-  /** Row height variant */
-  rowHeight?: 'compact' | 'default';
-  /** Maximum height for the table container (enables vertical scroll) */
+  /** Maximum height for vertical scroll */
   maxHeight?: string;
   /** Function to determine if a row should be highlighted */
   highlightRow?: (row: T, index: number) => boolean;
@@ -70,25 +68,8 @@ const alignStyles: Record<ColumnAlign, string> = {
   right: 'text-right',
 };
 
-const rowHeightStyles = {
-  compact: 'h-11',
-  default: 'h-12',
-};
-
-const breakpointStyles = {
-  sm: 'sm:hidden',
-  md: 'md:hidden',
-  lg: 'lg:hidden',
-};
-
-const tableBreakpointStyles = {
-  sm: 'hidden sm:block',
-  md: 'hidden md:block',
-  lg: 'hidden lg:block',
-};
-
 // =============================================================================
-// MEMOIZED ROW COMPONENT
+// TABLE ROW COMPONENT
 // =============================================================================
 
 interface TableRowProps<T> {
@@ -97,7 +78,6 @@ interface TableRowProps<T> {
   columns: DataTableColumn<T>[];
   onRowClick?: (row: T, index: number) => void;
   zebraStripes: boolean;
-  rowHeight: 'compact' | 'default';
   isHighlighted: boolean;
 }
 
@@ -107,7 +87,6 @@ const TableRowComponent = <T extends Record<string, unknown>>({
   columns,
   onRowClick,
   zebraStripes,
-  rowHeight,
   isHighlighted,
 }: TableRowProps<T>) => {
   const handleClick = useCallback(() => {
@@ -124,24 +103,14 @@ const TableRowComponent = <T extends Record<string, unknown>>({
     [onRowClick, row, rowIndex]
   );
 
-  const zebraClass = zebraStripes && rowIndex % 2 === 1 ? 'bg-cream-500/[0.02]' : '';
-  const clickableClass = onRowClick
-    ? 'cursor-pointer hover:bg-cream-500/5 focus:bg-cream-500/5 focus:outline-none'
-    : '';
-  const highlightClass = isHighlighted
-    ? 'bg-gold-500/10 border-l-2 border-l-gold-500'
-    : '';
-
   return (
     <tr
       role="row"
       className={`
-        ${rowHeightStyles[rowHeight]}
-        border-b border-cream-500/5
-        transition-colors duration-150
-        ${zebraClass}
-        ${clickableClass}
-        ${highlightClass}
+        h-10 border-b border-[#333]/50
+        ${zebraStripes && rowIndex % 2 === 1 ? 'bg-white/[0.03]' : ''}
+        ${onRowClick ? 'cursor-pointer hover:bg-white/5' : ''}
+        ${isHighlighted ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
       `.trim()}
       onClick={onRowClick ? handleClick : undefined}
       onKeyDown={onRowClick ? handleKeyDown : undefined}
@@ -152,13 +121,16 @@ const TableRowComponent = <T extends Record<string, unknown>>({
           ? column.render(row, rowIndex)
           : (row[column.key] as React.ReactNode);
 
+        const isRankColumn = column.isRank || column.key === 'rank';
+
         return (
           <td
             key={column.key}
             className={`
-              px-4 py-2 text-sm text-cream-500
+              px-2 py-1 text-sm
+              ${isRankColumn ? 'font-bold text-center text-gray-300 w-12' : 'font-data text-gray-100'}
               ${alignStyles[column.align || 'left']}
-              ${column.sticky ? 'sticky left-0 bg-charcoal-900/95 backdrop-blur-sm z-10' : ''}
+              ${column.sticky ? 'sticky left-0 bg-[#1a1a1a] z-10' : ''}
               ${column.cellClassName || ''}
             `.trim()}
             style={column.width ? { width: column.width, minWidth: column.width } : undefined}
@@ -171,7 +143,6 @@ const TableRowComponent = <T extends Record<string, unknown>>({
   );
 };
 
-// Memoize with generic type support
 const TableRow = memo(TableRowComponent) as typeof TableRowComponent;
 
 // =============================================================================
@@ -180,54 +151,24 @@ const TableRow = memo(TableRowComponent) as typeof TableRowComponent;
 
 interface SkeletonRowProps<T> {
   columns: DataTableColumn<T>[];
-  rowHeight: 'compact' | 'default';
 }
 
-const SkeletonRow = <T,>({ columns, rowHeight }: SkeletonRowProps<T>) => (
-  <tr className={`${rowHeightStyles[rowHeight]} border-b border-cream-500/5`}>
+const SkeletonRow = <T,>({ columns }: SkeletonRowProps<T>) => (
+  <tr className="h-10 border-b border-[#333]/50">
     {columns.map((column) => (
       <td
         key={column.key}
         className={`
-          px-4 py-2
+          px-2 py-1
           ${alignStyles[column.align || 'left']}
-          ${column.sticky ? 'sticky left-0 bg-charcoal-900/95 backdrop-blur-sm z-10' : ''}
+          ${column.sticky ? 'sticky left-0 bg-[#1a1a1a] z-10' : ''}
         `.trim()}
         style={column.width ? { width: column.width, minWidth: column.width } : undefined}
       >
-        <Skeleton height={16} width="80%" rounded="sm" />
+        <div className="h-4 bg-white/5 rounded animate-pulse" style={{ width: '70%' }} />
       </td>
     ))}
   </tr>
-);
-
-// =============================================================================
-// MOBILE CARD LIST COMPONENT
-// =============================================================================
-
-interface MobileCardListProps<T> {
-  data: T[];
-  getRowKey: (row: T, index: number) => string | number;
-  mobileCardRenderer: (row: T, index: number) => React.ReactNode;
-}
-
-const MobileCardList = <T,>({
-  data,
-  getRowKey,
-  mobileCardRenderer,
-}: MobileCardListProps<T>) => (
-  <div className="space-y-3">
-    {data.map((row, index) => (
-      <motion.div
-        key={getRowKey(row, index)}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.02, duration: 0.2 }}
-      >
-        {mobileCardRenderer(row, index)}
-      </motion.div>
-    ))}
-  </div>
 );
 
 // =============================================================================
@@ -235,23 +176,8 @@ const MobileCardList = <T,>({
 // =============================================================================
 
 const DefaultEmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="w-16 h-16 mb-4 rounded-full bg-cream-500/5 flex items-center justify-center">
-      <svg
-        className="w-8 h-8 text-cream-500/30"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-        />
-      </svg>
-    </div>
-    <p className="text-sm text-cream-500/50 font-medium">No data available</p>
+  <div className="flex flex-col items-center justify-center py-8 text-center">
+    <p className="text-sm text-gray-500">No data available</p>
   </div>
 );
 
@@ -267,79 +193,62 @@ export const DataTable = <T extends Record<string, unknown>>({
   isLoading = false,
   skeletonRows = 5,
   zebraStripes = true,
-  mobileCardRenderer,
-  mobileBreakpoint = 'md',
   emptyState,
   className = '',
-  tableClassName = '',
-  rowHeight = 'default',
   maxHeight,
   highlightRow,
 }: DataTableProps<T>) => {
-  // Refs and state for scroll hint
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // Check if table is scrollable and update scroll hint visibility
+  // Check if horizontally scrollable
   useEffect(() => {
-    const checkScrollable = () => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        const isScrollable = container.scrollWidth > container.clientWidth;
-        const isNotScrolledToEnd = container.scrollLeft < container.scrollWidth - container.clientWidth - 1;
-        setShowScrollHint(isScrollable && isNotScrolledToEnd);
+    const checkScroll = () => {
+      const el = scrollContainerRef.current;
+      if (el) {
+        const hasMore = el.scrollWidth > el.clientWidth;
+        const notAtEnd = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+        setCanScrollRight(hasMore && notAtEnd);
       }
     };
 
-    checkScrollable();
-    window.addEventListener('resize', checkScrollable);
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', checkScrollable);
-    }
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    const el = scrollContainerRef.current;
+    el?.addEventListener('scroll', checkScroll);
 
     return () => {
-      window.removeEventListener('resize', checkScrollable);
-      if (container) {
-        container.removeEventListener('scroll', checkScrollable);
-      }
+      window.removeEventListener('resize', checkScroll);
+      el?.removeEventListener('scroll', checkScroll);
     };
   }, [data, columns]);
 
-  // Memoize skeleton rows array
   const skeletonRowsArray = useMemo(
     () => Array.from({ length: skeletonRows }),
     [skeletonRows]
   );
 
-  // Determine if we have sticky columns for horizontal scroll
-  const hasStickyColumn = useMemo(
-    () => columns.some((col) => col.sticky),
-    [columns]
-  );
-
-  // Show loading state
+  // Loading state
   if (isLoading) {
     return (
-      <div
-        className={`
-          bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden
-          ${className}
-        `.trim()}
-      >
-        <div className={maxHeight ? `overflow-auto` : ''} style={maxHeight ? { maxHeight } : undefined}>
-          <table className={`w-full ${tableClassName}`}>
-            <thead className="sticky top-0 z-20 bg-charcoal-900/95 backdrop-blur-sm">
-              <tr className="border-b border-cream-500/10">
+      <div className={`bg-[#1a1a1a] border border-[#333] ${className}`}>
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto"
+          style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
+        >
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#1a1a1a] border-b border-[#333]">
                 {columns.map((column) => (
                   <th
                     key={column.key}
                     scope="col"
                     className={`
-                      px-4 py-3 text-xs font-display font-semibold text-cream-500/60 uppercase tracking-wider
+                      px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
+                      sticky top-0 bg-[#1a1a1a] z-20
                       ${alignStyles[column.align || 'left']}
-                      ${column.sticky ? 'sticky left-0 bg-charcoal-900/95 backdrop-blur-sm z-30' : ''}
+                      ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}
                     `.trim()}
                     style={column.width ? { width: column.width, minWidth: column.width } : undefined}
@@ -350,8 +259,8 @@ export const DataTable = <T extends Record<string, unknown>>({
               </tr>
             </thead>
             <tbody>
-              {skeletonRowsArray.map((_: unknown, index: number) => (
-                <SkeletonRow<T> key={index} columns={columns} rowHeight={rowHeight} />
+              {skeletonRowsArray.map((_, index) => (
+                <SkeletonRow<T> key={index} columns={columns} />
               ))}
             </tbody>
           </table>
@@ -360,92 +269,73 @@ export const DataTable = <T extends Record<string, unknown>>({
     );
   }
 
-  // Show empty state
+  // Empty state
   if (data.length === 0) {
     return (
-      <div
-        className={`
-          bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden
-          ${className}
-        `.trim()}
-      >
+      <div className={`bg-[#1a1a1a] border border-[#333] ${className}`}>
         {emptyState || <DefaultEmptyState />}
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      {/* Mobile Card View (when mobileCardRenderer is provided) */}
-      {mobileCardRenderer && (
-        <div className={breakpointStyles[mobileBreakpoint]}>
-          <MobileCardList
-            data={data}
-            getRowKey={getRowKey}
-            mobileCardRenderer={mobileCardRenderer}
-          />
-        </div>
-      )}
-
-      {/* Table View */}
+    <div className={`relative bg-[#0a0a0a] border border-[#333] ${className}`}>
+      {/* Scrollable container */}
       <div
-        className={`
-          relative bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden
-          ${mobileCardRenderer ? tableBreakpointStyles[mobileBreakpoint] : ''}
-        `.trim()}
+        ref={scrollContainerRef}
+        className="overflow-x-auto"
+        style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
       >
-        <div
-          ref={scrollContainerRef}
-          className={`
-            overflow-x-auto
-            ${maxHeight ? 'overflow-y-auto' : ''}
-          `.trim()}
-          style={maxHeight ? { maxHeight } : undefined}
-        >
-          <table className={`w-full ${tableClassName}`}>
-            <thead className="sticky top-0 z-20 bg-charcoal-900/95 backdrop-blur-sm">
-              <tr className="border-b border-cream-500/10">
-                {columns.map((column) => (
+        <table className="w-full border-collapse">
+          {/* Header - Sticky */}
+          <thead>
+            <tr className="bg-[#1a1a1a] border-b border-[#333]">
+              {columns.map((column) => {
+                const isRankColumn = column.isRank || column.key === 'rank';
+                return (
                   <th
                     key={column.key}
                     scope="col"
                     className={`
-                      px-4 py-3 text-xs font-display font-semibold text-cream-500/60 uppercase tracking-wider
-                      ${alignStyles[column.align || 'left']}
-                      ${column.sticky ? 'sticky left-0 bg-charcoal-900/95 backdrop-blur-sm z-30' : ''}
+                      px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider
+                      sticky top-0 bg-[#1a1a1a] z-20
+                      ${isRankColumn ? 'text-center w-12' : alignStyles[column.align || 'left']}
+                      ${column.sticky ? 'sticky left-0 z-30' : ''}
                       ${column.headerClassName || ''}
                     `.trim()}
                     style={column.width ? { width: column.width, minWidth: column.width } : undefined}
                   >
                     {column.header}
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <TableRow<T>
-                  key={getRowKey(row, rowIndex)}
-                  row={row}
-                  rowIndex={rowIndex}
-                  columns={columns}
-                  onRowClick={onRowClick}
-                  zebraStripes={zebraStripes}
-                  rowHeight={rowHeight}
-                  isHighlighted={highlightRow ? highlightRow(row, rowIndex) : false}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Scroll hint gradient - indicates more content to the right */}
-        {showScrollHint && (
-          <div
-            className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none bg-gradient-to-l from-black/60 to-transparent"
-            aria-hidden="true"
-          />
-        )}
+                );
+              })}
+            </tr>
+          </thead>
+
+          {/* Body - Zebra striped */}
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <TableRow<T>
+                key={getRowKey(row, rowIndex)}
+                row={row}
+                rowIndex={rowIndex}
+                columns={columns}
+                onRowClick={onRowClick}
+                zebraStripes={zebraStripes}
+                isHighlighted={highlightRow ? highlightRow(row, rowIndex) : false}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {/* Scroll hint - subtle right edge fade */}
+      {canScrollRight && (
+        <div
+          className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent"
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 };
