@@ -918,13 +918,7 @@ const Dashboard = () => {
         onClick={() => setShowQuickStartGuide(true)}
         show={!primaryLeague || (activeCorps?.lineup && Object.keys(activeCorps.lineup).length < 8)}
       />
-    </>
-  );
-
-  return (
-    <GameShell>
-      {dashboardContent}
-    </GameShell>
+    </div>
   );
 };
 

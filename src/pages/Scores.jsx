@@ -610,7 +610,7 @@ const Scores = () => {
           activeTab={activeTab}
           onChange={setActiveTab}
         />
-      </header>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
@@ -634,39 +634,41 @@ const Scores = () => {
             />
           </div>
         ) : (
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === 'latest' && (
-              <LatestTab
-                shows={allShows}
-                userCorpsName={userCorpsName}
-                onShowClick={handleShowClick}
-              />
-            )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'latest' && (
+                <LatestTab
+                  shows={allShows}
+                  userCorpsName={userCorpsName}
+                  onShowClick={handleShowClick}
+                />
+              )}
 
-            {activeTab === 'standings' && (
-              <StandingsTab
-                aggregatedScores={aggregatedScores}
-                userCorpsName={userCorpsName}
-                onEntryClick={handleEntryClick}
-                isLoading={loading}
-              />
-            )}
+              {activeTab === 'standings' && (
+                <StandingsTab
+                  aggregatedScores={aggregatedScores}
+                  userCorpsName={userCorpsName}
+                  onEntryClick={handleEntryClick}
+                  isLoading={loading}
+                />
+              )}
 
-            {activeTab === 'history' && (
-              <HistoryTab
-                archivedSeasons={archivedSeasons}
-                onSeasonSelect={handleSeasonSelect}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      )}
+              {activeTab === 'history' && (
+                <HistoryTab
+                  archivedSeasons={archivedSeasons}
+                  onSeasonSelect={handleSeasonSelect}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </div>
 
       {/* Score Breakdown Modal */}
       <ScoreBreakdown
@@ -677,7 +679,7 @@ const Scores = () => {
         showInfo={selectedShowInfo}
         previousShowInfo={previousShowInfo}
       />
-    </GameShell>
+    </div>
   );
 };
 
