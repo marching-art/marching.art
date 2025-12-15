@@ -4,7 +4,7 @@
 // Wraps individual pages with error boundaries for graceful error handling
 // Usage: <PageErrorBoundary name="Dashboard"><Dashboard /></PageErrorBoundary>
 
-import React from 'react';
+import React, { startTransition } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -73,14 +73,14 @@ const PageErrorFallback: React.FC<PageErrorFallbackProps> = ({
             </button>
           )}
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => startTransition(() => navigate(-1))}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold bg-charcoal-700 text-cream-200 hover:bg-charcoal-600 transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
             Go Back
           </button>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => startTransition(() => navigate('/dashboard'))}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-cream-700 text-cream-300 hover:bg-cream-900/20 transition-all"
           >
             <Home className="w-5 h-5" />

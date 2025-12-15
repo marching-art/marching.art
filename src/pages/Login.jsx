@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
@@ -27,7 +27,9 @@ const Login = () => {
     try {
       await signIn(email, password);
       toast.success('Welcome back!');
-      navigate(from, { replace: true });
+      startTransition(() => {
+        navigate(from, { replace: true });
+      });
     } catch (err) {
       console.error('Login error:', err);
       
