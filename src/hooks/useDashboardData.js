@@ -6,6 +6,8 @@ import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { getBattlePassProgress } from '../firebase/functions';
 import { useSeason, getSeasonProgress } from './useSeason';
 import toast from 'react-hot-toast';
+import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
+import { formatSeasonName } from '../utils/season';
 
 /**
  * Custom hook that centralizes all dashboard data fetching and state management.
@@ -52,32 +54,6 @@ export const useDashboardData = () => {
   const activeCorps = (activeCorpsClass && corps) ? corps[activeCorpsClass] : null;
   const hasMultipleCorps = corps && Object.keys(corps).length > 1;
   const { currentWeek, currentDay } = seasonData ? getSeasonProgress(seasonData) : { currentWeek: 1, currentDay: 1 };
-
-  // Utility functions
-  const formatSeasonName = (name) => {
-    if (!name) return 'Loading season...';
-    return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  };
-
-  const getCorpsClassName = (classId) => {
-    const classNames = {
-      soundSport: 'SoundSport',
-      aClass: 'A Class',
-      open: 'Open Class',
-      world: 'World Class'
-    };
-    return classNames[classId] || classId;
-  };
-
-  const getCorpsClassColor = (classId) => {
-    const colors = {
-      soundSport: 'text-green-500 bg-green-500/10 border-green-500/30',
-      aClass: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
-      open: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
-      world: 'text-gold-500 bg-gold-500/10 border-gold-500/30'
-    };
-    return colors[classId] || 'text-cream-500 bg-cream-500/10 border-cream-500/30';
-  };
 
   // Load selected corps from localStorage on mount
   useEffect(() => {

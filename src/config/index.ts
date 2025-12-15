@@ -12,6 +12,32 @@
 // - VITE_FIREBASE_* : Firebase configuration
 
 // =============================================================================
+// PRODUCTION ENVIRONMENT VALIDATION
+// =============================================================================
+
+if (import.meta.env.MODE === 'production') {
+  const requiredEnvVars = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID',
+    'VITE_ADMIN_UIDS',
+  ] as const;
+
+  const missingVars = requiredEnvVars.filter(
+    (varName) => !import.meta.env[varName]
+  );
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variables in production: ${missingVars.join(', ')}`
+    );
+  }
+}
+
+// =============================================================================
 // APP CONFIGURATION
 // =============================================================================
 
@@ -49,11 +75,11 @@ export const AUTH_CONFIG = {
   /**
    * Admin user ID(s)
    * Can be a single UID or comma-separated list
-   * Falls back to hardcoded value if not set (for backwards compatibility)
+   * Must be set via VITE_ADMIN_UIDS environment variable
    */
-  adminUids: (import.meta.env.VITE_ADMIN_UIDS || 'o8vfRCOevjTKBY0k2dISlpiYiIH2')
-    .split(',')
-    .map((uid: string) => uid.trim()),
+  adminUids: (import.meta.env.VITE_ADMIN_UIDS?.split(',') || [])
+    .map((uid: string) => uid.trim())
+    .filter((uid: string) => uid.length > 0),
 
   /** Check if a UID is an admin */
   isAdminUid: (uid: string): boolean => {
@@ -66,13 +92,13 @@ export const AUTH_CONFIG = {
 // =============================================================================
 
 export const FIREBASE_CONFIG = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyA4Qhjpp2MVwo0h0t2dNtznSIDMjlKQ5JE',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'marching-art.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'marching-art',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'marching-art.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '278086562126',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:278086562126:web:f7737ee897774c3d9a6e1f',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-H0KE8GJS7M',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 } as const;
 
 // =============================================================================

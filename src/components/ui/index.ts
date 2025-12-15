@@ -18,14 +18,22 @@ export {
 export {
   Card,
   CardHeader,
+  CardBody,
   CardContent,
   CardFooter,
   type CardProps,
   type CardHeaderProps,
+  type CardBodyProps,
   type CardContentProps,
   type CardFooterProps,
-  type CardVariant,
 } from './Card';
+
+// StatCard Components
+export {
+  StatCard,
+  type StatCardProps,
+  type TrendDirection,
+} from './StatCard';
 
 // Modal Components
 export {
@@ -111,3 +119,11 @@ export {
   type ErrorFallbackProps,
   type FeatureErrorBoundaryProps,
 } from './ErrorBoundary';
+
+// DataTable Components
+export {
+  DataTable,
+  type DataTableProps,
+  type DataTableColumn,
+  type ColumnAlign,
+} from './DataTable';

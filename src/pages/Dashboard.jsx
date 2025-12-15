@@ -1,11 +1,11 @@
 // src/pages/Dashboard.jsx
-// Simplified Fantasy Dashboard - Focus on Corps, Scores, League
+// Data-dense Dashboard focused on quick stats and actionable information
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, Eye, Sparkles, X, Crown, Lock, Unlock, TrendingUp
+  Music, Sparkles, X, Crown
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -31,7 +31,11 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { getNextClassProgress, XP_SOURCES } from '../utils/captionPricing';
+import GameShell from '../components/Layout/GameShell';
+import { StatCard } from '../components/ui/StatCard';
+import { DataTable } from '../components/ui/DataTable';
+import { Card } from '../components/ui/Card';
+import { TableSkeleton } from '../components/Skeleton';
 
 // Caption definitions for lineup display
 const CAPTIONS = [
@@ -66,17 +70,45 @@ const parseLineupValue = (value) => {
   };
 };
 
-// Animation variants
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
+// Standings table columns
+const standingsColumns = [
+  {
+    key: 'rank',
+    header: '#',
+    width: '50px',
+    align: 'center',
+    sticky: true,
+    render: (row) => (
+      <span className="font-data font-bold text-cream-500/80">{row.rank}</span>
+    ),
+  },
+  {
+    key: 'corpsName',
+    header: 'Corps',
+    sticky: true,
+    render: (row) => (
+      <span className="font-semibold text-cream truncate block max-w-[120px] md:max-w-none">
+        {row.corpsName || row.corps}
+      </span>
+    ),
+  },
+  {
+    key: 'score',
+    header: 'Score',
+    align: 'right',
+    width: '80px',
+    render: (row) => (
+      <span className="font-data font-bold text-gold-400 tabular-nums">
+        {typeof row.score === 'number' ? row.score.toFixed(2) : row.score}
+      </span>
+    ),
+  },
+];
 
-// Simplified Dashboard Component
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { allShows } = useScoresData();
+  const { aggregatedScores, loading: scoresLoading } = useScoresData();
   const { data: myLeagues } = useMyLeagues(user?.uid);
 
   // Modal states
@@ -104,9 +136,7 @@ const Dashboard = () => {
     activeCorpsClass,
     hasMultipleCorps,
     seasonData,
-    weeksRemaining,
     currentWeek,
-    currentDay,
     formatSeasonName,
     engagementData,
     showSeasonSetupWizard,
@@ -134,10 +164,9 @@ const Dashboard = () => {
     }
   }, [profile, activeCorps, user?.uid]);
 
-  // Show onboarding tour on first dashboard visit (after onboarding completion)
+  // Show onboarding tour on first dashboard visit
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps && !showMorningReport) {
-      // Delay tour slightly to let UI settle
       const timer = setTimeout(() => {
         setShowOnboardingTour(true);
       }, 500);
@@ -168,32 +197,17 @@ const Dashboard = () => {
     if (newAchievement) setShowAchievementModal(true);
   }, [newAchievement]);
 
-  // Get recent scores for active corps
-  const getRecentScores = () => {
-    if (!allShows || !activeCorps) return [];
-    const corpsName = activeCorps.corpsName || activeCorps.name;
-
-    return allShows
-      .flatMap(show =>
-        show.scores
-          .filter(s => s.corpsName === corpsName || s.corps === corpsName)
-          .map(s => ({
-            eventName: show.eventName,
-            date: show.date,
-            totalScore: s.totalScore || s.score,
-            geScore: s.geScore,
-            visualScore: s.visualScore,
-            musicScore: s.musicScore,
-          }))
-      )
-      .slice(0, 3);
-  };
-
   // Get upcoming shows for this week
   const getThisWeekShows = () => {
     if (!activeCorps?.selectedShows) return [];
     const weekShows = activeCorps.selectedShows[`week${currentWeek}`] || [];
     return weekShows.slice(0, 3);
+  };
+
+  // Get next show
+  const getNextShow = () => {
+    const shows = getThisWeekShows();
+    return shows.length > 0 ? shows[0] : null;
   };
 
   // Get user's primary league
@@ -310,18 +324,24 @@ const Dashboard = () => {
     setShowCaptionSelection(false);
   };
 
-  const recentScores = getRecentScores();
   const thisWeekShows = getThisWeekShows();
+  const nextShow = getNextShow();
   const primaryLeague = getPrimaryLeague();
   const lineup = activeCorps?.lineup || {};
   const lineupCount = Object.keys(lineup).length;
 
-  // Calculate next class unlock progress
-  const nextClassProgress = getNextClassProgress(
-    profile?.xp || 0,
-    profile?.unlockedClasses || ['soundSport'],
-    profile?.corpsCoin || 0
-  );
+  // Get top 5 standings
+  const standingsPreview = aggregatedScores.slice(0, 5);
+
+  // Calculate trend for rank
+  const getRankTrend = () => {
+    if (!activeCorps?.rankHistory || activeCorps.rankHistory.length < 2) return undefined;
+    const prev = activeCorps.rankHistory[activeCorps.rankHistory.length - 2];
+    const curr = activeCorps.rank;
+    if (prev > curr) return 'up';
+    if (prev < curr) return 'down';
+    return 'neutral';
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-charcoal-950 p-4 md:p-6">
@@ -338,18 +358,20 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Simple Header */}
-      <header className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-display font-bold text-cream">Dashboard</h1>
-          <span className="text-sm text-cream/50">
-            {formatSeasonName(seasonData?.name)} - Week {currentWeek}
+      {/* Compact Header */}
+      <header className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-display font-bold text-cream">Dashboard</h1>
+          <span className="text-xs text-cream-500/50 hidden sm:inline">
+            {formatSeasonName(seasonData?.name)} • Week {currentWeek}
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded-lg">
-            <Coins className="w-4 h-4 text-gold-400" />
-            <span className="text-sm font-bold text-gold-400">{(profile?.corpsCoin || 0).toLocaleString()}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-gold-500/10 border border-gold-500/20 rounded">
+            <Coins className="w-3.5 h-3.5 text-gold-400" />
+            <span className="text-xs font-bold text-gold-400 tabular-nums">
+              {(profile?.corpsCoin || 0).toLocaleString()}
+            </span>
           </div>
         </div>
       </header>
@@ -456,17 +478,17 @@ const Dashboard = () => {
         <div className="space-y-6">
           {/* Corps Switcher (if multiple corps) */}
           {hasMultipleCorps && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
               {Object.entries(corps)
                 .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
                 .map(([classId, corpsData]) => (
                   <button
                     key={classId}
                     onClick={() => handleCorpsSwitch(classId)}
-                    className={`px-4 py-2 rounded-lg text-sm font-display font-bold uppercase tracking-wide transition-all ${
+                    className={`px-3 py-1.5 rounded text-xs font-display font-bold uppercase tracking-wide transition-all whitespace-nowrap ${
                       activeCorpsClass === classId
                         ? `${classColors[classId]} shadow-lg`
-                        : 'bg-charcoal-800 text-cream/60 hover:text-cream border border-white/10'
+                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream border border-white/10'
                     }`}
                   >
                     {(corpsData.corpsName || corpsData.name || '').slice(0, 15)}
@@ -475,331 +497,260 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Top Row: Corps Hero + This Week */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* YOUR CORPS - Hero Card */}
-            <motion.div
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              data-tour="corps-card"
-              className="lg:col-span-2 bg-charcoal-900 border border-white/10 rounded-xl p-6"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-2.5 py-1 rounded text-xs font-display font-bold uppercase tracking-widest ${classColors[activeCorpsClass]}`}>
-                      {getCorpsClassName(activeCorpsClass)}
-                    </span>
-                    {activeCorps.rank && activeCorps.rank <= 10 && (
-                      <span className="flex items-center gap-1 px-2 py-1 rounded bg-gold-500/20 text-gold-400 text-xs font-bold">
-                        <Crown size={12} /> Top 10
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="text-3xl font-display font-black text-cream uppercase tracking-tight">
-                    {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
+          {/* QUICK LOOK - StatCards Row */}
+          <section aria-label="Quick Stats">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard
+                label="Rank"
+                value={activeCorps.rank ? `#${activeCorps.rank}` : '-'}
+                trend={getRankTrend()}
+                trendValue={activeCorps.rankChange ? Math.abs(activeCorps.rankChange).toString() : undefined}
+              />
+              <StatCard
+                label="Season Score"
+                value={activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+              />
+              <StatCard
+                label="Next Show"
+                value={nextShow ? (nextShow.eventName || nextShow.name || 'Show').slice(0, 12) : 'None'}
+              />
+            </div>
+          </section>
+
+          {/* MIDDLE ROW - My Corps + Standings */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* MY CORPS Card */}
+            <Card data-tour="corps-card">
+              <Card.Header className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
+                    My Corps
                   </h2>
-                  {activeCorps.location && (
-                    <p className="text-sm text-cream/50 mt-1">{activeCorps.location}</p>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase ${classColors[activeCorpsClass]}`}>
+                    {getCorpsClassName(activeCorpsClass)}
+                  </span>
+                  {activeCorps.rank && activeCorps.rank <= 10 && (
+                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[10px] font-bold">
+                      <Crown size={10} /> Top 10
+                    </span>
                   )}
                 </div>
                 <button
                   onClick={() => setShowEditCorps(true)}
-                  className="p-2 rounded-lg hover:bg-white/10 text-cream/40 hover:text-cream transition-colors"
+                  className="p-1.5 rounded hover:bg-white/10 text-cream-500/40 hover:text-cream transition-colors"
+                  aria-label="Edit corps"
                 >
-                  <Edit className="w-5 h-5" />
+                  <Edit className="w-4 h-4" />
                 </button>
-              </div>
+              </Card.Header>
 
-              {/* Season Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-white/10">
-                <div>
-                  <div className="text-2xl font-data font-bold text-gold-400">
-                    {activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
+              <Card.Body className="space-y-3">
+                {/* Corps Name */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-display font-black text-cream uppercase tracking-tight">
+                    {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
+                  </h3>
+                  {typeof activeCorps?.showConcept === 'object' && activeCorps.showConcept.theme && (
+                    <button
+                      onClick={() => setShowSynergyPanel(true)}
+                      className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-400 hover:bg-purple-500/20 transition-colors"
+                      aria-label={`View show concept: ${activeCorps.showConcept.theme}`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {activeCorps.showConcept.theme}
+                    </button>
+                  )}
+                </div>
+
+                {/* Lineup Summary */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-cream-500/50">Lineup</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-data font-bold ${lineupCount === 8 ? 'text-green-400' : 'text-gold-400'}`}>
+                      {lineupCount}/8
+                    </span>
+                    <button
+                      onClick={() => setShowCaptionSelection(true)}
+                      className="text-xs text-gold-400 hover:text-gold-300 transition-colors"
+                      aria-label="Edit lineup"
+                    >
+                      Edit
+                    </button>
                   </div>
-                  <div className="text-xs text-cream/50 uppercase">Season Score</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-data font-bold text-purple-400">
-                    #{activeCorps.rank || '-'}
+
+                {/* Compact Lineup Grid */}
+                {lineupCount > 0 ? (
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {CAPTIONS.map((caption) => {
+                      const value = lineup[caption.id];
+                      const parsed = parseLineupValue(value);
+                      const categoryColors = {
+                        ge: 'border-gold-500/30 bg-gold-500/5 text-gold-400',
+                        vis: 'border-blue-500/30 bg-blue-500/5 text-blue-400',
+                        mus: 'border-purple-500/30 bg-purple-500/5 text-purple-400',
+                      };
+
+                      return (
+                        <div
+                          key={caption.id}
+                          className={`p-1.5 rounded border text-center ${categoryColors[caption.category]}`}
+                          title={parsed ? `${parsed.name} '${parsed.year?.slice(-2) || '??'}` : 'Not set'}
+                        >
+                          <div className="text-[10px] font-bold uppercase">{caption.name}</div>
+                          {parsed ? (
+                            <div className="text-[9px] text-cream-500/50 truncate">{parsed.name.slice(0, 8)}</div>
+                          ) : (
+                            <div className="text-[9px] text-cream-500/30">-</div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="text-xs text-cream/50 uppercase">Rank</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-data font-bold text-blue-400">
-                    {activeCorps?.selectedShows?.[`week${currentWeek}`]?.length || 0}
-                  </div>
-                  <div className="text-xs text-cream/50 uppercase">Shows This Week</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-data font-bold text-green-400">
-                    {lineupCount}/8
-                  </div>
-                  <div className="text-xs text-cream/50 uppercase">Lineup Set</div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* THIS WEEK Card */}
-            <motion.div
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              data-tour="schedule"
-              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">This Week</h3>
-                <Calendar className="w-4 h-4 text-purple-400" />
-              </div>
-
-              {thisWeekShows.length > 0 ? (
-                <div className="space-y-3">
-                  {thisWeekShows.map((show, idx) => (
-                    <div key={idx} className="p-3 bg-charcoal-800 rounded-lg">
-                      <div className="text-sm font-semibold text-cream">{show.eventName || show.name || 'Show'}</div>
-                      <div className="text-xs text-cream/50">{show.location || show.date || ''}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <Calendar className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                  <p className="text-sm text-cream/50">No shows selected</p>
-                </div>
-              )}
-
-              <Link
-                to="/schedule"
-                className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-sm font-semibold hover:bg-purple-500/20 transition-colors"
-              >
-                View Schedule <ChevronRight className="w-4 h-4" />
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* YOUR LINEUP Section */}
-          <motion.div
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            data-tour="lineup"
-            className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">Your Lineup</h3>
-                {typeof activeCorps?.showConcept === 'object' && activeCorps.showConcept.theme && (
+                ) : (
                   <button
-                    onClick={() => setShowSynergyPanel(true)}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400 hover:bg-purple-500/20 transition-colors"
+                    onClick={() => setShowCaptionSelection(true)}
+                    className="w-full py-3 text-center bg-gold-500/10 border border-gold-500/20 rounded text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
                   >
-                    <Sparkles className="w-3 h-3" />
-                    {activeCorps.showConcept.theme}
+                    <Music className="w-4 h-4 inline mr-2" />
+                    Build Lineup
                   </button>
                 )}
-              </div>
-              <button
-                onClick={() => setShowCaptionSelection(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gold-500/10 border border-gold-500/20 rounded-lg text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
-              >
-                <Edit className="w-4 h-4" /> Edit
-              </button>
-            </div>
 
-            {lineupCount > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {CAPTIONS.map((caption) => {
-                  const value = lineup[caption.id];
-                  const parsed = parseLineupValue(value);
-                  const categoryColors = {
-                    ge: 'border-gold-500/30 bg-gold-500/5',
-                    vis: 'border-blue-500/30 bg-blue-500/5',
-                    mus: 'border-purple-500/30 bg-purple-500/5',
-                  };
-                  const textColors = {
-                    ge: 'text-gold-400',
-                    vis: 'text-blue-400',
-                    mus: 'text-purple-400',
-                  };
-
-                  return (
-                    <div
-                      key={caption.id}
-                      className={`p-3 rounded-lg border ${categoryColors[caption.category]}`}
-                    >
-                      <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${textColors[caption.category]}`}>
-                        {caption.name}
-                      </div>
-                      {parsed ? (
-                        <>
-                          <div className="text-sm font-semibold text-cream truncate">
-                            {parsed.name}
-                          </div>
-                          <div className="text-xs text-cream/50">
-                            '{parsed.year?.slice(-2) || '??'}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-sm text-cream/30">Not set</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Music className="w-10 h-10 text-cream/20 mx-auto mb-3" />
-                <p className="text-sm text-cream/50 mb-4">No lineup configured yet</p>
-                <button
-                  onClick={() => setShowCaptionSelection(true)}
-                  className="px-4 py-2 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors"
-                >
-                  Build Lineup
-                </button>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Bottom Row: League + Recent Scores */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* LEAGUE Card */}
-            <motion.div
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              data-tour="league"
-              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">League</h3>
-                <Users className="w-4 h-4 text-blue-400" />
-              </div>
-
-              {primaryLeague ? (
-                <div>
-                  <h4 className="text-lg font-display font-bold text-cream mb-2">{primaryLeague.name}</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-xl font-data font-bold text-blue-400">
-                        #{primaryLeague.userRank || '-'}
-                      </div>
-                      <div className="text-xs text-cream/50">Your Position</div>
-                    </div>
-                    <div>
-                      <div className="text-xl font-data font-bold text-cream/60">
-                        {primaryLeague.memberCount || 0}
-                      </div>
-                      <div className="text-xs text-cream/50">Members</div>
-                    </div>
-                  </div>
+                {/* League Info */}
+                {primaryLeague ? (
                   <Link
                     to="/leagues"
-                    className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm font-semibold hover:bg-blue-500/20 transition-colors"
+                    className="flex items-center justify-between p-2 bg-blue-500/5 border border-blue-500/20 rounded hover:bg-blue-500/10 transition-colors"
                   >
-                    View League <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  {/* Pulsing indicator for new users */}
-                  <div className="relative w-14 h-14 mx-auto mb-3">
-                    <div className="absolute inset-0 rounded-full bg-gold-500/20 animate-ping" />
-                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-gold-500/20 to-blue-500/20 flex items-center justify-center border border-gold-500/30">
-                      <Users className="w-7 h-7 text-gold-400" />
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm text-cream">{primaryLeague.name}</span>
                     </div>
-                  </div>
-                  <h4 className="font-display font-bold text-gold-400 text-lg mb-1">Join a League!</h4>
-                  <p className="text-sm text-cream/60 mb-4">
-                    Compete with friends and track your rankings together
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    <Link
-                      to="/leagues?action=create"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors shadow-[0_0_15px_rgba(234,179,8,0.3)]"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      Create a League
-                    </Link>
-                    <Link
-                      to="/leagues"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm font-semibold hover:bg-blue-500/20 transition-colors"
-                    >
-                      Browse Public Leagues <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+                    <span className="text-xs font-data font-bold text-blue-400">
+                      #{primaryLeague.userRank || '-'}
+                    </span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/leagues"
+                    className="flex flex-col items-center gap-1 p-3 bg-blue-500/5 border border-dashed border-blue-500/30 rounded hover:bg-blue-500/10 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 text-blue-400">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm font-semibold">No Active Leagues</span>
+                    </div>
+                    <span className="text-xs text-cream-500/50 group-hover:text-blue-400/70 transition-colors">
+                      Join a league to compete with other directors!
+                    </span>
+                  </Link>
+                )}
+              </Card.Body>
+            </Card>
 
-            {/* RECENT SCORES Card */}
-            <motion.div
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              className="bg-charcoal-900 border border-white/10 rounded-xl p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-display font-bold text-cream/70 uppercase tracking-wider">Recent Scores</h3>
-                <Trophy className="w-4 h-4 text-gold-400" />
+            {/* STANDINGS PREVIEW */}
+            <div data-tour="standings">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
+                  Standings
+                </h2>
+                <Link
+                  to="/leaderboard"
+                  className="text-xs text-gold-400 hover:text-gold-300 flex items-center gap-1 transition-colors"
+                >
+                  View All <ChevronRight className="w-3 h-3" />
+                </Link>
               </div>
 
-              {recentScores.length > 0 ? (
-                <div className="space-y-3">
-                  {recentScores.map((score, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-charcoal-800 rounded-lg">
-                      <div>
-                        <div className="text-sm font-semibold text-cream">{score.eventName}</div>
-                        <div className="text-xs text-cream/50">{score.date}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-data font-bold text-gold-400">
-                          {typeof score.totalScore === 'number' ? score.totalScore.toFixed(2) : score.totalScore}
-                        </div>
-                        {(score.geScore || score.visualScore || score.musicScore) && (
-                          <div className="flex items-center gap-2 text-xs text-cream/40">
-                            <span className="text-gold-400/60">GE:{score.geScore?.toFixed(0) || '-'}</span>
-                            <span className="text-blue-400/60">VIS:{score.visualScore?.toFixed(0) || '-'}</span>
-                            <span className="text-purple-400/60">MUS:{score.musicScore?.toFixed(0) || '-'}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {scoresLoading ? (
+                <TableSkeleton rows={5} columns={3} />
               ) : (
-                <div className="text-center py-6">
-                  <Trophy className="w-8 h-8 text-cream/20 mx-auto mb-2" />
-                  <p className="text-sm text-cream/50">No scores yet</p>
+                <div className="overflow-x-auto">
+                  <DataTable
+                    columns={standingsColumns}
+                    data={standingsPreview}
+                    getRowKey={(row) => row.corpsName || row.corps}
+                    rowHeight="compact"
+                    zebraStripes={true}
+                    emptyState={
+                      <div className="text-center py-6">
+                        <Trophy className="w-8 h-8 text-cream-500/20 mx-auto mb-2" />
+                        <p className="text-sm text-cream-500/50">No standings yet</p>
+                      </div>
+                    }
+                  />
                 </div>
               )}
-
-              <Link
-                to="/leaderboard"
-                className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-gold-500/10 border border-gold-500/20 rounded-lg text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
-              >
-                View Leaderboard <ChevronRight className="w-4 h-4" />
-              </Link>
-            </motion.div>
+            </div>
           </div>
+
+          {/* BOTTOM - Upcoming Shows */}
+          <section data-tour="schedule" aria-label="Upcoming Shows">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
+                This Week's Shows
+              </h2>
+              <Link
+                to="/schedule"
+                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+              >
+                Schedule <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {thisWeekShows.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {thisWeekShows.map((show, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 bg-charcoal-900 border border-charcoal-700 rounded-md"
+                  >
+                    <div className="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-cream truncate">
+                        {show.eventName || show.name || 'Show'}
+                      </div>
+                      <div className="text-xs text-cream-500/50 truncate">
+                        {show.location || show.date || ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 bg-charcoal-900 border border-charcoal-700 rounded-md">
+                <Calendar className="w-8 h-8 text-cream-500/20 mx-auto mb-2" />
+                <p className="text-sm text-cream-500/50 mb-3">No shows selected for this week</p>
+                <Link
+                  to="/schedule"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded text-purple-400 text-sm font-semibold hover:bg-purple-500/20 transition-colors"
+                >
+                  Select Shows <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </section>
         </div>
       ) : (
         /* No Corps State */
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center p-8 bg-charcoal-900 border border-white/10 rounded-xl max-w-md">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gold-500/10 rounded-full flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-gold-400" />
-            </div>
-            <h2 className="text-2xl font-display font-bold text-cream mb-2">Welcome to Marching.Art</h2>
-            <p className="text-sm text-cream/50 mb-6">Create your first fantasy corps to begin your journey!</p>
-            <button
-              onClick={() => setShowRegistration(true)}
-              className="px-6 py-3 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold uppercase tracking-wide hover:bg-gold-400 transition-colors"
-            >
-              Register Corps
-            </button>
-          </div>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Card className="max-w-md text-center">
+            <Card.Body className="py-8">
+              <div className="w-14 h-14 mx-auto mb-4 bg-gold-500/10 rounded-full flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-gold-400" />
+              </div>
+              <h2 className="text-xl font-display font-bold text-cream mb-2">Start Your Season</h2>
+              <p className="text-sm text-cream-500/50 mb-6">Create your first fantasy corps to begin competing!</p>
+              <button
+                onClick={() => setShowRegistration(true)}
+                className="px-5 py-2.5 bg-gold-500 text-charcoal-900 rounded font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors"
+              >
+                Register Corps
+              </button>
+            </Card.Body>
+          </Card>
         </div>
       )}
 
@@ -823,8 +774,12 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-display font-bold text-cream">Show Concept</h2>
-                <button onClick={() => setShowSynergyPanel(false)} className="p-2 hover:bg-white/10 rounded-lg">
-                  <X className="w-5 h-5 text-cream/60" />
+                <button
+                  onClick={() => setShowSynergyPanel(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg"
+                  aria-label="Close show concept panel"
+                >
+                  <X className="w-5 h-5 text-cream-500/60" />
                 </button>
               </div>
               <div className="p-4">
@@ -958,12 +913,18 @@ const Dashboard = () => {
         ]}
       />
 
-      {/* Quick Start Button (floating) - show for new users */}
+      {/* Quick Start Button (floating) */}
       <QuickStartButton
         onClick={() => setShowQuickStartGuide(true)}
         show={!primaryLeague || (activeCorps?.lineup && Object.keys(activeCorps.lineup).length < 8)}
       />
-    </div>
+    </>
+  );
+
+  return (
+    <GameShell>
+      {dashboardContent}
+    </GameShell>
   );
 };
 

@@ -1,12 +1,9 @@
 // src/pages/Scores.jsx
-// Redesigned Scores page with clear hierarchy:
-// 1. Your Season status at top
-// 2. Latest Show with your results
-// 3. Leaderboard below
+// Redesigned Scores page with underline tabs: Latest, Standings, History
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Trophy, Archive } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, MapPin, ChevronRight, Archive, Clock } from 'lucide-react';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -15,16 +12,440 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
 
 // Components
-import YourSeasonCard from '../components/Scores/YourSeasonCard';
-import LatestShowCard from '../components/Scores/LatestShowCard';
-import Leaderboard from '../components/Scores/Leaderboard';
+import GameShell from '../components/Layout/GameShell';
+import { Card } from '../components/ui/Card';
+import { DataTable } from '../components/ui/DataTable';
 import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
 import { SystemLoader, ConsoleEmptyState } from '../components/ui/CommandConsole';
+
+// =============================================================================
+// UNDERLINE TABS COMPONENT
+// =============================================================================
+
+const UnderlineTabs = ({ tabs, activeTab, onChange, className = '' }) => {
+  return (
+    <div className={`border-b border-cream-500/10 ${className}`}>
+      <nav className="flex gap-6" aria-label="Score tabs" role="tablist">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            id={`tab-${tab.id}`}
+            onClick={() => onChange(tab.id)}
+            className={`
+              relative pb-3 text-sm font-display font-semibold uppercase tracking-wide
+              transition-colors duration-200
+              ${activeTab === tab.id
+                ? 'text-cream-100'
+                : 'text-cream-500/50 hover:text-cream-500/80'
+              }
+            `}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
+            role="tab"
+          >
+            <span className="flex items-center gap-2">
+              {tab.icon}
+              {tab.label}
+            </span>
+            {activeTab === tab.id && (
+              <motion.div
+                layoutId="activeTabUnderline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold-500"
+                initial={false}
+                transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }}
+              />
+            )}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+};
+
+// =============================================================================
+// TREND INDICATOR COMPONENT
+// =============================================================================
+
+const TrendIndicator = memo(({ trend, change }) => {
+  if (trend === 'up' || change > 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-green-400 text-sm font-medium">
+        <TrendingUp className="w-3.5 h-3.5" />
+        <span className="text-xs">{change ? Math.abs(change) : ''}</span>
+      </span>
+    );
+  }
+  if (trend === 'down' || change < 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-red-400 text-sm font-medium">
+        <TrendingDown className="w-3.5 h-3.5" />
+        <span className="text-xs">{change ? Math.abs(change) : ''}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center text-cream-500/40 text-sm">
+      <Minus className="w-3.5 h-3.5" />
+    </span>
+  );
+});
+
+TrendIndicator.displayName = 'TrendIndicator';
+
+// =============================================================================
+// RANK BADGE COMPONENT
+// =============================================================================
+
+const RankBadge = memo(({ rank }) => {
+  const getStyle = () => {
+    if (rank === 1) return 'bg-gold-500 text-charcoal-900';
+    if (rank === 2) return 'bg-gray-400 text-charcoal-900';
+    if (rank === 3) return 'bg-amber-600 text-charcoal-900';
+    return 'bg-charcoal-800 text-cream-400';
+  };
+
+  return (
+    <div className={`w-7 h-7 rounded flex items-center justify-center font-display font-bold text-xs ${getStyle()}`}>
+      {rank}
+    </div>
+  );
+});
+
+RankBadge.displayName = 'RankBadge';
+
+// =============================================================================
+// MINI RESULTS TABLE (for Latest tab cards)
+// =============================================================================
+
+const MiniResultsTable = memo(({ scores, userCorpsName }) => {
+  const top3 = scores.slice(0, 3);
+
+  return (
+    <div className="space-y-1">
+      {top3.map((score, idx) => {
+        const corpsName = score.corps || score.corpsName;
+        const isUserCorps = userCorpsName && corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+
+        return (
+          <div
+            key={`${corpsName}-${idx}`}
+            className={`flex items-center gap-3 px-2 py-1.5 rounded ${
+              isUserCorps ? 'bg-gold-500/10 border border-gold-500/20' : ''
+            }`}
+          >
+            <RankBadge rank={idx + 1} />
+            <span className={`flex-1 text-sm truncate ${
+              isUserCorps ? 'text-gold-400 font-semibold' : 'text-cream-300'
+            }`}>
+              {corpsName}
+            </span>
+            <span className="font-mono text-sm font-bold text-cream-100 tabular-nums">
+              {(score.score || score.totalScore || 0).toFixed(2)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+MiniResultsTable.displayName = 'MiniResultsTable';
+
+// =============================================================================
+// SHOW CARD COMPONENT (for Latest tab)
+// =============================================================================
+
+const ShowResultCard = memo(({ show, userCorpsName, onClick }) => {
+  return (
+    <Card hoverable onClick={() => onClick?.(show)}>
+      <Card.Header className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+            <Trophy className="w-4 h-4 text-purple-400" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-display font-bold text-cream-100 uppercase tracking-wide truncate">
+              {show.eventName}
+            </h3>
+            <div className="flex items-center gap-2 text-xs text-cream-500/50">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {show.date}
+              </span>
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {show.location}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-cream-500/30 flex-shrink-0" />
+      </Card.Header>
+
+      <Card.Body>
+        {show.scores && show.scores.length > 0 ? (
+          <>
+            <MiniResultsTable scores={show.scores} userCorpsName={userCorpsName} />
+            {show.scores.length > 3 && (
+              <p className="mt-2 text-xs text-cream-500/40 text-center">
+                +{show.scores.length - 3} more corps
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-cream-500/50 text-center py-4">No results yet</p>
+        )}
+      </Card.Body>
+    </Card>
+  );
+});
+
+ShowResultCard.displayName = 'ShowResultCard';
+
+// =============================================================================
+// STANDINGS TABLE COLUMNS
+// =============================================================================
+
+const createStandingsColumns = (onViewDetails) => [
+  {
+    key: 'rank',
+    header: '#',
+    width: '50px',
+    align: 'center',
+    sticky: true,
+    render: (row) => <RankBadge rank={row.rank} />,
+  },
+  {
+    key: 'corps',
+    header: 'Corps',
+    sticky: true,
+    render: (row) => (
+      <span className="font-semibold text-cream truncate block max-w-[150px] md:max-w-none">
+        {row.corpsName || row.corps}
+      </span>
+    ),
+  },
+  {
+    key: 'score',
+    header: 'Score',
+    align: 'right',
+    width: '90px',
+    render: (row) => (
+      <span className="font-mono font-bold text-gold-400 tabular-nums">
+        {typeof row.score === 'number' ? row.score.toFixed(2) : row.score}
+      </span>
+    ),
+  },
+  {
+    key: 'trend',
+    header: 'Change',
+    align: 'center',
+    width: '70px',
+    render: (row) => (
+      <TrendIndicator
+        trend={row.trend?.trend}
+        change={row.rankChange || row.trend?.direction}
+      />
+    ),
+  },
+  {
+    key: 'director',
+    header: 'Director',
+    width: '120px',
+    cellClassName: 'hidden md:table-cell',
+    headerClassName: 'hidden md:table-cell',
+    render: (row) => (
+      <span className="text-cream-500/70 text-sm truncate block max-w-[100px]">
+        {row.director || '-'}
+      </span>
+    ),
+  },
+];
+
+// =============================================================================
+// MEMOIZED STANDINGS TABLE
+// =============================================================================
+
+const StandingsTable = memo(({
+  data,
+  userCorpsName,
+  onRowClick,
+  isLoading
+}) => {
+  const columns = useMemo(() => createStandingsColumns(onRowClick), [onRowClick]);
+
+  const highlightRow = useCallback((row) => {
+    const corpsName = row.corps || row.corpsName;
+    return userCorpsName && corpsName?.toLowerCase() === userCorpsName.toLowerCase();
+  }, [userCorpsName]);
+
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      getRowKey={(row) => row.corpsName || row.corps}
+      onRowClick={onRowClick}
+      isLoading={isLoading}
+      skeletonRows={10}
+      zebraStripes={true}
+      rowHeight="default"
+      maxHeight="600px"
+      highlightRow={highlightRow}
+      emptyState={
+        <div className="text-center py-12">
+          <Trophy className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
+          <p className="text-cream-500/50 text-sm">No standings available yet</p>
+        </div>
+      }
+    />
+  );
+});
+
+StandingsTable.displayName = 'StandingsTable';
+
+// =============================================================================
+// LATEST TAB CONTENT
+// =============================================================================
+
+const LatestTab = memo(({ shows, userCorpsName, onShowClick }) => {
+  if (!shows || shows.length === 0) {
+    return (
+      <div
+        role="tabpanel"
+        id="tabpanel-latest"
+        aria-labelledby="tab-latest"
+        className="flex items-center justify-center py-16"
+      >
+        <div className="text-center">
+          <Calendar className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
+          <p className="text-cream-500/50 text-sm">No recent shows</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="tabpanel"
+      id="tabpanel-latest"
+      aria-labelledby="tab-latest"
+      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+    >
+      {shows.slice(0, 6).map((show, idx) => (
+        <motion.div
+          key={`${show.eventName}-${idx}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.05 }}
+        >
+          <ShowResultCard
+            show={show}
+            userCorpsName={userCorpsName}
+            onClick={onShowClick}
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+});
+
+LatestTab.displayName = 'LatestTab';
+
+// =============================================================================
+// STANDINGS TAB CONTENT
+// =============================================================================
+
+const StandingsTab = memo(({ aggregatedScores, userCorpsName, onEntryClick, isLoading }) => {
+  return (
+    <div
+      role="tabpanel"
+      id="tabpanel-standings"
+      aria-labelledby="tab-standings"
+    >
+      <StandingsTable
+        data={aggregatedScores}
+        userCorpsName={userCorpsName}
+        onRowClick={onEntryClick}
+        isLoading={isLoading}
+      />
+    </div>
+  );
+});
+
+StandingsTab.displayName = 'StandingsTab';
+
+// =============================================================================
+// HISTORY TAB CONTENT
+// =============================================================================
+
+const HistoryTab = memo(({ archivedSeasons, onSeasonSelect }) => {
+  if (!archivedSeasons || archivedSeasons.length === 0) {
+    return (
+      <div
+        role="tabpanel"
+        id="tabpanel-history"
+        aria-labelledby="tab-history"
+        className="flex items-center justify-center py-16"
+      >
+        <div className="text-center">
+          <Archive className="w-12 h-12 text-cream-500/20 mx-auto mb-3" />
+          <p className="text-cream-500/50 text-sm">No archived seasons yet</p>
+          <p className="text-cream-500/30 text-xs mt-1">Past season data will appear here</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="tabpanel"
+      id="tabpanel-history"
+      aria-labelledby="tab-history"
+      className="space-y-3"
+    >
+      {archivedSeasons.map((season) => (
+        <Card
+          key={season.id}
+          hoverable
+          pressable
+          onClick={() => onSeasonSelect?.(season.id)}
+          className="cursor-pointer"
+        >
+          <Card.Body className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-amber-500/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-display font-bold text-cream-100 uppercase">
+                  {season.seasonName}
+                </h3>
+                <p className="text-xs text-cream-500/50">
+                  {season.archivedAt?.toLocaleDateString?.() || 'Archived'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-cream-500/30" />
+          </Card.Body>
+        </Card>
+      ))}
+    </div>
+  );
+});
+
+HistoryTab.displayName = 'HistoryTab';
+
+// =============================================================================
+// MAIN SCORES COMPONENT
+// =============================================================================
 
 const Scores = () => {
   const { user } = useAuth();
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
+
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('latest');
 
   // Score breakdown modal state
   const [breakdownOpen, setBreakdownOpen] = useState(false);
@@ -33,13 +454,14 @@ const Scores = () => {
   const [previousScore, setPreviousScore] = useState(null);
   const [previousShowInfo, setPreviousShowInfo] = useState(null);
 
-  // Use the scores data hook - default to 'all' classes
+  // Use the scores data hook
   const {
     loading,
     error,
     allShows,
     stats,
     aggregatedScores,
+    archivedSeasons,
     isArchived
   } = useScoresData({
     classFilter: 'all',
@@ -51,87 +473,12 @@ const Scores = () => {
     return formatSeasonName?.() || 'Current Season';
   }, [formatSeasonName]);
 
-  // Extract user's corps data
-  const userCorpsData = useMemo(() => {
+  // Extract user's corps name
+  const userCorpsName = useMemo(() => {
     if (!loggedInProfile?.corps) return null;
-
-    // Get first corps with a lineup (active corps)
     const activeCorps = Object.values(loggedInProfile.corps).find(c => c?.lineup);
-    if (!activeCorps) return null;
-
-    return {
-      corpsName: activeCorps.corpsName,
-      corpsClass: activeCorps.corpsClass,
-      totalSeasonScore: activeCorps.totalSeasonScore || 0
-    };
+    return activeCorps?.corpsName || null;
   }, [loggedInProfile?.corps]);
-
-  // Find user's position in leaderboard
-  const userLeaderboardEntry = useMemo(() => {
-    if (!userCorpsData?.corpsName || !aggregatedScores?.length) return null;
-
-    return aggregatedScores.find(score =>
-      (score.corps || score.corpsName) === userCorpsData.corpsName
-    );
-  }, [aggregatedScores, userCorpsData?.corpsName]);
-
-  // Calculate rank change (simplified - compare to previous best position)
-  const userRankChange = useMemo(() => {
-    if (!userLeaderboardEntry?.scores || userLeaderboardEntry.scores.length < 2) return 0;
-
-    // Get ranks from last two shows
-    const scores = userLeaderboardEntry.scores;
-    const lastScore = scores[scores.length - 1];
-    const previousScoreData = scores[scores.length - 2];
-
-    if (!lastScore?.rank || !previousScoreData?.rank) return 0;
-    return previousScoreData.rank - lastScore.rank; // Positive means improved
-  }, [userLeaderboardEntry]);
-
-  // Get user's latest show result
-  const userLatestShow = useMemo(() => {
-    if (!userCorpsData?.corpsName || !allShows?.length) return null;
-
-    // Find most recent show where user competed
-    for (const show of allShows) {
-      const userScore = show.scores?.find(s =>
-        (s.corps || s.corpsName) === userCorpsData.corpsName
-      );
-      if (userScore) {
-        return {
-          show,
-          score: userScore,
-          rank: show.scores.findIndex(s =>
-            (s.corps || s.corpsName) === userCorpsData.corpsName
-          ) + 1,
-          totalParticipants: show.scores.length
-        };
-      }
-    }
-    return null;
-  }, [allShows, userCorpsData?.corpsName]);
-
-  // Get user's previous show for comparison
-  const userPreviousShow = useMemo(() => {
-    if (!userCorpsData?.corpsName || !allShows?.length) return null;
-
-    let foundFirst = false;
-    for (const show of allShows) {
-      const userScore = show.scores?.find(s =>
-        (s.corps || s.corpsName) === userCorpsData.corpsName
-      );
-      if (userScore) {
-        if (foundFirst) {
-          return {
-            show,
-            score: userScore
-          };
-        }
-        foundFirst = true;
-      }
-    }
-    return null;
-  }, [allShows, userCorpsData?.corpsName]);
 
   // Complete daily challenge on visit
   useEffect(() => {
@@ -141,17 +488,16 @@ const Scores = () => {
   }, [user, loggedInProfile, completeDailyChallenge]);
 
   // Handle viewing score breakdown
-  const handleViewBreakdown = (score, showInfo, prevScore = null, prevShowInfo = null) => {
+  const handleViewBreakdown = useCallback((score, showInfo, prevScore = null, prevShowInfo = null) => {
     setSelectedScore(score);
     setSelectedShowInfo(showInfo);
     setPreviousScore(prevScore);
     setPreviousShowInfo(prevShowInfo);
     setBreakdownOpen(true);
-  };
+  }, []);
 
   // Handle leaderboard entry click
-  const handleEntryClick = (entry) => {
-    // Get this corps's most recent score with show info
+  const handleEntryClick = useCallback((entry) => {
     if (entry.scores && entry.scores.length > 0) {
       const latestScore = entry.scores[entry.scores.length - 1];
       const prevScore = entry.scores.length > 1 ? entry.scores[entry.scores.length - 2] : null;
@@ -167,23 +513,35 @@ const Scores = () => {
         prevScore ? { eventName: prevScore.eventName } : null
       );
     }
-  };
+  }, [handleViewBreakdown]);
 
-  // Handle viewing user's latest show breakdown
-  const handleViewUserBreakdown = () => {
-    if (userLatestShow) {
+  // Handle show card click
+  const handleShowClick = useCallback((show) => {
+    if (show.scores && show.scores.length > 0) {
+      const topScore = show.scores[0];
       handleViewBreakdown(
-        { ...userLatestShow.score, rank: userLatestShow.rank },
+        topScore,
         {
-          eventName: userLatestShow.show.eventName,
-          date: userLatestShow.show.date,
-          location: userLatestShow.show.location
-        },
-        userPreviousShow?.score,
-        userPreviousShow ? { eventName: userPreviousShow.show.eventName } : null
+          eventName: show.eventName,
+          date: show.date,
+          location: show.location
+        }
       );
     }
-  };
+  }, [handleViewBreakdown]);
+
+  // Handle archived season selection
+  const handleSeasonSelect = useCallback((seasonId) => {
+    // TODO: Navigate to archived season view with router
+    // Future: navigate(`/scores/archive/${seasonId}`)
+  }, []);
+
+  // Tab definitions
+  const tabs = useMemo(() => [
+    { id: 'latest', label: 'Latest', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'standings', label: 'Standings', icon: <Trophy className="w-4 h-4" /> },
+    { id: 'history', label: 'History', icon: <Archive className="w-4 h-4" /> },
+  ], []);
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-charcoal-950">
@@ -204,21 +562,55 @@ const Scores = () => {
                 </p>
               </div>
             </div>
+            <div>
+              <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
+                Scores
+              </h1>
+              <p className="text-xs text-cream-500/60 font-mono uppercase tracking-wide">
+                {currentSeasonName}
+              </p>
+            </div>
+          </div>
 
-            {/* Quick stats */}
-            <div className="hidden sm:flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Corps</p>
-                <p className="font-mono text-lg font-bold text-cream-100">{stats.corpsActive || 0}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Top Score</p>
-                <p className="font-mono text-lg font-bold text-gold-400">{stats.topScore || '-'}</p>
-              </div>
+          {/* Quick stats */}
+          <div className="hidden sm:flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Corps</p>
+              <p className="font-mono text-lg font-bold text-cream-100">{stats.corpsActive || 0}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Top Score</p>
+              <p className="font-mono text-lg font-bold text-gold-400">{stats.topScore || '-'}</p>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Archive Notice */}
+        {isArchived && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center gap-3"
+          >
+            <Archive className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-display font-bold text-amber-400 uppercase tracking-wide">
+                Historical Archive
+              </p>
+              <p className="text-xs text-amber-400/70">
+                Viewing archived data. Some features may be limited.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Underline Tabs */}
+        <UnderlineTabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+      </header>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
@@ -243,67 +635,38 @@ const Scores = () => {
           </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-6"
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
-            {/* Archive Notice */}
-            {isArchived && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3"
-              >
-                <Archive className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-display font-bold text-amber-400 uppercase tracking-wide">
-                    Historical Archive
-                  </p>
-                  <p className="text-xs text-amber-400/70">
-                    Viewing archived data. Some features may be limited.
-                  </p>
-                </div>
-              </motion.div>
+            {activeTab === 'latest' && (
+              <LatestTab
+                shows={allShows}
+                userCorpsName={userCorpsName}
+                onShowClick={handleShowClick}
+              />
             )}
 
-            {/* Your Season Card */}
-            {user && (
-              <YourSeasonCard
-                rank={userLeaderboardEntry?.rank}
-                totalCorps={aggregatedScores.length}
-                score={userLeaderboardEntry?.score || userLeaderboardEntry?.totalScore || userCorpsData?.totalSeasonScore || 0}
-                rankChange={userRankChange}
-                corpsClass={userCorpsData?.corpsClass}
-                corpsName={userCorpsData?.corpsName}
+            {activeTab === 'standings' && (
+              <StandingsTab
+                aggregatedScores={aggregatedScores}
+                userCorpsName={userCorpsName}
+                onEntryClick={handleEntryClick}
                 isLoading={loading}
               />
             )}
 
-            {/* Latest Show Card */}
-            {user && (
-              <LatestShowCard
-                showName={userLatestShow?.show?.eventName}
-                showDate={userLatestShow?.show?.date}
-                location={userLatestShow?.show?.location}
-                userScore={userLatestShow?.score?.score || userLatestShow?.score?.totalScore}
-                userRank={userLatestShow?.rank}
-                totalParticipants={userLatestShow?.totalParticipants}
-                onViewBreakdown={userLatestShow ? handleViewUserBreakdown : null}
-                isLoading={loading}
+            {activeTab === 'history' && (
+              <HistoryTab
+                archivedSeasons={archivedSeasons}
+                onSeasonSelect={handleSeasonSelect}
               />
             )}
-
-            {/* Leaderboard */}
-            <Leaderboard
-              entries={aggregatedScores}
-              currentUserCorps={userCorpsData?.corpsName}
-              onEntryClick={handleEntryClick}
-              isLoading={loading}
-              totalEntries={aggregatedScores.length}
-            />
           </motion.div>
-        )}
-      </div>
+        </AnimatePresence>
+      )}
 
       {/* Score Breakdown Modal */}
       <ScoreBreakdown
@@ -314,7 +677,7 @@ const Scores = () => {
         showInfo={selectedShowInfo}
         previousShowInfo={previousShowInfo}
       />
-    </div>
+    </GameShell>
   );
 };
 

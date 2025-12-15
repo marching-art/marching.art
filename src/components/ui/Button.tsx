@@ -6,7 +6,7 @@ import { Loader2, LucideIcon } from 'lucide-react';
 // BUTTON COMPONENT
 // =============================================================================
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
@@ -20,17 +20,15 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
   children: React.ReactNode;
 }
 
-// Premium Stadium HUD variant styles - Gold glow for action, glass for secondary
+// Button variant styles
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-gold-500 text-charcoal-950 border border-gold-400/50 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:shadow-[0_0_25px_rgba(234,179,8,0.5)] hover:bg-gold-400',
-  secondary: 'bg-white/10 backdrop-blur-sm text-cream border border-white/15 shadow-[0_2px_15px_rgba(0,0,0,0.2)] hover:bg-white/15 hover:border-white/25 hover:shadow-[0_4px_20px_rgba(0,0,0,0.25)]',
-  outline: 'bg-transparent border border-gold-500/50 text-gold-400 shadow-[0_0_10px_rgba(234,179,8,0.15)] hover:bg-gold-500/10 hover:border-gold-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.3)]',
-  ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream shadow-none',
-  danger: 'bg-red-600 text-white border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:bg-red-500 hover:shadow-[0_0_25px_rgba(239,68,68,0.5)]',
+  primary: 'bg-primary text-white border border-primary hover:bg-primary/90',
+  secondary: 'bg-transparent border border-cream-500/30 text-cream hover:bg-white/5 hover:border-cream-500/50',
+  ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-2 text-sm min-h-[36px]',
+  sm: 'px-3 py-2 text-sm min-h-[44px]',
   md: 'px-5 py-3 text-base min-h-[44px]',
   lg: 'px-8 py-4 text-lg min-h-[52px]',
 };
@@ -69,8 +67,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           inline-flex items-center justify-center gap-2
           rounded-lg font-semibold
           transition-all duration-300 ease-out
-          focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:ring-offset-2 focus:ring-offset-charcoal-950
-          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
+          focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-charcoal-950
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
           ${variantStyles[variant]}
           ${sizeStyles[size]}
           ${fullWidth ? 'w-full' : ''}
@@ -108,7 +106,7 @@ export interface IconButtonProps extends Omit<ButtonProps, 'children' | 'leftIco
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ icon: Icon, size = 'md', className = '', ...props }, ref) => {
     const iconButtonSizes: Record<ButtonSize, string> = {
-      sm: 'p-2 min-h-[36px] min-w-[36px]',
+      sm: 'p-2 min-h-[44px] min-w-[44px]',
       md: 'p-2.5 min-h-[44px] min-w-[44px]',
       lg: 'p-3 min-h-[52px] min-w-[52px]',
     };

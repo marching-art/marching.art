@@ -199,9 +199,10 @@ export function getSeasonTypeInfo(season: SeasonData): {
 }
 
 /**
- * Format season name for display
+ * Format season display name from SeasonData object
+ * Use utils/season.ts formatSeasonName for simple string formatting
  */
-export function formatSeasonName(season: SeasonData): string {
+export function formatSeasonDisplayName(season: SeasonData): string {
   if (season.seasonType === 'live') {
     return `${season.year} Live Season`;
   }

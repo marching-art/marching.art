@@ -1,13 +1,12 @@
 // src/pages/Profile.jsx
-// Redesigned Profile: Clean profile showing your fantasy career with integrated settings
-import React, { useState, useMemo, useEffect } from 'react';
+// Redesigned Profile: Sports Almanac style - clean, data-focused layout
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  User, Trophy, History, Settings, Star, TrendingUp, Calendar, Crown,
-  DollarSign, AlertTriangle, RefreshCw, Zap, Flame, MapPin, Edit, Check, X,
-  ChevronRight, Medal, Sparkles, Bell, Shield, LogOut, Gift, Coins,
-  ArrowUp, ArrowDown, Award, Target
+  User, Trophy, Settings, Star, TrendingUp, Calendar, Crown,
+  AlertTriangle, RefreshCw, MapPin, Edit, Check, X,
+  Medal, Bell, Shield, LogOut, Gift, Coins
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -15,11 +14,11 @@ import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import LoadingScreen from '../components/LoadingScreen';
-import { getCorpsCoinHistory } from '../firebase/functions';
-import { getNextClassProgress } from '../utils/captionPricing';
+import { StatCard } from '../components/ui/StatCard';
+import { DataTable } from '../components/ui/DataTable';
 
 // =============================================================================
-// AVATAR CUSTOMIZATION - Simple avatar options
+// AVATAR COLOR OPTIONS
 // =============================================================================
 const AVATAR_COLORS = [
   { id: 'gold', from: 'from-gold-500/30', to: 'to-amber-500/30', border: 'border-gold-500/50', icon: 'text-gold-400' },
@@ -31,12 +30,11 @@ const AVATAR_COLORS = [
 ];
 
 // =============================================================================
-// MEANINGFUL MILESTONE ACHIEVEMENTS
+// ACHIEVEMENT DEFINITIONS
 // =============================================================================
 const getMilestoneAchievements = (profile) => {
   const achievements = [];
 
-  // First Championship Win
   if ((profile?.stats?.championships || 0) >= 1) {
     achievements.push({
       id: 'first-champ',
@@ -44,12 +42,9 @@ const getMilestoneAchievements = (profile) => {
       description: 'Won your first championship',
       icon: Trophy,
       color: 'text-gold-400',
-      bgColor: 'bg-gold-500/20',
-      borderColor: 'border-gold-500/30'
     });
   }
 
-  // Dynasty Builder - 3+ Championships
   if ((profile?.stats?.championships || 0) >= 3) {
     achievements.push({
       id: 'dynasty',
@@ -57,12 +52,9 @@ const getMilestoneAchievements = (profile) => {
       description: 'Won 3+ championships',
       icon: Crown,
       color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
-      borderColor: 'border-purple-500/30'
     });
   }
 
-  // Season milestones
   if ((profile?.stats?.seasonsPlayed || 0) >= 1) {
     achievements.push({
       id: 'first-season',
@@ -70,8 +62,6 @@ const getMilestoneAchievements = (profile) => {
       description: 'Completed your first season',
       icon: Star,
       color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-      borderColor: 'border-blue-500/30'
     });
   }
 
@@ -82,8 +72,6 @@ const getMilestoneAchievements = (profile) => {
       description: 'Completed 5+ seasons',
       icon: Medal,
       color: 'text-green-400',
-      bgColor: 'bg-green-500/20',
-      borderColor: 'border-green-500/30'
     });
   }
 
@@ -92,37 +80,19 @@ const getMilestoneAchievements = (profile) => {
       id: 'legend',
       name: 'Living Legend',
       description: 'Completed 10+ seasons',
-      icon: Sparkles,
+      icon: Star,
       color: 'text-amber-400',
-      bgColor: 'bg-amber-500/20',
-      borderColor: 'border-amber-500/30'
     });
   }
 
-  // League winning streak (if tracked)
-  if ((profile?.stats?.longestWinStreak || 0) >= 5) {
-    achievements.push({
-      id: 'streak',
-      name: 'On Fire',
-      description: '5+ league win streak',
-      icon: Flame,
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/20',
-      borderColor: 'border-orange-500/30'
-    });
-  }
-
-  // Class unlocks
   const unlockedClasses = profile?.unlockedClasses || [];
-  if (unlockedClasses.includes('world')) {
+  if (unlockedClasses.includes('world') || unlockedClasses.includes('worldClass')) {
     achievements.push({
       id: 'world-unlock',
       name: 'World Class',
       description: 'Unlocked World Class',
       icon: TrendingUp,
       color: 'text-gold-400',
-      bgColor: 'bg-gold-500/20',
-      borderColor: 'border-gold-500/30'
     });
   }
 
@@ -130,14 +100,78 @@ const getMilestoneAchievements = (profile) => {
 };
 
 // =============================================================================
-// CLASS DISPLAY HELPERS
+// SEASON HISTORY TABLE COLUMNS
 // =============================================================================
-const CLASS_DISPLAY = {
-  worldClass: { name: 'World', color: 'text-gold-400', bg: 'bg-gold-500/10', border: 'border-gold-500/20' },
-  openClass: { name: 'Open', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-  aClass: { name: 'A Class', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-  soundSport: { name: 'SoundSport', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-};
+const getSeasonHistoryColumns = () => [
+  {
+    key: 'seasonNumber',
+    header: 'Season',
+    width: '5rem',
+    align: 'center',
+    render: (row) => (
+      <span className="font-mono text-cream-300">S{row.seasonNumber || '?'}</span>
+    ),
+  },
+  {
+    key: 'corpsName',
+    header: 'Corps',
+    render: (row) => (
+      <span className="text-cream-100 font-medium truncate">
+        {row.corpsName || 'Unknown Corps'}
+      </span>
+    ),
+  },
+  {
+    key: 'className',
+    header: 'Class',
+    width: '6.25rem',
+    render: (row) => {
+      const classColors = {
+        worldClass: 'text-gold-400',
+        openClass: 'text-purple-400',
+        aClass: 'text-blue-400',
+        soundSport: 'text-green-400',
+      };
+      const classNames = {
+        worldClass: 'World',
+        openClass: 'Open',
+        aClass: 'A Class',
+        soundSport: 'SoundSport',
+      };
+      return (
+        <span className={classColors[row.classKey] || 'text-cream-500'}>
+          {classNames[row.classKey] || row.classKey}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'placement',
+    header: 'Rank',
+    width: '5rem',
+    align: 'center',
+    render: (row) => {
+      if (!row.placement) return <span className="text-cream-500/50">—</span>;
+      const isTop3 = row.placement <= 3;
+      return (
+        <span className={`font-mono font-bold ${isTop3 ? 'text-gold-400' : 'text-cream-300'}`}>
+          #{row.placement}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'finalScore',
+    header: 'Score',
+    width: '5rem',
+    align: 'right',
+    render: (row) => (
+      <span className="font-mono font-bold text-cream-100">
+        {row.finalScore ? row.finalScore.toFixed(1) : '—'}
+      </span>
+    ),
+  },
+];
 
 // =============================================================================
 // SETTINGS PANEL COMPONENT
@@ -201,7 +235,7 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
           onChange={onChange}
         />
         <div className="w-11 h-6 bg-charcoal-800 peer-focus:outline-none rounded-full peer peer-checked:bg-gold-500/30 transition-colors" />
-        <div className={`absolute left-0.5 top-0.5 w-5 h-5 bg-cream-500/50 rounded-full transition-all peer-checked:translate-x-5 peer-checked:bg-gold-400`} />
+        <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-cream-500/50 rounded-full transition-all peer-checked:translate-x-5 peer-checked:bg-gold-400" />
       </div>
     </label>
   );
@@ -224,19 +258,18 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
           className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
             <h2 className="text-lg font-display font-bold text-cream-100">Settings</h2>
             <button
               onClick={onClose}
+              aria-label="Close settings"
               className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-cream-500/10">
+          <div className="flex border-b border-cream-500/10" role="tablist">
             {[
               { id: 'account', label: 'Account', icon: User },
               { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -257,7 +290,6 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
             ))}
           </div>
 
-          {/* Content */}
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             {activeSection === 'account' && (
               <div className="space-y-4">
@@ -337,7 +369,6 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Footer */}
           {activeSection !== 'account' && (
             <div className="p-4 border-t border-cream-500/10">
               <button
@@ -356,106 +387,9 @@ const SettingsPanel = ({ profile, user, isOpen, onClose }) => {
 };
 
 // =============================================================================
-// SEASON HISTORY MODAL
-// =============================================================================
-const SeasonHistoryModal = ({ profile, isOpen, onClose }) => {
-  const seasonHistory = useMemo(() => {
-    if (!profile?.corps) return [];
-    const history = [];
-    Object.entries(profile.corps).forEach(([classKey, corps]) => {
-      if (corps.seasonHistory) {
-        corps.seasonHistory.forEach(season => {
-          history.push({
-            ...season,
-            corpsName: corps.name || corps.corpsName,
-            classKey
-          });
-        });
-      }
-    });
-    return history.sort((a, b) => (b.seasonNumber || 0) - (a.seasonNumber || 0));
-  }, [profile]);
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
-            <h2 className="text-lg font-display font-bold text-cream-100 flex items-center gap-2">
-              <History className="w-5 h-5 text-purple-400" />
-              Season History
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            {seasonHistory.length > 0 ? (
-              <div className="space-y-3">
-                {seasonHistory.map((season, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="flex items-center gap-4 p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
-                  >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      season.placement === 1 ? 'bg-gold-500/20 text-gold-400' :
-                      season.placement <= 3 ? 'bg-purple-500/20 text-purple-400' :
-                      'bg-charcoal-800 text-cream-500/60'
-                    }`}>
-                      {season.placement === 1 ? <Trophy className="w-5 h-5" /> :
-                       season.placement ? `#${season.placement}` : <Calendar className="w-5 h-5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-cream-100 truncate">{season.corpsName || 'Corps'}</p>
-                      <p className="text-xs text-cream-500/60">
-                        {CLASS_DISPLAY[season.classKey]?.name || season.classKey} • Season {season.seasonNumber || '?'}
-                      </p>
-                    </div>
-                    {season.finalScore && (
-                      <p className="text-lg font-mono font-bold text-gold-400">{season.finalScore.toFixed(1)}</p>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <History className="w-12 h-12 text-cream-500/30 mx-auto mb-3" />
-                <p className="text-cream-500/60">No season history yet</p>
-                <p className="text-sm text-cream-500/40 mt-1">Complete seasons to build your history</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-// =============================================================================
 // AVATAR CUSTOMIZATION MODAL
 // =============================================================================
-const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) => {
+const AvatarCustomizationModal = ({ profile, isOpen, onClose, onSave }) => {
   const [selectedColor, setSelectedColor] = useState(profile?.avatarColor || 'gold');
   const [saving, setSaving] = useState(false);
 
@@ -496,6 +430,7 @@ const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) =>
             <h2 className="text-lg font-display font-bold text-cream-100">Customize Avatar</h2>
             <button
               onClick={onClose}
+              aria-label="Close avatar customization"
               className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -503,24 +438,25 @@ const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) =>
           </div>
 
           <div className="p-6">
-            {/* Preview */}
             <div className="flex justify-center mb-6">
-              <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${currentColor.from} ${currentColor.to} border-2 ${currentColor.border} flex items-center justify-center`}>
+              <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${currentColor.from} ${currentColor.to} border-2 ${currentColor.border} flex items-center justify-center`}>
                 {profile?.photoURL ? (
-                  <img src={profile.photoURL} alt="" className="w-full h-full rounded-2xl object-cover" />
+                  <img src={profile.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
                 ) : (
                   <User className={`w-12 h-12 ${currentColor.icon}`} />
                 )}
               </div>
             </div>
 
-            {/* Color Options */}
             <p className="text-sm text-cream-500/60 mb-3 text-center">Choose a color theme</p>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Avatar color options">
               {AVATAR_COLORS.map((color) => (
                 <button
                   key={color.id}
                   onClick={() => setSelectedColor(color.id)}
+                  aria-label={`Select ${color.id} color`}
+                  aria-checked={selectedColor === color.id}
+                  role="radio"
                   className={`aspect-square rounded-lg bg-gradient-to-br ${color.from} ${color.to} border-2 transition-all ${
                     selectedColor === color.id ? `${color.border} scale-110` : 'border-transparent hover:scale-105'
                   }`}
@@ -545,205 +481,6 @@ const AvatarCustomizationModal = ({ profile, user, isOpen, onClose, onSave }) =>
 };
 
 // =============================================================================
-// CORPSCOIN EARNING OPPORTUNITIES
-// =============================================================================
-const EARNING_OPPORTUNITIES = [
-  {
-    id: 'shows',
-    title: 'Show Participation',
-    description: 'Perform at shows to earn CC',
-    rewards: { soundSport: 50, aClass: 100, open: 150, world: 200 },
-    icon: Target,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/20'
-  },
-  {
-    id: 'league',
-    title: 'Weekly League Win',
-    description: 'Win your weekly matchup',
-    reward: 100,
-    icon: Trophy,
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/20'
-  },
-  {
-    id: 'season',
-    title: 'Season Finish Bonus',
-    description: 'Based on final ranking',
-    rewards: { '1st': 1000, '2nd': 750, '3rd': 500, 'Top 10': 350, 'Top 25': 250 },
-    icon: Award,
-    color: 'text-gold-400',
-    bgColor: 'bg-gold-500/20'
-  },
-  {
-    id: 'battlepass',
-    title: 'Battle Pass',
-    description: 'Claim rewards as you level up',
-    note: 'Varies by level',
-    icon: Gift,
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/20'
-  }
-];
-
-// =============================================================================
-// CORPSCOIN HISTORY MODAL
-// =============================================================================
-const CorpsCoinHistoryModal = ({ isOpen, onClose, balance }) => {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadHistory();
-    }
-  }, [isOpen]);
-
-  const loadHistory = async () => {
-    setLoading(true);
-    try {
-      const result = await getCorpsCoinHistory({ limit: 50 });
-      if (result.data?.success) {
-        setHistory(result.data.history || []);
-      }
-    } catch (error) {
-      console.error('Error loading CC history:', error);
-      toast.error('Failed to load history');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTransactionIcon = (type) => {
-    switch (type) {
-      case 'show_participation': return Target;
-      case 'league_win': return Trophy;
-      case 'season_bonus': return Award;
-      case 'battle_pass': return Gift;
-      case 'class_unlock': return TrendingUp;
-      case 'league_entry': return Coins;
-      default: return DollarSign;
-    }
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp?.toDate?.() || new Date(timestamp);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-cream-500/10">
-            <div>
-              <h2 className="text-lg font-display font-bold text-cream-100 flex items-center gap-2">
-                <Coins className="w-5 h-5 text-green-400" />
-                CorpsCoin History
-              </h2>
-              <p className="text-sm text-cream-500/60 mt-1">
-                Balance: <span className="text-green-400 font-mono font-bold">{(balance || 0).toLocaleString()} CC</span>
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-6 h-6 text-cream-500/40 animate-spin" />
-              </div>
-            ) : history.length > 0 ? (
-              <div className="space-y-2">
-                {history.map((entry, idx) => {
-                  const Icon = getTransactionIcon(entry.type);
-                  const isPositive = entry.amount > 0;
-                  return (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.03 }}
-                      className="flex items-center gap-3 p-3 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isPositive ? 'bg-green-500/20' : 'bg-red-500/20'
-                      }`}>
-                        <Icon className={`w-5 h-5 ${isPositive ? 'text-green-400' : 'text-red-400'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-cream-100 truncate">
-                          {entry.description}
-                        </p>
-                        <p className="text-xs text-cream-500/60">
-                          {formatDate(entry.timestamp)}
-                        </p>
-                      </div>
-                      <div className={`text-right ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                        <p className="font-mono font-bold">
-                          {isPositive ? '+' : ''}{entry.amount}
-                        </p>
-                        <p className="text-xs text-cream-500/40 font-mono">
-                          {entry.balance?.toLocaleString()} CC
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Coins className="w-12 h-12 text-cream-500/30 mx-auto mb-3" />
-                <p className="text-cream-500/60">No transaction history yet</p>
-                <p className="text-sm text-cream-500/40 mt-1">Earn CC by participating in shows</p>
-              </div>
-            )}
-          </div>
-
-          {/* Earning Opportunities Footer */}
-          <div className="p-4 border-t border-cream-500/10 bg-charcoal-900/30">
-            <p className="text-xs text-cream-500/60 mb-3 font-medium uppercase tracking-wide">How to Earn</p>
-            <div className="grid grid-cols-2 gap-2">
-              {EARNING_OPPORTUNITIES.slice(0, 4).map((opp) => {
-                const Icon = opp.icon;
-                return (
-                  <div key={opp.id} className="flex items-center gap-2 p-2 bg-charcoal-800/50 rounded-lg">
-                    <Icon className={`w-4 h-4 ${opp.color}`} />
-                    <span className="text-xs text-cream-300">{opp.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-// =============================================================================
 // MAIN PROFILE COMPONENT
 // =============================================================================
 const Profile = () => {
@@ -754,14 +491,11 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [showSettings, setShowSettings] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [showAvatarCustomization, setShowAvatarCustomization] = useState(false);
-  const [showCCHistory, setShowCCHistory] = useState(false);
 
   const isOwnProfile = !userId || userId === user?.uid;
   const profileUserId = userId || user?.uid;
 
-  // React Query hooks
   const { data: profile, isLoading: loading, error, isError, refetch } = useProfile(profileUserId);
   const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
@@ -772,6 +506,77 @@ const Profile = () => {
   const avatarColor = useMemo(() => {
     return AVATAR_COLORS.find(c => c.id === profile?.avatarColor) || AVATAR_COLORS[0];
   }, [profile?.avatarColor]);
+
+  // Get current corps/team name
+  const teamName = useMemo(() => {
+    if (!profile?.corps) return null;
+    const corpsList = Object.values(profile.corps);
+    if (corpsList.length === 0) return null;
+    // Return the first corps name as the "team"
+    return corpsList[0]?.corpsName || corpsList[0]?.name || null;
+  }, [profile?.corps]);
+
+  // Compute stats for StatCards
+  const stats = useMemo(() => {
+    if (!profile?.corps) return { seasonAverage: 0, bestScore: 0, highestRank: null };
+
+    let totalScore = 0;
+    let scoreCount = 0;
+    let bestScore = 0;
+    let highestRank = null;
+
+    Object.values(profile.corps).forEach((corps) => {
+      if (corps.seasonHistory) {
+        corps.seasonHistory.forEach(season => {
+          if (season.finalScore) {
+            totalScore += season.finalScore;
+            scoreCount++;
+            if (season.finalScore > bestScore) {
+              bestScore = season.finalScore;
+            }
+          }
+          if (season.placement && (highestRank === null || season.placement < highestRank)) {
+            highestRank = season.placement;
+          }
+        });
+      }
+      // Also check current season score
+      if (corps.totalSeasonScore) {
+        totalScore += corps.totalSeasonScore;
+        scoreCount++;
+        if (corps.totalSeasonScore > bestScore) {
+          bestScore = corps.totalSeasonScore;
+        }
+      }
+      if (corps.ranking && (highestRank === null || corps.ranking < highestRank)) {
+        highestRank = corps.ranking;
+      }
+    });
+
+    return {
+      seasonAverage: scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '—',
+      bestScore: bestScore > 0 ? bestScore.toFixed(1) : '—',
+      highestRank: highestRank ? `#${highestRank}` : '—',
+    };
+  }, [profile?.corps]);
+
+  // Collect season history for DataTable
+  const seasonHistory = useMemo(() => {
+    if (!profile?.corps) return [];
+    const history = [];
+    Object.entries(profile.corps).forEach(([classKey, corps]) => {
+      if (corps.seasonHistory) {
+        corps.seasonHistory.forEach(season => {
+          history.push({
+            ...season,
+            corpsName: corps.name || corps.corpsName,
+            classKey
+          });
+        });
+      }
+    });
+    return history.sort((a, b) => (b.seasonNumber || 0) - (a.seasonNumber || 0));
+  }, [profile]);
 
   const handleStartEdit = () => {
     setEditData({
@@ -839,392 +644,218 @@ const Profile = () => {
     );
   }
 
+  const historyColumns = getSeasonHistoryColumns();
+
   return (
     <div className="h-full overflow-y-auto hud-scroll">
       <div className="p-4 lg:p-6 space-y-6">
 
         {/* ================================================================
-            HEADER: Profile Title + Settings Button
+            HEADER: Simple Avatar + Name + Team Name
             ================================================================ */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-display font-bold text-cream-100">Profile</h1>
-          {isOwnProfile && (
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-
-        {/* ================================================================
-            IDENTITY SECTION: Avatar, Name, Location, Favorite Corps
-            ================================================================ */}
-        <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => isOwnProfile && setShowAvatarCustomization(true)}
-                className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${avatarColor.from} ${avatarColor.to} border-2 ${avatarColor.border} flex items-center justify-center transition-transform ${isOwnProfile ? 'hover:scale-105 cursor-pointer' : ''}`}
-              >
-                {profile.photoURL ? (
-                  <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full rounded-2xl object-cover" />
-                ) : (
-                  <User className={`w-12 h-12 ${avatarColor.icon}`} />
-                )}
-              </button>
-              {/* Highest Class Badge */}
-              {(() => {
-                const classes = profile.unlockedClasses || ['soundSport'];
-                let badgeColor, abbrev;
-                if (classes.includes('world') || classes.includes('worldClass')) {
-                  badgeColor = 'bg-gold-500'; abbrev = 'W';
-                } else if (classes.includes('open') || classes.includes('openClass')) {
-                  badgeColor = 'bg-purple-500'; abbrev = 'O';
-                } else if (classes.includes('aClass')) {
-                  badgeColor = 'bg-blue-500'; abbrev = 'A';
-                } else {
-                  badgeColor = 'bg-green-500'; abbrev = 'SS';
-                }
-                return (
-                  <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-lg ${badgeColor} border-2 border-charcoal-900 flex items-center justify-center`}>
-                    <span className="text-xs font-mono font-black text-white">
-                      {abbrev}
-                    </span>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Identity Info */}
-            <div className="flex-1 text-center sm:text-left">
-              {isEditing ? (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={editData.displayName}
-                    onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
-                    placeholder="Display Name"
-                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
-                  />
-                  <input
-                    type="text"
-                    value={editData.location}
-                    onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                    placeholder="Location (e.g., Austin, TX)"
-                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
-                  />
-                  <input
-                    type="text"
-                    value={editData.favoriteCorps}
-                    onChange={(e) => setEditData({ ...editData, favoriteCorps: e.target.value })}
-                    placeholder="Favorite Corps (e.g., Blue Devils)"
-                    className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm font-bold hover:bg-green-500/30 transition-colors disabled:opacity-50"
-                    >
-                      {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-bold hover:bg-charcoal-700 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+            <button
+              onClick={() => isOwnProfile && setShowAvatarCustomization(true)}
+              aria-label={isOwnProfile ? 'Customize avatar' : `${profile.displayName || 'User'} avatar`}
+              className={`w-16 h-16 rounded-full bg-gradient-to-br ${avatarColor.from} ${avatarColor.to} border-2 ${avatarColor.border} flex items-center justify-center transition-transform ${isOwnProfile ? 'hover:scale-105 cursor-pointer' : ''}`}
+            >
+              {profile.photoURL ? (
+                <img src={profile.photoURL} alt={profile.displayName || 'User avatar'} className="w-full h-full rounded-full object-cover" />
               ) : (
-                <>
-                  <h2 className="text-xl font-display font-bold text-cream-100">
-                    {profile.displayName || 'Anonymous Director'}
-                  </h2>
+                <User className={`w-8 h-8 ${avatarColor.icon}`} />
+              )}
+            </button>
 
-                  {profile.location && (
-                    <p className="flex items-center justify-center sm:justify-start gap-1 text-sm text-cream-500/60 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      {profile.location}
-                    </p>
-                  )}
-
-                  {profile.favoriteCorps && (
-                    <p className="text-sm text-cream-500/60 mt-1">
-                      Favorite: <span className="text-gold-400">{profile.favoriteCorps}</span>
-                    </p>
-                  )}
-
-                  <p className="text-xs text-cream-500/40 mt-2">
-                    Member since {profile.createdAt ? new Date(profile.createdAt?.toDate?.() || profile.createdAt).getFullYear() : '2024'}
-                  </p>
-
-                  {isOwnProfile && (
-                    <button
-                      onClick={handleStartEdit}
-                      className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors mx-auto sm:mx-0"
-                    >
-                      <Edit className="w-3 h-3" />
-                      Edit Profile
-                    </button>
-                  )}
-                </>
+            {/* Name + Team */}
+            <div>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editData.displayName}
+                  onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+                  placeholder="Display Name"
+                  className="px-3 py-1 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 text-lg font-display font-bold focus:outline-none focus:border-gold-500"
+                />
+              ) : (
+                <h1 className="text-xl font-display font-bold text-cream-100">
+                  {profile.displayName || 'Anonymous Director'}
+                </h1>
+              )}
+              {teamName && (
+                <p className="text-sm text-cream-500/60">{teamName}</p>
               )}
             </div>
           </div>
-        </div>
 
-        {/* ================================================================
-            STATS SECTION: XP, Seasons, Championships, CorpsCoin
-            ================================================================ */}
-        <div className="grid grid-cols-4 gap-3">
-          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-gold-400 mb-1">
-              <Zap className="w-4 h-4" />
-              <span className="text-lg font-mono font-bold">{(profile.xp || 0).toLocaleString()}</span>
-            </div>
-            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">XP</p>
-          </div>
-          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-blue-400 mb-1">
-              <Calendar className="w-4 h-4" />
-              <span className="text-lg font-mono font-bold">{profile.stats?.seasonsPlayed || 0}</span>
-            </div>
-            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Seasons</p>
-          </div>
-          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-purple-400 mb-1">
-              <Trophy className="w-4 h-4" />
-              <span className="text-lg font-mono font-bold">{profile.stats?.championships || 0}</span>
-            </div>
-            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Champs</p>
-          </div>
-          <button
-            onClick={() => isOwnProfile && setShowCCHistory(true)}
-            className={`bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center transition-all ${
-              isOwnProfile ? 'hover:border-green-500/30 hover:bg-green-500/5 cursor-pointer' : ''
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
-              <Coins className="w-4 h-4" />
-              <span className="text-lg font-mono font-bold">{(profile.corpsCoin || 0).toLocaleString()}</span>
-            </div>
-            <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">
-              {isOwnProfile ? 'CC (tap)' : 'CC'}
-            </p>
-          </button>
-        </div>
-
-        {/* ================================================================
-            CLASS PROGRESSION - Show progress toward next class
-            ================================================================ */}
-        {(() => {
-          const nextProgress = getNextClassProgress(
-            profile.xp || 0,
-            profile.unlockedClasses || ['soundSport'],
-            profile.corpsCoin || 0
-          );
-          if (!nextProgress) {
-            return (
-              <div className="bg-gradient-to-r from-gold-500/10 to-amber-500/10 border border-gold-500/20 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-gold-400" />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-gold-400">All Classes Unlocked!</p>
-                    <p className="text-xs text-cream-500/60">You've mastered every level of competition</p>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          const colorStyles = {
-            blue: { border: 'border-blue-500/20', bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-400', gradient: 'from-blue-500 to-blue-400', iconBg: 'bg-blue-500/20' },
-            purple: { border: 'border-purple-500/20', bg: 'from-purple-500/10 to-violet-500/10', text: 'text-purple-400', gradient: 'from-purple-500 to-purple-400', iconBg: 'bg-purple-500/20' },
-            gold: { border: 'border-gold-500/20', bg: 'from-gold-500/10 to-amber-500/10', text: 'text-gold-400', gradient: 'from-gold-500 to-gold-400', iconBg: 'bg-gold-500/20' }
-          };
-          const style = colorStyles[nextProgress.color] || colorStyles.blue;
-          return (
-            <div className={`bg-gradient-to-r ${style.bg} border ${style.border} rounded-xl p-4`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${style.iconBg} flex items-center justify-center`}>
-                    <TrendingUp className={`w-5 h-5 ${style.text}`} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-cream-500/60">Next Unlock</p>
-                    <p className={`font-display font-bold ${style.text}`}>{nextProgress.className}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-cream-500/60">Progress</p>
-                  <p className="font-mono font-bold text-cream-100">
-                    {nextProgress.currentXP.toLocaleString()} / {nextProgress.requiredXP.toLocaleString()} XP
-                  </p>
-                </div>
-              </div>
-              <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${nextProgress.xpProgress}%` }}
-                  transition={{ duration: 0.8 }}
-                  className={`h-full bg-gradient-to-r ${style.gradient} rounded-full`}
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-cream-500/60">{nextProgress.xpRemaining.toLocaleString()} XP to go</span>
-                {nextProgress.canUnlockWithCC && (
-                  <span className={`${style.text}`}>or {nextProgress.requiredCC.toLocaleString()} CC</span>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* ================================================================
-            CORPSCOIN EARNING OPPORTUNITIES - Show how to earn CC
-            ================================================================ */}
-        {isOwnProfile && (
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-display font-bold text-green-400 flex items-center gap-2">
-                <Coins className="w-4 h-4" />
-                Earn CorpsCoin
-              </h3>
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {isOwnProfile && !isEditing && (
               <button
-                onClick={() => setShowCCHistory(true)}
-                className="text-xs text-cream-500/60 hover:text-cream-300 flex items-center gap-1 transition-colors"
+                onClick={handleStartEdit}
+                aria-label="Edit Profile"
+                className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
               >
-                View History
-                <ChevronRight className="w-3 h-3" />
+                <Edit className="w-5 h-5" />
+              </button>
+            )}
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowSettings(true)}
+                aria-label="Open settings"
+                className="p-2 text-cream-500/60 hover:text-cream-300 rounded-lg hover:bg-cream-500/10 transition-colors"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Editing fields for location/favoriteCorps */}
+        {isEditing && (
+          <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-4 space-y-3">
+            <input
+              type="text"
+              value={editData.location}
+              onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+              placeholder="Location (e.g., Austin, TX)"
+              className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+            />
+            <input
+              type="text"
+              value={editData.favoriteCorps}
+              onChange={(e) => setEditData({ ...editData, favoriteCorps: e.target.value })}
+              placeholder="Favorite Corps (e.g., Blue Devils)"
+              className="w-full px-3 py-2 bg-charcoal-800 border border-cream-500/20 rounded-lg text-cream-100 focus:outline-none focus:border-gold-500"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-4 py-2 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-sm font-bold hover:bg-green-500/30 transition-colors disabled:opacity-50"
+              >
+                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-charcoal-800 border border-cream-500/20 text-cream-400 rounded-lg text-sm font-bold hover:bg-charcoal-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Cancel
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {EARNING_OPPORTUNITIES.map((opp) => {
-                const Icon = opp.icon;
-                return (
-                  <div
-                    key={opp.id}
-                    className="flex items-start gap-3 p-3 bg-charcoal-900/50 border border-cream-500/10 rounded-lg"
-                  >
-                    <div className={`w-8 h-8 rounded-lg ${opp.bgColor} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-4 h-4 ${opp.color}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-cream-100">{opp.title}</p>
-                      <p className="text-[10px] text-cream-500/60 mt-0.5">
-                        {opp.reward ? `${opp.reward} CC` : opp.note || opp.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          </div>
+        )}
+
+        {/* Profile meta when not editing */}
+        {!isEditing && (profile.location || profile.favoriteCorps) && (
+          <div className="flex flex-wrap items-center gap-4 text-sm text-cream-500/60">
+            {profile.location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {profile.location}
+              </span>
+            )}
+            {profile.favoriteCorps && (
+              <span>
+                Favorite: <span className="text-gold-400">{profile.favoriteCorps}</span>
+              </span>
+            )}
           </div>
         )}
 
         {/* ================================================================
-            MY CORPS GALLERY
+            STATS GRID: Season Average, Best Score, Highest Rank
             ================================================================ */}
-        {profile.corps && Object.keys(profile.corps).length > 0 && (
-          <div>
-            <h3 className="text-sm font-display font-bold text-cream-500/60 uppercase tracking-wide mb-3">My Corps</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {Object.entries(profile.corps)
-                .sort((a, b) => {
-                  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
-                  return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
-                })
-                .map(([classKey, corps]) => {
-                  const classInfo = CLASS_DISPLAY[classKey] || { name: classKey, color: 'text-cream-400', bg: 'bg-cream-500/10', border: 'border-cream-500/20' };
-                  return (
-                    <motion.div
-                      key={classKey}
-                      whileHover={{ scale: 1.02 }}
-                      className={`${classInfo.bg} border ${classInfo.border} rounded-xl p-4 transition-all`}
-                    >
-                      <p className={`text-xs ${classInfo.color} uppercase tracking-wide font-medium mb-1`}>
-                        {classInfo.name}
-                      </p>
-                      <p className="font-display font-bold text-cream-100 truncate">
-                        {corps.corpsName || corps.name || 'Unnamed Corps'}
-                      </p>
-                      {corps.ranking && (
-                        <p className="text-sm text-cream-500/60 mt-1">#{corps.ranking}</p>
-                      )}
-                      {corps.totalSeasonScore !== undefined && (
-                        <p className={`text-lg font-mono font-bold ${classInfo.color} mt-2`}>
-                          {corps.totalSeasonScore.toFixed(1)}
-                        </p>
-                      )}
-                    </motion.div>
-                  );
-                })}
-            </div>
+        <section>
+          <h2 className="text-xs uppercase tracking-wider text-cream-500/50 mb-3">Career Stats</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard label="Season Avg" value={stats.seasonAverage} />
+            <StatCard label="Best Score" value={stats.bestScore} />
+            <StatCard label="Highest Rank" value={stats.highestRank} />
           </div>
-        )}
+        </section>
 
         {/* ================================================================
-            ACHIEVEMENTS: Meaningful Milestones
+            SEASON HISTORY: DataTable
             ================================================================ */}
-        <div>
-          <h3 className="text-sm font-display font-bold text-cream-500/60 uppercase tracking-wide mb-3">Achievements</h3>
+        <section>
+          <h2 className="text-xs uppercase tracking-wider text-cream-500/50 mb-3">Season History</h2>
+          <DataTable
+            columns={historyColumns}
+            data={seasonHistory}
+            getRowKey={(row, idx) => `${row.classKey}-${row.seasonNumber}-${idx}`}
+            rowHeight="compact"
+            emptyState={
+              <div className="py-12 text-center">
+                <Calendar className="w-10 h-10 text-cream-500/30 mx-auto mb-2" />
+                <p className="text-cream-500/50 text-sm">No season history yet</p>
+              </div>
+            }
+          />
+        </section>
+
+        {/* ================================================================
+            ACHIEVEMENTS: Simple icon grid (no glow)
+            ================================================================ */}
+        <section>
+          <h2 className="text-xs uppercase tracking-wider text-cream-500/50 mb-3">Achievements</h2>
           {achievements.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
               {achievements.map((achievement) => {
                 const Icon = achievement.icon;
                 return (
-                  <motion.div
+                  <div
                     key={achievement.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`flex items-center gap-3 p-4 ${achievement.bgColor} border ${achievement.borderColor} rounded-xl`}
+                    className="flex flex-col items-center p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg"
+                    title={`${achievement.name}: ${achievement.description}`}
                   >
-                    <div className={`w-10 h-10 rounded-lg ${achievement.bgColor} flex items-center justify-center`}>
-                      <Icon className={`w-5 h-5 ${achievement.color}`} />
-                    </div>
-                    <div>
-                      <p className={`font-display font-bold ${achievement.color}`}>{achievement.name}</p>
-                      <p className="text-xs text-cream-500/60">{achievement.description}</p>
-                    </div>
-                  </motion.div>
+                    <Icon className={`w-6 h-6 ${achievement.color} mb-1`} />
+                    <span className="text-[10px] text-cream-500/60 text-center leading-tight">
+                      {achievement.name}
+                    </span>
+                  </div>
                 );
               })}
             </div>
           ) : (
-            <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-6 text-center">
-              <Medal className="w-10 h-10 text-cream-500/30 mx-auto mb-2" />
-              <p className="text-cream-500/60">No achievements yet</p>
-              <p className="text-sm text-cream-500/40 mt-1">Complete seasons and win championships to earn achievements</p>
+            <div className="bg-charcoal-900 border border-charcoal-700 rounded-lg p-6 text-center">
+              <Medal className="w-8 h-8 text-cream-500/30 mx-auto mb-2" />
+              <p className="text-cream-500/50 text-sm">No achievements yet</p>
+              <p className="text-cream-500/40 text-xs mt-1">Complete seasons to earn achievements</p>
             </div>
           )}
-        </div>
+        </section>
 
         {/* ================================================================
-            ACTION BUTTONS: Battle Pass + Season History
+            QUICK ACTIONS
             ================================================================ */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex gap-3">
           <button
             onClick={() => navigate('/battlepass')}
-            className="flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-purple-500/20 to-gold-500/20 border border-purple-500/30 rounded-xl text-cream-100 font-medium hover:from-purple-500/30 hover:to-gold-500/30 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
           >
-            <Gift className="w-5 h-5 text-gold-400" />
+            <Gift className="w-4 h-4 text-gold-400" />
             Battle Pass
           </button>
           <button
-            onClick={() => setShowHistory(true)}
-            className="flex items-center justify-center gap-2 p-4 bg-charcoal-900/50 border border-cream-500/10 rounded-xl text-cream-100 font-medium hover:border-cream-500/20 transition-all"
+            onClick={() => navigate('/leagues')}
+            className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
           >
-            <History className="w-5 h-5 text-purple-400" />
-            Season History
+            <Trophy className="w-4 h-4 text-purple-400" />
+            Leagues
           </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex-1 flex items-center justify-center gap-2 p-3 bg-charcoal-900 border border-charcoal-700 rounded-lg text-cream-100 text-sm font-medium hover:border-cream-500/30 transition-colors"
+            >
+              <Coins className="w-4 h-4 text-green-400" />
+              {(profile.corpsCoin || 0).toLocaleString()} CC
+            </button>
+          )}
         </div>
       </div>
 
@@ -1238,24 +869,11 @@ const Profile = () => {
         onClose={() => setShowSettings(false)}
       />
 
-      <SeasonHistoryModal
-        profile={profile}
-        isOpen={showHistory}
-        onClose={() => setShowHistory(false)}
-      />
-
       <AvatarCustomizationModal
         profile={profile}
-        user={user}
         isOpen={showAvatarCustomization}
         onClose={() => setShowAvatarCustomization(false)}
         onSave={handleAvatarSave}
-      />
-
-      <CorpsCoinHistoryModal
-        isOpen={showCCHistory}
-        onClose={() => setShowCCHistory(false)}
-        balance={profile?.corpsCoin}
       />
     </div>
   );

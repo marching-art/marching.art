@@ -58,6 +58,7 @@
       /* =================================================================
          ONE-SCREEN GAME UI: Global Reset
          Browser window must NEVER scroll. All scrolling is internal.
+         Prevent white flash by setting dark background immediately.
          ================================================================= */
       html, body {
         height: 100%;
@@ -65,6 +66,8 @@
         overflow: hidden;
         margin: 0;
         padding: 0;
+        background-color: #0A0A0A;
+        color-scheme: dark;
       }
 
       #root {

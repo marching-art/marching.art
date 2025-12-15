@@ -289,7 +289,7 @@ const Leagues = () => {
       <div className="flex-shrink-0 p-4 md:p-6 border-b border-cream-500/10 bg-charcoal-950/50">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl md:text-2xl font-display font-bold text-cream-100 uppercase tracking-wide">
+            <h1 className="text-xl font-display font-bold text-cream uppercase tracking-wide">
               League Hub
             </h1>
             <p className="text-sm text-cream-500/60 mt-1 hidden sm:block">
@@ -590,23 +590,36 @@ const Leagues = () => {
                 </button>
               </div>
             ) : discoverLeagues.length === 0 ? (
-              <div className="text-center py-8 bg-charcoal-900/30 border border-cream-500/10 rounded-xl">
-                <Users className="w-10 h-10 text-cream-500/20 mx-auto mb-3" />
-                <p className="text-sm text-cream-500/60">
+              <div className="text-center py-10 bg-charcoal-900/30 border border-dashed border-cream-500/20 rounded-xl">
+                <Users className="w-12 h-12 text-cream-500/20 mx-auto mb-4" />
+                <h3 className="text-lg font-display font-bold text-cream-500/80 mb-2">
                   {searchTerm || hasActiveFilters
-                    ? 'No leagues match your search or filters'
-                    : 'No public leagues available'}
+                    ? 'No Leagues Found'
+                    : 'No Public Leagues Yet'}
+                </h3>
+                <p className="text-sm text-cream-500/50 mb-4 max-w-sm mx-auto">
+                  {searchTerm || hasActiveFilters
+                    ? 'Try adjusting your search or filters to find more leagues.'
+                    : 'Be the first to create a league and invite your friends to join!'}
                 </p>
-                {(searchTerm || hasActiveFilters) && (
+                {(searchTerm || hasActiveFilters) ? (
                   <button
                     onClick={() => {
                       setSearchTerm('');
                       setMemberFilter('all');
                       setActivityFilter('all');
                     }}
-                    className="mt-3 text-xs text-gold-400 hover:text-gold-300"
+                    className="px-4 py-2 text-sm text-gold-400 hover:text-gold-300 border border-gold-500/30 rounded-lg hover:bg-gold-500/10 transition-colors"
                   >
                     Clear search & filters
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-5 py-2.5 bg-gold-500 text-charcoal-900 rounded-lg font-display font-bold text-sm uppercase hover:bg-gold-400 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 inline mr-2" />
+                    Create First League
                   </button>
                 )}
               </div>

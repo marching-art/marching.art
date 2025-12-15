@@ -1,121 +1,87 @@
 import React, { forwardRef } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
 
 // =============================================================================
-// CARD COMPONENT
+// CARD COMPONENT - Clean, flat design
 // =============================================================================
 
-export type CardVariant = 'default' | 'glass' | 'glass-dark' | 'premium' | 'interactive' | 'outlined';
-
-export interface CardProps extends HTMLMotionProps<'div'> {
-  variant?: CardVariant;
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverable?: boolean;
   pressable?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
 
-// Premium glass variant styles - Subtle borders, soft shadows, refined aesthetics
-const variantStyles: Record<CardVariant, string> = {
-  default: 'bg-black/35 backdrop-blur-sm border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.25)]',
-  glass: 'bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.3)]',
-  'glass-dark': 'bg-black/60 backdrop-blur-md border border-white/8 shadow-[0_4px_30px_rgba(0,0,0,0.4)]',
-  premium: 'bg-gradient-to-br from-charcoal-900/90 to-black/95 backdrop-blur-lg border border-gold-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.3),0_0_20px_rgba(234,179,8,0.1)]',
-  interactive: 'bg-black/35 backdrop-blur-sm border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.25)] hover:border-gold-500/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.35),0_0_20px_rgba(234,179,8,0.1)] transition-all duration-300',
-  outlined: 'bg-transparent border border-white/15 shadow-[0_2px_15px_rgba(0,0,0,0.2)]',
-};
-
 const paddingStyles: Record<string, string> = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
+  none: '',
+  sm: 'p-3',
+  md: 'p-4',
+  lg: 'p-6',
 };
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
+// Main Card Component
+const CardRoot = forwardRef<HTMLDivElement, CardProps>(
   (
     {
-      variant = 'default',
       hoverable = false,
       pressable = false,
-      padding = 'md',
+      padding = 'none',
       children,
       className = '',
+      onClick,
       ...props
     },
     ref
   ) => {
-    // Brutalist hover animation with hard shadow offset
-    const hoverAnimation = hoverable
-      ? {
-          whileHover: { y: -4 },
-          transition: { duration: 0.2 },
-        }
-      : {};
-
-    const pressAnimation = pressable
-      ? {
-          whileTap: { scale: 0.98 },
-        }
-      : {};
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (pressable && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>);
+      }
+    };
 
     return (
-      <motion.div
+      <div
         ref={ref}
-        {...hoverAnimation}
-        {...pressAnimation}
+        role={pressable ? 'button' : undefined}
+        tabIndex={pressable ? 0 : undefined}
+        onKeyDown={pressable ? handleKeyDown : undefined}
+        onClick={onClick}
         className={`
-          rounded-xl
-          transition-all duration-300 ease-out
-          ${variantStyles[variant]}
+          bg-[#1A1A1A]
+          border border-[#333]
+          rounded-md
           ${paddingStyles[padding]}
-          ${hoverable ? 'cursor-pointer hover:-translate-y-1' : ''}
-          ${pressable ? 'cursor-pointer' : ''}
+          ${hoverable ? 'cursor-pointer hover:border-neutral-600 transition-colors duration-200' : ''}
+          ${pressable ? 'cursor-pointer active:scale-[0.99] transition-transform duration-100 focus:outline-none focus:ring-2 focus:ring-neutral-500' : ''}
           ${className}
-        `.trim()}
+        `.trim().replace(/\s+/g, ' ')}
         {...props}
       >
         {children}
-      </motion.div>
+      </div>
     );
   }
 );
 
-Card.displayName = 'Card';
+CardRoot.displayName = 'Card';
 
 // =============================================================================
-// CARD HEADER COMPONENT
+// CARD HEADER COMPONENT - With border-bottom
 // =============================================================================
 
 export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-  icon?: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
-  ({ title, subtitle, action, icon, className = '', ...props }, ref) => {
+const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
+  ({ children, className = '', ...props }, ref) => {
     return (
       <div
         ref={ref}
-        className={`flex items-center justify-between mb-4 ${className}`}
+        className={`px-4 py-3 border-b border-[#333] ${className}`}
         {...props}
       >
-        <div className="flex items-center gap-3">
-          {icon && (
-            <div className="bg-gold-500/15 p-2.5 rounded-lg border border-gold-500/30">
-              {icon}
-            </div>
-          )}
-          <div>
-            <h3 className="text-lg font-semibold text-cream">{title}</h3>
-            {subtitle && (
-              <p className="text-sm text-cream/60">{subtitle}</p>
-            )}
-          </div>
-        </div>
-        {action && <div>{action}</div>}
+        {children}
       </div>
     );
   }
@@ -124,14 +90,62 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
 CardHeader.displayName = 'CardHeader';
 
 // =============================================================================
-// CARD CONTENT COMPONENT
+// CARD BODY COMPONENT - p-4 padding
+// =============================================================================
+
+export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(
+  ({ children, className = '', ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={`p-4 ${className}`}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+CardBody.displayName = 'CardBody';
+
+// =============================================================================
+// CARD FOOTER COMPONENT
+// =============================================================================
+
+export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
+  ({ children, className = '', ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={`px-4 py-3 border-t border-[#333] ${className}`}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+CardFooter.displayName = 'CardFooter';
+
+// =============================================================================
+// CARD CONTENT COMPONENT (Legacy support)
 // =============================================================================
 
 export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
+const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
   ({ children, className = '', ...props }, ref) => {
     return (
       <div ref={ref} className={className} {...props}>
@@ -144,27 +158,16 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
 CardContent.displayName = 'CardContent';
 
 // =============================================================================
-// CARD FOOTER COMPONENT
+// COMPOUND COMPONENT EXPORT
 // =============================================================================
 
-export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
+export const Card = Object.assign(CardRoot, {
+  Header: CardHeader,
+  Body: CardBody,
+  Footer: CardFooter,
+});
 
-export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
-  ({ children, className = '', ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={`mt-4 pt-4 border-t border-white/10 ${className}`}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
-
-CardFooter.displayName = 'CardFooter';
+// Named exports for backwards compatibility
+export { CardHeader, CardContent, CardFooter, CardBody };
 
 export default Card;
