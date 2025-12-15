@@ -265,7 +265,7 @@ const HallOfChampions = () => {
                 ) : (
                   <div className="max-w-4xl mx-auto">
                     {/* Podium Layout - 3 Column with center elevated */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       {/* 2nd Place - Left */}
                       {currentChampions[1] && (
                         <motion.div

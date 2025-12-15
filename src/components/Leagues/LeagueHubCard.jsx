@@ -117,12 +117,12 @@ const LeagueHubCard = ({ league, userProfile, onClick, isMember }) => {
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className={`${style.bg} border-2 ${style.border} rounded-xl p-4 cursor-pointer transition-all shadow-lg hover:shadow-xl`}
+      className={`${style.bg} border-2 ${style.border} rounded-sm p-4 cursor-pointer transition-all`}
     >
       {/* Header Row */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-xl ${accent === 'gold' ? 'bg-gold-500/20' : accent === 'silver' ? 'bg-gray-400/20' : accent === 'bronze' ? 'bg-orange-500/20' : 'bg-charcoal-800'} flex items-center justify-center`}>
+          <div className={`w-12 h-12 rounded-sm ${accent === 'gold' ? 'bg-gold-500/20' : accent === 'silver' ? 'bg-gray-400/20' : accent === 'bronze' ? 'bg-orange-500/20' : 'bg-charcoal-800'} flex items-center justify-center`}>
             <Trophy className={`w-6 h-6 ${style.icon}`} />
           </div>
           <div>

@@ -221,7 +221,7 @@ const PWAInstallPrompt = () => {
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
       >
-        <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
           <button
             onClick={handleDismiss}
             className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -231,7 +231,7 @@ const PWAInstallPrompt = () => {
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-10 h-10 bg-[#0057B8] rounded-sm flex items-center justify-center flex-shrink-0">
               <Icon className="w-6 h-6 text-slate-900" />
             </div>
 
@@ -249,14 +249,14 @@ const PWAInstallPrompt = () => {
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={handleInstall}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-slate-900 font-semibold rounded-xl hover:from-yellow-400 hover:to-yellow-500 transition-all shadow-lg"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-sm rounded-sm hover:bg-[#0066d6] transition-all"
                   >
                     <Download className="w-4 h-4" />
                     Install
                   </button>
                   <button
                     onClick={handleDismiss}
-                    className="px-4 py-2.5 text-cream-400 hover:text-cream-200 hover:bg-white/5 rounded-xl transition-colors"
+                    className="px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-sm transition-colors"
                   >
                     Later
                   </button>
@@ -266,7 +266,7 @@ const PWAInstallPrompt = () => {
               {!content.showInstallButton && (
                 <button
                   onClick={handleDismiss}
-                  className="mt-4 w-full px-4 py-2.5 text-sm text-cream-400 hover:text-cream-200 hover:bg-white/5 rounded-xl transition-colors"
+                  className="mt-4 w-full px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-sm transition-colors"
                 >
                   Got it
                 </button>

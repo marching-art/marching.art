@@ -331,7 +331,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
         {/* Caption Wins Summary */}
         {(isLive || isCompleted) && userCaptions && opponentCaptions && (
           <div className="px-6 pb-4">
-            <div className="flex justify-center gap-6">
+            <div className="flex justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-400">{captionWins.user}</p>
                 <p className="text-xs text-cream-500/60">Captions Won</p>
@@ -409,7 +409,7 @@ ${userIsWinning ? '(Leading)' : isTied ? '(Tied)' : '(Trailing)'}
             Head-to-Head History
           </h3>
 
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex items-center justify-center gap-4">
             <div className="text-center">
               <p className={`text-3xl font-display font-bold ${h2hRecord.user1Wins > h2hRecord.user2Wins ? 'text-green-400' : 'text-cream-400'}`}>
                 {h2hRecord.user1Wins}

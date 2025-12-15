@@ -84,11 +84,11 @@ const ProfileHeader = ({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-cream-500/20 shadow-sm dark:shadow-none rounded-2xl p-8"
+      className="bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-cream-500/20 shadow-sm dark:shadow-none rounded-sm p-4"
     >
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4">
         {/* Avatar */}
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-amber-400 to-amber-600 dark:from-gold-400 dark:to-gold-600 rounded-2xl flex items-center justify-center flex-shrink-0 relative shadow-lg">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#333] rounded-sm flex items-center justify-center flex-shrink-0 relative">
           <User className="w-10 h-10 sm:w-12 sm:h-12 text-white dark:text-charcoal-900" />
           <div className={`absolute -bottom-2 -right-2 ${
             highestClass.color === 'gold' ? 'bg-gold-500' :

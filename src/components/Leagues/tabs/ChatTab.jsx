@@ -231,7 +231,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles }) => {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className={`absolute ${isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 z-10 flex gap-1 p-2 rounded-xl bg-charcoal-800 border border-cream-500/20 shadow-lg`}
+                        className={`absolute ${isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 z-10 flex gap-1 p-2 rounded-sm bg-[#1a1a1a] border border-[#333]`}
                       >
                         {REACTIONS.map(reaction => (
                           <button

@@ -57,7 +57,7 @@ const ScoreRow = ({ score, rank }) => {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
+          <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
             {/* Desktop caption display */}
             <div className="hidden md:flex items-center gap-4 text-sm">
               <div className="text-center">

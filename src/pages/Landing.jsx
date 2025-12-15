@@ -1,522 +1,280 @@
-// src/pages/Landing.jsx
-// Launch-ready landing page with clear value proposition
-import React, { useState, useEffect } from 'react';
+// =============================================================================
+// LANDING PAGE - ESPN LOGIN PORTAL
+// =============================================================================
+// A gate, not a brochure. Two-column split with live scoreboard preview.
+// Laws: No marketing fluff, no parallax, no testimonials
+
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Trophy, Users, Star, ArrowRight, Target, Calendar,
-  Wrench, Music, Shield, Flag, ChevronDown, Play,
-  Zap, TrendingUp, Award, Clock, Sparkles, Check
-} from 'lucide-react';
+import { Trophy, Lock, Mail, ArrowRight } from 'lucide-react';
+import { DataTable } from '../components/ui/DataTable';
+
+// =============================================================================
+// DUMMY SCOREBOARD DATA
+// =============================================================================
+
+const LIVE_SCORES = [
+  { rank: 1, corps: 'Blue Devils', score: 97.850, ge: 19.70, visual: 19.55, music: 38.60, change: '+0.2' },
+  { rank: 2, corps: 'Bluecoats', score: 96.425, ge: 19.45, visual: 19.20, music: 37.78, change: '+0.4' },
+  { rank: 3, corps: 'Carolina Crown', score: 95.900, ge: 19.30, visual: 19.10, music: 37.50, change: '-0.1' },
+  { rank: 4, corps: 'Santa Clara Vanguard', score: 95.275, ge: 19.15, visual: 19.00, music: 37.13, change: '+0.3' },
+  { rank: 5, corps: 'The Cadets', score: 94.650, ge: 18.95, visual: 18.85, music: 36.85, change: '—' },
+  { rank: 6, corps: 'Boston Crusaders', score: 93.800, ge: 18.80, visual: 18.60, music: 36.40, change: '+0.5' },
+  { rank: 7, corps: 'Phantom Regiment', score: 92.150, ge: 18.50, visual: 18.30, music: 35.35, change: '-0.2' },
+  { rank: 8, corps: 'Blue Knights', score: 91.425, ge: 18.35, visual: 18.10, music: 34.98, change: '+0.1' },
+];
+
+const scoreboardColumns = [
+  {
+    key: 'rank',
+    header: 'RK',
+    width: '40px',
+    isRank: true,
+  },
+  {
+    key: 'corps',
+    header: 'Corps',
+    render: (row) => (
+      <span className="text-white font-medium">{row.corps}</span>
+    ),
+  },
+  {
+    key: 'ge',
+    header: 'GE',
+    width: '55px',
+    align: 'right',
+    render: (row) => (
+      <span className="text-gray-400 tabular-nums text-xs">{row.ge.toFixed(2)}</span>
+    ),
+  },
+  {
+    key: 'visual',
+    header: 'VIS',
+    width: '55px',
+    align: 'right',
+    render: (row) => (
+      <span className="text-gray-400 tabular-nums text-xs">{row.visual.toFixed(2)}</span>
+    ),
+  },
+  {
+    key: 'music',
+    header: 'MUS',
+    width: '55px',
+    align: 'right',
+    render: (row) => (
+      <span className="text-gray-400 tabular-nums text-xs">{row.music.toFixed(2)}</span>
+    ),
+  },
+  {
+    key: 'score',
+    header: 'Total',
+    width: '70px',
+    align: 'right',
+    render: (row) => (
+      <span className="text-white font-bold tabular-nums">{row.score.toFixed(3)}</span>
+    ),
+  },
+  {
+    key: 'change',
+    header: '+/-',
+    width: '45px',
+    align: 'center',
+    render: (row) => (
+      <span className={`text-xs tabular-nums ${
+        row.change.startsWith('+') ? 'text-green-500' :
+        row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
+      }`}>
+        {row.change}
+      </span>
+    ),
+  },
+];
+
+// =============================================================================
+// LANDING PAGE COMPONENT
+// =============================================================================
 
 const Landing = () => {
-  const [expandedFaq, setExpandedFaq] = useState(null);
-
-  const features = [
-    {
-      icon: Flag,
-      title: 'Build Your Corps',
-      description: 'Create and manage your own fantasy drum corps from the ground up',
-      color: 'text-gold-500'
-    },
-    {
-      icon: Target,
-      title: 'Daily Management',
-      description: 'Run rehearsals, manage staff, maintain equipment, and keep morale high',
-      color: 'text-blue-400'
-    },
-    {
-      icon: Trophy,
-      title: 'Compete & Win',
-      description: 'Watch your corps perform and climb the leaderboards against other directors',
-      color: 'text-purple-400'
-    }
-  ];
-
-  const howItWorks = [
-    {
-      step: 1,
-      icon: Flag,
-      title: 'Create Your Corps',
-      description: 'Name your drum corps and choose a show concept. Start in SoundSport and work your way up to World Class.',
-      color: 'from-green-500/20 to-green-600/10'
-    },
-    {
-      step: 2,
-      icon: Users,
-      title: 'Build Your Staff',
-      description: 'Hire legendary instructors from drum corps history. Each staff member brings unique expertise to your program.',
-      color: 'from-blue-500/20 to-blue-600/10'
-    },
-    {
-      step: 3,
-      icon: Calendar,
-      title: 'Manage Daily Operations',
-      description: 'Run rehearsals, check on your members, maintain equipment, and prepare your show for competition.',
-      color: 'from-purple-500/20 to-purple-600/10'
-    },
-    {
-      step: 4,
-      icon: Star,
-      title: 'Compete & Progress',
-      description: 'Your corps performs at shows throughout the season. Earn XP, CorpsCoin, and unlock higher competition classes.',
-      color: 'from-gold-500/20 to-gold-600/10'
-    }
-  ];
-
-  const dailyActivities = [
-    { icon: Target, name: 'Rehearsal', description: 'Improve readiness' },
-    { icon: Users, name: 'Staff Meeting', description: 'Coordinate with instructors' },
-    { icon: Wrench, name: 'Equipment Check', description: 'Maintain your gear' },
-    { icon: Shield, name: 'Member Morale', description: 'Keep members happy' },
-    { icon: Music, name: 'Show Review', description: 'Analyze performance' },
-  ];
-
-  const competitionClasses = [
-    { name: 'SoundSport', color: 'bg-green-500', description: 'Entry level - Free to start' },
-    { name: 'A Class', color: 'bg-blue-500', description: 'Intermediate competition' },
-    { name: 'Open Class', color: 'bg-purple-500', description: 'Advanced division' },
-    { name: 'World Class', color: 'bg-gold-500', description: 'Elite competition' },
-  ];
-
-  const faqs = [
-    {
-      question: 'Is this game free to play?',
-      answer: 'Yes! You can play entirely for free. Start with a SoundSport corps and earn CorpsCoin through gameplay to unlock higher competition classes. Optional Battle Pass available for extra rewards.'
-    },
-    {
-      question: 'How do I improve my corps?',
-      answer: 'Daily activities are key! Run rehearsals to improve readiness, hire staff to boost your scoring potential, maintain equipment, and keep member morale high. Consistency pays off!'
-    },
-    {
-      question: 'What are CorpsCoin used for?',
-      answer: 'CorpsCoin is the in-game currency earned from performances. Use it to unlock new competition classes, hire staff, repair and upgrade equipment, and boost morale when needed.'
-    },
-    {
-      question: 'Can I compete against friends?',
-      answer: 'Absolutely! Create or join leagues to compete head-to-head with other directors. Trade staff, chat, and see who can build the best corps.'
-    },
-    {
-      question: 'How does scoring work?',
-      answer: 'Scores are based on DCI scoring sheets, influenced by your staff expertise, show difficulty, equipment condition, member readiness, and morale. Higher preparation = better scores!'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-main">
-      {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 bg-charcoal-950/80 backdrop-blur-lg border-b border-cream-500/10 z-40">
-        <div className="container-responsive py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" />
-              </div>
-              <h1 className="text-lg sm:text-2xl font-display font-bold text-gradient">
-                marching.art
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Link to="/login" className="btn-ghost text-sm sm:text-base px-2 sm:px-4">
-                Sign In
-              </Link>
-              <Link to="/register" className="btn-primary text-sm sm:text-base px-3 sm:px-4">
-                Get Started
-              </Link>
-            </div>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+      {/* TOP BAR */}
+      <div className="h-12 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-sm overflow-hidden">
+            <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
           </div>
+          <span className="text-sm font-bold text-white uppercase tracking-wider">
+            marching.art
+          </span>
         </div>
-      </nav>
-
-      {/* Spacer for fixed nav */}
-      <div className="h-16 sm:h-20" />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-12 sm:py-20 lg:py-28">
-        {/* Background Effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-48 sm:w-72 h-48 sm:h-72 bg-gold-500/20 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-10 w-64 sm:w-96 h-64 sm:h-96 bg-cream-500/20 rounded-full blur-3xl animate-float"
-               style={{ animationDelay: '2s' }} />
+        <div className="ml-auto flex items-center gap-4">
+          <Link to="/privacy" className="text-xs text-gray-500 hover:text-gray-300">
+            Privacy
+          </Link>
+          <Link to="/terms" className="text-xs text-gray-500 hover:text-gray-300">
+            Terms
+          </Link>
         </div>
+      </div>
 
-        <div className="container-responsive relative z-10 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/30 mb-6">
-                <Sparkles className="w-4 h-4 text-gold-500" />
-                <span className="text-sm text-gold-400 font-medium">The Fantasy Sports Game for Marching Arts</span>
-              </div>
-
-              {/* Main Headline */}
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-bold mb-4 sm:mb-6">
-                <span className="text-gradient">Build Your Dream</span>
-                <br />
-                <span className="text-cream-100">Drum Corps</span>
-              </h1>
-
-              {/* Subheadline */}
-              <p className="text-lg sm:text-xl md:text-2xl text-cream-300 mb-8 sm:mb-10 leading-relaxed px-4 sm:px-0 max-w-2xl mx-auto">
-                Manage daily operations, hire legendary staff, compete against directors worldwide, and lead your corps to championship glory.
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link to="/register" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 inline-flex items-center w-full sm:w-auto justify-center">
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Playing Free
-                </Link>
-                <a href="#how-it-works" className="btn-ghost text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 inline-flex items-center w-full sm:w-auto justify-center">
-                  Learn How It Works
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </a>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="mt-12 grid grid-cols-3 gap-4 max-w-lg mx-auto">
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-gold-500">Free</div>
-                  <div className="text-xs sm:text-sm text-cream-500/60">to Play</div>
-                </div>
-                <div className="text-center border-x border-cream-500/10">
-                  <div className="text-2xl sm:text-3xl font-bold text-cream-100">4</div>
-                  <div className="text-xs sm:text-sm text-cream-500/60">Classes to Unlock</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-cream-100">Daily</div>
-                  <div className="text-xs sm:text-sm text-cream-500/60">Competitions</div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Features Section */}
-      <section className="py-12 sm:py-16 relative">
-        <div className="container-responsive px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="card-hover group text-center p-4 sm:p-6"
-                >
-                  <div className={`${feature.color} mb-3 sm:mb-4 flex justify-center`}>
-                    <div className="p-3 rounded-xl bg-charcoal-800/50">
-                      <Icon className="w-6 h-6 sm:w-8 sm:h-8" />
-                    </div>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-cream-100 mb-1 sm:mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-cream-500/80 text-xs sm:text-sm">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-16 sm:py-24 bg-charcoal-900/50">
-        <div className="container-responsive px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
-              How It Works
-            </h2>
-            <p className="text-cream-400 max-w-2xl mx-auto">
-              Step into the shoes of a drum corps director. Every decision you make impacts your corps' success.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {howItWorks.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`relative glass rounded-2xl p-6 overflow-hidden`}
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-50`} />
-                  <div className="relative z-10">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-charcoal-800 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-gold-500">{item.step}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Icon className="w-5 h-5 text-cream-300" />
-                          <h3 className="text-lg font-semibold text-cream-100">{item.title}</h3>
-                        </div>
-                        <p className="text-cream-400 text-sm">{item.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Daily Activities Section */}
-      <section className="py-16 sm:py-24">
-        <div className="container-responsive px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
-              A Day in the Life
-            </h2>
-            <p className="text-cream-400 max-w-2xl mx-auto">
-              Every day brings new opportunities to improve your corps. Here's what successful directors do:
-            </p>
-          </motion.div>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-              {dailyActivities.map((activity, index) => {
-                const Icon = activity.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="glass rounded-xl p-4 text-center hover:border-gold-500/30 transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center mx-auto mb-2">
-                      <Icon className="w-5 h-5 text-gold-500" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-cream-100 mb-1">{activity.name}</h4>
-                    <p className="text-xs text-cream-500/60">{activity.description}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Rewards callout */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mt-8 glass-premium rounded-xl p-6 border border-gold-500/20"
-            >
-              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-gold-500/20 to-yellow-500/20 flex items-center justify-center">
-                  <Zap className="w-7 h-7 text-gold-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-cream-100 mb-1">Earn XP & CorpsCoin Daily</h3>
-                  <p className="text-cream-400 text-sm">Complete daily activities to earn rewards. Build streaks for bonus XP. Level up to unlock new competition classes!</p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-blue-400">+XP</div>
-                    <div className="text-xs text-cream-500/60">Experience</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-gold-500">+CC</div>
-                    <div className="text-xs text-cream-500/60">CorpsCoin</div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Competition Classes Section */}
-      <section className="py-16 sm:py-24 bg-charcoal-900/50">
-        <div className="container-responsive px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
-              Rise Through the Ranks
-            </h2>
-            <p className="text-cream-400 max-w-2xl mx-auto">
-              Start in SoundSport and climb your way to World Class. Each class offers new challenges and bigger rewards.
-            </p>
-          </motion.div>
-
-          <div className="flex flex-col sm:flex-row gap-4 max-w-4xl mx-auto items-stretch">
-            {competitionClasses.map((classItem, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex-1 glass rounded-xl p-4 sm:p-6 text-center relative overflow-hidden"
-              >
-                <div className={`absolute top-0 left-0 right-0 h-1 ${classItem.color}`} />
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-cream-500/60" />
-                  <span className="text-xs text-cream-500/60 uppercase tracking-wider">Level {index + 1}</span>
-                </div>
-                <h3 className="text-lg font-semibold text-cream-100 mb-1">{classItem.name}</h3>
-                <p className="text-xs text-cream-400">{classItem.description}</p>
-                {index === 0 && (
-                  <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">
-                    <Sparkles className="w-3 h-3" />
-                    Start Here
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 sm:py-24">
-        <div className="container-responsive px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
-              Frequently Asked Questions
-            </h2>
-          </motion.div>
-
-          <div className="max-w-2xl mx-auto space-y-3">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="glass rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                  className="w-full p-4 flex items-center justify-between text-left hover:bg-cream-500/5 transition-colors"
-                >
-                  <span className="font-semibold text-cream-100 pr-4">{faq.question}</span>
-                  <ChevronDown className={`w-5 h-5 text-cream-500/60 transition-transform flex-shrink-0 ${
-                    expandedFaq === index ? 'rotate-180' : ''
-                  }`} />
-                </button>
-                <AnimatePresence>
-                  {expandedFaq === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 pb-4 text-cream-400 text-sm">
-                        {faq.answer}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-16 sm:py-24 bg-gradient-to-b from-charcoal-900/50 to-charcoal-950">
-        <div className="container-responsive px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <Award className="w-12 h-12 text-gold-500 mx-auto mb-6" />
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-100 mb-4">
-              Ready to Lead Your Corps to Glory?
-            </h2>
-            <p className="text-cream-400 mb-6 max-w-xl mx-auto">
-              Join directors building their dream corps. Free to play, no credit card required.
-            </p>
-
-            {/* Benefits checklist */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              {[
-                'Free to play forever',
-                'No credit card needed',
-                'Play on any device',
-                'Join leagues instantly'
-              ].map((benefit, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-cream-300">
-                  <Check className="w-4 h-4 text-green-400" />
-                  <span>{benefit}</span>
-                </div>
-              ))}
-            </div>
-
-            <Link to="/register" className="btn-primary text-lg px-8 py-4 inline-flex items-center">
-              <Play className="w-5 h-5 mr-2" />
-              Start Your Journey
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-6 sm:py-8 border-t border-cream-500/10">
-        <div className="container-responsive px-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo192.webp" alt="marching.art logo" className="w-full h-full object-cover" loading="lazy" />
-              </div>
-              <span className="font-display font-bold text-cream-100 text-sm sm:text-base">
-                marching.art
+      {/* MAIN CONTENT - Two Column Split */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
+        {/* LEFT COLUMN - Live Scoreboard Preview */}
+        <div className="bg-[#0a0a0a] border-r border-[#333] p-6 lg:p-8 flex flex-col">
+          {/* Brand Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="w-5 h-5 text-[#0057B8]" />
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                Live Scores
               </span>
             </div>
-            <p className="text-cream-500/60 text-xs sm:text-sm text-center">
-              © 2025 marching.art
+            <h1 className="text-2xl lg:text-3xl font-bold text-white uppercase tracking-wide">
+              Fantasy Drum Corps
+            </h1>
+            <h2 className="text-lg lg:text-xl font-bold text-[#0057B8]">
+              2025 Season
+            </h2>
+            <p className="text-sm text-gray-500 mt-2">
+              The season starts now.
             </p>
-            <div className="flex gap-4 sm:gap-6">
-              <Link to="/privacy" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
-                Privacy
-              </Link>
-              <Link to="/terms" className="text-cream-500/60 hover:text-gold-500 text-xs sm:text-sm transition-colors">
-                Terms
-              </Link>
+          </div>
+
+          {/* Live Scoreboard */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="bg-[#1a1a1a] border border-[#333] flex-1 flex flex-col">
+              {/* Scoreboard Header */}
+              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  World Class Standings
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-[10px] text-green-500 font-bold uppercase">Live</span>
+                </div>
+              </div>
+
+              {/* DataTable */}
+              <div className="flex-1 overflow-auto">
+                <DataTable
+                  columns={scoreboardColumns}
+                  data={LIVE_SCORES}
+                  getRowKey={(row) => row.rank}
+                  zebraStripes={true}
+                />
+              </div>
+            </div>
+
+            {/* Stats Strip */}
+            <div className="mt-4 grid grid-cols-3 gap-px bg-[#333]">
+              <div className="bg-[#1a1a1a] p-3 text-center">
+                <div className="text-lg font-bold text-white tabular-nums">2,847</div>
+                <div className="text-[10px] text-gray-500 uppercase">Directors</div>
+              </div>
+              <div className="bg-[#1a1a1a] p-3 text-center">
+                <div className="text-lg font-bold text-white tabular-nums">156</div>
+                <div className="text-[10px] text-gray-500 uppercase">Leagues</div>
+              </div>
+              <div className="bg-[#1a1a1a] p-3 text-center">
+                <div className="text-lg font-bold text-white tabular-nums">Week 4</div>
+                <div className="text-[10px] text-gray-500 uppercase">Current</div>
+              </div>
             </div>
           </div>
         </div>
-      </footer>
+
+        {/* RIGHT COLUMN - Login Box */}
+        <div className="bg-[#111] flex items-center justify-center p-6 lg:p-8">
+          <div className="w-full max-w-sm">
+            {/* Login Card */}
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+              {/* Card Header */}
+              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Lock className="w-4 h-4" />
+                  Director Login
+                </h3>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4 space-y-4">
+                {/* Email Input */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input
+                      type="email"
+                      placeholder="director@example.com"
+                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Input */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                    />
+                  </div>
+                </div>
+
+                {/* Sign In Button */}
+                <Link
+                  to="/login"
+                  className="block w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors"
+                >
+                  Sign In
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-[#333]" />
+                  <span className="text-[10px] text-gray-500 uppercase">or</span>
+                  <div className="flex-1 h-px bg-[#333]" />
+                </div>
+
+                {/* Register Link */}
+                <Link
+                  to="/register"
+                  className="block w-full h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-colors"
+                >
+                  Create Account
+                </Link>
+              </div>
+
+              {/* Card Footer */}
+              <div className="px-4 py-3 border-t border-[#333] bg-[#1a1a1a]/50">
+                <Link to="/login" className="text-xs text-gray-500 hover:text-[#0057B8]">
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            {/* Footer Note */}
+            <p className="mt-4 text-center text-[10px] text-gray-600">
+              Free to play. No credit card required.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM BAR */}
+      <div className="h-8 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-center">
+        <span className="text-[10px] text-gray-600">
+          © 2025 marching.art — Fantasy Sports for the Marching Arts
+        </span>
+      </div>
     </div>
   );
 };

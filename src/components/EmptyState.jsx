@@ -212,7 +212,7 @@ const EmptyState = ({
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-black font-mono font-bold text-sm uppercase tracking-widest border-2 border-gold-400 hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500 text-black font-mono font-bold text-sm uppercase tracking-widest border-2 border-gold-400 hover:bg-gold-400 transition-colors"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}
@@ -221,7 +221,7 @@ const EmptyState = ({
 
         {/* Technical readout footer */}
         <div className="mt-10 pt-6 border-t border-cream/5">
-          <div className="flex items-center justify-center gap-6 text-[9px] font-mono text-cream/20 uppercase tracking-widest">
+          <div className="flex items-center justify-center gap-2 text-[9px] font-mono text-cream/20 uppercase tracking-widest">
             <span>Signal: --</span>
             <span>|</span>
             <span>Connections: 0</span>

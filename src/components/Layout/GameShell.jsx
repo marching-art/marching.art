@@ -1,15 +1,21 @@
 // =============================================================================
-// GAME SHELL COMPONENT (Dense Layout)
+// GAME SHELL - ESPN DATA GRID LAYOUT
 // =============================================================================
-// App-like layout with fixed top nav, sidebar on desktop, bottom nav on mobile
-// Dense padding optimized for data-heavy dashboard views
+// Strict data terminal layout: fixed headers, scrollable content
+// Laws enforced: No glow, no shadow, tight spacing
 
 import React, { useEffect, createContext, useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useLocation, NavLink } from 'react-router-dom';
 import { analyticsHelpers } from '../../firebase';
-import CommandRail from '../CommandRail';
 import BottomNav from '../BottomNav';
+import {
+  LayoutDashboard,
+  Calendar,
+  Trophy,
+  Users,
+  User,
+  ChevronDown
+} from 'lucide-react';
 
 // =============================================================================
 // SHELL CONTEXT
@@ -26,50 +32,97 @@ export const useShell = () => {
 };
 
 // =============================================================================
-// PAGE TRANSITION ANIMATIONS
-// =============================================================================
-
-const pageVariants = {
-  initial: { opacity: 0, y: 8 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -8 }
-};
-
-const pageTransition = {
-  type: 'tween',
-  ease: [0.25, 0.1, 0.25, 1.0],
-  duration: 0.25
-};
-
-// =============================================================================
-// TOP NAV COMPONENT
+// TOP NAV - Fixed h-12
 // =============================================================================
 
 const TopNav = () => (
-  <header
-    className="fixed top-0 left-0 right-0 z-30 h-14 bg-surface border-b border-charcoal-700 lg:pl-56"
-    role="banner"
-  >
-    <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
-      {/* Mobile Logo */}
-      <Link to="/dashboard" className="lg:hidden flex items-center gap-2">
-        <img
-          src="/logo192.webp"
-          alt="marching.art"
-          className="w-8 h-8 rounded-lg"
-        />
-        <span className="font-display font-bold text-yellow-400">Marching</span>
-        <span className="font-display font-bold text-yellow-50/90">.art</span>
-      </Link>
+  <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-4">
+    {/* Logo */}
+    <Link to="/dashboard" className="flex items-center gap-2 mr-6">
+      <img
+        src="/logo192.webp"
+        alt="marching.art"
+        className="w-7 h-7 rounded"
+      />
+      <span className="hidden sm:block font-bold text-sm text-white">MARCHING.ART</span>
+    </Link>
 
-      {/* Desktop: empty space or future breadcrumbs */}
-      <div className="hidden lg:block" />
+    {/* League Selector (placeholder) */}
+    <button className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300 hover:border-[#555]">
+      <span>2024 DCI Season</span>
+      <ChevronDown className="w-3 h-3" />
+    </button>
 
-      {/* Spacer for alignment */}
-      <div className="w-8 lg:hidden" />
+    {/* Spacer */}
+    <div className="flex-1" />
+
+    {/* Desktop Nav Links */}
+    <div className="hidden lg:flex items-center gap-1">
+      <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+      <NavItem to="/schedule" icon={Calendar} label="Schedule" />
+      <NavItem to="/scores" icon={Trophy} label="Scores" />
+      <NavItem to="/leagues" icon={Users} label="Leagues" />
+      <NavItem to="/profile" icon={User} label="Profile" />
     </div>
-  </header>
+  </nav>
 );
+
+// Nav Item Component
+const NavItem = ({ to, icon: Icon, label }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) =>
+      `flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+        isActive
+          ? 'bg-[#0057B8] text-white'
+          : 'text-gray-400 hover:text-white hover:bg-white/5'
+      }`
+    }
+  >
+    <Icon className="w-4 h-4" />
+    <span>{label}</span>
+  </NavLink>
+);
+
+// =============================================================================
+// TICKER BAR - Fixed h-8 (Sub Nav)
+// =============================================================================
+
+const TickerBar = () => {
+  // Placeholder ticker data
+  const tickerItems = [
+    { name: 'BD', score: '98.20', trend: 'up' },
+    { name: 'CC', score: '97.55', trend: 'down' },
+    { name: 'BAC', score: '96.80', trend: 'up' },
+    { name: 'SCV', score: '95.40', trend: 'neutral' },
+    { name: 'CAV', score: '94.25', trend: 'up' },
+    { name: 'PR', score: '93.10', trend: 'down' },
+  ];
+
+  return (
+    <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+      <div className="flex items-center gap-4 px-4 text-xs font-data">
+        <span className="text-gray-500 uppercase tracking-wider text-[10px] font-bold">Live</span>
+        <div className="w-px h-4 bg-[#333]" />
+        {tickerItems.map((item, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <span className="text-gray-400 font-medium">{item.name}</span>
+            <span className={`tabular-nums ${
+              item.trend === 'up' ? 'text-green-500' :
+              item.trend === 'down' ? 'text-red-500' :
+              'text-gray-300'
+            }`}>
+              {item.score}
+            </span>
+            {item.trend === 'up' && <span className="text-green-500 text-[10px]">▲</span>}
+            {item.trend === 'down' && <span className="text-red-500 text-[10px]">▼</span>}
+            {idx < tickerItems.length - 1 && <div className="w-px h-3 bg-[#333] ml-2" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // =============================================================================
 // GAME SHELL COMPONENT
@@ -84,40 +137,26 @@ const GameShell = ({ children }) => {
   }, [location]);
 
   const shellContextValue = {
-    navWidth: 224, // 14rem = 224px (w-56)
+    headerHeight: 80, // 48px (h-12) + 32px (h-8) = 80px total
   };
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="min-h-screen w-screen bg-background text-cream font-sans overscroll-contain touch-manipulation">
+      <div className="min-h-screen w-screen bg-[#0a0a0a] text-white font-sans">
         {/* Fixed Top Navigation */}
         <TopNav />
 
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-40">
-          <CommandRail />
-        </aside>
+        {/* Fixed Ticker Bar */}
+        <TickerBar />
 
-        {/* Main Content Area */}
+        {/* Main Content Area - Pads for fixed headers (h-12 + h-8 = 80px = pt-20) */}
         <main
           id="main-content"
           role="main"
-          className="relative z-10 min-h-screen w-full lg:pl-56 pt-16 pb-20 lg:pb-4"
+          className="pt-20 pb-20 lg:pb-4 min-h-screen bg-[#0a0a0a]"
         >
-          <div className="max-w-7xl mx-auto px-4">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial="initial"
-                animate="in"
-                exit="out"
-                variants={pageVariants}
-                transition={pageTransition}
-                className="w-full"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+          <div className="max-w-[1400px] mx-auto px-4">
+            {children}
           </div>
         </main>
 

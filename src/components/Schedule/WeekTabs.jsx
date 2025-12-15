@@ -147,7 +147,7 @@ const WeekTabs = ({
         </div>
 
         {/* Timeline Legend */}
-        <div className="flex items-center justify-center gap-6 mt-8 pt-4 border-t border-charcoal-800">
+        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-charcoal-800">
           <div className="flex items-center gap-2">
             <Check className="w-3 h-3 text-gold-400" />
             <span className="text-[10px] text-cream/40 font-display uppercase tracking-wider">Complete</span>

@@ -232,7 +232,7 @@ const PerformanceChart = ({ scores = [], corpsClass }) => {
                   cy={point.y}
                   r="1.5"
                   fill="#FFD44D"
-                  className="drop-shadow-lg"
+                  className=""
                 />
                 {/* Hover effect would go here in a more advanced implementation */}
               </motion.g>

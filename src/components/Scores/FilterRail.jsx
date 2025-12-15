@@ -313,7 +313,7 @@ const FilterRail = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleVisibility}
-              className="flex items-center gap-2 px-4 py-3 bg-gold-500 text-charcoal-900 rounded-lg shadow-lg font-display font-bold uppercase tracking-wide text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white rounded-sm font-bold uppercase tracking-wide text-xs"
             >
               <Filter className="w-4 h-4" />
               Filters

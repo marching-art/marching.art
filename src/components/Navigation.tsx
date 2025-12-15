@@ -113,7 +113,7 @@ const Navigation: React.FC = () => {
               <div className="relative">
                 <Icon className={`w-5 h-5 ${active ? 'text-yellow-400' : ''}`} />
                 {badgeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg">
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
                     {badgeCount > 99 ? '99+' : badgeCount}
                   </span>
                 )}

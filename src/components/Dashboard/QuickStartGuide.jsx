@@ -262,7 +262,7 @@ export const QuickStartButton = ({ onClick, show = true }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-gold-500 text-charcoal-900 rounded-xl shadow-lg shadow-gold-500/20 font-display font-bold text-sm hover:bg-gold-400 transition-colors"
+      className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white rounded-sm font-bold text-sm hover:bg-[#0066d6] transition-colors"
     >
       <HelpCircle className="w-5 h-5" />
       Quick Start

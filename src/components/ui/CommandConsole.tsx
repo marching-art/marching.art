@@ -71,7 +71,7 @@ export const SystemLoader: React.FC<SystemLoaderProps> = ({
   const displayProgress = progress ?? internalProgress;
 
   const content = (
-    <div className={`flex flex-col items-center justify-center gap-6 ${className}`}>
+    <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       {/* Terminal Header - simplified on mobile */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
@@ -437,7 +437,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
           {actionLabel && onAction && (
             <button
               onClick={onAction}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gold-500 text-charcoal-900 font-mono font-bold text-xs uppercase tracking-wider hover:bg-gold-400 transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-mono font-bold text-xs uppercase tracking-wider hover:bg-[#0066d6] transition-colors"
             >
               <Plus className="w-3 h-3" />
               {actionLabel}
@@ -506,7 +506,7 @@ export const ConsoleEmptyState: React.FC<ConsoleEmptyStateProps> = ({
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold-500 text-charcoal-900 font-mono font-bold text-sm uppercase tracking-wider border border-gold-400 hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-[#0057B8] text-white font-mono font-bold text-sm uppercase tracking-wider border border-[#0057B8] hover:bg-[#0066d6] transition-colors"
           >
             <Plus className="w-4 h-4" />
             {actionLabel}
