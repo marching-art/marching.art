@@ -22,7 +22,7 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
 
 // Button variant styles
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-[#0057B8] text-white border border-[#0057B8] hover:bg-[#004a9e]',
+  primary: 'bg-primary text-white border border-primary hover:bg-primary/90',
   secondary: 'bg-transparent border border-cream-500/30 text-cream hover:bg-white/5 hover:border-cream-500/50',
   ghost: 'bg-transparent text-cream/80 border border-transparent hover:bg-white/10 hover:text-cream',
 };
@@ -67,7 +67,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           inline-flex items-center justify-center gap-2
           rounded-lg font-semibold
           transition-all duration-300 ease-out
-          focus:outline-none focus:ring-2 focus:ring-[#0057B8]/50 focus:ring-offset-2 focus:ring-offset-charcoal-950
+          focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-charcoal-950
           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
           ${variantStyles[variant]}
           ${sizeStyles[size]}
