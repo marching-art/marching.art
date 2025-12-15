@@ -36,6 +36,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { TableSkeleton } from '../components/Skeleton';
+import { getNextClassProgress } from '../utils/captionPricing';
 
 // Caption definitions for lineup display
 const CAPTIONS = [
@@ -151,6 +152,13 @@ const Dashboard = () => {
     getCorpsClassName,
     refreshProfile
   } = dashboardData;
+
+  // Compute next class progress for display
+  const nextClassProgress = getNextClassProgress(
+    profile?.xp || 0,
+    profile?.unlockedClasses || ['soundSport'],
+    profile?.corpsCoin || 0
+  );
 
   // Show morning report on first visit of the day
   useEffect(() => {
