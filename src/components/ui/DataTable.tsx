@@ -56,6 +56,8 @@ export interface DataTableProps<T = Record<string, unknown>> {
   rowHeight?: 'compact' | 'default';
   /** Maximum height for the table container (enables vertical scroll) */
   maxHeight?: string;
+  /** Function to determine if a row should be highlighted */
+  highlightRow?: (row: T, index: number) => boolean;
 }
 
 // =============================================================================
@@ -96,6 +98,7 @@ interface TableRowProps<T> {
   onRowClick?: (row: T, index: number) => void;
   zebraStripes: boolean;
   rowHeight: 'compact' | 'default';
+  isHighlighted: boolean;
 }
 
 const TableRowComponent = <T extends Record<string, unknown>>({
@@ -105,6 +108,7 @@ const TableRowComponent = <T extends Record<string, unknown>>({
   onRowClick,
   zebraStripes,
   rowHeight,
+  isHighlighted,
 }: TableRowProps<T>) => {
   const handleClick = useCallback(() => {
     onRowClick?.(row, rowIndex);
@@ -124,6 +128,9 @@ const TableRowComponent = <T extends Record<string, unknown>>({
   const clickableClass = onRowClick
     ? 'cursor-pointer hover:bg-cream-500/5 focus:bg-cream-500/5 focus:outline-none'
     : '';
+  const highlightClass = isHighlighted
+    ? 'bg-gold-500/10 border-l-2 border-l-gold-500'
+    : '';
 
   return (
     <tr
@@ -134,6 +141,7 @@ const TableRowComponent = <T extends Record<string, unknown>>({
         transition-colors duration-150
         ${zebraClass}
         ${clickableClass}
+        ${highlightClass}
       `.trim()}
       onClick={onRowClick ? handleClick : undefined}
       onKeyDown={onRowClick ? handleKeyDown : undefined}
@@ -266,6 +274,7 @@ export const DataTable = <T extends Record<string, unknown>>({
   tableClassName = '',
   rowHeight = 'default',
   maxHeight,
+  highlightRow,
 }: DataTableProps<T>) => {
   // Memoize skeleton rows array
   const skeletonRowsArray = useMemo(
@@ -391,6 +400,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                   onRowClick={onRowClick}
                   zebraStripes={zebraStripes}
                   rowHeight={rowHeight}
+                  isHighlighted={highlightRow ? highlightRow(row, rowIndex) : false}
                 />
               ))}
             </tbody>
