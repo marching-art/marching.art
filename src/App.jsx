@@ -205,9 +205,11 @@ function App() {
           <Route path="/settings" element={<Navigate to="/profile" replace />} />
 
           <Route path="/hall-of-champions" element={
-            <GameShell>
-              <Page name="Hall of Champions"><HallOfChampions /></Page>
-            </GameShell>
+            <Suspense fallback={<LoadingScreen fullScreen />}>
+              <GameShell>
+                <Page name="Hall of Champions"><HallOfChampions /></Page>
+              </GameShell>
+            </Suspense>
           } />
 
           <Route path="/admin" element={
