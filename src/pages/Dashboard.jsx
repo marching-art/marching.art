@@ -1,17 +1,19 @@
-// src/pages/Dashboard.jsx
-// Data-dense Dashboard focused on quick stats and actionable information
+// =============================================================================
+// DASHBOARD - ESPN DATA GRID LAYOUT
+// =============================================================================
+// Dense, puzzle-fit panels. Zero black space between cards.
+// Laws: gap-px creates borders, tables over cards, no glow
+
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, Sparkles, X, Crown, TrendingUp, Lock
+  Music, TrendingUp, TrendingDown, Activity
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
-import ShowConceptSelector from '../components/ShowConcept/ShowConceptSelector';
 import {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
@@ -23,7 +25,6 @@ import {
   MorningReport,
   OnboardingTour,
   QuickStartGuide,
-  QuickStartButton,
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
@@ -31,64 +32,47 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import GameShell from '../components/Layout/GameShell';
-import { StatCard } from '../components/ui/StatCard';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
-import { TableSkeleton } from '../components/Skeleton';
-import { getNextClassProgress, XP_SOURCES } from '../utils/captionPricing';
 
-// Caption definitions for lineup display
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
 const CAPTIONS = [
-  { id: 'GE1', name: 'GE1', fullName: 'General Effect 1', category: 'ge' },
-  { id: 'GE2', name: 'GE2', fullName: 'General Effect 2', category: 'ge' },
-  { id: 'VP', name: 'VP', fullName: 'Visual Proficiency', category: 'vis' },
-  { id: 'VA', name: 'VA', fullName: 'Visual Analysis', category: 'vis' },
-  { id: 'CG', name: 'CG', fullName: 'Color Guard', category: 'vis' },
-  { id: 'B', name: 'B', fullName: 'Brass', category: 'mus' },
-  { id: 'MA', name: 'MA', fullName: 'Music Analysis', category: 'mus' },
-  { id: 'P', name: 'P', fullName: 'Percussion', category: 'mus' },
+  { id: 'GE1', name: 'GE1', category: 'ge' },
+  { id: 'GE2', name: 'GE2', category: 'ge' },
+  { id: 'VP', name: 'VP', category: 'vis' },
+  { id: 'VA', name: 'VA', category: 'vis' },
+  { id: 'CG', name: 'CG', category: 'vis' },
+  { id: 'B', name: 'B', category: 'mus' },
+  { id: 'MA', name: 'MA', category: 'mus' },
+  { id: 'P', name: 'P', category: 'mus' },
 ];
 
-// Class badge styles
-const classColors = {
-  worldClass: 'bg-gold-500 text-charcoal-900',
-  openClass: 'bg-purple-500 text-white',
-  aClass: 'bg-blue-500 text-white',
-  soundSport: 'bg-green-500 text-white',
+const CLASS_LABELS = {
+  worldClass: 'World',
+  openClass: 'Open',
+  aClass: 'A Class',
+  soundSport: 'SoundSport',
 };
 
-const CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+// =============================================================================
+// STANDINGS TABLE COLUMNS
+// =============================================================================
 
-// Parse lineup value "CorpsName|Year|Points" -> { name, year, points }
-const parseLineupValue = (value) => {
-  if (!value) return null;
-  const parts = value.split('|');
-  return {
-    name: parts[0] || 'Unknown',
-    year: parts[1] || '',
-    points: parseInt(parts[2]) || 0,
-  };
-};
-
-// Standings table columns
 const standingsColumns = [
   {
     key: 'rank',
-    header: '#',
-    width: '50px',
-    align: 'center',
-    sticky: true,
-    render: (row) => (
-      <span className="font-data font-bold text-cream-500/80">{row.rank}</span>
-    ),
+    header: 'RK',
+    width: '40px',
+    isRank: true,
   },
   {
     key: 'corpsName',
     header: 'Corps',
-    sticky: true,
     render: (row) => (
-      <span className="font-semibold text-cream truncate block max-w-[120px] md:max-w-none">
+      <span className="truncate block max-w-[140px]">
         {row.corpsName || row.corps}
       </span>
     ),
@@ -97,14 +81,18 @@ const standingsColumns = [
     key: 'score',
     header: 'Score',
     align: 'right',
-    width: '80px',
+    width: '70px',
     render: (row) => (
-      <span className="font-data font-bold text-gold-400 tabular-nums">
+      <span className="text-white tabular-nums">
         {typeof row.score === 'number' ? row.score.toFixed(2) : row.score}
       </span>
     ),
   },
 ];
+
+// =============================================================================
+// DASHBOARD COMPONENT
+// =============================================================================
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -123,9 +111,6 @@ const Dashboard = () => {
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [showMorningReport, setShowMorningReport] = useState(false);
-  const [showSynergyPanel, setShowSynergyPanel] = useState(false);
-
-  // Onboarding tour and quick start guide states
   const [showOnboardingTour, setShowOnboardingTour] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
 
@@ -153,14 +138,7 @@ const Dashboard = () => {
     refreshProfile
   } = dashboardData;
 
-  // Compute next class progress for display
-  const nextClassProgress = getNextClassProgress(
-    profile?.xp || 0,
-    profile?.unlockedClasses || ['soundSport'],
-    profile?.corpsCoin || 0
-  );
-
-  // Show morning report on first visit of the day
+  // Effects
   useEffect(() => {
     if (profile && activeCorps) {
       const today = new Date().toDateString();
@@ -172,17 +150,22 @@ const Dashboard = () => {
     }
   }, [profile, activeCorps, user?.uid]);
 
-  // Show onboarding tour on first dashboard visit
   useEffect(() => {
     if (profile?.isFirstVisit && activeCorps && !showMorningReport) {
-      const timer = setTimeout(() => {
-        setShowOnboardingTour(true);
-      }, 500);
+      const timer = setTimeout(() => setShowOnboardingTour(true), 500);
       return () => clearTimeout(timer);
     }
   }, [profile?.isFirstVisit, activeCorps, showMorningReport]);
 
-  // Mark first visit as complete when tour ends
+  useEffect(() => {
+    if (newlyUnlockedClass) setShowClassUnlockCongrats(true);
+  }, [newlyUnlockedClass]);
+
+  useEffect(() => {
+    if (newAchievement) setShowAchievementModal(true);
+  }, [newAchievement]);
+
+  // Handlers
   const handleTourComplete = async () => {
     setShowOnboardingTour(false);
     if (profile?.isFirstVisit && user) {
@@ -195,36 +178,6 @@ const Dashboard = () => {
     }
   };
 
-  // Show class unlock congrats when newly unlocked
-  useEffect(() => {
-    if (newlyUnlockedClass) setShowClassUnlockCongrats(true);
-  }, [newlyUnlockedClass]);
-
-  // Show achievement modal when new achievement
-  useEffect(() => {
-    if (newAchievement) setShowAchievementModal(true);
-  }, [newAchievement]);
-
-  // Get upcoming shows for this week
-  const getThisWeekShows = () => {
-    if (!activeCorps?.selectedShows) return [];
-    const weekShows = activeCorps.selectedShows[`week${currentWeek}`] || [];
-    return weekShows.slice(0, 3);
-  };
-
-  // Get next show
-  const getNextShow = () => {
-    const shows = getThisWeekShows();
-    return shows.length > 0 ? shows[0] : null;
-  };
-
-  // Get user's primary league
-  const getPrimaryLeague = () => {
-    if (!myLeagues || myLeagues.length === 0) return null;
-    return myLeagues[0];
-  };
-
-  // Handler functions
   const handleSetupNewClass = () => {
     setShowClassUnlockCongrats(false);
     setShowRegistration(true);
@@ -233,7 +186,7 @@ const Dashboard = () => {
   const handleDeclineSetup = () => {
     setShowClassUnlockCongrats(false);
     clearNewlyUnlockedClass();
-    toast.success('You can register your new corps anytime from the dashboard!');
+    toast.success('You can register your new corps anytime!');
   };
 
   const handleEditCorps = async (formData) => {
@@ -244,11 +197,10 @@ const Dashboard = () => {
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
       });
-      toast.success('Corps updated successfully!');
+      toast.success('Corps updated!');
       setShowEditCorps(false);
     } catch (error) {
-      console.error('Error updating corps:', error);
-      toast.error('Failed to update corps. Please try again.');
+      toast.error('Failed to update corps');
     }
   };
 
@@ -256,11 +208,10 @@ const Dashboard = () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, { [`corps.${activeCorpsClass}`]: null });
-      toast.success(`${activeCorps.corpsName || activeCorps.name} has been deleted`);
+      toast.success('Corps deleted');
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error('Error deleting corps:', error);
-      toast.error('Failed to delete corps. Please try again.');
+      toast.error('Failed to delete corps');
     }
   };
 
@@ -273,8 +224,7 @@ const Dashboard = () => {
         setShowRetireConfirm(false);
       }
     } catch (error) {
-      console.error('Error retiring corps:', error);
-      toast.error(error.message || 'Failed to retire corps. Please try again.');
+      toast.error(error.message || 'Failed to retire corps');
     } finally {
       setRetiring(false);
     }
@@ -283,76 +233,78 @@ const Dashboard = () => {
   const handleMoveCorps = async (targetClass) => {
     try {
       if (corps[targetClass]) {
-        toast.error(`You already have a corps registered in ${getCorpsClassName(targetClass)}`);
+        toast.error(`Already have a corps in ${getCorpsClassName(targetClass)}`);
         return;
       }
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const corpsData = { ...activeCorps, class: targetClass };
       await updateDoc(profileRef, {
-        [`corps.${targetClass}`]: corpsData,
+        [`corps.${targetClass}`]: { ...activeCorps, class: targetClass },
         [`corps.${activeCorpsClass}`]: null
       });
-      toast.success(`${activeCorps.corpsName || activeCorps.name} moved to ${getCorpsClassName(targetClass)}`);
+      toast.success('Corps moved!');
       setShowMoveCorps(false);
     } catch (error) {
-      console.error('Error moving corps:', error);
-      toast.error('Failed to move corps. Please try again.');
+      toast.error('Failed to move corps');
     }
   };
 
   const handleCorpsRegistration = async (formData) => {
     try {
       if (!seasonData?.seasonUid) {
-        toast.error('Season data not loaded. Please try again.');
+        toast.error('Season data not loaded');
         return;
       }
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const corpsData = {
-        name: formData.name,
-        location: formData.location,
-        showConcept: formData.showConcept,
-        class: formData.class,
-        createdAt: new Date(),
-        seasonId: seasonData.seasonUid,
-        lineup: {},
-        score: 0,
-        rank: null
-      };
-      await updateDoc(profileRef, { [`corps.${formData.class}`]: corpsData });
-      toast.success(`${formData.name} registered successfully!`);
+      await updateDoc(profileRef, {
+        [`corps.${formData.class}`]: {
+          name: formData.name,
+          location: formData.location,
+          showConcept: formData.showConcept,
+          class: formData.class,
+          createdAt: new Date(),
+          seasonId: seasonData.seasonUid,
+          lineup: {},
+          score: 0,
+          rank: null
+        }
+      });
+      toast.success(`${formData.name} registered!`);
       setShowRegistration(false);
       clearNewlyUnlockedClass();
     } catch (error) {
-      console.error('Error registering corps:', error);
-      toast.error('Failed to register corps. Please try again.');
+      toast.error('Failed to register corps');
     }
   };
 
-  const handleCaptionSelection = async () => {
-    setShowCaptionSelection(false);
-  };
-
-  const thisWeekShows = getThisWeekShows();
-  const nextShow = getNextShow();
-  const primaryLeague = getPrimaryLeague();
+  // Computed values
   const lineup = activeCorps?.lineup || {};
   const lineupCount = Object.keys(lineup).length;
+  const standingsData = aggregatedScores.slice(0, 8);
+  const primaryLeague = myLeagues?.[0];
 
-  // Get top 5 standings
-  const standingsPreview = aggregatedScores.slice(0, 5);
+  const getThisWeekShows = () => {
+    if (!activeCorps?.selectedShows) return [];
+    return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 4);
+  };
 
-  // Calculate trend for rank
   const getRankTrend = () => {
-    if (!activeCorps?.rankHistory || activeCorps.rankHistory.length < 2) return undefined;
+    if (!activeCorps?.rankHistory || activeCorps.rankHistory.length < 2) return null;
     const prev = activeCorps.rankHistory[activeCorps.rankHistory.length - 2];
     const curr = activeCorps.rank;
     if (prev > curr) return 'up';
     if (prev < curr) return 'down';
-    return 'neutral';
+    return null;
   };
 
+  const thisWeekShows = getThisWeekShows();
+  const rankTrend = getRankTrend();
+
+  // =============================================================================
+  // RENDER
+  // =============================================================================
+
   return (
-    <div className="h-full overflow-y-auto bg-charcoal-950 p-4 md:p-6">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Season Setup Wizard */}
       {showSeasonSetupWizard && seasonData && (
         <SeasonSetupWizard
@@ -366,394 +318,268 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Compact Header */}
-      <header className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-display font-bold text-cream">Dashboard</h1>
-          <span className="text-xs text-cream-500/50 hidden sm:inline">
-            {formatSeasonName(seasonData?.name)} • Week {currentWeek}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-gold-500/10 border border-gold-500/20 rounded">
-            <Coins className="w-3.5 h-3.5 text-gold-400" />
-            <span className="text-xs font-bold text-gold-400 tabular-nums">
-              {(profile?.corpsCoin || 0).toLocaleString()}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Next Class Unlock Progress */}
-      {nextClassProgress && (() => {
-        // Static class mappings for Tailwind
-        const colorStyles = {
-          blue: {
-            border: 'border-blue-500/20',
-            iconBg: 'bg-blue-500/20',
-            iconText: 'text-blue-400',
-            text: 'text-blue-400',
-            gradient: 'from-blue-500 to-blue-400',
-            buttonBg: 'bg-blue-500/10',
-            buttonBorder: 'border-blue-500/20',
-            buttonHover: 'hover:bg-blue-500/20'
-          },
-          purple: {
-            border: 'border-purple-500/20',
-            iconBg: 'bg-purple-500/20',
-            iconText: 'text-purple-400',
-            text: 'text-purple-400',
-            gradient: 'from-purple-500 to-purple-400',
-            buttonBg: 'bg-purple-500/10',
-            buttonBorder: 'border-purple-500/20',
-            buttonHover: 'hover:bg-purple-500/20'
-          },
-          gold: {
-            border: 'border-gold-500/20',
-            iconBg: 'bg-gold-500/20',
-            iconText: 'text-gold-400',
-            text: 'text-gold-400',
-            gradient: 'from-gold-500 to-gold-400',
-            buttonBg: 'bg-gold-500/10',
-            buttonBorder: 'border-gold-500/20',
-            buttonHover: 'hover:bg-gold-500/20'
-          }
-        };
-        const styles = colorStyles[nextClassProgress.color] || colorStyles.blue;
-
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <div className={`bg-charcoal-900 border ${styles.border} rounded-xl p-4`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${styles.iconBg} flex items-center justify-center`}>
-                    <Lock className={`w-5 h-5 ${styles.iconText}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-cream/70">Next Unlock</p>
-                    <p className={`font-display font-bold ${styles.text}`}>
-                      {nextClassProgress.className}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-cream/70">Progress</p>
-                  <p className="font-data font-bold text-cream">
-                    {nextClassProgress.currentXP.toLocaleString()} / {nextClassProgress.requiredXP.toLocaleString()} XP
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden mb-3">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${nextClassProgress.xpProgress}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                  className={`h-full bg-gradient-to-r ${styles.gradient} rounded-full`}
-                />
-              </div>
-
-              {/* XP Sources Hint */}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-4 text-cream/50">
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    Weekly: +{XP_SOURCES.weeklyParticipation} XP
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Trophy className="w-3 h-3" />
-                    League Wins: +{XP_SOURCES.leagueWin} XP
-                  </span>
-                </div>
-                {nextClassProgress.canUnlockWithCC && (
-                  <button className={`flex items-center gap-1.5 px-3 py-1 ${styles.buttonBg} border ${styles.buttonBorder} rounded ${styles.text} ${styles.buttonHover} transition-colors`}>
-                    <Coins className="w-3 h-3" />
-                    Unlock with {nextClassProgress.requiredCC.toLocaleString()} CC
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        );
-      })()}
-
       {activeCorps ? (
-        <div className="space-y-6">
-          {/* Corps Switcher (if multiple corps) */}
+        <>
+          {/* Corps Switcher Bar */}
           {hasMultipleCorps && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {Object.entries(corps)
-                .sort((a, b) => CLASS_ORDER.indexOf(a[0]) - CLASS_ORDER.indexOf(b[0]))
-                .map(([classId, corpsData]) => (
-                  <button
-                    key={classId}
-                    onClick={() => handleCorpsSwitch(classId)}
-                    className={`px-3 py-1.5 rounded text-xs font-display font-bold uppercase tracking-wide transition-all whitespace-nowrap ${
-                      activeCorpsClass === classId
-                        ? `${classColors[classId]} shadow-lg`
-                        : 'bg-charcoal-800 text-cream-500/60 hover:text-cream border border-white/10'
-                    }`}
-                  >
-                    {(corpsData.corpsName || corpsData.name || '').slice(0, 15)}
-                  </button>
-                ))}
+            <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-2 flex items-center gap-2 overflow-x-auto">
+              {Object.entries(corps).map(([classId, corpsData]) => (
+                <button
+                  key={classId}
+                  onClick={() => handleCorpsSwitch(classId)}
+                  className={`px-3 py-1 text-xs font-bold uppercase whitespace-nowrap ${
+                    activeCorpsClass === classId
+                      ? 'bg-[#0057B8] text-white'
+                      : 'bg-[#333] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* QUICK LOOK - StatCards Row */}
-          <section aria-label="Quick Stats">
-            <div className="grid grid-cols-3 gap-3">
-              <StatCard
-                label="Rank"
-                value={activeCorps.rank ? `#${activeCorps.rank}` : '-'}
-                trend={getRankTrend()}
-                trendValue={activeCorps.rankChange ? Math.abs(activeCorps.rankChange).toString() : undefined}
-              />
-              <StatCard
-                label="Season Score"
-                value={activeCorps.totalSeasonScore?.toFixed(1) || '0.0'}
-              />
-              <StatCard
-                label="Next Show"
-                value={nextShow ? (nextShow.eventName || nextShow.name || 'Show').slice(0, 12) : 'None'}
-              />
-            </div>
-          </section>
+          {/* MAIN GRID - gap-px creates borders */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-[#333]">
 
-          {/* MIDDLE ROW - My Corps + Standings */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* MY CORPS Card */}
-            <Card data-tour="corps-card">
-              <Card.Header className="flex items-center justify-between">
+            {/* LEFT COLUMN - My Team */}
+            <div className="bg-[#1a1a1a] p-4">
+              {/* Team Header */}
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
-                    My Corps
-                  </h2>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-display font-bold uppercase ${classColors[activeCorpsClass]}`}>
-                    {getCorpsClassName(activeCorpsClass)}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
                   </span>
-                  {activeCorps.rank && activeCorps.rank <= 10 && (
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-400 text-[10px] font-bold">
-                      <Crown size={10} /> Top 10
-                    </span>
-                  )}
                 </div>
                 <button
                   onClick={() => setShowEditCorps(true)}
-                  className="p-1.5 rounded hover:bg-white/10 text-cream-500/40 hover:text-cream transition-colors"
-                  aria-label="Edit corps"
+                  className="p-1 text-gray-500 hover:text-white"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
-              </Card.Header>
+              </div>
 
-              <Card.Body className="space-y-3">
-                {/* Corps Name */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-display font-black text-cream uppercase tracking-tight">
-                    {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
-                  </h3>
-                  {typeof activeCorps?.showConcept === 'object' && activeCorps.showConcept.theme && (
-                    <button
-                      onClick={() => setShowSynergyPanel(true)}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-400 hover:bg-purple-500/20 transition-colors"
-                      aria-label={`View show concept: ${activeCorps.showConcept.theme}`}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      {activeCorps.showConcept.theme}
-                    </button>
-                  )}
+              {/* Corps Name */}
+              <h2 className="text-lg font-bold text-white mb-4 truncate">
+                {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
+              </h2>
+
+              {/* Big Score */}
+              <div className="mb-4">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Season Score
                 </div>
+                <div className="text-3xl font-bold font-data text-white tabular-nums">
+                  {activeCorps.totalSeasonScore?.toFixed(2) || '0.00'}
+                </div>
+              </div>
 
-                {/* Lineup Summary */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-cream-500/50">Lineup</span>
+              {/* Rank */}
+              <div className="flex items-center gap-4 mb-4 pb-4 border-b border-[#333]">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Rank
+                  </div>
                   <div className="flex items-center gap-2">
-                    <span className={`font-data font-bold ${lineupCount === 8 ? 'text-green-400' : 'text-gold-400'}`}>
+                    <span className="text-2xl font-bold text-white">
+                      #{activeCorps.rank || '-'}
+                    </span>
+                    {rankTrend === 'up' && (
+                      <span className="flex items-center text-green-500 text-xs">
+                        <TrendingUp className="w-4 h-4" />
+                      </span>
+                    )}
+                    {rankTrend === 'down' && (
+                      <span className="flex items-center text-red-500 text-xs">
+                        <TrendingDown className="w-4 h-4" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Lineup
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xl font-bold ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
                       {lineupCount}/8
                     </span>
                     <button
                       onClick={() => setShowCaptionSelection(true)}
-                      className="text-xs text-gold-400 hover:text-gold-300 transition-colors"
-                      aria-label="Edit lineup"
+                      className="text-[10px] text-[#0057B8] hover:underline"
                     >
                       Edit
                     </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Compact Lineup Grid */}
-                {lineupCount > 0 ? (
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {CAPTIONS.map((caption) => {
-                      const value = lineup[caption.id];
-                      const parsed = parseLineupValue(value);
-                      const categoryColors = {
-                        ge: 'border-gold-500/30 bg-gold-500/5 text-gold-400',
-                        vis: 'border-blue-500/30 bg-blue-500/5 text-blue-400',
-                        mus: 'border-purple-500/30 bg-purple-500/5 text-purple-400',
-                      };
-
-                      return (
-                        <div
-                          key={caption.id}
-                          className={`p-1.5 rounded border text-center ${categoryColors[caption.category]}`}
-                          title={parsed ? `${parsed.name} '${parsed.year?.slice(-2) || '??'}` : 'Not set'}
-                        >
-                          <div className="text-[10px] font-bold uppercase">{caption.name}</div>
-                          {parsed ? (
-                            <div className="text-[9px] text-cream-500/50 truncate">{parsed.name.slice(0, 8)}</div>
-                          ) : (
-                            <div className="text-[9px] text-cream-500/30">-</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowCaptionSelection(true)}
-                    className="w-full py-3 text-center bg-gold-500/10 border border-gold-500/20 rounded text-gold-400 text-sm font-semibold hover:bg-gold-500/20 transition-colors"
-                  >
-                    <Music className="w-4 h-4 inline mr-2" />
-                    Build Lineup
-                  </button>
-                )}
-
-                {/* League Info */}
-                {primaryLeague ? (
-                  <Link
-                    to="/leagues"
-                    className="flex items-center justify-between p-2 bg-blue-500/5 border border-blue-500/20 rounded hover:bg-blue-500/10 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm text-cream">{primaryLeague.name}</span>
+              {/* Lineup Grid */}
+              <div className="grid grid-cols-4 gap-1 mb-4">
+                {CAPTIONS.map((caption) => {
+                  const value = lineup[caption.id];
+                  const hasValue = !!value;
+                  return (
+                    <div
+                      key={caption.id}
+                      className={`p-1.5 text-center border ${
+                        hasValue ? 'border-[#444] bg-[#222]' : 'border-[#333] bg-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="text-[10px] font-bold text-gray-400">{caption.name}</div>
+                      <div className={`text-[9px] truncate ${hasValue ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {hasValue ? value.split('|')[0]?.slice(0, 6) : '-'}
+                      </div>
                     </div>
-                    <span className="text-xs font-data font-bold text-blue-400">
-                      #{primaryLeague.userRank || '-'}
-                    </span>
-                  </Link>
-                ) : (
-                  <Link
-                    to="/leagues"
-                    className="flex flex-col items-center gap-1 p-3 bg-blue-500/5 border border-dashed border-blue-500/30 rounded hover:bg-blue-500/10 transition-colors group"
-                  >
-                    <div className="flex items-center gap-2 text-blue-400">
-                      <Users className="w-4 h-4" />
-                      <span className="text-sm font-semibold">No Active Leagues</span>
-                    </div>
-                    <span className="text-xs text-cream-500/50 group-hover:text-blue-400/70 transition-colors">
-                      Join a league to compete with other directors!
-                    </span>
-                  </Link>
-                )}
-              </Card.Body>
-            </Card>
+                  );
+                })}
+              </div>
 
-            {/* STANDINGS PREVIEW */}
-            <div data-tour="standings">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
-                  Standings
-                </h2>
+              {/* League Link */}
+              {primaryLeague ? (
                 <Link
-                  to="/leaderboard"
-                  className="text-xs text-gold-400 hover:text-gold-300 flex items-center gap-1 transition-colors"
+                  to="/leagues"
+                  className="flex items-center justify-between p-2 bg-[#222] border border-[#333] hover:border-[#444]"
                 >
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#0057B8]" />
+                    <span className="text-sm text-white truncate">{primaryLeague.name}</span>
+                  </div>
+                  <span className="text-xs font-bold text-[#0057B8]">#{primaryLeague.userRank || '-'}</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/leagues"
+                  className="flex items-center justify-center gap-2 p-2 border border-dashed border-[#444] text-gray-500 hover:text-white hover:border-[#555]"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="text-xs">Join a League</span>
+                </Link>
+              )}
+
+              {/* CorpsCoin */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#333]">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                  <span className="text-xs text-gray-400">CorpsCoin</span>
+                </div>
+                <span className="text-sm font-bold font-data text-yellow-500 tabular-nums">
+                  {(profile?.corpsCoin || 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* CENTER COLUMN - Standings */}
+            <div className="bg-[#0a0a0a]">
+              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Standings
+                </span>
+                <Link to="/scores" className="text-[10px] text-[#0057B8] hover:underline flex items-center gap-1">
                   View All <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
-
               {scoresLoading ? (
-                <TableSkeleton rows={5} columns={3} />
+                <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <DataTable
-                    columns={standingsColumns}
-                    data={standingsPreview}
-                    getRowKey={(row) => row.corpsName || row.corps}
-                    rowHeight="compact"
-                    zebraStripes={true}
-                    emptyState={
-                      <div className="text-center py-6">
-                        <Trophy className="w-8 h-8 text-cream-500/20 mx-auto mb-2" />
-                        <p className="text-sm text-cream-500/50">No standings yet</p>
+                <DataTable
+                  columns={standingsColumns}
+                  data={standingsData}
+                  getRowKey={(row) => row.corpsName || row.corps}
+                  zebraStripes={true}
+                  highlightRow={(row) =>
+                    row.corpsName === (activeCorps.corpsName || activeCorps.name)
+                  }
+                  emptyState={
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No standings yet
+                    </div>
+                  }
+                />
+              )}
+            </div>
+
+            {/* RIGHT COLUMN - Activity */}
+            <div className="bg-[#1a1a1a]">
+              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Week {currentWeek} Schedule
+                </span>
+                <Link to="/schedule" className="text-[10px] text-[#0057B8] hover:underline flex items-center gap-1">
+                  Full Schedule <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              {thisWeekShows.length > 0 ? (
+                <div className="divide-y divide-[#333]">
+                  {thisWeekShows.map((show, idx) => (
+                    <div key={idx} className="px-3 py-2 flex items-center gap-3 hover:bg-[#222]">
+                      <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm text-white truncate">
+                          {show.eventName || show.name || 'Show'}
+                        </div>
+                        <div className="text-[10px] text-gray-500 truncate">
+                          {show.location || show.date || ''}
+                        </div>
                       </div>
-                    }
-                  />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center">
+                  <Calendar className="w-6 h-6 text-gray-600 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 mb-2">No shows selected</p>
+                  <Link
+                    to="/schedule"
+                    className="text-xs text-[#0057B8] hover:underline"
+                  >
+                    Select Shows
+                  </Link>
                 </div>
               )}
+
+              {/* Season Info */}
+              <div className="px-3 py-2 border-t border-[#333] bg-[#222]">
+                <div className="text-[10px] text-gray-500">
+                  {formatSeasonName(seasonData?.name)} • Week {currentWeek}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* BOTTOM - Upcoming Shows */}
-          <section data-tour="schedule" aria-label="Upcoming Shows">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-display font-bold text-cream-500/70 uppercase tracking-wider">
-                This Week's Shows
-              </h2>
-              <Link
-                to="/schedule"
-                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
-              >
-                Schedule <ChevronRight className="w-3 h-3" />
-              </Link>
+          {/* BOTTOM ROW - Activity Feed */}
+          <div className="bg-[#1a1a1a] border-t border-[#333]">
+            <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center gap-2">
+              <Activity className="w-4 h-4 text-gray-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Recent Activity
+              </span>
             </div>
-
-            {thisWeekShows.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {thisWeekShows.map((show, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 p-3 bg-charcoal-900 border border-charcoal-700 rounded-md"
-                  >
-                    <div className="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="w-4 h-4 text-purple-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-cream truncate">
-                        {show.eventName || show.name || 'Show'}
-                      </div>
-                      <div className="text-xs text-cream-500/50 truncate">
-                        {show.location || show.date || ''}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 bg-charcoal-900 border border-charcoal-700 rounded-md">
-                <Calendar className="w-8 h-8 text-cream-500/20 mx-auto mb-2" />
-                <p className="text-sm text-cream-500/50 mb-3">No shows selected for this week</p>
-                <Link
-                  to="/schedule"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded text-purple-400 text-sm font-semibold hover:bg-purple-500/20 transition-colors"
-                >
-                  Select Shows <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
-          </section>
-        </div>
+            <div className="px-4 py-3 text-sm text-gray-500">
+              {engagementData?.streak > 0 ? (
+                <span>🔥 {engagementData.streak} day streak! Keep it up.</span>
+              ) : (
+                <span>No recent activity. Check back after competing!</span>
+              )}
+            </div>
+          </div>
+        </>
       ) : (
         /* No Corps State */
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Card className="max-w-md text-center">
-            <Card.Body className="py-8">
-              <div className="w-14 h-14 mx-auto mb-4 bg-gold-500/10 rounded-full flex items-center justify-center">
-                <Trophy className="w-7 h-7 text-gold-400" />
-              </div>
-              <h2 className="text-xl font-display font-bold text-cream mb-2">Start Your Season</h2>
-              <p className="text-sm text-cream-500/50 mb-6">Create your first fantasy corps to begin competing!</p>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="max-w-sm">
+            <Card.Header>
+              <Card.Title>Start Your Season</Card.Title>
+            </Card.Header>
+            <Card.Body className="p-4 text-center">
+              <Trophy className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-400 mb-4">
+                Create your first fantasy corps to begin competing.
+              </p>
               <button
                 onClick={() => setShowRegistration(true)}
-                className="px-5 py-2.5 bg-gold-500 text-charcoal-900 rounded font-display font-bold uppercase text-sm hover:bg-gold-400 transition-colors"
+                className="w-full py-2 bg-[#0057B8] text-white text-sm font-bold hover:bg-[#0066d6]"
               >
                 Register Corps
               </button>
@@ -762,133 +588,85 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Show Concept Synergy Panel */}
-      <AnimatePresence>
-        {showSynergyPanel && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSynergyPanel(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-lg bg-charcoal-950 border-l border-white/10 z-50 overflow-y-auto"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <h2 className="text-lg font-display font-bold text-cream">Show Concept</h2>
-                <button
-                  onClick={() => setShowSynergyPanel(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg"
-                  aria-label="Close show concept panel"
-                >
-                  <X className="w-5 h-5 text-cream-500/60" />
-                </button>
-              </div>
-              <div className="p-4">
-                <ShowConceptSelector
-                  corpsClass={activeCorpsClass}
-                  currentConcept={typeof activeCorps?.showConcept === 'object' ? activeCorps.showConcept : {}}
-                  lineup={activeCorps?.lineup || {}}
-                  onSave={() => {
-                    refreshProfile();
-                    setShowSynergyPanel(false);
-                  }}
-                  compact={false}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* MODALS */}
+      {showClassUnlockCongrats && newlyUnlockedClass && (
+        <ClassUnlockCongratsModal
+          unlockedClass={newlyUnlockedClass}
+          onSetup={handleSetupNewClass}
+          onDecline={handleDeclineSetup}
+        />
+      )}
 
-      {/* Modals */}
-      <AnimatePresence>
-        {showClassUnlockCongrats && newlyUnlockedClass && (
-          <ClassUnlockCongratsModal
-            unlockedClass={newlyUnlockedClass}
-            onSetup={handleSetupNewClass}
-            onDecline={handleDeclineSetup}
-          />
-        )}
+      {showRegistration && (
+        <CorpsRegistrationModal
+          onClose={() => { setShowRegistration(false); clearNewlyUnlockedClass(); }}
+          onSubmit={handleCorpsRegistration}
+          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          defaultClass={newlyUnlockedClass}
+        />
+      )}
 
-        {showRegistration && (
-          <CorpsRegistrationModal
-            onClose={() => { setShowRegistration(false); clearNewlyUnlockedClass(); }}
-            onSubmit={handleCorpsRegistration}
-            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
-            defaultClass={newlyUnlockedClass}
-          />
-        )}
+      {showCaptionSelection && activeCorps && seasonData && (
+        <CaptionSelectionModal
+          onClose={() => setShowCaptionSelection(false)}
+          onSubmit={() => setShowCaptionSelection(false)}
+          corpsClass={activeCorpsClass}
+          currentLineup={activeCorps.lineup || {}}
+          seasonId={seasonData.seasonUid}
+        />
+      )}
 
-        {showCaptionSelection && activeCorps && seasonData && (
-          <CaptionSelectionModal
-            onClose={() => setShowCaptionSelection(false)}
-            onSubmit={handleCaptionSelection}
-            corpsClass={activeCorpsClass}
-            currentLineup={activeCorps.lineup || {}}
-            seasonId={seasonData.seasonUid}
-          />
-        )}
+      {showEditCorps && activeCorps && (
+        <EditCorpsModal
+          onClose={() => setShowEditCorps(false)}
+          onSubmit={handleEditCorps}
+          currentData={{
+            name: activeCorps.corpsName || activeCorps.name,
+            location: activeCorps.location,
+            showConcept: activeCorps.showConcept
+          }}
+        />
+      )}
 
-        {showEditCorps && activeCorps && (
-          <EditCorpsModal
-            onClose={() => setShowEditCorps(false)}
-            onSubmit={handleEditCorps}
-            currentData={{
-              name: activeCorps.corpsName || activeCorps.name,
-              location: activeCorps.location,
-              showConcept: activeCorps.showConcept
-            }}
-          />
-        )}
+      {showDeleteConfirm && activeCorps && (
+        <DeleteConfirmModal
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteCorps}
+          corpsName={activeCorps.corpsName || activeCorps.name}
+          corpsClass={activeCorpsClass}
+        />
+      )}
 
-        {showDeleteConfirm && activeCorps && (
-          <DeleteConfirmModal
-            onClose={() => setShowDeleteConfirm(false)}
-            onConfirm={handleDeleteCorps}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-            corpsClass={activeCorpsClass}
-          />
-        )}
+      {showRetireConfirm && activeCorps && (
+        <RetireConfirmModal
+          onClose={() => setShowRetireConfirm(false)}
+          onConfirm={handleRetireCorps}
+          corpsName={activeCorps.corpsName || activeCorps.name}
+          corpsClass={activeCorpsClass}
+          retiring={retiring}
+          inLeague={false}
+        />
+      )}
 
-        {showRetireConfirm && activeCorps && (
-          <RetireConfirmModal
-            onClose={() => setShowRetireConfirm(false)}
-            onConfirm={handleRetireCorps}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-            corpsClass={activeCorpsClass}
-            retiring={retiring}
-            inLeague={false}
-          />
-        )}
+      {showMoveCorps && activeCorps && (
+        <MoveCorpsModal
+          onClose={() => setShowMoveCorps(false)}
+          onMove={handleMoveCorps}
+          currentClass={activeCorpsClass}
+          corpsName={activeCorps.corpsName || activeCorps.name}
+          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          existingCorps={corps}
+        />
+      )}
 
-        {showMoveCorps && activeCorps && (
-          <MoveCorpsModal
-            onClose={() => setShowMoveCorps(false)}
-            onMove={handleMoveCorps}
-            currentClass={activeCorpsClass}
-            corpsName={activeCorps.corpsName || activeCorps.name}
-            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
-            existingCorps={corps}
-          />
-        )}
+      {showAchievementModal && (
+        <AchievementModal
+          onClose={() => { setShowAchievementModal(false); clearNewAchievement(); }}
+          achievements={profile?.achievements || []}
+          newAchievement={newAchievement}
+        />
+      )}
 
-        {showAchievementModal && (
-          <AchievementModal
-            onClose={() => { setShowAchievementModal(false); clearNewAchievement(); }}
-            achievements={profile?.achievements || []}
-            newAchievement={newAchievement}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Morning Report Modal */}
       <MorningReport
         isOpen={showMorningReport}
         onClose={() => setShowMorningReport(false)}
@@ -898,33 +676,23 @@ const Dashboard = () => {
         engagementData={engagementData}
       />
 
-      {/* Onboarding Tour for first-time users */}
       <OnboardingTour
         isOpen={showOnboardingTour}
         onClose={() => setShowOnboardingTour(false)}
         onComplete={handleTourComplete}
       />
 
-      {/* Quick Start Guide */}
       <QuickStartGuide
         isOpen={showQuickStartGuide}
         onClose={() => setShowQuickStartGuide(false)}
         onAction={(action) => {
-          if (action === 'lineup') {
-            setShowCaptionSelection(true);
-          }
+          if (action === 'lineup') setShowCaptionSelection(true);
         }}
         completedSteps={[
-          ...(activeCorps?.lineup && Object.keys(activeCorps.lineup).length === 8 ? ['lineup'] : []),
-          ...(activeCorps?.selectedShows && Object.values(activeCorps.selectedShows).flat().length > 0 ? ['schedule'] : []),
-          ...(myLeagues && myLeagues.length > 0 ? ['league'] : []),
+          ...(lineupCount === 8 ? ['lineup'] : []),
+          ...(thisWeekShows.length > 0 ? ['schedule'] : []),
+          ...(myLeagues?.length > 0 ? ['league'] : []),
         ]}
-      />
-
-      {/* Quick Start Button (floating) */}
-      <QuickStartButton
-        onClick={() => setShowQuickStartGuide(true)}
-        show={!primaryLeague || (activeCorps?.lineup && Object.keys(activeCorps.lineup).length < 8)}
       />
     </div>
   );
