@@ -212,7 +212,7 @@ const LeagueOfficeView = ({ league, userProfile, userId, onBack, onLeave }) => {
       </div>
 
       {/* CONTENT GRID - Split view */}
-      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {/* LEFT PANEL - Standings */}
         <div className="bg-[#1a1a1a] border border-[#333]">
           <div className="bg-[#222] px-3 py-2 border-b border-[#333]">
@@ -260,7 +260,7 @@ const LeagueOfficeView = ({ league, userProfile, userId, onBack, onLeave }) => {
       </div>
 
       {/* League Info */}
-      <div className="max-w-[1400px] mx-auto px-4 pb-4">
+      <div className="w-full px-4 pb-4">
         <div className="bg-[#1a1a1a] border border-[#333] p-4">
           <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
             League Info
@@ -471,7 +471,7 @@ const Leagues = () => {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* HEADER */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-[#0057B8]" />
             <h1 className="text-sm font-bold text-white uppercase">Leagues</h1>
@@ -494,7 +494,7 @@ const Leagues = () => {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto p-4 space-y-6">
+      <div className="w-full p-4 space-y-6">
         {/* MY LEAGUES */}
         <section>
           <div className="bg-[#222] px-3 py-2 border border-[#333] border-b-0 flex items-center justify-between">

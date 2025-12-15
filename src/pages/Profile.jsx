@@ -280,7 +280,7 @@ const Profile = () => {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* HEADER - Minimal: Square Avatar + Name + Team */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Square Avatar */}
             <div className="w-14 h-14 bg-[#333] border border-[#444] flex items-center justify-center">
@@ -339,7 +339,7 @@ const Profile = () => {
 
         {/* Edit fields */}
         {isEditing && (
-          <div className="max-w-[1400px] mx-auto mt-3 flex items-center gap-2">
+          <div className="w-full mt-3 flex items-center gap-2">
             <input
               type="text"
               value={editData.location}
@@ -385,7 +385,7 @@ const Profile = () => {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="max-w-[1400px] mx-auto">
+      <div className="w-full">
         {/* TROPHY CASE - Dense grid of small icons */}
         <div className="border-b border-[#333]">
           <div className="bg-[#222] px-4 py-2 border-b border-[#333]">

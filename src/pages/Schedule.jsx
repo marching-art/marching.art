@@ -155,7 +155,7 @@ const Schedule = () => {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* HEADER */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-[#0057B8]" />
             <div>
@@ -185,7 +185,7 @@ const Schedule = () => {
       </div>
 
       {/* SCHEDULE LIST */}
-      <div className="max-w-[1400px] mx-auto">
+      <div className="w-full">
         {weeks.length === 0 ? (
           <div className="p-8 text-center">
             <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
