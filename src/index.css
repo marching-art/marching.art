@@ -1671,7 +1671,7 @@ p, li, span {
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #374151 transparent;
+    scrollbar-color: var(--charcoal-700) transparent;
   }
 
   /* ===========================================
@@ -1711,7 +1711,7 @@ p, li, span {
   /* HUD Scroll Container - Thin, subtle scrollbar for internal content */
   .hud-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #374151 transparent;
+    scrollbar-color: var(--charcoal-700) transparent;
   }
 
   .hud-scroll::-webkit-scrollbar {
@@ -1724,12 +1724,12 @@ p, li, span {
   }
 
   .hud-scroll::-webkit-scrollbar-thumb {
-    background: #374151;
+    background: var(--charcoal-700);
     border-radius: 3px;
   }
 
   .hud-scroll::-webkit-scrollbar-thumb:hover {
-    background: #4B5563;
+    background: var(--charcoal-600);
   }
 
   /* ===========================================
@@ -3378,7 +3378,7 @@ p, li, span {
 .hud-scroll,
 .bento-box-content.scrollable {
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+  scrollbar-color: var(--charcoal-700) transparent;
 }
 
 .hud-scroll::-webkit-scrollbar,
@@ -3395,14 +3395,14 @@ p, li, span {
 
 .hud-scroll::-webkit-scrollbar-thumb,
 .bento-box-content.scrollable::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: var(--charcoal-700);
   border-radius: 3px;
   transition: background 0.2s ease;
 }
 
 .hud-scroll::-webkit-scrollbar-thumb:hover,
 .bento-box-content.scrollable::-webkit-scrollbar-thumb:hover {
-  background: #4B5563;
+  background: var(--charcoal-600);
 }
 
 /* Gold variant scrollbar - for special accent areas */
