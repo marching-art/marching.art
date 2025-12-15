@@ -18,10 +18,14 @@ module.exports = {
         black: '#000000',
         white: '#FFFFFF',
 
-        // PRIMARY BRAND (DCI Blue)
+        // PRIMARY BRAND (ESPN Blue)
+        'espn-blue': '#0057B8',
         'dci-blue': '#0057B8',
         primary: '#0057B8',
         'primary-content': '#FFFFFF',
+
+        // Panel color
+        'panel': '#1a1a1a',
 
         // SURFACE COLORS - Deep neutral backgrounds
         background: '#0A0A0A',
@@ -79,19 +83,9 @@ module.exports = {
           950: '#0A0A0A'
         },
       },
+      // SHADOWS BANNED - Law 4: No Glow, No Shadow
       boxShadow: {
-        // STANDARD BLACK SHADOWS - Clean, professional depth
         'none': 'none',
-        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        DEFAULT: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
-        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-        '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
-        // Card shadows - standard elevation
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.25)',
       },
       borderWidth: {
         DEFAULT: '1px',
@@ -117,6 +111,8 @@ module.exports = {
         'data': ['JetBrains Mono', 'Fira Code', 'Roboto Mono', 'monospace'],
       },
       fontSize: {
+        // XXS for dense data headers
+        'xxs': ['10px', '12px'],
         // Tabular-nums variants for data display
         'stat-xs': ['0.75rem', { fontVariantNumeric: 'tabular-nums' }],
         'stat-lg': ['1.25rem', { fontVariantNumeric: 'tabular-nums', fontWeight: '700' }],
@@ -177,18 +173,9 @@ module.exports = {
           '75%, 100%': { transform: 'scale(1.5)', opacity: '0' }
         },
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      },
-      backdropBlur: {
-        'xs': '2px',
-        'sm': '4px',
-        DEFAULT: '8px',
-        'md': '12px',
-        'lg': '16px',
-        'xl': '24px',
-      },
+      // GRADIENTS & BLUR BANNED - Law 4: No Glow, No Shadow
+      backgroundImage: {},
+      backdropBlur: {},
       height: {
         'dvh': '100dvh',
         'screen': '100vh',
