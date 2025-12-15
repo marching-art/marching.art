@@ -1,18 +1,19 @@
-// ShowRegistrationModal - Streamlined modal for registering corps at shows
+// =============================================================================
+// SHOW REGISTRATION MODAL - ESPN DATA STYLE
+// =============================================================================
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Calendar, MapPin, Check, X, AlertTriangle, Users } from 'lucide-react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 
-// Class display names and colors
 const CLASS_CONFIG = {
-  worldClass: { name: 'World Class', color: 'gold' },
-  openClass: { name: 'Open Class', color: 'purple' },
-  aClass: { name: 'A Class', color: 'blue' },
-  soundSport: { name: 'SoundSport', color: 'green' }
+  worldClass: { name: 'World Class', color: 'text-yellow-500' },
+  openClass: { name: 'Open Class', color: 'text-purple-400' },
+  aClass: { name: 'A Class', color: 'text-[#0057B8]' },
+  soundSport: { name: 'SoundSport', color: 'text-green-500' },
 };
 
 const CLASS_ORDER = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
@@ -21,25 +22,21 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // Get sorted corps classes
   const userCorpsClasses = useMemo(() =>
     userProfile?.corps
       ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
       : []
   , [userProfile?.corps]);
 
-  // Check which corps are already registered
   useEffect(() => {
     const alreadyRegistered = [];
     userCorpsClasses.forEach(corpsClass => {
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const selectedShows = corpsData.selectedShows?.[weekKey] || [];
-
       const isRegistered = selectedShows.some(
         s => s.eventName === show.eventName && s.date === show.date
       );
-
       if (isRegistered) {
         alreadyRegistered.push(corpsClass);
       }
@@ -51,26 +48,20 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     if (selectedCorps.includes(corpsClass)) {
       setSelectedCorps(selectedCorps.filter(c => c !== corpsClass));
     } else {
-      // Check if this corps already has 4 shows this week
       const corpsData = userProfile.corps[corpsClass];
       const weekKey = `week${show.week}`;
       const currentShows = corpsData.selectedShows?.[weekKey] || [];
-
-      // Only check if adding (not if already selected)
       const isAlreadyAtShow = currentShows.some(
         s => s.eventName === show.eventName && s.date === show.date
       );
-
       if (currentShows.length >= 4 && !isAlreadyAtShow) {
         toast.error(`This corps already has 4 shows registered for week ${show.week}`);
         return;
       }
-
       setSelectedCorps([...selectedCorps, corpsClass]);
     }
   };
 
-  // Select all corps
   const selectAll = () => {
     const canSelect = userCorpsClasses.filter(corpsClass => {
       const corpsData = userProfile.corps[corpsClass];
@@ -84,45 +75,35 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     setSelectedCorps(canSelect);
   };
 
-  // Clear all selections
   const clearAll = () => {
     setSelectedCorps([]);
   };
 
   const handleSave = async () => {
     setSaving(true);
-
     try {
       const selectUserShows = httpsCallable(functions, 'selectUserShows');
-
-      // For each corps class, update their show selection
       for (const corpsClass of userCorpsClasses) {
         const corpsData = userProfile.corps[corpsClass];
         const weekKey = `week${show.week}`;
         const currentShows = corpsData.selectedShows?.[weekKey] || [];
-
-        // Remove this show from the list if it exists
         const filteredShows = currentShows.filter(
           s => !(s.eventName === show.eventName && s.date === show.date)
         );
-
-        // Add it back if selected
         const newShows = selectedCorps.includes(corpsClass)
           ? [...filteredShows, {
               eventName: show.eventName,
               date: show.date,
               location: show.location,
-              day: show.day
+              day: show.day,
             }]
           : filteredShows;
-
         await selectUserShows({
           week: show.week,
           shows: newShows,
-          corpsClass
+          corpsClass,
         });
       }
-
       toast.success('Registration updated!');
       onSuccess();
     } catch (error) {
@@ -133,103 +114,78 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     }
   };
 
-  const getClassColor = (colorName) => {
-    const colors = {
-      gold: 'border-gold-500/50 bg-gold-500/20 text-gold-400',
-      purple: 'border-purple-500/50 bg-purple-500/20 text-purple-400',
-      blue: 'border-blue-500/50 bg-blue-500/20 text-blue-400',
-      green: 'border-green-500/50 bg-green-500/20 text-green-400'
-    };
-    return colors[colorName] || colors.gold;
-  };
-
   return (
     <Portal>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-charcoal-900 border border-white/10 rounded-xl w-full max-w-md overflow-hidden"
+        <div
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-5 py-4 border-b border-white/10 bg-black/30">
+          <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-display font-bold text-cream">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
                   Register for Show
                 </h2>
-                <p className="text-sm text-cream/60 mt-1 truncate">
+                <p className="text-sm text-white mt-1 truncate">
                   {show.eventName}
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-cream/40 hover:text-cream hover:bg-white/10 transition-colors"
-              >
-                <X className="w-5 h-5" />
+              <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Show Details */}
-            <div className="flex items-center gap-4 mt-3 text-sm text-cream/50">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-gold-400" />
+            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#0057B8]" />
                 <span>{formattedDate}</span>
               </div>
               {show.location && (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-purple-400" />
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-purple-400" />
                   <span className="truncate">{show.location}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Corps Selection */}
-          <div className="p-5">
+          {/* Body */}
+          <div className="p-4">
             {userCorpsClasses.length === 0 ? (
               <div className="text-center py-6">
-                <AlertTriangle className="w-10 h-10 text-cream/30 mx-auto mb-3" />
-                <p className="text-cream/60">You don't have any corps yet.</p>
-                <p className="text-cream/40 text-sm mt-1">Register a corps from the Dashboard first.</p>
+                <AlertTriangle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">You don't have any corps yet.</p>
+                <p className="text-xs text-gray-600 mt-1">Register a corps from the Dashboard first.</p>
               </div>
             ) : (
               <>
                 {/* Quick Actions */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-bold text-cream/60 uppercase tracking-wide">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                     Select Corps
                   </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={selectAll}
-                      className="text-xs text-gold-400 hover:text-gold-300 font-bold"
-                    >
+                  <div className="flex items-center gap-2 text-xs">
+                    <button onClick={selectAll} className="text-[#0057B8] hover:text-[#0066d6] font-bold">
                       Select All
                     </button>
-                    <span className="text-cream/30">|</span>
-                    <button
-                      onClick={clearAll}
-                      className="text-xs text-cream/50 hover:text-cream font-bold"
-                    >
+                    <span className="text-gray-600">|</span>
+                    <button onClick={clearAll} className="text-gray-500 hover:text-white font-bold">
                       Clear
                     </button>
                   </div>
                 </div>
 
                 {/* Corps List */}
-                <div className="space-y-2">
+                <div className="border border-[#333] divide-y divide-[#333]">
                   {userCorpsClasses.map(corpsClass => {
                     const corpsData = userProfile.corps[corpsClass];
-                    const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'gold' };
+                    const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400' };
                     const isSelected = selectedCorps.includes(corpsClass);
                     const weekKey = `week${show.week}`;
                     const currentShows = corpsData.selectedShows?.[weekKey] || [];
@@ -243,37 +199,29 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                       <div
                         key={corpsClass}
                         onClick={() => toggleCorps(corpsClass)}
-                        className={`
-                          flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
-                          ${isSelected
-                            ? 'border-gold-500/50 bg-gold-500/10'
-                            : 'border-white/10 bg-black/20 hover:border-white/20'
-                          }
-                        `}
+                        className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-white/5 ${
+                          isSelected ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''
+                        }`}
                       >
                         {/* Checkbox */}
-                        <div className={`
-                          w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all
-                          ${isSelected
-                            ? 'bg-gold-500 border-gold-500'
-                            : 'border-2 border-cream/30'
-                          }
-                        `}>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-charcoal-900" />}
+                        <div className={`w-4 h-4 border-2 flex items-center justify-center flex-shrink-0 ${
+                          isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
                         </div>
 
                         {/* Corps Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-cream truncate">
+                            <span className="font-bold text-white text-sm truncate">
                               {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getClassColor(config.color)}`}>
+                            <span className={`text-[10px] font-bold uppercase ${config.color}`}>
                               {config.name}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-xs ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-cream/40'}`}>
+                            <span className={`text-[10px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-gray-500'}`}>
                               {showsThisWeek}/4 shows this week
                             </span>
                             {isAtMax && !isAlreadyAtShow && (
@@ -287,45 +235,45 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                 </div>
 
                 {/* Tip */}
-                <div className="flex items-center gap-2 mt-4 p-2 bg-gold-500/10 border border-gold-500/20 rounded-lg">
-                  <Users className="w-4 h-4 text-gold-400 shrink-0" />
-                  <span className="text-xs text-cream/60">
-                    Each corps can attend up to <span className="text-gold-400 font-bold">4 shows</span> per week
+                <div className="flex items-center gap-2 mt-3 p-2 bg-[#0057B8]/10 border border-[#0057B8]/30">
+                  <Users className="w-4 h-4 text-[#0057B8] flex-shrink-0" />
+                  <span className="text-[10px] text-gray-400">
+                    Each corps can attend up to <span className="text-[#0057B8] font-bold">4 shows</span> per week
                   </span>
                 </div>
               </>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="px-5 py-4 border-t border-white/10 bg-black/20 flex gap-3">
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-cream/60 font-bold hover:bg-white/5 transition-colors"
               disabled={saving}
+              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-gold-500 text-charcoal-900 font-bold hover:bg-gold-400 transition-colors disabled:opacity-50"
               disabled={saving || userCorpsClasses.length === 0}
+              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin" />
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Saving...
-                </span>
+                </>
               ) : (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   <Check className="w-4 h-4" />
                   Save
-                </span>
+                </>
               )}
             </button>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </Portal>
   );
 };

@@ -1,31 +1,30 @@
-// ClassUnlockModal - Congratulations modal when user unlocks a new class
+// =============================================================================
+// CLASS UNLOCK MODAL - ESPN DATA STYLE
+// =============================================================================
+
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Lock, Sparkles } from 'lucide-react';
+import { Unlock, X, Plus } from 'lucide-react';
 import Portal from '../Portal';
 
 const CLASS_INFO = {
   aClass: {
     name: 'A Class',
     description: 'Intermediate level corps with higher point limits and more competitive shows',
-    icon: '\uD83C\uDFBA',
-    color: 'from-blue-500 to-blue-600',
-    xpRequired: '3,000 XP'
+    budget: '60 pts',
+    xpRequired: '3,000 XP',
   },
-  open: {
+  openClass: {
     name: 'Open Class',
     description: 'Advanced level corps with expanded opportunities and prestigious competitions',
-    icon: '\uD83C\uDF96\uFE0F',
-    color: 'from-purple-500 to-purple-600',
-    xpRequired: '5,000 XP'
+    budget: '120 pts',
+    xpRequired: '5,000 XP',
   },
-  world: {
+  worldClass: {
     name: 'World Class',
     description: 'Elite level corps competing at the highest tier of drum corps activity',
-    icon: '\uD83D\uDC51',
-    color: 'from-gold-500 to-gold-600',
-    xpRequired: '10,000 XP'
-  }
+    budget: '150 pts',
+    xpRequired: '10,000 XP',
+  },
 };
 
 const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
@@ -33,103 +32,69 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
 
   return (
     <Portal>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      >
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0, y: 50 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.8, opacity: 0, y: 50 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="w-full max-w-lg"
+      <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+        <div
+          className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="glass-premium rounded-2xl p-8 border-2 border-gold-500/30 relative overflow-hidden">
-            {/* Animated background gradient */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${classInfo.color} opacity-10 animate-pulse`} />
-
-            <div className="relative z-10">
-              {/* Celebration icon */}
-              <div className="text-center mb-6">
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                  className="text-7xl mb-4"
-                >
-                  {classInfo.icon}
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h2 className="text-4xl font-display font-bold text-gradient mb-2">
-                    Congratulations!
-                  </h2>
-                  <p className="text-xl text-cream-100 font-semibold">
-                    You've earned {classInfo.xpRequired}!
-                  </p>
-                </motion.div>
-              </div>
-
-              {/* Class unlock info */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="glass-dark rounded-xl p-6 mb-6"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${classInfo.color} flex items-center justify-center`}>
-                      <Lock className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-display font-bold text-cream-100 mb-2">
-                      {classInfo.name} Unlocked!
-                    </h3>
-                    <p className="text-cream-300 text-sm leading-relaxed">
-                      {classInfo.description}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Call to action */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="space-y-3"
-              >
-                <p className="text-center text-cream-300 mb-4">
-                  Would you like to register a corps for {classInfo.name} now?
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={onDecline}
-                    className="btn-ghost flex-1"
-                  >
-                    Maybe Later
-                  </button>
-                  <button
-                    onClick={onSetup}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    Register Corps
-                  </button>
-                </div>
-              </motion.div>
-            </div>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
+              <Unlock className="w-4 h-4" />
+              Class Unlocked
+            </h2>
           </div>
-        </motion.div>
-      </motion.div>
+
+          {/* Body */}
+          <div className="p-4">
+            {/* Achievement Badge */}
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 mx-auto mb-3 bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+                <Unlock className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-green-400 mb-1">
+                Congratulations
+              </p>
+              <p className="text-lg font-bold text-white">
+                You've earned {classInfo.xpRequired}!
+              </p>
+            </div>
+
+            {/* Class Info Card */}
+            <div className="bg-[#0a0a0a] border border-[#333] p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-white">{classInfo.name}</h3>
+                <span className="text-xs font-data text-[#0057B8]">{classInfo.budget}</span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                {classInfo.description}
+              </p>
+            </div>
+
+            {/* Prompt */}
+            <p className="text-center text-sm text-gray-400 mb-4">
+              Would you like to register a corps for {classInfo.name} now?
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-[#333] bg-[#222] flex justify-end gap-2">
+            <button
+              onClick={onDecline}
+              className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white"
+            >
+              Maybe Later
+            </button>
+            <button
+              onClick={onSetup}
+              className="h-9 px-4 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#0066d6] flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Register Corps
+            </button>
+          </div>
+        </div>
+      </div>
     </Portal>
   );
 };
