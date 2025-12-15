@@ -108,7 +108,7 @@ const standingsColumns = [
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { allShows, aggregatedScores, loading: scoresLoading } = useScoresData();
+  const { aggregatedScores, loading: scoresLoading } = useScoresData();
   const { data: myLeagues } = useMyLeagues(user?.uid);
 
   // Modal states
@@ -136,7 +136,6 @@ const Dashboard = () => {
     activeCorpsClass,
     hasMultipleCorps,
     seasonData,
-    weeksRemaining,
     currentWeek,
     formatSeasonName,
     engagementData,
@@ -150,8 +149,7 @@ const Dashboard = () => {
     newAchievement,
     clearNewAchievement,
     getCorpsClassName,
-    refreshProfile,
-    loading
+    refreshProfile
   } = dashboardData;
 
   // Show morning report on first visit of the day
@@ -458,6 +456,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => setShowSynergyPanel(true)}
                       className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-400 hover:bg-purple-500/20 transition-colors"
+                      aria-label={`View show concept: ${activeCorps.showConcept.theme}`}
                     >
                       <Sparkles className="w-3 h-3" />
                       {activeCorps.showConcept.theme}
@@ -475,6 +474,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => setShowCaptionSelection(true)}
                       className="text-xs text-gold-400 hover:text-gold-300 transition-colors"
+                      aria-label="Edit lineup"
                     >
                       Edit
                     </button>
@@ -600,7 +600,7 @@ const Dashboard = () => {
                 {thisWeekShows.map((show, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3 p-3 bg-[#1A1A1A] border border-[#333] rounded-md"
+                    className="flex items-center gap-3 p-3 bg-charcoal-900 border border-charcoal-700 rounded-md"
                   >
                     <div className="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center flex-shrink-0">
                       <Calendar className="w-4 h-4 text-purple-400" />
@@ -617,7 +617,7 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 bg-[#1A1A1A] border border-[#333] rounded-md">
+              <div className="text-center py-6 bg-charcoal-900 border border-charcoal-700 rounded-md">
                 <Calendar className="w-8 h-8 text-cream-500/20 mx-auto mb-2" />
                 <p className="text-sm text-cream-500/50 mb-3">No shows selected for this week</p>
                 <Link
@@ -671,7 +671,11 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-display font-bold text-cream">Show Concept</h2>
-                <button onClick={() => setShowSynergyPanel(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                <button
+                  onClick={() => setShowSynergyPanel(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg"
+                  aria-label="Close show concept panel"
+                >
                   <X className="w-5 h-5 text-cream-500/60" />
                 </button>
               </div>
