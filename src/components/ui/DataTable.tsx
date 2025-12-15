@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Skeleton } from './Spinner';
 
@@ -71,7 +71,7 @@ const alignStyles: Record<ColumnAlign, string> = {
 };
 
 const rowHeightStyles = {
-  compact: 'h-10',
+  compact: 'h-11',
   default: 'h-12',
 };
 
@@ -276,6 +276,37 @@ export const DataTable = <T extends Record<string, unknown>>({
   maxHeight,
   highlightRow,
 }: DataTableProps<T>) => {
+  // Refs and state for scroll hint
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+
+  // Check if table is scrollable and update scroll hint visibility
+  useEffect(() => {
+    const checkScrollable = () => {
+      const container = scrollContainerRef.current;
+      if (container) {
+        const isScrollable = container.scrollWidth > container.clientWidth;
+        const isNotScrolledToEnd = container.scrollLeft < container.scrollWidth - container.clientWidth - 1;
+        setShowScrollHint(isScrollable && isNotScrolledToEnd);
+      }
+    };
+
+    checkScrollable();
+    window.addEventListener('resize', checkScrollable);
+
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollable);
+    }
+
+    return () => {
+      window.removeEventListener('resize', checkScrollable);
+      if (container) {
+        container.removeEventListener('scroll', checkScrollable);
+      }
+    };
+  }, [data, columns]);
+
   // Memoize skeleton rows array
   const skeletonRowsArray = useMemo(
     () => Array.from({ length: skeletonRows }),
@@ -359,13 +390,14 @@ export const DataTable = <T extends Record<string, unknown>>({
       {/* Table View */}
       <div
         className={`
-          bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden
+          relative bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden
           ${mobileCardRenderer ? tableBreakpointStyles[mobileBreakpoint] : ''}
         `.trim()}
       >
         <div
+          ref={scrollContainerRef}
           className={`
-            ${hasStickyColumn ? 'overflow-x-auto' : ''}
+            overflow-x-auto
             ${maxHeight ? 'overflow-y-auto' : ''}
           `.trim()}
           style={maxHeight ? { maxHeight } : undefined}
@@ -406,6 +438,13 @@ export const DataTable = <T extends Record<string, unknown>>({
             </tbody>
           </table>
         </div>
+        {/* Scroll hint gradient - indicates more content to the right */}
+        {showScrollHint && (
+          <div
+            className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none bg-gradient-to-l from-black/60 to-transparent"
+            aria-hidden="true"
+          />
+        )}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-2 text-sm min-h-[36px]',
+  sm: 'px-3 py-2 text-sm min-h-[44px]',
   md: 'px-5 py-3 text-base min-h-[44px]',
   lg: 'px-8 py-4 text-lg min-h-[52px]',
 };
@@ -106,7 +106,7 @@ export interface IconButtonProps extends Omit<ButtonProps, 'children' | 'leftIco
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ icon: Icon, size = 'md', className = '', ...props }, ref) => {
     const iconButtonSizes: Record<ButtonSize, string> = {
-      sm: 'p-2 min-h-[36px] min-w-[36px]',
+      sm: 'p-2 min-h-[44px] min-w-[44px]',
       md: 'p-2.5 min-h-[44px] min-w-[44px]',
       lg: 'p-3 min-h-[52px] min-w-[52px]',
     };
