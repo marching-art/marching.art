@@ -137,6 +137,7 @@ function App() {
         {/* Celebration System - for achievements and level ups */}
         <CelebrationContainer />
 
+        <Suspense fallback={<LoadingScreen fullScreen />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Suspense fallback={<LoadingScreen fullScreen />}><Landing /></Suspense>} />
@@ -259,6 +260,7 @@ function App() {
             </Suspense>
           } />
           </Routes>
+        </Suspense>
           </Router>
         </AuthContext.Provider>
         </ThemeProvider>
