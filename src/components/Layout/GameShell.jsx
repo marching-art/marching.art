@@ -8,6 +8,8 @@ import React, { useEffect, createContext, useContext } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { analyticsHelpers } from '../../firebase';
 import BottomNav from '../BottomNav';
+import { useSeasonStore } from '../../store/seasonStore';
+import { formatSeasonName } from '../../utils/season';
 import {
   LayoutDashboard,
   Calendar,
@@ -35,23 +37,42 @@ export const useShell = () => {
 // TOP NAV - Fixed h-12
 // =============================================================================
 
-const TopNav = () => (
-  <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-4">
-    {/* Logo */}
-    <Link to="/dashboard" className="flex items-center gap-2 mr-6">
-      <img
-        src="/logo192.webp"
-        alt="marching.art"
-        className="w-7 h-7 rounded"
-      />
-      <span className="hidden sm:block font-bold text-sm text-white">MARCHING.ART</span>
-    </Link>
+const TopNav = () => {
+  const seasonData = useSeasonStore((state) => state.seasonData);
 
-    {/* League Selector (placeholder) */}
-    <button className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300 hover:border-[#555]">
-      <span>2024 DCI Season</span>
-      <ChevronDown className="w-3 h-3" />
-    </button>
+  // Format the season name for display
+  const getDisplaySeasonName = () => {
+    if (!seasonData?.name) return 'Loading Season...';
+
+    const name = seasonData.name;
+
+    // For live seasons (e.g., "live_2024-25"), display as "2024-25 DCI Season"
+    if (name.startsWith('live_')) {
+      const yearPart = name.replace('live_', '');
+      return `${yearPart} DCI Season`;
+    }
+
+    // For off-seasons (e.g., "finale_2024-25"), display as "Finale 2024-25"
+    return formatSeasonName(name);
+  };
+
+  return (
+    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-4">
+      {/* Logo */}
+      <Link to="/dashboard" className="flex items-center gap-2 mr-6">
+        <img
+          src="/logo192.webp"
+          alt="marching.art"
+          className="w-7 h-7 rounded"
+        />
+        <span className="hidden sm:block font-bold text-sm text-white">MARCHING.ART</span>
+      </Link>
+
+      {/* Season Selector */}
+      <div className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300">
+        <span>{getDisplaySeasonName()}</span>
+        <ChevronDown className="w-3 h-3 opacity-50" />
+      </div>
 
     {/* Spacer */}
     <div className="flex-1" />
@@ -65,7 +86,8 @@ const TopNav = () => (
       <NavItem to="/profile" icon={User} label="Profile" />
     </div>
   </nav>
-);
+  );
+};
 
 // Nav Item Component
 const NavItem = ({ to, icon: Icon, label }) => (
