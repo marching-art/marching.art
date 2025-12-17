@@ -46,10 +46,10 @@ const TopNav = () => {
 
     const name = seasonData.name;
 
-    // For live seasons (e.g., "live_2024-25"), display as "2024-25 DCI Season"
+    // For live seasons (e.g., "live_2024-25"), display as "2024 Live Season"
     if (name.startsWith('live_')) {
-      const yearPart = name.replace('live_', '');
-      return `${yearPart} DCI Season`;
+      const yearPart = name.replace('live_', '').split('-')[0];
+      return `${yearPart} Live Season`;
     }
 
     // For off-seasons (e.g., "finale_2024-25"), display as "Finale 2024-25"
