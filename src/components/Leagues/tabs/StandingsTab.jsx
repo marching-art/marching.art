@@ -159,7 +159,7 @@ const StandingsTab = ({ standings, memberProfiles, userProfile, loading }) => {
                             {getDisplayName(stats.uid)}
                           </p>
                           {getCorpsName(stats.uid) && (
-                            <p className="text-xs text-cream-500/40 truncate max-w-32">
+                            <p className="text-xs text-cream-500/40">
                               {getCorpsName(stats.uid)}
                             </p>
                           )}
@@ -243,7 +243,7 @@ const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height }) => 
         </span>
       </div>
 
-      <p className={`font-display font-semibold text-sm text-center truncate max-w-24 ${
+      <p className={`font-display font-semibold text-sm text-center ${
         isUser ? 'text-purple-400' : 'text-cream-100'
       }`}>
         {displayName}

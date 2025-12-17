@@ -241,7 +241,7 @@ const RankingsTab = ({
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5 text-slate-600 dark:text-cream-400 min-w-0">
                       <Users className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span className="truncate">{entry.corpsName || 'No Corps'}</span>
+                      <span>{entry.corpsName || 'No Corps'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-slate-700 dark:text-cream-300 flex-shrink-0">
                       <Trophy className="w-3.5 h-3.5 text-amber-600 dark:text-gold-500" />

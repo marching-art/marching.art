@@ -31,7 +31,7 @@ const createStandingsColumns = () => [
     width: '160px',
     sticky: true,
     render: (row) => (
-      <span className="font-medium text-white truncate block">
+      <span className="font-medium text-white">
         {row.corpsName || row.corps}
       </span>
     ),
@@ -135,7 +135,7 @@ const createLatestColumns = () => [
     header: 'Corps',
     sticky: true,
     render: (row) => (
-      <span className="font-medium text-white truncate block max-w-[140px]">
+      <span className="font-medium text-white">
         {row.corps || row.corpsName}
       </span>
     ),
