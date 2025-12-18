@@ -323,7 +323,12 @@ const Dashboard = () => {
           {/* Corps Switcher Bar */}
           {hasMultipleCorps && (
             <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-2 flex items-center gap-2 overflow-x-auto">
-              {Object.entries(corps).map(([classId, corpsData]) => (
+              {Object.entries(corps)
+                .sort((a, b) => {
+                  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+                  return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+                })
+                .map(([classId, corpsData]) => (
                 <button
                   key={classId}
                   onClick={() => handleCorpsSwitch(classId)}

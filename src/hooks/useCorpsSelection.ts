@@ -38,8 +38,13 @@ export function useCorpsSelection(
 ): UseCorpsSelectionReturn {
   const [selectedCorpsClass, setSelectedCorpsClass] = useState<CorpsClass | null>(null);
 
-  // Derived values
-  const corpsEntries = corps ? Object.entries(corps).filter(([_, data]) => data) : [];
+  // Derived values - sorted by class order (world, open, a, soundsport)
+  const CLASS_ORDER: Record<string, number> = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+  const corpsEntries = corps
+    ? Object.entries(corps)
+        .filter(([_, data]) => data)
+        .sort((a, b) => (CLASS_ORDER[a[0]] ?? 99) - (CLASS_ORDER[b[0]] ?? 99))
+    : [];
   const hasMultipleCorps = corpsEntries.length > 1;
   const firstCorpsClass = corpsEntries.length > 0 ? (corpsEntries[0][0] as CorpsClass) : null;
   const activeCorpsClass = selectedCorpsClass || firstCorpsClass;
@@ -65,9 +70,9 @@ export function useCorpsSelection(
   // Update selected corps when corps data changes
   useEffect(() => {
     if (corps) {
-      const corpsClasses = Object.keys(corps).filter(
+      const corpsClasses = (Object.keys(corps).filter(
         (key) => corps[key as CorpsClass]
-      ) as CorpsClass[];
+      ) as CorpsClass[]).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99));
 
       if (selectedCorpsClass && !corpsClasses.includes(selectedCorpsClass)) {
         setSelectedCorpsClass(corpsClasses[0] || null);
