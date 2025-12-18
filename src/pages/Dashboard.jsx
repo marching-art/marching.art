@@ -193,7 +193,7 @@ const Dashboard = () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
-        [`corps.${activeCorpsClass}.name`]: formData.name,
+        [`corps.${activeCorpsClass}.corpsName`]: formData.name,
         [`corps.${activeCorpsClass}.location`]: formData.location,
         [`corps.${activeCorpsClass}.showConcept`]: formData.showConcept,
       });
