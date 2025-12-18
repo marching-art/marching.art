@@ -333,7 +333,7 @@ const Dashboard = () => {
                       : 'bg-[#333] text-gray-400 hover:text-white'
                   }`}
                 >
-                  {(corpsData.corpsName || corpsData.name || '').slice(0, 12)}
+                  {corpsData.corpsName || corpsData.name || ''}
                 </button>
               ))}
             </div>
@@ -360,7 +360,7 @@ const Dashboard = () => {
               </div>
 
               {/* Corps Name */}
-              <h2 className="text-lg font-bold text-white mb-4 truncate">
+              <h2 className="text-lg font-bold text-white mb-4">
                 {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
               </h2>
 

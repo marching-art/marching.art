@@ -124,7 +124,7 @@ const LeaderboardRow = ({ entry, isCurrentUser, onClick }) => {
 
       {/* Corps name */}
       <div className="flex-1 min-w-0">
-        <p className={`font-medium truncate ${isCurrentUser ? 'text-gold-400' : 'text-cream-100'}`}>
+        <p className={`font-medium ${isCurrentUser ? 'text-gold-400' : 'text-cream-100'}`}>
           {isCurrentUser ? `You (${displayName})` : displayName}
         </p>
       </div>

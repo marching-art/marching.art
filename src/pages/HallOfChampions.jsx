@@ -387,7 +387,7 @@ const HallOfChampions = () => {
                               >
                                 {finalist.username}
                               </Link>
-                              <p className="text-xs text-cream-500/60 truncate">{finalist.corpsName}</p>
+                              <p className="text-xs text-cream-500/60">{finalist.corpsName}</p>
                               <p className="text-lg font-mono font-bold text-cream-300 mt-2">{finalist.score?.toFixed(2)}</p>
                             </div>
                           ))}

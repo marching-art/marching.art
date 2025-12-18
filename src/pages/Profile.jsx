@@ -63,7 +63,7 @@ const seasonHistoryColumns = [
   {
     key: 'corpsName',
     header: 'Corps',
-    render: (row) => <span className="text-white truncate block">{row.corpsName || 'Unknown'}</span>,
+    render: (row) => <span className="text-white">{row.corpsName || 'Unknown'}</span>,
   },
   {
     key: 'className',
