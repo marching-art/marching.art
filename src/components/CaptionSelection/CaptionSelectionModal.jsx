@@ -244,7 +244,7 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections }) => {
 // -----------------------------------------------------------------------------
 // MAIN MODAL
 // -----------------------------------------------------------------------------
-const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, seasonId }) => {
+const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, seasonId, initialCaption }) => {
   const { user } = useAuth();
   const [selections, setSelections] = useState(currentLineup || {});
   const [availableCorps, setAvailableCorps] = useState([]);
@@ -253,7 +253,6 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [showCelebration, setShowCelebration] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templates, setTemplates] = useState([]);
-  const [expandedCategory, setExpandedCategory] = useState('General Effect');
   const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
   const [userHistory, setUserHistory] = useState([]);
 
@@ -267,6 +266,15 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     { id: 'MA', name: 'Music Analysis', category: 'Music' },
     { id: 'P', name: 'Percussion', category: 'Music' },
   ];
+
+  // Determine initial category based on initialCaption prop
+  const getInitialCategory = () => {
+    if (!initialCaption) return 'General Effect';
+    const caption = captions.find(c => c.id === initialCaption);
+    return caption?.category || 'General Effect';
+  };
+
+  const [expandedCategory, setExpandedCategory] = useState(getInitialCategory);
 
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
