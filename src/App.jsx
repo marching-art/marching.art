@@ -14,6 +14,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
+import { useUserStore } from './store/userStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
 
@@ -69,6 +70,7 @@ function App() {
   const [user, loading, error] = useAuthState(auth);
   const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
   const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
+  const initAuthListener = useUserStore((state) => state.initAuthListener);
 
   // Initialize global season listener ONCE at app startup
   // This prevents duplicate Firestore listeners across components
@@ -78,6 +80,15 @@ function App() {
       cleanupSeasonListener();
     };
   }, [initSeasonListener, cleanupSeasonListener]);
+
+  // Initialize user profile listener to sync profile data with auth state
+  // This ensures loggedInProfile is available for components like Scores
+  useEffect(() => {
+    const unsubscribe = initAuthListener();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [initAuthListener]);
 
   if (loading) {
     return <LoadingScreen fullScreen />;
