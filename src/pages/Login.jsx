@@ -1,23 +1,19 @@
 // src/pages/Login.jsx
-import React, { useState, startTransition } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { signIn } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,13 +22,13 @@ const Login = () => {
 
     try {
       await signIn(email, password);
+      // Don't navigate manually - the route definition in App.jsx handles
+      // redirecting authenticated users away from /login automatically.
+      // This prevents duplicate navigation race conditions.
       toast.success('Welcome back!');
-      startTransition(() => {
-        navigate(from, { replace: true });
-      });
     } catch (err) {
       console.error('Login error:', err);
-      
+
       // Handle specific error codes
       switch (err.code) {
         case 'auth/user-not-found':
