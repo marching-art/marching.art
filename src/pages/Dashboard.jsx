@@ -103,6 +103,7 @@ const Dashboard = () => {
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
+  const [selectedCaption, setSelectedCaption] = useState(null);
   const [showEditCorps, setShowEditCorps] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
@@ -299,6 +300,12 @@ const Dashboard = () => {
   const thisWeekShows = getThisWeekShows();
   const rankTrend = getRankTrend();
 
+  // Open caption selection, optionally focused on a specific caption
+  const openCaptionSelection = (captionId = null) => {
+    setSelectedCaption(captionId);
+    setShowCaptionSelection(true);
+  };
+
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -410,32 +417,42 @@ const Dashboard = () => {
                       {lineupCount}/8
                     </span>
                     <button
-                      onClick={() => setShowCaptionSelection(true)}
-                      className="text-[10px] text-[#0057B8] hover:underline"
+                      onClick={() => openCaptionSelection()}
+                      className="flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
                     >
-                      Edit
+                      <Edit className="w-3 h-3" />
+                      Edit All
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Lineup Grid */}
+              {/* Lineup Grid - Click any slot to edit */}
               <div className="grid grid-cols-4 gap-1 mb-4">
                 {CAPTIONS.map((caption) => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   return (
-                    <div
+                    <button
                       key={caption.id}
-                      className={`p-1.5 text-center border ${
-                        hasValue ? 'border-[#444] bg-[#222]' : 'border-[#333] bg-[#1a1a1a]'
+                      onClick={() => openCaptionSelection(caption.id)}
+                      className={`p-1.5 text-center border transition-all cursor-pointer group ${
+                        hasValue
+                          ? 'border-[#444] bg-[#222] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
+                          : 'border-dashed border-[#444] bg-[#1a1a1a] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
                       }`}
                     >
-                      <div className="text-[10px] font-bold text-gray-400">{caption.name}</div>
-                      <div className={`text-[9px] truncate ${hasValue ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {hasValue ? value.split('|')[0]?.slice(0, 6) : '-'}
+                      <div className="text-[10px] font-bold text-gray-400 group-hover:text-[#0057B8]">
+                        {caption.name}
                       </div>
-                    </div>
+                      <div className={`text-[9px] truncate ${
+                        hasValue
+                          ? 'text-gray-300 group-hover:text-white'
+                          : 'text-[#0057B8] font-medium'
+                      }`}>
+                        {hasValue ? value.split('|')[0]?.slice(0, 6) : '+ Draft'}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
@@ -613,11 +630,12 @@ const Dashboard = () => {
 
       {showCaptionSelection && activeCorps && seasonData && (
         <CaptionSelectionModal
-          onClose={() => setShowCaptionSelection(false)}
-          onSubmit={() => setShowCaptionSelection(false)}
+          onClose={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
+          onSubmit={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
           corpsClass={activeCorpsClass}
           currentLineup={activeCorps.lineup || {}}
           seasonId={seasonData.seasonUid}
+          initialCaption={selectedCaption}
         />
       )}
 
