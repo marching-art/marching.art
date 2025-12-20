@@ -340,12 +340,15 @@ export const useScoresData = (options = {}) => {
           date: show.date,
           offSeasonDay: show.offSeasonDay
         });
-        entry.totalScore = Math.max(entry.totalScore, score.score);
+        // Use most recent score (first encountered since shows are sorted by offSeasonDay descending)
+        if (entry.scores.length === 1) {
+          entry.totalScore = score.score;
+        }
         entry.showCount++;
       });
     });
 
-    // Convert to array and sort by best score
+    // Convert to array and sort by most recent score
     const leaderboard = Array.from(corpsScores.values())
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, index) => ({
