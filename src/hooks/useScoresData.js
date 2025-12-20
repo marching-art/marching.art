@@ -89,26 +89,31 @@ export const getHeatmapColor = (value, stats) => {
 };
 
 /**
- * Calculate trend from last N scores (for sparkline)
+ * Calculate trend from most recent N scores (for sparkline)
+ * Note: scoreHistory is ordered with most recent first (index 0 = newest)
  */
 export const calculateTrend = (scoreHistory, count = 5) => {
   if (!scoreHistory || scoreHistory.length < 2) {
     return { trend: 'stable', values: [], direction: 0 };
   }
 
-  const recent = scoreHistory.slice(-count);
+  // Get the most recent N scores (first N elements since array is newest-first)
+  const recent = scoreHistory.slice(0, count);
   const values = recent.map(s => s.score || s.totalScore || 0);
 
-  // Calculate trend direction (-1 to 1)
-  const first = values[0];
-  const last = values[values.length - 1];
-  const direction = first > 0 ? (last - first) / first : 0;
+  // values[0] = most recent, values[length-1] = oldest in this window
+  const newest = values[0];
+  const oldest = values[values.length - 1];
+
+  // Calculate trend: positive if scores are improving (newest > oldest)
+  const direction = oldest > 0 ? (newest - oldest) / oldest : 0;
 
   let trend = 'stable';
-  if (direction > 0.05) trend = 'up';
-  else if (direction < -0.05) trend = 'down';
+  if (direction > 0.02) trend = 'up';
+  else if (direction < -0.02) trend = 'down';
 
-  return { trend, values, direction };
+  // Reverse values for sparkline display (chronological: oldest to newest)
+  return { trend, values: [...values].reverse(), direction };
 };
 
 /**
