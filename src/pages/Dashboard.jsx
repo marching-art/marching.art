@@ -91,6 +91,16 @@ const standingsColumns = [
 ];
 
 // =============================================================================
+// MOBILE TAB LABELS
+// =============================================================================
+
+const MOBILE_TABS = [
+  { id: 'team', label: 'My Team' },
+  { id: 'standings', label: 'Standings' },
+  { id: 'schedule', label: 'Schedule' },
+];
+
+// =============================================================================
 // DASHBOARD COMPONENT
 // =============================================================================
 
@@ -99,6 +109,9 @@ const Dashboard = () => {
   const dashboardData = useDashboardData();
   const { aggregatedScores, loading: scoresLoading } = useScoresData();
   const { data: myLeagues } = useMyLeagues(user?.uid);
+
+  // Mobile tab state
+  const [activeMobileTab, setActiveMobileTab] = useState('team');
 
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
@@ -351,11 +364,28 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* MAIN GRID - gap-px creates borders, full width fluid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-px bg-[#333]">
+          {/* MOBILE TABS - Only show on mobile */}
+          <div className="lg:hidden flex border-b border-[#333] bg-[#1a1a1a]">
+            {MOBILE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveMobileTab(tab.id)}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors ${
+                  activeMobileTab === tab.id
+                    ? 'text-[#0057B8] border-b-2 border-[#0057B8] bg-[#0a0a0a]'
+                    : 'text-gray-500 border-b-2 border-transparent'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
+          <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333]">
 
             {/* LEFT COLUMN - My Team */}
-            <div className="bg-[#1a1a1a] p-4 sm:p-4">
+            <div className={`bg-[#1a1a1a] p-4 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
               {/* Team Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -500,8 +530,9 @@ const Dashboard = () => {
             </div>
 
             {/* CENTER COLUMN - Standings */}
-            <div className="bg-[#0a0a0a]">
-              <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center justify-between">
+            <div className={`bg-[#0a0a0a] ${activeMobileTab !== 'standings' ? 'hidden lg:block' : ''}`}>
+              {/* Header hidden on mobile since we have tabs */}
+              <div className="hidden lg:flex bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] items-center justify-between">
                 <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Standings
                 </span>
@@ -527,11 +558,19 @@ const Dashboard = () => {
                   }
                 />
               )}
+              {/* Mobile View All link */}
+              <Link
+                to="/scores"
+                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm text-[#0057B8] hover:underline active:underline border-t border-[#333] bg-[#1a1a1a]"
+              >
+                View Full Standings <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
 
-            {/* RIGHT COLUMN - Activity */}
-            <div className="bg-[#1a1a1a]">
-              <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center justify-between">
+            {/* RIGHT COLUMN - Schedule */}
+            <div className={`bg-[#1a1a1a] ${activeMobileTab !== 'schedule' ? 'hidden lg:block' : ''}`}>
+              {/* Header hidden on mobile since we have tabs */}
+              <div className="hidden lg:flex bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] items-center justify-between">
                 <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Week {currentWeek} Schedule
                 </span>
@@ -569,17 +608,24 @@ const Dashboard = () => {
                 </div>
               )}
 
-              {/* Season Info */}
-              <div className="px-4 sm:px-3 py-3 sm:py-2 border-t border-[#333] bg-[#222]">
+              {/* Season Info - desktop only */}
+              <div className="hidden lg:block px-4 sm:px-3 py-3 sm:py-2 border-t border-[#333] bg-[#222]">
                 <div className="text-[11px] sm:text-[10px] text-gray-500">
                   {formatSeasonName(seasonData?.name)} • Week {currentWeek}
                 </div>
               </div>
+              {/* Mobile View All link */}
+              <Link
+                to="/schedule"
+                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm text-[#0057B8] hover:underline active:underline border-t border-[#333] bg-[#222]"
+              >
+                View Full Schedule <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
 
-          {/* BOTTOM ROW - Activity Feed */}
-          <div className="bg-[#1a1a1a] border-t border-[#333]">
+          {/* BOTTOM ROW - Activity Feed - Desktop only */}
+          <div className="hidden lg:block bg-[#1a1a1a] border-t border-[#333]">
             <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center gap-2">
               <Activity className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500" />
               <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
