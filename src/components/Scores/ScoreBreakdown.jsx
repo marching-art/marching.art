@@ -1,5 +1,6 @@
 // src/components/Scores/ScoreBreakdown.jsx
 // Modal showing detailed score breakdown by caption with comparison to previous show
+// Styled similar to the lineup editor with category headers and individual caption cards
 
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,27 +10,46 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Sparkles,
-  Eye,
-  Music,
   Calendar,
   MapPin,
-  ArrowRight
+  Check
 } from 'lucide-react';
 import { calculateCaptionAggregates } from '../../hooks/useScoresData';
 
+// Caption definitions matching the lineup editor
+const CAPTIONS = [
+  { id: 'GE1', name: 'General Effect 1', category: 'General Effect', abbrev: 'GE1' },
+  { id: 'GE2', name: 'General Effect 2', category: 'General Effect', abbrev: 'GE2' },
+  { id: 'VP', name: 'Visual Proficiency', category: 'Visual', abbrev: 'VP' },
+  { id: 'VA', name: 'Visual Analysis', category: 'Visual', abbrev: 'VA' },
+  { id: 'CG', name: 'Color Guard', category: 'Visual', abbrev: 'CG' },
+  { id: 'B', name: 'Brass', category: 'Music', abbrev: 'B' },
+  { id: 'MA', name: 'Music Analysis', category: 'Music', abbrev: 'MA' },
+  { id: 'P', name: 'Percussion', category: 'Music', abbrev: 'P' }
+];
+
+const CAPTION_CATEGORIES = ['General Effect', 'Visual', 'Music'];
+
+// Category color mapping
+const getCategoryColor = (category) => {
+  switch (category) {
+    case 'General Effect': return 'gold';
+    case 'Visual': return 'blue';
+    case 'Music': return 'purple';
+    default: return 'gold';
+  }
+};
+
 // Score change indicator
 const ScoreChange = ({ current, previous }) => {
-  if (!previous || previous === 0) return null;
+  if (previous === undefined || previous === null) return null;
 
   const change = current - previous;
-  const percentChange = ((change / previous) * 100).toFixed(1);
 
   if (Math.abs(change) < 0.01) {
     return (
       <span className="text-cream-500/40 text-xs flex items-center gap-1">
         <Minus className="w-3 h-3" />
-        No change
       </span>
     );
   }
@@ -38,7 +58,7 @@ const ScoreChange = ({ current, previous }) => {
     return (
       <span className="text-green-400 text-xs flex items-center gap-1">
         <TrendingUp className="w-3 h-3" />
-        +{change.toFixed(2)} ({percentChange}%)
+        +{change.toFixed(2)}
       </span>
     );
   }
@@ -46,85 +66,78 @@ const ScoreChange = ({ current, previous }) => {
   return (
     <span className="text-red-400 text-xs flex items-center gap-1">
       <TrendingDown className="w-3 h-3" />
-      {change.toFixed(2)} ({percentChange}%)
+      {change.toFixed(2)}
     </span>
   );
 };
 
-// Progress bar for caption scores
-const CaptionBar = ({ label, icon: Icon, score, maxScore, previousScore, color = 'gold' }) => {
-  const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+// Individual caption score card
+const CaptionCard = ({ caption, score, previousScore, categoryColor }) => {
+  const hasPrevious = previousScore !== undefined && previousScore !== null;
 
   const colorClasses = {
-    gold: 'from-gold-600 to-gold-400',
-    purple: 'from-purple-600 to-purple-400',
-    blue: 'from-blue-600 to-blue-400'
+    gold: 'border-gold-500/30 bg-gold-500/5',
+    blue: 'border-blue-500/30 bg-blue-500/5',
+    purple: 'border-purple-500/30 bg-purple-500/5'
+  };
+
+  const textColorClasses = {
+    gold: 'text-gold-400',
+    blue: 'text-blue-400',
+    purple: 'text-purple-400'
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-cream-500/60" />
-          <span className="text-sm text-cream-300">{label}</span>
+    <div className={`p-3 rounded-lg border transition-all ${colorClasses[categoryColor]}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Check className={`w-4 h-4 flex-shrink-0 ${textColorClasses[categoryColor]}`} />
+          <span className="font-medium text-cream-100 text-sm truncate">{caption.name}</span>
+          <span className="text-xs text-cream-500/60 flex-shrink-0">({caption.abbrev})</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="font-mono font-bold text-cream-100">
-            {score.toFixed(2)}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`font-bold text-sm tabular-nums ${textColorClasses[categoryColor]}`}>
+            {score?.toFixed(2) || '0.00'}
           </span>
-          <span className="text-cream-500/40 text-xs">/ {maxScore}</span>
+          {hasPrevious && (
+            <ScoreChange current={score || 0} previous={previousScore} />
+          )}
         </div>
       </div>
-      <div className="h-3 bg-charcoal-800 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className={`h-full bg-gradient-to-r ${colorClasses[color]} rounded-full`}
-        />
-      </div>
-      {previousScore !== undefined && (
-        <div className="flex justify-end">
-          <ScoreChange current={score} previous={previousScore} />
-        </div>
-      )}
     </div>
   );
 };
 
-// Rank change display
-const RankChange = ({ current, previous }) => {
-  if (!previous) {
-    return (
-      <span className="text-cream-500/60">First show</span>
-    );
-  }
+// Category subtotal card
+const CategorySubtotal = ({ category, total, previousTotal, maxScore }) => {
+  const color = getCategoryColor(category);
+  const hasPrevious = previousTotal !== undefined && previousTotal !== null;
 
-  const change = previous - current; // Positive means improved (lower rank number is better)
+  const bgClasses = {
+    gold: 'bg-gold-500/10 border-gold-500/20',
+    blue: 'bg-blue-500/10 border-blue-500/20',
+    purple: 'bg-purple-500/10 border-purple-500/20'
+  };
 
-  if (change === 0) {
-    return (
-      <span className="text-cream-500/60 flex items-center gap-1">
-        <Minus className="w-4 h-4" />
-        No change
-      </span>
-    );
-  }
-
-  if (change > 0) {
-    return (
-      <span className="text-green-400 flex items-center gap-1">
-        <TrendingUp className="w-4 h-4" />
-        Up {change} spot{change > 1 ? 's' : ''}
-      </span>
-    );
-  }
+  const textClasses = {
+    gold: 'text-gold-400',
+    blue: 'text-blue-400',
+    purple: 'text-purple-400'
+  };
 
   return (
-    <span className="text-red-400 flex items-center gap-1">
-      <TrendingDown className="w-4 h-4" />
-      Down {Math.abs(change)} spot{Math.abs(change) > 1 ? 's' : ''}
-    </span>
+    <div className={`mt-2 p-2 rounded-lg border ${bgClasses[color]} flex items-center justify-between`}>
+      <span className="text-xs text-cream-500/60 uppercase tracking-wide">Subtotal</span>
+      <div className="flex items-center gap-2">
+        <span className={`font-bold text-sm tabular-nums ${textClasses[color]}`}>
+          {total.toFixed(2)}
+        </span>
+        <span className="text-cream-500/40 text-xs">/ {maxScore}</span>
+        {hasPrevious && (
+          <ScoreChange current={total} previous={previousTotal} />
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -136,6 +149,17 @@ const ScoreBreakdown = ({
   showInfo = {},
   previousShowInfo = null
 }) => {
+  // Get individual caption scores from the score object
+  const captionScores = useMemo(() => {
+    if (!score) return {};
+    return score.captions || {};
+  }, [score]);
+
+  const previousCaptionScores = useMemo(() => {
+    if (!previousScore) return {};
+    return previousScore.captions || {};
+  }, [previousScore]);
+
   // Calculate aggregates for current and previous scores
   const currentAggregates = useMemo(() => {
     return calculateCaptionAggregates(score);
@@ -147,6 +171,28 @@ const ScoreBreakdown = ({
   }, [previousScore]);
 
   const displayScore = score?.score || score?.totalScore || currentAggregates.Total_Score;
+  const previousDisplayScore = previousScore?.score || previousScore?.totalScore || 0;
+
+  // Get category max scores
+  const getCategoryMaxScore = (category) => {
+    switch (category) {
+      case 'General Effect': return 40;
+      case 'Visual': return 30;
+      case 'Music': return 30;
+      default: return 0;
+    }
+  };
+
+  // Get category total
+  const getCategoryTotal = (category, aggregates) => {
+    if (!aggregates) return 0;
+    switch (category) {
+      case 'General Effect': return aggregates.GE_Total;
+      case 'Visual': return aggregates.VIS_Total;
+      case 'Music': return aggregates.MUS_Total;
+      default: return 0;
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -166,7 +212,7 @@ const ScoreBreakdown = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-[10%] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col"
+            className="fixed inset-x-4 top-[5%] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-charcoal-950 border border-cream-500/10 rounded-xl shadow-2xl z-50 max-h-[90vh] overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex-shrink-0 p-4 border-b border-cream-500/10 bg-charcoal-900/50">
@@ -179,9 +225,9 @@ const ScoreBreakdown = ({
                     <h2 className="font-display font-bold text-lg text-cream-100">
                       Score Breakdown
                     </h2>
-                    {showInfo.eventName && (
+                    {score?.corpsName && (
                       <p className="text-sm text-cream-500/60">
-                        {showInfo.eventName}
+                        {score.corpsName}
                       </p>
                     )}
                   </div>
@@ -196,26 +242,29 @@ const ScoreBreakdown = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {/* Show info */}
-              {(showInfo.date || showInfo.location) && (
-                <div className="flex items-center gap-4 text-sm text-cream-500/60">
+              {(showInfo.eventName || showInfo.date || showInfo.location) && (
+                <div className="flex flex-wrap items-center gap-3 text-sm text-cream-500/60 pb-2 border-b border-cream-500/10">
+                  {showInfo.eventName && (
+                    <span className="font-medium text-cream-300">{showInfo.eventName}</span>
+                  )}
                   {showInfo.date && (
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
+                      <Calendar className="w-3 h-3" />
                       {showInfo.date}
                     </span>
                   )}
                   {showInfo.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
+                      <MapPin className="w-3 h-3" />
                       {showInfo.location}
                     </span>
                   )}
                 </div>
               )}
 
-              {/* Total Score */}
+              {/* Total Score Card */}
               <div className="bg-gradient-to-br from-gold-500/10 to-gold-500/5 border border-gold-500/20 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-cream-500/60 uppercase tracking-wide">Total Score</span>
@@ -227,86 +276,74 @@ const ScoreBreakdown = ({
                 </div>
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-mono font-black text-gold-400">
-                    {displayScore.toFixed(1)}
+                    {displayScore.toFixed(2)}
                   </span>
                   {previousScore && (
                     <ScoreChange
                       current={displayScore}
-                      previous={previousScore.score || previousScore.totalScore || 0}
+                      previous={previousDisplayScore}
                     />
                   )}
                 </div>
-                {previousScore?.rank && score?.rank && (
-                  <div className="mt-3 pt-3 border-t border-gold-500/20">
-                    <RankChange current={score.rank} previous={previousScore.rank} />
-                  </div>
-                )}
               </div>
 
-              {/* Caption Breakdown */}
-              <div>
-                <h3 className="text-sm font-display font-bold text-cream-400 uppercase tracking-wide mb-4">
-                  Caption Scores
-                </h3>
-                <div className="space-y-5">
-                  <CaptionBar
-                    label="General Effect"
-                    icon={Sparkles}
-                    score={currentAggregates.GE_Total}
-                    maxScore={40}
-                    previousScore={previousAggregates?.GE_Total}
-                    color="gold"
-                  />
-                  <CaptionBar
-                    label="Visual"
-                    icon={Eye}
-                    score={currentAggregates.VIS_Total}
-                    maxScore={30}
-                    previousScore={previousAggregates?.VIS_Total}
-                    color="purple"
-                  />
-                  <CaptionBar
-                    label="Music"
-                    icon={Music}
-                    score={currentAggregates.MUS_Total}
-                    maxScore={30}
-                    previousScore={previousAggregates?.MUS_Total}
-                    color="blue"
-                  />
-                </div>
+              {/* Caption Breakdown - Lineup Editor Style */}
+              <div className="space-y-4">
+                {CAPTION_CATEGORIES.map((category) => {
+                  const categoryCaptions = CAPTIONS.filter(c => c.category === category);
+                  const categoryColor = getCategoryColor(category);
+                  const categoryTotal = getCategoryTotal(category, currentAggregates);
+                  const previousCategoryTotal = previousAggregates ? getCategoryTotal(category, previousAggregates) : null;
+                  const maxScore = getCategoryMaxScore(category);
+
+                  const borderColorClass = {
+                    gold: 'bg-gold-500',
+                    blue: 'bg-blue-500',
+                    purple: 'bg-purple-500'
+                  }[categoryColor];
+
+                  return (
+                    <div key={category} className="space-y-2">
+                      {/* Category Header */}
+                      <div className="flex items-center gap-2 sticky top-0 bg-charcoal-950 z-10 py-1">
+                        <div className={`w-1 h-5 rounded flex-shrink-0 ${borderColorClass}`} />
+                        <h3 className="font-semibold text-cream-100 text-sm">{category}</h3>
+                      </div>
+
+                      {/* Individual Caption Cards */}
+                      {categoryCaptions.map((caption) => (
+                        <CaptionCard
+                          key={caption.id}
+                          caption={caption}
+                          score={captionScores[caption.id]}
+                          previousScore={previousCaptionScores[caption.id]}
+                          categoryColor={categoryColor}
+                        />
+                      ))}
+
+                      {/* Category Subtotal */}
+                      <CategorySubtotal
+                        category={category}
+                        total={categoryTotal}
+                        previousTotal={previousCategoryTotal}
+                        maxScore={maxScore}
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Previous show comparison */}
               {previousShowInfo && (
-                <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3 text-xs text-cream-500/40 uppercase tracking-wide">
-                    <span>Compared to</span>
-                    <ArrowRight className="w-3 h-3" />
-                    <span className="text-cream-500/60">{previousShowInfo.eventName || 'Previous Show'}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-cream-500/40 mb-1">GE</p>
-                      <ScoreChange
-                        current={currentAggregates.GE_Total}
-                        previous={previousAggregates?.GE_Total}
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs text-cream-500/40 mb-1">Visual</p>
-                      <ScoreChange
-                        current={currentAggregates.VIS_Total}
-                        previous={previousAggregates?.VIS_Total}
-                      />
-                    </div>
-                    <div>
-                      <p className="text-xs text-cream-500/40 mb-1">Music</p>
-                      <ScoreChange
-                        current={currentAggregates.MUS_Total}
-                        previous={previousAggregates?.MUS_Total}
-                      />
-                    </div>
-                  </div>
+                <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-lg p-3 mt-4">
+                  <p className="text-xs text-cream-500/40 mb-1">
+                    Compared to previous: <span className="text-cream-500/60">{previousShowInfo.eventName || 'Previous Show'}</span>
+                  </p>
+                  {previousShowInfo.date && (
+                    <p className="text-xs text-cream-500/40">
+                      {previousShowInfo.date}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

@@ -352,7 +352,8 @@ export const useScoresData = (options = {}) => {
         ...entry,
         rank: index + 1,
         score: entry.totalScore,
-        ...calculateCaptionAggregates(entry.scores[entry.scores.length - 1]),
+        // scores[0] is the most recent since shows are sorted by offSeasonDay descending
+        ...calculateCaptionAggregates(entry.scores[0]),
         trend: calculateTrend(entry.scores)
       }));
 
