@@ -200,7 +200,7 @@ const TickerBar = () => {
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.yesterdayScores.slice(0, 8).map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className="text-gray-400 font-medium">{item.fullName}</span>
                 <span className="text-white tabular-nums font-mono">{item.score}</span>
                 {idx < Math.min(tickerData.yesterdayScores.length, 8) - 1 && (
                   <div className="w-px h-3 bg-[#333] ml-1" />
@@ -222,7 +222,7 @@ const TickerBar = () => {
             {tickerData.seasonLeaders.slice(0, 8).map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-gray-500 text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className="text-gray-400 font-medium">{item.fullName}</span>
                 <span className={`tabular-nums font-mono ${
                   item.trend === 'up' ? 'text-green-400' :
                   item.trend === 'down' ? 'text-red-400' :
@@ -253,7 +253,7 @@ const TickerBar = () => {
             {tickerData.captionLeaders.ge && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-amber-400 text-[10px] font-bold">GE</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.ge.name}</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.ge.fullName}</span>
                 <span className="text-amber-300 tabular-nums font-mono">{tickerData.captionLeaders.ge.score}</span>
               </div>
             )}
@@ -263,7 +263,7 @@ const TickerBar = () => {
             {tickerData.captionLeaders.visual && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-cyan-400 text-[10px] font-bold">VIS</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.visual.name}</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.visual.fullName}</span>
                 <span className="text-cyan-300 tabular-nums font-mono">{tickerData.captionLeaders.visual.score}</span>
               </div>
             )}
@@ -273,7 +273,7 @@ const TickerBar = () => {
             {tickerData.captionLeaders.music && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-pink-400 text-[10px] font-bold">MUS</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.music.name}</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.music.fullName}</span>
                 <span className="text-pink-300 tabular-nums font-mono">{tickerData.captionLeaders.music.score}</span>
               </div>
             )}
@@ -283,7 +283,7 @@ const TickerBar = () => {
             {captionStats.topGE.slice(0, 3).map((item, idx) => (
               <div key={`ge-${idx}`} className="flex items-center gap-1 flex-shrink-0 text-[10px]">
                 <span className="text-gray-600">{idx + 1}.</span>
-                <span className="text-gray-500">{item.abbr}</span>
+                <span className="text-gray-500">{item.name}</span>
                 <span className="text-amber-400/60 tabular-nums">{item.latestGE.toFixed(1)}</span>
               </div>
             ))}
@@ -314,7 +314,7 @@ const TickerBar = () => {
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.biggestMovers.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className="text-gray-400 font-medium">{item.fullName}</span>
                 <span className={`tabular-nums font-mono ${
                   item.direction === 'up' ? 'text-green-400' : 'text-red-400'
                 }`}>
