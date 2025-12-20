@@ -4,19 +4,28 @@
 // Strict data terminal layout: fixed headers, scrollable content
 // Laws enforced: No glow, no shadow, tight spacing
 
-import React, { useEffect, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { analyticsHelpers } from '../../firebase';
 import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';
+import { useTickerData } from '../../hooks/useTickerData';
 import {
   LayoutDashboard,
   Calendar,
   Trophy,
   Users,
   User,
-  ChevronDown
+  ChevronDown,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Music,
+  Eye,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 // =============================================================================
@@ -107,39 +116,263 @@ const NavItem = ({ to, icon: Icon, label }) => (
 );
 
 // =============================================================================
-// TICKER BAR - Fixed h-8 (Sub Nav)
+// TICKER BAR - Fixed h-8 (Sub Nav) - Sports Stats Style
 // =============================================================================
 
+// Ticker section types for cycling through different data
+const TICKER_SECTIONS = ['scores', 'leaders', 'captions', 'movers'];
+
 const TickerBar = () => {
-  // Placeholder ticker data
-  const tickerItems = [
-    { name: 'BD', score: '98.20', trend: 'up' },
-    { name: 'CC', score: '97.55', trend: 'down' },
-    { name: 'BAC', score: '96.80', trend: 'up' },
-    { name: 'SCV', score: '95.40', trend: 'neutral' },
-    { name: 'CAV', score: '94.25', trend: 'up' },
-    { name: 'PR', score: '93.10', trend: 'down' },
-  ];
+  const { tickerData, captionStats, loading, hasData, displayDay } = useTickerData();
+  const [activeSection, setActiveSection] = useState(0);
+  const scrollRef = useRef(null);
+
+  // Auto-cycle through sections every 8 seconds
+  useEffect(() => {
+    if (!hasData) return;
+
+    const interval = setInterval(() => {
+      setActiveSection(prev => (prev + 1) % TICKER_SECTIONS.length);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [hasData]);
+
+  // Navigate between sections
+  const goToPrev = () => {
+    setActiveSection(prev => (prev - 1 + TICKER_SECTIONS.length) % TICKER_SECTIONS.length);
+  };
+
+  const goToNext = () => {
+    setActiveSection(prev => (prev + 1) % TICKER_SECTIONS.length);
+  };
+
+  // Trend indicator component
+  const TrendIndicator = ({ trend }) => {
+    if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
+    if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
+    return <Minus className="w-3 h-3 text-gray-500" />;
+  };
+
+  // Section label badge
+  const SectionBadge = ({ label, icon: Icon, color = 'gray' }) => (
+    <div className={`flex items-center gap-1.5 px-2 py-0.5 bg-${color}-500/20 border border-${color}-500/30 rounded text-[10px] font-bold uppercase tracking-wider`}>
+      <Icon className={`w-3 h-3 text-${color}-400`} />
+      <span className={`text-${color}-400`}>{label}</span>
+    </div>
+  );
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+        <div className="flex items-center gap-4 px-4 text-xs">
+          <span className="text-gray-500 animate-pulse">Loading scores...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!hasData) {
+    return (
+      <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+        <div className="flex items-center gap-4 px-4 text-xs">
+          <span className="text-gray-500">No scores available yet</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Get current section content
+  const renderSectionContent = () => {
+    const section = TICKER_SECTIONS[activeSection];
+
+    switch (section) {
+      case 'scores':
+        // Yesterday's top scores
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+              <Trophy className="w-3 h-3 text-blue-400" />
+              <span className="text-blue-400">{tickerData.dayLabel} Scores</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+            {tickerData.yesterdayScores.slice(0, 8).map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className="text-white tabular-nums font-mono">{item.score}</span>
+                {idx < Math.min(tickerData.yesterdayScores.length, 8) - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-1" />
+                )}
+              </div>
+            ))}
+          </>
+        );
+
+      case 'leaders':
+        // Season leaders with trends
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-gold-500/20 border border-gold-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+              <TrendingUp className="w-3 h-3 text-gold-400" />
+              <span className="text-gold-400">Season Leaders</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+            {tickerData.seasonLeaders.slice(0, 8).map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className={`tabular-nums font-mono ${
+                  item.trend === 'up' ? 'text-green-400' :
+                  item.trend === 'down' ? 'text-red-400' :
+                  'text-white'
+                }`}>
+                  {item.score}
+                </span>
+                <TrendIndicator trend={item.trend} />
+                {idx < Math.min(tickerData.seasonLeaders.length, 8) - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-1" />
+                )}
+              </div>
+            ))}
+          </>
+        );
+
+      case 'captions':
+        // Caption leaders (GE, Visual, Music)
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 text-purple-400" />
+              <span className="text-purple-400">Caption Leaders</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+
+            {/* GE Leader */}
+            {tickerData.captionLeaders.ge && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-amber-400 text-[10px] font-bold">GE</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.ge.name}</span>
+                <span className="text-amber-300 tabular-nums font-mono">{tickerData.captionLeaders.ge.score}</span>
+              </div>
+            )}
+            <div className="w-px h-3 bg-[#333]" />
+
+            {/* Visual Leader */}
+            {tickerData.captionLeaders.visual && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-cyan-400 text-[10px] font-bold">VIS</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.visual.name}</span>
+                <span className="text-cyan-300 tabular-nums font-mono">{tickerData.captionLeaders.visual.score}</span>
+              </div>
+            )}
+            <div className="w-px h-3 bg-[#333]" />
+
+            {/* Music Leader */}
+            {tickerData.captionLeaders.music && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-pink-400 text-[10px] font-bold">MUS</span>
+                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.music.name}</span>
+                <span className="text-pink-300 tabular-nums font-mono">{tickerData.captionLeaders.music.score}</span>
+              </div>
+            )}
+
+            {/* Top 3 from each caption */}
+            <div className="w-px h-4 bg-[#333]" />
+            {captionStats.topGE.slice(0, 3).map((item, idx) => (
+              <div key={`ge-${idx}`} className="flex items-center gap-1 flex-shrink-0 text-[10px]">
+                <span className="text-gray-600">{idx + 1}.</span>
+                <span className="text-gray-500">{item.abbr}</span>
+                <span className="text-amber-400/60 tabular-nums">{item.latestGE.toFixed(1)}</span>
+              </div>
+            ))}
+          </>
+        );
+
+      case 'movers':
+        // Biggest movers (up/down)
+        if (tickerData.biggestMovers.length === 0) {
+          return (
+            <>
+              <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+                <TrendingUp className="w-3 h-3 text-green-400" />
+                <span className="text-green-400">Daily Movers</span>
+              </div>
+              <div className="w-px h-4 bg-[#333]" />
+              <span className="text-gray-500 text-xs">No significant moves today</span>
+            </>
+          );
+        }
+
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-green-400">Daily Movers</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+            {tickerData.biggestMovers.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium">{item.name}</span>
+                <span className={`tabular-nums font-mono ${
+                  item.direction === 'up' ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {item.direction === 'up' ? '+' : ''}{item.change}
+                </span>
+                <TrendIndicator trend={item.direction} />
+                {idx < tickerData.biggestMovers.length - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-1" />
+                )}
+              </div>
+            ))}
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-      <div className="flex items-center gap-4 px-4 text-xs font-data">
-        <span className="text-gray-500 uppercase tracking-wider text-[10px] font-bold">Live</span>
-        <div className="w-px h-4 bg-[#333]" />
-        {tickerItems.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2">
-            <span className="text-gray-400 font-medium">{item.name}</span>
-            <span className={`tabular-nums ${
-              item.trend === 'up' ? 'text-green-500' :
-              item.trend === 'down' ? 'text-red-500' :
-              'text-gray-300'
-            }`}>
-              {item.score}
-            </span>
-            {item.trend === 'up' && <span className="text-green-500 text-[10px]">▲</span>}
-            {item.trend === 'down' && <span className="text-red-500 text-[10px]">▼</span>}
-            {idx < tickerItems.length - 1 && <div className="w-px h-3 bg-[#333] ml-2" />}
-          </div>
+      {/* Navigation arrows - desktop only */}
+      <button
+        onClick={goToPrev}
+        className="hidden md:flex items-center justify-center w-6 h-full bg-[#111] border-r border-[#333] hover:bg-[#222] transition-colors"
+        aria-label="Previous section"
+      >
+        <ChevronLeft className="w-4 h-4 text-gray-500" />
+      </button>
+
+      {/* Ticker content */}
+      <div
+        ref={scrollRef}
+        className="flex-1 flex items-center gap-3 px-3 text-xs overflow-x-auto scrollbar-hide"
+      >
+        {renderSectionContent()}
+      </div>
+
+      {/* Navigation arrows - desktop only */}
+      <button
+        onClick={goToNext}
+        className="hidden md:flex items-center justify-center w-6 h-full bg-[#111] border-l border-[#333] hover:bg-[#222] transition-colors"
+        aria-label="Next section"
+      >
+        <ChevronRight className="w-4 h-4 text-gray-500" />
+      </button>
+
+      {/* Section indicator dots */}
+      <div className="hidden md:flex items-center gap-1 px-2 border-l border-[#333]">
+        {TICKER_SECTIONS.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveSection(idx)}
+            className={`w-1.5 h-1.5 rounded-full transition-colors ${
+              idx === activeSection ? 'bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'
+            }`}
+            aria-label={`Go to section ${idx + 1}`}
+          />
         ))}
       </div>
     </div>
