@@ -202,6 +202,8 @@ const Scores = () => {
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [selectedScore, setSelectedScore] = useState(null);
   const [selectedShowInfo, setSelectedShowInfo] = useState({});
+  const [previousScore, setPreviousScore] = useState(null);
+  const [previousShowInfo, setPreviousShowInfo] = useState(null);
 
   // Scores data
   const {
@@ -248,13 +250,21 @@ const Scores = () => {
   // Handle row click for breakdown
   const handleRowClick = useCallback((entry) => {
     if (entry.scores && entry.scores.length > 0) {
-      const latestScore = entry.scores[entry.scores.length - 1];
+      // scores[0] is the most recent since shows are sorted by offSeasonDay descending
+      const latestScore = entry.scores[0];
+      const prevScore = entry.scores.length > 1 ? entry.scores[1] : null;
       setSelectedScore({ ...entry, ...latestScore });
       setSelectedShowInfo({
         eventName: latestScore.eventName,
         date: latestScore.date,
         location: latestScore.location
       });
+      setPreviousScore(prevScore);
+      setPreviousShowInfo(prevScore ? {
+        eventName: prevScore.eventName,
+        date: prevScore.date,
+        location: prevScore.location
+      } : null);
       setBreakdownOpen(true);
     }
   }, []);
@@ -420,7 +430,9 @@ const Scores = () => {
         isOpen={breakdownOpen}
         onClose={() => setBreakdownOpen(false)}
         score={selectedScore}
+        previousScore={previousScore}
         showInfo={selectedShowInfo}
+        previousShowInfo={previousShowInfo}
       />
     </div>
   );
