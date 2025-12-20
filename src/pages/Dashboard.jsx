@@ -65,14 +65,14 @@ const standingsColumns = [
   {
     key: 'rank',
     header: 'RK',
-    width: '40px',
+    width: '36px',
     isRank: true,
   },
   {
     key: 'corpsName',
     header: 'Corps',
     render: (row) => (
-      <span className="truncate block max-w-[140px]">
+      <span className="truncate block max-w-[180px] sm:max-w-[140px] text-sm sm:text-xs">
         {row.corpsName || row.corps}
       </span>
     ),
@@ -81,9 +81,9 @@ const standingsColumns = [
     key: 'score',
     header: 'Score',
     align: 'right',
-    width: '70px',
+    width: '75px',
     render: (row) => (
-      <span className="text-white tabular-nums">
+      <span className="text-white tabular-nums text-sm sm:text-xs">
         {typeof row.score === 'number' ? row.score.toFixed(2) : row.score}
       </span>
     ),
@@ -327,9 +327,9 @@ const Dashboard = () => {
 
       {activeCorps ? (
         <>
-          {/* Corps Switcher Bar */}
+          {/* Corps Switcher Bar - Mobile optimized with larger touch targets */}
           {hasMultipleCorps && (
-            <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-2 flex items-center gap-2 overflow-x-auto">
+            <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {Object.entries(corps)
                 .sort((a, b) => {
                   const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
@@ -339,10 +339,10 @@ const Dashboard = () => {
                 <button
                   key={classId}
                   onClick={() => handleCorpsSwitch(classId)}
-                  className={`px-3 py-1 text-xs font-bold uppercase whitespace-nowrap ${
+                  className={`px-4 py-2 text-xs font-bold uppercase whitespace-nowrap rounded transition-colors min-h-[44px] ${
                     activeCorpsClass === classId
                       ? 'bg-[#0057B8] text-white'
-                      : 'bg-[#333] text-gray-400 hover:text-white'
+                      : 'bg-[#333] text-gray-400 hover:text-white active:bg-[#444]'
                   }`}
                 >
                   {corpsData.corpsName || corpsData.name || ''}
@@ -355,102 +355,110 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-px bg-[#333]">
 
             {/* LEFT COLUMN - My Team */}
-            <div className="bg-[#1a1a1a] p-4">
+            <div className="bg-[#1a1a1a] p-4 sm:p-4">
               {/* Team Header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                     {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowEditCorps(true)}
-                  className="p-1 text-gray-500 hover:text-white"
+                  className="p-2 -mr-2 text-gray-500 hover:text-white active:text-white"
+                  aria-label="Edit corps"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-5 h-5 sm:w-4 sm:h-4" />
                 </button>
               </div>
 
               {/* Corps Name */}
-              <h2 className="text-lg font-bold text-white mb-4">
+              <h2 className="text-xl sm:text-lg font-bold text-white mb-4 leading-tight">
                 {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
               </h2>
 
               {/* Big Score */}
               <div className="mb-4">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
                   Season Score
                 </div>
-                <div className="text-3xl font-bold font-data text-white tabular-nums">
+                <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums">
                   {activeCorps.totalSeasonScore?.toFixed(2) || '0.00'}
                 </div>
               </div>
 
-              {/* Rank */}
-              <div className="flex items-center gap-4 mb-4 pb-4 border-b border-[#333]">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+              {/* Rank and Lineup - Better mobile layout */}
+              <div className="flex items-start gap-6 sm:gap-4 mb-4 pb-4 border-b border-[#333]">
+                <div className="flex-shrink-0">
+                  <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
                     Rank
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-white">
+                    <span className="text-3xl sm:text-2xl font-bold text-white">
                       #{activeCorps.rank || '-'}
                     </span>
                     {rankTrend === 'up' && (
-                      <span className="flex items-center text-green-500 text-xs">
-                        <TrendingUp className="w-4 h-4" />
+                      <span className="flex items-center text-green-500">
+                        <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4" />
                       </span>
                     )}
                     {rankTrend === 'down' && (
-                      <span className="flex items-center text-red-500 text-xs">
-                        <TrendingDown className="w-4 h-4" />
+                      <span className="flex items-center text-red-500">
+                        <TrendingDown className="w-5 h-5 sm:w-4 sm:h-4" />
                       </span>
                     )}
                   </div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                <div className="flex-shrink-0">
+                  <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
                     Lineup
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xl font-bold ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    <span className={`text-2xl sm:text-xl font-bold ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
                       {lineupCount}/8
                     </span>
                     <button
                       onClick={() => openCaptionSelection()}
-                      className="flex items-center gap-1 text-[10px] text-[#0057B8] hover:underline"
+                      className="flex items-center gap-1 text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline py-1"
                     >
-                      <Edit className="w-3 h-3" />
+                      <Edit className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                       Edit All
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Lineup Grid - Click any slot to edit */}
-              <div className="grid grid-cols-4 gap-1 mb-4">
+              {/* Lineup Grid - Mobile: 2 cols with full names, Desktop: 4 cols compact */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-1 mb-4">
                 {CAPTIONS.map((caption) => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
+                  const corpsName = hasValue ? value.split('|')[0] : null;
                   return (
                     <button
                       key={caption.id}
                       onClick={() => openCaptionSelection(caption.id)}
-                      className={`p-1.5 text-center border transition-all cursor-pointer group ${
+                      className={`p-2.5 sm:p-1.5 text-center border transition-all cursor-pointer group min-h-[52px] sm:min-h-0 ${
                         hasValue
-                          ? 'border-[#444] bg-[#222] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
-                          : 'border-dashed border-[#444] bg-[#1a1a1a] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
+                          ? 'border-[#444] bg-[#222] hover:border-[#0057B8] hover:bg-[#0057B8]/10 active:bg-[#0057B8]/20'
+                          : 'border-dashed border-[#444] bg-[#1a1a1a] hover:border-[#0057B8] hover:bg-[#0057B8]/10 active:bg-[#0057B8]/20'
                       }`}
                     >
-                      <div className="text-[10px] font-bold text-gray-400 group-hover:text-[#0057B8]">
+                      <div className="text-[11px] sm:text-[10px] font-bold text-gray-400 group-hover:text-[#0057B8]">
                         {caption.name}
                       </div>
-                      <div className={`text-[9px] truncate ${
+                      <div className={`text-[11px] sm:text-[9px] truncate ${
                         hasValue
                           ? 'text-gray-300 group-hover:text-white'
                           : 'text-[#0057B8] font-medium'
-                      }`}>
-                        {hasValue ? value.split('|')[0]?.slice(0, 6) : '+ Draft'}
+                      }`} title={corpsName || undefined}>
+                        {hasValue ? (
+                          <span className="sm:hidden">{corpsName?.slice(0, 12) || corpsName}</span>
+                        ) : null}
+                        {hasValue ? (
+                          <span className="hidden sm:inline">{corpsName?.slice(0, 6)}</span>
+                        ) : null}
+                        {!hasValue && '+ Draft'}
                       </div>
                     </button>
                   );
@@ -461,31 +469,31 @@ const Dashboard = () => {
               {primaryLeague ? (
                 <Link
                   to="/leagues"
-                  className="flex items-center justify-between p-2 bg-[#222] border border-[#333] hover:border-[#444]"
+                  className="flex items-center justify-between p-3 sm:p-2 bg-[#222] border border-[#333] hover:border-[#444] active:bg-[#333] rounded"
                 >
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#0057B8]" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Users className="w-5 h-5 sm:w-4 sm:h-4 text-[#0057B8] flex-shrink-0" />
                     <span className="text-sm text-white truncate">{primaryLeague.name}</span>
                   </div>
-                  <span className="text-xs font-bold text-[#0057B8]">#{primaryLeague.userRank || '-'}</span>
+                  <span className="text-sm sm:text-xs font-bold text-[#0057B8] flex-shrink-0 ml-2">#{primaryLeague.userRank || '-'}</span>
                 </Link>
               ) : (
                 <Link
                   to="/leagues"
-                  className="flex items-center justify-center gap-2 p-2 border border-dashed border-[#444] text-gray-500 hover:text-white hover:border-[#555]"
+                  className="flex items-center justify-center gap-2 p-3 sm:p-2 border border-dashed border-[#444] text-gray-500 hover:text-white hover:border-[#555] active:bg-[#222] rounded min-h-[48px] sm:min-h-0"
                 >
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs">Join a League</span>
+                  <Users className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="text-sm sm:text-xs">Join a League</span>
                 </Link>
               )}
 
               {/* CorpsCoin */}
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#333]">
                 <div className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-yellow-500" />
-                  <span className="text-xs text-gray-400">CorpsCoin</span>
+                  <Coins className="w-5 h-5 sm:w-4 sm:h-4 text-yellow-500" />
+                  <span className="text-sm sm:text-xs text-gray-400">CorpsCoin</span>
                 </div>
-                <span className="text-sm font-bold font-data text-yellow-500 tabular-nums">
+                <span className="text-base sm:text-sm font-bold font-data text-yellow-500 tabular-nums">
                   {(profile?.corpsCoin || 0).toLocaleString()}
                 </span>
               </div>
@@ -493,12 +501,12 @@ const Dashboard = () => {
 
             {/* CENTER COLUMN - Standings */}
             <div className="bg-[#0a0a0a]">
-              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center justify-between">
+                <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Standings
                 </span>
-                <Link to="/scores" className="text-[10px] text-[#0057B8] hover:underline flex items-center gap-1">
-                  View All <ChevronRight className="w-3 h-3" />
+                <Link to="/scores" className="text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline flex items-center gap-1 py-1">
+                  View All <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
                 </Link>
               </div>
               {scoresLoading ? (
@@ -523,25 +531,25 @@ const Dashboard = () => {
 
             {/* RIGHT COLUMN - Activity */}
             <div className="bg-[#1a1a1a]">
-              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+              <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center justify-between">
+                <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Week {currentWeek} Schedule
                 </span>
-                <Link to="/schedule" className="text-[10px] text-[#0057B8] hover:underline flex items-center gap-1">
-                  Full Schedule <ChevronRight className="w-3 h-3" />
+                <Link to="/schedule" className="text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline flex items-center gap-1 py-1">
+                  Full Schedule <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
                 </Link>
               </div>
 
               {thisWeekShows.length > 0 ? (
                 <div className="divide-y divide-[#333]">
                   {thisWeekShows.map((show, idx) => (
-                    <div key={idx} className="px-3 py-2 flex items-center gap-3 hover:bg-[#222]">
-                      <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <div key={idx} className="px-4 sm:px-3 py-3 sm:py-2 flex items-center gap-3 hover:bg-[#222] active:bg-[#222]">
+                      <Calendar className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm text-white truncate">
                           {show.eventName || show.name || 'Show'}
                         </div>
-                        <div className="text-[10px] text-gray-500 truncate">
+                        <div className="text-[11px] sm:text-[10px] text-gray-500 truncate">
                           {show.location || show.date || ''}
                         </div>
                       </div>
@@ -549,12 +557,12 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-4 text-center">
-                  <Calendar className="w-6 h-6 text-gray-600 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 mb-2">No shows selected</p>
+                <div className="p-5 sm:p-4 text-center">
+                  <Calendar className="w-8 h-8 sm:w-6 sm:h-6 text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm sm:text-xs text-gray-500 mb-3 sm:mb-2">No shows selected</p>
                   <Link
                     to="/schedule"
-                    className="text-xs text-[#0057B8] hover:underline"
+                    className="inline-block text-sm sm:text-xs text-[#0057B8] hover:underline active:underline py-1"
                   >
                     Select Shows
                   </Link>
@@ -562,8 +570,8 @@ const Dashboard = () => {
               )}
 
               {/* Season Info */}
-              <div className="px-3 py-2 border-t border-[#333] bg-[#222]">
-                <div className="text-[10px] text-gray-500">
+              <div className="px-4 sm:px-3 py-3 sm:py-2 border-t border-[#333] bg-[#222]">
+                <div className="text-[11px] sm:text-[10px] text-gray-500">
                   {formatSeasonName(seasonData?.name)} • Week {currentWeek}
                 </div>
               </div>
@@ -572,13 +580,13 @@ const Dashboard = () => {
 
           {/* BOTTOM ROW - Activity Feed */}
           <div className="bg-[#1a1a1a] border-t border-[#333]">
-            <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center gap-2">
-              <Activity className="w-4 h-4 text-gray-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center gap-2">
+              <Activity className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500" />
+              <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                 Recent Activity
               </span>
             </div>
-            <div className="px-4 py-3 text-sm text-gray-500">
+            <div className="px-4 py-4 sm:py-3 text-sm text-gray-500">
               {engagementData?.streak > 0 ? (
                 <span>🔥 {engagementData.streak} day streak! Keep it up.</span>
               ) : (

@@ -193,17 +193,17 @@ const TickerBar = () => {
         // Yesterday's top scores
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Trophy className="w-3 h-3 text-blue-400" />
-              <span className="text-blue-400">{tickerData.dayLabel} Scores</span>
+              <span className="text-blue-400 whitespace-nowrap">{tickerData.dayLabel} Scores</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.yesterdayScores.slice(0, 8).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium">{item.fullName}</span>
-                <span className="text-white tabular-nums font-mono">{item.score}</span>
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-white tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
                 {idx < Math.min(tickerData.yesterdayScores.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
                 )}
               </div>
             ))}
@@ -214,16 +214,16 @@ const TickerBar = () => {
         // Season leaders with trends
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-gold-500/20 border border-gold-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-gold-500/20 border border-gold-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
               <TrendingUp className="w-3 h-3 text-gold-400" />
-              <span className="text-gold-400">Season Leaders</span>
+              <span className="text-gold-400 whitespace-nowrap">Season Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.seasonLeaders.slice(0, 8).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-500 text-[10px] font-mono">#{idx + 1}</span>
-                <span className="text-gray-400 font-medium">{item.fullName}</span>
-                <span className={`tabular-nums font-mono ${
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
                   item.trend === 'up' ? 'text-green-400' :
                   item.trend === 'down' ? 'text-red-400' :
                   'text-white'
@@ -232,7 +232,7 @@ const TickerBar = () => {
                 </span>
                 <TrendIndicator trend={item.trend} />
                 {idx < Math.min(tickerData.seasonLeaders.length, 8) - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
                 )}
               </div>
             ))}
@@ -243,45 +243,45 @@ const TickerBar = () => {
         // Caption leaders (GE, Visual, Music)
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
               <Sparkles className="w-3 h-3 text-purple-400" />
-              <span className="text-purple-400">Caption Leaders</span>
+              <span className="text-purple-400 whitespace-nowrap">Caption Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
 
             {/* GE Leader */}
             {tickerData.captionLeaders.ge && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-amber-400 text-[10px] font-bold">GE</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.ge.fullName}</span>
-                <span className="text-amber-300 tabular-nums font-mono">{tickerData.captionLeaders.ge.score}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold">GE</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{tickerData.captionLeaders.ge.fullName}</span>
+                <span className="text-amber-300 tabular-nums font-mono text-[11px] sm:text-xs">{tickerData.captionLeaders.ge.score}</span>
               </div>
             )}
             <div className="w-px h-3 bg-[#333]" />
 
             {/* Visual Leader */}
             {tickerData.captionLeaders.visual && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-cyan-400 text-[10px] font-bold">VIS</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.visual.fullName}</span>
-                <span className="text-cyan-300 tabular-nums font-mono">{tickerData.captionLeaders.visual.score}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-cyan-400 text-[9px] sm:text-[10px] font-bold">VIS</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{tickerData.captionLeaders.visual.fullName}</span>
+                <span className="text-cyan-300 tabular-nums font-mono text-[11px] sm:text-xs">{tickerData.captionLeaders.visual.score}</span>
               </div>
             )}
             <div className="w-px h-3 bg-[#333]" />
 
             {/* Music Leader */}
             {tickerData.captionLeaders.music && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-pink-400 text-[10px] font-bold">MUS</span>
-                <span className="text-gray-400 font-medium">{tickerData.captionLeaders.music.fullName}</span>
-                <span className="text-pink-300 tabular-nums font-mono">{tickerData.captionLeaders.music.score}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-pink-400 text-[9px] sm:text-[10px] font-bold">MUS</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{tickerData.captionLeaders.music.fullName}</span>
+                <span className="text-pink-300 tabular-nums font-mono text-[11px] sm:text-xs">{tickerData.captionLeaders.music.score}</span>
               </div>
             )}
 
-            {/* Top 3 from each caption */}
-            <div className="w-px h-4 bg-[#333]" />
+            {/* Top 3 from each caption - hidden on mobile for space */}
+            <div className="hidden sm:block w-px h-4 bg-[#333]" />
             {captionStats.topGE.slice(0, 3).map((item, idx) => (
-              <div key={`ge-${idx}`} className="flex items-center gap-1 flex-shrink-0 text-[10px]">
+              <div key={`ge-${idx}`} className="hidden sm:flex items-center gap-1 flex-shrink-0 text-[10px]">
                 <span className="text-gray-600">{idx + 1}.</span>
                 <span className="text-gray-500">{item.name}</span>
                 <span className="text-amber-400/60 tabular-nums">{item.latestGE.toFixed(1)}</span>
@@ -295,34 +295,34 @@ const TickerBar = () => {
         if (tickerData.biggestMovers.length === 0) {
           return (
             <>
-              <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+              <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
                 <TrendingUp className="w-3 h-3 text-green-400" />
-                <span className="text-green-400">Daily Movers</span>
+                <span className="text-green-400 whitespace-nowrap">Daily Movers</span>
               </div>
               <div className="w-px h-4 bg-[#333]" />
-              <span className="text-gray-500 text-xs">No significant moves today</span>
+              <span className="text-gray-500 text-[11px] sm:text-xs">No significant moves today</span>
             </>
           );
         }
 
         return (
           <>
-            <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
               <TrendingUp className="w-3 h-3 text-green-400" />
-              <span className="text-green-400">Daily Movers</span>
+              <span className="text-green-400 whitespace-nowrap">Daily Movers</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
             {tickerData.biggestMovers.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-gray-400 font-medium">{item.fullName}</span>
-                <span className={`tabular-nums font-mono ${
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className={`tabular-nums font-mono text-[11px] sm:text-xs ${
                   item.direction === 'up' ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {item.direction === 'up' ? '+' : ''}{item.change}
                 </span>
                 <TrendIndicator trend={item.direction} />
                 {idx < tickerData.biggestMovers.length - 1 && (
-                  <div className="w-px h-3 bg-[#333] ml-1" />
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
                 )}
               </div>
             ))}
@@ -335,7 +335,7 @@ const TickerBar = () => {
   };
 
   return (
-    <div className="fixed top-12 w-full h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
+    <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
       {/* Navigation arrows - desktop only */}
       <button
         onClick={goToPrev}
@@ -348,7 +348,7 @@ const TickerBar = () => {
       {/* Ticker content */}
       <div
         ref={scrollRef}
-        className="flex-1 flex items-center gap-3 px-3 text-xs overflow-x-auto scrollbar-hide"
+        className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
       >
         {renderSectionContent()}
       </div>
@@ -404,13 +404,13 @@ const GameShell = ({ children }) => {
         {/* Fixed Ticker Bar */}
         <TickerBar />
 
-        {/* Main Content Area - Pads for fixed headers (h-12 + h-8 = 80px = pt-20) */}
+        {/* Main Content Area - Pads for fixed headers (h-12 + h-9/h-8 = 84px/80px) */}
         <main
           id="main-content"
           role="main"
-          className="pt-20 pb-20 lg:pb-4 min-h-screen w-full bg-[#0a0a0a]"
+          className="pt-[84px] sm:pt-20 pb-20 lg:pb-4 min-h-screen w-full bg-[#0a0a0a]"
         >
-          <div className="w-full px-2 md:px-4">
+          <div className="w-full px-0 sm:px-2 md:px-4">
             {children}
           </div>
         </main>
