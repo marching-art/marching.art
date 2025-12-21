@@ -683,7 +683,7 @@ const Schedule = () => {
   }
 
   return (
-    <div className="w-full bg-[#0a0a0a]">
+    <div className="w-full h-full min-h-screen bg-[#0a0a0a]">
       {/* HEADER */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
         <div className="flex items-center justify-between">
@@ -749,7 +749,7 @@ const Schedule = () => {
       )}
 
       {/* TAB CONTENT */}
-      <div className="pb-safe">
+      <div>
         {activeMobileTab === 'myshows' && (
           <MyShowsTab
             userProfile={userProfile}
