@@ -397,7 +397,7 @@ const GameShell = ({ children }) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <div className="min-h-screen w-screen bg-[#0a0a0a] text-white font-sans">
+      <div className="min-h-screen w-full bg-[#0a0a0a] text-white font-sans">
         {/* Fixed Top Navigation */}
         <TopNav />
 
