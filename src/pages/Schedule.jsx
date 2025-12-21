@@ -660,7 +660,7 @@ const Schedule = () => {
   // Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="w-full py-20 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-500">Loading schedule...</p>
@@ -672,7 +672,7 @@ const Schedule = () => {
   // No season
   if (!seasonData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <div className="w-full py-20 flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <h2 className="text-sm font-bold text-white mb-1">No Active Season</h2>
@@ -683,7 +683,7 @@ const Schedule = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="w-full bg-[#0a0a0a]">
       {/* HEADER */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
         <div className="flex items-center justify-between">
