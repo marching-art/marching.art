@@ -683,9 +683,9 @@ const Schedule = () => {
   }
 
   return (
-    <div className="w-full">
-      {/* HEADER */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* HEADER - Fixed */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-[#0057B8]" />
@@ -713,8 +713,8 @@ const Schedule = () => {
         </div>
       </div>
 
-      {/* MOBILE TABS */}
-      <div className="flex border-b border-[#333] bg-[#1a1a1a]">
+      {/* MOBILE TABS - Fixed */}
+      <div className="flex-shrink-0 flex border-b border-[#333] bg-[#1a1a1a]">
         {MOBILE_TABS.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -737,19 +737,21 @@ const Schedule = () => {
         })}
       </div>
 
-      {/* WEEK PILLS (Only for Browse tab) */}
+      {/* WEEK PILLS - Fixed (Only for Browse tab) */}
       {activeMobileTab === 'browse' && (
-        <WeekPills
-          weeks={weeks}
-          currentWeek={currentWeek}
-          selectedWeek={selectedWeek}
-          onSelect={setSelectedWeek}
-          showsByWeek={showsByWeek}
-        />
+        <div className="flex-shrink-0">
+          <WeekPills
+            weeks={weeks}
+            currentWeek={currentWeek}
+            selectedWeek={selectedWeek}
+            onSelect={setSelectedWeek}
+            showsByWeek={showsByWeek}
+          />
+        </div>
       )}
 
-      {/* TAB CONTENT */}
-      <div>
+      {/* TAB CONTENT - Scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         {activeMobileTab === 'myshows' && (
           <MyShowsTab
             userProfile={userProfile}
