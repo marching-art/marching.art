@@ -404,13 +404,13 @@ const GameShell = ({ children }) => {
         {/* Fixed Ticker Bar */}
         <TickerBar />
 
-        {/* Main Content Area - Pads for fixed headers (h-12 + h-9/h-8 = 84px/80px) */}
+        {/* Main Content Area - Fixed position fills space between headers and footer */}
         <main
           id="main-content"
           role="main"
-          className="pt-[84px] sm:pt-20 pb-20 lg:pb-4 min-h-screen w-full bg-[#0a0a0a]"
+          className="fixed top-[84px] sm:top-20 bottom-20 lg:bottom-4 left-0 right-0 bg-[#0a0a0a] overflow-hidden"
         >
-          <div className="w-full px-0 sm:px-2 md:px-4">
+          <div className="h-full w-full px-0 sm:px-2 md:px-4 overflow-hidden">
             {children}
           </div>
         </main>
