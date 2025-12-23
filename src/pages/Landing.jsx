@@ -153,9 +153,9 @@ const Landing = () => {
                           </span>
                         </td>
                         <td className="px-2 py-1 text-sm text-white font-medium">{row.corps}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.ge.toFixed(2)}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.visual.toFixed(2)}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.music.toFixed(2)}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.ge.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.visual.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.music.toFixed(3)}</td>
                         <td className="px-2 py-1 text-sm text-white font-bold tabular-nums text-right">{row.score.toFixed(3)}</td>
                         <td className="px-2 py-1 text-center">
                           <span className={`text-xs tabular-nums ${

@@ -54,7 +54,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="font-bold text-white tabular-nums">
-        {typeof row.score === 'number' ? row.score.toFixed(2) : row.score || '-'}
+        {typeof row.score === 'number' ? row.score.toFixed(3) : row.score || '-'}
       </span>
     ),
   },
@@ -81,7 +81,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.geScore?.toFixed(2) || row.ge?.toFixed(2) || '-'}
+        {row.geScore?.toFixed(3) || row.ge?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -92,7 +92,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.visScore?.toFixed(2) || row.vis?.toFixed(2) || '-'}
+        {row.visScore?.toFixed(3) || row.vis?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -103,7 +103,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.musScore?.toFixed(2) || row.mus?.toFixed(2) || '-'}
+        {row.musScore?.toFixed(3) || row.mus?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -148,7 +148,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="font-bold text-white tabular-nums">
-        {(row.score || row.totalScore || 0).toFixed(2)}
+        {(row.score || row.totalScore || 0).toFixed(3)}
       </span>
     ),
   },
@@ -159,7 +159,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.ge?.toFixed(2) || '-'}
+        {row.ge?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -170,7 +170,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.vis?.toFixed(2) || '-'}
+        {row.vis?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -181,7 +181,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.mus?.toFixed(2) || '-'}
+        {row.mus?.toFixed(3) || '-'}
       </span>
     ),
   },

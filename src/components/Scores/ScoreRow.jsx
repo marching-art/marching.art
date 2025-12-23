@@ -88,9 +88,9 @@ const ScoreRow = React.memo(({ score, rank }) => {
         {/* Mobile caption summary */}
         {hasCaptions && (
           <div className="md:hidden flex items-center justify-end gap-3 mt-2 text-xs text-slate-500 dark:text-cream-500/60">
-            <span>GE: {geScore.toFixed(1)}</span>
-            <span>V: {visualScore.toFixed(1)}</span>
-            <span>M: {musicScore.toFixed(1)}</span>
+            <span>GE: {geScore.toFixed(3)}</span>
+            <span>V: {visualScore.toFixed(3)}</span>
+            <span>M: {musicScore.toFixed(3)}</span>
             {hasDetailedCaptions && (
               <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
             )}

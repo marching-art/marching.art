@@ -58,7 +58,7 @@ const ScoreChange = ({ current, previous }) => {
     return (
       <span className="text-green-400 text-xs flex items-center gap-1">
         <TrendingUp className="w-3 h-3" />
-        +{change.toFixed(2)}
+        +{change.toFixed(3)}
       </span>
     );
   }
@@ -66,7 +66,7 @@ const ScoreChange = ({ current, previous }) => {
   return (
     <span className="text-red-400 text-xs flex items-center gap-1">
       <TrendingDown className="w-3 h-3" />
-      {change.toFixed(2)}
+      {change.toFixed(3)}
     </span>
   );
 };
@@ -97,7 +97,7 @@ const CaptionCard = ({ caption, score, previousScore, categoryColor }) => {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`font-bold text-sm tabular-nums ${textColorClasses[categoryColor]}`}>
-            {score?.toFixed(2) || '0.00'}
+            {score?.toFixed(3) || '0.000'}
           </span>
           {hasPrevious && (
             <ScoreChange current={score || 0} previous={previousScore} />
@@ -130,7 +130,7 @@ const CategorySubtotal = ({ category, total, previousTotal, maxScore }) => {
       <span className="text-xs text-cream-500/60 uppercase tracking-wide">Subtotal</span>
       <div className="flex items-center gap-2">
         <span className={`font-bold text-sm tabular-nums ${textClasses[color]}`}>
-          {total.toFixed(2)}
+          {total.toFixed(3)}
         </span>
         <span className="text-cream-500/40 text-xs">/ {maxScore}</span>
         {hasPrevious && (
@@ -276,7 +276,7 @@ const ScoreBreakdown = ({
                 </div>
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-mono font-black text-gold-400">
-                    {displayScore.toFixed(2)}
+                    {displayScore.toFixed(3)}
                   </span>
                   {previousScore && (
                     <ScoreChange

@@ -273,19 +273,19 @@ const CorpsHistory = () => {
               </div>
               <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-cream-500/60 uppercase tracking-wide mb-1">Total Pts</p>
-                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.totalPoints.toFixed(1)}</p>
+                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.totalPoints.toFixed(3)}</p>
               </div>
               <div className="bg-gold-500/10 border border-gold-500/20 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-gold-400 uppercase tracking-wide mb-1">Best Season</p>
-                <p className="text-xl font-mono font-bold text-gold-400">{careerStats.bestSeasonScore.toFixed(1)}</p>
+                <p className="text-xl font-mono font-bold text-gold-400">{careerStats.bestSeasonScore.toFixed(3)}</p>
               </div>
               <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-cream-500/60 uppercase tracking-wide mb-1">Best Week</p>
-                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.bestWeeklyScore.toFixed(1)}</p>
+                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.bestWeeklyScore.toFixed(3)}</p>
               </div>
               <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-cream-500/60 uppercase tracking-wide mb-1">Avg Season</p>
-                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.averageSeasonScore.toFixed(1)}</p>
+                <p className="text-xl font-mono font-bold text-cream-100">{careerStats.averageSeasonScore.toFixed(3)}</p>
               </div>
             </div>
           )}
@@ -399,7 +399,7 @@ const CorpsHistory = () => {
                               <div className="flex items-center gap-4 text-xs text-cream-500/60">
                                 <span className="flex items-center gap-1">
                                   <Star className="w-3 h-3" />
-                                  {(season.totalSeasonScore || 0).toFixed(1)} pts
+                                  {(season.totalSeasonScore || 0).toFixed(3)} pts
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
@@ -458,7 +458,7 @@ const CorpsHistory = () => {
                     <div className="bg-gold-500/10 border border-gold-500/20 rounded-xl p-4 text-center">
                       <p className="text-xs text-gold-400 uppercase tracking-wide mb-1">Final Score</p>
                       <p className="text-3xl font-mono font-bold text-gold-400">
-                        {(season.totalSeasonScore || 0).toFixed(1)}
+                        {(season.totalSeasonScore || 0).toFixed(3)}
                       </p>
                     </div>
 
@@ -466,7 +466,7 @@ const CorpsHistory = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
                         <p className="text-[10px] text-cream-500/60 uppercase tracking-wide mb-1">Best Week</p>
-                        <p className="text-xl font-mono font-bold text-cream-100">{(season.highestWeeklyScore || 0).toFixed(1)}</p>
+                        <p className="text-xl font-mono font-bold text-cream-100">{(season.highestWeeklyScore || 0).toFixed(3)}</p>
                       </div>
                       <div className="bg-charcoal-900/50 border border-cream-500/10 rounded-xl p-3 text-center">
                         <p className="text-[10px] text-cream-500/60 uppercase tracking-wide mb-1">Shows</p>
@@ -486,7 +486,7 @@ const CorpsHistory = () => {
                             <div key={week} className="bg-charcoal-800/50 rounded-lg p-2 flex items-center justify-between">
                               <span className="text-xs text-cream-500/60">{week}</span>
                               <span className="text-xs font-mono font-bold text-cream-100">
-                                {(weeklyScores[week] || 0).toFixed(1)}
+                                {(weeklyScores[week] || 0).toFixed(3)}
                               </span>
                             </div>
                           ))}

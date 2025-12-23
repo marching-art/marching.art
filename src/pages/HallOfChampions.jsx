@@ -289,7 +289,7 @@ const HallOfChampions = () => {
                             </Link>
                             <p className="text-sm text-cream-400 mb-3">{currentChampions[1].corpsName}</p>
                             <div className="bg-gray-500/10 rounded-xl p-3">
-                              <p className="text-2xl font-mono font-bold text-gray-300">{currentChampions[1].score?.toFixed(2)}</p>
+                              <p className="text-2xl font-mono font-bold text-gray-300">{currentChampions[1].score?.toFixed(3)}</p>
                               <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
@@ -324,7 +324,7 @@ const HallOfChampions = () => {
                             </Link>
                             <p className="text-lg text-cream-300 mb-4">{currentChampions[0].corpsName}</p>
                             <div className="bg-gold-500/20 rounded-xl p-4">
-                              <p className="text-3xl font-mono font-bold text-gold-400">{currentChampions[0].score?.toFixed(2)}</p>
+                              <p className="text-3xl font-mono font-bold text-gold-400">{currentChampions[0].score?.toFixed(3)}</p>
                               <p className="text-xs text-gold-400/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
@@ -354,7 +354,7 @@ const HallOfChampions = () => {
                             </Link>
                             <p className="text-sm text-cream-400 mb-3">{currentChampions[2].corpsName}</p>
                             <div className="bg-amber-600/10 rounded-xl p-3">
-                              <p className="text-2xl font-mono font-bold text-amber-500">{currentChampions[2].score?.toFixed(2)}</p>
+                              <p className="text-2xl font-mono font-bold text-amber-500">{currentChampions[2].score?.toFixed(3)}</p>
                               <p className="text-[10px] text-cream-500/60 uppercase tracking-wide">Points</p>
                             </div>
                           </div>
@@ -388,7 +388,7 @@ const HallOfChampions = () => {
                                 {finalist.username}
                               </Link>
                               <p className="text-xs text-cream-500/60">{finalist.corpsName}</p>
-                              <p className="text-lg font-mono font-bold text-cream-300 mt-2">{finalist.score?.toFixed(2)}</p>
+                              <p className="text-lg font-mono font-bold text-cream-300 mt-2">{finalist.score?.toFixed(3)}</p>
                             </div>
                           ))}
                         </div>

@@ -89,7 +89,7 @@ const seasonHistoryColumns = [
     align: 'right',
     render: (row) => (
       <span className="text-white tabular-nums">
-        {row.finalScore ? row.finalScore.toFixed(1) : '-'}
+        {row.finalScore ? row.finalScore.toFixed(3) : '-'}
       </span>
     ),
   },
@@ -207,7 +207,7 @@ const Profile = () => {
 
     return {
       starts: profile?.stats?.seasonsPlayed || scoreCount || 0,
-      avgScore: scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '-',
+      avgScore: scoreCount > 0 ? (totalScore / scoreCount).toFixed(3) : '-',
       bestFinish: bestRank ? `#${bestRank}` : '-',
       badges: achievements.length,
     };
