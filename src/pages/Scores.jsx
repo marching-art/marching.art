@@ -288,11 +288,11 @@ const Scores = () => {
     if (!allShows || allShows.length === 0) return null;
 
     // If a specific show was requested, find it by event name
+    // Don't fall back to most recent - return null if not found
     if (targetShowName) {
-      const targetShow = allShows.find(
+      return allShows.find(
         s => s.eventName === targetShowName && s.scores && s.scores.length > 0
-      );
-      if (targetShow) return targetShow;
+      ) || null;
     }
 
     // Otherwise, return the most recent show with scores
@@ -393,7 +393,11 @@ const Scores = () => {
                 ) : (
                   <div className="p-8 text-center">
                     <Calendar className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                    <p className="text-gray-500">No recent shows</p>
+                    <p className="text-gray-500">
+                      {targetShowName
+                        ? `No results available for "${targetShowName}"`
+                        : 'No recent shows'}
+                    </p>
                   </div>
                 )}
               </div>
