@@ -5,6 +5,7 @@
 // Laws: Dense, tabular, sticky header, no glow
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trophy, Calendar, Archive, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
@@ -194,9 +195,13 @@ const Scores = () => {
   const { user } = useAuth();
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
+  const [searchParams] = useSearchParams();
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState('standings');
+  // Get specific show from URL if provided
+  const targetShowName = searchParams.get('show');
+
+  // Tab state - default to 'latest' if a specific show is requested
+  const [activeTab, setActiveTab] = useState(targetShowName ? 'latest' : 'standings');
 
   // Score breakdown modal
   const [breakdownOpen, setBreakdownOpen] = useState(false);
@@ -237,6 +242,13 @@ const Scores = () => {
     }
   }, [user, loggedInProfile, completeDailyChallenge]);
 
+  // Switch to latest tab when a specific show is requested via URL
+  useEffect(() => {
+    if (targetShowName) {
+      setActiveTab('latest');
+    }
+  }, [targetShowName]);
+
   // Columns
   const standingsColumns = useMemo(() => createStandingsColumns(), []);
   const latestColumns = useMemo(() => createLatestColumns(), []);
@@ -269,11 +281,21 @@ const Scores = () => {
     }
   }, []);
 
-  // Get latest show with scores
+  // Get latest show with scores (or specific show if requested via URL)
   const latestShow = useMemo(() => {
     if (!allShows || allShows.length === 0) return null;
+
+    // If a specific show was requested, find it by event name
+    if (targetShowName) {
+      const targetShow = allShows.find(
+        s => s.eventName === targetShowName && s.scores && s.scores.length > 0
+      );
+      if (targetShow) return targetShow;
+    }
+
+    // Otherwise, return the most recent show with scores
     return allShows.find(s => s.scores && s.scores.length > 0);
-  }, [allShows]);
+  }, [allShows, targetShowName]);
 
   // =============================================================================
   // RENDER
