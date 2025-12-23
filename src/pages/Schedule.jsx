@@ -120,7 +120,7 @@ const RegistrationBadges = ({ show, userProfile }) => {
 // SHOW CARD COMPONENT
 // =============================================================================
 
-const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isCompleted, showScore }) => {
+const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isCompleted, showScore, seasonUid }) => {
   const isRegistered = useMemo(() => {
     if (!userProfile?.corps) return false;
     return Object.values(userProfile.corps).some(corps => {
@@ -188,7 +188,7 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
           {/* Score Preview for Completed Shows */}
           {isCompleted && showScore && (
             <Link
-              to={`/scores?show=${encodeURIComponent(show.eventName)}`}
+              to={`/scores?show=${encodeURIComponent(show.eventName)}${seasonUid ? `&season=${seasonUid}` : ''}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-xs text-[#0057B8] hover:underline"
             >
@@ -387,7 +387,7 @@ const MyShowsTab = ({ userProfile, showsByWeek, currentWeek, formatDate, getActu
 // RESULTS TAB CONTENT
 // =============================================================================
 
-const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate }) => {
+const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate, seasonUid }) => {
   // Get all completed shows
   const completedShows = useMemo(() => {
     const shows = [];
@@ -467,7 +467,7 @@ const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate }) => 
                 </div>
 
                 <Link
-                  to={`/scores?show=${encodeURIComponent(show.eventName)}`}
+                  to={`/scores?show=${encodeURIComponent(show.eventName)}${seasonUid ? `&season=${seasonUid}` : ''}`}
                   className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 bg-[#0057B8]/10 text-[#0057B8] text-xs font-bold rounded hover:bg-[#0057B8]/20"
                 >
                   <Trophy className="w-3.5 h-3.5" />
@@ -486,7 +486,7 @@ const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate }) => 
 // BROWSE TAB CONTENT
 // =============================================================================
 
-const BrowseTab = ({ shows, userProfile, formatDate, getActualDate, onRegister }) => {
+const BrowseTab = ({ shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
   if (!shows || shows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -515,6 +515,7 @@ const BrowseTab = ({ shows, userProfile, formatDate, getActualDate, onRegister }
             onRegister={onRegister}
             isCompleted={isPast && show.scores?.length > 0}
             showScore={show.scores?.[0]?.score}
+            seasonUid={seasonUid}
           />
         );
       })}
@@ -537,6 +538,7 @@ const Schedule = () => {
 
   // Season store
   const seasonData = useSeasonStore((state) => state.seasonData);
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
   const currentWeek = useSeasonStore((state) => state.currentWeek);
   const seasonLoading = useSeasonStore((state) => state.loading);
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
@@ -770,6 +772,7 @@ const Schedule = () => {
             formatDate={formatDate}
             getActualDate={getActualDate}
             onRegister={handleShowClick}
+            seasonUid={seasonUid}
           />
         )}
 
@@ -779,6 +782,7 @@ const Schedule = () => {
             currentWeek={currentWeek}
             getActualDate={getActualDate}
             formatDate={formatDate}
+            seasonUid={seasonUid}
           />
         )}
       </div>
