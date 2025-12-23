@@ -125,35 +125,15 @@ export interface CorpsData {
   showsAttended: number;
   seasonHighScore: number;
 
-  // Execution state
-  readiness: number;
-  morale: number;
+  // Execution state (simplified - just for XP tracking)
   lastRehearsalDate?: string;
   rehearsalsToday: number;
-
-  // Equipment
-  equipment?: Equipment;
-
-  // Staff assignments (caption -> staffId)
-  assignedStaff?: Record<Caption, string>;
 
   // Show selections (keyed by week number)
   selectedShows?: Record<string, string[]>;
 
   // Lineup
   lineup?: Lineup;
-}
-
-export interface Equipment {
-  brass: EquipmentItem;
-  percussion: EquipmentItem;
-  colorGuard: EquipmentItem;
-}
-
-export interface EquipmentItem {
-  level: number;
-  condition: number;
-  maxCondition: number;
 }
 
 export interface Lineup {
@@ -167,44 +147,13 @@ export interface LineupSlot {
 }
 
 // =============================================================================
-// STAFF TYPES
+// CAPTION TYPE
 // =============================================================================
 
 export type Caption =
   | 'GE1' | 'GE2'
   | 'VP' | 'VA' | 'CG'
   | 'B' | 'MA' | 'P';
-
-export interface Staff {
-  staffId: string;
-  name: string;
-  caption: Caption;
-  rating: number;
-  currentValue: number;
-  originalValue: number;
-
-  // Ownership
-  ownerId?: string;
-  ownerUsername?: string;
-
-  // Assignment
-  assignedCorpsClass?: CorpsClass;
-
-  // Marketplace
-  forSale?: boolean;
-  auctionEndTime?: Timestamp;
-  currentBid?: number;
-  currentBidderId?: string;
-
-  // Stats
-  seasonStats?: StaffSeasonStats;
-}
-
-export interface StaffSeasonStats {
-  showsWorked: number;
-  averageRating: number;
-  bonusesEarned: number;
-}
 
 // =============================================================================
 // SEASON TYPES
