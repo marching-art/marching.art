@@ -46,14 +46,18 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, showsByWeek }) 
 
   // Auto-scroll to current week on mount
   useEffect(() => {
-    if (currentWeekRef.current && containerRef.current) {
-      currentWeekRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
-      });
-    }
-  }, [currentWeek]);
+    // Small delay to ensure DOM is ready after render
+    const timer = setTimeout(() => {
+      if (currentWeekRef.current) {
+        currentWeekRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center',
+        });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [currentWeek, weeks.length]);
 
   return (
     <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2.5">
