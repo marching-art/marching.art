@@ -188,7 +188,7 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
           {/* Score Preview for Completed Shows */}
           {isCompleted && showScore && (
             <Link
-              to="/scores"
+              to={`/scores?show=${encodeURIComponent(show.eventName)}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-xs text-[#0057B8] hover:underline"
             >
@@ -467,7 +467,7 @@ const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate }) => 
                 </div>
 
                 <Link
-                  to="/scores"
+                  to={`/scores?show=${encodeURIComponent(show.eventName)}`}
                   className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 bg-[#0057B8]/10 text-[#0057B8] text-xs font-bold rounded hover:bg-[#0057B8]/20"
                 >
                   <Trophy className="w-3.5 h-3.5" />
