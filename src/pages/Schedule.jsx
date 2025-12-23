@@ -1,33 +1,23 @@
 // =============================================================================
-// SCHEDULE - DIRECTOR'S COMMAND CENTER
+// SCHEDULE - SHOW REGISTRATION & BROWSING
 // =============================================================================
-// Mobile-first tabbed navigation: My Shows | Browse | Results
+// Browse all shows by week, register corps for competitions
 // Laws: Dense data, ESPN aesthetic, mobile-optimized touch targets
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Calendar, MapPin, Check, ChevronRight, Trophy,
-  Users, Clock, AlertCircle, ChevronDown, Star
+  Calendar, MapPin, Check, ChevronRight, Trophy
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, functions } from '../firebase';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 import { ShowRegistrationModal } from '../components/Schedule';
-import { DataTable } from '../components/ui/DataTable';
-import toast from 'react-hot-toast';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-
-const MOBILE_TABS = [
-  { id: 'myshows', label: 'My Shows', icon: Star },
-  { id: 'browse', label: 'Browse', icon: Calendar },
-  { id: 'results', label: 'Results', icon: Trophy },
-];
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30' },
@@ -224,284 +214,10 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
 };
 
 // =============================================================================
-// MY SHOWS TAB CONTENT
+// SHOWS LIST COMPONENT
 // =============================================================================
 
-const MyShowsTab = ({ userProfile, showsByWeek, currentWeek, formatDate, getActualDate, onRegister }) => {
-  // Gather all registered shows across all corps
-  const myShows = useMemo(() => {
-    if (!userProfile?.corps) return [];
-
-    const shows = [];
-    Object.entries(userProfile.corps).forEach(([corpsClass, corpsData]) => {
-      if (!corpsData?.selectedShows) return;
-
-      Object.entries(corpsData.selectedShows).forEach(([weekKey, weekShows]) => {
-        const week = parseInt(weekKey.replace('week', ''));
-        (weekShows || []).forEach((show) => {
-          const existing = shows.find(
-            s => s.eventName === show.eventName && s.date === show.date
-          );
-          if (existing) {
-            existing.registeredCorps.push(corpsClass);
-          } else {
-            shows.push({
-              ...show,
-              week,
-              registeredCorps: [corpsClass],
-            });
-          }
-        });
-      });
-    });
-
-    // Sort by day
-    return shows.sort((a, b) => (a.day || 0) - (b.day || 0));
-  }, [userProfile]);
-
-  // Group by week
-  const myShowsByWeek = useMemo(() => {
-    const grouped = {};
-    myShows.forEach((show) => {
-      if (!grouped[show.week]) grouped[show.week] = [];
-      grouped[show.week].push(show);
-    });
-    return grouped;
-  }, [myShows]);
-
-  const weeks = Object.keys(myShowsByWeek).map(Number).sort((a, b) => a - b);
-
-  // Stats
-  const totalShows = myShows.length;
-  const upcomingShows = myShows.filter(show => {
-    const date = getActualDate(show.day);
-    return date && date >= new Date();
-  }).length;
-
-  if (myShows.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Calendar className="w-12 h-12 text-gray-600 mb-3" />
-        <h3 className="text-sm font-bold text-white mb-1">No Shows Registered</h3>
-        <p className="text-xs text-gray-500 mb-4 max-w-[280px]">
-          Register your corps for shows to compete and earn scores. Each corps can attend up to 4 shows per week.
-        </p>
-        <Link
-          to="#"
-          onClick={(e) => { e.preventDefault(); }}
-          className="px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase hover:bg-[#0066d6] rounded"
-        >
-          Browse Shows
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Stats Header */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Your Schedule</div>
-            <div className="text-lg font-bold text-white mt-0.5">{totalShows} Shows</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Upcoming</div>
-            <div className="text-lg font-bold text-green-400 mt-0.5">{upcomingShows}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Shows List */}
-      <div className="divide-y divide-[#333]">
-        {weeks.map((week) => {
-          const shows = myShowsByWeek[week] || [];
-          const isCurrentWeek = week === currentWeek;
-          const isPastWeek = week < currentWeek;
-
-          return (
-            <div key={week}>
-              {/* Week Header */}
-              <div className={`
-                px-4 py-2 flex items-center justify-between
-                ${isCurrentWeek ? 'bg-[#0057B8]/10' : 'bg-[#222]'}
-              `}>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                    Week {week}
-                  </span>
-                  {isCurrentWeek && (
-                    <span className="px-1.5 py-0.5 bg-[#0057B8] text-white text-[9px] font-bold uppercase rounded">
-                      Current
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] text-gray-500">{shows.length} shows</span>
-              </div>
-
-              {/* Show Items */}
-              {shows.map((show, idx) => {
-                const date = getActualDate(show.day);
-                const isPast = date && date < new Date();
-
-                return (
-                  <div
-                    key={`${show.eventName}-${idx}`}
-                    onClick={() => !isPast && onRegister({ ...show, week })}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 bg-[#1a1a1a]
-                      ${isPast ? 'opacity-50' : 'hover:bg-[#222] cursor-pointer active:bg-[#222]'}
-                    `}
-                  >
-                    {/* Date Column */}
-                    <div className="w-16 flex-shrink-0 text-center">
-                      <div className="text-lg font-bold text-white tabular-nums">
-                        {date?.getDate() || '-'}
-                      </div>
-                      <div className="text-[10px] text-gray-500 uppercase">
-                        {date?.toLocaleDateString('en-US', { weekday: 'short' }) || ''}
-                      </div>
-                    </div>
-
-                    {/* Show Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-white truncate">{show.eventName}</div>
-                      <div className="flex items-center gap-1 mt-0.5 text-[11px] text-gray-500">
-                        <MapPin className="w-3 h-3" />
-                        <span className="truncate">{show.location || 'TBD'}</span>
-                      </div>
-                    </div>
-
-                    {/* Corps Badges */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {show.registeredCorps.map((corpsClass) => {
-                        const config = CLASS_CONFIG[corpsClass];
-                        return (
-                          <span
-                            key={corpsClass}
-                            className={`w-6 h-6 flex items-center justify-center text-[9px] font-bold rounded ${config?.bgColor} ${config?.color}`}
-                          >
-                            {config?.name?.charAt(0) || '?'}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// RESULTS TAB CONTENT
-// =============================================================================
-
-const ResultsTab = ({ showsByWeek, currentWeek, getActualDate, formatDate, seasonUid }) => {
-  // Get all completed shows
-  const completedShows = useMemo(() => {
-    const shows = [];
-    Object.entries(showsByWeek).forEach(([week, weekShows]) => {
-      (weekShows || []).forEach((show) => {
-        const date = getActualDate(show.day);
-        if (date && date < new Date()) {
-          shows.push({ ...show, week: parseInt(week) });
-        }
-      });
-    });
-    return shows.sort((a, b) => (b.day || 0) - (a.day || 0)); // Most recent first
-  }, [showsByWeek, getActualDate]);
-
-  if (completedShows.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Trophy className="w-12 h-12 text-gray-600 mb-3" />
-        <h3 className="text-sm font-bold text-white mb-1">No Results Yet</h3>
-        <p className="text-xs text-gray-500 mb-4 max-w-[280px]">
-          Show results will appear here after competitions are completed. Check back soon!
-        </p>
-        <Link
-          to="/scores"
-          className="px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase hover:bg-[#0066d6] rounded flex items-center gap-2"
-        >
-          <Trophy className="w-4 h-4" />
-          View Standings
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Header */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Completed Shows</div>
-            <div className="text-lg font-bold text-white mt-0.5">{completedShows.length} Shows</div>
-          </div>
-          <Link
-            to="/scores"
-            className="flex items-center gap-1 text-xs text-[#0057B8] hover:underline"
-          >
-            Full Standings <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Results List */}
-      <div className="divide-y divide-[#333]">
-        {completedShows.map((show, idx) => {
-          const date = getActualDate(show.day);
-
-          return (
-            <div
-              key={`${show.eventName}-${idx}`}
-              className="px-4 py-3 bg-[#1a1a1a] hover:bg-[#222]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-white">{show.eventName}</div>
-                  <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(show.day)}
-                    </span>
-                    {show.location && (
-                      <span className="flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3" />
-                        <span className="truncate">{show.location}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <Link
-                  to={`/scores?show=${encodeURIComponent(show.eventName)}${seasonUid ? `&season=${seasonUid}` : ''}`}
-                  className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 bg-[#0057B8]/10 text-[#0057B8] text-xs font-bold rounded hover:bg-[#0057B8]/20"
-                >
-                  <Trophy className="w-3.5 h-3.5" />
-                  Results
-                </Link>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-// =============================================================================
-// BROWSE TAB CONTENT
-// =============================================================================
-
-const BrowseTab = ({ shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
+const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
   if (!shows || shows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -548,7 +264,6 @@ const Schedule = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
-  const [activeMobileTab, setActiveMobileTab] = useState('myshows');
   const [selectedWeek, setSelectedWeek] = useState(null);
 
   // Season store
@@ -730,76 +445,27 @@ const Schedule = () => {
         </div>
       </div>
 
-      {/* MOBILE TABS - Fixed */}
-      <div className="flex-shrink-0 flex border-b border-[#333] bg-[#1a1a1a]">
-        {MOBILE_TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveMobileTab(tab.id)}
-              className={`
-                flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold uppercase tracking-wide transition-colors min-h-[48px]
-                ${activeMobileTab === tab.id
-                  ? 'text-[#0057B8] border-b-2 border-[#0057B8] bg-[#0a0a0a]'
-                  : 'text-gray-500 border-b-2 border-transparent'
-                }
-              `}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
-            </button>
-          );
-        })}
+      {/* WEEK PILLS - Fixed */}
+      <div className="flex-shrink-0">
+        <WeekPills
+          weeks={weeks}
+          currentWeek={currentWeek}
+          selectedWeek={selectedWeek}
+          onSelect={setSelectedWeek}
+          showsByWeek={showsByWeek}
+        />
       </div>
 
-      {/* WEEK PILLS - Fixed (Only for Browse tab) */}
-      {activeMobileTab === 'browse' && (
-        <div className="flex-shrink-0">
-          <WeekPills
-            weeks={weeks}
-            currentWeek={currentWeek}
-            selectedWeek={selectedWeek}
-            onSelect={setSelectedWeek}
-            showsByWeek={showsByWeek}
-          />
-        </div>
-      )}
-
-      {/* TAB CONTENT - Scrollable */}
+      {/* SHOWS LIST - Scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {activeMobileTab === 'myshows' && (
-          <MyShowsTab
-            userProfile={userProfile}
-            showsByWeek={showsByWeek}
-            currentWeek={currentWeek}
-            formatDate={formatDate}
-            getActualDate={getActualDate}
-            onRegister={handleShowClick}
-          />
-        )}
-
-        {activeMobileTab === 'browse' && (
-          <BrowseTab
-            shows={showsByWeek[selectedWeek] || []}
-            userProfile={userProfile}
-            formatDate={formatDate}
-            getActualDate={getActualDate}
-            onRegister={handleShowClick}
-            seasonUid={seasonUid}
-          />
-        )}
-
-        {activeMobileTab === 'results' && (
-          <ResultsTab
-            showsByWeek={showsByWeek}
-            currentWeek={currentWeek}
-            getActualDate={getActualDate}
-            formatDate={formatDate}
-            seasonUid={seasonUid}
-          />
-        )}
+        <ShowsList
+          shows={showsByWeek[selectedWeek] || []}
+          userProfile={userProfile}
+          formatDate={formatDate}
+          getActualDate={getActualDate}
+          onRegister={handleShowClick}
+          seasonUid={seasonUid}
+        />
       </div>
 
       {/* REGISTRATION MODAL */}
