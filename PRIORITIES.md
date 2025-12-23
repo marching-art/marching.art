@@ -7,15 +7,17 @@
 ### 1.1 Security: Rotate Exposed Credentials
 - **Issue**: Firebase credentials exposed in `.env.production` (committed to git history)
 - **Impact**: Security vulnerability
-- **Action**:
-  - Rotate Firebase API keys in Firebase Console
-  - Rotate any other exposed secrets
-  - Add `.env.production` to `.gitignore`
-  - Use Vercel environment variables instead
+- **Status**: **PARTIALLY FIXED**
+  - ✅ Added `.env.production` to `.gitignore`
+  - ✅ Removed `.env.production` from git tracking
+  - ✅ Created `.env.production.example` template
+  - ⚠️ **USER ACTION REQUIRED**: Rotate Firebase API keys in Firebase Console (old keys still in git history)
+  - ⚠️ **USER ACTION REQUIRED**: Set env vars in Vercel dashboard instead of committed file
 
 ### 1.2 Deploy Cloud Functions
 - **Issue**: Functions exist in `functions/` but aren't deployed to production
 - **Impact**: Backend features non-functional in production
+- **Status**: **USER HANDLING**
 - **Action**:
   - Run `firebase deploy --only functions`
   - Verify all 12 callable functions are live
@@ -24,7 +26,10 @@
 ### 1.3 Remove Exposed Admin UID
 - **Issue**: Admin UID hardcoded/exposed in codebase
 - **Impact**: Security risk
-- **Action**: Move to environment variable or Firebase custom claims
+- **Status**: **FIXED**
+  - ✅ Code uses `VITE_ADMIN_UIDS` env var (no hardcoded fallback)
+  - ✅ Firestore rules use Firebase custom claims (`request.auth.token.admin`)
+  - ✅ Admin UID removed from git tracking (was in `.env.production`)
 
 ---
 
