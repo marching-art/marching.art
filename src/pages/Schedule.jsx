@@ -214,10 +214,88 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
 };
 
 // =============================================================================
+// DAY INDICATOR COMPONENT
+// =============================================================================
+
+const DayIndicator = ({ date, dayNumber }) => {
+  if (!date) return null;
+
+  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const isPast = date < new Date();
+
+  return (
+    <div className={`
+      flex-shrink-0 w-20 lg:w-24 flex flex-col items-center justify-center
+      py-3 px-2 rounded-lg border
+      ${isPast
+        ? 'bg-[#1a1a1a] border-[#333] text-gray-500'
+        : 'bg-[#0057B8]/10 border-[#0057B8]/30'
+      }
+    `}>
+      <span className={`text-xs font-bold uppercase ${isPast ? 'text-gray-500' : 'text-[#0057B8]'}`}>
+        {dayOfWeek}
+      </span>
+      <span className={`text-sm font-bold ${isPast ? 'text-gray-400' : 'text-white'}`}>
+        {monthDay}
+      </span>
+    </div>
+  );
+};
+
+// =============================================================================
+// DAY ROW COMPONENT
+// =============================================================================
+
+const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
+  const date = getActualDate(day);
+  const isPast = date && date < new Date();
+
+  return (
+    <div className="flex gap-3 items-stretch">
+      {/* Day Indicator */}
+      <DayIndicator date={date} dayNumber={day} />
+
+      {/* Shows for this day - horizontal layout */}
+      <div className="flex-1 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {shows.map((show, idx) => (
+          <ShowCard
+            key={`${show.eventName}-${show.day}-${idx}`}
+            show={show}
+            userProfile={userProfile}
+            formattedDate={formatDate(show.day)}
+            isPast={isPast}
+            onRegister={onRegister}
+            isCompleted={isPast && show.scores?.some(s => s.score != null)}
+            seasonUid={seasonUid}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// =============================================================================
 // SHOWS LIST COMPONENT
 // =============================================================================
 
 const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
+  // Group shows by day
+  const showsByDay = useMemo(() => {
+    if (!shows || shows.length === 0) return {};
+
+    const grouped = {};
+    shows.forEach(show => {
+      const day = show.day;
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(show);
+    });
+
+    return grouped;
+  }, [shows]);
+
+  const days = Object.keys(showsByDay).map(Number).sort((a, b) => a - b);
+
   if (!shows || shows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -231,24 +309,19 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
   }
 
   return (
-    <div className="p-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {shows.map((show, idx) => {
-        const date = getActualDate(show.day);
-        const isPast = date && date < new Date();
-
-        return (
-          <ShowCard
-            key={`${show.eventName}-${show.day}-${idx}`}
-            show={show}
-            userProfile={userProfile}
-            formattedDate={formatDate(show.day)}
-            isPast={isPast}
-            onRegister={onRegister}
-            isCompleted={isPast && show.scores?.some(s => s.score != null)}
-            seasonUid={seasonUid}
-          />
-        );
-      })}
+    <div className="p-3 flex flex-col gap-4">
+      {days.map(day => (
+        <DayRow
+          key={day}
+          day={day}
+          shows={showsByDay[day]}
+          userProfile={userProfile}
+          formatDate={formatDate}
+          getActualDate={getActualDate}
+          onRegister={onRegister}
+          seasonUid={seasonUid}
+        />
+      ))}
     </div>
   );
 };
