@@ -125,7 +125,7 @@ const RegistrationBadges = ({ show, userProfile }) => {
 // SHOW CARD COMPONENT
 // =============================================================================
 
-const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isCompleted, showScore, seasonUid }) => {
+const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isCompleted, seasonUid }) => {
   const isRegistered = useMemo(() => {
     if (!userProfile?.corps) return false;
     return Object.values(userProfile.corps).some(corps => {
@@ -190,15 +190,15 @@ const ShowCard = ({ show, userProfile, formattedDate, isPast, onRegister, isComp
           {/* Registration Badges */}
           <RegistrationBadges show={show} userProfile={userProfile} />
 
-          {/* Score Preview for Completed Shows */}
-          {isCompleted && showScore && (
+          {/* Results Link for Completed Shows with actual results */}
+          {isCompleted && (
             <Link
               to={`/scores?show=${encodeURIComponent(show.eventName)}${seasonUid ? `&season=${seasonUid}` : ''}`}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-xs text-[#0057B8] hover:underline"
             >
               <Trophy className="w-3.5 h-3.5" />
-              <span className="font-bold">{showScore.toFixed(2)}</span>
+              <span className="font-bold">Results</span>
               <ChevronRight className="w-3 h-3" />
             </Link>
           )}
@@ -244,8 +244,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
             formattedDate={formatDate(show.day)}
             isPast={isPast}
             onRegister={onRegister}
-            isCompleted={isPast && show.scores?.length > 0}
-            showScore={show.scores?.[0]?.score}
+            isCompleted={isPast && show.scores?.some(s => s.score != null)}
             seasonUid={seasonUid}
           />
         );
