@@ -4,9 +4,11 @@
 // A gate, not a brochure. Two-column split with live scoreboard preview.
 // Laws: No marketing fluff, no parallax, no testimonials
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Trophy, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { useAuth } from '../App';
+import toast from 'react-hot-toast';
 
 // =============================================================================
 // DUMMY SCOREBOARD DATA
@@ -28,6 +30,44 @@ const LIVE_SCORES = [
 // =============================================================================
 
 const Landing = () => {
+  const { signIn } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      await signIn(email, password);
+      toast.success('Welcome back!');
+    } catch (err) {
+      console.error('Login error:', err);
+      switch (err.code) {
+        case 'auth/user-not-found':
+          setError('No account found with this email');
+          break;
+        case 'auth/wrong-password':
+          setError('Incorrect password');
+          break;
+        case 'auth/invalid-email':
+          setError('Invalid email address');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Try again later');
+          break;
+        default:
+          setError('Failed to sign in. Please try again');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       {/* TOP BAR */}
@@ -164,7 +204,15 @@ const Landing = () => {
               </div>
 
               {/* Card Body */}
-              <div className="p-4 space-y-4">
+              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                {/* Error Message */}
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-300">{error}</p>
+                  </div>
+                )}
+
                 {/* Email Input */}
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
@@ -175,7 +223,11 @@ const Landing = () => {
                     <input
                       type="email"
                       placeholder="director@example.com"
-                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -190,19 +242,30 @@ const Landing = () => {
                     <input
                       type="password"
                       placeholder="••••••••"
-                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
                   </div>
                 </div>
 
                 {/* Sign In Button */}
-                <Link
-                  to="/login"
-                  className="w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors"
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Sign In
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
+                  {loading ? (
+                    'Signing in...'
+                  ) : (
+                    <>
+                      Sign In
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </button>
 
                 {/* Divider */}
                 <div className="flex items-center gap-3">
@@ -218,11 +281,11 @@ const Landing = () => {
                 >
                   Create Account
                 </Link>
-              </div>
+              </form>
 
               {/* Card Footer */}
               <div className="px-4 py-3 border-t border-[#333] bg-[#1a1a1a]/50">
-                <Link to="/login" className="text-xs text-gray-500 hover:text-[#0057B8]">
+                <Link to="/forgot-password" className="text-xs text-gray-500 hover:text-[#0057B8]">
                   Forgot password?
                 </Link>
               </div>
