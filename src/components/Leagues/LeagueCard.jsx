@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Trophy, Lock, Crown, Check, ChevronRight } from 'lucide-react';
 
-const LeagueCard = ({ league, isMember, onJoin, onClick, userProfile }) => {
+const LeagueCard = React.memo(({ league, isMember, onJoin, onClick, userProfile }) => {
   const memberCount = league.members?.length || 0;
   const maxMembers = league.maxMembers || 20;
   const isCommissioner = league.creatorId === userProfile?.uid;
@@ -74,6 +74,8 @@ const LeagueCard = ({ league, isMember, onJoin, onClick, userProfile }) => {
       )}
     </motion.div>
   );
-};
+});
+
+LeagueCard.displayName = 'LeagueCard';
 
 export default LeagueCard;
