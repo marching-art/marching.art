@@ -84,7 +84,7 @@ const standingsColumns = [
     width: '75px',
     render: (row) => (
       <span className="text-white tabular-nums text-sm sm:text-xs">
-        {typeof row.score === 'number' ? row.score.toFixed(2) : row.score}
+        {typeof row.score === 'number' ? row.score.toFixed(3) : row.score}
       </span>
     ),
   },
@@ -413,7 +413,7 @@ const Dashboard = () => {
                   Season Score
                 </div>
                 <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums">
-                  {activeCorps.totalSeasonScore?.toFixed(2) || '0.00'}
+                  {activeCorps.totalSeasonScore?.toFixed(3) || '0.000'}
                 </div>
               </div>
 

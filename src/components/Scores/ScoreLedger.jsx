@@ -196,7 +196,7 @@ const ScoreLedger = ({
                 {enabledCaptions.ge && (
                   <td className="px-2 py-1 text-right">
                     <span className={`font-mono text-sm font-bold ${geColor || 'text-gold-400'}`}>
-                      {aggregates.GE_Total.toFixed(1)}
+                      {aggregates.GE_Total.toFixed(3)}
                     </span>
                     {score.GE_Rank && (
                       <span className="ml-1 text-[10px] text-cream-500/40">
@@ -210,7 +210,7 @@ const ScoreLedger = ({
                 {enabledCaptions.vis && (
                   <td className="px-2 py-1 text-right">
                     <span className={`font-mono text-sm font-bold ${visColor || 'text-gold-400'}`}>
-                      {aggregates.VIS_Total.toFixed(1)}
+                      {aggregates.VIS_Total.toFixed(3)}
                     </span>
                     {score.VIS_Rank && (
                       <span className="ml-1 text-[10px] text-cream-500/40">
@@ -224,7 +224,7 @@ const ScoreLedger = ({
                 {enabledCaptions.mus && (
                   <td className="px-2 py-1 text-right">
                     <span className={`font-mono text-sm font-bold ${musColor || 'text-gold-400'}`}>
-                      {aggregates.MUS_Total.toFixed(1)}
+                      {aggregates.MUS_Total.toFixed(3)}
                     </span>
                     {score.MUS_Rank && (
                       <span className="ml-1 text-[10px] text-cream-500/40">

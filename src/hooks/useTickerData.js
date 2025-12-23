@@ -181,17 +181,17 @@ export const useTickerData = () => {
       ge: sortedByGE[0] ? {
         name: sortedByGE[0].abbr,
         fullName: sortedByGE[0].corpsName,
-        score: sortedByGE[0].GE_Total.toFixed(2),
+        score: sortedByGE[0].GE_Total.toFixed(3),
       } : null,
       visual: sortedByVisual[0] ? {
         name: sortedByVisual[0].abbr,
         fullName: sortedByVisual[0].corpsName,
-        score: sortedByVisual[0].VIS_Total.toFixed(2),
+        score: sortedByVisual[0].VIS_Total.toFixed(3),
       } : null,
       music: sortedByMusic[0] ? {
         name: sortedByMusic[0].abbr,
         fullName: sortedByMusic[0].corpsName,
-        score: sortedByMusic[0].MUS_Total.toFixed(2),
+        score: sortedByMusic[0].MUS_Total.toFixed(3),
       } : null,
     };
 

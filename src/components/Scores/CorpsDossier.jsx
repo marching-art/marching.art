@@ -317,7 +317,7 @@ const CorpsDossier = ({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-cream-500/60">General Effect</span>
-                            <span className="font-mono font-bold text-gold-400">{aggregates.GE_Total.toFixed(2)}</span>
+                            <span className="font-mono font-bold text-gold-400">{aggregates.GE_Total.toFixed(3)}</span>
                           </div>
                           <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
                             <div
@@ -327,7 +327,7 @@ const CorpsDossier = ({
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-cream-500/60">Visual</span>
-                            <span className="font-mono font-bold text-gold-400">{aggregates.VIS_Total.toFixed(2)}</span>
+                            <span className="font-mono font-bold text-gold-400">{aggregates.VIS_Total.toFixed(3)}</span>
                           </div>
                           <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
                             <div
@@ -337,7 +337,7 @@ const CorpsDossier = ({
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-cream-500/60">Music</span>
-                            <span className="font-mono font-bold text-gold-400">{aggregates.MUS_Total.toFixed(2)}</span>
+                            <span className="font-mono font-bold text-gold-400">{aggregates.MUS_Total.toFixed(3)}</span>
                           </div>
                           <div className="h-2 bg-charcoal-800 rounded-full overflow-hidden">
                             <div

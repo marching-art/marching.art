@@ -314,7 +314,7 @@ export const useDashboardData = () => {
 
               newActivities.push({
                 type: 'milestone',
-                message: `New high score: ${activeCorps.totalSeasonScore.toFixed(2)} in ${getCorpsClassName(classKey)}!`,
+                message: `New high score: ${activeCorps.totalSeasonScore.toFixed(3)} in ${getCorpsClassName(classKey)}!`,
                 timestamp: new Date().toISOString(),
                 icon: 'star'
               });
@@ -392,7 +392,7 @@ export const useDashboardData = () => {
           .map(r => ({
             showName: r.showName || r.eventName || r.name || 'Show',
             date: r.date || '',
-            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(2) : (r.totalScore || '0.00')),
+            totalScore: isSoundSport ? 'Complete' : (typeof r.totalScore === 'number' ? r.totalScore.toFixed(3) : (r.totalScore || '0.000')),
             rank: isSoundSport ? null : (r.rank ?? '-')
           }));
         setRecentScores(sortedRecaps);
