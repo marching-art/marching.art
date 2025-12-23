@@ -4,7 +4,7 @@
 // Mobile-first tabbed navigation: My Shows | Browse | Results
 // Laws: Dense data, ESPN aesthetic, mobile-optimized touch targets
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Calendar, MapPin, Check, ChevronRight, Trophy,
@@ -41,9 +41,23 @@ const CLASS_CONFIG = {
 // =============================================================================
 
 const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, showsByWeek }) => {
+  const containerRef = useRef(null);
+  const currentWeekRef = useRef(null);
+
+  // Auto-scroll to current week on mount
+  useEffect(() => {
+    if (currentWeekRef.current && containerRef.current) {
+      currentWeekRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [currentWeek]);
+
   return (
     <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2.5">
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      <div ref={containerRef} className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {weeks.map((week) => {
           const isSelected = selectedWeek === week;
           const isCurrent = currentWeek === week;
@@ -52,6 +66,7 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, showsByWeek }) 
           return (
             <button
               key={week}
+              ref={isCurrent ? currentWeekRef : null}
               onClick={() => onSelect(week)}
               className={`
                 relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase
