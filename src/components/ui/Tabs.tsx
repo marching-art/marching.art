@@ -108,9 +108,11 @@ export const TabTrigger: React.FC<TabTriggerProps> = ({
 
   return (
     <button
+      id={`tab-${value}`}
       role="tab"
       aria-selected={isActive}
       aria-controls={`tabpanel-${value}`}
+      tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       onClick={() => !disabled && setActiveTab(value)}
       className={`

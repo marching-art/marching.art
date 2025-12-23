@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Lock, Music, Plus, ExternalLink, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const ShowCard = ({
+const ShowCard = React.memo(({
   show,
   index,
   myCorps,
@@ -155,6 +155,8 @@ const ShowCard = ({
       </div>
     </motion.div>
   );
-};
+});
+
+ShowCard.displayName = 'ShowCard';
 
 export default ShowCard;

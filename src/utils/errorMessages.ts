@@ -201,10 +201,36 @@ export function isRecoverableError(error: unknown): boolean {
  * Log error for debugging (only in development)
  */
 export function logError(error: unknown, context?: string): void {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.error(`[${context || 'Error'}]`, error);
   }
   // In production, this could send to an error tracking service
+}
+
+/**
+ * Log info for debugging (only in development)
+ */
+export function logInfo(message: string, data?: unknown): void {
+  if (import.meta.env.DEV) {
+    if (data !== undefined) {
+      console.log(`[Info] ${message}`, data);
+    } else {
+      console.log(`[Info] ${message}`);
+    }
+  }
+}
+
+/**
+ * Log warning for debugging (only in development)
+ */
+export function logWarn(message: string, data?: unknown): void {
+  if (import.meta.env.DEV) {
+    if (data !== undefined) {
+      console.warn(`[Warn] ${message}`, data);
+    } else {
+      console.warn(`[Warn] ${message}`);
+    }
+  }
 }
 
 export default {
@@ -212,4 +238,6 @@ export default {
   getToastMessage,
   isRecoverableError,
   logError,
+  logInfo,
+  logWarn,
 };

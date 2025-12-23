@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Eye, Music, ChevronDown } from 'lucide-react';
 import { CAPTION_CATEGORIES } from '../../utils/captionPricing';
 
-const ScoreRow = ({ score, rank }) => {
+const ScoreRow = React.memo(({ score, rank }) => {
   const [expanded, setExpanded] = useState(false);
 
   // Check if we have detailed captions (historical data) or aggregate scores (fantasy data)
@@ -133,6 +133,8 @@ const ScoreRow = ({ score, rank }) => {
       )}
     </div>
   );
-};
+});
+
+ScoreRow.displayName = 'ScoreRow';
 
 export default ScoreRow;

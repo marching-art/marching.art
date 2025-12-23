@@ -31,6 +31,7 @@ import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 
 // Import centralized configuration
 import { AUTH_CONFIG } from './config';
+import { logError } from './utils/errorMessages';
 
 // Re-export Firebase instances from the API layer
 export { app, auth, db, functions, storage };
@@ -71,7 +72,7 @@ export const authHelpers = {
       safeLogEvent('login', { method: 'email' });
       return userCredential;
     } catch (error) {
-      console.error('Error signing in:', error);
+      logError(error, 'signInWithEmail');
       throw error;
     }
   },
@@ -83,7 +84,7 @@ export const authHelpers = {
       safeLogEvent('sign_up', { method: 'email' });
       return userCredential;
     } catch (error) {
-      console.error('Error signing up:', error);
+      logError(error, 'signUpWithEmail');
       throw error;
     }
   },
@@ -95,7 +96,7 @@ export const authHelpers = {
       safeLogEvent('login', { method: 'anonymous' });
       return userCredential;
     } catch (error) {
-      console.error('Error signing in anonymously:', error);
+      logError(error, 'signInAnonymously');
       throw error;
     }
   },
@@ -107,7 +108,7 @@ export const authHelpers = {
       safeLogEvent('login', { method: 'custom_token' });
       return userCredential;
     } catch (error) {
-      console.error('Error signing in with custom token:', error);
+      logError(error, 'signInWithCustomToken');
       throw error;
     }
   },
@@ -118,7 +119,7 @@ export const authHelpers = {
       await signOut(auth);
       safeLogEvent('logout');
     } catch (error) {
-      console.error('Error signing out:', error);
+      logError(error, 'signOut');
       throw error;
     }
   },

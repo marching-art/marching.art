@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 
-const ShowCard = ({ show, onClick, userCorpsNames = [] }) => {
+const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
   // Check if a corps name belongs to the user
   const isUserCorps = (corpsName) => {
     return userCorpsNames.some(name =>
@@ -74,6 +74,8 @@ const ShowCard = ({ show, onClick, userCorpsNames = [] }) => {
       )}
     </motion.div>
   );
-};
+});
+
+ShowCard.displayName = 'ShowCard';
 
 export default ShowCard;

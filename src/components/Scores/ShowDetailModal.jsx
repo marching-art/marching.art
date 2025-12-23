@@ -2,19 +2,43 @@
 // SHOW DETAIL MODAL - ESPN DATA STYLE
 // =============================================================================
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Portal from '../Portal';
 import ScoreRow from './ScoreRow';
 
 const ShowDetailModal = ({ show, onClose }) => {
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Auto-focus close button on mount
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+  }, []);
+
   return (
     <Portal>
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
+        role="presentation"
       >
         <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="show-detail-title"
           className="w-full max-w-4xl max-h-[85vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
@@ -22,12 +46,17 @@ const ShowDetailModal = ({ show, onClose }) => {
           <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-bold text-white truncate">{show.eventName}</h2>
+                <h2 id="show-detail-title" className="text-sm font-bold text-white truncate">{show.eventName}</h2>
                 <p className="text-[10px] text-gray-500 mt-1">
                   {show.location} • {show.date}
                 </p>
               </div>
-              <button onClick={onClose} className="p-1 text-gray-500 hover:text-white flex-shrink-0">
+              <button
+                ref={closeButtonRef}
+                onClick={onClose}
+                aria-label="Close modal"
+                className="p-1 text-gray-500 hover:text-white flex-shrink-0"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
