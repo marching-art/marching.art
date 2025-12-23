@@ -197,8 +197,9 @@ const Scores = () => {
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
 
-  // Get specific show from URL if provided
+  // Get specific show and season from URL if provided
   const targetShowName = searchParams.get('show');
+  const targetSeasonId = searchParams.get('season');
 
   // Tab state - default to 'latest' if a specific show is requested
   const [activeTab, setActiveTab] = useState(targetShowName ? 'latest' : 'standings');
@@ -219,6 +220,7 @@ const Scores = () => {
     aggregatedScores,
     archivedSeasons,
   } = useScoresData({
+    seasonId: targetSeasonId,
     classFilter: 'all',
     enabledCaptions: { ge: true, vis: true, mus: true }
   });
