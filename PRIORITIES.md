@@ -92,21 +92,34 @@
 ## Priority 4: Low (Technical Debt)
 
 ### 4.1 TypeScript Migration
-- **Issue**: Mixed `.js` and `.tsx` files
-- **Action**: Convert remaining JS files to TypeScript
+- **Status**: **DOCUMENTED**
+- 127 JS/JSX files (66%), 65 TS/TSX files (34%)
+- Full migration deferred - too large for single session
 
 ### 4.2 Remove Dead Code
-- Delete unused type definitions (Equipment, Staff interfaces with no backend)
-- Remove commented-out code
-- Clean up unused imports
+- **Status**: **FIXED**
+  - ✅ Removed Equipment, EquipmentItem interfaces
+  - ✅ Removed Staff, StaffSeasonStats interfaces
+  - ✅ Removed unused fields from CorpsData (readiness, morale, equipment, assignedStaff)
 
 ### 4.3 Code Duplication
 - Extract shared logic from duplicate implementations
 - Create shared utilities where patterns repeat
 
 ### 4.4 Update Dependencies
-- Update outdated packages
-- Address Storybook vulnerability (if still using)
+- **Status**: **PARTIALLY FIXED**
+  - ✅ Updated patch/minor versions (vite, vitest, autoprefixer, tailwindcss, storybook, etc.)
+  - ✅ Fixed all security vulnerabilities (0 remaining)
+  - ⚠️ Major updates deferred (require testing):
+
+| Package | Current | Latest | Notes |
+|---------|---------|--------|-------|
+| firebase | 11.10.0 | 12.7.0 | Breaking changes in auth/firestore |
+| framer-motion | 11.18.2 | 12.23.26 | Animation API changes |
+| react | 18.3.1 | 19.2.3 | Major React 19 features |
+| react-router-dom | 6.30.2 | 7.11.0 | Loader/action changes |
+| zustand | 4.5.7 | 5.0.9 | API simplification |
+| tailwindcss | 3.4.19 | 4.1.18 | New engine, config changes |
 
 ---
 
