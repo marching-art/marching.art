@@ -1,8 +1,21 @@
 # Code Audit Report - marching.art
 
 **Date:** December 14, 2025
+**Last Updated:** December 23, 2025
 **Auditor:** Claude Code
-**Branch:** claude/code-audit-NoYGN
+
+---
+
+## Status Updates (December 23, 2025)
+
+| Issue | Status | Resolution |
+|-------|--------|------------|
+| Hardcoded Firebase API key (1.1) | **FIXED** | `src/config/index.ts` now requires env var, no fallback |
+| Hardcoded admin UID (1.2 HIGH) | **FIXED** | Uses `VITE_ADMIN_UIDS` env var only |
+| Admin UID in firestore.rules | **FIXED** | Uses Firebase custom claims (`request.auth.token.admin`) |
+| `.env.production` committed | **FIXED** | Removed from git, added to `.gitignore` |
+
+**Remaining Critical:** Deploy Cloud Functions to production.
 
 ---
 
