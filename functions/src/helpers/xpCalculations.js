@@ -12,10 +12,12 @@ const admin = require('firebase-admin');
  */
 const XP_CONFIG = {
   xpPerLevel: 1000,  // XP required per level
-  classUnlocks: {
-    aClass: 3,       // Level 3 (3000 XP) unlocks A Class
-    open: 5,         // Level 5 (5000 XP) unlocks Open Class
-    world: 10        // Level 10 (10000 XP) unlocks World Class
+  // Class unlocks are based on total XP, not levels
+  // This allows faster early progression while maintaining meaningful milestones
+  classUnlockXP: {
+    aClass: 300,     // ~2 weeks of dedicated play
+    open: 2000,      // ~3 months of dedicated play
+    world: 4000      // ~6 months of dedicated play
   }
 };
 
@@ -61,21 +63,21 @@ function calculateXPUpdates(profileData, xpToAdd) {
     updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpToAdd);
   }
 
-  // Check for class unlocks
+  // Check for class unlocks based on total XP (not level)
   const unlockedClasses = [...(profileData.unlockedClasses || ['soundSport'])];
   let classUnlocked = null;
 
-  if (newLevel >= XP_CONFIG.classUnlocks.aClass && !unlockedClasses.includes('aClass')) {
+  if (newXP >= XP_CONFIG.classUnlockXP.aClass && !unlockedClasses.includes('aClass')) {
     unlockedClasses.push('aClass');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'A Class';
   }
-  if (newLevel >= XP_CONFIG.classUnlocks.open && !unlockedClasses.includes('open')) {
+  if (newXP >= XP_CONFIG.classUnlockXP.open && !unlockedClasses.includes('open')) {
     unlockedClasses.push('open');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'Open Class';
   }
-  if (newLevel >= XP_CONFIG.classUnlocks.world && !unlockedClasses.includes('world')) {
+  if (newXP >= XP_CONFIG.classUnlockXP.world && !unlockedClasses.includes('world')) {
     unlockedClasses.push('world');
     updates.unlockedClasses = unlockedClasses;
     classUnlocked = 'World Class';

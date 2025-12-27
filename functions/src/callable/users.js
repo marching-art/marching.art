@@ -322,21 +322,22 @@ exports.dailyXPCheckIn = onCall({ cors: true }, async (request) => {
       lastRehearsal: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // Check for class unlocks
+    // Check for class unlocks based on total XP
+    // Thresholds: A Class = 300 XP, Open Class = 2000 XP, World Class = 4000 XP
     const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
     let classUnlocked = null;
 
-    if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+    if (newXP >= 300 && !unlockedClasses.includes('aClass')) {
       unlockedClasses.push('aClass');
       updateData.unlockedClasses = unlockedClasses;
       classUnlocked = 'A Class';
     }
-    if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+    if (newXP >= 2000 && !unlockedClasses.includes('open')) {
       unlockedClasses.push('open');
       updateData.unlockedClasses = unlockedClasses;
       classUnlocked = 'Open Class';
     }
-    if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+    if (newXP >= 4000 && !unlockedClasses.includes('world')) {
       unlockedClasses.push('world');
       updateData.unlockedClasses = unlockedClasses;
       classUnlocked = 'World Class';
@@ -396,17 +397,18 @@ exports.awardXP = onCall({ cors: true }, async (request) => {
         xpLevel: newLevel,
       };
 
-      // Check for class unlocks
+      // Check for class unlocks based on total XP
+      // Thresholds: A Class = 300 XP, Open Class = 2000 XP, World Class = 4000 XP
       const unlockedClasses = profileData.unlockedClasses || ['soundSport'];
-      if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+      if (newXP >= 300 && !unlockedClasses.includes('aClass')) {
         unlockedClasses.push('aClass');
         updateData.unlockedClasses = unlockedClasses;
       }
-      if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+      if (newXP >= 2000 && !unlockedClasses.includes('open')) {
         unlockedClasses.push('open');
         updateData.unlockedClasses = unlockedClasses;
       }
-      if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+      if (newXP >= 4000 && !unlockedClasses.includes('world')) {
         unlockedClasses.push('world');
         updateData.unlockedClasses = unlockedClasses;
       }

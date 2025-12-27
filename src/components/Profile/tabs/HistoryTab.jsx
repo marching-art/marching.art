@@ -6,7 +6,7 @@ import EmptyState from '../../EmptyState';
 
 // Note: unlockedClasses array uses 'open' and 'world' (not 'openClass' and 'worldClass')
 const CLASS_ORDER = ['world', 'open', 'aClass', 'soundSport'];
-const CLASS_LEVELS = { soundSport: 1, aClass: 3, open: 5, world: 10 };
+const CLASS_XP_THRESHOLDS = { soundSport: 0, aClass: 300, open: 2000, world: 4000 };
 const CLASS_NAMES = { soundSport: 'SoundSport', aClass: 'A Class', open: 'Open Class', world: 'World Class' };
 const CLASS_COLORS = {
   soundSport: { border: 'border-green-500/30', bg: 'bg-green-500/20', text: 'text-green-400', glow: 'drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]' },
@@ -165,7 +165,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                       {CLASS_NAMES[classKey]}
                     </p>
                     <p className={`text-sm ${isUnlocked ? 'text-yellow-50/50' : 'text-yellow-50/30'}`}>
-                      Unlocks at Level {CLASS_LEVELS[classKey]}
+                      {CLASS_XP_THRESHOLDS[classKey] === 0 ? 'Always available' : `Unlocks at ${CLASS_XP_THRESHOLDS[classKey].toLocaleString()} XP`}
                     </p>
                   </div>
                 </div>

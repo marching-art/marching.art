@@ -13,25 +13,19 @@ export const CLASS_POINT_LIMITS = {
 };
 
 /**
- * XP level requirements for class unlocks
- * Level 1 = 1000 XP, so Level 3 = 3000 XP, etc.
- */
-export const CLASS_UNLOCK_REQUIREMENTS = {
-  soundSport: 0,  // Always available (0 XP)
-  aClass: 3,      // Level 3 (3000 XP)
-  openClass: 5,   // Level 5 (5000 XP)
-  worldClass: 10  // Level 10 (10000 XP)
-};
-
-/**
- * XP thresholds for class unlocks (for display purposes)
+ * XP thresholds for class unlocks
+ * Classes unlock based on total XP earned, not player level
+ * Designed for: A Class ~2 weeks, Open Class ~3 months, World Class ~6 months
  */
 export const CLASS_XP_THRESHOLDS = {
-  soundSport: 0,
-  aClass: 3000,      // Level 3
-  openClass: 5000,   // Level 5
-  worldClass: 10000  // Level 10
+  soundSport: 0,     // Always available
+  aClass: 300,       // ~2 weeks of dedicated play
+  openClass: 2000,   // ~3 months of dedicated play
+  worldClass: 4000   // ~6 months of dedicated play
 };
+
+// Alias for backwards compatibility
+export const CLASS_UNLOCK_REQUIREMENTS = CLASS_XP_THRESHOLDS;
 
 /**
  * Weeks remaining lockout for each class
@@ -198,14 +192,14 @@ export const generateLineupHash = (lineup) => {
 
 /**
  * Check if user can register for a class
- * @param {number} userLevel - User's current XP level
+ * @param {number} userXP - User's current total XP
  * @param {number} corpsCoin - User's CorpsCoin balance
  * @param {string} corpsClass - Class to check
  * @param {number} weeksRemaining - Weeks until season end
  * @returns {Object} { canRegister: boolean, reason: string, cost: number }
  */
-export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemaining) => {
-  const requiredLevel = CLASS_UNLOCK_REQUIREMENTS[corpsClass];
+export const canRegisterForClass = (userXP, corpsCoin, corpsClass, weeksRemaining) => {
+  const requiredXP = CLASS_XP_THRESHOLDS[corpsClass];
   const lockWeeks = CLASS_REGISTRATION_LOCKS[corpsClass];
   const unlockCost = CLASS_UNLOCK_COSTS[corpsClass] || 0;
 
@@ -218,11 +212,11 @@ export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemai
     };
   }
 
-  // Check level requirement
-  if (userLevel >= requiredLevel) {
+  // Check XP requirement
+  if (userXP >= requiredXP) {
     return {
       canRegister: true,
-      reason: 'Level requirement met',
+      reason: 'XP requirement met',
       cost: 0
     };
   }
@@ -239,7 +233,7 @@ export const canRegisterForClass = (userLevel, corpsCoin, corpsClass, weeksRemai
 
   return {
     canRegister: false,
-    reason: `Requires Level ${requiredLevel} or ${unlockCost} CorpsCoin (have ${corpsCoin})`,
+    reason: `Requires ${requiredXP} XP or ${unlockCost} CorpsCoin (have ${corpsCoin})`,
     cost: unlockCost
   };
 };
@@ -314,7 +308,6 @@ export const getClassInfo = (corpsClass) => {
       textClass: 'text-green-500',
       description: 'Entry level - Perfect for beginners',
       pointLimit: 90,
-      requiredLevel: 0,
       requiredXP: 0
     },
     aClass: {
@@ -323,10 +316,9 @@ export const getClassInfo = (corpsClass) => {
       color: 'blue',
       bgClass: 'bg-blue-500',
       textClass: 'text-blue-500',
-      description: '3,000 XP or 1,000 CC',
+      description: '300 XP or 1,000 CC',
       pointLimit: 60,
-      requiredLevel: 3,
-      requiredXP: 3000,
+      requiredXP: 300,
       unlockCost: 1000
     },
     open: {
@@ -335,10 +327,9 @@ export const getClassInfo = (corpsClass) => {
       color: 'purple',
       bgClass: 'bg-purple-500',
       textClass: 'text-purple-500',
-      description: '5,000 XP or 2,500 CC',
+      description: '2,000 XP or 2,500 CC',
       pointLimit: 120,
-      requiredLevel: 5,
-      requiredXP: 5000,
+      requiredXP: 2000,
       unlockCost: 2500
     },
     world: {
@@ -347,10 +338,9 @@ export const getClassInfo = (corpsClass) => {
       color: 'gold',
       bgClass: 'bg-gold-500',
       textClass: 'text-gold-500',
-      description: '10,000 XP or 5,000 CC',
+      description: '4,000 XP or 5,000 CC',
       pointLimit: 150,
-      requiredLevel: 10,
-      requiredXP: 10000,
+      requiredXP: 4000,
       unlockCost: 5000
     }
   };
@@ -379,9 +369,9 @@ export const getNextClassProgress = (currentXP, unlockedClasses = ['soundSport']
   }
 
   const thresholds = {
-    aClass: { xp: 3000, cc: 1000, name: 'A Class', color: 'blue' },
-    openClass: { xp: 5000, cc: 2500, name: 'Open Class', color: 'purple' },
-    worldClass: { xp: 10000, cc: 5000, name: 'World Class', color: 'gold' }
+    aClass: { xp: 300, cc: 1000, name: 'A Class', color: 'blue' },
+    openClass: { xp: 2000, cc: 2500, name: 'Open Class', color: 'purple' },
+    worldClass: { xp: 4000, cc: 5000, name: 'World Class', color: 'gold' }
   };
 
   const threshold = thresholds[nextClass];

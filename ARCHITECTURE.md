@@ -161,9 +161,9 @@ Located in `src/components/ui/`:
 | Class | Point Limit | Unlock Requirement |
 |-------|-------------|-------------------|
 | SoundSport | 90 | Default |
-| A Class | 60 | Level 3 OR 1,000 CorpsCoin |
-| Open Class | 40 | Level 5 OR 2,500 CorpsCoin |
-| World Class | 40 | Level 10 OR 5,000 CorpsCoin |
+| A Class | 60 | 300 XP (~2 weeks) OR 1,000 CorpsCoin |
+| Open Class | 120 | 2,000 XP (~3 months) OR 2,500 CorpsCoin |
+| World Class | 150 | 4,000 XP (~6 months) OR 5,000 CorpsCoin |
 
 ## Known Issues
 

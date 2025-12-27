@@ -133,7 +133,7 @@ const HowToPlay = () => {
               <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-cream-100">A Class</h4>
-                  <span className="text-blue-400 text-sm">Unlocks at Level 3</span>
+                  <span className="text-blue-400 text-sm">Unlocks at 300 XP</span>
                 </div>
                 <p className="text-cream-400 text-sm mb-2">Intermediate competition</p>
                 <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ const HowToPlay = () => {
               <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-cream-100">Open Class</h4>
-                  <span className="text-purple-400 text-sm">Unlocks at Level 5</span>
+                  <span className="text-purple-400 text-sm">Unlocks at 2,000 XP</span>
                 </div>
                 <p className="text-cream-400 text-sm mb-2">Advanced competition</p>
                 <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ const HowToPlay = () => {
               <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-cream-100">World Class</h4>
-                  <span className="text-gold-400 text-sm">Unlocks at Level 10</span>
+                  <span className="text-gold-400 text-sm">Unlocks at 4,000 XP</span>
                 </div>
                 <p className="text-cream-400 text-sm mb-2">Elite championship level</p>
                 <div className="flex items-center gap-2">
@@ -317,11 +317,11 @@ const HowToPlay = () => {
               </div>
             </div>
 
-            <InfoBox title="Level Milestones" color="gold">
+            <InfoBox title="XP Milestones" color="gold">
               <ul className="space-y-1 text-sm">
-                <li><strong>Level 3:</strong> Unlock A Class competition</li>
-                <li><strong>Level 5:</strong> Unlock Open Class competition</li>
-                <li><strong>Level 10:</strong> Unlock World Class - the ultimate challenge!</li>
+                <li><strong>300 XP:</strong> Unlock A Class competition (~2 weeks)</li>
+                <li><strong>2,000 XP:</strong> Unlock Open Class competition (~3 months)</li>
+                <li><strong>4,000 XP:</strong> Unlock World Class - the ultimate challenge! (~6 months)</li>
               </ul>
             </InfoBox>
           </Section>
@@ -557,11 +557,11 @@ const HowToPlay = () => {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-cream-100 mb-2">Level Unlocks</h4>
+                <h4 className="font-semibold text-cream-100 mb-2">XP Unlocks</h4>
                 <ul className="space-y-1 text-cream-300">
-                  <li>Level 3: A Class</li>
-                  <li>Level 5: Open Class</li>
-                  <li>Level 10: World Class</li>
+                  <li>300 XP: A Class</li>
+                  <li>2,000 XP: Open Class</li>
+                  <li>4,000 XP: World Class</li>
                 </ul>
               </div>
               <div>

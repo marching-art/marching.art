@@ -104,9 +104,9 @@ npm run build
 
 ### Progression System
 - **SoundSport**: Available to all users
-- **A Class**: Unlocked at Level 3
-- **Open Class**: Unlocked at Level 5
-- **World Class**: Unlocked at Level 10
+- **A Class**: Unlocked at 300 XP (~2 weeks of dedicated play)
+- **Open Class**: Unlocked at 2,000 XP (~3 months of dedicated play)
+- **World Class**: Unlocked at 4,000 XP (~6 months of dedicated play)
 
 ## 📁 Project Structure
 

@@ -160,19 +160,20 @@ export async function addXp(uid: string, amount: number): Promise<{
     const newLevel = calculateLevel(newXp);
     const leveledUp = newLevel > currentLevel;
 
-    // Check for class unlocks
+    // Check for class unlocks based on total XP
+    // Thresholds: A Class = 300 XP, Open Class = 2000 XP, World Class = 4000 XP
     let unlockedClass: CorpsClass | undefined;
     const unlockedClasses = [...(profile.unlockedClasses || ['soundSport'])];
 
-    if (newLevel >= 3 && !unlockedClasses.includes('aClass')) {
+    if (newXp >= 300 && !unlockedClasses.includes('aClass')) {
       unlockedClasses.push('aClass');
       unlockedClass = 'aClass';
     }
-    if (newLevel >= 5 && !unlockedClasses.includes('open')) {
+    if (newXp >= 2000 && !unlockedClasses.includes('open')) {
       unlockedClasses.push('open');
       unlockedClass = 'open';
     }
-    if (newLevel >= 10 && !unlockedClasses.includes('world')) {
+    if (newXp >= 4000 && !unlockedClasses.includes('world')) {
       unlockedClasses.push('world');
       unlockedClass = 'world';
     }

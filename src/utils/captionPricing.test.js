@@ -22,11 +22,11 @@ describe('captionPricing constants', () => {
     expect(CLASS_POINT_LIMITS.worldClass).toBe(150);
   });
 
-  test('CLASS_UNLOCK_REQUIREMENTS has correct levels', () => {
+  test('CLASS_UNLOCK_REQUIREMENTS has correct XP thresholds', () => {
     expect(CLASS_UNLOCK_REQUIREMENTS.soundSport).toBe(0);
-    expect(CLASS_UNLOCK_REQUIREMENTS.aClass).toBe(3);
-    expect(CLASS_UNLOCK_REQUIREMENTS.openClass).toBe(5);
-    expect(CLASS_UNLOCK_REQUIREMENTS.worldClass).toBe(10);
+    expect(CLASS_UNLOCK_REQUIREMENTS.aClass).toBe(300);
+    expect(CLASS_UNLOCK_REQUIREMENTS.openClass).toBe(2000);
+    expect(CLASS_UNLOCK_REQUIREMENTS.worldClass).toBe(4000);
   });
 
   test('REQUIRED_CAPTIONS has all 8 captions', () => {
@@ -159,33 +159,33 @@ describe('generateLineupHash', () => {
 });
 
 describe('canRegisterForClass', () => {
-  test('allows registration when level requirement met', () => {
-    const result = canRegisterForClass(5, 0, 'openClass', 10);
+  test('allows registration when XP requirement met', () => {
+    const result = canRegisterForClass(2000, 0, 'openClass', 10);
     expect(result.canRegister).toBe(true);
     expect(result.cost).toBe(0);
   });
 
   test('denies registration when locked due to timing', () => {
-    const result = canRegisterForClass(10, 5000, 'worldClass', 5);
+    const result = canRegisterForClass(5000, 5000, 'worldClass', 5);
     expect(result.canRegister).toBe(false);
     expect(result.reason).toContain('closed');
   });
 
-  test('allows unlock with CorpsCoin when level not met', () => {
-    const result = canRegisterForClass(1, 5000, 'worldClass', 10);
+  test('allows unlock with CorpsCoin when XP not met', () => {
+    const result = canRegisterForClass(100, 5000, 'worldClass', 10);
     expect(result.canRegister).toBe(true);
     expect(result.cost).toBe(5000);
     expect(result.requiresPayment).toBe(true);
   });
 
-  test('denies when level and coins insufficient', () => {
-    const result = canRegisterForClass(1, 100, 'worldClass', 10);
+  test('denies when XP and coins insufficient', () => {
+    const result = canRegisterForClass(100, 100, 'worldClass', 10);
     expect(result.canRegister).toBe(false);
-    expect(result.reason).toContain('Level 10');
+    expect(result.reason).toContain('4000 XP');
   });
 
   test('soundSport always available', () => {
-    const result = canRegisterForClass(1, 0, 'soundSport', 1);
+    const result = canRegisterForClass(0, 0, 'soundSport', 1);
     expect(result.canRegister).toBe(true);
     expect(result.cost).toBe(0);
   });
@@ -270,14 +270,14 @@ describe('getClassInfo', () => {
     const info = getClassInfo('soundSport');
     expect(info.name).toBe('SoundSport');
     expect(info.pointLimit).toBe(90);
-    expect(info.requiredLevel).toBe(0);
+    expect(info.requiredXP).toBe(0);
   });
 
   test('returns aClass info', () => {
     const info = getClassInfo('aClass');
     expect(info.name).toBe('A Class');
     expect(info.pointLimit).toBe(60);
-    expect(info.requiredLevel).toBe(3);
+    expect(info.requiredXP).toBe(300);
   });
 
   test('returns default soundSport for unknown class', () => {
