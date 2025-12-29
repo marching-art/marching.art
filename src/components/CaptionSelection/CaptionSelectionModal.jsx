@@ -83,7 +83,12 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled }) => {
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
         <span className="text-[10px] text-gray-500">'{corps.sourceYear?.slice(-2)}</span>
         {corps.performanceData?.isHot && (
-          <span className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded">
+          <span
+            className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded"
+            title={corps.performanceData?.improvement > 0
+              ? `Up ${corps.performanceData.improvement}% recently`
+              : 'Top performer recently'}
+          >
             <Flame className="w-2.5 h-2.5" /> Hot
           </span>
         )}
@@ -437,25 +442,43 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     loadUserData();
   }, [user?.uid, corpsClass]);
 
-  // Load available corps
+  // Load available corps and hot status
   useEffect(() => {
     let cancelled = false;
     const fetchCorps = async () => {
       if (!seasonId) { setLoading(false); return; }
       try {
         setLoading(true);
-        const ref = doc(db, 'dci-data', seasonId);
-        const snap = await getDoc(ref);
-        if (!cancelled && snap.exists()) {
-          let corps = snap.data().corpsValues || [];
-          corps = corps.map(c => ({
-            ...c,
-            performanceData: {
-              avgScore: c.avgScore || (Math.random() * 20 + 70),
-              isHot: Math.random() > 0.7,
-              isValue: (c.avgScore || 80) / c.points > 4.5,
-            },
-          }));
+
+        // Fetch corps data and hot status in parallel
+        const corpsRef = doc(db, 'dci-data', seasonId);
+        const getHotCorps = httpsCallable(functions, 'getHotCorps');
+
+        const [corpsSnap, hotCorpsResult] = await Promise.all([
+          getDoc(corpsRef),
+          getHotCorps().catch(() => ({ data: { hotCorps: {} } }))
+        ]);
+
+        if (!cancelled && corpsSnap.exists()) {
+          const hotCorpsData = hotCorpsResult.data?.hotCorps || {};
+          let corps = corpsSnap.data().corpsValues || [];
+
+          corps = corps.map(c => {
+            const corpsId = `${c.corpsName}|${c.sourceYear}`;
+            const hotStatus = hotCorpsData[corpsId];
+
+            return {
+              ...c,
+              performanceData: {
+                avgScore: c.avgScore || 80,
+                // Use real hot status from server, based on recent performance
+                isHot: hotStatus?.isHot || false,
+                improvement: hotStatus?.improvement || 0,
+                // Value calculation: good score per point ratio
+                isValue: (c.avgScore || 80) / c.points > 4.5,
+              },
+            };
+          });
           corps.sort((a, b) => b.points - a.points);
           setAvailableCorps(corps);
           generateSuggestions(corps);

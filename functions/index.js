@@ -22,6 +22,7 @@ const {
   selectUserShows,
   saveShowConcept,
   getLineupAnalytics,
+  getHotCorps,
 } = require("./src/callable/lineups");
 const {
   unlockClassWithCorpsCoin,
@@ -103,6 +104,7 @@ module.exports = {
   selectUserShows,
   saveShowConcept,
   getLineupAnalytics,
+  getHotCorps,
   createLeague,
   joinLeague,
   leaveLeague,

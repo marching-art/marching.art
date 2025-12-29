@@ -260,6 +260,157 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Get "hot" status for all corps in the season.
+ * A corps is "hot" if it has performed above average in the recent window (last 10 days).
+ * This compares each corps' recent performance to the field average for the same period.
+ */
+exports.getHotCorps = onCall({ cors: true }, async (request) => {
+  const db = getDb();
+
+  try {
+    // Get season data
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) {
+      return { success: true, hotCorps: {} };
+    }
+
+    const seasonData = seasonDoc.data();
+    const dataDocId = seasonData.dataDocId;
+
+    // Calculate current day
+    let currentDay = 1;
+    if (seasonData.schedule?.startDate) {
+      const now = new Date();
+      const startDate = seasonData.schedule.startDate.toDate();
+      const diffInMillis = now.getTime() - startDate.getTime();
+      currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // Define the lookback window (10 days)
+    const lookbackDays = 10;
+    const windowStart = Math.max(1, currentDay - lookbackDays);
+    const windowEnd = currentDay - 1; // Don't include today since scores may not be in yet
+
+    if (windowEnd < 1) {
+      // Season just started, no historical data to compare
+      return { success: true, hotCorps: {} };
+    }
+
+    // Get corps list for this season
+    const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
+    if (!corpsDataDoc.exists) {
+      return { success: true, hotCorps: {} };
+    }
+
+    const corpsList = corpsDataDoc.data().corpsValues || [];
+
+    // Get the years we need to fetch
+    const yearsToFetch = [...new Set(corpsList.map(c => c.sourceYear))];
+
+    // Fetch historical scores for all relevant years
+    const historicalDocs = await Promise.all(
+      yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
+    );
+
+    const historicalData = {};
+    historicalDocs.forEach(doc => {
+      if (doc.exists) {
+        historicalData[doc.id] = doc.data().data || [];
+      }
+    });
+
+    // Calculate performance metrics for each corps
+    const corpsPerformance = [];
+
+    for (const corps of corpsList) {
+      const { corpsName, sourceYear } = corps;
+      const yearData = historicalData[sourceYear] || [];
+
+      // Get scores in the recent window
+      const recentScores = [];
+      // Get all scores for this corps (for baseline comparison)
+      const allScores = [];
+
+      for (const event of yearData) {
+        const scoreData = event.scores?.find(s => s.corps === corpsName);
+        if (scoreData && scoreData.captions) {
+          // Calculate total score for this event (sum of all captions)
+          const totalScore = Object.values(scoreData.captions)
+            .filter(v => typeof v === 'number' && v > 0)
+            .reduce((sum, v) => sum + v, 0);
+
+          if (totalScore > 0) {
+            allScores.push({ day: event.offSeasonDay, score: totalScore });
+
+            if (event.offSeasonDay >= windowStart && event.offSeasonDay <= windowEnd) {
+              recentScores.push(totalScore);
+            }
+          }
+        }
+      }
+
+      if (recentScores.length > 0 && allScores.length >= 3) {
+        const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+        const seasonAvg = allScores.reduce((a, b) => a + b.score, 0) / allScores.length;
+
+        // Calculate trend: compare recent to early season
+        const midpoint = Math.floor(allScores.length / 2);
+        const earlyScores = allScores.slice(0, midpoint).map(s => s.score);
+        const earlyAvg = earlyScores.length > 0
+          ? earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
+          : seasonAvg;
+
+        // Improvement percentage from early season to recent
+        const improvement = earlyAvg > 0 ? ((recentAvg - earlyAvg) / earlyAvg) * 100 : 0;
+
+        corpsPerformance.push({
+          corpsName,
+          sourceYear,
+          recentAvg,
+          seasonAvg,
+          improvement,
+          recentCount: recentScores.length
+        });
+      }
+    }
+
+    // Determine "hot" corps: those with above-median recent performance AND positive improvement
+    if (corpsPerformance.length === 0) {
+      return { success: true, hotCorps: {} };
+    }
+
+    // Sort by recent average and find median
+    const sortedByRecent = [...corpsPerformance].sort((a, b) => b.recentAvg - a.recentAvg);
+    const medianIndex = Math.floor(sortedByRecent.length / 2);
+    const medianRecentAvg = sortedByRecent[medianIndex].recentAvg;
+
+    // A corps is "hot" if:
+    // 1. Their recent average is above the field median, AND
+    // 2. They're showing improvement (positive trend) OR they're in the top 25%
+    const topQuartileThreshold = sortedByRecent[Math.floor(sortedByRecent.length * 0.25)]?.recentAvg || medianRecentAvg;
+
+    const hotCorps = {};
+    for (const corps of corpsPerformance) {
+      const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
+      const isAboveMedian = corps.recentAvg >= medianRecentAvg;
+      const isImproving = corps.improvement > 2; // More than 2% improvement
+      const isTopQuartile = corps.recentAvg >= topQuartileThreshold;
+
+      hotCorps[corpsId] = {
+        isHot: (isAboveMedian && isImproving) || isTopQuartile,
+        improvement: Math.round(corps.improvement * 10) / 10,
+        recentAvg: Math.round(corps.recentAvg * 10) / 10
+      };
+    }
+
+    return { success: true, hotCorps, windowStart, windowEnd, currentDay };
+  } catch (error) {
+    logger.error("Error calculating hot corps:", error);
+    return { success: true, hotCorps: {} };
+  }
+});
+
+/**
  * Get caption trend analytics for a lineup
  * Returns trend indicators without exposing raw scores
  */
