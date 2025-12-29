@@ -1,12 +1,12 @@
 // =============================================================================
-// CAPTION SELECTION MODAL - ESPN DATA STYLE
+// CAPTION SELECTION MODAL - CONSOLIDATED CAPTION-FOCUSED DESIGN
 // =============================================================================
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Check, AlertCircle, TrendingUp, TrendingDown, Minus, Info, Flame, Snowflake,
+  Check, AlertCircle, TrendingUp, TrendingDown, Minus, Flame, Snowflake,
   Trophy, Zap, Clock, Save, Download, Trash2, ChevronDown, ChevronUp,
-  Target, History, Award, X, PartyPopper
+  Target, History, Award, X, PartyPopper, ArrowLeft, RefreshCw
 } from 'lucide-react';
 import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -66,7 +66,7 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled }) => {
     <button
       onClick={() => !disabled && onSelect(corps)}
       disabled={disabled}
-      className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${
+      className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
         isSelected
           ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]'
           : disabled
@@ -75,15 +75,15 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled }) => {
       }`}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <div className={`w-4 h-4 border-2 flex items-center justify-center flex-shrink-0 ${
+        <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 rounded-sm ${
           isSelected ? 'bg-[#0057B8] border-[#0057B8]' : 'border-[#444]'
         }`}>
-          {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+          {isSelected && <Check className="w-3 h-3 text-white" />}
         </div>
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
         <span className="text-[10px] text-gray-500">'{corps.sourceYear?.slice(-2)}</span>
         {corps.performanceData?.isHot && (
-          <span className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px]">
+          <span className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded">
             <Flame className="w-2.5 h-2.5" /> Hot
           </span>
         )}
@@ -172,7 +172,7 @@ const TemplateModal = ({ isOpen, onClose, templates, onSave, onLoad, onDelete, c
 // -----------------------------------------------------------------------------
 // DRAFT HELPER
 // -----------------------------------------------------------------------------
-const DraftHelper = ({ suggestions, onSelectSuggestion, selections }) => {
+const DraftHelper = ({ suggestions, onSelectSuggestion, selections, activeCaption }) => {
   const [activeTab, setActiveTab] = useState('hot');
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -222,10 +222,10 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections }) => {
                 return (
                   <button
                     key={idx}
-                    onClick={() => !isAlreadySelected && onSelectSuggestion(corps)}
-                    disabled={isAlreadySelected}
+                    onClick={() => !isAlreadySelected && activeCaption && onSelectSuggestion(corps, activeCaption)}
+                    disabled={isAlreadySelected || !activeCaption}
                     className={`w-full flex items-center justify-between p-2 text-xs ${
-                      isAlreadySelected ? 'opacity-50' : 'hover:bg-white/5'
+                      isAlreadySelected || !activeCaption ? 'opacity-50' : 'hover:bg-white/5'
                     }`}
                   >
                     <span className="text-gray-300">{corps.corpsName}</span>
@@ -238,6 +238,84 @@ const DraftHelper = ({ suggestions, onSelectSuggestion, selections }) => {
         </>
       )}
     </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
+// TRADES REMAINING INDICATOR
+// -----------------------------------------------------------------------------
+const TradesRemainingIndicator = ({ tradesRemaining, isUnlimited, isInitialSetup }) => {
+  if (isInitialSetup) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/30 rounded">
+        <RefreshCw className="w-3 h-3 text-green-400" />
+        <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">
+          Initial Setup - Unlimited Changes
+        </span>
+      </div>
+    );
+  }
+
+  if (isUnlimited) {
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0057B8]/10 border border-[#0057B8]/30 rounded">
+        <RefreshCw className="w-3 h-3 text-[#0057B8]" />
+        <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider">
+          Unlimited Changes This Week
+        </span>
+      </div>
+    );
+  }
+
+  const isLow = tradesRemaining <= 1;
+  const colorClass = isLow ? 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10' : 'text-gray-400 border-[#333] bg-[#222]';
+
+  return (
+    <div className={`flex items-center gap-1.5 px-2 py-1 border rounded ${colorClass}`}>
+      <RefreshCw className="w-3 h-3" />
+      <span className="text-[10px] font-bold uppercase tracking-wider">
+        {tradesRemaining} Change{tradesRemaining !== 1 ? 's' : ''} Left This Week
+      </span>
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
+// CAPTION BUTTON (for Your Lineup panel)
+// -----------------------------------------------------------------------------
+const CaptionButton = ({ caption, selected, isActive, onClick, categoryColor }) => {
+  const hasValue = !!selected;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between p-2.5 border transition-all ${
+        isActive
+          ? 'border-[#0057B8] bg-[#0057B8]/10'
+          : hasValue
+            ? 'border-green-500/30 bg-green-500/5 hover:border-[#0057B8] hover:bg-[#0057B8]/10'
+            : 'border-[#333] hover:border-[#0057B8] hover:bg-[#0057B8]/10'
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <div className={`w-1.5 h-4 rounded-full ${categoryColor}`} />
+        <div className="text-left min-w-0">
+          <div className="text-xs font-bold text-white">{caption.id}</div>
+          <div className="text-[10px] text-gray-500 truncate">{caption.name}</div>
+        </div>
+      </div>
+      {hasValue ? (
+        <div className="flex items-center gap-2">
+          <div className="text-right min-w-0">
+            <div className="text-xs text-white truncate max-w-[100px]">{selected.name}</div>
+            <div className="text-[10px] font-data text-[#0057B8]">{selected.points} pts</div>
+          </div>
+          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+        </div>
+      ) : (
+        <div className="text-[10px] text-[#0057B8] font-bold">+ DRAFT</div>
+      )}
+    </button>
   );
 };
 
@@ -256,6 +334,17 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
   const [userHistory, setUserHistory] = useState([]);
 
+  // Mobile state - whether we're viewing lineup or selection list
+  const [mobileView, setMobileView] = useState('lineup'); // 'lineup' or 'selection'
+
+  // Active caption for selection
+  const [activeCaption, setActiveCaption] = useState(initialCaption || null);
+
+  // Trade limits state
+  const [tradesRemaining, setTradesRemaining] = useState(3);
+  const [isUnlimitedTrades, setIsUnlimitedTrades] = useState(false);
+  const [isInitialSetup, setIsInitialSetup] = useState(false);
+
   const captions = [
     { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },
     { id: 'GE2', name: 'General Effect 2', category: 'General Effect' },
@@ -267,19 +356,16 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     { id: 'P', name: 'Percussion', category: 'Music' },
   ];
 
-  // Determine initial category based on initialCaption prop
-  const getInitialCategory = () => {
-    if (!initialCaption) return 'General Effect';
-    const caption = captions.find(c => c.id === initialCaption);
-    return caption?.category || 'General Effect';
-  };
-
-  const [expandedCategory, setExpandedCategory] = useState(getInitialCategory);
-
   const pointLimits = { soundSport: 90, aClass: 60, openClass: 120, worldClass: 150 };
   const pointLimit = pointLimits[corpsClass];
 
   const CLASS_LABELS = { soundSport: 'SoundSport', aClass: 'A Class', openClass: 'Open Class', worldClass: 'World Class' };
+
+  const categoryColors = {
+    'General Effect': 'bg-yellow-500',
+    'Visual': 'bg-[#0057B8]',
+    'Music': 'bg-purple-400',
+  };
 
   // Load templates
   useEffect(() => {
@@ -287,9 +373,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     if (saved) { try { setTemplates(JSON.parse(saved)); } catch (e) {} }
   }, [user?.uid, corpsClass]);
 
-  // Load user history
+  // Load user history and trade limits
   useEffect(() => {
-    const loadHistory = async () => {
+    const loadUserData = async () => {
       if (!user?.uid) return;
       try {
         const ref = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -303,11 +389,53 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
             });
           }
           setUserHistory(Array.from(history));
+
+          // Check if initial setup (no existing lineup)
+          const currentCorpsData = data.corps?.[corpsClass];
+          const existingLineup = currentCorpsData?.lineup || {};
+          const hasExistingLineup = Object.keys(existingLineup).length > 0;
+          setIsInitialSetup(!hasExistingLineup);
+
+          // Get weekly trades info
+          const weeklyTrades = currentCorpsData?.weeklyTrades;
+
+          // Load season data to check trade limits
+          const seasonRef = doc(db, 'game-settings/season');
+          const seasonSnap = await getDoc(seasonRef);
+          if (seasonSnap.exists()) {
+            const seasonData = seasonSnap.data();
+            const now = new Date();
+            const seasonStartDate = seasonData.schedule?.startDate?.toDate();
+
+            if (seasonStartDate) {
+              const diffInMillis = now.getTime() - seasonStartDate.getTime();
+              const currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+              const currentWeek = Math.ceil(currentDay / 7);
+
+              // Determine if unlimited trades
+              let unlimited = false;
+              if (!hasExistingLineup) unlimited = true;
+              if (seasonData.status === 'off-season' && currentWeek === 1) unlimited = true;
+              if (seasonData.status === 'live-season' && [1, 2, 3].includes(currentWeek)) unlimited = true;
+
+              setIsUnlimitedTrades(unlimited);
+
+              if (!unlimited && weeklyTrades) {
+                const tradesUsed = (weeklyTrades.seasonUid === seasonData.seasonUid &&
+                  weeklyTrades.week === currentWeek) ? weeklyTrades.used : 0;
+                setTradesRemaining(3 - tradesUsed);
+              } else if (!unlimited) {
+                setTradesRemaining(3);
+              }
+            }
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to load user data:', e);
+      }
     };
-    loadHistory();
-  }, [user?.uid]);
+    loadUserData();
+  }, [user?.uid, corpsClass]);
 
   // Load available corps
   useEffect(() => {
@@ -377,6 +505,37 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     }
   }, [selections]);
 
+  const handleCaptionClick = (captionId) => {
+    setActiveCaption(captionId);
+    setMobileView('selection');
+  };
+
+  const handleBackToLineup = () => {
+    setActiveCaption(null);
+    setMobileView('lineup');
+  };
+
+  // Move to next empty caption or stay on current
+  const handleCorpsSelect = (captionId, corps) => {
+    handleSelectionChange(captionId, corps);
+
+    // Find next empty caption
+    const currentIndex = captions.findIndex(c => c.id === captionId);
+    for (let i = currentIndex + 1; i < captions.length; i++) {
+      if (!selections[captions[i].id]) {
+        setActiveCaption(captions[i].id);
+        return;
+      }
+    }
+    // Check from beginning
+    for (let i = 0; i < currentIndex; i++) {
+      if (!selections[captions[i].id]) {
+        setActiveCaption(captions[i].id);
+        return;
+      }
+    }
+  };
+
   const handleSaveTemplate = (name) => {
     const newTemplate = { name, lineup: selections, totalPoints: calculateTotalPoints(), createdAt: new Date().toISOString() };
     const updated = [...templates, newTemplate];
@@ -425,30 +584,42 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     onClose();
   };
 
-  const captionsByCategory = useMemo(() => ({
-    'General Effect': captions.filter(c => c.category === 'General Effect'),
-    'Visual': captions.filter(c => c.category === 'Visual'),
-    'Music': captions.filter(c => c.category === 'Music'),
-  }), []);
-
-  const categoryColors = {
-    'General Effect': { accent: 'text-yellow-500', border: 'border-yellow-500/30', bg: 'bg-yellow-500' },
-    'Visual': { accent: 'text-[#0057B8]', border: 'border-[#0057B8]/30', bg: 'bg-[#0057B8]' },
-    'Music': { accent: 'text-purple-400', border: 'border-purple-400/30', bg: 'bg-purple-400' },
-  };
+  // Get active caption data
+  const activeCaptionData = activeCaption ? captions.find(c => c.id === activeCaption) : null;
+  const activeCaptionSelection = activeCaption ? getSelectedCorps(activeCaption) : null;
 
   return (
     <Portal>
       <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-2 md:p-4" onClick={onClose}>
-        <div className="w-full max-w-6xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">Draft Your Lineup</h2>
-                <p className="text-sm text-gray-500">{CLASS_LABELS[corpsClass]} • {pointLimit} pts budget</p>
+              <div className="flex items-center gap-3">
+                {/* Mobile back button when viewing selection */}
+                {mobileView === 'selection' && (
+                  <button
+                    onClick={handleBackToLineup}
+                    className="lg:hidden p-1.5 -ml-1.5 text-gray-400 hover:text-white"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                    {mobileView === 'selection' && activeCaptionData
+                      ? `Select for ${activeCaptionData.name}`
+                      : 'Draft Your Lineup'}
+                  </h2>
+                  <p className="text-sm text-gray-500">{CLASS_LABELS[corpsClass]} • {pointLimit} pts budget</p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
+                <TradesRemainingIndicator
+                  tradesRemaining={tradesRemaining}
+                  isUnlimited={isUnlimitedTrades}
+                  isInitialSetup={isInitialSetup}
+                />
                 <button onClick={() => setShowTemplateModal(true)} className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white flex items-center gap-1">
                   <Save className="w-3 h-3" /> Templates
                 </button>
@@ -474,138 +645,129 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   {selectionCount}/8 selected
                 </span>
                 {isOverLimit && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded">
                     <AlertCircle className="w-3 h-3" /> Over Budget
                   </span>
                 )}
                 {isComplete && !isOverLimit && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded">
                     <Check className="w-3 h-3" /> Ready
                   </span>
                 )}
               </div>
             </div>
-            <div className="h-2 bg-[#333] overflow-hidden">
+            <div className="h-2 bg-[#333] overflow-hidden rounded">
               <div className={`h-full transition-all ${isOverLimit ? 'bg-red-500' : 'bg-[#0057B8]'}`} style={{ width: `${Math.min((totalPoints / pointLimit) * 100, 100)}%` }} />
             </div>
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-hidden">
             {loading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                {/* Sidebar */}
-                <div className="lg:col-span-1 space-y-4">
-                  <DraftHelper suggestions={draftSuggestions} onSelectSuggestion={(corps) => {
-                    const empty = captions.find(c => !selections[c.id]);
-                    if (empty) { handleSelectionChange(empty.id, corps); setExpandedCategory(empty.category); }
-                    else toast('All slots filled');
-                  }} selections={selections} />
+              <div className="h-full flex">
+                {/* Left Panel - Your Lineup (hidden on mobile when viewing selection) */}
+                <div className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}>
+                  <div className="p-4 space-y-4">
+                    {/* Draft Helper */}
+                    <DraftHelper
+                      suggestions={draftSuggestions}
+                      onSelectSuggestion={(corps, captionId) => {
+                        if (captionId) {
+                          handleSelectionChange(captionId, corps);
+                        }
+                      }}
+                      selections={selections}
+                      activeCaption={activeCaption}
+                    />
 
-                  {/* Lineup Summary */}
-                  <div className="bg-[#0a0a0a] border border-[#333] p-3">
-                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
-                      <Award className="w-3 h-3" /> Your Lineup
-                    </h3>
-                    <div className="space-y-1">
-                      {captions.map((caption) => {
-                        const sel = getSelectedCorps(caption.id);
-                        const colors = categoryColors[caption.category];
-                        return (
-                          <div key={caption.id} className={`flex items-center justify-between p-1.5 border ${sel ? 'border-green-500/30 bg-green-500/5' : 'border-[#333]'}`}>
-                            <div className="flex items-center gap-1.5">
-                              <div className={`w-1.5 h-1.5 rounded-full ${colors.bg}`} />
-                              <span className="text-[10px] font-bold text-gray-400">{caption.id}</span>
-                            </div>
-                            {sel ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] text-white truncate max-w-[80px]">{sel.name}</span>
-                                <span className="text-[10px] font-data text-[#0057B8]">{sel.points}</span>
-                                <button onClick={() => handleSelectionChange(caption.id, null)} className="p-0.5 text-red-400 hover:text-red-300">
-                                  <X className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-gray-600">—</span>
-                            )}
-                          </div>
-                        );
-                      })}
+                    {/* Your Lineup - Caption List */}
+                    <div className="bg-[#0a0a0a] border border-[#333]">
+                      <div className="p-3 border-b border-[#333]">
+                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                          <Award className="w-3 h-3" /> Your Lineup
+                        </h3>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        {captions.map((caption) => {
+                          const sel = getSelectedCorps(caption.id);
+                          const isActive = activeCaption === caption.id;
+                          return (
+                            <CaptionButton
+                              key={caption.id}
+                              caption={caption}
+                              selected={sel}
+                              isActive={isActive}
+                              onClick={() => handleCaptionClick(caption.id)}
+                              categoryColor={categoryColors[caption.category]}
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Main Selection Area */}
-                <div className="lg:col-span-3 space-y-3">
-                  {['General Effect', 'Visual', 'Music'].map((category) => {
-                    const categoryCaptions = captionsByCategory[category];
-                    const colors = categoryColors[category];
-                    const selectedCount = categoryCaptions.filter(c => selections[c.id]).length;
-                    const isExpanded = expandedCategory === category;
-
-                    return (
-                      <div key={category} className={`border ${colors.border}`}>
-                        <button
-                          onClick={() => setExpandedCategory(isExpanded ? null : category)}
-                          className="w-full flex items-center justify-between p-3 hover:bg-white/5"
-                        >
+                {/* Right Panel - Corps Selection (full screen on mobile when viewing selection) */}
+                <div className={`flex-1 flex flex-col overflow-hidden ${mobileView === 'lineup' ? 'hidden lg:flex' : ''}`}>
+                  {activeCaption && activeCaptionData ? (
+                    <>
+                      {/* Caption Header */}
+                      <div className="px-4 py-3 bg-[#222] border-b border-[#333] flex-shrink-0">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-1 h-6 ${colors.bg}`} />
-                            <span className="font-bold text-white">{category}</span>
-                            <span className="text-xs text-gray-500">{selectedCount}/{categoryCaptions.length}</span>
+                            <div className={`w-1.5 h-6 rounded-full ${categoryColors[activeCaptionData.category]}`} />
+                            <div>
+                              <h3 className="text-sm font-bold text-white">{activeCaptionData.name}</h3>
+                              <p className="text-[10px] text-gray-500">{activeCaptionData.category}</p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {selectedCount === categoryCaptions.length && <Check className="w-4 h-4 text-green-500" />}
-                            {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
-                          </div>
-                        </button>
-
-                        {isExpanded && (
-                          <div className="border-t border-[#333]">
-                            {categoryCaptions.map((caption) => {
-                              const selected = getSelectedCorps(caption.id);
-                              return (
-                                <div key={caption.id} className="border-b border-[#333] last:border-b-0">
-                                  <div className="px-3 py-2 bg-[#0a0a0a] flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      {selected ? <Check className="w-4 h-4 text-green-500" /> : <div className={`w-4 h-4 border-2 ${colors.border}`} />}
-                                      <span className="text-sm font-medium text-white">{caption.name}</span>
-                                    </div>
-                                    {selected && (
-                                      <span className="text-xs text-gray-400">
-                                        {selected.name} <span className="text-[#0057B8] font-data">{selected.points} pts</span>
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="divide-y divide-[#222] max-h-48 overflow-y-auto">
-                                    {availableCorps.map((corps, idx) => {
-                                      const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
-                                      const isCurrentSel = selections[caption.id] === value;
-                                      const wouldExceed = !isCurrentSel && (totalPoints - (selected?.points || 0) + corps.points > pointLimit);
-                                      return (
-                                        <CorpsOptionRow
-                                          key={idx}
-                                          corps={corps}
-                                          isSelected={isCurrentSel}
-                                          onSelect={() => handleSelectionChange(caption.id, corps)}
-                                          disabled={wouldExceed}
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                          {activeCaptionSelection && (
+                            <button
+                              onClick={() => handleSelectionChange(activeCaption, null)}
+                              className="flex items-center gap-2 px-2 py-1 text-red-400 hover:bg-red-500/10 rounded text-xs"
+                            >
+                              <X className="w-3 h-3" /> Clear
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    );
-                  })}
+
+                      {/* Corps List */}
+                      <div className="flex-1 overflow-y-auto">
+                        <div className="divide-y divide-[#222]">
+                          {availableCorps.map((corps, idx) => {
+                            const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
+                            const isCurrentSel = selections[activeCaption] === value;
+                            const wouldExceed = !isCurrentSel && (totalPoints - (activeCaptionSelection?.points || 0) + corps.points > pointLimit);
+                            return (
+                              <CorpsOptionRow
+                                key={idx}
+                                corps={corps}
+                                isSelected={isCurrentSel}
+                                onSelect={() => handleCorpsSelect(activeCaption, corps)}
+                                disabled={wouldExceed}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center text-center p-8">
+                      <div>
+                        <Award className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <h3 className="text-lg font-bold text-gray-400 mb-1">Select a Caption</h3>
+                        <p className="text-sm text-gray-600">
+                          Click on a caption from Your Lineup to see available corps
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
