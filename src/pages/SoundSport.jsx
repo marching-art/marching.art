@@ -250,10 +250,10 @@ const SoundSport = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-b from-green-900/30 to-[#0a0a0a] border-b border-green-500/20">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="h-full overflow-y-auto bg-[#0a0a0a]">
+      {/* Hero Header - Full width background */}
+      <div className="w-full bg-gradient-to-b from-green-900/30 to-[#0a0a0a] border-b border-green-500/20">
+        <div className="w-full px-4 py-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-green-500/20 rounded-lg border border-green-500/30">
               <Music className="w-8 h-8 text-green-500" />
@@ -271,9 +271,9 @@ const SoundSport = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
-        <div className="max-w-4xl mx-auto px-4">
+      {/* Tab Navigation - Full width background */}
+      <div className="w-full sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
+        <div className="w-full px-4">
           <nav className="flex gap-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -300,7 +300,7 @@ const SoundSport = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <AnimatePresence mode="wait">
           {/* OVERVIEW SECTION */}
           {activeSection === 'overview' && (
