@@ -117,27 +117,36 @@ function App() {
           {/* Offline Banner - Shows when network is unavailable */}
           <OfflineBanner />
 
-          {/* Global Components */}
+          {/* Global Toast Notifications - Mobile aware positioning */}
           <Toaster
-            position="top-right"
+            position="top-center"
+            containerClassName="!top-16 sm:!top-4 sm:!right-4 sm:!left-auto"
+            containerStyle={{
+              // Safe area + header offset on mobile
+              top: 'max(env(safe-area-inset-top, 0px) + 64px, 64px)',
+            }}
             toastOptions={{
               duration: 4000,
+              className: 'press-feedback',
               style: {
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '0.5rem',
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                fontSize: '14px',
+                padding: '12px 16px',
+                maxWidth: '90vw',
               },
               success: {
                 iconTheme: {
-                  primary: 'var(--color-primary)',
-                  secondary: 'var(--color-surface-secondary)',
+                  primary: '#00C853',
+                  secondary: '#1a1a1a',
                 },
               },
               error: {
                 iconTheme: {
-                  primary: 'var(--color-danger)',
-                  secondary: 'var(--color-surface-secondary)',
+                  primary: '#FF5252',
+                  secondary: '#1a1a1a',
                 },
               },
             }}
