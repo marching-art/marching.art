@@ -408,7 +408,7 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 bottom-20 lg:bottom-4 left-0 right-0 bg-[#0a0a0a] overflow-hidden"
+          className="fixed top-[84px] sm:top-20 bottom-[60px] lg:bottom-4 left-0 right-0 bg-[#0a0a0a] overflow-hidden"
         >
           <div className="h-full w-full overflow-hidden">
             {children}
