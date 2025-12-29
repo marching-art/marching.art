@@ -260,6 +260,158 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Get "hot" status for all corps in the season, calculated PER CAPTION.
+ * A corps is "hot" for a specific caption if they've performed above average
+ * in that caption during the recent window (last 10 days).
+ *
+ * Returns: { hotCorps: { "CorpsName|Year": { GE1: {isHot, improvement}, GE2: {...}, ... } } }
+ */
+exports.getHotCorps = onCall({ cors: true }, async (request) => {
+  const db = getDb();
+  const CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
+
+  try {
+    // Get season data
+    const seasonDoc = await db.doc("game-settings/season").get();
+    if (!seasonDoc.exists) {
+      return { success: true, hotCorps: {} };
+    }
+
+    const seasonData = seasonDoc.data();
+    const dataDocId = seasonData.dataDocId;
+
+    // Calculate current day
+    let currentDay = 1;
+    if (seasonData.schedule?.startDate) {
+      const now = new Date();
+      const startDate = seasonData.schedule.startDate.toDate();
+      const diffInMillis = now.getTime() - startDate.getTime();
+      currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // Define the lookback window (10 days)
+    const lookbackDays = 10;
+    const windowStart = Math.max(1, currentDay - lookbackDays);
+    const windowEnd = currentDay - 1; // Don't include today since scores may not be in yet
+
+    if (windowEnd < 1) {
+      // Season just started, no historical data to compare
+      return { success: true, hotCorps: {} };
+    }
+
+    // Get corps list for this season
+    const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
+    if (!corpsDataDoc.exists) {
+      return { success: true, hotCorps: {} };
+    }
+
+    const corpsList = corpsDataDoc.data().corpsValues || [];
+
+    // Get the years we need to fetch
+    const yearsToFetch = [...new Set(corpsList.map(c => c.sourceYear))];
+
+    // Fetch historical scores for all relevant years
+    const historicalDocs = await Promise.all(
+      yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
+    );
+
+    const historicalData = {};
+    historicalDocs.forEach(doc => {
+      if (doc.exists) {
+        historicalData[doc.id] = doc.data().data || [];
+      }
+    });
+
+    // For each caption, collect all corps' performance metrics
+    // Structure: { caption: [{ corpsName, sourceYear, recentAvg, improvement }, ...] }
+    const captionPerformance = {};
+    CAPTIONS.forEach(cap => { captionPerformance[cap] = []; });
+
+    for (const corps of corpsList) {
+      const { corpsName, sourceYear } = corps;
+      const yearData = historicalData[sourceYear] || [];
+
+      // For each caption, calculate performance metrics
+      for (const caption of CAPTIONS) {
+        const recentScores = [];
+        const allScores = [];
+
+        for (const event of yearData) {
+          const scoreData = event.scores?.find(s => s.corps === corpsName);
+          if (scoreData && scoreData.captions && scoreData.captions[caption] > 0) {
+            const score = scoreData.captions[caption];
+            allScores.push({ day: event.offSeasonDay, score });
+
+            if (event.offSeasonDay >= windowStart && event.offSeasonDay <= windowEnd) {
+              recentScores.push(score);
+            }
+          }
+        }
+
+        if (recentScores.length > 0 && allScores.length >= 3) {
+          const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+
+          // Calculate trend: compare recent to early season
+          const midpoint = Math.floor(allScores.length / 2);
+          const earlyScores = allScores.slice(0, midpoint).map(s => s.score);
+          const earlyAvg = earlyScores.length > 0
+            ? earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
+            : recentAvg;
+
+          // Improvement percentage from early season to recent
+          const improvement = earlyAvg > 0 ? ((recentAvg - earlyAvg) / earlyAvg) * 100 : 0;
+
+          captionPerformance[caption].push({
+            corpsName,
+            sourceYear,
+            recentAvg,
+            improvement,
+            recentCount: recentScores.length
+          });
+        }
+      }
+    }
+
+    // For each caption, determine which corps are "hot"
+    const hotCorps = {};
+
+    for (const caption of CAPTIONS) {
+      const performers = captionPerformance[caption];
+      if (performers.length === 0) continue;
+
+      // Sort by recent average and find thresholds
+      const sortedByRecent = [...performers].sort((a, b) => b.recentAvg - a.recentAvg);
+      const medianIndex = Math.floor(sortedByRecent.length / 2);
+      const medianRecentAvg = sortedByRecent[medianIndex].recentAvg;
+      const topQuartileThreshold = sortedByRecent[Math.floor(sortedByRecent.length * 0.25)]?.recentAvg || medianRecentAvg;
+
+      // Determine hot status for each corps in this caption
+      for (const perf of performers) {
+        const corpsId = `${perf.corpsName}|${perf.sourceYear}`;
+        const isAboveMedian = perf.recentAvg >= medianRecentAvg;
+        const isImproving = perf.improvement > 2; // More than 2% improvement
+        const isTopQuartile = perf.recentAvg >= topQuartileThreshold;
+
+        if (!hotCorps[corpsId]) {
+          hotCorps[corpsId] = {};
+        }
+
+        hotCorps[corpsId][caption] = {
+          isHot: (isAboveMedian && isImproving) || isTopQuartile,
+          improvement: Math.round(perf.improvement * 10) / 10,
+          recentAvg: Math.round(perf.recentAvg * 100) / 100
+        };
+      }
+    }
+
+    return { success: true, hotCorps, windowStart, windowEnd, currentDay };
+  } catch (error) {
+    logger.error("Error calculating hot corps:", error);
+    return { success: true, hotCorps: {} };
+  }
+});
+
+/**
  * Get caption trend analytics for a lineup
  * Returns trend indicators without exposing raw scores
  */
