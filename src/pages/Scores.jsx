@@ -306,7 +306,7 @@ const Scores = () => {
   // =============================================================================
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="h-full overflow-y-auto bg-[#0a0a0a]">
       {/* Header Bar */}
       <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
         <div className="w-full flex items-center justify-between">
