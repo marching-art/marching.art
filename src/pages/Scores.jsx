@@ -217,6 +217,7 @@ const Scores = () => {
     loading,
     error,
     allShows,
+    unfilteredShows,
     stats,
     aggregatedScores,
     archivedSeasons,
@@ -430,7 +431,7 @@ const Scores = () => {
             {/* SOUNDSPORT TAB */}
             {activeTab === 'soundsport' && (
               <div className="p-4">
-                <SoundSportTab loading={loading} allShows={allShows} />
+                <SoundSportTab loading={loading} allShows={unfilteredShows} />
               </div>
             )}
 

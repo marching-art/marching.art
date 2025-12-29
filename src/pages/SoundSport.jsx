@@ -215,13 +215,13 @@ const ResultCard = ({ score, showAwards = false }) => {
 
 const SoundSport = () => {
   const [activeSection, setActiveSection] = useState('overview');
-  const { allShows, loading } = useScoresData();
+  const { unfilteredShows, loading } = useScoresData();
 
   // Get SoundSport shows and results
   const soundSportData = useMemo(() => {
-    if (!allShows) return { shows: [], latestShow: null };
+    if (!unfilteredShows) return { shows: [], latestShow: null };
 
-    const shows = allShows.filter(show =>
+    const shows = unfilteredShows.filter(show =>
       show.scores?.some(s => s.corpsClass === 'soundSport')
     ).map(show => ({
       ...show,
@@ -241,7 +241,7 @@ const SoundSport = () => {
     const classWinners = latestShow ? determineClassWinners(latestShow.scores) : null;
 
     return { shows, latestShow, classWinners };
-  }, [allShows]);
+  }, [unfilteredShows]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Info },

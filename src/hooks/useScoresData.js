@@ -381,6 +381,7 @@ export const useScoresData = (options = {}) => {
     loading,
     error,
     allShows: filteredShows,
+    unfilteredShows: allShows,
     availableDays,
     archivedSeasons,
     stats,
