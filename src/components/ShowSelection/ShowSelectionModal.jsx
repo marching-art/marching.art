@@ -48,6 +48,10 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
           const day = dayEvent.offSeasonDay || dayEvent.day || 0;
           if (day >= weekStart && day <= weekEnd && dayEvent.shows) {
             dayEvent.shows.forEach(show => {
+              // Skip championship shows - they are auto-enrolled based on class
+              if (show.isChampionship) {
+                return;
+              }
               weekShows.push({
                 ...show,
                 day: day,
@@ -179,8 +183,27 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
             ) : availableShows.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 mb-1">No shows available this week</p>
-                <p className="text-xs text-gray-600">Check back next week for new events</p>
+                {currentWeek === 7 ? (
+                  <>
+                    <p className="text-sm text-[#0057B8] font-bold mb-2">🏆 Championship Week</p>
+                    <p className="text-sm text-gray-400 mb-2">
+                      All championship events have automatic enrollment!
+                    </p>
+                    <div className="text-xs text-gray-500 space-y-1 max-w-md mx-auto text-left px-8">
+                      <p><strong>Days 45-46:</strong> Open & A Class Prelims/Finals (Marion, IN)</p>
+                      <p><strong>Days 47-49:</strong> World Championships (Indianapolis, IN)</p>
+                      <p><strong>Day 49:</strong> SoundSport Festival (Indianapolis, IN)</p>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-3">
+                      Your corps will compete based on class eligibility and advancement.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-500 mb-1">No shows available this week</p>
+                    <p className="text-xs text-gray-600">Check back next week for new events</p>
+                  </>
+                )}
               </div>
             ) : (
               <>
