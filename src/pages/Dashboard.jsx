@@ -483,18 +483,12 @@ const Dashboard = () => {
                       <div className="text-[11px] sm:text-[10px] font-bold text-gray-400 group-hover:text-[#0057B8]">
                         {caption.name}
                       </div>
-                      <div className={`text-[11px] sm:text-[9px] truncate ${
+                      <div className={`text-[11px] sm:text-[9px] ${
                         hasValue
                           ? 'text-gray-300 group-hover:text-white'
                           : 'text-[#0057B8] font-medium'
-                      }`} title={corpsName || undefined}>
-                        {hasValue ? (
-                          <span className="sm:hidden">{corpsName?.slice(0, 12) || corpsName}</span>
-                        ) : null}
-                        {hasValue ? (
-                          <span className="hidden sm:inline">{corpsName?.slice(0, 6)}</span>
-                        ) : null}
-                        {!hasValue && '+ Draft'}
+                      }`}>
+                        {hasValue ? corpsName : '+ Draft'}
                       </div>
                     </button>
                   );
