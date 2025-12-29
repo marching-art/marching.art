@@ -201,19 +201,26 @@ export const useTickerData = () => {
         .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     }
 
-    // Get previous day results for movers calculation
-    const previousDayRecap = allRecaps.find(r => r.offSeasonDay === displayDay - 1);
-    const previousResults = new Map();
-    if (previousDayRecap) {
-      previousDayRecap.shows?.forEach(show => {
-        show.results?.forEach(result => {
-          previousResults.set(result.corpsName, {
-            score: result.totalScore || 0,
-            corpsClass: result.corpsClass,
+    // Get previous scores for movers calculation - find each corps' most recent score before display day
+    const corpsPreviousScores = new Map();
+    allRecaps
+      .filter(r => r.offSeasonDay < displayDay)
+      .sort((a, b) => b.offSeasonDay - a.offSeasonDay) // Most recent first
+      .forEach(recap => {
+        recap.shows?.forEach(show => {
+          show.results?.forEach(result => {
+            if (result.corpsClass === 'soundSport') return;
+            // Only store the most recent score (first one we find due to sorting)
+            if (!corpsPreviousScores.has(result.corpsName)) {
+              corpsPreviousScores.set(result.corpsName, {
+                score: result.totalScore || 0,
+                corpsClass: result.corpsClass,
+                day: recap.offSeasonDay,
+              });
+            }
           });
         });
       });
-    }
 
     // Calculate season data for leaders
     const corpsSeasonScores = new Map();
@@ -281,10 +288,10 @@ export const useTickerData = () => {
         } : null,
       };
 
-      // Movers for this class
+      // Movers for this class - compare current score to most recent previous score
       const movers = [];
       classResults.forEach(result => {
-        const prev = previousResults.get(result.corpsName);
+        const prev = corpsPreviousScores.get(result.corpsName);
         if (prev && prev.corpsClass === classKey) {
           const change = (result.totalScore || 0) - prev.score;
           if (Math.abs(change) > 0.1) {
@@ -293,6 +300,9 @@ export const useTickerData = () => {
               fullName: result.corpsName,
               change: change.toFixed(3),
               direction: change > 0 ? 'up' : 'down',
+              currentScore: (result.totalScore || 0).toFixed(3),
+              previousScore: prev.score.toFixed(3),
+              daysSince: displayDay - prev.day,
             });
           }
         }
