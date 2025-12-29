@@ -287,21 +287,6 @@ const SoundSport = () => {
                 </p>
               </section>
 
-              {/* CTA */}
-              <div className="bg-gradient-to-r from-green-900/30 to-green-800/20 border border-green-500/30 rounded-lg p-6 text-center">
-                <Trophy className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-white mb-2">Ready to Compete?</h3>
-                <p className="text-gray-300 text-sm mb-4">
-                  Start your SoundSport journey today. Create your ensemble and begin competing!
-                </p>
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-500 text-black font-bold rounded-sm hover:bg-green-400 transition-colors"
-                >
-                  <Play className="w-4 h-4" />
-                  Get Started
-                </Link>
-              </div>
             </motion.div>
           )}
 

@@ -91,9 +91,6 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-white text-sm">Welcome to SoundSport!</h3>
-              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded">
-                New
-              </span>
             </div>
             <p className="text-gray-400 text-xs truncate">
               Your gateway to marching music performance
