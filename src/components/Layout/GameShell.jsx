@@ -163,12 +163,15 @@ const TickerBar = () => {
       }
     }
 
-    // Add caption leaders for each class
-    for (const classKey of tickerData.availableClasses || []) {
-      const classData = tickerData.byClass?.[classKey];
-      if (classData?.captionLeaders?.ge || classData?.captionLeaders?.visual || classData?.captionLeaders?.music) {
-        sections.push({ type: 'captions', classKey, label: classData.label });
-      }
+    // Add combined caption leaders by type (GE, VIS, MUS)
+    if (tickerData.combinedCaptionLeaders?.ge?.length > 0) {
+      sections.push({ type: 'captions_ge', classKey: null, label: 'GE' });
+    }
+    if (tickerData.combinedCaptionLeaders?.visual?.length > 0) {
+      sections.push({ type: 'captions_vis', classKey: null, label: 'Visual' });
+    }
+    if (tickerData.combinedCaptionLeaders?.music?.length > 0) {
+      sections.push({ type: 'captions_mus', classKey: null, label: 'Music' });
     }
 
     // Add movers for each class
@@ -323,59 +326,69 @@ const TickerBar = () => {
           </>
         );
 
-      case 'captions':
-        // Class-specific caption leaders (GE, Visual, Music)
-        const classCaptionStats = captionStats?.byClass?.[classKey];
+      case 'captions_ge':
+        // GE Caption Leaders (combined across all classes)
         return (
           <>
-            <div className={`flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-${colors.bg}-500/20 border border-${colors.bg}-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider`}>
-              <Sparkles className={`w-3 h-3 text-${colors.text}-400`} />
-              <span className={`text-${colors.text}-400 whitespace-nowrap`}>{label} Captions</span>
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span className="text-amber-400 whitespace-nowrap">GE Caption Leaders</span>
             </div>
             <div className="w-px h-4 bg-[#333]" />
-
-            {/* GE Leader */}
-            {classData?.captionLeaders?.ge && (
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-amber-400 text-[9px] sm:text-[10px] font-bold">GE</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{classData.captionLeaders.ge.fullName}</span>
-                <span className="text-amber-300 tabular-nums font-mono text-[11px] sm:text-xs">{classData.captionLeaders.ge.score}</span>
+            {tickerData.combinedCaptionLeaders?.ge?.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-amber-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+                {idx < tickerData.combinedCaptionLeaders.ge.length - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                )}
               </div>
-            )}
-            <div className="w-px h-3 bg-[#333]" />
+            ))}
+          </>
+        );
 
-            {/* Visual Leader */}
-            {classData?.captionLeaders?.visual && (
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-cyan-400 text-[9px] sm:text-[10px] font-bold">VIS</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{classData.captionLeaders.visual.fullName}</span>
-                <span className="text-cyan-300 tabular-nums font-mono text-[11px] sm:text-xs">{classData.captionLeaders.visual.score}</span>
+      case 'captions_vis':
+        // Visual Caption Leaders (combined across all classes)
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-cyan-500/20 border border-cyan-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Eye className="w-3 h-3 text-cyan-400" />
+              <span className="text-cyan-400 whitespace-nowrap">Visual Caption Leaders</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+            {tickerData.combinedCaptionLeaders?.visual?.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-cyan-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+                {idx < tickerData.combinedCaptionLeaders.visual.length - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                )}
               </div>
-            )}
-            <div className="w-px h-3 bg-[#333]" />
+            ))}
+          </>
+        );
 
-            {/* Music Leader */}
-            {classData?.captionLeaders?.music && (
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className="text-pink-400 text-[9px] sm:text-[10px] font-bold">MUS</span>
-                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{classData.captionLeaders.music.fullName}</span>
-                <span className="text-pink-300 tabular-nums font-mono text-[11px] sm:text-xs">{classData.captionLeaders.music.score}</span>
+      case 'captions_mus':
+        // Music Caption Leaders (combined across all classes)
+        return (
+          <>
+            <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 bg-pink-500/20 border border-pink-500/30 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Music className="w-3 h-3 text-pink-400" />
+              <span className="text-pink-400 whitespace-nowrap">Music Caption Leaders</span>
+            </div>
+            <div className="w-px h-4 bg-[#333]" />
+            {tickerData.combinedCaptionLeaders?.music?.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className="text-gray-500 text-[9px] sm:text-[10px] font-mono">#{idx + 1}</span>
+                <span className="text-gray-400 font-medium text-[11px] sm:text-xs whitespace-nowrap">{item.fullName}</span>
+                <span className="text-pink-300 tabular-nums font-mono text-[11px] sm:text-xs">{item.score}</span>
+                {idx < tickerData.combinedCaptionLeaders.music.length - 1 && (
+                  <div className="w-px h-3 bg-[#333] ml-0.5 sm:ml-1" />
+                )}
               </div>
-            )}
-
-            {/* Top 3 from each caption - hidden on mobile for space */}
-            {classCaptionStats?.topGE?.length > 0 && (
-              <>
-                <div className="hidden sm:block w-px h-4 bg-[#333]" />
-                {classCaptionStats.topGE.slice(0, 3).map((item, idx) => (
-                  <div key={`ge-${idx}`} className="hidden sm:flex items-center gap-1 flex-shrink-0 text-[10px]">
-                    <span className="text-gray-600">{idx + 1}.</span>
-                    <span className="text-gray-500">{item.abbr}</span>
-                    <span className="text-amber-400/60 tabular-nums">{item.latestGE.toFixed(1)}</span>
-                  </div>
-                ))}
-              </>
-            )}
+            ))}
           </>
         );
 
