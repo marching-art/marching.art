@@ -6,7 +6,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trophy, Calendar, Archive, TrendingUp, TrendingDown } from 'lucide-react';
+import { Trophy, Calendar, Archive, TrendingUp, TrendingDown, Music } from 'lucide-react';
 import { useAuth } from '../App';
 import { useUserStore } from '../store/userStore';
 import { useSeasonStore } from '../store/seasonStore';
@@ -14,6 +14,7 @@ import { useScoresData } from '../hooks/useScoresData';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
+import SoundSportTab from '../components/Scores/tabs/SoundSportTab';
 
 // =============================================================================
 // STANDINGS TABLE COLUMNS - Full spreadsheet with all captions
@@ -331,23 +332,27 @@ const Scores = () => {
       {/* Tab Bar */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
         <div className="w-full px-4">
-          <nav className="flex gap-4">
+          <nav className="flex gap-4 overflow-x-auto scrollbar-hide">
             {[
               { id: 'latest', label: 'Latest' },
               { id: 'standings', label: 'Standings' },
+              { id: 'soundsport', label: 'SoundSport', icon: Music, accent: 'green' },
               { id: 'history', label: 'History' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  py-3 text-xs font-bold uppercase tracking-wider border-b-2 -mb-px
+                  flex items-center gap-1.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap
                   ${activeTab === tab.id
-                    ? 'text-[#0057B8] border-[#0057B8]'
+                    ? tab.accent === 'green'
+                      ? 'text-green-500 border-green-500'
+                      : 'text-[#0057B8] border-[#0057B8]'
                     : 'text-gray-500 border-transparent hover:text-gray-300'
                   }
                 `}
               >
+                {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
                 {tab.label}
               </button>
             ))}
@@ -420,6 +425,13 @@ const Scores = () => {
                   </div>
                 }
               />
+            )}
+
+            {/* SOUNDSPORT TAB */}
+            {activeTab === 'soundsport' && (
+              <div className="p-4">
+                <SoundSportTab loading={loading} allShows={allShows} />
+              </div>
             )}
 
             {/* HISTORY TAB */}

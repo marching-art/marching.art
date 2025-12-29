@@ -16,3 +16,6 @@ export { default as MorningReport } from './MorningReport';
 // Onboarding and quick start components
 export { default as OnboardingTour } from './OnboardingTour';
 export { default as QuickStartGuide, QuickStartButton } from './QuickStartGuide';
+
+// SoundSport welcome component
+export { default as SoundSportWelcome, SoundSportBanner } from './SoundSportWelcome';

@@ -34,6 +34,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Landing = lazy(() => import('./pages/Landing'));
 const RetiredCorpsGallery = lazy(() => import('./pages/RetiredCorpsGallery'));
 const CorpsHistory = lazy(() => import('./pages/CorpsHistory'));
+const SoundSport = lazy(() => import('./pages/SoundSport'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -260,6 +261,14 @@ function App() {
             <ProtectedRoute>
               <GameShell>
                 <Page name="Corps History"><CorpsHistory /></Page>
+              </GameShell>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/soundsport" element={
+            <ProtectedRoute>
+              <GameShell>
+                <Page name="SoundSport"><SoundSport /></Page>
               </GameShell>
             </ProtectedRoute>
           } />
