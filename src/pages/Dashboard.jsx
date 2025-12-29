@@ -25,6 +25,7 @@ import {
   MorningReport,
   OnboardingTour,
   QuickStartGuide,
+  SoundSportWelcome,
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import SeasonSetupWizard from '../components/SeasonSetupWizard';
@@ -386,6 +387,11 @@ const Dashboard = () => {
 
             {/* LEFT COLUMN - My Team */}
             <div className={`bg-[#1a1a1a] p-4 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
+              {/* SoundSport Welcome Card - Show for SoundSport directors */}
+              {activeCorpsClass === 'soundSport' && (
+                <SoundSportWelcome showCompact={true} />
+              )}
+
               {/* Team Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
