@@ -371,10 +371,10 @@ const Dashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveMobileTab(tab.id)}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors ${
+                className={`flex-1 py-3.5 min-h-[48px] text-sm font-bold uppercase tracking-wide transition-all press-feedback ${
                   activeMobileTab === tab.id
                     ? 'text-[#0057B8] border-b-2 border-[#0057B8] bg-[#0a0a0a]'
-                    : 'text-gray-500 border-b-2 border-transparent'
+                    : 'text-gray-500 border-b-2 border-transparent active:text-white'
                 }`}
               >
                 {tab.label}

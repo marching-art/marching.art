@@ -22,14 +22,14 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-xs h-8',
-  md: 'px-3 py-2 text-sm h-10',
-  lg: 'px-4 py-2.5 text-sm h-12',
+  sm: 'px-3 py-2 text-sm h-11',
+  md: 'px-3.5 py-2.5 text-base h-12',
+  lg: 'px-4 py-3 text-base h-14',
 };
 
 const iconSizes = {
-  sm: 'w-3 h-3',
-  md: 'w-4 h-4',
+  sm: 'w-4 h-4',
+  md: 'w-5 h-5',
   lg: 'w-5 h-5',
 };
 
@@ -58,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1"
+            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>
@@ -75,7 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`
               w-full rounded-sm
               bg-[#0a0a0a] border
-              text-white text-sm placeholder-gray-600
+              text-white text-base placeholder-gray-600
               transition-colors
               focus:outline-none focus:border-[#0057B8]
               disabled:opacity-50 disabled:cursor-not-allowed
@@ -132,7 +132,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1"
+            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>
@@ -213,7 +213,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1"
+            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5"
           >
             {label}
           </label>

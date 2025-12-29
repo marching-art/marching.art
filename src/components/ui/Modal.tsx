@@ -151,10 +151,10 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 text-gray-500 hover:text-white transition-colors"
+                className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
                 aria-label="Close modal"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -208,16 +208,16 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   showCloseButton = true,
 }) => (
   <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-    <div className="text-xs font-bold uppercase tracking-wider text-gray-300">
+    <div className="text-sm font-bold uppercase tracking-wider text-gray-300">
       {children}
     </div>
     {showCloseButton && onClose && (
       <button
         onClick={onClose}
-        className="p-1 text-gray-500 hover:text-white transition-colors"
+        className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
         aria-label="Close modal"
       >
-        <X className="w-4 h-4" />
+        <X className="w-5 h-5" />
       </button>
     )}
   </div>
@@ -299,7 +299,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="h-9 px-4 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-colors disabled:opacity-50"
+            className="h-12 px-5 border border-[#333] text-gray-400 text-base font-bold uppercase tracking-wider hover:border-[#444] hover:text-white active:bg-white/5 transition-all press-feedback disabled:opacity-50 rounded-sm"
           >
             {cancelText}
           </button>
@@ -307,10 +307,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`
-              h-9 px-4 text-sm font-bold uppercase tracking-wider transition-colors disabled:opacity-50
+              h-12 px-5 text-base font-bold uppercase tracking-wider transition-all press-feedback-strong disabled:opacity-50 rounded-sm
               ${variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-500'
-                : 'bg-[#0057B8] text-white hover:bg-[#0066d6]'}
+                ? 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700'
+                : 'bg-[#0057B8] text-white hover:bg-[#0066d6] active:bg-[#004a9e]'}
             `}
           >
             {isLoading ? 'Loading...' : confirmText}
