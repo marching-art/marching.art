@@ -540,6 +540,13 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
   const day46 = schedule.find((d) => d.offSeasonDay === 46);
   if (day46) day46.shows = [];
 
+  // Swap DCI to marching.art in show names for off-season branding
+  schedule.forEach((day) => {
+    day.shows.forEach((show) => {
+      show.eventName = show.eventName.replace(/DCI/g, "marching.art");
+    });
+  });
+
   logger.info("Advanced schedule generated successfully.");
   return schedule;
 }
