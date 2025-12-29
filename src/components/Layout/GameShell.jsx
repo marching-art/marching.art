@@ -98,19 +98,19 @@ const TopNav = () => {
   );
 };
 
-// Nav Item Component
+// Nav Item Component - with touch target sizing
 const NavItem = ({ to, icon: Icon, label }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+      `flex items-center gap-2 px-4 py-2.5 min-h-touch text-sm font-medium rounded transition-all duration-150 press-feedback ${
         isActive
           ? 'bg-[#0057B8] text-white'
           : 'text-gray-400 hover:text-white hover:bg-white/5'
       }`
     }
   >
-    <Icon className="w-4 h-4" />
+    <Icon className="w-5 h-5" />
     <span>{label}</span>
   </NavLink>
 );
@@ -438,13 +438,13 @@ const TickerBar = () => {
 
   return (
     <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-      {/* Navigation arrows - desktop only */}
+      {/* Navigation arrows - touch-friendly sizing */}
       <button
         onClick={goToPrev}
-        className="hidden md:flex items-center justify-center w-6 h-full bg-[#111] border-r border-[#333] hover:bg-[#222] transition-colors"
+        className="hidden md:flex items-center justify-center w-10 h-full bg-[#111] border-r border-[#333] hover:bg-[#222] active:bg-[#333] transition-colors press-feedback"
         aria-label="Previous section"
       >
-        <ChevronLeft className="w-4 h-4 text-gray-500" />
+        <ChevronLeft className="w-5 h-5 text-gray-400" />
       </button>
 
       {/* Ticker content */}
@@ -455,26 +455,28 @@ const TickerBar = () => {
         {renderSectionContent()}
       </div>
 
-      {/* Navigation arrows - desktop only */}
+      {/* Navigation arrows - touch-friendly sizing */}
       <button
         onClick={goToNext}
-        className="hidden md:flex items-center justify-center w-6 h-full bg-[#111] border-l border-[#333] hover:bg-[#222] transition-colors"
+        className="hidden md:flex items-center justify-center w-10 h-full bg-[#111] border-l border-[#333] hover:bg-[#222] active:bg-[#333] transition-colors press-feedback"
         aria-label="Next section"
       >
-        <ChevronRight className="w-4 h-4 text-gray-500" />
+        <ChevronRight className="w-5 h-5 text-gray-400" />
       </button>
 
-      {/* Section indicator dots */}
-      <div className="hidden md:flex items-center gap-1 px-2 border-l border-[#333]">
+      {/* Section indicator dots - touch-friendly hitboxes */}
+      <div className="hidden md:flex items-center gap-0.5 px-2 border-l border-[#333]">
         {tickerSections.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setActiveSection(idx)}
-            className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              idx === activeSection ? 'bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'
-            }`}
+            className="p-1.5 touch-target"
             aria-label={`Go to section ${idx + 1}`}
-          />
+          >
+            <div className={`w-2 h-2 rounded-full transition-colors ${
+              idx === activeSection ? 'bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'
+            }`} />
+          </button>
         ))}
       </div>
     </div>
@@ -510,9 +512,9 @@ const GameShell = ({ children }) => {
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 bottom-[60px] lg:bottom-4 left-0 right-0 bg-[#0a0a0a] overflow-y-auto"
+          className="fixed top-[84px] sm:top-20 bottom-[72px] lg:bottom-4 left-0 right-0 bg-[#0a0a0a] scroll-momentum"
         >
-          <div className="h-full w-full overflow-y-auto">
+          <div className="h-full w-full overflow-y-auto scroll-contain">
             {children}
           </div>
         </main>

@@ -71,20 +71,20 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       {/* TOP BAR */}
-      <div className="h-12 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-sm overflow-hidden">
+      <div className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-sm overflow-hidden aspect-avatar">
             <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
           </div>
-          <span className="text-sm font-bold text-white uppercase tracking-wider">
+          <span className="text-base font-bold text-white uppercase tracking-wider">
             marching.art
           </span>
         </div>
-        <div className="ml-auto flex items-center gap-4">
-          <Link to="/privacy" className="text-xs text-gray-500 hover:text-gray-300">
+        <div className="ml-auto flex items-center">
+          <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
             Privacy
           </Link>
-          <Link to="/terms" className="text-xs text-gray-500 hover:text-gray-300">
+          <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
             Terms
           </Link>
         </div>
@@ -98,67 +98,105 @@ const Landing = () => {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <Trophy className="w-5 h-5 text-[#0057B8]" />
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
                 Live Scores
               </span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-white uppercase tracking-wide">
+            <h1 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wide">
               Fantasy Drum Corps
             </h1>
-            <h2 className="text-lg lg:text-xl font-bold text-[#0057B8]">
+            <h2 className="text-lg md:text-xl font-bold text-[#0057B8]">
               2025 Season
             </h2>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-base text-gray-500 mt-2">
               The season starts now.
             </p>
           </div>
 
-          {/* Live Scoreboard - Simple Static Table */}
+          {/* Live Scoreboard - Mobile Cards / Desktop Table */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="bg-[#1a1a1a] border border-[#333] flex-1 flex flex-col overflow-hidden">
               {/* Scoreboard Header */}
-              <div className="bg-[#222] px-3 py-2 border-b border-[#333] flex items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   World Class Standings
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-[10px] text-green-500 font-bold uppercase">Live</span>
+                  <span className="text-xs text-green-500 font-bold uppercase">Live</span>
                 </div>
               </div>
 
-              {/* Static Table */}
-              <div className="flex-1 overflow-auto">
+              {/* Mobile Card View - Clean, readable stacked layout */}
+              <div className="flex-1 overflow-auto scroll-momentum md:hidden">
+                <div className="divide-y divide-[#333]/50">
+                  {LIVE_SCORES.map((row, idx) => (
+                    <div
+                      key={row.rank}
+                      className={`flex items-center gap-3 px-3 py-3 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+                    >
+                      {/* Rank Badge */}
+                      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#222] rounded text-sm font-bold text-gray-400 tabular-nums">
+                        {row.rank}
+                      </div>
+
+                      {/* Corps Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-base text-white font-medium truncate">{row.corps}</div>
+                        <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 tabular-nums">
+                          <span>GE {row.ge.toFixed(2)}</span>
+                          <span>VIS {row.visual.toFixed(2)}</span>
+                          <span>MUS {row.music.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {/* Score + Change */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-lg text-white font-bold tabular-nums">{row.score.toFixed(3)}</div>
+                        <div className={`text-xs tabular-nums ${
+                          row.change.startsWith('+') ? 'text-green-500' :
+                          row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {row.change}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop Table View - Full data density */}
+              <div className="flex-1 overflow-auto scroll-momentum hidden md:block">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-[#1a1a1a] border-b border-[#333]">
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-left w-10">RK</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-left">Corps</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">GE</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">VIS</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-14">MUS</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right w-16">Total</th>
-                      <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center w-12">+/-</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-left w-10">RK</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">Corps</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">GE</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">VIS</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">MUS</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-20">Total</th>
+                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-14">+/-</th>
                     </tr>
                   </thead>
                   <tbody>
                     {LIVE_SCORES.map((row, idx) => (
                       <tr
                         key={row.rank}
-                        className={`border-b border-[#333]/50 h-10 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
+                        className={`border-b border-[#333]/50 h-11 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
                       >
                         <td className="px-2 py-1">
-                          <span className="inline-flex items-center justify-center w-6 h-6 bg-[#222] text-xs font-bold text-gray-400 tabular-nums">
+                          <span className="inline-flex items-center justify-center w-7 h-7 bg-[#222] text-sm font-bold text-gray-400 tabular-nums">
                             {row.rank}
                           </span>
                         </td>
-                        <td className="px-2 py-1 text-sm text-white font-medium">{row.corps}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.ge.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.visual.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-xs text-gray-400 tabular-nums text-right">{row.music.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-sm text-white font-bold tabular-nums text-right">{row.score.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-base text-white font-medium">{row.corps}</td>
+                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.ge.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.visual.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.music.toFixed(3)}</td>
+                        <td className="px-2 py-1 text-base text-white font-bold tabular-nums text-right">{row.score.toFixed(3)}</td>
                         <td className="px-2 py-1 text-center">
-                          <span className={`text-xs tabular-nums ${
+                          <span className={`text-sm tabular-nums ${
                             row.change.startsWith('+') ? 'text-green-500' :
                             row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
                           }`}>
@@ -174,17 +212,17 @@ const Landing = () => {
 
             {/* Stats Strip */}
             <div className="mt-4 grid grid-cols-3 gap-px bg-[#333]">
-              <div className="bg-[#1a1a1a] p-3 text-center">
-                <div className="text-lg font-bold text-white tabular-nums">2,847</div>
-                <div className="text-[10px] text-gray-500 uppercase">Directors</div>
+              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
+                <div className="text-lg md:text-xl font-bold text-white tabular-nums">2,847</div>
+                <div className="text-xs text-gray-500 uppercase">Directors</div>
               </div>
-              <div className="bg-[#1a1a1a] p-3 text-center">
-                <div className="text-lg font-bold text-white tabular-nums">156</div>
-                <div className="text-[10px] text-gray-500 uppercase">Leagues</div>
+              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
+                <div className="text-lg md:text-xl font-bold text-white tabular-nums">156</div>
+                <div className="text-xs text-gray-500 uppercase">Leagues</div>
               </div>
-              <div className="bg-[#1a1a1a] p-3 text-center">
-                <div className="text-lg font-bold text-white tabular-nums">Week 4</div>
-                <div className="text-[10px] text-gray-500 uppercase">Current</div>
+              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
+                <div className="text-lg md:text-xl font-bold text-white tabular-nums">Week 4</div>
+                <div className="text-xs text-gray-500 uppercase">Current</div>
               </div>
             </div>
           </div>
@@ -215,11 +253,11 @@ const Landing = () => {
 
                 {/* Email Input */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
                       type="email"
                       placeholder="director@example.com"
@@ -227,18 +265,18 @@ const Landing = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
-                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
                   </div>
                 </div>
 
                 {/* Password Input */}
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
                       type="password"
                       placeholder="••••••••"
@@ -246,62 +284,62 @@ const Landing = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
-                      className="w-full h-10 pl-10 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
                   </div>
                 </div>
 
-                {/* Sign In Button */}
+                {/* Sign In Button - 48px min height for touch */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
                 >
                   {loading ? (
                     'Signing in...'
                   ) : (
                     <>
                       Sign In
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   )}
                 </button>
 
                 {/* Divider */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 py-1">
                   <div className="flex-1 h-px bg-[#333]" />
-                  <span className="text-[10px] text-gray-500 uppercase">or</span>
+                  <span className="text-xs text-gray-500 uppercase">or</span>
                   <div className="flex-1 h-px bg-[#333]" />
                 </div>
 
-                {/* Register Link */}
+                {/* Register Link - 48px min height for touch */}
                 <Link
                   to="/register"
-                  className="w-full h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-colors"
+                  className="w-full h-12 border border-[#333] text-gray-400 font-bold text-base uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:bg-white/5 transition-all duration-150 press-feedback rounded-sm"
                 >
                   Create Account
                 </Link>
               </form>
 
               {/* Card Footer */}
-              <div className="px-4 py-3 border-t border-[#333] bg-[#1a1a1a]/50">
-                <Link to="/forgot-password" className="text-xs text-gray-500 hover:text-[#0057B8]">
+              <div className="px-4 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
+                <Link to="/forgot-password" className="inline-flex items-center px-2 py-2.5 -ml-2 min-h-touch text-sm text-gray-500 hover:text-[#0057B8] active:text-[#0066d6] transition-colors press-feedback">
                   Forgot password?
                 </Link>
               </div>
             </div>
 
             {/* Footer Note */}
-            <p className="mt-4 text-center text-[10px] text-gray-600">
+            <p className="mt-4 text-center text-xs text-gray-600">
               Free to play. No credit card required.
             </p>
           </div>
         </div>
       </div>
 
-      {/* BOTTOM BAR */}
-      <div className="h-8 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-center">
-        <span className="text-[10px] text-gray-600">
+      {/* BOTTOM BAR - Taller for mobile readability */}
+      <div className="h-10 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-center px-4">
+        <span className="text-xs text-gray-600 text-center">
           © 2025 marching.art — Fantasy Sports for the Marching Arts
         </span>
       </div>
