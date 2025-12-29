@@ -2,20 +2,18 @@
 // SOUNDSPORT PAGE - Entry Point for New Directors
 // =============================================================================
 // Comprehensive, welcoming page for SoundSport ensembles
-// Features: Interactive rules, ratings system, results display, class winners
+// Features: Interactive rules, ratings system overview, guidelines
+// Note: Results are displayed in the Scores section (/scores?tab=soundsport)
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Music, Medal, Trophy, Users, Clock, Zap, Volume2, Shield,
-  ChevronDown, ChevronRight, Star, Award, Target, Sparkles,
+  ChevronDown, Star, Award, Target, Sparkles,
   Play, Info, BookOpen, CheckCircle, AlertCircle, Mic2
 } from 'lucide-react';
-import { useScoresData } from '../hooks/useScoresData';
 import { Card } from '../components/ui/Card';
-import LoadingScreen from '../components/LoadingScreen';
-import EmptyState from '../components/EmptyState';
 
 // =============================================================================
 // CONSTANTS
@@ -50,53 +48,6 @@ const PERFORMANCE_RULES = [
   { title: 'Live Music Only', content: 'All music must be performed live in real-time. Sequenced music and loops are prohibited.', icon: Mic2 },
   { title: 'Safety', content: 'No pyrotechnics, hazardous materials, or powders. Keep the performance area safe.', icon: Shield },
 ];
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-const getSoundSportRating = (score) => {
-  for (const threshold of RATING_THRESHOLDS) {
-    if (score >= threshold.min) return threshold;
-  }
-  return RATING_THRESHOLDS[RATING_THRESHOLDS.length - 1];
-};
-
-const getRatingOrder = (score) => {
-  if (score >= 90) return 0;
-  if (score >= 75) return 1;
-  if (score >= 60) return 2;
-  return 3;
-};
-
-// Determine class winner categories from results
-const determineClassWinners = (scores) => {
-  if (!scores || scores.length === 0) return null;
-
-  // Group by rating, then find highest within each potential class
-  const goldScores = scores.filter(s => s.score >= 90).sort((a, b) => b.score - a.score);
-
-  if (goldScores.length === 0) return null;
-
-  // Best in Show is highest scoring ensemble
-  const bestInShow = goldScores[0];
-
-  // Class categories (simplified - in real data would have member counts)
-  const youthSmall = goldScores.find(s => s.ageClass === 'youth' && s.memberCount < 50);
-  const youthLarge = goldScores.find(s => s.ageClass === 'youth' && s.memberCount >= 50);
-  const allAgeSmall = goldScores.find(s => s.ageClass === 'allAge' && s.memberCount < 50);
-  const allAgeLarge = goldScores.find(s => s.ageClass === 'allAge' && s.memberCount >= 50);
-
-  return {
-    bestInShow,
-    classWinners: [
-      youthSmall && { category: 'Youth, Under 50 Members', ensemble: youthSmall },
-      youthLarge && { category: 'Youth, Over 50 Members', ensemble: youthLarge },
-      allAgeSmall && { category: 'All-Age, Under 50 Members', ensemble: allAgeSmall },
-      allAgeLarge && { category: 'All-Age, Over 50 Members', ensemble: allAgeLarge },
-    ].filter(Boolean)
-  };
-};
 
 // =============================================================================
 // COLLAPSIBLE SECTION COMPONENT
@@ -163,89 +114,14 @@ const RatingCard = ({ rating, isHighlighted = false }) => {
 };
 
 // =============================================================================
-// RESULT CARD COMPONENT
-// =============================================================================
-
-const ResultCard = ({ score, showAwards = false }) => {
-  const ratingInfo = getSoundSportRating(score.score);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`p-4 rounded-sm border-2 ${ratingInfo.color} ${ratingInfo.borderColor} relative overflow-hidden`}
-    >
-      {showAwards && score.isBestInShow && (
-        <div className="absolute top-0 right-0 bg-black text-primary px-2 py-1 text-xs font-bold flex items-center gap-1">
-          <Trophy className="w-3 h-3" />
-          BEST IN SHOW
-        </div>
-      )}
-      {showAwards && score.isClassWinner && !score.isBestInShow && (
-        <div className="absolute top-0 right-0 bg-black text-white px-2 py-1 text-xs font-bold flex items-center gap-1">
-          <Award className="w-3 h-3" />
-          CLASS WINNER
-        </div>
-      )}
-      <div className="flex items-center gap-3">
-        <Medal className={`w-6 h-6 flex-shrink-0 ${ratingInfo.textColor}`} />
-        <div className="min-w-0 flex-1">
-          <p className={`font-bold text-base truncate uppercase ${ratingInfo.textColor}`}>
-            {score.corps}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-sm font-bold ${ratingInfo.textColor}`}>
-              {ratingInfo.rating}
-            </span>
-            {score.ageClass && (
-              <span className={`text-xs px-2 py-0.5 rounded-sm bg-black/20 ${ratingInfo.textColor}`}>
-                {AGE_CLASSES.find(c => c.id === score.ageClass)?.name || score.ageClass}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// =============================================================================
 // MAIN SOUNDSPORT PAGE COMPONENT
 // =============================================================================
 
 const SoundSport = () => {
   const [activeSection, setActiveSection] = useState('overview');
-  const { unfilteredShows, loading } = useScoresData();
-
-  // Get SoundSport shows and results
-  const soundSportData = useMemo(() => {
-    if (!unfilteredShows) return { shows: [], latestShow: null };
-
-    const shows = unfilteredShows.filter(show =>
-      show.scores?.some(s => s.corpsClass === 'soundSport')
-    ).map(show => ({
-      ...show,
-      scores: show.scores
-        .filter(s => s.corpsClass === 'soundSport')
-        .sort((a, b) => {
-          const ratingOrderA = getRatingOrder(a.score);
-          const ratingOrderB = getRatingOrder(b.score);
-          if (ratingOrderA !== ratingOrderB) {
-            return ratingOrderA - ratingOrderB;
-          }
-          return a.corps.localeCompare(b.corps);
-        })
-    }));
-
-    const latestShow = shows[0] || null;
-    const classWinners = latestShow ? determineClassWinners(latestShow.scores) : null;
-
-    return { shows, latestShow, classWinners };
-  }, [unfilteredShows]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Info },
-    { id: 'results', label: 'Results', icon: Trophy },
     { id: 'rules', label: 'Rules & Guidelines', icon: BookOpen },
   ];
 
@@ -426,127 +302,6 @@ const SoundSport = () => {
                   Get Started
                 </Link>
               </div>
-            </motion.div>
-          )}
-
-          {/* RESULTS SECTION */}
-          {activeSection === 'results' && (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {loading ? (
-                <LoadingScreen fullScreen={false} />
-              ) : soundSportData.shows.length > 0 ? (
-                <>
-                  {/* Latest Event with Winners */}
-                  {soundSportData.latestShow && (
-                    <section>
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h2 className="text-lg font-bold text-white">{soundSportData.latestShow.eventName}</h2>
-                          <p className="text-gray-500 text-sm">
-                            {soundSportData.latestShow.location} • {soundSportData.latestShow.date}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Best in Show Highlight */}
-                      {soundSportData.classWinners?.bestInShow && (
-                        <div className="mb-6">
-                          <div className="bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500/50 rounded-lg p-6">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Trophy className="w-6 h-6 text-yellow-500" />
-                              <span className="text-yellow-500 font-bold uppercase text-sm">Best in Show</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="p-3 bg-primary border-2 border-black rounded-sm">
-                                <Medal className="w-8 h-8 text-black" />
-                              </div>
-                              <div>
-                                <p className="text-xl font-bold text-white uppercase">
-                                  {soundSportData.classWinners.bestInShow.corps}
-                                </p>
-                                <p className="text-yellow-400 font-bold">Gold</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Class Winners */}
-                      {soundSportData.classWinners?.classWinners?.length > 0 && (
-                        <div className="mb-6">
-                          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <Award className="w-4 h-4" />
-                            Class Winners
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {soundSportData.classWinners.classWinners.map((winner, idx) => (
-                              <div
-                                key={idx}
-                                className="p-4 bg-[#1a1a1a] border border-[#333] rounded-sm"
-                              >
-                                <p className="text-xs text-gray-500 mb-1">{winner.category}</p>
-                                <p className="font-bold text-white">{winner.ensemble.corps}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* All Results by Rating */}
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">
-                          All Results
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {soundSportData.latestShow.scores.map((score, idx) => (
-                            <ResultCard
-                              key={idx}
-                              score={score}
-                              showAwards={true}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Previous Events */}
-                  {soundSportData.shows.length > 1 && (
-                    <section>
-                      <h2 className="text-lg font-bold text-white mb-4">Previous Events</h2>
-                      <div className="space-y-4">
-                        {soundSportData.shows.slice(1).map((show, showIdx) => (
-                          <CollapsibleSection
-                            key={showIdx}
-                            title={show.eventName}
-                            icon={Trophy}
-                          >
-                            <p className="text-gray-500 text-sm mb-3">
-                              {show.location} • {show.date}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {show.scores.map((score, idx) => (
-                                <ResultCard key={idx} score={score} />
-                              ))}
-                            </div>
-                          </CollapsibleSection>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </>
-              ) : (
-                <EmptyState
-                  title="No SoundSport Events Yet"
-                  subtitle="SoundSport event results will appear here when available."
-                />
-              )}
             </motion.div>
           )}
 
