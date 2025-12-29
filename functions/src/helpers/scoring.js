@@ -193,37 +193,133 @@ async function processAndArchiveOffSeasonScoresLogic() {
   const batch = db.batch();
   const dailyScores = new Map();
 
-  // --- NEW: CHAMPIONSHIP PROGRESSION LOGIC ---
-  let championshipParticipants = null;
-  if (scoredDay === 48 || scoredDay === 49) {
+  // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
+  // Structure: { showEventName: { participants: [uid], classFilter: [corpsClass] } }
+  let championshipConfig = null;
+
+  if (scoredDay >= 45) {
     const recapDoc = await db.doc(`fantasy_recaps/${seasonData.seasonUid}`).get();
-    if (recapDoc.exists) {
-      const allRecaps = recapDoc.data().recaps || [];
-      if (scoredDay === 48) { // Semifinals
-        const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
-        if (prelimsRecap) {
-          const allResults = prelimsRecap.shows.flatMap(s => s.results);
-          allResults.sort((a, b) => b.totalScore - a.totalScore);
-          championshipParticipants = allResults.slice(0, 25).map(r => r.uid);
-          logger.info(`Found ${championshipParticipants.length} corps advancing to Semifinals.`);
-        }
-      } else if (scoredDay === 49) { // Finals
-        const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
-        if (semisRecap) {
-          const allResults = semisRecap.shows.flatMap(s => s.results);
-          allResults.sort((a, b) => b.totalScore - a.totalScore);
-          if (allResults.length >= 12) {
-            const twelfthPlaceScore = allResults[11].totalScore;
-            championshipParticipants = allResults.filter(r => r.totalScore >= twelfthPlaceScore).map(r => r.uid);
-            logger.info(`Found ${championshipParticipants.length} corps advancing to Finals (tie-breaker included).`);
-          } else {
-            championshipParticipants = allResults.map(r => r.uid); // All advance if less than 12
-          }
-        }
+    const allRecaps = recapDoc.exists ? recapDoc.data().recaps || [] : [];
+
+    if (scoredDay === 45) {
+      // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
+      championshipConfig = {
+        "Open and A Class Prelims": {
+          participants: null, // null means all eligible
+          classFilter: ["openClass", "aClass"],
+        },
+      };
+      logger.info("Day 45: Auto-enrolling all Open Class and A Class corps in Prelims.");
+
+    } else if (scoredDay === 46) {
+      // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
+      const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
+      if (day45Recap) {
+        const openClassResults = [];
+        const aClassResults = [];
+
+        day45Recap.shows.forEach(show => {
+          show.results.forEach(r => {
+            if (r.corpsClass === "openClass") openClassResults.push(r);
+            else if (r.corpsClass === "aClass") aClassResults.push(r);
+          });
+        });
+
+        openClassResults.sort((a, b) => b.totalScore - a.totalScore);
+        aClassResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        // Top 8 Open Class
+        const top8Open = openClassResults.slice(0, 8).map(r => ({ uid: r.uid, corpsClass: "openClass" }));
+        // Top 4 A Class
+        const top4AClass = aClassResults.slice(0, 4).map(r => ({ uid: r.uid, corpsClass: "aClass" }));
+
+        const finalists = [...top8Open, ...top4AClass];
+        logger.info(`Day 46: ${top8Open.length} Open Class and ${top4AClass.length} A Class corps advancing to Finals.`);
+
+        championshipConfig = {
+          "Open and A Class Finals": {
+            participants: finalists, // Array of { uid, corpsClass }
+            classFilter: ["openClass", "aClass"],
+          },
+        };
       }
+
+    } else if (scoredDay === 47) {
+      // Day 47: World Championships Prelims - All World, Open, and A Class corps
+      championshipConfig = {
+        "marching.art World Championship Prelims": {
+          participants: null, // All eligible
+          classFilter: ["worldClass", "openClass", "aClass"],
+        },
+      };
+      logger.info("Day 47: Auto-enrolling all World, Open, and A Class corps in World Championship Prelims.");
+
+    } else if (scoredDay === 48) {
+      // Day 48: World Championships Semifinals - Top 25 from Day 47
+      const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
+      if (prelimsRecap) {
+        const allResults = prelimsRecap.shows.flatMap(s => s.results);
+        allResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        // Handle tie at 25th place
+        let advancingCorps = [];
+        if (allResults.length >= 25) {
+          const twentyFifthPlaceScore = allResults[24].totalScore;
+          advancingCorps = allResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
+        } else {
+          advancingCorps = allResults;
+        }
+
+        const participants = advancingCorps.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
+        logger.info(`Day 48: ${participants.length} corps advancing to Semifinals.`);
+
+        championshipConfig = {
+          "marching.art World Championship Semifinals": {
+            participants,
+            classFilter: ["worldClass", "openClass", "aClass"],
+          },
+        };
+      }
+
+    } else if (scoredDay === 49) {
+      // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
+      const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+
+      championshipConfig = {
+        // World Championship Finals - Top 12 from Day 48
+        "marching.art World Championship Finals": {
+          participants: [],
+          classFilter: ["worldClass", "openClass", "aClass"],
+        },
+        // SoundSport Festival - All SoundSport corps
+        "SoundSport International Music & Food Festival": {
+          participants: null, // All eligible
+          classFilter: ["soundSport"],
+        },
+      };
+
+      if (semisRecap) {
+        const allResults = semisRecap.shows.flatMap(s => s.results);
+        allResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        // Handle tie at 12th place
+        let finalists = [];
+        if (allResults.length >= 12) {
+          const twelfthPlaceScore = allResults[11].totalScore;
+          finalists = allResults.filter(r => r.totalScore >= twelfthPlaceScore);
+        } else {
+          finalists = allResults;
+        }
+
+        championshipConfig["marching.art World Championship Finals"].participants =
+          finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
+
+        logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
+      }
+      logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
     }
   }
-  // --- END: CHAMPIONSHIP PROGRESSION LOGIC ---
+  // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
   if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
     logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
@@ -237,7 +333,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
       results: [],
     };
 
-    // --- NEW: DAY 41/42 REGIONAL SPLIT LOGIC ---
+    // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
     let day41_42_participants = null;
     if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
         const allEnrollees = [];
@@ -260,28 +356,51 @@ async function processAndArchiveOffSeasonScoresLogic() {
     }
     // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
 
+    // --- CHAMPIONSHIP SHOW CONFIGURATION ---
+    // Get config for this specific show if it's a championship event
+    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+    // --- END: CHAMPIONSHIP SHOW CONFIGURATION ---
+
     for (const userDoc of profilesSnapshot.docs) {
       const userProfile = userDoc.data();
       const uid = userDoc.ref.parent.parent.id;
 
-      // --- NEW: Filter participants for championships/regionals ---
-      if (championshipParticipants && !championshipParticipants.includes(uid)) continue;
+      // Filter for regional split
       if (day41_42_participants && !day41_42_participants.includes(uid)) continue;
-      // --- END: Filter ---
 
       const userCorps = userProfile.corps || {};
       for (const corpsClass of Object.keys(userCorps)) {
         const corps = userCorps[corpsClass];
-        if (!corps || !corps.corpsName) continue;
+        if (!corps || !corps.corpsName || !corps.lineup) continue;
 
         let attended = false;
-        if (scoredDay >= 47) {
-            attended = true; // All corps automatically enrolled in championships
+
+        // Championship Week Logic (Days 45-49)
+        if (showConfig) {
+          // Check if this corps class is eligible for this show
+          if (!showConfig.classFilter.includes(corpsClass)) {
+            continue; // This class can't participate in this show
+          }
+
+          // Check if this user/class combo is in the participants list (for advancement rounds)
+          if (showConfig.participants !== null) {
+            // participants is an array of { uid, corpsClass } objects
+            const isParticipant = showConfig.participants.some(
+              p => p.uid === uid && p.corpsClass === corpsClass
+            );
+            if (!isParticipant) {
+              continue; // Didn't advance to this round
+            }
+          }
+
+          // If we get here, the corps is eligible and has advanced (if applicable)
+          attended = true;
         } else {
-            const userShows = corps.selectedShows?.[`week${week}`] || [];
-            // Match by eventName only - dates can have type mismatches (Timestamp vs string)
-            // and eventName should be unique enough within a week
-            attended = userShows.some(s => s.eventName === show.eventName);
+          // Regular show - check manual registration
+          const userShows = corps.selectedShows?.[`week${week}`] || [];
+          // Match by eventName only - dates can have type mismatches (Timestamp vs string)
+          // and eventName should be unique enough within a week
+          attended = userShows.some(s => s.eventName === show.eventName);
         }
 
         if (attended) {
@@ -357,7 +476,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     batch.update(recapDocRef, { recaps: updatedRecaps });
   }
 
-  // --- NEW: TROPHY AWARDING LOGIC ---
+  // --- TROPHY AWARDING LOGIC ---
   const regionalTrophyDays = [28, 35, 41, 42];
   const metals = ['gold', 'silver', 'bronze'];
 
@@ -384,52 +503,126 @@ async function processAndArchiveOffSeasonScoresLogic() {
     });
   }
 
-  if (scoredDay === 49) { // Finals Day
-    logger.info(`Day ${scoredDay} is Finals day. Awarding championship trophies and finalist medals...`);
-    const finalsShow = dailyRecap.shows[0]; // There's only one show on Finals day
-    finalsShow.results.sort((a,b) => b.totalScore - a.totalScore);
+  // Day 46: Open and A Class Finals - Award class-specific trophies
+  if (scoredDay === 46) {
+    logger.info("Day 46: Awarding Open and A Class Finals trophies...");
+    dailyRecap.shows.forEach(show => {
+      // Group results by class for separate awards
+      const openClassResults = show.results.filter(r => r.corpsClass === "openClass");
+      const aClassResults = show.results.filter(r => r.corpsClass === "aClass");
 
-    // Award trophies to top 3
-    const top3 = finalsShow.results.slice(0, 3);
-    top3.forEach((winner, index) => {
+      // Sort each class
+      openClassResults.sort((a, b) => b.totalScore - a.totalScore);
+      aClassResults.sort((a, b) => b.totalScore - a.totalScore);
+
+      // Award Open Class champion trophies (top 3)
+      openClassResults.slice(0, 3).forEach((winner, index) => {
         const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
         const trophy = {
-            type: 'championship',
-            metal: metals[index],
-            seasonName: seasonData.name,
-            eventName: finalsShow.eventName,
-            score: winner.totalScore,
-            rank: index + 1
+          type: 'class_championship',
+          classType: 'openClass',
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
         };
         batch.update(userProfileRef, {
-            'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy)
+          'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
         });
-    });
+      });
 
-    // Award finalist medals to all participants on Day 49
-    finalsShow.results.forEach((finalist, index) => {
+      // Award A Class champion trophies (top 3)
+      aClassResults.slice(0, 3).forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: 'class_championship',
+          classType: 'aClass',
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
+        });
+      });
+
+      // Award finalist ribbons to all participants
+      show.results.forEach((finalist) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+        const ribbon = {
+          type: 'class_finalist',
+          classType: finalist.corpsClass,
+          seasonName: seasonData.name,
+          eventName: show.eventName
+        };
+        batch.update(userProfileRef, {
+          'trophies.classFinalistRibbons': admin.firestore.FieldValue.arrayUnion(ribbon)
+        });
+      });
+
+      logger.info(`Awarded trophies to ${openClassResults.slice(0, 3).length} Open Class and ${aClassResults.slice(0, 3).length} A Class champions.`);
+    });
+  }
+
+  if (scoredDay === 49) { // Finals Day - Multiple shows
+    logger.info(`Day ${scoredDay} is Finals day. Awarding championship trophies and finalist medals...`);
+
+    // Collect all results by class for season champions
+    const allResultsByClass = {};
+
+    // Process each show on Day 49 (World Finals and SoundSport Festival)
+    for (const show of dailyRecap.shows) {
+      show.results.sort((a, b) => b.totalScore - a.totalScore);
+
+      // Determine trophy type based on show
+      const isSoundSport = show.eventName.includes("SoundSport");
+      const trophyType = isSoundSport ? 'soundsport_championship' : 'championship';
+
+      // Award trophies to top 3
+      const top3 = show.results.slice(0, 3);
+      top3.forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: trophyType,
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy)
+        });
+      });
+
+      // Award finalist medals/ribbons to all participants
+      show.results.forEach((finalist, index) => {
         const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
         const medal = {
-            type: 'finalist',
-            seasonName: seasonData.name,
-            rank: index + 1
+          type: isSoundSport ? 'soundsport_finalist' : 'finalist',
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          rank: index + 1
         };
         batch.update(userProfileRef, {
-            'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
+          'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
         });
-    });
+      });
+
+      // Collect results by class for season champions
+      show.results.forEach(result => {
+        const corpsClass = result.corpsClass || 'worldClass';
+        if (!allResultsByClass[corpsClass]) {
+          allResultsByClass[corpsClass] = [];
+        }
+        allResultsByClass[corpsClass].push(result);
+      });
+    }
 
     // --- SAVE SEASON CHAMPIONS BY CLASS ---
-    // Group results by corps class and get top 3 for each
-    const resultsByClass = {};
-    finalsShow.results.forEach(result => {
-      const corpsClass = result.corpsClass || 'worldClass';
-      if (!resultsByClass[corpsClass]) {
-        resultsByClass[corpsClass] = [];
-      }
-      resultsByClass[corpsClass].push(result);
-    });
-
     const seasonChampionsData = {
       seasonId: seasonData.seasonUid,
       seasonName: seasonData.name,
@@ -439,7 +632,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     };
 
     // Process each class and get top 3
-    for (const [corpsClass, classResults] of Object.entries(resultsByClass)) {
+    for (const [corpsClass, classResults] of Object.entries(allResultsByClass)) {
       classResults.sort((a, b) => b.totalScore - a.totalScore);
       const classTop3 = classResults.slice(0, 3);
 
@@ -462,7 +655,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     // Save to season_champions collection
     const seasonChampionsRef = db.doc(`season_champions/${seasonData.seasonUid}`);
     batch.set(seasonChampionsRef, seasonChampionsData);
-    logger.info(`Saved season champions for ${Object.keys(resultsByClass).length} classes.`);
+    logger.info(`Saved season champions for ${Object.keys(allResultsByClass).length} classes.`);
     // --- END SAVE SEASON CHAMPIONS BY CLASS ---
   }
   // --- END: TROPHY AWARDING LOGIC ---

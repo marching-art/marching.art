@@ -44,9 +44,12 @@ Each document represents a year and contains:
    ]
    ```
 4. Places key championship shows on specific days:
-   - Day 49: DCI World Championship Finals (mandatory)
-   - Day 48: DCI World Championship Semifinals (mandatory)
-   - Day 47: DCI World Championship Prelims (mandatory)
+   - Day 49: World Championship Finals (mandatory, auto-enrollment for top 12 from Day 48)
+   - Day 49: SoundSport International Music & Food Festival (mandatory, auto-enrollment for all SoundSport)
+   - Day 48: World Championship Semifinals (mandatory, auto-enrollment for top 25 from Day 47)
+   - Day 47: World Championship Prelims (mandatory, auto-enrollment for World/Open/A Class)
+   - Day 46: Open and A Class Finals (mandatory, auto-enrollment for top 8 Open + top 4 A Class from Day 45)
+   - Day 45: Open and A Class Prelims (mandatory, auto-enrollment for all Open/A Class)
    - Day 28: DCI Southwestern Championship (mandatory)
    - Day 41-42: DCI Eastern Classic
 5. Fills remaining days with 2-3 shows each
@@ -171,12 +174,51 @@ const weekEnd = currentWeek * 7;
 // So Week 2 = Days 8-14
 ```
 
+## Championship Week (Days 45-49)
+
+Championship events have **automatic enrollment** based on corps class and advancement rules:
+
+### Day 45 - Open and A Class Prelims (Marion, IN)
+- **Eligible:** All Open Class and A Class corps
+- **Auto-enrolled:** Yes, all eligible corps compete automatically
+- **Location:** Marion, IN
+
+### Day 46 - Open and A Class Finals (Marion, IN)
+- **Eligible:** Top 8 Open Class + Top 4 A Class from Day 45
+- **Auto-enrolled:** Yes, based on Day 45 results
+- **Awards:** Champion trophies (gold/silver/bronze) per class, finalist ribbons
+
+### Day 47 - World Championship Prelims (Indianapolis, IN)
+- **Eligible:** All World Class, Open Class, and A Class corps
+- **Auto-enrolled:** Yes, all eligible corps compete
+- **Note:** Recaps do not indicate class, all corps ranked together
+
+### Day 48 - World Championship Semifinals (Indianapolis, IN)
+- **Eligible:** Top 25 corps from Day 47 (ties at 25th place all advance)
+- **Auto-enrolled:** Yes, based on Day 47 results
+- **Note:** Recaps do not indicate class, all corps ranked together
+
+### Day 49 - World Championship Finals (Indianapolis, IN)
+- **Eligible:** Top 12 corps from Day 48 (ties at 12th place all advance)
+- **Auto-enrolled:** Yes, based on Day 48 results
+- **Awards:** Champion trophies (gold/silver/bronze), finalist medals
+
+### Day 49 - SoundSport International Music & Food Festival (Indianapolis, IN)
+- **Eligible:** All SoundSport corps
+- **Auto-enrolled:** Yes, all SoundSport corps compete
+- **Awards:** SoundSport champion trophies (gold/silver/bronze)
+
+### Class Restrictions
+- **World Class, Open Class, A Class** cannot participate in SoundSport Festival
+- **SoundSport** cannot participate in World Championship events (Days 47-49) or Open/A Class events (Days 45-46)
+
 ## Important Notes
 
-1. **Championship shows (Week 7)** are automatically included for all corps
-2. **Days 45-46** are intentionally left empty (rest before championships)
-3. **Mandatory shows** must be attended by all corps (Finals, Semifinals, Prelims)
+1. **Championship shows (Week 7)** have automatic enrollment - users don't manually select them
+2. **Days 45-46** are dedicated to Open and A Class championship events
+3. **Days 47-49** are World Championship events (all non-SoundSport classes)
 4. **Show uniqueness** is enforced per season - no two corps can select the exact same show lineup
+5. **Championship shows** are marked with `isChampionship: true` and filtered from the ShowSelectionModal
 
 ## Testing
 

@@ -535,15 +535,78 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     day.shows = pickedShows;
   }
 
+  // Championship Week Shows (Days 45-49)
+  // These are auto-enrollment events - users don't select them manually
   const day45 = schedule.find((d) => d.offSeasonDay === 45);
-  if (day45) day45.shows = [];
+  if (day45) {
+    day45.shows = [{
+      eventName: "Open and A Class Prelims",
+      location: "Marion, IN",
+      date: null, // Will be set based on season schedule
+      isChampionship: true,
+      eligibleClasses: ["openClass", "aClass"],
+      mandatory: true,
+    }];
+  }
+
   const day46 = schedule.find((d) => d.offSeasonDay === 46);
-  if (day46) day46.shows = [];
+  if (day46) {
+    day46.shows = [{
+      eventName: "Open and A Class Finals",
+      location: "Marion, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["openClass", "aClass"],
+      advancementRules: { openClass: 8, aClass: 4 }, // Top 8 Open, Top 4 A Class from Day 45
+      mandatory: true,
+    }];
+  }
+
+  // Update Day 47-49 to include championship metadata
+  const day47 = schedule.find((d) => d.offSeasonDay === 47);
+  if (day47 && day47.shows.length > 0) {
+    day47.shows[0].isChampionship = true;
+    day47.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
+  }
+
+  const day48 = schedule.find((d) => d.offSeasonDay === 48);
+  if (day48 && day48.shows.length > 0) {
+    day48.shows[0].isChampionship = true;
+    day48.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
+    day48.shows[0].advancementRules = { all: 25 }; // Top 25 from Day 47
+  }
+
+  const day49 = schedule.find((d) => d.offSeasonDay === 49);
+  if (day49) {
+    // Day 49 has two shows: World Finals and SoundSport Festival
+    const worldFinalsShow = day49.shows[0] || {
+      eventName: "World Championships Finals",
+      location: "Indianapolis, IN",
+      date: null,
+    };
+    worldFinalsShow.isChampionship = true;
+    worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
+    worldFinalsShow.advancementRules = { all: 12 }; // Top 12 from Day 48
+
+    const soundSportShow = {
+      eventName: "SoundSport International Music & Food Festival",
+      location: "Indianapolis, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["soundSport"],
+      mandatory: true,
+    };
+
+    day49.shows = [worldFinalsShow, soundSportShow];
+  }
 
   // Swap DCI to marching.art in show names for off-season branding
+  // Skip championship shows that already have proper names
   schedule.forEach((day) => {
     day.shows.forEach((show) => {
-      show.eventName = show.eventName.replace(/DCI/g, "marching.art");
+      if (!show.isChampionship) {
+        show.eventName = show.eventName.replace(/DCI/g, "marching.art");
+      }
     });
   });
 
