@@ -61,7 +61,7 @@ const LineupCelebration = ({ onComplete }) => {
 // -----------------------------------------------------------------------------
 // CORPS OPTION ROW
 // -----------------------------------------------------------------------------
-const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled }) => {
+const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled, captionHotStatus }) => {
   return (
     <button
       onClick={() => !disabled && onSelect(corps)}
@@ -82,12 +82,12 @@ const CorpsOptionRow = ({ corps, isSelected, onSelect, disabled }) => {
         </div>
         <span className="font-medium text-white text-sm truncate">{corps.corpsName}</span>
         <span className="text-[10px] text-gray-500">'{corps.sourceYear?.slice(-2)}</span>
-        {corps.performanceData?.isHot && (
+        {captionHotStatus?.isHot && (
           <span
             className="flex items-center gap-0.5 px-1 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] rounded"
-            title={corps.performanceData?.improvement > 0
-              ? `Up ${corps.performanceData.improvement}% recently`
-              : 'Top performer recently'}
+            title={captionHotStatus.improvement > 0
+              ? `Up ${captionHotStatus.improvement}% in this caption recently`
+              : 'Top performer in this caption recently'}
           >
             <Flame className="w-2.5 h-2.5" /> Hot
           </span>
@@ -338,6 +338,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [templates, setTemplates] = useState([]);
   const [draftSuggestions, setDraftSuggestions] = useState({ hot: [], value: [], history: [] });
   const [userHistory, setUserHistory] = useState([]);
+  const [hotCorpsData, setHotCorpsData] = useState({}); // Per-caption hot status
 
   // Mobile state - whether we're viewing lineup or selection list
   const [mobileView, setMobileView] = useState('lineup'); // 'lineup' or 'selection'
@@ -442,7 +443,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     loadUserData();
   }, [user?.uid, corpsClass]);
 
-  // Load available corps and hot status
+  // Load available corps and hot status (per-caption)
   useEffect(() => {
     let cancelled = false;
     const fetchCorps = async () => {
@@ -452,36 +453,30 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
         // Fetch corps data and hot status in parallel
         const corpsRef = doc(db, 'dci-data', seasonId);
-        const getHotCorps = httpsCallable(functions, 'getHotCorps');
+        const getHotCorpsFn = httpsCallable(functions, 'getHotCorps');
 
         const [corpsSnap, hotCorpsResult] = await Promise.all([
           getDoc(corpsRef),
-          getHotCorps().catch(() => ({ data: { hotCorps: {} } }))
+          getHotCorpsFn().catch(() => ({ data: { hotCorps: {} } }))
         ]);
 
         if (!cancelled && corpsSnap.exists()) {
-          const hotCorpsData = hotCorpsResult.data?.hotCorps || {};
+          // Store per-caption hot data for dynamic lookups
+          const hotData = hotCorpsResult.data?.hotCorps || {};
+          setHotCorpsData(hotData);
+
           let corps = corpsSnap.data().corpsValues || [];
 
-          corps = corps.map(c => {
-            const corpsId = `${c.corpsName}|${c.sourceYear}`;
-            const hotStatus = hotCorpsData[corpsId];
-
-            return {
-              ...c,
-              performanceData: {
-                avgScore: c.avgScore || 80,
-                // Use real hot status from server, based on recent performance
-                isHot: hotStatus?.isHot || false,
-                improvement: hotStatus?.improvement || 0,
-                // Value calculation: good score per point ratio
-                isValue: (c.avgScore || 80) / c.points > 4.5,
-              },
-            };
-          });
+          corps = corps.map(c => ({
+            ...c,
+            performanceData: {
+              avgScore: c.avgScore || 80,
+              // Value calculation: good score per point ratio
+              isValue: (c.avgScore || 80) / c.points > 4.5,
+            },
+          }));
           corps.sort((a, b) => b.points - a.points);
           setAvailableCorps(corps);
-          generateSuggestions(corps);
         }
       } catch (e) { toast.error('Failed to load corps data'); }
       finally { if (!cancelled) setLoading(false); }
@@ -490,16 +485,25 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     return () => { cancelled = true; };
   }, [seasonId]);
 
-  const generateSuggestions = useCallback((corps) => {
-    const hot = corps.filter(c => c.performanceData?.isHot).slice(0, 5);
+  // Generate suggestions based on the active caption
+  const generateSuggestions = useCallback((corps, caption, hotData) => {
+    // Hot suggestions: corps that are hot for the current caption
+    const hot = corps.filter(c => {
+      const corpsId = `${c.corpsName}|${c.sourceYear}`;
+      return hotData[corpsId]?.[caption]?.isHot;
+    }).slice(0, 5);
+
     const value = corps.filter(c => c.performanceData?.isValue).slice(0, 5);
     const history = corps.filter(c => userHistory.includes(c.corpsName)).slice(0, 5);
     setDraftSuggestions({ hot, value, history });
   }, [userHistory]);
 
+  // Regenerate suggestions when caption changes or data loads
   useEffect(() => {
-    if (availableCorps.length > 0) generateSuggestions(availableCorps);
-  }, [availableCorps, userHistory, generateSuggestions]);
+    if (availableCorps.length > 0 && activeCaption) {
+      generateSuggestions(availableCorps, activeCaption, hotCorpsData);
+    }
+  }, [availableCorps, activeCaption, hotCorpsData, generateSuggestions]);
 
   const calculateTotalPoints = useCallback(() => {
     return Object.values(selections).reduce((t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0);
@@ -767,6 +771,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                             const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
                             const isCurrentSel = selections[activeCaption] === value;
                             const wouldExceed = !isCurrentSel && (totalPoints - (activeCaptionSelection?.points || 0) + corps.points > pointLimit);
+                            // Get caption-specific hot status for this corps
+                            const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
+                            const captionHotStatus = hotCorpsData[corpsId]?.[activeCaption];
                             return (
                               <CorpsOptionRow
                                 key={idx}
@@ -774,6 +781,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                                 isSelected={isCurrentSel}
                                 onSelect={() => handleCorpsSelect(activeCaption, corps)}
                                 disabled={wouldExceed}
+                                captionHotStatus={captionHotStatus}
                               />
                             );
                           })}

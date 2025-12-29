@@ -260,12 +260,15 @@ exports.saveShowConcept = onCall({ cors: true }, async (request) => {
 });
 
 /**
- * Get "hot" status for all corps in the season.
- * A corps is "hot" if it has performed above average in the recent window (last 10 days).
- * This compares each corps' recent performance to the field average for the same period.
+ * Get "hot" status for all corps in the season, calculated PER CAPTION.
+ * A corps is "hot" for a specific caption if they've performed above average
+ * in that caption during the recent window (last 10 days).
+ *
+ * Returns: { hotCorps: { "CorpsName|Year": { GE1: {isHot, improvement}, GE2: {...}, ... } } }
  */
 exports.getHotCorps = onCall({ cors: true }, async (request) => {
   const db = getDb();
+  const CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 
   try {
     // Get season data
@@ -319,88 +322,86 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       }
     });
 
-    // Calculate performance metrics for each corps
-    const corpsPerformance = [];
+    // For each caption, collect all corps' performance metrics
+    // Structure: { caption: [{ corpsName, sourceYear, recentAvg, improvement }, ...] }
+    const captionPerformance = {};
+    CAPTIONS.forEach(cap => { captionPerformance[cap] = []; });
 
     for (const corps of corpsList) {
       const { corpsName, sourceYear } = corps;
       const yearData = historicalData[sourceYear] || [];
 
-      // Get scores in the recent window
-      const recentScores = [];
-      // Get all scores for this corps (for baseline comparison)
-      const allScores = [];
+      // For each caption, calculate performance metrics
+      for (const caption of CAPTIONS) {
+        const recentScores = [];
+        const allScores = [];
 
-      for (const event of yearData) {
-        const scoreData = event.scores?.find(s => s.corps === corpsName);
-        if (scoreData && scoreData.captions) {
-          // Calculate total score for this event (sum of all captions)
-          const totalScore = Object.values(scoreData.captions)
-            .filter(v => typeof v === 'number' && v > 0)
-            .reduce((sum, v) => sum + v, 0);
-
-          if (totalScore > 0) {
-            allScores.push({ day: event.offSeasonDay, score: totalScore });
+        for (const event of yearData) {
+          const scoreData = event.scores?.find(s => s.corps === corpsName);
+          if (scoreData && scoreData.captions && scoreData.captions[caption] > 0) {
+            const score = scoreData.captions[caption];
+            allScores.push({ day: event.offSeasonDay, score });
 
             if (event.offSeasonDay >= windowStart && event.offSeasonDay <= windowEnd) {
-              recentScores.push(totalScore);
+              recentScores.push(score);
             }
           }
         }
-      }
 
-      if (recentScores.length > 0 && allScores.length >= 3) {
-        const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
-        const seasonAvg = allScores.reduce((a, b) => a + b.score, 0) / allScores.length;
+        if (recentScores.length > 0 && allScores.length >= 3) {
+          const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
 
-        // Calculate trend: compare recent to early season
-        const midpoint = Math.floor(allScores.length / 2);
-        const earlyScores = allScores.slice(0, midpoint).map(s => s.score);
-        const earlyAvg = earlyScores.length > 0
-          ? earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
-          : seasonAvg;
+          // Calculate trend: compare recent to early season
+          const midpoint = Math.floor(allScores.length / 2);
+          const earlyScores = allScores.slice(0, midpoint).map(s => s.score);
+          const earlyAvg = earlyScores.length > 0
+            ? earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
+            : recentAvg;
 
-        // Improvement percentage from early season to recent
-        const improvement = earlyAvg > 0 ? ((recentAvg - earlyAvg) / earlyAvg) * 100 : 0;
+          // Improvement percentage from early season to recent
+          const improvement = earlyAvg > 0 ? ((recentAvg - earlyAvg) / earlyAvg) * 100 : 0;
 
-        corpsPerformance.push({
-          corpsName,
-          sourceYear,
-          recentAvg,
-          seasonAvg,
-          improvement,
-          recentCount: recentScores.length
-        });
+          captionPerformance[caption].push({
+            corpsName,
+            sourceYear,
+            recentAvg,
+            improvement,
+            recentCount: recentScores.length
+          });
+        }
       }
     }
 
-    // Determine "hot" corps: those with above-median recent performance AND positive improvement
-    if (corpsPerformance.length === 0) {
-      return { success: true, hotCorps: {} };
-    }
-
-    // Sort by recent average and find median
-    const sortedByRecent = [...corpsPerformance].sort((a, b) => b.recentAvg - a.recentAvg);
-    const medianIndex = Math.floor(sortedByRecent.length / 2);
-    const medianRecentAvg = sortedByRecent[medianIndex].recentAvg;
-
-    // A corps is "hot" if:
-    // 1. Their recent average is above the field median, AND
-    // 2. They're showing improvement (positive trend) OR they're in the top 25%
-    const topQuartileThreshold = sortedByRecent[Math.floor(sortedByRecent.length * 0.25)]?.recentAvg || medianRecentAvg;
-
+    // For each caption, determine which corps are "hot"
     const hotCorps = {};
-    for (const corps of corpsPerformance) {
-      const corpsId = `${corps.corpsName}|${corps.sourceYear}`;
-      const isAboveMedian = corps.recentAvg >= medianRecentAvg;
-      const isImproving = corps.improvement > 2; // More than 2% improvement
-      const isTopQuartile = corps.recentAvg >= topQuartileThreshold;
 
-      hotCorps[corpsId] = {
-        isHot: (isAboveMedian && isImproving) || isTopQuartile,
-        improvement: Math.round(corps.improvement * 10) / 10,
-        recentAvg: Math.round(corps.recentAvg * 10) / 10
-      };
+    for (const caption of CAPTIONS) {
+      const performers = captionPerformance[caption];
+      if (performers.length === 0) continue;
+
+      // Sort by recent average and find thresholds
+      const sortedByRecent = [...performers].sort((a, b) => b.recentAvg - a.recentAvg);
+      const medianIndex = Math.floor(sortedByRecent.length / 2);
+      const medianRecentAvg = sortedByRecent[medianIndex].recentAvg;
+      const topQuartileThreshold = sortedByRecent[Math.floor(sortedByRecent.length * 0.25)]?.recentAvg || medianRecentAvg;
+
+      // Determine hot status for each corps in this caption
+      for (const perf of performers) {
+        const corpsId = `${perf.corpsName}|${perf.sourceYear}`;
+        const isAboveMedian = perf.recentAvg >= medianRecentAvg;
+        const isImproving = perf.improvement > 2; // More than 2% improvement
+        const isTopQuartile = perf.recentAvg >= topQuartileThreshold;
+
+        if (!hotCorps[corpsId]) {
+          hotCorps[corpsId] = {};
+        }
+
+        hotCorps[corpsId][caption] = {
+          isHot: (isAboveMedian && isImproving) || isTopQuartile,
+          improvement: Math.round(perf.improvement * 10) / 10,
+          recentAvg: Math.round(perf.recentAvg * 100) / 100
+        };
+      }
     }
 
     return { success: true, hotCorps, windowStart, windowEnd, currentDay };
