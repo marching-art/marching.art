@@ -335,11 +335,38 @@ export const useTickerData = () => {
     // Sort available classes by config order
     availableClasses.sort((a, b) => CLASS_CONFIG[a].order - CLASS_CONFIG[b].order);
 
+    // Build combined caption leaders across all classes
+    const allSortedByGE = [...resultsWithAggregates].sort((a, b) => (b.GE_Total || 0) - (a.GE_Total || 0));
+    const allSortedByVisual = [...resultsWithAggregates].sort((a, b) => (b.VIS_Total || 0) - (a.VIS_Total || 0));
+    const allSortedByMusic = [...resultsWithAggregates].sort((a, b) => (b.MUS_Total || 0) - (a.MUS_Total || 0));
+
+    const combinedCaptionLeaders = {
+      ge: allSortedByGE.slice(0, 8).map(r => ({
+        name: r.abbr,
+        fullName: r.corpsName,
+        score: (r.GE_Total || 0).toFixed(3),
+        corpsClass: r.corpsClass,
+      })),
+      visual: allSortedByVisual.slice(0, 8).map(r => ({
+        name: r.abbr,
+        fullName: r.corpsName,
+        score: (r.VIS_Total || 0).toFixed(3),
+        corpsClass: r.corpsClass,
+      })),
+      music: allSortedByMusic.slice(0, 8).map(r => ({
+        name: r.abbr,
+        fullName: r.corpsName,
+        score: (r.MUS_Total || 0).toFixed(3),
+        corpsClass: r.corpsClass,
+      })),
+    };
+
     // Get show count for the day
     const showCount = dayRecap.shows?.length || 0;
 
     return {
       byClass,
+      combinedCaptionLeaders,
       soundSportMedals,
       dayLabel: `Day ${displayDay}`,
       showCount,
