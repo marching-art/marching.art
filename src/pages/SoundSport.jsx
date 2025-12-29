@@ -461,12 +461,8 @@ const SoundSport = () => {
 
               {/* Official Rules Link */}
               <div className="mt-6 p-4 bg-[#1a1a1a] border border-[#333] rounded-sm text-center">
-                <p className="text-gray-400 text-sm mb-2">
+                <p className="text-gray-400 text-sm">
                   These are highlights from the official 2025 SoundSport Rulebook.
-                </p>
-                <p className="text-gray-500 text-xs">
-                  For complete rules and clarifications, contact{' '}
-                  <span className="text-green-400">SoundSport@dci.org</span>
                 </p>
               </div>
             </motion.div>
