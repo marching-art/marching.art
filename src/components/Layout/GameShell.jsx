@@ -410,7 +410,7 @@ const GameShell = ({ children }) => {
           role="main"
           className="fixed top-[84px] sm:top-20 bottom-20 lg:bottom-4 left-0 right-0 bg-[#0a0a0a] overflow-hidden"
         >
-          <div className="h-full w-full px-0 sm:px-2 md:px-4 overflow-hidden">
+          <div className="h-full w-full overflow-hidden">
             {children}
           </div>
         </main>
