@@ -36,6 +36,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useHaptic } from '../hooks/useHaptic';
+import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 
 // =============================================================================
 // CONSTANTS
@@ -127,7 +128,10 @@ const Dashboard = () => {
     haptic('success');
   };
 
-  // Modal states
+  // Modal queue for auto-triggered modals (prevents modal chaos)
+  const modalQueue = useModalQueue();
+
+  // User-triggered modal states (not queued - they take priority)
   const [showRegistration, setShowRegistration] = useState(false);
   const [showCaptionSelection, setShowCaptionSelection] = useState(false);
   const [selectedCaption, setSelectedCaption] = useState(null);
@@ -135,10 +139,7 @@ const Dashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMoveCorps, setShowMoveCorps] = useState(false);
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
-  const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [retiring, setRetiring] = useState(false);
-  const [showOnboardingTour, setShowOnboardingTour] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
 
   // Destructure dashboard data
@@ -165,25 +166,52 @@ const Dashboard = () => {
     refreshProfile
   } = dashboardData;
 
-  // Effects
+  // Queue auto-triggered modals based on conditions
   useEffect(() => {
+    // Season setup wizard (highest priority)
+    if (showSeasonSetupWizard && seasonData) {
+      modalQueue.enqueue('seasonSetup', MODAL_PRIORITY.SEASON_SETUP, { seasonData });
+    }
+  }, [showSeasonSetupWizard, seasonData, modalQueue.enqueue]);
+
+  useEffect(() => {
+    // Onboarding tour for first visit
     if (profile?.isFirstVisit && activeCorps) {
-      const timer = setTimeout(() => setShowOnboardingTour(true), 500);
+      const timer = setTimeout(() => {
+        modalQueue.enqueue('onboarding', MODAL_PRIORITY.ONBOARDING);
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [profile?.isFirstVisit, activeCorps]);
+  }, [profile?.isFirstVisit, activeCorps, modalQueue.enqueue]);
 
   useEffect(() => {
-    if (newlyUnlockedClass) setShowClassUnlockCongrats(true);
-  }, [newlyUnlockedClass]);
+    // Class unlock celebration
+    if (newlyUnlockedClass) {
+      modalQueue.enqueue('classUnlock', MODAL_PRIORITY.CLASS_UNLOCK, { unlockedClass: newlyUnlockedClass });
+    }
+  }, [newlyUnlockedClass, modalQueue.enqueue]);
 
   useEffect(() => {
-    if (newAchievement) setShowAchievementModal(true);
-  }, [newAchievement]);
+    // Achievement celebration
+    if (newAchievement) {
+      modalQueue.enqueue('achievement', MODAL_PRIORITY.ACHIEVEMENT, { achievement: newAchievement });
+    }
+  }, [newAchievement, modalQueue.enqueue]);
+
+  // Pause queue when user-triggered modals are open
+  useEffect(() => {
+    const userModalOpen = showRegistration || showCaptionSelection || showEditCorps ||
+                          showDeleteConfirm || showMoveCorps || showRetireConfirm;
+    if (userModalOpen) {
+      modalQueue.pauseQueue();
+    } else {
+      modalQueue.resumeQueue();
+    }
+  }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
 
   // Handlers
   const handleTourComplete = async () => {
-    setShowOnboardingTour(false);
+    modalQueue.dequeue(); // Close onboarding modal
     if (profile?.isFirstVisit && user) {
       try {
         const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -195,14 +223,24 @@ const Dashboard = () => {
   };
 
   const handleSetupNewClass = () => {
-    setShowClassUnlockCongrats(false);
+    modalQueue.dequeue(); // Close class unlock modal
     setShowRegistration(true);
   };
 
   const handleDeclineSetup = () => {
-    setShowClassUnlockCongrats(false);
+    modalQueue.dequeue(); // Close class unlock modal
     clearNewlyUnlockedClass();
     toast.success('You can register your new corps anytime!');
+  };
+
+  const handleAchievementClose = () => {
+    modalQueue.dequeue(); // Close achievement modal
+    clearNewAchievement();
+  };
+
+  const handleSeasonSetupClose = () => {
+    modalQueue.dequeue(); // Close season setup wizard
+    setShowSeasonSetupWizard(false);
   };
 
   const handleEditCorps = async (formData) => {
@@ -327,10 +365,10 @@ const Dashboard = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-[#0a0a0a]">
-      {/* Season Setup Wizard */}
-      {showSeasonSetupWizard && seasonData && (
+      {/* Season Setup Wizard - via modal queue */}
+      {modalQueue.isActive('seasonSetup') && seasonData && (
         <SeasonSetupWizard
-          onComplete={handleSeasonSetupComplete}
+          onComplete={() => { handleSeasonSetupComplete(); handleSeasonSetupClose(); }}
           profile={profile}
           seasonData={seasonData}
           corpsNeedingSetup={corpsNeedingSetup}
@@ -668,8 +706,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* MODALS */}
-      {showClassUnlockCongrats && newlyUnlockedClass && (
+      {/* MODALS - Queued modals use modalQueue.isActive() */}
+      {modalQueue.isActive('classUnlock') && newlyUnlockedClass && (
         <ClassUnlockCongratsModal
           unlockedClass={newlyUnlockedClass}
           onSetup={handleSetupNewClass}
@@ -740,9 +778,9 @@ const Dashboard = () => {
         />
       )}
 
-      {showAchievementModal && (
+      {modalQueue.isActive('achievement') && newAchievement && (
         <AchievementModal
-          onClose={() => { setShowAchievementModal(false); clearNewAchievement(); }}
+          onClose={handleAchievementClose}
           achievements={profile?.achievements || []}
           newAchievement={newAchievement}
         />
@@ -751,8 +789,8 @@ const Dashboard = () => {
       {/* Morning Report removed - streak now visible in header PlayerStatusBar */}
 
       <OnboardingTour
-        isOpen={showOnboardingTour}
-        onClose={() => setShowOnboardingTour(false)}
+        isOpen={modalQueue.isActive('onboarding')}
+        onClose={() => modalQueue.dequeue()}
         onComplete={handleTourComplete}
       />
 
