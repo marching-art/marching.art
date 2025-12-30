@@ -61,9 +61,51 @@
     font-size: 16px;
   }
 
+  /* Improved placeholder contrast for WCAG AA compliance */
+  /* gray-600 (#4B5563) has ~3.2:1 contrast on #0a0a0a - fails AA */
+  /* gray-400 (#9CA3AF) has ~5.4:1 contrast on #0a0a0a - passes AA */
+  ::placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  ::-webkit-input-placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  ::-moz-placeholder {
+    color: #9CA3AF !important;
+    opacity: 1;
+  }
+
+  :-ms-input-placeholder {
+    color: #9CA3AF !important;
+  }
+
   /* All interactive elements get touch optimization */
   a, button, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
     touch-action: manipulation;
+  }
+
+  /* Focus-visible styles for keyboard navigation (WCAG 2.4.7) */
+  /* Only shows focus ring when navigating with keyboard, not mouse */
+  :focus-visible {
+    outline: 2px solid var(--espn-blue);
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus styles (replaced by focus-visible) */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Special handling for inputs - always show focus ring */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--espn-blue) !important;
   }
 }
 

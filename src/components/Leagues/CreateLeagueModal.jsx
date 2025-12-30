@@ -6,8 +6,12 @@ import React, { useState } from 'react';
 import { X, Users, Lock, Trophy, Copy, Check, Share2, Link2 } from 'lucide-react';
 import Portal from '../Portal';
 import toast from 'react-hot-toast';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CreateLeagueModal = ({ onClose, onCreate }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   const [step, setStep] = useState('create'); // 'create' | 'success'
   const [formData, setFormData] = useState({
     name: '',
@@ -94,6 +98,9 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 overflow-y-auto"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-create-league"
       >
         <div
           className="w-full max-w-md my-auto"
@@ -105,7 +112,7 @@ const CreateLeagueModal = ({ onClose, onCreate }) => {
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
                 <div className="flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-[#0057B8]" />
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  <h2 id="modal-title-create-league" className="text-xs font-bold uppercase tracking-wider text-gray-300">
                     Create League
                   </h2>
                 </div>

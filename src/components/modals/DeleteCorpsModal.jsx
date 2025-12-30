@@ -5,6 +5,7 @@
 import React from 'react';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -14,11 +15,17 @@ const CLASS_NAMES = {
 };
 
 const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   return (
     <Portal>
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-delete-corps"
       >
         <div
           className="w-full max-w-sm bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
@@ -26,7 +33,7 @@ const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+            <h2 id="modal-title-delete-corps" className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Confirm Delete
             </h2>

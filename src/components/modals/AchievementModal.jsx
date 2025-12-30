@@ -5,6 +5,7 @@
 import React from 'react';
 import { Trophy, Star, Crown, Award, Medal, Flame, X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const ICON_MAP = {
   flame: Flame,
@@ -23,6 +24,9 @@ const RARITY_STYLES = {
 };
 
 const AchievementModal = ({ onClose, achievements, newAchievement }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   const sortedAchievements = [...achievements].sort((a, b) =>
     new Date(b.earnedAt) - new Date(a.earnedAt)
   );
@@ -34,6 +38,9 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-achievement"
       >
         <div
           className="w-full max-w-2xl max-h-[80vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col"
@@ -44,7 +51,7 @@ const AchievementModal = ({ onClose, achievements, newAchievement }) => {
             <div className="flex items-center gap-3">
               <Trophy className="w-5 h-5 text-yellow-500" />
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">Your Achievements</h2>
+                <h2 id="modal-title-achievement" className="text-xs font-bold uppercase tracking-wider text-gray-300">Your Achievements</h2>
                 <p className="text-[10px] text-gray-500">
                   {achievements.length} achievement{achievements.length !== 1 ? 's' : ''} unlocked
                 </p>

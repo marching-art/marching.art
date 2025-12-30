@@ -17,6 +17,8 @@ import {
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
+import { XPFeedbackContainer } from './components/XPFeedback';
+import { LevelUpCelebrationContainer } from './components/LevelUpCelebration';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -140,45 +142,59 @@ function App() {
           <OfflineBanner />
 
           {/* Global Toast Notifications - Mobile aware positioning */}
-          <Toaster
-            position="top-center"
-            containerClassName="!top-16 sm:!top-4 sm:!right-4 sm:!left-auto"
-            containerStyle={{
-              // Safe area + header offset on mobile
-              top: 'max(env(safe-area-inset-top, 0px) + 64px, 64px)',
-            }}
-            toastOptions={{
-              duration: 4000,
-              className: 'press-feedback',
-              style: {
-                background: '#1a1a1a',
-                color: '#fff',
-                border: '1px solid #333',
-                borderRadius: '4px',
-                fontSize: '14px',
-                padding: '12px 16px',
-                maxWidth: '90vw',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#00C853',
-                  secondary: '#1a1a1a',
+          {/* ARIA live region for screen reader accessibility (WCAG 4.1.3) */}
+          <div
+            role="region"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-label="Notifications"
+          >
+            <Toaster
+              position="top-center"
+              containerClassName="!top-16 sm:!top-4 sm:!right-4 sm:!left-auto"
+              containerStyle={{
+                // Safe area + header offset on mobile
+                top: 'max(env(safe-area-inset-top, 0px) + 64px, 64px)',
+              }}
+              toastOptions={{
+                duration: 4000,
+                className: 'press-feedback',
+                style: {
+                  background: '#1a1a1a',
+                  color: '#fff',
+                  border: '1px solid #333',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  padding: '12px 16px',
+                  maxWidth: '90vw',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#FF5252',
-                  secondary: '#1a1a1a',
+                success: {
+                  iconTheme: {
+                    primary: '#00C853',
+                    secondary: '#1a1a1a',
+                  },
                 },
-              },
-            }}
-          />
+                error: {
+                  iconTheme: {
+                    primary: '#FF5252',
+                    secondary: '#1a1a1a',
+                  },
+                },
+              }}
+            />
+          </div>
 
         {/* PWA Install Prompt - shows after user engagement */}
         {user && <PWAInstallPrompt />}
 
         {/* Celebration System - for achievements and level ups */}
         <CelebrationContainer />
+
+        {/* XP/CC Floating Feedback - for gains throughout the app */}
+        <XPFeedbackContainer />
+
+        {/* Level Up Celebration - full-screen animation on level up */}
+        <LevelUpCelebrationContainer />
 
         <Suspense fallback={<LoadingScreen fullScreen />}>
         <Routes>

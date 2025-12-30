@@ -14,6 +14,7 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../App';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // -----------------------------------------------------------------------------
 // TREND BADGE
@@ -351,6 +352,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [isUnlimitedTrades, setIsUnlimitedTrades] = useState(false);
   const [isInitialSetup, setIsInitialSetup] = useState(false);
 
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   const captions = [
     { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },
     { id: 'GE2', name: 'General Effect 2', category: 'General Effect' },
@@ -676,7 +680,13 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-2 md:p-4" onClick={onClose}>
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-2 md:p-4"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-caption-selection"
+      >
         <div className="w-full max-w-5xl max-h-[95vh] bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex-shrink-0">
@@ -692,7 +702,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   </button>
                 )}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  <h2 id="modal-title-caption-selection" className="text-xs font-bold uppercase tracking-wider text-gray-300">
                     {mobileView === 'selection' && activeCaptionData
                       ? `Select for ${activeCaptionData.name}`
                       : 'Draft Your Lineup'}
