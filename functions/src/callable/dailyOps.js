@@ -4,12 +4,12 @@ const admin = require("firebase-admin");
 const { getDb, dataNamespaceParam } = require("../config");
 const { calculateXPUpdates, XP_SOURCES } = require("../helpers/xpCalculations");
 
-// Streak milestone rewards (XP + CC)
+// Streak milestone rewards (XP + CC + optional free streak freeze)
 const STREAK_MILESTONES = {
   3: { xp: 50, coin: 50, title: '3 Day Streak!' },
   7: { xp: 100, coin: 100, title: 'Week Warrior!' },
   14: { xp: 250, coin: 200, title: 'Two Week Terror!' },
-  30: { xp: 500, coin: 500, title: 'Monthly Master!' },
+  30: { xp: 500, coin: 500, title: 'Monthly Master!', freeFreeze: true },
   60: { xp: 750, coin: 750, title: 'Streak Legend!' },
   100: { xp: 1000, coin: 1000, title: 'Century Club!' },
 };
@@ -96,15 +96,18 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
       let milestoneReached = null;
 
       // Check for streak milestone
+      let freeFreeze = false;
       if (STREAK_MILESTONES[newStreak]) {
         const milestone = STREAK_MILESTONES[newStreak];
         xpAwarded += milestone.xp;
         coinAwarded += milestone.coin;
+        freeFreeze = milestone.freeFreeze || false;
         milestoneReached = {
           days: newStreak,
           title: milestone.title,
           xp: milestone.xp,
           coin: milestone.coin,
+          freeFreeze,
         };
       }
 
@@ -120,6 +123,13 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         ...xpResult.updates,
       };
 
+      // Award free streak freeze at 30-day milestone
+      if (freeFreeze) {
+        const freezeUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        updates['engagement.streakFreezeUntil'] = freezeUntil;
+        logger.info(`User ${uid} awarded free streak freeze for ${newStreak}-day milestone`);
+      }
+
       // Add CorpsCoin if milestone reached
       if (coinAwarded > 0) {
         updates.corpsCoin = admin.firestore.FieldValue.increment(coinAwarded);
@@ -128,7 +138,7 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
         const historyEntry = {
           type: 'streak_milestone',
           amount: coinAwarded,
-          description: `${newStreak}-day streak milestone!`,
+          description: `${newStreak}-day streak milestone!${freeFreeze ? ' +Free Streak Freeze!' : ''}`,
           timestamp: new Date(),
         };
         updates.corpsCoinHistory = admin.firestore.FieldValue.arrayUnion(historyEntry);
@@ -169,6 +179,9 @@ const claimDailyLogin = onCall({ cors: true }, async (request) => {
 
     if (result.milestoneReached) {
       message = `${result.milestoneReached.title} +${result.milestoneReached.xp} XP +${result.milestoneReached.coin} CC`;
+      if (result.milestoneReached.freeFreeze) {
+        message += ' +Free Streak Freeze!';
+      }
     }
 
     return {
