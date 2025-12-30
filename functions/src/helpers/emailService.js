@@ -1,14 +1,14 @@
 /**
  * Email Service for marching.art
- * Handles all outbound email communications via SendGrid
+ * Handles all outbound email communications via Brevo (formerly Sendinblue)
  */
 
-const sgMail = require("@sendgrid/mail");
+const brevo = require("@getbrevo/brevo");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions/v2");
 
-// Define secrets for SendGrid (set via `firebase functions:secrets:set`)
-const sendgridApiKey = defineSecret("SENDGRID_API_KEY");
+// Define secrets for Brevo (set via `firebase functions:secrets:set`)
+const brevoApiKey = defineSecret("BREVO_API_KEY");
 
 // Email configuration
 const EMAIL_CONFIG = {
@@ -34,18 +34,21 @@ const EMAIL_TYPES = {
 };
 
 /**
- * Initialize SendGrid with API key
+ * Create and configure Brevo API instance
  */
-function initSendGrid() {
-  const apiKey = sendgridApiKey.value();
+function createBrevoClient() {
+  const apiKey = brevoApiKey.value();
   if (!apiKey) {
-    throw new Error("SendGrid API key not configured");
+    throw new Error("Brevo API key not configured");
   }
-  sgMail.setApiKey(apiKey);
+
+  const apiInstance = new brevo.TransactionalEmailsApi();
+  apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+  return apiInstance;
 }
 
 /**
- * Send an email using SendGrid
+ * Send an email using Brevo
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
@@ -56,34 +59,27 @@ function initSendGrid() {
  */
 async function sendEmail({ to, subject, html, text, emailType }) {
   try {
-    initSendGrid();
+    const apiInstance = createBrevoClient();
 
-    const msg = {
-      to,
-      from: {
-        email: EMAIL_CONFIG.fromEmail,
-        name: EMAIL_CONFIG.fromName,
-      },
-      replyTo: EMAIL_CONFIG.replyTo,
-      subject,
-      html,
-      text: text || stripHtml(html),
-      trackingSettings: {
-        clickTracking: { enable: true },
-        openTracking: { enable: true },
-      },
-      customArgs: {
-        emailType,
-      },
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+    sendSmtpEmail.textContent = text || stripHtml(html);
+    sendSmtpEmail.sender = {
+      email: EMAIL_CONFIG.fromEmail,
+      name: EMAIL_CONFIG.fromName,
     };
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.replyTo = { email: EMAIL_CONFIG.replyTo };
+    sendSmtpEmail.tags = [emailType];
 
-    await sgMail.send(msg);
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
     logger.info(`Email sent successfully: ${emailType} to ${to}`);
     return true;
   } catch (error) {
     logger.error(`Failed to send email: ${emailType} to ${to}`, error);
-    if (error.response) {
-      logger.error("SendGrid error body:", error.response.body);
+    if (error.body) {
+      logger.error("Brevo error body:", error.body);
     }
     return false;
   }
@@ -712,7 +708,7 @@ module.exports = {
   // Configuration
   EMAIL_TYPES,
   EMAIL_CONFIG,
-  sendgridApiKey,
+  brevoApiKey,
 
   // Core function
   sendEmail,

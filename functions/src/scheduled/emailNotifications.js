@@ -12,7 +12,7 @@ const {
   sendStreakBrokenEmail,
   sendWeeklyDigestEmail,
   sendWinBackEmail,
-  sendgridApiKey,
+  brevoApiKey,
   EMAIL_TYPES,
 } = require("../helpers/emailService");
 
@@ -103,7 +103,7 @@ exports.streakAtRiskEmailJob = onSchedule(
   {
     schedule: "0 * * * *", // Every hour at :00
     timeZone: "America/New_York",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async () => {
     const db = getDb();
@@ -220,7 +220,7 @@ exports.weeklyDigestEmailJob = onSchedule(
   {
     schedule: "0 10 * * 0", // Every Sunday at 10 AM
     timeZone: "America/New_York",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async () => {
     const db = getDb();
@@ -343,7 +343,7 @@ exports.winBackEmailJob = onSchedule(
   {
     schedule: "0 9 * * *", // Every day at 9 AM
     timeZone: "America/New_York",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async () => {
     const db = getDb();
@@ -454,7 +454,7 @@ exports.streakBrokenEmailJob = onSchedule(
   {
     schedule: "0 1 * * *", // Every day at 1 AM
     timeZone: "America/New_York",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async () => {
     const db = getDb();

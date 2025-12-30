@@ -10,7 +10,7 @@ const { dataNamespaceParam } = require("../config");
 const {
   sendWelcomeEmail,
   sendMilestoneEmail,
-  sendgridApiKey,
+  brevoApiKey,
   EMAIL_TYPES,
 } = require("../helpers/emailService");
 
@@ -36,7 +36,7 @@ async function getUserEmail(uid) {
 exports.onProfileCreated = onDocumentCreated(
   {
     document: "artifacts/{namespace}/users/{userId}/profile/data",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async (event) => {
     const snapshot = event.data;
@@ -75,7 +75,7 @@ exports.onProfileCreated = onDocumentCreated(
 exports.onStreakMilestoneReached = onDocumentCreated(
   {
     document: "artifacts/{namespace}/users/{userId}/streak_milestones/{milestoneId}",
-    secrets: [sendgridApiKey],
+    secrets: [brevoApiKey],
   },
   async (event) => {
     const snapshot = event.data;
