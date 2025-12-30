@@ -317,23 +317,41 @@ const UserManagementTab = () => {
       const snapshot = await getDocs(usersRef);
 
       let activeCount = 0;
+      let premiumCount = 0;
       let corpsCount = 0;
 
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.lastActive) {
-          const lastActive = data.lastActive.toDate();
-          const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
-          if (daysSinceActive <= 7) activeCount++;
+      // Need to fetch profile data for each user to get accurate stats
+      for (const userDoc of snapshot.docs) {
+        const userId = userDoc.id;
+        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data();
+
+          // Count active users (within 7 days)
+          if (profileData.lastActive) {
+            const lastActive = profileData.lastActive.toDate();
+            const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceActive <= 7) activeCount++;
+          }
+
+          // Count premium users
+          if (profileData.isPremium) {
+            premiumCount++;
+          }
+
+          // Count total corps across all classes
+          if (profileData.corps) {
+            corpsCount += Object.keys(profileData.corps).length;
+          }
         }
-        if (data.corps) {
-          corpsCount += Object.keys(data.corps).length;
-        }
-      });
+      }
 
       setStats({
         totalUsers: snapshot.size,
         activeUsers: activeCount,
+        premiumUsers: premiumCount,
         totalCorps: corpsCount
       });
     } catch (error) {
@@ -360,6 +378,7 @@ const UserManagementTab = () => {
           createdAt: profileData.createdAt,
           lastActive: profileData.lastActive,
           xpLevel: profileData.xpLevel || 1,
+          isPremium: profileData.isPremium || false,
           corps: profileData.corps ? Object.keys(profileData.corps) : []
         };
       }));
