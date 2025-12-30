@@ -12,6 +12,8 @@ import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';
 import { useTickerData } from '../../hooks/useTickerData';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import PlayerStatusBar from '../PlayerStatusBar';
 import {
   LayoutDashboard,
   Calendar,
@@ -49,6 +51,7 @@ export const useShell = () => {
 const TopNav = () => {
   const seasonData = useSeasonStore((state) => state.seasonData);
   const { user } = useAuth();
+  const { profile, engagementData } = useDashboardData();
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
@@ -77,36 +80,50 @@ const TopNav = () => {
   };
 
   return (
-    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-4">
+    <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-2 sm:px-4">
       {/* Logo */}
-      <Link to="/dashboard" className="flex items-center gap-2 mr-6">
+      <Link to="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-6">
         <img
           src="/logo192.webp"
           alt="marching.art"
           className="w-7 h-7 rounded"
         />
-        <span className="hidden sm:block font-bold text-sm text-white">MARCHING.ART</span>
+        <span className="hidden lg:block font-bold text-sm text-white">MARCHING.ART</span>
       </Link>
 
-      {/* Season Selector */}
-      <div className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300">
+      {/* Season Selector - Hidden on mobile to make room for status */}
+      <div className="hidden xl:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300">
         <span>{getDisplaySeasonName()}</span>
         <ChevronDown className="w-3 h-3 opacity-50" />
       </div>
 
-    {/* Spacer */}
-    <div className="flex-1" />
+      {/* Player Status Bar - Shows streak, XP, CC */}
+      {profile && (
+        <div className="ml-2 sm:ml-4">
+          <PlayerStatusBar
+            xp={profile.xp || 0}
+            xpLevel={profile.xpLevel || 1}
+            corpsCoin={profile.corpsCoin || 0}
+            streak={engagementData?.loginStreak || 0}
+            lastLogin={engagementData?.lastLogin}
+            unlockedClasses={profile.unlockedClasses || ['soundSport']}
+          />
+        </div>
+      )}
 
-    {/* Desktop Nav Links */}
-    <div className="hidden lg:flex items-center gap-1">
-      <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-      <NavItem to="/schedule" icon={Calendar} label="Schedule" />
-      <NavItem to="/scores" icon={Trophy} label="Scores" />
-      <NavItem to="/leagues" icon={Users} label="Leagues" />
-      <NavItem to="/profile" icon={User} label="Profile" />
-      {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
-    </div>
-  </nav>
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Desktop Nav Links */}
+      <div className="hidden lg:flex items-center gap-1">
+        <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+        <NavItem to="/schedule" icon={Calendar} label="Schedule" />
+        <NavItem to="/scores" icon={Trophy} label="Scores" />
+        <NavItem to="/leagues" icon={Users} label="Leagues" />
+        <NavItem to="/profile" icon={User} label="Profile" />
+        {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
+      </div>
+    </nav>
   );
 };
 

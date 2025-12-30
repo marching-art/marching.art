@@ -56,6 +56,8 @@ const {
 } = require("./src/callable/profile");
 const {
   claimDailyLogin,
+  purchaseStreakFreeze,
+  getStreakStatus,
 } = require("./src/callable/dailyOps");
 const {
   startNewOffSeason,
@@ -125,6 +127,8 @@ module.exports = {
   retireCorps,
   unretireCorps,
   claimDailyLogin,
+  purchaseStreakFreeze,
+  getStreakStatus,
 
   // Scheduled
   seasonScheduler,

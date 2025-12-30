@@ -9,6 +9,7 @@ const admin = require('firebase-admin');
 
 /**
  * XP Configuration
+ * Balanced for ~4-5 month path to World Class for active players
  */
 const XP_CONFIG = {
   xpPerLevel: 1000,  // XP required per level
@@ -20,15 +21,29 @@ const XP_CONFIG = {
 };
 
 /**
- * Simplified XP Sources - Clear, achievable amounts
- * No daily grind required, focused on meaningful participation
+ * XP Sources - Balanced for meaningful progression
+ * Active player (~4-5 months to World Class via XP)
+ * Target: ~500 XP/week for consistent players
  */
 const XP_SOURCES = {
+  // Daily login - reward consistency
+  dailyLogin: 25,              // 175 XP/week if daily
+
   // Weekly participation - just play the game
-  weeklyParticipation: 100,    // Submit a lineup and participate in weekly shows
+  weeklyParticipation: 200,    // Submit a lineup and participate in weekly shows
 
   // League wins - reward competitive success
-  leagueWin: 50,               // Win a weekly league matchup
+  leagueWin: 100,              // Win a weekly league matchup
+
+  // Streak milestones - reward dedication
+  streakMilestone: {
+    3: 50,                     // 3-day streak bonus
+    7: 100,                    // Week streak bonus
+    14: 250,                   // 2-week streak bonus
+    30: 500,                   // Month streak bonus
+    60: 750,                   // 2-month streak bonus
+    100: 1000,                 // Century streak bonus
+  },
 
   // Season completion - end of season bonus based on final rank
   seasonCompletion: {
