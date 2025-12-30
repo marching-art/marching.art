@@ -6,10 +6,13 @@ import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Portal from '../Portal';
 import ScoreRow from './ScoreRow';
+import { useFocusTrap } from '../a11y';
 
 const ShowDetailModal = ({ show, onClose }) => {
   const modalRef = useRef(null);
-  const closeButtonRef = useRef(null);
+
+  // Focus trap - keeps Tab navigation within modal for accessibility
+  useFocusTrap(modalRef, true);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -21,11 +24,6 @@ const ShowDetailModal = ({ show, onClose }) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-
-  // Auto-focus close button on mount
-  useEffect(() => {
-    closeButtonRef.current?.focus();
-  }, []);
 
   return (
     <Portal>
@@ -52,7 +50,6 @@ const ShowDetailModal = ({ show, onClose }) => {
                 </p>
               </div>
               <button
-                ref={closeButtonRef}
                 onClick={onClose}
                 aria-label="Close modal"
                 className="p-1 text-gray-500 hover:text-white flex-shrink-0"

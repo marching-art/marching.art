@@ -29,12 +29,12 @@ const OverviewTab = ({ profile, milestones }) => {
               <div key={classKey} className="bg-black/30 border border-white/5 rounded-xl p-4 hover:border-yellow-500/30 hover:shadow-[0_0_15px_rgba(234,179,8,0.1)] transition-all">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="text-xs text-yellow-50/50 uppercase tracking-wide font-display">{classKey}</p>
+                    <p className="text-xs text-yellow-50/70 uppercase tracking-wide font-display">{classKey}</p>
                     <h3 className="font-display font-bold text-yellow-50 text-lg">{corps.corpsName || corps.name || 'Unnamed Corps'}</h3>
                   </div>
                   {corps.totalSeasonScore !== undefined && (
                     <div className="text-right">
-                      <p className="text-xs text-yellow-50/50">Score</p>
+                      <p className="text-xs text-yellow-50/70">Score</p>
                       <p className="text-xl font-display font-bold text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{corps.totalSeasonScore.toFixed(2)}</p>
                     </div>
                   )}
@@ -44,7 +44,7 @@ const OverviewTab = ({ profile, milestones }) => {
                 )}
                 {corps.selectedShows && (
                   <div className="mt-3 pt-3 border-t border-white/5">
-                    <p className="text-xs text-yellow-50/50">
+                    <p className="text-xs text-yellow-50/70">
                       Shows: <span className="text-yellow-400">{Object.keys(corps.selectedShows).length}</span> selected
                     </p>
                   </div>
@@ -106,7 +106,7 @@ const OverviewTab = ({ profile, milestones }) => {
                     <p className={`font-display font-semibold text-sm ${isComplete ? 'text-yellow-400' : 'text-yellow-50'}`}>
                       {milestone.name}
                     </p>
-                    <p className="text-xs text-yellow-50/50">{milestone.description}</p>
+                    <p className="text-xs text-yellow-50/70">{milestone.description}</p>
                   </div>
                 </div>
                 <div className="w-full bg-black/50 rounded-full h-1.5">
@@ -115,7 +115,7 @@ const OverviewTab = ({ profile, milestones }) => {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="text-xs text-yellow-50/50 mt-1 text-right">
+                <p className="text-xs text-yellow-50/70 mt-1 text-right">
                   {milestone.current} / {milestone.requirement}
                 </p>
               </div>

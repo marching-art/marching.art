@@ -22,6 +22,7 @@ import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
 import { useUserStore } from './store/userStore';
+import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
 
@@ -78,6 +79,8 @@ function App() {
   const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
   const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
   const initAuthListener = useUserStore((state) => state.initAuthListener);
+  const initProfileListener = useProfileStore((state) => state.initProfileListener);
+  const cleanupProfileListener = useProfileStore((state) => state.cleanup);
 
   // Initialize global season listener ONCE at app startup
   // This prevents duplicate Firestore listeners across components
@@ -87,6 +90,19 @@ function App() {
       cleanupSeasonListener();
     };
   }, [initSeasonListener, cleanupSeasonListener]);
+
+  // Initialize global profile listener when user changes
+  // This prevents duplicate Firestore listeners for profile data across components
+  useEffect(() => {
+    if (user) {
+      initProfileListener(user.uid, user);
+    } else {
+      cleanupProfileListener();
+    }
+    return () => {
+      // Only cleanup on unmount, not on user change (handled above)
+    };
+  }, [user, initProfileListener, cleanupProfileListener]);
 
   // Initialize user profile listener to sync profile data with auth state
   // This ensures loggedInProfile is available for components like Scores

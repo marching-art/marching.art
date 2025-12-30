@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useSeason, getSeasonProgress } from './useSeason';
+import { useProfileStore } from '../store/profileStore';
 import toast from 'react-hot-toast';
 import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
 import { formatSeasonName } from '../utils/season';
@@ -11,15 +12,25 @@ import { formatSeasonName } from '../utils/season';
 /**
  * Custom hook that centralizes all dashboard data fetching and state management.
  * This reduces the main Dashboard component complexity significantly.
+ *
+ * NOTE: Profile data now comes from the global profileStore to prevent
+ * duplicate Firestore listeners. The store is initialized in App.jsx.
  */
 export const useDashboardData = () => {
   const { user } = useAuth();
   const { seasonData, loading: seasonLoading, weeksRemaining } = useSeason();
 
-  // Core state
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [corps, setCorps] = useState(null);
+  // Get profile data from global store (singleton listener)
+  const storeProfile = useProfileStore((state) => state.profile);
+  const storeCorps = useProfileStore((state) => state.corps);
+  const storeLoading = useProfileStore((state) => state.loading);
+
+  // Core state - profile and corps now come from store
+  const profile = storeProfile;
+  const loading = storeLoading;
+  const corps = storeCorps;
+
+  // Additional local state
   const [availableCorps, setAvailableCorps] = useState([]);
   const [recentScores, setRecentScores] = useState([]);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
@@ -96,41 +107,8 @@ export const useDashboardData = () => {
     }
   }, [profile?.unlockedClasses, previousUnlockedClasses]);
 
-  // Subscribe to profile updates
-  useEffect(() => {
-    if (user) {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const unsubscribeProfile = onSnapshot(profileRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          setProfile(data);
-          setCorps(data.corps || null);
-        } else {
-          const initialProfile = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || 'Director',
-            createdAt: new Date(),
-            xp: 0,
-            xpLevel: 1,
-            unlockedClasses: ['soundSport'],
-            achievements: [],
-            stats: {
-              seasonsPlayed: 0,
-              championships: 0,
-              topTenFinishes: 0
-            }
-          };
-          setDoc(profileRef, initialProfile);
-        }
-        setLoading(false);
-      });
-
-      return () => {
-        unsubscribeProfile();
-      };
-    }
-  }, [user]);
+  // NOTE: Profile subscription is now handled by profileStore (initialized in App.jsx)
+  // This eliminates duplicate Firestore listeners when multiple components use this hook
 
   // Detect corps that need season setup
   useEffect(() => {
@@ -427,22 +405,12 @@ export const useDashboardData = () => {
     setNewAchievement(null);
   };
 
-  // Manual profile refresh - useful after daily activities complete
+  // Manual profile refresh - now handled automatically by profileStore's onSnapshot
+  // This is a no-op but kept for API compatibility
   const refreshProfile = useCallback(async () => {
-    if (user) {
-      try {
-        const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        const profileDoc = await getDoc(profileRef);
-        if (profileDoc.exists()) {
-          const data = profileDoc.data();
-          setProfile(data);
-          setCorps(data.corps || null);
-        }
-      } catch (error) {
-        console.error('Error refreshing profile:', error);
-      }
-    }
-  }, [user]);
+    // Profile data is now managed by profileStore with real-time updates
+    // No manual refresh needed - onSnapshot handles it automatically
+  }, []);
 
   return {
     // Core data

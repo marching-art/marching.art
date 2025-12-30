@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 import { triggerHaptic } from '../hooks/useHaptic';
+import { prefetchRoute } from '../lib/prefetch';
 
 // =============================================================================
 // TYPES
@@ -79,6 +80,8 @@ const BottomNav: React.FC = () => {
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => triggerHaptic('light')}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                onFocus={() => prefetchRoute(item.path)}
                 className="relative flex flex-col items-center justify-center gap-1 px-4 py-2.5 min-w-[60px] min-h-[52px] press-feedback"
               >
                 {/* Active indicator */}
@@ -94,7 +97,7 @@ const BottomNav: React.FC = () => {
                 <div className={`relative z-10 p-1.5 rounded-lg transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
                     className={`w-6 h-6 transition-all duration-150 ${
-                      active ? 'text-yellow-400' : 'text-yellow-50/50'
+                      active ? 'text-yellow-400' : 'text-yellow-50/70'
                     }`}
                     aria-hidden="true"
                   />
@@ -109,7 +112,7 @@ const BottomNav: React.FC = () => {
                 {/* Label - increased size for readability */}
                 <span
                   className={`relative z-10 text-[11px] font-medium transition-all duration-150 ${
-                    active ? 'text-yellow-400' : 'text-yellow-50/50'
+                    active ? 'text-yellow-400' : 'text-yellow-50/70'
                   }`}
                 >
                   {item.label}

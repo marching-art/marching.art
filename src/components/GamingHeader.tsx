@@ -16,6 +16,7 @@ import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { prefetchRoute } from '../lib/prefetch';
 
 // =============================================================================
 // TYPES
@@ -159,6 +160,8 @@ const GamingHeader: React.FC = () => {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onMouseEnter={() => prefetchRoute(item.path)}
+                    onFocus={() => prefetchRoute(item.path)}
                     className={`
                       relative flex items-center gap-2 px-4 py-2.5 rounded-lg font-display font-semibold text-sm uppercase tracking-wide
                       transition-all duration-300 group
@@ -311,6 +314,8 @@ const GamingHeader: React.FC = () => {
                     <Link
                       key={item.path}
                       to={item.path}
+                      onMouseEnter={() => prefetchRoute(item.path)}
+                      onFocus={() => prefetchRoute(item.path)}
                       className={`
                         flex items-center gap-3 px-4 py-3 transition-all duration-200
                         ${active
@@ -331,6 +336,8 @@ const GamingHeader: React.FC = () => {
                 {isAdmin && (
                   <Link
                     to="/admin"
+                    onMouseEnter={() => prefetchRoute('/admin')}
+                    onFocus={() => prefetchRoute('/admin')}
                     className={`
                       flex items-center gap-3 px-4 py-3 transition-all duration-200
                       ${isActive('/admin')
@@ -360,7 +367,7 @@ const GamingHeader: React.FC = () => {
               {seasonData && (
                 <div className="p-4 border-t border-white/10 bg-gradient-to-r from-yellow-500/10 to-transparent">
                   <div className="text-center">
-                    <p className="text-xs text-yellow-50/50 uppercase tracking-wider">Current Season</p>
+                    <p className="text-xs text-yellow-50/70 uppercase tracking-wider">Current Season</p>
                     <p className="text-lg font-display font-bold text-yellow-400 mt-1 capitalize">
                       {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
                     </p>
