@@ -70,6 +70,78 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
     case "createBattlePassSeason":
       await createBattlePassSeasonManual();
       return { success: true, message: "Battle pass season created successfully." };
+    case "patchChampionshipShows": {
+      // Migration to add isChampionship flag to existing season's championship shows
+      const db = getDb();
+      const seasonDoc = await db.doc("game-settings/season").get();
+      if (!seasonDoc.exists) {
+        throw new HttpsError("failed-precondition", "No active season found.");
+      }
+      const seasonData = seasonDoc.data();
+      const events = seasonData.events || [];
+      let patched = 0;
+
+      events.forEach(dayEvent => {
+        const day = dayEvent.offSeasonDay;
+
+        if (day === 45) {
+          dayEvent.shows = [{
+            eventName: "Open and A Class Prelims",
+            location: "Marion, IN",
+            date: null,
+            isChampionship: true,
+            eligibleClasses: ["openClass", "aClass"],
+            mandatory: true,
+          }];
+          patched++;
+        } else if (day === 46) {
+          dayEvent.shows = [{
+            eventName: "Open and A Class Finals",
+            location: "Marion, IN",
+            date: null,
+            isChampionship: true,
+            eligibleClasses: ["openClass", "aClass"],
+            advancementRules: { openClass: 8, aClass: 4 },
+            mandatory: true,
+          }];
+          patched++;
+        } else if (day === 47 && dayEvent.shows.length > 0) {
+          dayEvent.shows[0].isChampionship = true;
+          dayEvent.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
+          patched++;
+        } else if (day === 48 && dayEvent.shows.length > 0) {
+          dayEvent.shows[0].isChampionship = true;
+          dayEvent.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
+          dayEvent.shows[0].advancementRules = { all: 25 };
+          patched++;
+        } else if (day === 49) {
+          const worldFinalsShow = dayEvent.shows[0] || {
+            eventName: "marching.art World Championship Finals",
+            location: "Indianapolis, IN",
+            date: null,
+          };
+          worldFinalsShow.isChampionship = true;
+          worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
+          worldFinalsShow.advancementRules = { all: 12 };
+
+          const soundSportShow = {
+            eventName: "SoundSport International Music & Food Festival",
+            location: "Indianapolis, IN",
+            date: null,
+            isChampionship: true,
+            eligibleClasses: ["soundSport"],
+            mandatory: true,
+          };
+
+          dayEvent.shows = [worldFinalsShow, soundSportShow];
+          patched++;
+        }
+      });
+
+      await db.doc("game-settings/season").update({ events });
+      logger.info(`Patched ${patched} championship days in current season.`);
+      return { success: true, message: `Successfully patched ${patched} championship days with isChampionship flag.` };
+    }
     default:
       throw new HttpsError("not-found", `Job named '${jobName}' was not found.`);
     }
