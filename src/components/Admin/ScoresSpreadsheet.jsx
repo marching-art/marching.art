@@ -172,7 +172,7 @@ const ScoresSpreadsheet = () => {
   };
 
   // Visible columns based on scroll position
-  const VISIBLE_COLUMNS = 18;
+  const VISIBLE_COLUMNS = 24;
   const visibleDates = useMemo(() => {
     return allDates.slice(scrollPosition, scrollPosition + VISIBLE_COLUMNS);
   }, [allDates, scrollPosition]);
@@ -181,11 +181,11 @@ const ScoresSpreadsheet = () => {
   const canScrollRight = scrollPosition + VISIBLE_COLUMNS < allDates.length;
 
   const handleScrollLeft = () => {
-    setScrollPosition(Math.max(0, scrollPosition - 9));
+    setScrollPosition(Math.max(0, scrollPosition - 12));
   };
 
   const handleScrollRight = () => {
-    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 9));
+    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 12));
   };
 
   // Export to CSV
@@ -344,10 +344,10 @@ const ScoresSpreadsheet = () => {
               {visibleDates.map((dateInfo, idx) => (
                 <th
                   key={dateInfo.day}
-                  className="px-0.5 py-1 text-center font-mono text-cream-400 min-w-[44px] border-r border-cream-500/10"
+                  className="px-0 py-0.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[9px] text-cream-500/70 leading-tight">{formatDateHeader(dateInfo.date, dateInfo.day)}</div>
+                  <div className="text-[8px] text-cream-500/70 leading-none">{formatDateHeader(dateInfo.date, dateInfo.day)}</div>
                 </th>
               ))}
             </tr>
@@ -402,7 +402,7 @@ const ScoresSpreadsheet = () => {
                   return (
                     <td
                       key={dateInfo.day}
-                      className={`px-0.5 py-0.5 text-center font-mono text-[10px] border-r border-cream-500/5 ${bgColor}`}
+                      className={`px-0 py-0.5 text-center font-mono text-[9px] w-[38px] border-r border-cream-500/5 ${bgColor}`}
                     >
                       {score !== null ? (
                         <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-cream-300'}`}>
