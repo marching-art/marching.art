@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
 import { triggerHaptic } from '../hooks/useHaptic';
+import { prefetchRoute } from '../lib/prefetch';
 
 // =============================================================================
 // TYPES
@@ -79,6 +80,8 @@ const BottomNav: React.FC = () => {
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
                 onClick={() => triggerHaptic('light')}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                onFocus={() => prefetchRoute(item.path)}
                 className="relative flex flex-col items-center justify-center gap-1 px-4 py-2.5 min-w-[60px] min-h-[52px] press-feedback"
               >
                 {/* Active indicator */}
