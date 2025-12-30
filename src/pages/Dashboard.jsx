@@ -534,7 +534,12 @@ const Dashboard = () => {
                 {CAPTIONS.map((caption, index) => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
-                  const corpsName = hasValue ? value.split('|')[0] : null;
+                  const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
+                  // Get caption score from aggregated scores (most recent competition)
+                  const corpsScoreData = hasValue ? aggregatedScores.find(
+                    s => (s.corpsName || s.corps) === corpsName
+                  ) : null;
+                  const captionScore = corpsScoreData?.scores?.[0]?.captions?.[caption.id] ?? null;
                   return (
                     <button
                       key={caption.id}
@@ -553,18 +558,25 @@ const Dashboard = () => {
                       }`}>
                         {caption.name}
                       </div>
-                      {/* Corps Name */}
+                      {/* Corps Name + Year */}
                       <div className="flex-1 text-left min-w-0">
                         {hasValue ? (
-                          <span className="text-sm text-white truncate block">{corpsName}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm text-white truncate">{corpsName}</span>
+                            {sourceYear && (
+                              <span className="text-[10px] text-gray-500">'{sourceYear?.slice(-2)}</span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-sm text-gray-500 italic">Empty slot</span>
                         )}
                       </div>
-                      {/* Score Placeholder / Action */}
+                      {/* Caption Score / Action */}
                       <div className="flex items-center gap-2">
                         {hasValue ? (
-                          <span className="text-xs font-data text-gray-500 tabular-nums">—</span>
+                          <span className="text-xs font-data text-gray-400 tabular-nums">
+                            {captionScore !== null ? captionScore.toFixed(1) : '—'}
+                          </span>
                         ) : (
                           <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
                         )}
