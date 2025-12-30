@@ -27,8 +27,9 @@
 | **QW-6** | Route prefetching on hover/focus | Medium |
 | **QW-7** | Modal queue system prevents modal chaos | High |
 | **QW-8** | Quick Fill button for lineup auto-fill | High |
+| **QW-9** | Consolidated Firestore listeners with profileStore | Medium |
 
-### Current Grade: **B+** *(upgraded from B)*
+### Current Grade: **A-** *(upgraded from B+)*
 
 ---
 
@@ -333,8 +334,8 @@ No countdown timers, no limited events, no scarcity.
 |-------|--------|---------|-------------|--------|
 | ~~**Unused React Query**~~ | — | — | — | **N/A** — In use |
 | **Firebase monolithic** | +1.2MB | Full SDK | Tree-shake to used modules | Pending |
-| **No prefetching** | Slow route transitions | Load on demand | Prefetch on hover | Pending |
-| **Duplicate Firestore listeners** | Redundant reads | Multiple listeners for same data | Consolidate to singleton pattern | Pending |
+| ~~**No prefetching**~~ | ~~Slow route transitions~~ | ~~Load on demand~~ | ~~Prefetch on hover~~ | **✅ DONE** |
+| ~~**Duplicate Firestore listeners**~~ | ~~Redundant reads~~ | ~~Multiple listeners for same data~~ | ~~Consolidate to singleton pattern~~ | **✅ DONE** |
 | **Service worker non-functional** | No offline support | Registered, not implemented | Implement caching strategy | Pending |
 | ~~**No skeleton screens on pages**~~ | ~~Perceived slowness~~ | ~~Generic loading~~ | ~~Page-specific skeletons~~ | **✅ DONE** |
 
@@ -424,10 +425,10 @@ Being critical as requested:
 | ~~**QW-6**~~ | ~~Add route prefetching~~ | 2 hours | Medium | **✅ DONE** | Created prefetch.ts utility with requestIdleCallback |
 | ~~**QW-7**~~ | ~~Modal queue system~~ | 4 hours | High | **✅ DONE** | useModalQueue hook with priority-based queue |
 | ~~**QW-8**~~ | ~~Add "Quick Fill" to onboarding lineup~~ | 2 hours | High | **✅ DONE** | Wand2 button auto-fills empty slots with balanced allocation |
-| **QW-9** | Consolidate duplicate Firestore listeners | 4 hours | Medium | Pending | Enforce singleton pattern in useDashboardData |
+| ~~**QW-9**~~ | ~~Consolidate duplicate Firestore listeners~~ | 4 hours | Medium | **✅ DONE** | Created profileStore.js with singleton pattern |
 | **QW-10** | Add focus trap to ShowDetailModal | 2 hours | Medium | Pending | Use existing useFocusTrap hook |
 
-**Progress: 8/10 Quick Wins Complete** (~19 hours done, ~6 hours remaining)
+**Progress: 9/10 Quick Wins Complete** (~23 hours done, ~2 hours remaining)
 
 ---
 
