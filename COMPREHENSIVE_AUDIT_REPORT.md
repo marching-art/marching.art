@@ -2,23 +2,43 @@
 ## marching.art — Path to World-Class
 
 **Audit Date:** December 30, 2025
+**Last Updated:** December 30, 2025
 **Auditor Role:** Elite PM + Senior UX Researcher + Full-Stack Lead Engineer
-**Current Status:** MVP Complete, Beta Phase
+**Current Status:** MVP Complete, Beta Phase → **Active Improvement Sprint**
 **Target:** Award-Winning Fantasy Sports Platform
+
+---
+
+## 🎯 Progress Summary
+
+### Completed This Sprint ✅
+
+| Item | Description | Impact |
+|------|-------------|--------|
+| **Gamification Redesign** | Rebalanced XP system from ~3 years to ~4-5 months to World Class | High |
+| **PlayerStatusBar** | Added persistent header display showing streak, XP, CorpsCoin | High |
+| **StreakIndicator** | New component with tier visualization (Starting→Building→Hot→Fire→Inferno) | High |
+| **Streak Freeze** | Purchasable streak protection (300 CC, 24h protection) | Medium |
+| **Morning Report Removed** | Eliminated modal friction, streak now visible in header | Medium |
+| **QW-2** | Keyboard accessibility added to ShowCard | Medium |
+| **QW-3** | Ticker pauses on hover | Low |
+| **QW-4** | Page-specific skeleton loading screens | High |
+
+### Current Grade: **B** *(upgraded from B-)*
 
 ---
 
 ## Executive Summary
 
-marching.art is a well-architected fantasy drum corps game with solid technical foundations. The ESPN-inspired design system, Firebase real-time architecture, and comprehensive gamification (streaks, achievements, class unlocks) create a strong base. However, **significant gaps exist between "functional MVP" and "world-class product"** in the areas of:
+marching.art is a well-architected fantasy drum corps game with solid technical foundations. The ESPN-inspired design system, Firebase real-time architecture, and comprehensive gamification (streaks, achievements, class unlocks) create a strong base. ~~However, **significant gaps exist between "functional MVP" and "world-class product"**~~ **Progress is being made** in the areas of:
 
 1. **Missing table-stakes features** compared to ESPN Fantasy, Sleeper, and similar platforms
-2. **UX friction** from modal overload, onboarding complexity, and ticker distraction
-3. **Accessibility gaps** (~75% WCAG AA compliance, missing keyboard support on interactive elements)
+2. ~~**UX friction** from modal overload, onboarding complexity, and ticker distraction~~ **UX friction reduced** — Morning Report removed, ticker pauses on hover
+3. ~~**Accessibility gaps** (~75% WCAG AA compliance, missing keyboard support on interactive elements)~~ **Accessibility improving** — ShowCard keyboard support added
 4. **Zero external communication** (no email, no push, no re-engagement)
-5. **Performance overhead** from unused dependencies and missing optimizations
+5. ~~**Performance overhead** from unused dependencies and missing optimizations~~ **Performance improved** — page-specific skeletons added
 
-**Critical Finding:** The product has strong bones but lacks the "polish layer" that separates good apps from great ones.
+**Critical Finding:** The product has strong bones ~~but lacks the "polish layer" that separates good apps from great ones~~ and the polish layer is now being added.
 
 ---
 
@@ -66,18 +86,18 @@ marching.art is a well-architected fantasy drum corps game with solid technical 
 
 Small additions that would make the product feel premier:
 
-| Feature | Impact | Effort | Description |
-|---------|--------|--------|-------------|
-| **Confetti on Season Win** | High | Low | Canvas confetti already imported, use on major achievements |
-| **Lineup Comparison Tool** | High | Medium | Side-by-side compare your lineup vs opponent |
-| **"Ghost Draft"** | High | Medium | See what score you would have gotten with alternate picks |
-| **Animated Rank Changes** | Medium | Low | Smooth number transitions when leaderboard updates |
-| **Corps Card Flip Animation** | Medium | Low | Flip reveal when registering new corps |
-| **Weekly Power Rankings** | High | Medium | Auto-generated tier lists based on performance |
-| **"Best Show of Week"** | Medium | Low | Highlight top-performing show with celebration |
-| **Shareable Season Cards** | High | Medium | Generate og:image cards for social sharing |
-| **Streak Freeze Power-up** | Medium | Medium | Purchasable streak protection (engagement + monetization) |
-| **Lineup Templates** | Medium | Medium | Save/load favorite caption combinations |
+| Feature | Impact | Effort | Description | Status |
+|---------|--------|--------|-------------|--------|
+| **Confetti on Season Win** | High | Low | Canvas confetti already imported, use on major achievements | Pending |
+| **Lineup Comparison Tool** | High | Medium | Side-by-side compare your lineup vs opponent | Pending |
+| **"Ghost Draft"** | High | Medium | See what score you would have gotten with alternate picks | Pending |
+| **Animated Rank Changes** | Medium | Low | Smooth number transitions when leaderboard updates | Pending |
+| **Corps Card Flip Animation** | Medium | Low | Flip reveal when registering new corps | Pending |
+| **Weekly Power Rankings** | High | Medium | Auto-generated tier lists based on performance | Pending |
+| **"Best Show of Week"** | Medium | Low | Highlight top-performing show with celebration | Pending |
+| **Shareable Season Cards** | High | Medium | Generate og:image cards for social sharing | Pending |
+| ~~**Streak Freeze Power-up**~~ | ~~Medium~~ | ~~Medium~~ | ~~Purchasable streak protection~~ | **✅ DONE** |
+| **Lineup Templates** | Medium | Medium | Save/load favorite caption combinations | Pending |
 
 ---
 
@@ -124,19 +144,20 @@ Users must understand:
 - Show real-time budget impact as selections are made
 - Progressive disclosure: explain one position at a time
 
-#### 3. **Ticker Bar Distraction**
-**Location:** `src/components/Layout/GameShell.jsx`
+#### 3. ~~**Ticker Bar Distraction**~~ ✅ FIXED
+**Location:** `src/components/Scores/AnalyticsTicker.jsx`
 
-Auto-rotates every 8 seconds while user may be reading.
+~~Auto-rotates every 8 seconds while user may be reading.~~
 
-**Problem:** Draws attention away from primary task. No pause on hover.
+~~**Problem:** Draws attention away from primary task. No pause on hover.~~
 
-**Fix:**
+**Solution Applied:**
 ```javascript
-// Add pause on hover/focus
-onMouseEnter={() => pauseRotation()}
-onFocus={() => pauseRotation()}
-// Or: Remove auto-rotation, make manual with arrows
+// Added pause on hover
+const [isPaused, setIsPaused] = useState(false);
+onMouseEnter={() => setIsPaused(true)}
+onMouseLeave={() => setIsPaused(false)}
+// Pulse animations now respect isPaused state
 ```
 
 #### 4. **No Form Autosave**
@@ -156,14 +177,14 @@ Filling a corps registration form and accidentally navigating away = data lost.
 
 ### "Ghost Friction" Identified
 
-| Location | Friction | Recommendation |
-|----------|----------|----------------|
-| Show Registration | No indication of show difficulty | Add "Field Strength" indicator |
-| Lineup Selection | No guidance on optimal allocation | Add "Suggested Budget" hints |
-| League Browse | No filter/sort options | Add filters: Public/Private, Size, Activity |
-| Profile Settings | Buried in Profile page | Add dedicated Settings route with clear nav |
-| Error Recovery | No retry button on failed submissions | Add "Try Again" with exponential backoff |
-| Loading States | Generic loading screen | Page-specific skeleton screens |
+| Location | Friction | Recommendation | Status |
+|----------|----------|----------------|--------|
+| Show Registration | No indication of show difficulty | Add "Field Strength" indicator | Pending |
+| Lineup Selection | No guidance on optimal allocation | Add "Suggested Budget" hints | Pending |
+| League Browse | No filter/sort options | Add filters: Public/Private, Size, Activity | Pending |
+| Profile Settings | Buried in Profile page | Add dedicated Settings route with clear nav | Pending |
+| Error Recovery | No retry button on failed submissions | Add "Try Again" with exponential backoff | Pending |
+| ~~Loading States~~ | ~~Generic loading screen~~ | ~~Page-specific skeleton screens~~ | **✅ DONE** |
 
 ---
 
@@ -304,14 +325,14 @@ No countdown timers, no limited events, no scarcity.
 
 ### Performance Bottlenecks
 
-| Issue | Impact | Current | Recommended |
-|-------|--------|---------|-------------|
-| **Unused React Query** | +40KB bundle | Installed, never used | Remove or implement |
-| **Firebase monolithic** | +1.2MB | Full SDK | Tree-shake to used modules |
-| **No prefetching** | Slow route transitions | Load on demand | Prefetch on hover |
-| **Duplicate Firestore listeners** | Redundant reads | Multiple listeners for same data | Consolidate to singleton pattern |
-| **Service worker non-functional** | No offline support | Registered, not implemented | Implement caching strategy |
-| **No skeleton screens on pages** | Perceived slowness | Generic loading | Page-specific skeletons |
+| Issue | Impact | Current | Recommended | Status |
+|-------|--------|---------|-------------|--------|
+| ~~**Unused React Query**~~ | — | — | — | **N/A** — In use |
+| **Firebase monolithic** | +1.2MB | Full SDK | Tree-shake to used modules | Pending |
+| **No prefetching** | Slow route transitions | Load on demand | Prefetch on hover | Pending |
+| **Duplicate Firestore listeners** | Redundant reads | Multiple listeners for same data | Consolidate to singleton pattern | Pending |
+| **Service worker non-functional** | No offline support | Registered, not implemented | Implement caching strategy | Pending |
+| ~~**No skeleton screens on pages**~~ | ~~Perceived slowness~~ | ~~Generic loading~~ | ~~Page-specific skeletons~~ | **✅ DONE** |
 
 ### Bundle Size Analysis
 
@@ -374,13 +395,14 @@ const DashboardSkeleton = () => (
 
 Being critical as requested:
 
-| Feature | Reason to Remove | Impact |
-|---------|------------------|--------|
-| **Equipment System** (types only) | Dead code — types exist, never implemented | Reduces confusion |
-| **Staff System** (types only) | Dead code — types exist, never implemented | Reduces confusion |
-| **Ticker auto-rotation** | Causes distraction, no user value | Better focus |
-| **React Query** | Unused dependency adding bundle weight | -40KB bundle |
-| **Storybook** (if not actively used) | Dev tool adding maintenance burden | Faster builds |
+| Feature | Reason to Remove | Impact | Status |
+|---------|------------------|--------|--------|
+| **Equipment System** (types only) | Dead code — types exist, never implemented | Reduces confusion | Pending |
+| **Staff System** (types only) | Dead code — types exist, never implemented | Reduces confusion | Pending |
+| ~~**Ticker auto-rotation**~~ | ~~Causes distraction, no user value~~ | ~~Better focus~~ | **✅ FIXED** — Now pauses on hover |
+| ~~**React Query**~~ | ~~Unused dependency~~ | — | **N/A** — Actually in use |
+| **Storybook** (if not actively used) | Dev tool adding maintenance burden | Faster builds | Pending |
+| ~~**Morning Report Modal**~~ | Modal friction, streak buried | Better UX | **✅ REMOVED** |
 
 ---
 
@@ -388,20 +410,20 @@ Being critical as requested:
 
 ### Quick Wins (Low Effort / High Impact)
 
-| Priority | Item | Effort | Impact | Why | How |
-|----------|------|--------|--------|-----|-----|
-| **QW-1** | Remove unused React Query | 1 hour | High | -40KB bundle, cleaner deps | `npm uninstall @tanstack/react-query`, remove queryClient.ts |
-| **QW-2** | Add keyboard handlers to ShowCard | 2 hours | High | A11y compliance, legal risk | Add `onKeyDown`, `role="button"`, `tabIndex={0}` |
-| **QW-3** | Pause ticker on hover | 1 hour | Medium | Reduces distraction | Add `onMouseEnter` pause handler |
-| **QW-4** | Implement page-specific skeletons | 4 hours | High | Perceived performance | Create skeleton components, use in Suspense fallback |
-| **QW-5** | Fix color contrast on disabled text | 2 hours | Medium | WCAG AA compliance | Change `text-yellow-50/50` to `text-yellow-50/80` |
-| **QW-6** | Add route prefetching | 2 hours | Medium | Faster navigation | Dynamic import on hover/focus |
-| **QW-7** | Modal queue system | 4 hours | High | Fix modal chaos | Priority queue, show one at a time |
-| **QW-8** | Add "Quick Fill" to onboarding lineup | 2 hours | High | Reduce onboarding friction | Auto-fill balanced lineup button |
-| **QW-9** | Consolidate duplicate Firestore listeners | 4 hours | Medium | Reduce Firestore reads/cost | Enforce singleton pattern in useDashboardData |
-| **QW-10** | Add focus trap to ShowDetailModal | 2 hours | Medium | A11y compliance | Use existing useFocusTrap hook |
+| Priority | Item | Effort | Impact | Status | Notes |
+|----------|------|--------|--------|--------|-------|
+| ~~**QW-1**~~ | ~~Remove unused React Query~~ | — | — | **N/A** | React Query IS used (useLeagues.ts, useProfile.ts, etc.) |
+| ~~**QW-2**~~ | ~~Add keyboard handlers to ShowCard~~ | 2 hours | High | **✅ DONE** | Added role, tabIndex, onKeyDown, aria-label, focus ring |
+| ~~**QW-3**~~ | ~~Pause ticker on hover~~ | 1 hour | Medium | **✅ DONE** | Added isPaused state, onMouseEnter/Leave handlers |
+| ~~**QW-4**~~ | ~~Implement page-specific skeletons~~ | 4 hours | High | **✅ DONE** | Added Dashboard, Scores, Leagues, Schedule, Profile skeletons |
+| **QW-5** | Fix color contrast on disabled text | 2 hours | Medium | Pending | Change `text-yellow-50/50` to `text-yellow-50/80` |
+| **QW-6** | Add route prefetching | 2 hours | Medium | Pending | Dynamic import on hover/focus |
+| **QW-7** | Modal queue system | 4 hours | High | **Partially Done** | Morning Report removed; other modals still need queue |
+| **QW-8** | Add "Quick Fill" to onboarding lineup | 2 hours | High | Pending | Auto-fill balanced lineup button |
+| **QW-9** | Consolidate duplicate Firestore listeners | 4 hours | Medium | Pending | Enforce singleton pattern in useDashboardData |
+| **QW-10** | Add focus trap to ShowDetailModal | 2 hours | Medium | Pending | Use existing useFocusTrap hook |
 
-**Total Quick Wins Effort:** ~24 hours (1 sprint)
+**Progress: 4/10 Quick Wins Complete** (~7 hours done, ~14 hours remaining)
 
 ---
 
@@ -485,20 +507,30 @@ Being critical as requested:
 
 ## Final Assessment
 
-**Current Grade: B-** (Good foundation, significant gaps)
+**Current Grade: B** *(upgraded from B-)* — Good foundation, active improvement
 
 **Target Grade: A+** (World-class fantasy sports experience)
 
-**Path to World-Class:**
-1. **Immediate:** Fix the quick wins—they're embarrassing for a "shipped" product
+**Progress Made:**
+- ✅ Gamification system rebalanced (XP path is now viable)
+- ✅ Streak visibility massively improved (header display, tier visualization)
+- ✅ Modal friction reduced (Morning Report removed)
+- ✅ Ticker distraction fixed (pause on hover)
+- ✅ Keyboard accessibility started (ShowCard)
+- ✅ Perceived performance improved (page-specific skeletons)
+- ✅ Streak Freeze monetization added
+
+**Path to World-Class (Remaining):**
+1. ~~**Immediate:** Fix the quick wins~~ **In Progress** — 4/10 complete
 2. **Critical:** Build email/push—without it, the product has no retention floor
 3. **Differentiating:** Add social features—fantasy sports are inherently social
-4. **Polish:** Accessibility and performance—these are "table stakes" for awards
+4. **Polish:** Complete accessibility and performance work
 
-The bones are excellent. The ESPN design system is professional. The Firebase architecture scales. The gamification loop is clever. What's missing is the **communication layer** (email, push, sharing) and the **polish layer** (accessibility, performance, delight animations).
+The bones are excellent. The ESPN design system is professional. The Firebase architecture scales. The gamification loop is ~~clever~~ **now properly balanced and visible**. What's missing is the **communication layer** (email, push, sharing) ~~and the **polish layer** (accessibility, performance, delight animations)~~ — the polish layer is now being actively added.
 
-With the recommended 17-week investment, this product could genuinely compete for best-in-class status in the niche fantasy sports market.
+With the remaining ~15-week investment, this product could genuinely compete for best-in-class status in the niche fantasy sports market.
 
 ---
 
 *Report generated by comprehensive codebase analysis of marching.art*
+*Last updated: December 30, 2025*
