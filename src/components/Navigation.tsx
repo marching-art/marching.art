@@ -53,8 +53,12 @@ const Navigation: React.FC = () => {
   const leagueBadge = useLeagueNotificationBadge(user?.uid);
 
   useEffect(() => {
-    adminHelpers.isAdmin().then(setIsAdmin);
-  }, []);
+    if (user) {
+      adminHelpers.isAdmin().then(setIsAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
