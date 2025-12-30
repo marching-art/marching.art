@@ -23,8 +23,11 @@
 | **QW-2** | Keyboard accessibility added to ShowCard | Medium |
 | **QW-3** | Ticker pauses on hover | Low |
 | **QW-4** | Page-specific skeleton loading screens | High |
+| **QW-5** | Fixed color contrast for WCAG AA compliance | Medium |
+| **QW-6** | Route prefetching on hover/focus | Medium |
+| **QW-7** | Modal queue system prevents modal chaos | High |
 
-### Current Grade: **B** *(upgraded from B-)*
+### Current Grade: **B+** *(upgraded from B)*
 
 ---
 
@@ -416,9 +419,9 @@ Being critical as requested:
 | ~~**QW-2**~~ | ~~Add keyboard handlers to ShowCard~~ | 2 hours | High | **✅ DONE** | Added role, tabIndex, onKeyDown, aria-label, focus ring |
 | ~~**QW-3**~~ | ~~Pause ticker on hover~~ | 1 hour | Medium | **✅ DONE** | Added isPaused state, onMouseEnter/Leave handlers |
 | ~~**QW-4**~~ | ~~Implement page-specific skeletons~~ | 4 hours | High | **✅ DONE** | Added Dashboard, Scores, Leagues, Schedule, Profile skeletons |
-| **QW-5** | Fix color contrast on disabled text | 2 hours | Medium | Pending | Change `text-yellow-50/50` to `text-yellow-50/80` |
-| **QW-6** | Add route prefetching | 2 hours | Medium | Pending | Dynamic import on hover/focus |
-| **QW-7** | Modal queue system | 4 hours | High | **Partially Done** | Morning Report removed; other modals still need queue |
+| ~~**QW-5**~~ | ~~Fix color contrast on disabled text~~ | 2 hours | Medium | **✅ DONE** | Changed `text-yellow-50/50` to `text-yellow-50/70` in 9 files |
+| ~~**QW-6**~~ | ~~Add route prefetching~~ | 2 hours | Medium | **✅ DONE** | Created prefetch.ts utility with requestIdleCallback |
+| ~~**QW-7**~~ | ~~Modal queue system~~ | 4 hours | High | **✅ DONE** | useModalQueue hook with priority-based queue |
 | **QW-8** | Add "Quick Fill" to onboarding lineup | 2 hours | High | Pending | Auto-fill balanced lineup button |
 | **QW-9** | Consolidate duplicate Firestore listeners | 4 hours | Medium | Pending | Enforce singleton pattern in useDashboardData |
 | **QW-10** | Add focus trap to ShowDetailModal | 2 hours | Medium | Pending | Use existing useFocusTrap hook |
