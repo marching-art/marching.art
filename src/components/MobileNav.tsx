@@ -8,10 +8,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Home, Trophy, Calendar, User, Settings, LogOut,
-  Users, X, Menu, Star, LucideIcon
+  Users, X, Menu, Star, Shield, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../firebase';
+import { db, adminHelpers } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 // =============================================================================
@@ -74,6 +74,12 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    adminHelpers.isAdmin().then(setIsAdmin);
+  }, [user]);
 
   // Subscribe to profile updates
   useEffect(() => {
@@ -260,6 +266,23 @@ const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
                       </Link>
                     );
                   })}
+
+                  {/* Admin Link - Only visible to admins */}
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className={`
+                        flex items-center gap-3 px-4 py-3 transition-all duration-200
+                        ${isActive('/admin')
+                          ? 'bg-yellow-500/10 text-yellow-400 border-l-2 border-yellow-500'
+                          : 'text-yellow-50/70 hover:bg-white/5 hover:text-yellow-50 border-l-2 border-transparent'
+                        }
+                      `}
+                    >
+                      <Shield className="w-5 h-5" />
+                      <span className="font-medium">Admin</span>
+                    </Link>
+                  )}
                 </div>
 
                 {/* Sign Out */}
