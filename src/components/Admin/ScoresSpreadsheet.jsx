@@ -172,7 +172,7 @@ const ScoresSpreadsheet = () => {
   };
 
   // Visible columns based on scroll position
-  const VISIBLE_COLUMNS = 32;
+  const VISIBLE_COLUMNS = 36;
   const visibleDates = useMemo(() => {
     return allDates.slice(scrollPosition, scrollPosition + VISIBLE_COLUMNS);
   }, [allDates, scrollPosition]);
@@ -181,11 +181,11 @@ const ScoresSpreadsheet = () => {
   const canScrollRight = scrollPosition + VISIBLE_COLUMNS < allDates.length;
 
   const handleScrollLeft = () => {
-    setScrollPosition(Math.max(0, scrollPosition - 16));
+    setScrollPosition(Math.max(0, scrollPosition - 18));
   };
 
   const handleScrollRight = () => {
-    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 16));
+    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 18));
   };
 
   // Export to CSV
@@ -344,10 +344,10 @@ const ScoresSpreadsheet = () => {
               {visibleDates.map((dateInfo, idx) => (
                 <th
                   key={dateInfo.day}
-                  className="px-0 py-0.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
+                  className="px-0 py-1.5 text-center font-mono text-cream-400 w-[38px] border-r border-cream-500/10"
                   title={`${dateInfo.eventName} (Day ${dateInfo.day})`}
                 >
-                  <div className="text-[8px] text-cream-500/70 leading-none">{formatDateHeader(dateInfo.date, dateInfo.day)}</div>
+                  <div className="text-[10px] text-cream-500/70 leading-none">{formatDateHeader(dateInfo.date, dateInfo.day)}</div>
                 </th>
               ))}
             </tr>
@@ -363,18 +363,18 @@ const ScoresSpreadsheet = () => {
                 } hover:bg-charcoal-800/40`}
               >
                 {/* Corps Name - Sticky */}
-                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-0.5 border-r border-cream-500/20 w-[90px] max-w-[90px]">
-                  <div className="font-medium text-cream-100 text-[9px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
+                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-1.5 border-r border-cream-500/20 w-[90px] max-w-[90px]">
+                  <div className="font-medium text-cream-100 text-[11px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
                     {corps.corpsName}
                   </div>
-                  <div className="text-[7px] text-cream-500/50 leading-none">
+                  <div className="text-[9px] text-cream-500/50 leading-none">
                     {corps.sourceYear}
                   </div>
                 </td>
 
                 {/* Points - Sticky */}
-                <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-0.5 text-center border-r border-cream-500/20 w-6">
-                  <span className={`font-mono text-[9px] font-bold ${
+                <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-1.5 text-center border-r border-cream-500/20 w-6">
+                  <span className={`font-mono text-[11px] font-bold ${
                     corps.points >= 20 ? 'text-gold-400' :
                     corps.points >= 15 ? 'text-cream-200' :
                     corps.points >= 10 ? 'text-cream-400' :
@@ -402,7 +402,7 @@ const ScoresSpreadsheet = () => {
                   return (
                     <td
                       key={dateInfo.day}
-                      className={`px-0 py-0.5 text-center font-mono text-[9px] w-[38px] border-r border-cream-500/5 ${bgColor}`}
+                      className={`px-0 py-1.5 text-center font-mono text-[11px] w-[38px] border-r border-cream-500/5 ${bgColor}`}
                     >
                       {score !== null ? (
                         <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-cream-300'}`}>
