@@ -35,6 +35,8 @@ import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { useHaptic } from '../hooks/useHaptic';
 
 // =============================================================================
 // CONSTANTS
@@ -108,11 +110,23 @@ const MOBILE_TABS = [
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, loading: scoresLoading } = useScoresData();
-  const { data: myLeagues } = useMyLeagues(user?.uid);
+  const { aggregatedScores, loading: scoresLoading, refetch: refetchScores } = useScoresData();
+  const { data: myLeagues, refetch: refetchLeagues } = useMyLeagues(user?.uid);
+  const { trigger: haptic } = useHaptic();
 
   // Mobile tab state
   const [activeMobileTab, setActiveMobileTab] = useState('team');
+
+  // Pull to refresh handler
+  const handleRefresh = async () => {
+    haptic('pull');
+    await Promise.all([
+      dashboardData.refreshProfile?.(),
+      refetchScores?.(),
+      refetchLeagues?.(),
+    ]);
+    haptic('success');
+  };
 
   // Modal states
   const [showRegistration, setShowRegistration] = useState(false);
@@ -352,8 +366,8 @@ const Dashboard = () => {
                 .map(([classId, corpsData]) => (
                 <button
                   key={classId}
-                  onClick={() => handleCorpsSwitch(classId)}
-                  className={`px-4 py-2 text-xs font-bold uppercase whitespace-nowrap rounded transition-colors min-h-[44px] ${
+                  onClick={() => { haptic('light'); handleCorpsSwitch(classId); }}
+                  className={`px-4 py-2 text-xs font-bold uppercase whitespace-nowrap rounded transition-colors min-h-[44px] press-feedback ${
                     activeCorpsClass === classId
                       ? 'bg-[#0057B8] text-white'
                       : 'bg-[#333] text-gray-400 hover:text-white active:bg-[#444]'
@@ -370,7 +384,7 @@ const Dashboard = () => {
             {MOBILE_TABS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveMobileTab(tab.id)}
+                onClick={() => { haptic('medium'); setActiveMobileTab(tab.id); }}
                 className={`flex-1 py-3.5 min-h-[48px] text-sm font-bold uppercase tracking-wide transition-all press-feedback ${
                   activeMobileTab === tab.id
                     ? 'text-[#0057B8] border-b-2 border-[#0057B8] bg-[#0a0a0a]'
@@ -382,8 +396,10 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
-          <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333]">
+          {/* Pull to Refresh Wrapper */}
+          <PullToRefresh onRefresh={handleRefresh}>
+            {/* MAIN GRID - Desktop: 3 columns, Mobile: single panel based on tab */}
+            <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333]">
 
             {/* LEFT COLUMN - My Team */}
             <div className={`bg-[#1a1a1a] p-4 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
@@ -624,22 +640,23 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* BOTTOM ROW - Activity Feed - Desktop only */}
-          <div className="hidden lg:block bg-[#1a1a1a] border-t border-[#333]">
-            <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center gap-2">
-              <Activity className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500" />
-              <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                Recent Activity
-              </span>
+            {/* BOTTOM ROW - Activity Feed - Desktop only */}
+            <div className="hidden lg:block bg-[#1a1a1a] border-t border-[#333]">
+              <div className="bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] flex items-center gap-2">
+                <Activity className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500" />
+                <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  Recent Activity
+                </span>
+              </div>
+              <div className="px-4 py-4 sm:py-3 text-sm text-gray-500">
+                {engagementData?.streak > 0 ? (
+                  <span>🔥 {engagementData.streak} day streak! Keep it up.</span>
+                ) : (
+                  <span>No recent activity. Check back after competing!</span>
+                )}
+              </div>
             </div>
-            <div className="px-4 py-4 sm:py-3 text-sm text-gray-500">
-              {engagementData?.streak > 0 ? (
-                <span>🔥 {engagementData.streak} day streak! Keep it up.</span>
-              ) : (
-                <span>No recent activity. Check back after competing!</span>
-              )}
-            </div>
-          </div>
+          </PullToRefresh>
         </>
       ) : (
         /* No Corps State */

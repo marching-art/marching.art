@@ -7,6 +7,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { triggerHaptic } from '../../hooks/useHaptic';
 
 // =============================================================================
 // TYPES
@@ -86,10 +87,15 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
         e.preventDefault();
         const clampedPull = Math.min(pull, maxPull);
         pullDistance.set(clampedPull);
-        setCanRefresh(clampedPull >= pullThreshold);
+        const nowCanRefresh = clampedPull >= pullThreshold;
+        // Haptic feedback when threshold is crossed
+        if (nowCanRefresh && !canRefresh) {
+          triggerHaptic('medium');
+        }
+        setCanRefresh(nowCanRefresh);
       }
     },
-    [disabled, isRefreshing, maxPull, pullThreshold, pullDistance]
+    [disabled, isRefreshing, maxPull, pullThreshold, pullDistance, canRefresh]
   );
 
   // Handle touch end
@@ -100,12 +106,14 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     const currentPull = pullDistance.get();
 
     if (canRefresh && !isRefreshing && !disabled) {
-      // Trigger refresh
+      // Trigger refresh with haptic feedback
+      triggerHaptic('pull');
       setIsRefreshing(true);
       animate(pullDistance, pullThreshold, { duration: 0.2 });
 
       try {
         await onRefresh();
+        // Success haptic is handled by the parent's refresh handler
       } finally {
         setIsRefreshing(false);
         setCanRefresh(false);

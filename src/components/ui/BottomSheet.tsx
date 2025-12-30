@@ -8,6 +8,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
+import { triggerHaptic } from '../../hooks/useHaptic';
 
 // =============================================================================
 // TYPES
@@ -82,11 +83,19 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Haptic feedback on open
+  useEffect(() => {
+    if (isOpen) {
+      triggerHaptic('sheetOpen');
+    }
+  }, [isOpen]);
+
   // Handle drag end
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       const shouldDismiss = info.offset.y > dismissThreshold || info.velocity.y > 500;
       if (shouldDismiss) {
+        triggerHaptic('sheetClose');
         onClose();
       }
     },
@@ -97,6 +106,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === e.currentTarget && closeOnOverlayClick) {
+        triggerHaptic('sheetClose');
         onClose();
       }
     },

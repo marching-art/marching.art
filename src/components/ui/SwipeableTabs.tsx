@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { triggerHaptic } from '../../hooks/useHaptic';
 
 // =============================================================================
 // TYPES
@@ -56,6 +57,9 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
       const oldIndex = tabs.findIndex((t) => t.id === activeTab);
       setDirection(newIndex > oldIndex ? 1 : -1);
 
+      // Haptic feedback on tab switch
+      triggerHaptic('medium');
+
       if (onTabChange) {
         onTabChange(tabId);
       } else {
@@ -77,8 +81,10 @@ export const SwipeableTabs: React.FC<SwipeableTabsProps> = ({
       const swipedRight = info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold;
 
       if (swipedLeft && activeIndex < tabs.length - 1) {
+        triggerHaptic('swipe');
         handleTabChange(tabs[activeIndex + 1].id);
       } else if (swipedRight && activeIndex > 0) {
+        triggerHaptic('swipe');
         handleTabChange(tabs[activeIndex - 1].id);
       }
     },

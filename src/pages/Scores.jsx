@@ -13,6 +13,8 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { useHaptic } from '../hooks/useHaptic';
 import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
 import SoundSportTab from '../components/Scores/tabs/SoundSportTab';
 
@@ -197,6 +199,7 @@ const Scores = () => {
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
+  const { trigger: haptic } = useHaptic();
 
   // Get specific show and season from URL if provided
   const targetShowName = searchParams.get('show');
@@ -221,11 +224,19 @@ const Scores = () => {
     stats,
     aggregatedScores,
     archivedSeasons,
+    refetch,
   } = useScoresData({
     seasonId: targetSeasonId,
     classFilter: 'all',
     enabledCaptions: { ge: true, vis: true, mus: true }
   });
+
+  // Pull to refresh handler
+  const handleRefresh = async () => {
+    haptic('pull');
+    await refetch?.();
+    haptic('success');
+  };
 
   // Season name
   const currentSeasonName = useMemo(() => {
@@ -342,7 +353,7 @@ const Scores = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => { haptic('medium'); setActiveTab(tab.id); }}
                 className={`
                   flex items-center gap-2 px-4 py-3 min-h-[48px] text-sm font-bold uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap press-feedback
                   ${activeTab === tab.id
@@ -361,8 +372,9 @@ const Scores = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full">
+      {/* Content with Pull to Refresh */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="w-full">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading scores...</div>
         ) : error ? (
@@ -464,7 +476,8 @@ const Scores = () => {
             )}
           </>
         )}
-      </div>
+        </div>
+      </PullToRefresh>
 
       {/* Score Breakdown Modal */}
       <ScoreBreakdown
