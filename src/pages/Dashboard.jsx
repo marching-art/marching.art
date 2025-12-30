@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, TrendingUp, TrendingDown, Activity
+  Music, TrendingUp, TrendingDown, Activity, Medal
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -59,6 +59,21 @@ const CLASS_LABELS = {
   openClass: 'Open',
   aClass: 'A Class',
   soundSport: 'SoundSport',
+};
+
+// SoundSport rating thresholds (matches SoundSportTab.jsx)
+const SOUNDSPORT_RATINGS = [
+  { rating: 'Gold', min: 90, color: 'bg-primary', textColor: 'text-black' },
+  { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black' },
+  { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black' },
+  { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black' },
+];
+
+const getSoundSportRating = (score) => {
+  for (const threshold of SOUNDSPORT_RATINGS) {
+    if (score >= threshold.min) return threshold;
+  }
+  return SOUNDSPORT_RATINGS[SOUNDSPORT_RATINGS.length - 1];
 };
 
 // =============================================================================
@@ -492,14 +507,20 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {/* Big Score - Moved higher, reduced margin */}
+              {/* Medal Rating Badge */}
               <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
-                  Season Score
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Season Rating
                 </div>
-                <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums leading-none">
-                  {activeCorps.totalSeasonScore?.toFixed(3) || '0.000'}
-                </div>
+                {(() => {
+                  const rating = getSoundSportRating(activeCorps.totalSeasonScore || 0);
+                  return (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded ${rating.color}`}>
+                      <Medal className={`w-5 h-5 ${rating.textColor}`} />
+                      <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Rank and Lineup - Compact inline row */}
