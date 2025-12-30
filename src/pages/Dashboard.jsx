@@ -221,29 +221,57 @@ const Dashboard = () => {
     }
   }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
 
-  // Fetch corps caption stats for lineup display
+  // Fetch corps caption scores from historical_scores for lineup display
   useEffect(() => {
     const fetchCorpsStats = async () => {
-      if (!seasonData?.seasonUid) return;
-      try {
-        const statsRef = doc(db, 'dci-stats', seasonData.seasonUid);
-        const statsSnap = await getDoc(statsRef);
-        if (statsSnap.exists()) {
-          const data = statsSnap.data();
-          // Build lookup map: "CorpsName|Year" -> stats
-          const statsMap = {};
-          (data.data || []).forEach(corps => {
-            const key = `${corps.corpsName}|${corps.sourceYear}`;
-            statsMap[key] = corps.stats;
-          });
-          setCorpsStats(statsMap);
+      const lineup = activeCorps?.lineup;
+      if (!lineup || Object.keys(lineup).length === 0) return;
+
+      // Get unique years from lineup
+      const years = new Set();
+      Object.values(lineup).forEach(value => {
+        if (value) {
+          const [, sourceYear] = value.split('|');
+          if (sourceYear) years.add(sourceYear);
         }
+      });
+
+      if (years.size === 0) return;
+
+      try {
+        // Fetch historical scores for each year
+        const yearDocs = await Promise.all(
+          Array.from(years).map(year => getDoc(doc(db, 'historical_scores', year)))
+        );
+
+        // Build lookup map: "CorpsName|Year" -> { captionId: score }
+        const statsMap = {};
+        yearDocs.forEach((yearDoc, idx) => {
+          if (!yearDoc.exists()) return;
+          const year = Array.from(years)[idx];
+          const data = yearDoc.data().data || [];
+
+          // Sort by offSeasonDay descending to get most recent first
+          const sortedEvents = [...data].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
+
+          // For each corps, get their most recent caption scores
+          sortedEvents.forEach(event => {
+            (event.scores || []).forEach(score => {
+              const key = `${score.corps}|${year}`;
+              if (!statsMap[key] && score.captions) {
+                statsMap[key] = score.captions;
+              }
+            });
+          });
+        });
+
+        setCorpsStats(statsMap);
       } catch (error) {
         console.error('Error fetching corps stats:', error);
       }
     };
     fetchCorpsStats();
-  }, [seasonData?.seasonUid]);
+  }, [activeCorps?.lineup]);
 
   // Handlers
   const handleTourComplete = async () => {
@@ -560,9 +588,9 @@ const Dashboard = () => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get caption score from corps stats (average performance)
+                  // Get caption score from historical scores (most recent performance)
                   const statsKey = `${corpsName}|${sourceYear}`;
-                  const captionScore = corpsStats[statsKey]?.[caption.id]?.avg ?? null;
+                  const captionScore = corpsStats[statsKey]?.[caption.id] ?? null;
                   return (
                     <button
                       key={caption.id}
