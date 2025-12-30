@@ -28,6 +28,11 @@ const createStandingsColumns = () => [
     header: 'RK',
     width: '45px',
     isRank: true,
+    render: (row) => (
+      <span className="text-gray-500 font-medium tabular-nums">
+        {row.rank}
+      </span>
+    ),
   },
   {
     key: 'corps',
@@ -35,7 +40,7 @@ const createStandingsColumns = () => [
     width: '160px',
     sticky: true,
     render: (row) => (
-      <span className="font-medium text-white">
+      <span className="font-bold text-white">
         {row.corpsName || row.corps}
       </span>
     ),
@@ -53,10 +58,10 @@ const createStandingsColumns = () => [
   {
     key: 'score',
     header: 'Total',
-    width: '70px',
+    width: '75px',
     align: 'right',
     render: (row) => (
-      <span className="font-bold text-white tabular-nums">
+      <span className="font-bold text-white font-data tabular-nums">
         {typeof row.score === 'number' ? row.score.toFixed(3) : row.score || '-'}
       </span>
     ),
@@ -133,13 +138,18 @@ const createLatestColumns = () => [
     header: 'RK',
     width: '45px',
     isRank: true,
+    render: (row) => (
+      <span className="text-gray-500 font-medium tabular-nums">
+        {row.rank}
+      </span>
+    ),
   },
   {
     key: 'corps',
     header: 'Corps',
     sticky: true,
     render: (row) => (
-      <span className="font-medium text-white">
+      <span className="font-bold text-white">
         {row.corps || row.corpsName}
       </span>
     ),
@@ -147,10 +157,10 @@ const createLatestColumns = () => [
   {
     key: 'score',
     header: 'Score',
-    width: '70px',
+    width: '75px',
     align: 'right',
     render: (row) => (
-      <span className="font-bold text-white tabular-nums">
+      <span className="font-bold text-white font-data tabular-nums">
         {(row.score || row.totalScore || 0).toFixed(3)}
       </span>
     ),
@@ -341,9 +351,9 @@ const Scores = () => {
         </div>
       </div>
 
-      {/* Tab Bar - Touch-optimized */}
+      {/* Tab Bar - Premium Sports-Style with Pill Background */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
-        <div className="w-full px-2">
+        <div className="w-full px-2 py-1.5">
           <nav className="flex gap-1 overflow-x-auto scrollbar-hide">
             {[
               { id: 'latest', label: 'Latest' },
@@ -355,17 +365,24 @@ const Scores = () => {
                 key={tab.id}
                 onClick={() => { haptic('medium'); setActiveTab(tab.id); }}
                 className={`
-                  flex items-center gap-2 px-4 py-3 min-h-[48px] text-sm font-bold uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap press-feedback
+                  relative flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wider
+                  whitespace-nowrap rounded-full transition-all duration-200 ease-out press-feedback
                   ${activeTab === tab.id
                     ? tab.accent === 'green'
-                      ? 'text-green-500 border-green-500'
-                      : 'text-[#0057B8] border-[#0057B8]'
-                    : 'text-gray-500 border-transparent hover:text-gray-300 active:text-white'
+                      ? 'text-green-400 bg-green-500/15'
+                      : 'text-[#0057B8] bg-[#0057B8]/15'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 active:text-white active:bg-white/10'
                   }
                 `}
               >
                 {tab.icon && <tab.icon className="w-4 h-4" />}
                 {tab.label}
+                {/* Active indicator dot */}
+                {activeTab === tab.id && (
+                  <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                    tab.accent === 'green' ? 'bg-green-400' : 'bg-[#0057B8]'
+                  }`} />
+                )}
               </button>
             ))}
           </nav>

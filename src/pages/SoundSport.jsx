@@ -147,9 +147,9 @@ const SoundSport = () => {
         </div>
       </div>
 
-      {/* Tab Navigation - Full width background */}
+      {/* Tab Navigation - Premium Pill Style */}
       <div className="w-full sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
-        <div className="w-full px-4">
+        <div className="w-full px-4 py-1.5">
           <nav className="flex gap-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -158,16 +158,20 @@ const SoundSport = () => {
                   key={tab.id}
                   onClick={() => setActiveSection(tab.id)}
                   className={`
-                    flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider
-                    whitespace-nowrap border-b-2 -mb-px transition-colors
+                    relative flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wider
+                    whitespace-nowrap rounded-full transition-all duration-200 ease-out
                     ${activeSection === tab.id
-                      ? 'text-green-500 border-green-500'
-                      : 'text-gray-500 border-transparent hover:text-gray-300'
+                      ? 'text-green-400 bg-green-500/15'
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 active:text-white active:bg-white/10'
                     }
                   `}
                 >
                   <Icon className="w-4 h-4" />
                   {tab.label}
+                  {/* Active indicator dot */}
+                  {activeSection === tab.id && (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-green-400" />
+                  )}
                 </button>
               );
             })}
@@ -299,24 +303,29 @@ const SoundSport = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-4"
             >
-              {/* Quick Reference */}
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
-                <h3 className="font-bold text-green-400 mb-2 flex items-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  Quick Reference
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-white">5-7</div>
-                    <div className="text-xs text-gray-400">Minutes</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">5+</div>
-                    <div className="text-xs text-gray-400">Members</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">3</div>
-                    <div className="text-xs text-gray-400">Judges</div>
+              {/* Quick Reference - Compact Horizontal Bar */}
+              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-green-400 flex items-center gap-2 text-sm">
+                    <Zap className="w-4 h-4" />
+                    Quick Reference
+                  </h3>
+                  <div className="flex items-center gap-6 text-center">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-green-500" />
+                      <span className="text-lg font-bold font-data text-white">5-7</span>
+                      <span className="text-[10px] uppercase text-gray-500">min</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-green-500" />
+                      <span className="text-lg font-bold font-data text-white">5+</span>
+                      <span className="text-[10px] uppercase text-gray-500">members</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-green-500" />
+                      <span className="text-lg font-bold font-data text-white">3</span>
+                      <span className="text-[10px] uppercase text-gray-500">judges</span>
+                    </div>
                   </div>
                 </div>
               </div>

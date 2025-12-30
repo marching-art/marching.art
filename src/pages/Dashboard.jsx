@@ -70,12 +70,17 @@ const standingsColumns = [
     header: 'RK',
     width: '36px',
     isRank: true,
+    render: (row) => (
+      <span className="text-gray-500 font-medium tabular-nums text-sm sm:text-xs">
+        {row.rank}
+      </span>
+    ),
   },
   {
     key: 'corpsName',
     header: 'Corps',
     render: (row) => (
-      <span className="truncate block max-w-[180px] sm:max-w-[140px] text-sm sm:text-xs">
+      <span className="font-bold text-white truncate block max-w-[180px] sm:max-w-[140px] text-sm sm:text-xs">
         {row.corpsName || row.corps}
       </span>
     ),
@@ -86,7 +91,7 @@ const standingsColumns = [
     align: 'right',
     width: '75px',
     render: (row) => (
-      <span className="text-white tabular-nums text-sm sm:text-xs">
+      <span className="text-white font-data tabular-nums text-sm sm:text-xs">
         {typeof row.score === 'number' ? row.score.toFixed(3) : row.score}
       </span>
     ),
@@ -404,19 +409,23 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* MOBILE TABS - Only show on mobile */}
-          <div className="lg:hidden flex border-b border-[#333] bg-[#1a1a1a]">
+          {/* MOBILE TABS - Premium Pill Style */}
+          <div className="lg:hidden flex gap-1 px-2 py-1.5 border-b border-[#333] bg-[#1a1a1a]">
             {MOBILE_TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => { haptic('medium'); setActiveMobileTab(tab.id); }}
-                className={`flex-1 py-3.5 min-h-[48px] text-sm font-bold uppercase tracking-wide transition-all press-feedback ${
+                className={`relative flex-1 py-2.5 min-h-[44px] text-sm font-bold uppercase tracking-wide transition-all duration-200 ease-out rounded-full press-feedback ${
                   activeMobileTab === tab.id
-                    ? 'text-[#0057B8] border-b-2 border-[#0057B8] bg-[#0a0a0a]'
-                    : 'text-gray-500 border-b-2 border-transparent active:text-white'
+                    ? 'text-[#0057B8] bg-[#0057B8]/15'
+                    : 'text-gray-500 hover:text-gray-300 active:text-white active:bg-white/10'
                 }`}
               >
                 {tab.label}
+                {/* Active indicator dot */}
+                {activeMobileTab === tab.id && (
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0057B8]" />
+                )}
               </button>
             ))}
           </div>
@@ -496,18 +505,19 @@ const Dashboard = () => {
                     </span>
                     <button
                       onClick={() => openCaptionSelection()}
-                      className="flex items-center gap-1 text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline py-1"
+                      className="flex items-center gap-1 text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors py-1"
                     >
                       <Edit className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                       Edit All
+                      <ChevronRight className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Lineup Grid - Mobile: 2 cols with full names, Desktop: 4 cols compact */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-1 mb-4">
-                {CAPTIONS.map((caption) => {
+              {/* Lineup List - Clean ESPN-style rows */}
+              <div className="mb-4 border border-[#333] rounded-sm overflow-hidden">
+                {CAPTIONS.map((caption, index) => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const corpsName = hasValue ? value.split('|')[0] : null;
@@ -515,21 +525,36 @@ const Dashboard = () => {
                     <button
                       key={caption.id}
                       onClick={() => openCaptionSelection(caption.id)}
-                      className={`p-2.5 sm:p-1.5 text-center border transition-all cursor-pointer group min-h-[52px] sm:min-h-0 ${
+                      className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
+                        index !== CAPTIONS.length - 1 ? 'border-b border-[#333]/50' : ''
+                      } ${
                         hasValue
-                          ? 'border-[#444] bg-[#222] hover:border-[#0057B8] hover:bg-[#0057B8]/10 active:bg-[#0057B8]/20'
-                          : 'border-dashed border-[#444] bg-[#1a1a1a] hover:border-[#0057B8] hover:bg-[#0057B8]/10 active:bg-[#0057B8]/20'
+                          ? 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
+                          : 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
                       }`}
                     >
-                      <div className="text-[11px] sm:text-[10px] font-bold text-gray-400 group-hover:text-[#0057B8]">
+                      {/* Position Badge */}
+                      <div className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold ${
+                        hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
+                      }`}>
                         {caption.name}
                       </div>
-                      <div className={`text-[11px] sm:text-[9px] ${
-                        hasValue
-                          ? 'text-gray-300 group-hover:text-white'
-                          : 'text-[#0057B8] font-medium'
-                      }`}>
-                        {hasValue ? corpsName : '+ Draft'}
+                      {/* Corps Name */}
+                      <div className="flex-1 text-left min-w-0">
+                        {hasValue ? (
+                          <span className="text-sm text-white truncate block">{corpsName}</span>
+                        ) : (
+                          <span className="text-sm text-gray-500 italic">Empty slot</span>
+                        )}
+                      </div>
+                      {/* Score Placeholder / Action */}
+                      <div className="flex items-center gap-2">
+                        {hasValue ? (
+                          <span className="text-xs font-data text-gray-500 tabular-nums">—</span>
+                        ) : (
+                          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400" />
                       </div>
                     </button>
                   );
@@ -577,8 +602,8 @@ const Dashboard = () => {
                 <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Standings
                 </span>
-                <Link to="/scores" className="text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline flex items-center gap-1 py-1">
-                  View All <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
+                <Link to="/scores" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
+                  Results <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                 </Link>
               </div>
               {scoresLoading ? (
@@ -602,9 +627,9 @@ const Dashboard = () => {
               {/* Mobile View All link */}
               <Link
                 to="/scores"
-                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm text-[#0057B8] hover:underline active:underline border-t border-[#333] bg-[#1a1a1a]"
+                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm font-medium text-[#F5A623] hover:text-[#FFB84D] transition-colors border-t border-[#333] bg-[#1a1a1a]"
               >
-                View Full Standings <ChevronRight className="w-4 h-4" />
+                View Full Results <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
 
@@ -615,8 +640,8 @@ const Dashboard = () => {
                 <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
                   Week {currentWeek} Schedule
                 </span>
-                <Link to="/schedule" className="text-[11px] sm:text-[10px] text-[#0057B8] hover:underline active:underline flex items-center gap-1 py-1">
-                  Full Schedule <ChevronRight className="w-4 h-4 sm:w-3 sm:h-3" />
+                <Link to="/schedule" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
+                  Full Schedule <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                 </Link>
               </div>
 
@@ -642,9 +667,9 @@ const Dashboard = () => {
                   <p className="text-sm sm:text-xs text-gray-500 mb-3 sm:mb-2">No shows selected</p>
                   <Link
                     to="/schedule"
-                    className="inline-block text-sm sm:text-xs text-[#0057B8] hover:underline active:underline py-1"
+                    className="inline-flex items-center gap-1 text-sm sm:text-xs text-[#F5A623] hover:text-[#FFB84D] transition-colors py-1"
                   >
-                    Select Shows
+                    Select Shows <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               )}
@@ -658,7 +683,7 @@ const Dashboard = () => {
               {/* Mobile View All link */}
               <Link
                 to="/schedule"
-                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm text-[#0057B8] hover:underline active:underline border-t border-[#333] bg-[#222]"
+                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm font-medium text-[#F5A623] hover:text-[#FFB84D] transition-colors border-t border-[#333] bg-[#222]"
               >
                 View Full Schedule <ChevronRight className="w-4 h-4" />
               </Link>
