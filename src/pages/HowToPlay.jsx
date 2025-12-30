@@ -307,13 +307,6 @@ const HowToPlay = () => {
                   <p className="text-sm text-cream-400">Complete achievements for bonus XP</p>
                 </div>
 
-                <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Star className="w-4 h-4 text-gold-400" />
-                    <span className="font-semibold text-cream-100">Battle Pass</span>
-                  </div>
-                  <p className="text-sm text-cream-400">Premium rewards and XP boosts</p>
-                </div>
               </div>
             </div>
 
@@ -382,7 +375,6 @@ const HowToPlay = () => {
                 <li>Complete daily rehearsals</li>
                 <li>Achieve high competition scores</li>
                 <li>Complete achievements and challenges</li>
-                <li>Battle Pass rewards (free and premium)</li>
               </ul>
 
               <h4 className="font-semibold text-cream-100 mt-4">Spending CorpsCoin:</h4>
@@ -429,75 +421,6 @@ const HowToPlay = () => {
             </div>
           </Section>
 
-          {/* Battle Pass */}
-          <Section id="battlepass" title="Battle Pass & Rewards" icon={Award}>
-            <p>
-              The Battle Pass offers seasonal rewards and progression bonuses. Both free and premium
-              tiers are available!
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="bg-charcoal-800/50 border border-charcoal-700 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Shield className="w-5 h-5 text-blue-400" />
-                  <h4 className="font-semibold text-cream-100">Free Tier</h4>
-                </div>
-                <ul className="text-sm space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>CorpsCoin rewards</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>XP boosts</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>Basic cosmetic items</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>Achievement progress</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-gradient-gold/10 border border-gold-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star className="w-5 h-5 text-gold-400" />
-                  <h4 className="font-semibold text-cream-100">Premium Tier</h4>
-                </div>
-                <ul className="text-sm space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-gold-400">•</span>
-                    <span>All free tier rewards</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-gold-400">•</span>
-                    <span>Exclusive cosmetics</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-gold-400">•</span>
-                    <span>Bonus CorpsCoin</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-gold-400">•</span>
-                    <span>Early access to features</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-gold-400">•</span>
-                    <span>Premium support</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <InfoBox title="Free Rewards" color="green">
-              You can claim all free tier rewards without a subscription! Premium is optional and
-              supports continued development of marching.art.
-            </InfoBox>
-          </Section>
-
           {/* Strategy Tips */}
           <Section id="strategy" title="Strategy Tips" icon={Star}>
             <div className="space-y-4">
@@ -527,7 +450,6 @@ const HowToPlay = () => {
                   <li>Save CorpsCoin early season for strategic staff acquisitions</li>
                   <li>Don't overspend on equipment - maintain, don't replace constantly</li>
                   <li>Complete achievements for bonus currency</li>
-                  <li>Consider premium Battle Pass for accelerated progression</li>
                 </ul>
               </div>
 
