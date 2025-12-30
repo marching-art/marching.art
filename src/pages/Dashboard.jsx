@@ -235,29 +235,47 @@ const Dashboard = () => {
     }
   }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
 
-  // Fetch corps caption stats for lineup display
+  // Fetch user's fantasy recap scores for lineup display
   useEffect(() => {
-    const fetchCorpsStats = async () => {
-      if (!seasonData?.seasonUid) return;
+    const fetchUserScores = async () => {
+      if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass) return;
+
       try {
-        const statsRef = doc(db, 'dci-stats', seasonData.seasonUid);
-        const statsSnap = await getDoc(statsRef);
-        if (statsSnap.exists()) {
-          const data = statsSnap.data();
-          // Build lookup map: "CorpsName|Year" -> stats
-          const statsMap = {};
-          (data.data || []).forEach(corps => {
-            const key = `${corps.corpsName}|${corps.sourceYear}`;
-            statsMap[key] = corps.stats;
-          });
-          setCorpsStats(statsMap);
+        const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+        const recapSnap = await getDoc(recapRef);
+
+        if (recapSnap.exists()) {
+          const data = recapSnap.data();
+          const recaps = data.recaps || [];
+
+          // Sort by offSeasonDay descending to get most recent first
+          const sortedRecaps = [...recaps].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
+
+          // Find the user's most recent score for this corps class
+          for (const recap of sortedRecaps) {
+            for (const show of (recap.shows || [])) {
+              const userResult = (show.results || []).find(
+                r => r.uid === user.uid && r.corpsClass === activeCorpsClass
+              );
+              if (userResult) {
+                // Store the category scores (geScore, visualScore, musicScore)
+                setCorpsStats({
+                  geScore: userResult.geScore,
+                  visualScore: userResult.visualScore,
+                  musicScore: userResult.musicScore
+                });
+                return;
+              }
+            }
+          }
         }
+        setCorpsStats({});
       } catch (error) {
-        console.error('Error fetching corps stats:', error);
+        console.error('Error fetching user scores:', error);
       }
     };
-    fetchCorpsStats();
-  }, [seasonData?.seasonUid]);
+    fetchUserScores();
+  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
 
   // Handlers
   const handleTourComplete = async () => {
@@ -588,9 +606,15 @@ const Dashboard = () => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get caption score from corps stats (average performance)
-                  const statsKey = `${corpsName}|${sourceYear}`;
-                  const captionScore = corpsStats[statsKey]?.[caption.id]?.avg ?? null;
+                  // Get category score from user's fantasy recap (GE/Visual/Music)
+                  let captionScore = null;
+                  if (['GE1', 'GE2'].includes(caption.id)) {
+                    captionScore = corpsStats.geScore ?? null;
+                  } else if (['VP', 'VA', 'CG'].includes(caption.id)) {
+                    captionScore = corpsStats.visualScore ?? null;
+                  } else if (['B', 'MA', 'P'].includes(caption.id)) {
+                    captionScore = corpsStats.musicScore ?? null;
+                  }
                   return (
                     <button
                       key={caption.id}
