@@ -391,27 +391,47 @@ const Dashboard = () => {
 
       {activeCorps ? (
         <>
-          {/* Corps Switcher Bar - Mobile optimized with larger touch targets */}
+          {/* Team Switcher - Horizontal Pill Navigation */}
           {hasMultipleCorps && (
-            <div className="bg-[#1a1a1a] border-b border-[#333] px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              {Object.entries(corps)
-                .sort((a, b) => {
-                  const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
-                  return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
-                })
-                .map(([classId, corpsData]) => (
-                <button
-                  key={classId}
-                  onClick={() => { haptic('light'); handleCorpsSwitch(classId); }}
-                  className={`px-4 py-2 text-xs font-bold uppercase whitespace-nowrap rounded transition-colors min-h-[44px] press-feedback ${
-                    activeCorpsClass === classId
-                      ? 'bg-[#0057B8] text-white'
-                      : 'bg-[#333] text-gray-400 hover:text-white active:bg-[#444]'
-                  }`}
-                >
-                  {corpsData.corpsName || corpsData.name || ''}
-                </button>
-              ))}
+            <div className="bg-[#0a0a0a] border-b border-[#333] px-3 py-2 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 min-w-max">
+                {Object.entries(corps)
+                  .sort((a, b) => {
+                    const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+                    return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
+                  })
+                  .map(([classId, corpsData]) => {
+                    const isActive = activeCorpsClass === classId;
+                    const fullName = corpsData.corpsName || corpsData.name || 'Team';
+                    // Truncate names longer than 20 characters
+                    const displayName = fullName.length > 20
+                      ? fullName.substring(0, 18) + '…'
+                      : fullName;
+
+                    return (
+                      <button
+                        key={classId}
+                        onClick={() => { haptic('light'); handleCorpsSwitch(classId); }}
+                        className={`
+                          flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-full
+                          text-sm font-bold whitespace-nowrap transition-all duration-200 press-feedback
+                          ${isActive
+                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-black'
+                            : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333] hover:text-gray-200 active:bg-[#3a3a3a]'
+                          }
+                        `}
+                        title={fullName}
+                      >
+                        <TeamAvatar
+                          name={fullName}
+                          size="xs"
+                          className={isActive ? '!bg-black/20 !border-black/30 !text-black' : ''}
+                        />
+                        <span>{displayName}</span>
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
           )}
 
@@ -442,88 +462,70 @@ const Dashboard = () => {
             <div className="lg:grid lg:grid-cols-3 w-full gap-px bg-[#333]">
 
             {/* LEFT COLUMN - My Team */}
-            <div className={`bg-[#1a1a1a] p-4 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
+            <div className={`bg-[#1a1a1a] p-4 pt-3 ${activeMobileTab !== 'team' ? 'hidden lg:block' : ''}`}>
               {/* SoundSport Welcome Card - Show for SoundSport directors */}
               {activeCorpsClass === 'soundSport' && (
                 <SoundSportWelcome showCompact={true} />
               )}
 
-              {/* Team Header */}
-              <div className="flex items-center justify-between mb-3">
+              {/* Compact Team Header - Class label + Edit */}
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
                     {CLASS_LABELS[activeCorpsClass] || activeCorpsClass}
                   </span>
+                  {!hasMultipleCorps && (
+                    <span className="text-[10px] text-gray-600">•</span>
+                  )}
+                  {!hasMultipleCorps && (
+                    <span className="text-[10px] text-gray-400 truncate max-w-[150px]">
+                      {activeCorps.corpsName || activeCorps.name}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => setShowEditCorps(true)}
                   className="p-2 -mr-2 text-gray-500 hover:text-white active:text-white"
                   aria-label="Edit corps"
                 >
-                  <Edit className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <Edit className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Corps Name with Avatar */}
-              <div className="flex items-center gap-3 mb-4">
-                <TeamAvatar
-                  name={activeCorps.corpsName || activeCorps.name}
-                  size="lg"
-                />
-                <h2 className="text-xl sm:text-lg font-bold text-white leading-tight">
-                  {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
-                </h2>
-              </div>
-
-              {/* Big Score */}
-              <div className="mb-4">
-                <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+              {/* Big Score - Moved higher, reduced margin */}
+              <div className="mb-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
                   Season Score
                 </div>
-                <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums">
+                <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums leading-none">
                   {activeCorps.totalSeasonScore?.toFixed(3) || '0.000'}
                 </div>
               </div>
 
-              {/* Rank and Lineup - Better mobile layout */}
-              <div className="flex items-start gap-6 sm:gap-4 mb-4 pb-4 border-b border-[#333]">
-                <div className="flex-shrink-0">
-                  <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                    Rank
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl sm:text-2xl font-bold text-white">
-                      #{activeCorps.rank || '-'}
-                    </span>
-                    {rankTrend === 'up' && (
-                      <span className="flex items-center text-green-500">
-                        <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4" />
-                      </span>
-                    )}
-                    {rankTrend === 'down' && (
-                      <span className="flex items-center text-red-500">
-                        <TrendingDown className="w-5 h-5 sm:w-4 sm:h-4" />
-                      </span>
-                    )}
-                  </div>
+              {/* Rank and Lineup - Compact inline row */}
+              <div className="flex items-center gap-4 mb-3 pb-3 border-b border-[#333]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Rank</span>
+                  <span className="text-2xl font-bold text-white font-data">
+                    #{activeCorps.rank || '-'}
+                  </span>
+                  {rankTrend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
+                  {rankTrend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
                 </div>
-                <div className="flex-shrink-0">
-                  <div className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                    Lineup
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-2xl sm:text-xl font-bold ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
-                      {lineupCount}/8
-                    </span>
-                    <button
-                      onClick={() => openCaptionSelection()}
-                      className="flex items-center gap-1 text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors py-1"
-                    >
-                      <Edit className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                      Edit All
-                      <ChevronRight className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
-                    </button>
-                  </div>
+                <div className="w-px h-6 bg-[#333]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Lineup</span>
+                  <span className={`text-xl font-bold font-data ${lineupCount === 8 ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {lineupCount}/8
+                  </span>
+                  <button
+                    onClick={() => openCaptionSelection()}
+                    className="flex items-center gap-0.5 text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Edit
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
