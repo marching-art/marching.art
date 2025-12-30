@@ -76,12 +76,22 @@ const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
 } = require("./src/scheduled/lifetimeLeaderboard");
+const {
+  streakAtRiskEmailJob,
+  weeklyDigestEmailJob,
+  winBackEmailJob,
+  streakBrokenEmailJob,
+} = require("./src/scheduled/emailNotifications");
 
 // Trigger Functions
 const {
   processDciScores,
   processLiveScoreRecap,
 } = require("./src/triggers/scoreProcessing");
+const {
+  onProfileCreated,
+  onStreakMilestoneReached,
+} = require("./src/triggers/emailTriggers");
 
 // Webhooks
 const { stripeWebhook } = require("./src/webhooks/stripe");
@@ -138,9 +148,19 @@ module.exports = {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
 
+  // Email Scheduled Jobs
+  streakAtRiskEmailJob,
+  weeklyDigestEmailJob,
+  winBackEmailJob,
+  streakBrokenEmailJob,
+
   // Triggers
   processDciScores,
   processLiveScoreRecap,
+
+  // Email Triggers
+  onProfileCreated,
+  onStreakMilestoneReached,
 
   // Webhooks
   stripeWebhook,
