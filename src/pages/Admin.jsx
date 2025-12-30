@@ -1,13 +1,17 @@
 // src/pages/Admin.jsx
+// =============================================================================
+// ADMIN PANEL - ESPN DATA GRID STYLE
+// =============================================================================
+// Dense panels, dark theme matching Dashboard design
+// Uses bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222] color scheme
+
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Shield, Database, Users, Calendar, Award,
-  Play, RefreshCw, Settings, Download, Upload,
-  CheckCircle, XCircle, Clock, AlertTriangle, Plus, Table
+  Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, Table
 } from 'lucide-react';
 import { db, adminHelpers } from '../firebase';
-import { doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
@@ -54,11 +58,10 @@ const Admin = () => {
 
       setStats({
         totalUsers: usersSnapshot.size,
-        activeCorps: 0, // Calculate from user profiles
+        activeCorps: 0,
         activeSeasons: 1
       });
     } catch (error) {
-      // Silently handle permission errors - user is not an admin
       if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
         console.error('Error loading admin data:', error);
         toast.error('Failed to load admin data');
@@ -72,14 +75,12 @@ const Admin = () => {
       const callable = httpsCallable(functions, functionName);
       const result = await callable(data);
       toast.success(result.data.message || 'Operation completed successfully');
-      await loadAdminData(); // Refresh data
+      await loadAdminData();
       return result.data;
     } catch (error) {
-      // Only log unexpected errors to console
       if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
         console.error(`Error calling ${functionName}:`, error);
       }
-      // Always show user-friendly error message
       toast.error(error.message || `Failed to execute ${functionName}`);
       throw error;
     }
@@ -91,129 +92,101 @@ const Admin = () => {
 
   if (!isAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-cream-100 mb-2">Access Denied</h1>
-          <p className="text-cream-500">You do not have administrator privileges.</p>
+      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+            <Shield className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+          <p className="text-gray-500">You do not have administrator privileges.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-transparent dark:glass border border-cream-300 dark:border-cream-500/20 shadow-sm dark:shadow-none rounded-2xl p-8"
-      >
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-amber-500/20 dark:bg-gold-500/20 rounded-xl border border-amber-500/20 dark:border-gold-500/20">
-            <Shield className="w-8 h-8 text-amber-600 dark:text-gold-500" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-display font-bold text-charcoal-950 dark:text-cream-100">
-              Admin Panel
-            </h1>
-            <p className="text-slate-500 dark:text-cream-500">System Management & Administration</p>
+      <div className="bg-[#1a1a1a] border-b border-[#333]">
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+              <p className="text-sm text-gray-500">System Management & Administration</p>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          icon={Users}
-          label="Total Users"
-          value={stats.totalUsers}
-          color="blue"
-        />
-        <StatCard
-          icon={Database}
-          label="Active Corps"
-          value={stats.activeCorps}
-          color="green"
-        />
-        <StatCard
-          icon={Calendar}
-          label="Active Seasons"
-          value={stats.activeSeasons}
-          color="gold"
-        />
+      <div className="grid grid-cols-3 gap-px bg-[#333]">
+        <StatCard icon={Users} label="Total Users" value={stats.totalUsers} />
+        <StatCard icon={Database} label="Active Corps" value={stats.activeCorps} />
+        <StatCard icon={Calendar} label="Active Seasons" value={stats.activeSeasons} />
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 overflow-x-auto">
-        {[
-          { id: 'overview', label: 'Overview', icon: Database },
-          { id: 'season', label: 'Season Management', icon: Calendar },
-          { id: 'scores', label: 'Scores Reference', icon: Table },
-          { id: 'users', label: 'User Management', icon: Users },
-          { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'bg-gold-500 text-charcoal-900'
-                : 'glass text-cream-300 hover:text-cream-100'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="bg-[#1a1a1a] border-b border-[#333] overflow-x-auto">
+        <div className="flex">
+          {[
+            { id: 'overview', label: 'Overview', icon: Database },
+            { id: 'season', label: 'Season Management', icon: Calendar },
+            { id: 'scores', label: 'Scores Reference', icon: Table },
+            { id: 'users', label: 'User Management', icon: Users },
+            { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'text-[#0057B8] border-[#0057B8] bg-[#0a0a0a]'
+                  : 'text-gray-500 border-transparent hover:text-white'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="p-4">
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
         {activeTab === 'season' && <SeasonManagementTab seasonData={seasonData} callAdminFunction={callAdminFunction} />}
         {activeTab === 'scores' && <ScoresSpreadsheet />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
-      </motion.div>
+      </div>
     </div>
   );
 };
 
 // Stat Card Component
-const StatCard = ({ icon: Icon, label, value, color }) => {
-  const colorClasses = {
-    blue: 'bg-blue-500/20 text-blue-500',
-    green: 'bg-green-500/20 text-green-500',
-    purple: 'bg-purple-500/20 text-purple-500',
-    gold: 'bg-gold-500/20 text-gold-500',
-  };
-
-  return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <span className="text-3xl font-bold text-cream-100">{value}</span>
-      </div>
-      <p className="text-sm text-cream-500">{label}</p>
+const StatCard = ({ icon: Icon, label, value }) => (
+  <div className="bg-[#1a1a1a] p-4">
+    <div className="flex items-center justify-between mb-2">
+      <Icon className="w-5 h-5 text-gray-500" />
+      <span className="text-2xl font-bold text-white tabular-nums">{value}</span>
     </div>
-  );
-};
+    <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+  </div>
+);
 
 // Overview Tab
 const OverviewTab = ({ seasonData }) => (
-  <div className="space-y-6">
-    <div className="card">
-      <h2 className="text-xl font-bold text-cream-100 mb-4">Current Season</h2>
+  <div className="space-y-4">
+    {/* Current Season Card */}
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+        <h2 className="text-sm font-bold text-white uppercase tracking-wider">Current Season</h2>
+      </div>
       {seasonData ? (
-        <div className="space-y-3">
+        <div className="divide-y divide-[#333]">
           <InfoRow label="Season Name" value={seasonData.name} />
           <InfoRow label="Status" value={seasonData.status} badge />
           <InfoRow label="Season UID" value={seasonData.seasonUid} mono />
@@ -228,13 +201,16 @@ const OverviewTab = ({ seasonData }) => (
           <InfoRow label="Point Cap" value={seasonData.currentPointCap} />
         </div>
       ) : (
-        <p className="text-cream-500">No active season found</p>
+        <div className="p-4 text-gray-500 text-sm">No active season found</div>
       )}
     </div>
 
-    <div className="card">
-      <h2 className="text-xl font-bold text-cream-100 mb-4">System Health</h2>
-      <div className="space-y-2">
+    {/* System Health Card */}
+    <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+        <h2 className="text-sm font-bold text-white uppercase tracking-wider">System Health</h2>
+      </div>
+      <div className="divide-y divide-[#333]">
         <HealthIndicator label="Database" status="healthy" />
         <HealthIndicator label="Cloud Functions" status="healthy" />
         <HealthIndicator label="Authentication" status="healthy" />
@@ -258,71 +234,78 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
       const functionName = type === 'off' ? 'startNewOffSeason' : 'startNewLiveSeason';
       await callAdminFunction(functionName);
     } catch (error) {
-      // Error is already handled by callAdminFunction (toast shown)
-      // Just prevent uncaught promise rejection
+      // Error handled by callAdminFunction
     } finally {
       setNewSeasonLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="card">
-        <h2 className="text-xl font-bold text-cream-100 mb-4">Season Controls</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      {/* Season Controls */}
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Season Controls</h2>
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
             onClick={() => handleStartNewSeason('off')}
             disabled={newSeasonLoading}
-            className="btn-primary flex items-center justify-center gap-2"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0057B8] text-white font-bold text-sm rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <Play className="w-5 h-5" />
+            <Play className="w-4 h-4" />
             Start New Off-Season
           </button>
           <button
             onClick={() => handleStartNewSeason('live')}
             disabled={newSeasonLoading}
-            className="btn-outline flex items-center justify-center gap-2"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] text-white font-bold text-sm rounded border border-[#444] hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <Play className="w-5 h-5" />
+            <Play className="w-4 h-4" />
             Start New Live Season
           </button>
         </div>
       </div>
 
+      {/* Current Season Details */}
       {seasonData && (
-        <div className="card">
-          <h2 className="text-xl font-bold text-cream-100 mb-4">Current Season Details</h2>
-          <div className="space-y-4">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Current Season Details</h2>
+          </div>
+          <div className="p-4 space-y-4">
             <div>
-              <label className="label">Season Name</label>
+              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Season Name</label>
               <input
                 type="text"
                 value={seasonData.name}
                 disabled
-                className="input bg-charcoal-900/50"
+                className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded text-white text-sm"
               />
             </div>
             <div>
-              <label className="label">Data Document ID</label>
+              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Data Document ID</label>
               <input
                 type="text"
                 value={seasonData.dataDocId}
                 disabled
-                className="input bg-charcoal-900/50 font-mono text-sm"
+                className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded text-white text-sm font-mono"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Status</label>
-                <span className={`badge ${
-                  seasonData.status === 'live-season' ? 'badge-success' : 'badge-gold'
+                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                <span className={`inline-block px-3 py-1 rounded text-xs font-bold ${
+                  seasonData.status === 'live-season'
+                    ? 'bg-green-500/20 text-green-500'
+                    : 'bg-yellow-500/20 text-yellow-500'
                 }`}>
                   {seasonData.status}
                 </span>
               </div>
               <div>
-                <label className="label">Point Cap</label>
-                <span className="text-cream-100 font-bold">{seasonData.currentPointCap}</span>
+                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Point Cap</label>
+                <span className="text-white font-bold">{seasonData.currentPointCap}</span>
               </div>
             </div>
           </div>
@@ -331,7 +314,6 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
     </div>
   );
 };
-
 
 // User Management Tab
 const UserManagementTab = () => {
@@ -380,42 +362,47 @@ const UserManagementTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="card">
-        <h2 className="text-xl font-bold text-cream-100 mb-4">User Statistics</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-charcoal-900/50 rounded-lg">
-            <p className="text-sm text-cream-500/60 mb-1">Total Users</p>
-            <p className="text-3xl font-bold text-cream-100">{stats.totalUsers}</p>
+    <div className="space-y-4">
+      {/* User Statistics */}
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">User Statistics</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#333]">
+          <div className="bg-[#1a1a1a] p-4">
+            <p className="text-xs text-gray-500 mb-1">Total Users</p>
+            <p className="text-2xl font-bold text-white tabular-nums">{stats.totalUsers}</p>
           </div>
-          <div className="p-4 bg-charcoal-900/50 rounded-lg">
-            <p className="text-sm text-cream-500/60 mb-1">Active (7 days)</p>
-            <p className="text-3xl font-bold text-green-400">{stats.activeUsers}</p>
+          <div className="bg-[#1a1a1a] p-4">
+            <p className="text-xs text-gray-500 mb-1">Active (7 days)</p>
+            <p className="text-2xl font-bold text-green-500 tabular-nums">{stats.activeUsers}</p>
           </div>
-          <div className="p-4 bg-charcoal-900/50 rounded-lg">
-            <p className="text-sm text-cream-500/60 mb-1">Premium Users</p>
-            <p className="text-3xl font-bold text-gold-500">{stats.premiumUsers}</p>
+          <div className="bg-[#1a1a1a] p-4">
+            <p className="text-xs text-gray-500 mb-1">Premium Users</p>
+            <p className="text-2xl font-bold text-yellow-500 tabular-nums">{stats.premiumUsers}</p>
           </div>
-          <div className="p-4 bg-charcoal-900/50 rounded-lg">
-            <p className="text-sm text-cream-500/60 mb-1">Total Corps</p>
-            <p className="text-3xl font-bold text-blue-400">{stats.totalCorps}</p>
+          <div className="bg-[#1a1a1a] p-4">
+            <p className="text-xs text-gray-500 mb-1">Total Corps</p>
+            <p className="text-2xl font-bold text-[#0057B8] tabular-nums">{stats.totalCorps}</p>
           </div>
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="text-xl font-bold text-cream-100 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button className="p-4 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-left transition-colors">
-            <Users className="w-5 h-5 text-blue-400 mb-2" />
-            <p className="font-semibold text-cream-100">View All Users</p>
-            <p className="text-xs text-cream-500/60">Browse user profiles and activity</p>
+      {/* Quick Actions */}
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Quick Actions</h2>
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <button className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors">
+            <Users className="w-5 h-5 text-[#0057B8] mb-2" />
+            <p className="font-bold text-white text-sm">View All Users</p>
+            <p className="text-xs text-gray-500">Browse user profiles and activity</p>
           </button>
-          <button className="p-4 bg-charcoal-900/30 hover:bg-charcoal-900/50 rounded-lg text-left transition-colors">
-            <Shield className="w-5 h-5 text-purple-400 mb-2" />
-            <p className="font-semibold text-cream-100">Manage Roles</p>
-            <p className="text-xs text-cream-500/60">Assign admin and moderator roles</p>
+          <button className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors">
+            <Shield className="w-5 h-5 text-purple-500 mb-2" />
+            <p className="font-bold text-white text-sm">Manage Roles</p>
+            <p className="text-xs text-gray-500">Assign admin and moderator roles</p>
           </button>
         </div>
       </div>
@@ -474,33 +461,33 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {jobs.map((job) => (
-        <div key={job.id} className="card">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-gold-500/20 rounded-lg">
-                <job.icon className="w-6 h-6 text-gold-500" />
+        <div key={job.id} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-10 h-10 bg-[#222] rounded-lg flex items-center justify-center flex-shrink-0">
+                <job.icon className="w-5 h-5 text-yellow-500" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-cream-100 mb-1">{job.name}</h3>
-                <p className="text-cream-500 text-sm">{job.description}</p>
+              <div className="min-w-0">
+                <h3 className="font-bold text-white text-sm">{job.name}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{job.description}</p>
               </div>
             </div>
             <button
               onClick={() => handleRunJob(job.id)}
               disabled={jobLoading === job.id}
-              className="btn-primary flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-xs rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             >
               {jobLoading === job.id ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   Running...
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4" />
-                  Run Now
+                  <Play className="w-3.5 h-3.5" />
+                  Run
                 </>
               )}
             </button>
@@ -513,12 +500,14 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
 
 // Helper Components
 const InfoRow = ({ label, value, badge, mono }) => (
-  <div className="flex justify-between items-center py-2 border-b border-cream-500/10">
-    <span className="text-cream-500">{label}</span>
+  <div className="flex justify-between items-center px-4 py-3">
+    <span className="text-sm text-gray-500">{label}</span>
     {badge ? (
-      <span className="badge badge-gold">{value}</span>
+      <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-xs font-bold">
+        {value}
+      </span>
     ) : (
-      <span className={`text-cream-100 ${mono ? 'font-mono text-sm' : 'font-medium'}`}>
+      <span className={`text-sm text-white ${mono ? 'font-mono' : 'font-medium'}`}>
         {value || 'N/A'}
       </span>
     )}
@@ -536,11 +525,11 @@ const HealthIndicator = ({ label, status }) => {
   const Icon = config.icon;
 
   return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-cream-300">{label}</span>
-      <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${config.bg}`}>
-        <Icon className={`w-4 h-4 ${config.color}`} />
-        <span className={`text-sm font-medium ${config.color}`}>
+    <div className="flex items-center justify-between px-4 py-3">
+      <span className="text-sm text-gray-400">{label}</span>
+      <div className={`flex items-center gap-2 px-2 py-1 rounded ${config.bg}`}>
+        <Icon className={`w-3.5 h-3.5 ${config.color}`} />
+        <span className={`text-xs font-bold ${config.color}`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
       </div>
