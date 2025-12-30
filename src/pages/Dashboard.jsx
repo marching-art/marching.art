@@ -135,7 +135,7 @@ const MOBILE_TABS = [
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, loading: scoresLoading, refetch: refetchScores } = useScoresData();
+  const { aggregatedScores, unfilteredShows, loading: scoresLoading, refetch: refetchScores } = useScoresData();
   const { data: myLeagues, refetch: refetchLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
 
@@ -563,11 +563,17 @@ const Dashboard = () => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get caption score from aggregated scores (most recent competition)
-                  const corpsScoreData = hasValue ? aggregatedScores.find(
-                    s => (s.corpsName || s.corps) === corpsName
-                  ) : null;
-                  const captionScore = corpsScoreData?.scores?.[0]?.captions?.[caption.id] ?? null;
+                  // Get caption score from most recent show (unfilteredShows is sorted by offSeasonDay descending)
+                  let captionScore = null;
+                  if (hasValue && unfilteredShows?.length > 0) {
+                    for (const show of unfilteredShows) {
+                      const corpsScore = show.scores?.find(s => (s.corpsName || s.corps) === corpsName);
+                      if (corpsScore?.captions?.[caption.id] != null) {
+                        captionScore = corpsScore.captions[caption.id];
+                        break;
+                      }
+                    }
+                  }
                   return (
                     <button
                       key={caption.id}
