@@ -14,7 +14,8 @@ const INDIVIDUAL_CAPTIONS = ['GE1', 'GE2', 'VP', 'VA', 'CG', 'B', 'MA', 'P'];
 
 const AGGREGATE_TABS = [
   { id: 'total', label: 'Total Score', calculate: (c) =>
-    (c.GE1 || 0) + (c.GE2 || 0) + (c.VP || 0) + (c.VA || 0) + (c.CG || 0) + (c.B || 0) + (c.MA || 0) + (c.P || 0)
+    // GE contributes directly, Visual and Music are divided by 2
+    (c.GE1 || 0) + (c.GE2 || 0) + ((c.VP || 0) + (c.VA || 0) + (c.CG || 0)) / 2 + ((c.B || 0) + (c.MA || 0) + (c.P || 0)) / 2
   },
   { id: 'ge_total', label: 'Total GE', calculate: (c) => (c.GE1 || 0) + (c.GE2 || 0) },
   { id: 'music_total', label: 'Total Music', calculate: (c) => (c.B || 0) + (c.MA || 0) + (c.P || 0) },
@@ -161,7 +162,7 @@ const ScoresSpreadsheet = () => {
     const aggTab = AGGREGATE_TABS.find(t => t.id === activeTab);
     if (aggTab) {
       switch (aggTab.id) {
-        case 'total': return 160; // 8 captions * 20
+        case 'total': return 100; // GE(40) + Visual(30)/2 + Music(30)/2 = 100
         case 'ge_total': return 40; // 2 captions * 20
         case 'music_total': return 60; // 3 captions * 20
         case 'visual_total': return 60; // 3 captions * 20
@@ -270,7 +271,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(caption)}
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === caption
-                ? 'bg-gold-500/90 text-black font-bold'
+                ? 'bg-amber-400 text-neutral-900 font-bold'
                 : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
             }`}
           >
@@ -288,7 +289,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === tab.id
-                ? 'bg-gold-500/90 text-black font-bold'
+                ? 'bg-amber-400 text-neutral-900 font-bold'
                 : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
             }`}
           >
