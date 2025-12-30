@@ -25,8 +25,6 @@ import {
   Music,
   Eye,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   Shield
 } from 'lucide-react';
 
@@ -216,17 +214,6 @@ const TickerBar = () => {
       setActiveSection(0);
     }
   }, [activeSection, tickerSections.length]);
-
-  // Navigate between sections
-  const goToPrev = () => {
-    if (tickerSections.length === 0) return;
-    setActiveSection(prev => (prev - 1 + tickerSections.length) % tickerSections.length);
-  };
-
-  const goToNext = () => {
-    if (tickerSections.length === 0) return;
-    setActiveSection(prev => (prev + 1) % tickerSections.length);
-  };
 
   // Trend indicator component
   const TrendIndicator = ({ trend }) => {
@@ -452,46 +439,12 @@ const TickerBar = () => {
 
   return (
     <div className="fixed top-12 w-full h-9 sm:h-8 bg-black border-b border-[#333] z-40 flex items-center overflow-hidden">
-      {/* Navigation arrows - touch-friendly sizing */}
-      <button
-        onClick={goToPrev}
-        className="hidden md:flex items-center justify-center w-10 h-full bg-[#111] border-r border-[#333] hover:bg-[#222] active:bg-[#333] transition-colors press-feedback"
-        aria-label="Previous section"
-      >
-        <ChevronLeft className="w-5 h-5 text-gray-400" />
-      </button>
-
       {/* Ticker content */}
       <div
         ref={scrollRef}
         className="flex-1 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-xs overflow-x-auto scrollbar-hide"
       >
         {renderSectionContent()}
-      </div>
-
-      {/* Navigation arrows - touch-friendly sizing */}
-      <button
-        onClick={goToNext}
-        className="hidden md:flex items-center justify-center w-10 h-full bg-[#111] border-l border-[#333] hover:bg-[#222] active:bg-[#333] transition-colors press-feedback"
-        aria-label="Next section"
-      >
-        <ChevronRight className="w-5 h-5 text-gray-400" />
-      </button>
-
-      {/* Section indicator dots - touch-friendly hitboxes */}
-      <div className="hidden md:flex items-center gap-0.5 px-2 border-l border-[#333]">
-        {tickerSections.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActiveSection(idx)}
-            className="p-1.5 touch-target"
-            aria-label={`Go to section ${idx + 1}`}
-          >
-            <div className={`w-2 h-2 rounded-full transition-colors ${
-              idx === activeSection ? 'bg-blue-500' : 'bg-gray-600 hover:bg-gray-500'
-            }`} />
-          </button>
-        ))}
       </div>
     </div>
   );
