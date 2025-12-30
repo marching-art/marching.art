@@ -118,12 +118,12 @@ const BottomNav: React.FC = () => {
                   {item.label}
                 </span>
 
-                {/* Active dot indicator - no shadow per design laws */}
+                {/* Active dot indicator - perfectly centered */}
                 {active && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-0.5 right-1/2 translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                    className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
                   />
                 )}
               </Link>
