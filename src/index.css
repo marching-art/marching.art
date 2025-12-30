@@ -87,6 +87,26 @@
   a, button, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"]) {
     touch-action: manipulation;
   }
+
+  /* Focus-visible styles for keyboard navigation (WCAG 2.4.7) */
+  /* Only shows focus ring when navigating with keyboard, not mouse */
+  :focus-visible {
+    outline: 2px solid var(--espn-blue);
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus styles (replaced by focus-visible) */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Special handling for inputs - always show focus ring */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--espn-blue) !important;
+  }
 }
 
 /* =============================================================================
