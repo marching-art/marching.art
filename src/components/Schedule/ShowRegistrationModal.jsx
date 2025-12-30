@@ -177,7 +177,9 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     setSaving(true);
     try {
       const selectUserShows = httpsCallable(functions, 'selectUserShows');
-      for (const corpsClass of userCorpsClasses) {
+
+      // Prepare all updates first, then execute in parallel to avoid race conditions
+      const updatePromises = userCorpsClasses.map(corpsClass => {
         const corpsData = userProfile.corps[corpsClass];
         const weekKey = `week${show.week}`;
         const currentShows = corpsData.selectedShows?.[weekKey] || [];
@@ -192,12 +194,16 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
               day: show.day,
             }]
           : filteredShows;
-        await selectUserShows({
+        return selectUserShows({
           week: show.week,
           shows: newShows,
           corpsClass,
         });
-      }
+      });
+
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+
       haptic('success');
       toast.success('Registration updated!');
       onSuccess();
