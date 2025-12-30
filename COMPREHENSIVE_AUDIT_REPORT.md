@@ -26,6 +26,7 @@
 | **QW-5** | Fixed color contrast for WCAG AA compliance | Medium |
 | **QW-6** | Route prefetching on hover/focus | Medium |
 | **QW-7** | Modal queue system prevents modal chaos | High |
+| **QW-8** | Quick Fill button for lineup auto-fill | High |
 
 ### Current Grade: **B+** *(upgraded from B)*
 
@@ -422,11 +423,11 @@ Being critical as requested:
 | ~~**QW-5**~~ | ~~Fix color contrast on disabled text~~ | 2 hours | Medium | **✅ DONE** | Changed `text-yellow-50/50` to `text-yellow-50/70` in 9 files |
 | ~~**QW-6**~~ | ~~Add route prefetching~~ | 2 hours | Medium | **✅ DONE** | Created prefetch.ts utility with requestIdleCallback |
 | ~~**QW-7**~~ | ~~Modal queue system~~ | 4 hours | High | **✅ DONE** | useModalQueue hook with priority-based queue |
-| **QW-8** | Add "Quick Fill" to onboarding lineup | 2 hours | High | Pending | Auto-fill balanced lineup button |
+| ~~**QW-8**~~ | ~~Add "Quick Fill" to onboarding lineup~~ | 2 hours | High | **✅ DONE** | Wand2 button auto-fills empty slots with balanced allocation |
 | **QW-9** | Consolidate duplicate Firestore listeners | 4 hours | Medium | Pending | Enforce singleton pattern in useDashboardData |
 | **QW-10** | Add focus trap to ShowDetailModal | 2 hours | Medium | Pending | Use existing useFocusTrap hook |
 
-**Progress: 4/10 Quick Wins Complete** (~7 hours done, ~14 hours remaining)
+**Progress: 8/10 Quick Wins Complete** (~19 hours done, ~6 hours remaining)
 
 ---
 
