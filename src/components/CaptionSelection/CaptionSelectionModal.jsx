@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Check, AlertCircle, TrendingUp, TrendingDown, Minus, Flame, Snowflake,
   Trophy, Zap, Clock, Save, Download, Trash2, ChevronDown, ChevronUp,
-  Target, History, Award, X, PartyPopper, ArrowLeft, RefreshCw
+  Target, History, Award, X, PartyPopper, ArrowLeft, RefreshCw, Wand2
 } from 'lucide-react';
 import { db, functions } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -590,6 +590,65 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
     toast.success('Template deleted');
   };
 
+  // Quick Fill - auto-fill empty slots with balanced lineup
+  const handleQuickFill = useCallback(() => {
+    if (availableCorps.length === 0) return;
+
+    const newSelections = { ...selections };
+    const emptyCaptions = captions.filter(c => !newSelections[c.id]);
+
+    if (emptyCaptions.length === 0) {
+      toast('All positions are already filled!', { icon: '✓' });
+      return;
+    }
+
+    // Calculate current used points and remaining budget
+    let usedPoints = Object.values(newSelections).reduce(
+      (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
+    );
+    let remainingBudget = pointLimit - usedPoints;
+
+    // Target points per empty slot (balanced distribution)
+    const targetPerSlot = Math.floor(remainingBudget / emptyCaptions.length);
+
+    // Track which corps have been used (to avoid duplicates)
+    const usedCorps = new Set(
+      Object.values(newSelections)
+        .filter(Boolean)
+        .map(s => s.split('|')[0])
+    );
+
+    // Fill each empty caption
+    for (const caption of emptyCaptions) {
+      // Find corps that:
+      // 1. Haven't been used
+      // 2. Fit within remaining budget
+      // 3. Are closest to target per slot (prefer balanced distribution)
+      const availableForSlot = availableCorps
+        .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
+        .map(c => ({
+          ...c,
+          // Score: how close to target (prefer slightly under target)
+          distanceFromTarget: Math.abs(c.points - Math.min(targetPerSlot, remainingBudget))
+        }))
+        .sort((a, b) => a.distanceFromTarget - b.distanceFromTarget);
+
+      if (availableForSlot.length > 0) {
+        const selected = availableForSlot[0];
+        newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
+        usedCorps.add(selected.corpsName);
+        remainingBudget -= selected.points;
+      }
+    }
+
+    setSelections(newSelections);
+
+    const filledCount = Object.keys(newSelections).length - Object.keys(selections).length;
+    if (filledCount > 0) {
+      toast.success(`Auto-filled ${filledCount} position${filledCount > 1 ? 's' : ''}!`);
+    }
+  }, [availableCorps, selections, captions, pointLimit]);
+
   const handleSubmit = async () => {
     if (!isComplete) { toast.error('Please select all 8 captions'); return; }
     if (isOverLimit) { toast.error(`Lineup exceeds ${pointLimit} point limit`); return; }
@@ -647,6 +706,14 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                   isUnlimited={isUnlimitedTrades}
                   isInitialSetup={isInitialSetup}
                 />
+                <button
+                  onClick={handleQuickFill}
+                  disabled={loading || selectionCount === 8}
+                  className="h-8 px-3 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase flex items-center gap-1"
+                  title="Auto-fill empty positions with balanced picks"
+                >
+                  <Wand2 className="w-3 h-3" /> Quick Fill
+                </button>
                 <button onClick={() => setShowTemplateModal(true)} className="h-8 px-3 border border-[#333] text-gray-400 text-xs font-bold uppercase hover:border-[#444] hover:text-white flex items-center gap-1">
                   <Save className="w-3 h-3" /> Templates
                 </button>
@@ -714,10 +781,19 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
 
                     {/* Your Lineup - Caption List */}
                     <div className="bg-[#0a0a0a] border border-[#333]">
-                      <div className="p-3 border-b border-[#333]">
+                      <div className="p-3 border-b border-[#333] flex items-center justify-between">
                         <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                           <Award className="w-3 h-3" /> Your Lineup
                         </h3>
+                        {selectionCount < 8 && (
+                          <button
+                            onClick={handleQuickFill}
+                            disabled={loading}
+                            className="flex items-center gap-1 px-2 py-1 bg-green-600/20 hover:bg-green-600/30 text-green-400 text-[10px] font-bold uppercase rounded disabled:opacity-50"
+                          >
+                            <Wand2 className="w-3 h-3" /> Quick Fill
+                          </button>
+                        )}
                       </div>
                       <div className="p-2 space-y-1">
                         {captions.map((caption) => {
