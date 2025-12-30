@@ -514,9 +514,9 @@ Being critical as requested:
 | ~~**QW-17**~~ | ~~Add focus-visible global styles~~ | 1h | Medium | **✅ DONE** | :focus-visible with ESPN blue, input border override |
 | ~~**QW-18**~~ | ~~Free Streak Freeze at 30 days~~ | 2h | High | **✅ DONE** | 30-day milestone now includes free 24h freeze |
 | ~~**QW-19**~~ | ~~XP gain floating feedback~~ | 3h | Medium | **✅ DONE** | Enhanced PlayerStatusBar + global XPFeedbackContainer |
-| **QW-20** | Level-up celebration | 3h | High | Pending | Full-screen animation on level up |
+| ~~**QW-20**~~ | ~~Level-up celebration~~ | 3h | High | **✅ DONE** | Full-screen LevelUpCelebration with confetti + class unlock |
 
-**Progress: 9/10 Complete** (~13.5 hours done, ~3.5 hours remaining)
+**Progress: 10/10 Complete** 🎉 All Quick Wins Done!
 
 ### Strategic Overhauls (High Effort / Massive Impact)
 
