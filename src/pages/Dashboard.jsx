@@ -221,57 +221,47 @@ const Dashboard = () => {
     }
   }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
 
-  // Fetch corps caption scores from historical_scores for lineup display
+  // Fetch user's fantasy recap scores for lineup display
   useEffect(() => {
-    const fetchCorpsStats = async () => {
-      const lineup = activeCorps?.lineup;
-      if (!lineup || Object.keys(lineup).length === 0) return;
-
-      // Get unique years from lineup
-      const years = new Set();
-      Object.values(lineup).forEach(value => {
-        if (value) {
-          const [, sourceYear] = value.split('|');
-          if (sourceYear) years.add(sourceYear);
-        }
-      });
-
-      if (years.size === 0) return;
+    const fetchUserScores = async () => {
+      if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass) return;
 
       try {
-        // Fetch historical scores for each year
-        const yearDocs = await Promise.all(
-          Array.from(years).map(year => getDoc(doc(db, 'historical_scores', year)))
-        );
+        const recapRef = doc(db, 'fantasy_recaps', seasonData.seasonUid);
+        const recapSnap = await getDoc(recapRef);
 
-        // Build lookup map: "CorpsName|Year" -> { captionId: score }
-        const statsMap = {};
-        yearDocs.forEach((yearDoc, idx) => {
-          if (!yearDoc.exists()) return;
-          const year = Array.from(years)[idx];
-          const data = yearDoc.data().data || [];
+        if (recapSnap.exists()) {
+          const data = recapSnap.data();
+          const recaps = data.recaps || [];
 
           // Sort by offSeasonDay descending to get most recent first
-          const sortedEvents = [...data].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
+          const sortedRecaps = [...recaps].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
 
-          // For each corps, get their most recent caption scores
-          sortedEvents.forEach(event => {
-            (event.scores || []).forEach(score => {
-              const key = `${score.corps}|${year}`;
-              if (!statsMap[key] && score.captions) {
-                statsMap[key] = score.captions;
+          // Find the user's most recent score for this corps class
+          for (const recap of sortedRecaps) {
+            for (const show of (recap.shows || [])) {
+              const userResult = (show.results || []).find(
+                r => r.uid === user.uid && r.corpsClass === activeCorpsClass
+              );
+              if (userResult) {
+                // Store the category scores (geScore, visualScore, musicScore)
+                setCorpsStats({
+                  geScore: userResult.geScore,
+                  visualScore: userResult.visualScore,
+                  musicScore: userResult.musicScore
+                });
+                return;
               }
-            });
-          });
-        });
-
-        setCorpsStats(statsMap);
+            }
+          }
+        }
+        setCorpsStats({});
       } catch (error) {
-        console.error('Error fetching corps stats:', error);
+        console.error('Error fetching user scores:', error);
       }
     };
-    fetchCorpsStats();
-  }, [activeCorps?.lineup]);
+    fetchUserScores();
+  }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
 
   // Handlers
   const handleTourComplete = async () => {
@@ -588,9 +578,15 @@ const Dashboard = () => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get caption score from historical scores (most recent performance)
-                  const statsKey = `${corpsName}|${sourceYear}`;
-                  const captionScore = corpsStats[statsKey]?.[caption.id] ?? null;
+                  // Get category score from user's fantasy recap (GE/Visual/Music)
+                  let captionScore = null;
+                  if (['GE1', 'GE2'].includes(caption.id)) {
+                    captionScore = corpsStats.geScore ?? null;
+                  } else if (['VP', 'VA', 'CG'].includes(caption.id)) {
+                    captionScore = corpsStats.visualScore ?? null;
+                  } else if (['B', 'MA', 'P'].includes(caption.id)) {
+                    captionScore = corpsStats.musicScore ?? null;
+                  }
                   return (
                     <button
                       key={caption.id}
