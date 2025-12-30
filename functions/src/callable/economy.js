@@ -10,11 +10,9 @@ const { getDb, dataNamespaceParam } = require("../config");
 // - Show participation: 50-200 CC per show (by class)
 // - Weekly league win: 100 CC
 // - Season finish bonus: 250-1000 CC (based on final rank)
-// - Battle Pass rewards: Various amounts (handled in battlePass.js)
 //
 // SPENDING:
 // - Class unlocks (one-time): A=1000, Open=2500, World=5000
-// - Cosmetics (future): Avatars, badges, corps colors
 // - League entry fees (optional, commissioner-set)
 // =============================================================================
 
@@ -60,7 +58,6 @@ const TRANSACTION_TYPES = {
   SHOW_PARTICIPATION: 'show_participation',
   LEAGUE_WIN: 'league_win',
   SEASON_BONUS: 'season_bonus',
-  BATTLE_PASS: 'battle_pass',
   CLASS_UNLOCK: 'class_unlock',
   LEAGUE_ENTRY: 'league_entry',
   COSMETIC_PURCHASE: 'cosmetic_purchase',
@@ -207,45 +204,6 @@ const awardSeasonBonus = async (uid, finalRank, seasonName, corpsClass) => {
     return { success: true, amount, rank: finalRank };
   } catch (error) {
     logger.error(`Error awarding season bonus to user ${uid}:`, error);
-    return { success: false, error: error.message };
-  }
-};
-
-/**
- * Award CorpsCoin from Battle Pass (called by battlePass.js)
- */
-const awardBattlePassReward = async (uid, amount, level, tier) => {
-  const db = getDb();
-  const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const profileDoc = await transaction.get(profileRef);
-      if (!profileDoc.exists) return;
-
-      const currentBalance = profileDoc.data().corpsCoin || 0;
-      const newBalance = currentBalance + amount;
-
-      const historyEntry = {
-        type: TRANSACTION_TYPES.BATTLE_PASS,
-        amount: amount,
-        balance: newBalance,
-        description: `Battle Pass Level ${level} (${tier}) reward`,
-        level: level,
-        tier: tier,
-        timestamp: new Date(),
-      };
-
-      transaction.update(profileRef, {
-        corpsCoin: newBalance,
-        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
-      });
-    });
-
-    logger.info(`Awarded ${amount} CorpsCoin to user ${uid} from Battle Pass Level ${level}`);
-    return { success: true, amount };
-  } catch (error) {
-    logger.error(`Error awarding Battle Pass CorpsCoin to user ${uid}:`, error);
     return { success: false, error: error.message };
   }
 };
@@ -448,11 +406,6 @@ const getEarningOpportunities = onCall({ cors: true }, async (request) => {
         description: "Earn CC based on your final season ranking",
         rewards: SEASON_FINISH_BONUSES,
       },
-      battlePass: {
-        title: "Battle Pass Rewards",
-        description: "Claim CC rewards as you level up your Battle Pass",
-        note: "Amounts vary by level and tier",
-      },
     },
     spending: {
       classUnlocks: {
@@ -478,7 +431,6 @@ module.exports = {
   awardCorpsCoin,
   awardLeagueWinBonus,
   awardSeasonBonus,
-  awardBattlePassReward,
 
   // Spending functions
   unlockClassWithCorpsCoin,

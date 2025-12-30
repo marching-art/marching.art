@@ -185,7 +185,6 @@ const Settings = () => {
     emailNotifications: true,
     showReminders: true,
     leagueUpdates: true,
-    battlePassRewards: true,
     weeklyRecap: true
   });
 
@@ -219,7 +218,6 @@ const Settings = () => {
           emailNotifications: data.settings?.emailNotifications ?? true,
           showReminders: data.settings?.showReminders ?? true,
           leagueUpdates: data.settings?.leagueUpdates ?? true,
-          battlePassRewards: data.settings?.battlePassRewards ?? true,
           weeklyRecap: data.settings?.weeklyRecap ?? true
         });
 
@@ -488,14 +486,6 @@ const Settings = () => {
                       description="Circuit activity notifications"
                       checked={notificationSettings.leagueUpdates}
                       onChange={(e) => updateNotifications('leagueUpdates', e.target.checked)}
-                    />
-
-                    <TerminalToggle
-                      label="Reward Alerts"
-                      code="RWRD"
-                      description="Battle pass unlock notifications"
-                      checked={notificationSettings.battlePassRewards}
-                      onChange={(e) => updateNotifications('battlePassRewards', e.target.checked)}
                     />
 
                     <TerminalToggle

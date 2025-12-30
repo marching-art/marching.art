@@ -56,11 +56,6 @@ function calculateXPUpdates(profileData, xpToAdd) {
     xpLevel: newLevel
   };
 
-  // Also update battle pass if active
-  if (profileData.battlePass?.currentSeason) {
-    updates['battlePass.xp'] = admin.firestore.FieldValue.increment(xpToAdd);
-  }
-
   // Check for class unlocks
   const unlockedClasses = [...(profileData.unlockedClasses || ['soundSport'])];
   let classUnlocked = null;

@@ -26,7 +26,6 @@ const Profile = lazy(() => import('./pages/Profile'));
 // Settings is now integrated into Profile page
 const HallOfChampions = lazy(() => import('./pages/HallOfChampions'));
 const Admin = lazy(() => import('./pages/Admin'));
-const BattlePass = lazy(() => import('./pages/BattlePass'));
 const Leagues = lazy(() => import('./pages/Leagues'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Login = lazy(() => import('./pages/Login'));
@@ -238,14 +237,6 @@ function App() {
             <ProtectedRoute>
               <GameShell>
                 <Page name="Admin"><Admin /></Page>
-              </GameShell>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/battlepass" element={
-            <ProtectedRoute>
-              <GameShell>
-                <Page name="Battle Pass"><BattlePass /></Page>
               </GameShell>
             </ProtectedRoute>
           } />
