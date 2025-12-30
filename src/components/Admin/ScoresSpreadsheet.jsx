@@ -270,7 +270,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(caption)}
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === caption
-                ? 'bg-gold-500 text-charcoal-900 font-bold'
+                ? 'bg-gold-500/90 text-black font-bold'
                 : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
             }`}
           >
@@ -288,7 +288,7 @@ const ScoresSpreadsheet = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-2 py-1 text-[10px] font-mono rounded transition-all ${
               activeTab === tab.id
-                ? 'bg-gold-500 text-charcoal-900 font-bold'
+                ? 'bg-gold-500/90 text-black font-bold'
                 : 'text-cream-400 hover:text-cream-100 hover:bg-charcoal-800'
             }`}
           >
