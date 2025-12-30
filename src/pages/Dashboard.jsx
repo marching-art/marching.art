@@ -22,7 +22,6 @@ import {
   RetireConfirmModal,
   MoveCorpsModal,
   AchievementModal,
-  MorningReport,
   OnboardingTour,
   QuickStartGuide,
   SoundSportWelcome,
@@ -139,7 +138,6 @@ const Dashboard = () => {
   const [showClassUnlockCongrats, setShowClassUnlockCongrats] = useState(false);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [retiring, setRetiring] = useState(false);
-  const [showMorningReport, setShowMorningReport] = useState(false);
   const [showOnboardingTour, setShowOnboardingTour] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
 
@@ -169,22 +167,11 @@ const Dashboard = () => {
 
   // Effects
   useEffect(() => {
-    if (profile && activeCorps) {
-      const today = new Date().toDateString();
-      const lastVisit = localStorage.getItem(`lastDashboardVisit_${user?.uid}`);
-      if (lastVisit !== today) {
-        setShowMorningReport(true);
-        localStorage.setItem(`lastDashboardVisit_${user?.uid}`, today);
-      }
-    }
-  }, [profile, activeCorps, user?.uid]);
-
-  useEffect(() => {
-    if (profile?.isFirstVisit && activeCorps && !showMorningReport) {
+    if (profile?.isFirstVisit && activeCorps) {
       const timer = setTimeout(() => setShowOnboardingTour(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [profile?.isFirstVisit, activeCorps, showMorningReport]);
+  }, [profile?.isFirstVisit, activeCorps]);
 
   useEffect(() => {
     if (newlyUnlockedClass) setShowClassUnlockCongrats(true);
@@ -761,14 +748,7 @@ const Dashboard = () => {
         />
       )}
 
-      <MorningReport
-        isOpen={showMorningReport}
-        onClose={() => setShowMorningReport(false)}
-        profile={profile}
-        activeCorps={activeCorps}
-        activeCorpsClass={activeCorpsClass}
-        engagementData={engagementData}
-      />
+      {/* Morning Report removed - streak now visible in header PlayerStatusBar */}
 
       <OnboardingTour
         isOpen={showOnboardingTour}

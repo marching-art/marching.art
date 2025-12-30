@@ -11,11 +11,23 @@ const ShowCard = React.memo(({ show, onClick, userCorpsNames = [] }) => {
     );
   };
 
+  // Handle keyboard activation (Enter or Space)
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick?.();
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.002 }}
-      className="cursor-pointer"
+      className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-charcoal-900 rounded"
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${show.eventName}`}
     >
       {/* Show Header - Solid Black Bar */}
       <div className="bg-charcoal-900 dark:bg-charcoal-950 px-4 py-3 flex items-center justify-between gap-4">
