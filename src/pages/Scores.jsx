@@ -14,6 +14,7 @@ import { useScoresData } from '../hooks/useScoresData';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { useHaptic } from '../hooks/useHaptic';
 import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
 import SoundSportTab from '../components/Scores/tabs/SoundSportTab';
@@ -26,23 +27,28 @@ const createStandingsColumns = () => [
   {
     key: 'rank',
     header: 'RK',
-    width: '45px',
+    width: '52px',
     isRank: true,
     render: (row) => (
-      <span className="text-gray-500 font-medium tabular-nums">
-        {row.rank}
-      </span>
+      <div className="flex items-center justify-center px-1">
+        <span className="w-7 h-7 rounded bg-[#333] border border-[#444] flex items-center justify-center text-gray-400 font-bold tabular-nums text-sm">
+          {row.rank}
+        </span>
+      </div>
     ),
   },
   {
     key: 'corps',
     header: 'Corps',
-    width: '160px',
+    width: '180px',
     sticky: true,
     render: (row) => (
-      <span className="font-bold text-white">
-        {row.corpsName || row.corps}
-      </span>
+      <div className="flex items-center gap-2.5 px-1">
+        <TeamAvatar name={row.corpsName || row.corps} size="sm" />
+        <span className="font-bold text-white truncate">
+          {row.corpsName || row.corps}
+        </span>
+      </div>
     ),
   },
   {
@@ -136,12 +142,14 @@ const createLatestColumns = () => [
   {
     key: 'rank',
     header: 'RK',
-    width: '45px',
+    width: '52px',
     isRank: true,
     render: (row) => (
-      <span className="text-gray-500 font-medium tabular-nums">
-        {row.rank}
-      </span>
+      <div className="flex items-center justify-center px-1">
+        <span className="w-7 h-7 rounded bg-[#333] border border-[#444] flex items-center justify-center text-gray-400 font-bold tabular-nums text-sm">
+          {row.rank}
+        </span>
+      </div>
     ),
   },
   {
@@ -149,9 +157,12 @@ const createLatestColumns = () => [
     header: 'Corps',
     sticky: true,
     render: (row) => (
-      <span className="font-bold text-white">
-        {row.corps || row.corpsName}
-      </span>
+      <div className="flex items-center gap-2.5 px-1">
+        <TeamAvatar name={row.corps || row.corpsName} size="sm" />
+        <span className="font-bold text-white truncate">
+          {row.corps || row.corpsName}
+        </span>
+      </div>
     ),
   },
   {

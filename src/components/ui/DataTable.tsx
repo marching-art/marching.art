@@ -103,14 +103,17 @@ const TableRowComponent = <T extends Record<string, unknown>>({
     [onRowClick, row, rowIndex]
   );
 
+  // Determine background for zebra and sticky cells
+  const rowBg = zebraStripes && rowIndex % 2 === 1 ? 'bg-[#1f1f1f]' : 'bg-[#1a1a1a]';
+
   return (
     <tr
       role="row"
       className={`
-        h-10 border-b border-[#333]/50
-        ${zebraStripes && rowIndex % 2 === 1 ? 'bg-white/[0.03]' : ''}
-        ${onRowClick ? 'cursor-pointer hover:bg-white/5' : ''}
-        ${isHighlighted ? 'bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
+        h-11 border-b border-[#333]/50
+        ${rowBg}
+        ${onRowClick ? 'cursor-pointer hover:bg-[#252525]' : ''}
+        ${isHighlighted ? '!bg-[#0057B8]/10 border-l-2 border-l-[#0057B8]' : ''}
       `.trim()}
       onClick={onRowClick ? handleClick : undefined}
       onKeyDown={onRowClick ? handleKeyDown : undefined}
@@ -127,10 +130,10 @@ const TableRowComponent = <T extends Record<string, unknown>>({
           <td
             key={column.key}
             className={`
-              px-2 py-1 text-sm
+              px-3 py-1.5 text-sm
               ${isRankColumn ? 'font-bold text-center text-gray-300 w-12' : 'font-data text-gray-100'}
               ${alignStyles[column.align || 'left']}
-              ${column.sticky ? 'sticky left-0 bg-[#1a1a1a] z-10' : ''}
+              ${column.sticky ? `sticky left-0 ${rowBg} z-10` : ''}
               ${column.cellClassName || ''}
             `.trim()}
             style={column.width ? { width: column.width, minWidth: column.width } : undefined}

@@ -35,6 +35,7 @@ import { retireCorps } from '../firebase/functions';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 
@@ -68,21 +69,26 @@ const standingsColumns = [
   {
     key: 'rank',
     header: 'RK',
-    width: '36px',
+    width: '44px',
     isRank: true,
     render: (row) => (
-      <span className="text-gray-500 font-medium tabular-nums text-sm sm:text-xs">
-        {row.rank}
-      </span>
+      <div className="flex items-center justify-center">
+        <span className="w-6 h-6 rounded bg-[#333] border border-[#444] flex items-center justify-center text-gray-400 font-medium tabular-nums text-xs">
+          {row.rank}
+        </span>
+      </div>
     ),
   },
   {
     key: 'corpsName',
     header: 'Corps',
     render: (row) => (
-      <span className="font-bold text-white truncate block max-w-[180px] sm:max-w-[140px] text-sm sm:text-xs">
-        {row.corpsName || row.corps}
-      </span>
+      <div className="flex items-center gap-2">
+        <TeamAvatar name={row.corpsName || row.corps} size="xs" />
+        <span className="font-bold text-white truncate block max-w-[160px] sm:max-w-[120px] text-sm sm:text-xs">
+          {row.corpsName || row.corps}
+        </span>
+      </div>
     ),
   },
   {
@@ -458,10 +464,16 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {/* Corps Name */}
-              <h2 className="text-xl sm:text-lg font-bold text-white mb-4 leading-tight">
-                {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
-              </h2>
+              {/* Corps Name with Avatar */}
+              <div className="flex items-center gap-3 mb-4">
+                <TeamAvatar
+                  name={activeCorps.corpsName || activeCorps.name}
+                  size="lg"
+                />
+                <h2 className="text-xl sm:text-lg font-bold text-white leading-tight">
+                  {activeCorps.corpsName || activeCorps.name || 'Your Corps'}
+                </h2>
+              </div>
 
               {/* Big Score */}
               <div className="mb-4">

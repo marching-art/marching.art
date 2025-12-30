@@ -126,10 +126,10 @@ const GamingHeader: React.FC = () => {
 
         <div className="h-16 px-4 lg:px-6">
           <div className="flex items-center justify-between h-full max-w-[1920px] mx-auto">
-            {/* Left Section - Logo */}
-            <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-xl overflow-hidden transition-all duration-300">
+            {/* Left Section - Logo + Brand */}
+            <Link to="/dashboard" className="flex items-center gap-2 group">
+              <div className="relative flex-shrink-0">
+                <div className="w-9 h-9 rounded-lg overflow-hidden transition-all duration-300">
                   <img
                     src="/logo192.webp"
                     alt="marching.art"
@@ -137,16 +137,16 @@ const GamingHeader: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-display font-bold tracking-tight drop-shadow-[0_0_10px_rgba(234,179,8,0.3)]">
-                  <span className="text-yellow-400">Marching</span>
+              {/* Brand text - visible on all screens */}
+              <div className="flex flex-col">
+                <h1 className="text-base sm:text-lg font-display font-bold tracking-tight leading-tight">
+                  <span className="text-yellow-400">marching</span>
                   <span className="text-yellow-50/90">.art</span>
                 </h1>
-                {seasonData && (
-                  <p className="text-[10px] text-yellow-50/40 uppercase tracking-wider -mt-1">
-                    {seasonData.name?.replace(/_/g, ' ') || 'Fantasy Drum Corps'}
-                  </p>
-                )}
+                {/* Season subtitle - desktop only */}
+                <p className="hidden sm:block text-[9px] text-yellow-50/40 uppercase tracking-wider -mt-0.5">
+                  {seasonData?.name?.replace(/_/g, ' ') || 'Fantasy Drum Corps'}
+                </p>
               </div>
             </Link>
 
