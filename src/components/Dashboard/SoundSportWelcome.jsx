@@ -16,22 +16,14 @@ import {
 // CONSTANTS
 // =============================================================================
 
+// Key stats for horizontal display
+const KEY_STATS = [
+  { label: 'Time', value: '5-7 min', icon: Clock },
+  { label: 'Members', value: '5+', icon: Users },
+  { label: 'Judges', value: '3', icon: Target },
+];
+
 const QUICK_TIPS = [
-  {
-    icon: Clock,
-    title: 'Performance Time',
-    tip: 'Your show should be 5-7 minutes long.',
-  },
-  {
-    icon: Users,
-    title: 'Minimum Members',
-    tip: '5+ members must be on stage during performance.',
-  },
-  {
-    icon: Target,
-    title: 'Live Music',
-    tip: 'All music must be performed live - no loops or sequences.',
-  },
   {
     icon: Star,
     title: 'Rating System',
@@ -116,58 +108,34 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4">
-              {/* Quick Tips Grid */}
-              <div className="grid grid-cols-2 gap-2">
-                {QUICK_TIPS.map((tip, idx) => {
-                  const Icon = tip.icon;
+            <div className="px-4 pb-4 space-y-3">
+              {/* Key Stats - Horizontal Row */}
+              <div className="flex items-center justify-between p-2.5 bg-[#222] rounded border border-[#333]">
+                {KEY_STATS.map((stat, idx) => {
+                  const Icon = stat.icon;
                   return (
-                    <div
-                      key={idx}
-                      className="p-3 bg-[#222] rounded border border-[#333]"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Icon className="w-3.5 h-3.5 text-green-500" />
-                        <span className="font-bold text-white text-[11px]">{tip.title}</span>
+                    <div key={idx} className="flex-1 text-center">
+                      <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                        <Icon className="w-3 h-3 text-green-500" />
+                        <span className="text-lg font-bold font-data text-white">{stat.value}</span>
                       </div>
-                      <p className="text-gray-400 text-[10px] leading-tight">{tip.tip}</p>
+                      <span className="text-[9px] uppercase tracking-wider text-gray-500">{stat.label}</span>
                     </div>
                   );
                 })}
               </div>
 
-              {/* What Judges Look For */}
-              <div className="p-3 bg-[#222] rounded border border-[#333]">
-                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">
-                  What Judges Look For
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {ADJUDICATION_FOCUS.map((item, idx) => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-1 px-2 py-1 bg-[#333] rounded text-[10px]"
-                      >
-                        <Icon className="w-3 h-3 text-green-500" />
-                        <span className="text-gray-300">{item.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Rating Preview */}
-              <div className="flex items-center justify-center gap-2">
-                <div className="flex items-center gap-1 px-2 py-1 bg-primary border-2 border-black rounded-sm">
+              {/* Rating Badges - Compact Horizontal */}
+              <div className="flex items-center justify-center gap-1.5">
+                <div className="flex items-center gap-1 px-2 py-1 bg-primary border border-black/30 rounded-sm">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Gold 90+</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-stone-300 border-2 border-black rounded-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-stone-300 border border-black/30 rounded-sm">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Silver 75+</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-orange-300 border-2 border-black rounded-sm">
+                <div className="flex items-center gap-1 px-2 py-1 bg-orange-300 border border-black/30 rounded-sm">
                   <Medal className="w-3 h-3 text-black" />
                   <span className="text-[10px] font-bold text-black">Bronze 60+</span>
                 </div>
@@ -177,17 +145,17 @@ const SoundSportWelcome = ({ onDismiss, showCompact = false }) => {
               <div className="flex gap-2">
                 <Link
                   to="/soundsport"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-black font-bold text-xs rounded hover:bg-green-400 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-black font-bold text-xs rounded hover:bg-green-400 transition-colors"
                 >
-                  <BookOpen className="w-4 h-4" />
-                  Learn the Rules
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Learn Rules
                 </Link>
                 <Link
                   to="/scores?tab=soundsport"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#333] text-white font-bold text-xs rounded hover:bg-[#444] transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#333] text-white font-bold text-xs rounded hover:bg-[#444] transition-colors"
                 >
-                  <Trophy className="w-4 h-4" />
-                  View Results
+                  <Trophy className="w-3.5 h-3.5" />
+                  Results
                 </Link>
               </div>
             </div>
