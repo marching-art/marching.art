@@ -7,9 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Shield, Database, Users, Calendar, Award,
-  Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, Table,
-  X, Search, Mail, UserCheck, UserX
+  Shield, Database, Users, Award,
+  Play, RefreshCw, Table,
+  X, Search, Mail, UserCheck, UserX, Activity
 } from 'lucide-react';
 import { setUserRole } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
@@ -28,8 +28,8 @@ const Admin = () => {
   const [seasonData, setSeasonData] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
-    activeCorps: 0,
-    activeSeasons: 0
+    activeUsers: 0,
+    totalCorps: 0
   });
 
   // Check admin status
@@ -55,13 +55,39 @@ const Admin = () => {
         setSeasonData(seasonDoc.data());
       }
 
-      // Load stats
+      // Load user stats with proper calculations
       const usersSnapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
+
+      let activeCount = 0;
+      let corpsCount = 0;
+
+      for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+        // Get profile data for accurate stats
+        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data();
+
+          // Count active users (within 7 days)
+          if (profileData.lastActive) {
+            const lastActive = profileData.lastActive.toDate();
+            const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceActive <= 7) activeCount++;
+          }
+
+          // Count total corps across all classes
+          if (profileData.corps) {
+            corpsCount += Object.keys(profileData.corps).length;
+          }
+        }
+      }
 
       setStats({
         totalUsers: usersSnapshot.size,
-        activeCorps: 0,
-        activeSeasons: 1
+        activeUsers: activeCount,
+        totalCorps: corpsCount
       });
     } catch (error) {
       if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
@@ -126,8 +152,8 @@ const Admin = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-px bg-[#333]">
         <StatCard icon={Users} label="Total Users" value={stats.totalUsers} />
-        <StatCard icon={Database} label="Active Corps" value={stats.activeCorps} />
-        <StatCard icon={Calendar} label="Active Seasons" value={stats.activeSeasons} />
+        <StatCard icon={Activity} label="Active Users (7d)" value={stats.activeUsers} />
+        <StatCard icon={Database} label="Total Corps" value={stats.totalCorps} />
       </div>
 
       {/* Tab Navigation */}
@@ -159,7 +185,7 @@ const Admin = () => {
       {/* Tab Content */}
       <div className="p-4">
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
-        {activeTab === 'season' && <SeasonManagementTab seasonData={seasonData} callAdminFunction={callAdminFunction} />}
+        {activeTab === 'season' && <SeasonManagementTab callAdminFunction={callAdminFunction} />}
         {activeTab === 'scores' && <ScoresSpreadsheet />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
@@ -192,6 +218,7 @@ const OverviewTab = ({ seasonData }) => (
           <InfoRow label="Season Name" value={seasonData.name} />
           <InfoRow label="Status" value={seasonData.status} badge />
           <InfoRow label="Season UID" value={seasonData.seasonUid} mono />
+          <InfoRow label="Data Doc ID" value={seasonData.dataDocId} mono />
           <InfoRow
             label="Start Date"
             value={seasonData.schedule?.startDate?.toDate().toLocaleDateString()}
@@ -206,24 +233,11 @@ const OverviewTab = ({ seasonData }) => (
         <div className="p-4 text-gray-500 text-sm">No active season found</div>
       )}
     </div>
-
-    {/* System Health Card */}
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-        <h2 className="text-sm font-bold text-white uppercase tracking-wider">System Health</h2>
-      </div>
-      <div className="divide-y divide-[#333]">
-        <HealthIndicator label="Database" status="healthy" />
-        <HealthIndicator label="Cloud Functions" status="healthy" />
-        <HealthIndicator label="Authentication" status="healthy" />
-        <HealthIndicator label="Storage" status="healthy" />
-      </div>
-    </div>
   </div>
 );
 
 // Season Management Tab
-const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
+const SeasonManagementTab = ({ callAdminFunction }) => {
   const [newSeasonLoading, setNewSeasonLoading] = useState(false);
 
   const handleStartNewSeason = async (type) => {
@@ -249,70 +263,30 @@ const SeasonManagementTab = ({ seasonData, callAdminFunction }) => {
         <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Season Controls</h2>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button
-            onClick={() => handleStartNewSeason('off')}
-            disabled={newSeasonLoading}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0057B8] text-white font-bold text-sm rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Play className="w-4 h-4" />
-            Start New Off-Season
-          </button>
-          <button
-            onClick={() => handleStartNewSeason('live')}
-            disabled={newSeasonLoading}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] text-white font-bold text-sm rounded border border-[#444] hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Play className="w-4 h-4" />
-            Start New Live Season
-          </button>
+        <div className="p-4">
+          <p className="text-sm text-gray-400 mb-4">
+            Starting a new season will archive all current user corps data and reset the game state.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              onClick={() => handleStartNewSeason('off')}
+              disabled={newSeasonLoading}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0057B8] text-white font-bold text-sm rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Play className="w-4 h-4" />
+              Start New Off-Season
+            </button>
+            <button
+              onClick={() => handleStartNewSeason('live')}
+              disabled={newSeasonLoading}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] text-white font-bold text-sm rounded border border-[#444] hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Play className="w-4 h-4" />
+              Start New Live Season
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Current Season Details */}
-      {seasonData && (
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Current Season Details</h2>
-          </div>
-          <div className="p-4 space-y-4">
-            <div>
-              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Season Name</label>
-              <input
-                type="text"
-                value={seasonData.name}
-                disabled
-                className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded text-white text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Data Document ID</label>
-              <input
-                type="text"
-                value={seasonData.dataDocId}
-                disabled
-                className="w-full px-3 py-2 bg-[#222] border border-[#333] rounded text-white text-sm font-mono"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Status</label>
-                <span className={`inline-block px-3 py-1 rounded text-xs font-bold ${
-                  seasonData.status === 'live-season'
-                    ? 'bg-green-500/20 text-green-500'
-                    : 'bg-yellow-500/20 text-yellow-500'
-                }`}>
-                  {seasonData.status}
-                </span>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Point Cap</label>
-                <span className="text-white font-bold">{seasonData.currentPointCap}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -715,28 +689,5 @@ const InfoRow = ({ label, value, badge, mono }) => (
     )}
   </div>
 );
-
-const HealthIndicator = ({ label, status }) => {
-  const statusConfig = {
-    healthy: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/20' },
-    warning: { icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
-    error: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/20' },
-  };
-
-  const config = statusConfig[status] || statusConfig.healthy;
-  const Icon = config.icon;
-
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-gray-400">{label}</span>
-      <div className={`flex items-center gap-2 px-2 py-1 rounded ${config.bg}`}>
-        <Icon className={`w-3.5 h-3.5 ${config.color}`} />
-        <span className={`text-xs font-bold ${config.color}`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 export default Admin;
