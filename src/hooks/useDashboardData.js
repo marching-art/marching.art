@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
-import { getBattlePassProgress } from '../firebase/functions';
 import { useSeason, getSeasonProgress } from './useSeason';
 import toast from 'react-hot-toast';
 import { getCorpsClassName, getCorpsClassColor } from '../utils/corps';
@@ -24,10 +23,6 @@ export const useDashboardData = () => {
   const [availableCorps, setAvailableCorps] = useState([]);
   const [recentScores, setRecentScores] = useState([]);
   const [selectedCorpsClass, setSelectedCorpsClass] = useState(null);
-
-  // Battle pass
-  const [battlePassRewards, setBattlePassRewards] = useState(null);
-  const [unclaimedRewardsCount, setUnclaimedRewardsCount] = useState(0);
 
   // Class unlock tracking
   const [newlyUnlockedClass, setNewlyUnlockedClass] = useState(null);
@@ -130,8 +125,6 @@ export const useDashboardData = () => {
         }
         setLoading(false);
       });
-
-      fetchBattlePassProgress();
 
       return () => {
         unsubscribeProfile();
@@ -411,34 +404,6 @@ export const useDashboardData = () => {
     }
   }, [seasonData?.seasonUid, fetchAvailableCorps, fetchRecentScores]);
 
-  // Fetch battle pass progress
-  const fetchBattlePassProgress = async () => {
-    try {
-      const result = await getBattlePassProgress();
-      if (result.data && result.data.success) {
-        const progress = result.data.progress;
-        setBattlePassRewards(progress);
-
-        let unclaimedCount = 0;
-        for (let level = 1; level <= progress.currentLevel; level++) {
-          if (!progress.claimedRewards?.free?.includes(level)) {
-            unclaimedCount++;
-          }
-          if (progress.hasBattlePass && !progress.claimedRewards?.premium?.includes(level)) {
-            unclaimedCount++;
-          }
-        }
-        setUnclaimedRewardsCount(unclaimedCount);
-      }
-    } catch (error) {
-      if (error.message && !error.message.includes('No active battle pass season')) {
-        console.error('Error fetching battle pass progress:', error);
-      }
-      setBattlePassRewards(null);
-      setUnclaimedRewardsCount(0);
-    }
-  };
-
   // Corps switching handler
   const handleCorpsSwitch = (classId) => {
     setSelectedCorpsClass(classId);
@@ -503,10 +468,6 @@ export const useDashboardData = () => {
     currentWeek,
     currentDay,
     formatSeasonName,
-
-    // Battle pass
-    battlePassRewards,
-    unclaimedRewardsCount,
 
     // Class unlock
     newlyUnlockedClass,

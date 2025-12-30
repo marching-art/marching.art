@@ -343,7 +343,6 @@ const UserManagementTab = () => {
       const snapshot = await getDocs(usersRef);
 
       let activeCount = 0;
-      let premiumCount = 0;
       let corpsCount = 0;
 
       snapshot.docs.forEach(doc => {
@@ -353,7 +352,6 @@ const UserManagementTab = () => {
           const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
           if (daysSinceActive <= 7) activeCount++;
         }
-        if (data.battlePass?.isPremium) premiumCount++;
         if (data.corps) {
           corpsCount += Object.keys(data.corps).length;
         }
@@ -362,7 +360,6 @@ const UserManagementTab = () => {
       setStats({
         totalUsers: snapshot.size,
         activeUsers: activeCount,
-        premiumUsers: premiumCount,
         totalCorps: corpsCount
       });
     } catch (error) {
@@ -389,8 +386,7 @@ const UserManagementTab = () => {
           createdAt: profileData.createdAt,
           lastActive: profileData.lastActive,
           xpLevel: profileData.xpLevel || 1,
-          corps: profileData.corps ? Object.keys(profileData.corps) : [],
-          isPremium: profileData.battlePass?.isPremium || false
+          corps: profileData.corps ? Object.keys(profileData.corps) : []
         };
       }));
 
@@ -650,12 +646,6 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
       name: 'Process Live Season Scores',
       description: 'Manually trigger daily live season score processing',
       icon: RefreshCw,
-    },
-    {
-      id: 'createBattlePassSeason',
-      name: 'Create Battle Pass Season',
-      description: 'Initialize a new battle pass season with rewards',
-      icon: Award,
     },
   ];
 

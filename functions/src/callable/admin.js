@@ -3,7 +3,6 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
-const { createBattlePassSeasonManual } = require("../scheduled/battlePassRotation");
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -67,9 +66,6 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       await processAndScoreLiveSeasonDayLogic(scoredDay, seasonData);
       return { success: true, message: `Live Season scores processed for day ${scoredDay}.` };
     }
-    case "createBattlePassSeason":
-      await createBattlePassSeasonManual();
-      return { success: true, message: "Battle pass season created successfully." };
     case "patchChampionshipShows": {
       // Migration to add isChampionship flag to existing season's championship shows
       const db = getDb();
@@ -151,25 +147,3 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
   }
 });
 
-exports.initializeBattlePassSeason = onCall({ cors: true }, async (request) => {
-  if (!request.auth || !request.auth.token.admin) {
-    throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
-  }
-  try {
-    logger.info(`Admin ${request.auth.uid} is manually creating a battle pass season.`);
-    const season = await createBattlePassSeasonManual();
-    return {
-      success: true,
-      message: "Battle pass season created successfully.",
-      season: {
-        seasonId: season.seasonId,
-        name: season.name,
-        startDate: season.startDate,
-        endDate: season.endDate,
-      },
-    };
-  } catch (error) {
-    logger.error("Error manually creating battle pass season:", error);
-    throw new HttpsError("internal", `Failed to create battle pass season: ${error.message}`);
-  }
-});

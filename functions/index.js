@@ -29,12 +29,6 @@ const {
   getCorpsCoinHistory,
   getEarningOpportunities,
 } = require("./src/callable/economy");
-const {
-  purchaseBattlePass,
-  claimBattlePassReward,
-  getBattlePassProgress,
-  getAvailableRewards,
-} = require("./src/callable/battlePass");
 const { registerCorps } = require("./src/callable/registerCorps");
 const {
   processCorpsDecisions,
@@ -67,7 +61,6 @@ const {
   startNewOffSeason,
   startNewLiveSeason,
   manualTrigger,
-  initializeBattlePassSeason,
 } = require("./src/callable/admin");
 
 // Scheduled Functions
@@ -77,7 +70,6 @@ const {
   processDailyLiveScores,
   generateWeeklyMatchups,
 } = require("./src/scheduled/dailyProcessors");
-const { battlePassSeasonRotation } = require("./src/scheduled/battlePassRotation");
 const {
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate
@@ -123,7 +115,6 @@ module.exports = {
   createUserProfile,
   startNewOffSeason,
   startNewLiveSeason,
-  initializeBattlePassSeason,
   dailyXPCheckIn,
   awardXP,
   unlockClassWithCorpsCoin,
@@ -133,10 +124,6 @@ module.exports = {
   processCorpsDecisions,
   retireCorps,
   unretireCorps,
-  purchaseBattlePass,
-  claimBattlePassReward,
-  getBattlePassProgress,
-  getAvailableRewards,
   claimDailyLogin,
 
   // Scheduled
@@ -144,7 +131,6 @@ module.exports = {
   dailyOffSeasonProcessor,
   processDailyLiveScores,
   generateWeeklyMatchups,
-  battlePassSeasonRotation,
   updateLifetimeLeaderboard,
   scheduledLifetimeLeaderboardUpdate,
 

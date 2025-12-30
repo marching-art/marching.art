@@ -8,7 +8,7 @@ import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
-  Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins
+  Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -151,9 +151,19 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
             </div>
           </div>
 
+          <a
+            href="https://buymeacoffee.com/marching.art"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-4 min-h-[52px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-base font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+          >
+            <Heart className="w-5 h-5" />
+            Support marching.art
+          </a>
+
           <button
             onClick={handleSignOut}
-            className="w-full mt-4 py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+            className="w-full py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
           >
             <LogOut className="w-5 h-5" />
             Sign Out

@@ -182,9 +182,6 @@ export const GAME_CONFIG = {
 // =============================================================================
 
 export const FEATURE_FLAGS = {
-  /** Enable battle pass system */
-  battlePass: import.meta.env.VITE_FEATURE_BATTLE_PASS !== 'false',
-
   /** Enable staff marketplace */
   staffMarketplace: import.meta.env.VITE_FEATURE_STAFF_MARKETPLACE !== 'false',
 

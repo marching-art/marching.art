@@ -23,23 +23,13 @@ export const saveShowConcept = httpsCallable(functions, 'saveShowConcept');
 
 // ========================================
 // ECONOMY (Simplified CorpsCoin System)
-// Earning: Shows, League Wins, Season Bonus, Battle Pass
+// Earning: Shows, League Wins, Season Bonus
 // Spending: Class Unlocks, League Entry Fees
 // ========================================
 
 export const unlockClassWithCorpsCoin = httpsCallable(functions, 'unlockClassWithCorpsCoin');
 export const getCorpsCoinHistory = httpsCallable(functions, 'getCorpsCoinHistory');
 export const getEarningOpportunities = httpsCallable(functions, 'getEarningOpportunities');
-
-// ========================================
-// BATTLE PASS
-// ========================================
-
-export const purchaseBattlePass = httpsCallable(functions, 'purchaseBattlePass');
-export const claimBattlePassReward = httpsCallable(functions, 'claimBattlePassReward');
-export const getBattlePassProgress = httpsCallable(functions, 'getBattlePassProgress');
-export const getAvailableRewards = httpsCallable(functions, 'getAvailableRewards');
-export const awardXP = httpsCallable(functions, 'awardXP');
 
 // ========================================
 // CORPS MANAGEMENT
@@ -83,4 +73,3 @@ export const reportComment = httpsCallable(functions, 'reportComment');
 export const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
 export const startNewLiveSeason = httpsCallable(functions, 'startNewLiveSeason');
 export const manualTrigger = httpsCallable(functions, 'manualTrigger');
-export const initializeBattlePassSeason = httpsCallable(functions, 'initializeBattlePassSeason');

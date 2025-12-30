@@ -25,13 +25,6 @@ export {
 } from './useEngagement';
 
 export {
-  useBattlePass,
-  type BattlePassProgress,
-  type BattlePassReward,
-  type UseBattlePassReturn,
-} from './useBattlePass';
-
-export {
   useSeasonSetup,
   type UseSeasonSetupReturn,
 } from './useSeasonSetup';

@@ -93,16 +93,6 @@ export const boostMorale = createCallable<{ corpsClass: string }, { success: boo
 export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown>('getExecutionStatus');
 
 // =============================================================================
-// BATTLE PASS
-// =============================================================================
-
-export const purchaseBattlePass = createCallable<void, { success: boolean }>('purchaseBattlePass');
-export const claimBattlePassReward = createCallable<{ rewardId: string }, { success: boolean }>('claimBattlePassReward');
-export const getBattlePassProgress = createCallable<void, unknown>('getBattlePassProgress');
-export const getAvailableRewards = createCallable<void, unknown>('getAvailableRewards');
-export const awardXP = createCallable<{ amount: number; reason: string }, { newXP: number; newLevel: number }>('awardXP');
-
-// =============================================================================
 // DAILY OPERATIONS
 // =============================================================================
 
@@ -144,4 +134,3 @@ export const reportComment = createCallable<{ commentId: string; reason: string 
 export const startNewOffSeason = createCallable<{ seasonNumber: number }, { success: boolean }>('startNewOffSeason');
 export const startNewLiveSeason = createCallable<{ year: number }, { success: boolean }>('startNewLiveSeason');
 export const manualTrigger = createCallable<{ action: string; params?: unknown }, { success: boolean }>('manualTrigger');
-export const initializeBattlePassSeason = createCallable<{ seasonId: string }, { success: boolean }>('initializeBattlePassSeason');
