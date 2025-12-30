@@ -217,4 +217,211 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
   </div>
 );
 
+// =============================================================================
+// PAGE-SPECIFIC SKELETON SCREENS
+// =============================================================================
+
+/**
+ * Dashboard Page Skeleton
+ * Matches the ESPN data grid layout with stats, corps table, and recent shows
+ * Works inside GameShell layout
+ */
+export const DashboardSkeleton: React.FC = () => (
+  <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    {/* Stats Row */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-cream-500/10 rounded-lg overflow-hidden mb-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="bg-charcoal-900 p-4">
+          <Skeleton variant="text" className="w-16 mb-2" />
+          <Skeleton variant="title" className="w-24" />
+        </div>
+      ))}
+    </div>
+
+    {/* Main Grid */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-cream-500/10 rounded-lg overflow-hidden">
+      {/* Corps Table - 2 cols */}
+      <div className="lg:col-span-2 bg-charcoal-900 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton variant="title" className="w-32" />
+          <Skeleton variant="button" className="w-24 h-8" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-charcoal-800/50 rounded">
+              <Skeleton variant="text" className="w-8" />
+              <Skeleton variant="text" className="w-32 flex-1" />
+              <Skeleton variant="text" className="w-16" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="bg-charcoal-900 p-4 space-y-4">
+        <Skeleton variant="title" className="w-24 mb-3" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="p-3 bg-charcoal-800/50 rounded">
+            <Skeleton variant="text" className="w-full mb-2" />
+            <Skeleton variant="text" className="w-2/3" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * Scores Page Skeleton
+ * Matches the ESPN spreadsheet view with tabs and data table
+ * Works inside GameShell layout
+ */
+export const ScoresPageSkeleton: React.FC = () => (
+  <div className="max-w-7xl mx-auto">
+    {/* Ticker skeleton */}
+    <div className="h-10 bg-charcoal-900 border-b border-gold-500/30 flex items-center px-4">
+      <Skeleton variant="text" className="w-24 mr-6" />
+      <Skeleton variant="text" className="w-32 mr-6" />
+      <Skeleton variant="text" className="w-20" />
+    </div>
+
+    {/* Tabs skeleton */}
+    <div className="flex gap-1 p-2 bg-charcoal-900 border-b border-cream-500/10">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Skeleton key={i} variant="button" className="w-20 h-8" />
+      ))}
+    </div>
+
+    {/* Table skeleton */}
+    <div className="p-4">
+      <TableSkeleton rows={10} columns={6} />
+    </div>
+  </div>
+);
+
+/**
+ * Leagues Page Skeleton
+ * Matches the ESPN league office style with standings and matchups
+ * Works inside GameShell layout
+ */
+export const LeaguesPageSkeleton: React.FC = () => (
+  <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    {/* Header */}
+    <div className="flex items-center justify-between mb-4">
+      <Skeleton variant="title" className="w-32" />
+      <Skeleton variant="button" className="w-28 h-9" />
+    </div>
+
+    {/* League Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="bg-charcoal-900 rounded-lg border border-cream-500/10 p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <Skeleton variant="avatar" width="48px" height="48px" />
+            <div className="flex-1">
+              <Skeleton variant="title" className="w-32 mb-2" />
+              <Skeleton variant="text" className="w-20" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, j) => (
+              <div key={j} className="flex items-center justify-between p-2 bg-charcoal-800/50 rounded">
+                <Skeleton variant="text" className="w-24" />
+                <Skeleton variant="text" className="w-12" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/**
+ * Schedule Page Skeleton
+ * Calendar view with event cards
+ * Works inside GameShell layout
+ */
+export const SchedulePageSkeleton: React.FC = () => (
+  <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    {/* Month header */}
+    <div className="flex items-center justify-between mb-6">
+      <Skeleton variant="button" className="w-10 h-10" />
+      <Skeleton variant="title" className="w-40" />
+      <Skeleton variant="button" className="w-10 h-10" />
+    </div>
+
+    {/* Calendar grid */}
+    <div className="bg-charcoal-900 rounded-lg border border-cream-500/10 p-4">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 gap-2 mb-4">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <Skeleton key={i} variant="text" className="h-4" />
+        ))}
+      </div>
+      {/* Calendar cells */}
+      <div className="grid grid-cols-7 gap-2">
+        {Array.from({ length: 35 }).map((_, i) => (
+          <div key={i} className="aspect-square bg-charcoal-800/50 rounded p-1">
+            <Skeleton variant="text" className="w-6 h-4 mb-1" />
+            {i % 7 === 3 && <Skeleton variant="text" className="w-full h-3" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * Profile Page Skeleton
+ * User profile with stats and settings
+ * Works inside GameShell layout
+ */
+export const ProfilePageSkeleton: React.FC = () => (
+  <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4">
+    {/* Profile Header */}
+    <div className="bg-charcoal-900 rounded-lg border border-cream-500/10 p-6 mb-4">
+      <div className="flex items-start gap-4">
+        <Skeleton variant="avatar" width="80px" height="80px" />
+        <div className="flex-1">
+          <Skeleton variant="title" className="w-40 mb-2" />
+          <Skeleton variant="text" className="w-24 mb-3" />
+          <div className="flex gap-4">
+            <Skeleton variant="text" className="w-20" />
+            <Skeleton variant="text" className="w-20" />
+          </div>
+        </div>
+        <Skeleton variant="button" className="w-20 h-9" />
+      </div>
+    </div>
+
+    {/* Stats Grid */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="bg-charcoal-900 rounded-lg border border-cream-500/10 p-4">
+          <Skeleton variant="text" className="w-16 mb-2" />
+          <Skeleton variant="title" className="w-12" />
+        </div>
+      ))}
+    </div>
+
+    {/* Content Sections */}
+    <div className="space-y-4">
+      {Array.from({ length: 2 }).map((_, i) => (
+        <div key={i} className="bg-charcoal-900 rounded-lg border border-cream-500/10 p-4">
+          <Skeleton variant="title" className="w-32 mb-4" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, j) => (
+              <div key={j} className="flex items-center justify-between p-3 bg-charcoal-800/50 rounded">
+                <Skeleton variant="text" className="w-32" />
+                <Skeleton variant="text" className="w-16" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export default Skeleton;

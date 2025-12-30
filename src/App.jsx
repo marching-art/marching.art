@@ -7,6 +7,13 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { auth, authHelpers } from './firebase';
 import { queryClient } from './lib/queryClient';
 import LoadingScreen from './components/LoadingScreen';
+import {
+  DashboardSkeleton,
+  ScoresPageSkeleton,
+  LeaguesPageSkeleton,
+  SchedulePageSkeleton,
+  ProfilePageSkeleton,
+} from './components/Skeleton';
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
@@ -179,7 +186,9 @@ function App() {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Dashboard"><Dashboard /></Page>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <Page name="Dashboard"><Dashboard /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
@@ -193,7 +202,9 @@ function App() {
           <Route path="/schedule" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Schedule"><Schedule /></Page>
+                <Suspense fallback={<SchedulePageSkeleton />}>
+                  <Page name="Schedule"><Schedule /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
@@ -201,7 +212,9 @@ function App() {
           <Route path="/scores" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Scores"><Scores /></Page>
+                <Suspense fallback={<ScoresPageSkeleton />}>
+                  <Page name="Scores"><Scores /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
@@ -209,7 +222,9 @@ function App() {
           <Route path="/scores/:date" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Scores"><Scores /></Page>
+                <Suspense fallback={<ScoresPageSkeleton />}>
+                  <Page name="Scores"><Scores /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
@@ -217,7 +232,9 @@ function App() {
           <Route path="/profile/:userId?" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Profile"><Profile /></Page>
+                <Suspense fallback={<ProfilePageSkeleton />}>
+                  <Page name="Profile"><Profile /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
@@ -244,7 +261,9 @@ function App() {
           <Route path="/leagues" element={
             <ProtectedRoute>
               <GameShell>
-                <Page name="Leagues"><Leagues /></Page>
+                <Suspense fallback={<LeaguesPageSkeleton />}>
+                  <Page name="Leagues"><Leagues /></Page>
+                </Suspense>
               </GameShell>
             </ProtectedRoute>
           } />
