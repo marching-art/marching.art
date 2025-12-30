@@ -61,11 +61,11 @@ const CLASS_LABELS = {
   soundSport: 'SoundSport',
 };
 
-// SoundSport rating thresholds (matches SoundSportTab.jsx)
+// SoundSport rating thresholds for dashboard medal display
 const SOUNDSPORT_RATINGS = [
-  { rating: 'Gold', min: 90, color: 'bg-primary', textColor: 'text-black' },
+  { rating: 'Gold', min: 90, color: 'bg-yellow-400', textColor: 'text-black' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black' },
-  { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black' },
+  { rating: 'Bronze', min: 60, color: 'bg-orange-400', textColor: 'text-black' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black' },
 ];
 
@@ -507,20 +507,33 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {/* Medal Rating Badge */}
+              {/* Score or Medal Rating based on class */}
               <div className="mb-3">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                  Season Rating
-                </div>
-                {(() => {
-                  const rating = getSoundSportRating(activeCorps.totalSeasonScore || 0);
-                  return (
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded ${rating.color}`}>
-                      <Medal className={`w-5 h-5 ${rating.textColor}`} />
-                      <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>
+                {activeCorpsClass === 'soundSport' ? (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                      Season Rating
                     </div>
-                  );
-                })()}
+                    {(() => {
+                      const rating = getSoundSportRating(activeCorps.totalSeasonScore || 0);
+                      return (
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded ${rating.color}`}>
+                          <Medal className={`w-5 h-5 ${rating.textColor}`} />
+                          <span className={`text-lg font-bold ${rating.textColor}`}>{rating.rating}</span>
+                        </div>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
+                      Season Score
+                    </div>
+                    <div className="text-4xl sm:text-3xl font-bold font-data text-white tabular-nums leading-none">
+                      {activeCorps.totalSeasonScore?.toFixed(3) || '0.000'}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Rank and Lineup - Compact inline row */}
