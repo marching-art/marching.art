@@ -332,13 +332,13 @@ const ScoresSpreadsheet = () => {
           {/* Header Row */}
           <thead>
             <tr className="bg-charcoal-900/80 border-b border-cream-500/20">
-              <th className="sticky left-0 z-10 bg-charcoal-900 px-1.5 py-1 text-left font-mono text-gold-400 border-r border-cream-500/20 min-w-[120px]">
+              <th className="sticky left-0 z-10 bg-charcoal-900 px-1 py-1 text-left font-mono text-gold-400 border-r border-cream-500/20 w-[90px]">
                 {INDIVIDUAL_CAPTIONS.includes(activeTab)
                   ? getCaptionLabel(activeTab)
                   : AGGREGATE_TABS.find(t => t.id === activeTab)?.label || activeTab
                 }
               </th>
-              <th className="sticky left-[120px] z-10 bg-charcoal-900 px-1 py-1 text-center font-mono text-gold-400 border-r border-cream-500/20 w-8">
+              <th className="sticky left-[90px] z-10 bg-charcoal-900 px-0.5 py-1 text-center font-mono text-gold-400 border-r border-cream-500/20 w-6">
                 Pts
               </th>
               {visibleDates.map((dateInfo, idx) => (
@@ -363,18 +363,18 @@ const ScoresSpreadsheet = () => {
                 } hover:bg-charcoal-800/40`}
               >
                 {/* Corps Name - Sticky */}
-                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1.5 py-0.5 border-r border-cream-500/20">
-                  <div className="font-medium text-cream-100 text-[11px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
+                <td className="sticky left-0 z-10 bg-charcoal-900/95 px-1 py-0.5 border-r border-cream-500/20 w-[90px] max-w-[90px]">
+                  <div className="font-medium text-cream-100 text-[9px] truncate leading-tight" title={`${corps.corpsName} (${corps.sourceYear})`}>
                     {corps.corpsName}
                   </div>
-                  <div className="text-[8px] text-cream-500/50 leading-none">
+                  <div className="text-[7px] text-cream-500/50 leading-none">
                     {corps.sourceYear}
                   </div>
                 </td>
 
                 {/* Points - Sticky */}
-                <td className="sticky left-[120px] z-10 bg-charcoal-900/95 px-1 py-0.5 text-center border-r border-cream-500/20">
-                  <span className={`font-mono text-[11px] font-bold ${
+                <td className="sticky left-[90px] z-10 bg-charcoal-900/95 px-0.5 py-0.5 text-center border-r border-cream-500/20 w-6">
+                  <span className={`font-mono text-[9px] font-bold ${
                     corps.points >= 20 ? 'text-gold-400' :
                     corps.points >= 15 ? 'text-cream-200' :
                     corps.points >= 10 ? 'text-cream-400' :
