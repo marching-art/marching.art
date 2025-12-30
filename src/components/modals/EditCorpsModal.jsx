@@ -27,6 +27,9 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
       <div
         className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-edit-corps"
       >
         <div
           className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
@@ -34,7 +37,7 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+            <h2 id="modal-title-edit-corps" className="text-xs font-bold uppercase tracking-wider text-gray-300">
               Edit Corps Details
             </h2>
             <button onClick={onClose} className="p-1 text-gray-500 hover:text-white">

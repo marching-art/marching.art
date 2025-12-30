@@ -36,14 +36,19 @@ const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-class-unlock"
+      >
         <div
           className="w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] bg-[#222]">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
+            <h2 id="modal-title-class-unlock" className="text-xs font-bold uppercase tracking-wider text-green-400 flex items-center gap-2">
               <Unlock className="w-4 h-4" />
               Class Unlocked
             </h2>
