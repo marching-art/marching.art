@@ -12,9 +12,9 @@ import {
   Shield, X, Star
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, adminHelpers } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { adminHelpers } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
+import { useProfileStore } from '../store/profileStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { prefetchRoute } from '../lib/prefetch';
 
@@ -55,27 +55,17 @@ const mainNavItems: NavItem[] = [
 const GamingHeader: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Use global season store
+  // Use global stores to prevent duplicate Firestore listeners
   const seasonData = useSeasonStore((state) => state.seasonData);
+  const profile = useProfileStore((state) => state.profile) as UserProfile | null;
 
   useEffect(() => {
     if (user) {
-      // Subscribe to profile updates
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
-        }
-      });
-
       // Check admin status
       adminHelpers.isAdmin().then(setIsAdmin);
-
-      return () => unsubscribe();
     }
   }, [user]);
 

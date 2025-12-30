@@ -11,8 +11,8 @@ import {
   Users, X, Menu, Star, Shield, LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db, adminHelpers } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { adminHelpers } from '../firebase';
+import { useProfileStore } from '../store/profileStore';
 
 // =============================================================================
 // TYPES
@@ -73,26 +73,14 @@ const overlayVariants: Variants = {
 const MobileNav: React.FC<MobileNavProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Use global profile store to prevent duplicate Firestore listeners
+  const profile = useProfileStore((state) => state.profile) as UserProfile | null;
 
   // Check if user is admin
   useEffect(() => {
     adminHelpers.isAdmin().then(setIsAdmin);
-  }, [user]);
-
-  // Subscribe to profile updates
-  useEffect(() => {
-    if (user) {
-      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
-        }
-      });
-
-      return () => unsubscribe();
-    }
   }, [user]);
 
   // Close menu on route change
