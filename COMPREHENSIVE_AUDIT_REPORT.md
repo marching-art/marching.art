@@ -510,13 +510,13 @@ Being critical as requested:
 | ~~**QW-13**~~ | ~~Add Escape key to modals~~ | 1h | Medium | **✅ DONE** | Created useEscapeKey hook, added to 9 modals |
 | ~~**QW-14**~~ | ~~Fix placeholder contrast~~ | 1h | Medium | **✅ DONE** | Global CSS fix: gray-600→gray-400 (5.4:1 contrast) |
 | ~~**QW-15**~~ | ~~Add modal ARIA attributes~~ | 2h | Medium | **✅ DONE** | Added role, aria-modal, aria-labelledby to 9 modals |
-| **QW-16** | Lazy-load canvas-confetti | 30m | Low | Pending | Dynamic import |
+| ~~**QW-16**~~ | ~~Lazy-load canvas-confetti~~ | 30m | Low | **✅ DONE** | Dynamic import with module caching |
 | **QW-17** | Add focus-visible global styles | 1h | Medium | Pending | CSS focus-visible rule |
 | **QW-18** | Free Streak Freeze at 30 days | 2h | High | Pending | Award in milestone handler |
 | **QW-19** | XP gain floating feedback | 3h | Medium | Pending | Floating "+50 XP" animation |
 | **QW-20** | Level-up celebration | 3h | High | Pending | Full-screen animation on level up |
 
-**Progress: 5/10 Complete** (~7 hours done, ~10 hours remaining)
+**Progress: 6/10 Complete** (~7.5 hours done, ~9.5 hours remaining)
 
 ### Strategic Overhauls (High Effort / Massive Impact)
 

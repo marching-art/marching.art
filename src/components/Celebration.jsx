@@ -1,8 +1,10 @@
 // src/components/Celebration.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import { useShouldReduceMotion } from '../hooks/useReducedMotion';
+
+// Lazy-loaded confetti module (only loaded when celebration triggers)
+let confettiModule = null;
 
 /**
  * Celebration Component
@@ -42,7 +44,20 @@ const Celebration = ({ trigger, message, type = 'default' }) => {
     }
   }, [trigger, type, shouldReduceMotion]);
 
-  const triggerConfetti = (celebrationType) => {
+  const triggerConfetti = async (celebrationType) => {
+    // Lazy-load confetti module on first use
+    if (!confettiModule) {
+      try {
+        const module = await import('canvas-confetti');
+        confettiModule = module.default;
+      } catch (error) {
+        console.warn('Failed to load confetti:', error);
+        return;
+      }
+    }
+
+    const confetti = confettiModule;
+
     // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
