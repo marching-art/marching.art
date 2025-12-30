@@ -6,7 +6,8 @@
 
 import React, { useEffect, useState, createContext, useContext, useRef, useMemo } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
-import { analyticsHelpers } from '../../firebase';
+import { analyticsHelpers, adminHelpers } from '../../firebase';
+import { useAuth } from '../../App';
 import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';
@@ -25,7 +26,8 @@ import {
   Eye,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Shield
 } from 'lucide-react';
 
 // =============================================================================
@@ -48,6 +50,17 @@ export const useShell = () => {
 
 const TopNav = () => {
   const seasonData = useSeasonStore((state) => state.seasonData);
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user) {
+      adminHelpers.isAdmin().then(setIsAdmin);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   // Format the season name for display
   const getDisplaySeasonName = () => {
@@ -93,6 +106,7 @@ const TopNav = () => {
       <NavItem to="/scores" icon={Trophy} label="Scores" />
       <NavItem to="/leagues" icon={Users} label="Leagues" />
       <NavItem to="/profile" icon={User} label="Profile" />
+      {isAdmin && <NavItem to="/admin" icon={Shield} label="Admin" />}
     </div>
   </nav>
   );
