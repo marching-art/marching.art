@@ -508,7 +508,7 @@ Being critical as requested:
 | ~~**QW-11**~~ | ~~Remove duplicate Firestore listeners~~ | 2h | High | **✅ DONE** | GamingHeader + MobileNav now use profileStore |
 | ~~**QW-12**~~ | ~~Add ARIA live region for toasts~~ | 1h | High | **✅ DONE** | Wrapped Toaster with aria-live="polite" |
 | ~~**QW-13**~~ | ~~Add Escape key to modals~~ | 1h | Medium | **✅ DONE** | Created useEscapeKey hook, added to 9 modals |
-| **QW-14** | Fix placeholder contrast | 1h | Medium | Pending | Increase opacity to 80% |
+| ~~**QW-14**~~ | ~~Fix placeholder contrast~~ | 1h | Medium | **✅ DONE** | Global CSS fix: gray-600→gray-400 (5.4:1 contrast) |
 | **QW-15** | Add modal ARIA attributes | 2h | Medium | Pending | role="dialog", aria-modal, labelledby |
 | **QW-16** | Lazy-load canvas-confetti | 30m | Low | Pending | Dynamic import |
 | **QW-17** | Add focus-visible global styles | 1h | Medium | Pending | CSS focus-visible rule |
@@ -516,7 +516,7 @@ Being critical as requested:
 | **QW-19** | XP gain floating feedback | 3h | Medium | Pending | Floating "+50 XP" animation |
 | **QW-20** | Level-up celebration | 3h | High | Pending | Full-screen animation on level up |
 
-**Progress: 3/10 Complete** (~4 hours done, ~13 hours remaining)
+**Progress: 4/10 Complete** (~5 hours done, ~12 hours remaining)
 
 ### Strategic Overhauls (High Effort / Massive Impact)
 
