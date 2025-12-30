@@ -7,6 +7,18 @@ module.exports = {
   // Single dark mode - always active via data-theme="dark"
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
+    // ===========================================
+    // MOBILE-FIRST BREAKPOINTS
+    // All styles are mobile-first, scale UP to desktop
+    // ===========================================
+    screens: {
+      'xs': '375px',   // iPhone SE and up
+      'sm': '640px',   // Large phones / small tablets
+      'md': '768px',   // Tablets
+      'lg': '1024px',  // Desktop
+      'xl': '1280px',  // Large desktop
+      '2xl': '1536px', // Extra large desktop
+    },
     extend: {
       colors: {
         // ===========================================
@@ -198,6 +210,44 @@ module.exports = {
         'bento-no-header': 'minmax(0, 1fr) 32px',
         'bento-no-ticker': '56px minmax(0, 1fr)',
         'bento-minimal': 'minmax(0, 1fr)',
+      },
+      // ===========================================
+      // MOBILE-FIRST TOUCH UTILITIES
+      // ===========================================
+      spacing: {
+        // Touch target minimum (44px)
+        'touch': '44px',
+        'touch-lg': '48px',
+        // Safe area insets
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
+      minWidth: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      minHeight: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      // Transitions for micro-interactions
+      transitionDuration: {
+        '150': '150ms',
+        '200': '200ms',
+        '250': '250ms',
+      },
+      transitionTimingFunction: {
+        'touch': 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+        'bounce-out': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      // Scale transforms for press feedback
+      scale: {
+        '97': '0.97',
+        '98': '0.98',
+        '102': '1.02',
+        '103': '1.03',
       },
     },
   },

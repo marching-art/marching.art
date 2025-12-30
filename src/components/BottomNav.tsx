@@ -10,6 +10,7 @@ import { Home, Calendar, Trophy, Users, User, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
+import { triggerHaptic } from '../hooks/useHaptic';
 
 // =============================================================================
 // TYPES
@@ -60,12 +61,12 @@ const BottomNav: React.FC = () => {
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom select-none"
       aria-label="Mobile navigation"
     >
-      {/* Golden accent line at top */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-yellow-500/40 to-transparent" />
+      {/* Accent line at top - solid, no gradient per design laws */}
+      <div className="h-px w-full bg-yellow-500/30" />
 
-      {/* Nav container */}
+      {/* Nav container - increased height for better touch targets */}
       <div className="bg-[#1A1A1A] border-t border-white/10">
-        <div className="flex items-center justify-around px-1 py-1.5">
+        <div className="flex items-center justify-around px-1 py-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -77,7 +78,8 @@ const BottomNav: React.FC = () => {
                 to={item.path}
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
-                className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2 min-w-[56px] min-h-[44px]"
+                onClick={() => triggerHaptic('light')}
+                className="relative flex flex-col items-center justify-center gap-1 px-4 py-2.5 min-w-[60px] min-h-[52px] press-feedback"
               >
                 {/* Active indicator */}
                 {active && (
@@ -89,36 +91,36 @@ const BottomNav: React.FC = () => {
                 )}
 
                 {/* Icon with badge */}
-                <div className={`relative z-10 p-1.5 rounded-lg transition-all duration-300 ${active ? 'bg-yellow-500/20' : ''}`}>
+                <div className={`relative z-10 p-1.5 rounded-lg transition-all duration-150 ${active ? 'bg-yellow-500/20' : ''}`}>
                   <Icon
-                    className={`w-5 h-5 transition-all duration-300 ${
+                    className={`w-6 h-6 transition-all duration-150 ${
                       active ? 'text-yellow-400' : 'text-yellow-50/50'
                     }`}
                     aria-hidden="true"
                   />
-                  {/* Notification badge */}
+                  {/* Notification badge - larger for visibility */}
                   {badgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[11px] font-bold">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}
                 </div>
 
-                {/* Label */}
+                {/* Label - increased size for readability */}
                 <span
-                  className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${
+                  className={`relative z-10 text-[11px] font-medium transition-all duration-150 ${
                     active ? 'text-yellow-400' : 'text-yellow-50/50'
                   }`}
                 >
                   {item.label}
                 </span>
 
-                {/* Active dot indicator */}
+                {/* Active dot indicator - no shadow per design laws */}
                 {active && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-0.5 right-1/2 translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full shadow-[0_0_6px_rgba(234,179,8,0.6)]"
+                    className="absolute -top-0.5 right-1/2 translate-x-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full"
                   />
                 )}
               </Link>

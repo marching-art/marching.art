@@ -528,8 +528,8 @@ const Schedule = () => {
         />
       </div>
 
-      {/* SHOWS LIST - Scrollable */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* SHOWS LIST - Scrollable with momentum */}
+      <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
         <ShowsList
           shows={showsByWeek[selectedWeek] || []}
           userProfile={userProfile}

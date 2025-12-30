@@ -13,6 +13,8 @@ import { useSeasonStore } from '../store/seasonStore';
 import { useScoresData } from '../hooks/useScoresData';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
+import { useHaptic } from '../hooks/useHaptic';
 import ScoreBreakdown from '../components/Scores/ScoreBreakdown';
 import SoundSportTab from '../components/Scores/tabs/SoundSportTab';
 
@@ -197,6 +199,7 @@ const Scores = () => {
   const { loggedInProfile, completeDailyChallenge } = useUserStore();
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
+  const { trigger: haptic } = useHaptic();
 
   // Get specific show and season from URL if provided
   const targetShowName = searchParams.get('show');
@@ -221,11 +224,19 @@ const Scores = () => {
     stats,
     aggregatedScores,
     archivedSeasons,
+    refetch,
   } = useScoresData({
     seasonId: targetSeasonId,
     classFilter: 'all',
     enabledCaptions: { ge: true, vis: true, mus: true }
   });
+
+  // Pull to refresh handler
+  const handleRefresh = async () => {
+    haptic('pull');
+    await refetch?.();
+    haptic('success');
+  };
 
   // Season name
   const currentSeasonName = useMemo(() => {
@@ -308,32 +319,32 @@ const Scores = () => {
   return (
     <div className="h-full overflow-y-auto bg-[#0a0a0a]">
       {/* Header Bar */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3.5">
         <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Trophy className="w-5 h-5 text-[#0057B8]" />
+            <Trophy className="w-6 h-6 text-[#0057B8]" />
             <div>
-              <h1 className="text-sm font-bold text-white uppercase">Scores</h1>
-              <p className="text-[10px] text-gray-500">{currentSeasonName}</p>
+              <h1 className="text-base font-bold text-white uppercase">Scores</h1>
+              <p className="text-xs text-gray-500">{currentSeasonName}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-5 text-sm">
             <div className="text-right">
-              <div className="text-gray-500">Corps</div>
+              <div className="text-xs text-gray-500">Corps</div>
               <div className="font-bold text-white tabular-nums">{stats.corpsActive || 0}</div>
             </div>
             <div className="text-right">
-              <div className="text-gray-500">High Score</div>
+              <div className="text-xs text-gray-500">High Score</div>
               <div className="font-bold text-green-500 tabular-nums">{stats.topScore || '-'}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tab Bar */}
+      {/* Tab Bar - Touch-optimized */}
       <div className="bg-[#1a1a1a] border-b border-[#333]">
-        <div className="w-full px-4">
-          <nav className="flex gap-4 overflow-x-auto scrollbar-hide">
+        <div className="w-full px-2">
+          <nav className="flex gap-1 overflow-x-auto scrollbar-hide">
             {[
               { id: 'latest', label: 'Latest' },
               { id: 'standings', label: 'Standings' },
@@ -342,18 +353,18 @@ const Scores = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => { haptic('medium'); setActiveTab(tab.id); }}
                 className={`
-                  flex items-center gap-1.5 py-3 text-xs font-bold uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap
+                  flex items-center gap-2 px-4 py-3 min-h-[48px] text-sm font-bold uppercase tracking-wider border-b-2 -mb-px whitespace-nowrap press-feedback
                   ${activeTab === tab.id
                     ? tab.accent === 'green'
                       ? 'text-green-500 border-green-500'
                       : 'text-[#0057B8] border-[#0057B8]'
-                    : 'text-gray-500 border-transparent hover:text-gray-300'
+                    : 'text-gray-500 border-transparent hover:text-gray-300 active:text-white'
                   }
                 `}
               >
-                {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
+                {tab.icon && <tab.icon className="w-4 h-4" />}
                 {tab.label}
               </button>
             ))}
@@ -361,8 +372,9 @@ const Scores = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full">
+      {/* Content with Pull to Refresh */}
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div className="w-full">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading scores...</div>
         ) : error ? (
@@ -464,7 +476,8 @@ const Scores = () => {
             )}
           </>
         )}
-      </div>
+        </div>
+      </PullToRefresh>
 
       {/* Score Breakdown Modal */}
       <ScoreBreakdown

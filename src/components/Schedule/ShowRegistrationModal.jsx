@@ -2,7 +2,7 @@
 // SHOW REGISTRATION MODAL - DIRECTOR'S COMMAND CENTER
 // =============================================================================
 // Full show details, registration controls, attendees, and results
-// Mobile-optimized with large touch targets
+// Mobile-optimized with BottomSheet for native swipe-to-dismiss
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,6 +14,8 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../firebase';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import { BottomSheet } from '../ui/BottomSheet';
+import { useHaptic } from '../../hooks/useHaptic';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
@@ -99,6 +101,16 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const [selectedCorps, setSelectedCorps] = useState([]);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('register'); // 'register' | 'info'
+  const { trigger: haptic } = useHaptic();
+
+  // Detect mobile for BottomSheet vs Modal
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const userCorpsClasses = useMemo(() =>
     userProfile?.corps
@@ -124,6 +136,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   }, [show, userProfile, userCorpsClasses]);
 
   const toggleCorps = (corpsClass) => {
+    haptic('light');
     if (selectedCorps.includes(corpsClass)) {
       setSelectedCorps(selectedCorps.filter(c => c !== corpsClass));
     } else {
@@ -134,6 +147,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         s => s.eventName === show.eventName && s.date === show.date
       );
       if (currentShows.length >= 4 && !isAlreadyAtShow) {
+        haptic('error');
         toast.error(`This corps already has 4 shows registered for week ${show.week}`);
         return;
       }
@@ -159,6 +173,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   };
 
   const handleSave = async () => {
+    haptic('medium');
     setSaving(true);
     try {
       const selectUserShows = httpsCallable(functions, 'selectUserShows');
@@ -183,10 +198,12 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           corpsClass,
         });
       }
+      haptic('success');
       toast.success('Registration updated!');
       onSuccess();
     } catch (error) {
       console.error('Error updating registration:', error);
+      haptic('error');
       toast.error(error.message || 'Failed to update registration');
     } finally {
       setSaving(false);
@@ -204,189 +221,239 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
     return JSON.stringify(initialRegistered.sort()) !== JSON.stringify(selectedCorps.sort());
   }, [selectedCorps, userCorpsClasses, userProfile, show]);
 
+  // Shared header content for both mobile and desktop
+  const HeaderContent = () => (
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-bold text-white leading-tight">
+            {show.eventName}
+          </h2>
+          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
+              {formattedDate}
+            </span>
+            {show.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-purple-400" />
+                <span className="truncate max-w-[180px]">{show.location}</span>
+              </span>
+            )}
+          </div>
+        </div>
+        {!isMobile && (
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-full hover:bg-white/10 min-w-touch min-h-touch flex items-center justify-center"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Week Info Badge */}
+      <div className="mt-3 flex items-center gap-2">
+        <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase rounded">
+          Week {show.week}
+        </span>
+        <span className="text-[10px] text-gray-500">
+          Max 4 shows per corps
+        </span>
+      </div>
+    </>
+  );
+
+  // Shared body content
+  const BodyContent = () => (
+    <>
+      {userCorpsClasses.length === 0 ? (
+        <div className="text-center py-10 px-4">
+          <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
+          <p className="text-xs text-gray-600 mt-1 max-w-[280px] mx-auto">
+            Create a corps from the Dashboard to start registering for shows.
+          </p>
+          <Link
+            to="/"
+            onClick={onClose}
+            className="inline-block mt-4 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase rounded hover:bg-[#0066d6] press-feedback"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* Quick Actions */}
+          <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333]">
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              Select Corps to Attend
+            </span>
+            <div className="flex items-center gap-3 text-xs">
+              <button
+                onClick={() => { haptic('light'); selectAll(); }}
+                className="text-[#0057B8] hover:text-[#0066d6] font-bold py-2 px-2 -mx-2 rounded hover:bg-[#0057B8]/10 min-h-touch press-feedback"
+              >
+                Select All
+              </button>
+              <span className="text-gray-700">|</span>
+              <button
+                onClick={() => { haptic('light'); clearAll(); }}
+                className="text-gray-500 hover:text-white font-bold py-2 px-2 -mx-2 rounded hover:bg-white/5 min-h-touch press-feedback"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          {/* Corps List */}
+          <div className="divide-y divide-[#333]">
+            {userCorpsClasses.map(corpsClass => {
+              const corpsData = userProfile.corps[corpsClass];
+              const isSelected = selectedCorps.includes(corpsClass);
+
+              return (
+                <CorpsSelectionItem
+                  key={corpsClass}
+                  corpsClass={corpsClass}
+                  corpsData={corpsData}
+                  isSelected={isSelected}
+                  onToggle={toggleCorps}
+                  show={show}
+                  isDisabled={false}
+                />
+              );
+            })}
+          </div>
+
+          {/* Info Section */}
+          <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
+            <div className="flex items-start gap-3 p-3 bg-[#0057B8]/5 border border-[#0057B8]/20 rounded">
+              <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
+              <div className="text-[11px] text-gray-400 leading-relaxed">
+                <p>
+                  Each corps can attend up to <span className="text-[#0057B8] font-bold">4 shows per week</span>.
+                  Scores from attended shows contribute to your season standings.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Registration Summary */}
+          {selectedCorps.length > 0 && (
+            <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
+              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Registering
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedCorps.map(corpsClass => {
+                  const corpsData = userProfile.corps[corpsClass];
+                  const config = CLASS_CONFIG[corpsClass];
+                  return (
+                    <span
+                      key={corpsClass}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded ${config.bgColor} ${config.color}`}
+                    >
+                      <Check className="w-3 h-3" />
+                      {corpsData.corpsName || corpsData.name || config.name}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+
+  // Shared footer content
+  const FooterContent = () => (
+    userCorpsClasses.length > 0 ? (
+      <div className="flex gap-3">
+        <button
+          onClick={() => { haptic('light'); onClose(); }}
+          disabled={saving}
+          className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider rounded hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333] press-feedback"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving || !hasChanges}
+          className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494] press-feedback-strong"
+        >
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Check className="w-4 h-4" />
+              {hasChanges ? 'Save Changes' : 'No Changes'}
+            </>
+          )}
+        </button>
+      </div>
+    ) : null
+  );
+
+  // Mobile: Use BottomSheet with native swipe-to-dismiss
+  if (isMobile) {
+    return (
+      <BottomSheet
+        isOpen={true}
+        onClose={onClose}
+        snapPoints={[85]}
+        showCloseButton={true}
+      >
+        {/* Header */}
+        <div className="px-4 pb-3 border-b border-[#333]">
+          <HeaderContent />
+        </div>
+
+        {/* Body - Scrollable */}
+        <div className="flex-1 overflow-y-auto scroll-momentum">
+          <BodyContent />
+        </div>
+
+        {/* Footer */}
+        {userCorpsClasses.length > 0 && (
+          <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
+            <FooterContent />
+          </div>
+        )}
+      </BottomSheet>
+    );
+  }
+
+  // Desktop: Use Portal with centered modal
   return (
     <Portal>
       <div
-        className="fixed inset-0 z-[100] bg-black/80 flex items-end sm:items-center justify-center"
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center"
         onClick={onClose}
       >
         <div
-          className="w-full sm:max-w-lg bg-[#1a1a1a] border border-[#333] sm:rounded-sm shadow-2xl max-h-[90vh] flex flex-col rounded-t-xl sm:rounded-t-sm"
+          className="w-full max-w-lg bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0 rounded-t-xl sm:rounded-t-sm">
-            {/* Mobile drag indicator */}
-            <div className="sm:hidden w-10 h-1 bg-gray-600 rounded-full mx-auto mb-3" />
-
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-white leading-tight">
-                  {show.eventName}
-                </h2>
-                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#0057B8]" />
-                    {formattedDate}
-                  </span>
-                  {show.location && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-purple-400" />
-                      <span className="truncate max-w-[180px]">{show.location}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 -mr-2 -mt-1 text-gray-500 hover:text-white active:text-white rounded-full hover:bg-white/10"
-                aria-label="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Week Info Badge */}
-            <div className="mt-3 flex items-center gap-2">
-              <span className="px-2 py-1 bg-[#0057B8]/10 text-[#0057B8] text-[10px] font-bold uppercase rounded">
-                Week {show.week}
-              </span>
-              <span className="text-[10px] text-gray-500">
-                Max 4 shows per corps
-              </span>
-            </div>
+          <div className="px-4 py-4 border-b border-[#333] bg-[#222] flex-shrink-0 rounded-t-sm">
+            <HeaderContent />
           </div>
 
           {/* Body - Scrollable */}
           <div className="flex-1 overflow-y-auto">
-            {userCorpsClasses.length === 0 ? (
-              <div className="text-center py-10 px-4">
-                <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
-                <p className="text-xs text-gray-600 mt-1 max-w-[280px] mx-auto">
-                  Create a corps from the Dashboard to start registering for shows.
-                </p>
-                <Link
-                  to="/"
-                  onClick={onClose}
-                  className="inline-block mt-4 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase rounded hover:bg-[#0066d6]"
-                >
-                  Go to Dashboard
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* Quick Actions */}
-                <div className="flex items-center justify-between px-4 py-3 bg-[#111] border-b border-[#333]">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    Select Corps to Attend
-                  </span>
-                  <div className="flex items-center gap-3 text-xs">
-                    <button
-                      onClick={selectAll}
-                      className="text-[#0057B8] hover:text-[#0066d6] font-bold py-1 px-2 -mx-2 rounded hover:bg-[#0057B8]/10"
-                    >
-                      Select All
-                    </button>
-                    <span className="text-gray-700">|</span>
-                    <button
-                      onClick={clearAll}
-                      className="text-gray-500 hover:text-white font-bold py-1 px-2 -mx-2 rounded hover:bg-white/5"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                {/* Corps List */}
-                <div className="divide-y divide-[#333]">
-                  {userCorpsClasses.map(corpsClass => {
-                    const corpsData = userProfile.corps[corpsClass];
-                    const isSelected = selectedCorps.includes(corpsClass);
-
-                    return (
-                      <CorpsSelectionItem
-                        key={corpsClass}
-                        corpsClass={corpsClass}
-                        corpsData={corpsData}
-                        isSelected={isSelected}
-                        onToggle={toggleCorps}
-                        show={show}
-                        isDisabled={false}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* Info Section */}
-                <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-                  <div className="flex items-start gap-3 p-3 bg-[#0057B8]/5 border border-[#0057B8]/20 rounded">
-                    <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
-                    <div className="text-[11px] text-gray-400 leading-relaxed">
-                      <p>
-                        Each corps can attend up to <span className="text-[#0057B8] font-bold">4 shows per week</span>.
-                        Scores from attended shows contribute to your season standings.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Registration Summary */}
-                {selectedCorps.length > 0 && (
-                  <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Registering
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedCorps.map(corpsClass => {
-                        const corpsData = userProfile.corps[corpsClass];
-                        const config = CLASS_CONFIG[corpsClass];
-                        return (
-                          <span
-                            key={corpsClass}
-                            className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded ${config.bgColor} ${config.color}`}
-                          >
-                            <Check className="w-3 h-3" />
-                            {corpsData.corpsName || corpsData.name || config.name}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            <BodyContent />
           </div>
 
           {/* Footer */}
           {userCorpsClasses.length > 0 && (
-            <div className="px-4 py-4 border-t border-[#333] bg-[#222] flex-shrink-0 safe-area-bottom">
-              <div className="flex gap-3">
-                <button
-                  onClick={onClose}
-                  disabled={saving}
-                  className="flex-1 h-12 border border-[#444] text-gray-300 text-sm font-bold uppercase tracking-wider rounded hover:border-[#555] hover:text-white disabled:opacity-50 active:bg-[#333]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving || !hasChanges}
-                  className="flex-1 h-12 bg-[#0057B8] text-white text-sm font-bold uppercase tracking-wider rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:bg-[#004494]"
-                >
-                  {saving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      {hasChanges ? 'Save Changes' : 'No Changes'}
-                    </>
-                  )}
-                </button>
-              </div>
+            <div className="px-4 py-4 border-t border-[#333] bg-[#222] flex-shrink-0">
+              <FooterContent />
             </div>
           )}
         </div>

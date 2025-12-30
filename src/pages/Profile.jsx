@@ -106,6 +106,7 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
     try {
       await signOut();
       toast.success('Signed out');
+      onClose();
     } catch (error) {
       toast.error('Failed to sign out');
     }
@@ -114,31 +115,47 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="w-full max-w-sm bg-[#1a1a1a] border border-[#333]"
+        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-2xl sm:rounded-lg safe-area-bottom"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-3 py-2 border-b border-[#333] bg-[#222] flex items-center justify-between">
-          <span className="text-xs font-bold uppercase text-gray-400">Settings</span>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
-            <X className="w-4 h-4" />
+        {/* Drag handle - mobile only */}
+        <div className="sm:hidden flex justify-center py-3">
+          <div className="w-10 h-1 bg-gray-600 rounded-full" />
+        </div>
+
+        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+          <span className="text-sm font-bold uppercase text-gray-400">Settings</span>
+          <button
+            onClick={onClose}
+            className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 space-y-3">
-          <div className="text-xs text-gray-500">Email</div>
-          <div className="text-sm text-white font-data">{user?.email || 'Anonymous'}</div>
-          <div className="text-xs text-gray-500 mt-4">Member Since</div>
-          <div className="text-sm text-white">
-            {user?.metadata?.creationTime
-              ? new Date(user.metadata.creationTime).toLocaleDateString()
-              : 'Unknown'}
+
+        <div className="p-4 space-y-4">
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
+            <div className="text-base text-white font-data">{user?.email || 'Anonymous'}</div>
           </div>
+
+          <div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
+            <div className="text-base text-white">
+              {user?.metadata?.creationTime
+                ? new Date(user.metadata.creationTime).toLocaleDateString()
+                : 'Unknown'}
+            </div>
+          </div>
+
           <button
             onClick={handleSignOut}
-            className="w-full mt-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/20"
+            className="w-full mt-4 py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
           >
-            <LogOut className="w-4 h-4 inline mr-2" />
+            <LogOut className="w-5 h-5" />
             Sign Out
           </button>
         </div>
@@ -317,21 +334,23 @@ const Profile = () => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {isOwnProfile && !isEditing && (
               <button
                 onClick={handleStartEdit}
-                className="p-2 text-gray-500 hover:text-white"
+                className="p-2.5 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                aria-label="Edit profile"
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-5 h-5" />
               </button>
             )}
             {isOwnProfile && (
               <button
                 onClick={() => setShowSettings(true)}
-                className="p-2 text-gray-500 hover:text-white"
+                className="p-2.5 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                aria-label="Settings"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -365,62 +384,62 @@ const Profile = () => {
       </div>
 
       {/* STATS STRIP - Horizontal row of 4 stats */}
-      <div className="border-y border-[#333] bg-[#1a1a1a] py-3 flex justify-around">
-        <div className="text-center">
-          <div className="text-xl font-bold text-white font-data tabular-nums">{stats.starts}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Starts</div>
+      <div className="border-y border-[#333] bg-[#1a1a1a] py-4 flex justify-around">
+        <div className="text-center px-2">
+          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.starts}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Starts</div>
         </div>
-        <div className="text-center">
-          <div className="text-xl font-bold text-white font-data tabular-nums">{stats.avgScore}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Avg Score</div>
+        <div className="text-center px-2">
+          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.avgScore}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Avg Score</div>
         </div>
-        <div className="text-center">
-          <div className="text-xl font-bold text-white font-data tabular-nums">{stats.bestFinish}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Best Finish</div>
+        <div className="text-center px-2">
+          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.bestFinish}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Best</div>
         </div>
-        <div className="text-center">
-          <div className="text-xl font-bold text-white font-data tabular-nums">{stats.badges}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Badges</div>
+        <div className="text-center px-2">
+          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.badges}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Badges</div>
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <div className="w-full">
-        {/* TROPHY CASE - Dense grid of small icons */}
+        {/* TROPHY CASE */}
         <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-2 border-b border-[#333]">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          <div className="bg-[#222] px-4 py-2.5 border-b border-[#333]">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
               Trophy Case
             </span>
           </div>
           {achievements.length > 0 ? (
-            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-px bg-[#333] p-px">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-px bg-[#333] p-px">
               {achievements.map((a) => {
                 const Icon = a.icon;
                 return (
                   <div
                     key={a.id}
-                    className="bg-[#1a1a1a] p-3 flex flex-col items-center justify-center"
+                    className="bg-[#1a1a1a] p-4 flex flex-col items-center justify-center min-h-[72px]"
                     title={a.label}
                   >
-                    <Icon className="w-5 h-5 text-yellow-500" />
-                    <span className="text-[9px] text-gray-500 mt-1">{a.label}</span>
+                    <Icon className="w-6 h-6 text-yellow-500" />
+                    <span className="text-[11px] text-gray-500 mt-1.5">{a.label}</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="p-6 text-center">
-              <Medal className="w-6 h-6 text-gray-600 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">No badges yet</p>
+            <div className="p-8 text-center">
+              <Medal className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No badges yet</p>
             </div>
           )}
         </div>
 
         {/* SEASON HISTORY */}
         <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-2 border-b border-[#333]">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          <div className="bg-[#222] px-4 py-2.5 border-b border-[#333]">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
               Season History
             </span>
           </div>
@@ -442,25 +461,25 @@ const Profile = () => {
         <div className="grid grid-cols-3 gap-px bg-[#333]">
           <Link
             to="/battlepass"
-            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222]"
+            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
           >
-            <Trophy className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
-            <span className="text-xs text-gray-400">Battle Pass</span>
+            <Trophy className="w-6 h-6 text-yellow-500 mb-1.5" />
+            <span className="text-sm text-gray-400">Battle Pass</span>
           </Link>
           <Link
             to="/leagues"
-            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222]"
+            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
           >
-            <Crown className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-            <span className="text-xs text-gray-400">Leagues</span>
+            <Crown className="w-6 h-6 text-purple-500 mb-1.5" />
+            <span className="text-sm text-gray-400">Leagues</span>
           </Link>
           {isOwnProfile && (
             <Link
               to="/dashboard"
-              className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222]"
+              className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
             >
-              <Coins className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
-              <span className="text-xs text-gray-400 font-data tabular-nums">
+              <Coins className="w-6 h-6 text-yellow-500 mb-1.5" />
+              <span className="text-sm text-gray-400 font-data tabular-nums">
                 {(profile.corpsCoin || 0).toLocaleString()} CC
               </span>
             </Link>
