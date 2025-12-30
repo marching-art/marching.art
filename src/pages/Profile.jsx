@@ -469,13 +469,15 @@ const Profile = () => {
 
         {/* QUICK LINKS */}
         <div className="grid grid-cols-3 gap-px bg-[#333]">
-          <Link
-            to="/battlepass"
+          <a
+            href="https://buymeacoffee.com/marching.art"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
           >
-            <Trophy className="w-6 h-6 text-yellow-500 mb-1.5" />
-            <span className="text-sm text-gray-400">Battle Pass</span>
-          </Link>
+            <Heart className="w-6 h-6 text-amber-500 mb-1.5" />
+            <span className="text-sm text-gray-400">Support</span>
+          </a>
           <Link
             to="/leagues"
             className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
