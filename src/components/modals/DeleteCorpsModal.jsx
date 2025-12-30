@@ -5,6 +5,7 @@
 import React from 'react';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -14,6 +15,9 @@ const CLASS_NAMES = {
 };
 
 const DeleteCorpsModal = ({ onClose, onConfirm, corpsName, corpsClass }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   return (
     <Portal>
       <div

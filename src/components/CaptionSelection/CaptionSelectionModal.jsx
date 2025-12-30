@@ -14,6 +14,7 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { useAuth } from '../../App';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // -----------------------------------------------------------------------------
 // TREND BADGE
@@ -350,6 +351,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   const [tradesRemaining, setTradesRemaining] = useState(3);
   const [isUnlimitedTrades, setIsUnlimitedTrades] = useState(false);
   const [isInitialSetup, setIsInitialSetup] = useState(false);
+
+  // Close on Escape key
+  useEscapeKey(onClose);
 
   const captions = [
     { id: 'GE1', name: 'General Effect 1', category: 'General Effect' },

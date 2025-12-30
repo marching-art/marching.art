@@ -5,6 +5,7 @@
 import React from 'react';
 import { Unlock, X, Plus } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASS_INFO = {
   aClass: {
@@ -29,6 +30,9 @@ const CLASS_INFO = {
 
 const ClassUnlockModal = ({ unlockedClass, onSetup, onDecline }) => {
   const classInfo = CLASS_INFO[unlockedClass] || CLASS_INFO.aClass;
+
+  // Close on Escape key
+  useEscapeKey(onDecline);
 
   return (
     <Portal>

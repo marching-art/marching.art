@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Lock, Check, X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASSES = [
   { id: 'worldClass', name: 'World Class', budget: '150 pts', reqLevel: 6 },
@@ -20,6 +21,9 @@ const CorpsRegistrationModal = ({ onClose, onSubmit, unlockedClasses = ['soundSp
     showConcept: '',
     class: defaultClass || 'soundSport',
   });
+
+  // Close on Escape key
+  useEscapeKey(onClose);
 
   const classes = CLASSES.map((cls) => ({
     ...cls,

@@ -6,8 +6,12 @@ import React, { useState } from 'react';
 import { X, Users, Lock, Trophy, Copy, Check, Share2, Link2 } from 'lucide-react';
 import Portal from '../Portal';
 import toast from 'react-hot-toast';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CreateLeagueModal = ({ onClose, onCreate }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   const [step, setStep] = useState('create'); // 'create' | 'success'
   const [formData, setFormData] = useState({
     name: '',

@@ -5,6 +5,7 @@
 import React from 'react';
 import { Archive, X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -20,6 +21,9 @@ const RetireCorpsModal = ({
   corpsClass,
   retiring,
 }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   return (
     <Portal>
       <div

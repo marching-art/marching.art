@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Lock, Check, X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const CLASS_NAMES = {
   soundSport: 'SoundSport',
@@ -22,6 +23,9 @@ const AVAILABLE_CLASSES = [
 
 const MoveCorpsModal = ({ onClose, onMove, currentClass, corpsName, unlockedClasses, existingCorps }) => {
   const [selectedClass, setSelectedClass] = useState('');
+
+  // Close on Escape key
+  useEscapeKey(onClose);
 
   const availableClasses = AVAILABLE_CLASSES.filter(cls =>
     cls.id !== currentClass &&

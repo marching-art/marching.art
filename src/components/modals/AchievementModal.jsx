@@ -5,6 +5,7 @@
 import React from 'react';
 import { Trophy, Star, Crown, Award, Medal, Flame, X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const ICON_MAP = {
   flame: Flame,
@@ -23,6 +24,9 @@ const RARITY_STYLES = {
 };
 
 const AchievementModal = ({ onClose, achievements, newAchievement }) => {
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   const sortedAchievements = [...achievements].sort((a, b) =>
     new Date(b.earnedAt) - new Date(a.earnedAt)
   );

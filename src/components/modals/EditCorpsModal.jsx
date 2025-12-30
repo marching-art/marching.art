@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import Portal from '../Portal';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,9 @@ const EditCorpsModal = ({ onClose, onSubmit, currentData }) => {
     location: currentData?.location || '',
     showConcept: currentData?.showConcept || '',
   });
+
+  // Close on Escape key
+  useEscapeKey(onClose);
 
   const handleSubmit = (e) => {
     e.preventDefault();
