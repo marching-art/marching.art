@@ -8,8 +8,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Shield, Database, Users, Calendar, Award,
-  Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, Table
+  Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, Table,
+  X, Search, Mail, UserCheck, UserX
 } from 'lucide-react';
+import { setUserRole } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -323,6 +325,13 @@ const UserManagementTab = () => {
     premiumUsers: 0,
     totalCorps: 0
   });
+  const [users, setUsers] = useState([]);
+  const [showUserList, setShowUserList] = useState(false);
+  const [showRoleManager, setShowRoleManager] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleEmail, setRoleEmail] = useState('');
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   useEffect(() => {
     loadUserStats();
@@ -361,6 +370,64 @@ const UserManagementTab = () => {
     }
   };
 
+  const loadAllUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const usersRef = collection(db, 'artifacts/marching-art/users');
+      const snapshot = await getDocs(usersRef);
+
+      const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
+        const userId = userDoc.id;
+        // Get profile data
+        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
+        const profileSnap = await getDoc(profileRef);
+        const profileData = profileSnap.exists() ? profileSnap.data() : {};
+
+        return {
+          uid: userId,
+          username: profileData.username || 'Unknown',
+          createdAt: profileData.createdAt,
+          lastActive: profileData.lastActive,
+          xpLevel: profileData.xpLevel || 1,
+          corps: profileData.corps ? Object.keys(profileData.corps) : [],
+          isPremium: profileData.battlePass?.isPremium || false
+        };
+      }));
+
+      setUsers(userList.sort((a, b) => (b.lastActive?.toDate?.() || 0) - (a.lastActive?.toDate?.() || 0)));
+      setShowUserList(true);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const handleSetRole = async (makeAdmin) => {
+    if (!roleEmail.trim()) {
+      toast.error('Please enter an email address');
+      return;
+    }
+
+    setRoleLoading(true);
+    try {
+      const result = await setUserRole({ email: roleEmail.trim(), makeAdmin });
+      toast.success(result.data.message);
+      setRoleEmail('');
+    } catch (error) {
+      console.error('Error setting role:', error);
+      toast.error(error.message || 'Failed to set user role');
+    } finally {
+      setRoleLoading(false);
+    }
+  };
+
+  const filteredUsers = users.filter(user =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.uid.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-4">
       {/* User Statistics */}
@@ -394,18 +461,163 @@ const UserManagementTab = () => {
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Quick Actions</h2>
         </div>
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors">
-            <Users className="w-5 h-5 text-[#0057B8] mb-2" />
+          <button
+            onClick={loadAllUsers}
+            disabled={usersLoading}
+            className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors disabled:opacity-50"
+          >
+            {usersLoading ? (
+              <RefreshCw className="w-5 h-5 text-[#0057B8] mb-2 animate-spin" />
+            ) : (
+              <Users className="w-5 h-5 text-[#0057B8] mb-2" />
+            )}
             <p className="font-bold text-white text-sm">View All Users</p>
             <p className="text-xs text-gray-500">Browse user profiles and activity</p>
           </button>
-          <button className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors">
+          <button
+            onClick={() => setShowRoleManager(true)}
+            className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors"
+          >
             <Shield className="w-5 h-5 text-purple-500 mb-2" />
             <p className="font-bold text-white text-sm">Manage Roles</p>
             <p className="text-xs text-gray-500">Assign admin and moderator roles</p>
           </button>
         </div>
       </div>
+
+      {/* User List Modal */}
+      {showUserList && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col">
+            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">All Users ({users.length})</h2>
+              <button onClick={() => setShowUserList(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 border-b border-[#333]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search by username or UID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <table className="w-full">
+                <thead className="bg-[#222] sticky top-0">
+                  <tr>
+                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Username</th>
+                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Level</th>
+                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Corps</th>
+                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Last Active</th>
+                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#333]">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.uid} className="hover:bg-[#222]">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-white text-sm">{user.username}</p>
+                        <p className="text-xs text-gray-500 font-mono">{user.uid.slice(0, 8)}...</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-white">Lv. {user.xpLevel}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-400">{user.corps.length || 0} corps</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-400">
+                          {user.lastActive?.toDate?.()
+                            ? new Date(user.lastActive.toDate()).toLocaleDateString()
+                            : 'Never'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {user.isPremium && (
+                          <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-xs font-bold">
+                            Premium
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredUsers.length === 0 && (
+                <div className="p-8 text-center text-gray-500">
+                  No users found matching "{searchTerm}"
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Role Manager Modal */}
+      {showRoleManager && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-md">
+            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Manage User Roles</h2>
+              <button onClick={() => setShowRoleManager(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  User Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    value={roleEmail}
+                    onChange={(e) => setRoleEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleSetRole(true)}
+                  disabled={roleLoading || !roleEmail.trim()}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-bold text-sm rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {roleLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <UserCheck className="w-4 h-4" />
+                  )}
+                  Grant Admin
+                </button>
+                <button
+                  onClick={() => handleSetRole(false)}
+                  disabled={roleLoading || !roleEmail.trim()}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white font-bold text-sm rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {roleLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <UserX className="w-4 h-4" />
+                  )}
+                  Revoke Admin
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                User must sign out and sign back in for changes to take effect.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
