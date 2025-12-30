@@ -150,11 +150,11 @@ function App() {
             aria-label="Notifications"
           >
             <Toaster
-              position="top-center"
-              containerClassName="!top-16 sm:!top-4 sm:!right-4 sm:!left-auto"
+              position="top-right"
               containerStyle={{
-                // Safe area + header offset on mobile
-                top: 'max(env(safe-area-inset-top, 0px) + 64px, 64px)',
+                // Safe area + header offset, with right padding to prevent overflow
+                top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
+                right: 'max(env(safe-area-inset-right, 0px) + 16px, 16px)',
               }}
               toastOptions={{
                 duration: 4000,
@@ -166,7 +166,7 @@ function App() {
                   borderRadius: '4px',
                   fontSize: '14px',
                   padding: '12px 16px',
-                  maxWidth: '90vw',
+                  maxWidth: 'min(400px, calc(100vw - 32px))',
                 },
                 success: {
                   iconTheme: {
