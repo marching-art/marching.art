@@ -172,7 +172,7 @@ const ScoresSpreadsheet = () => {
   };
 
   // Visible columns based on scroll position
-  const VISIBLE_COLUMNS = 24;
+  const VISIBLE_COLUMNS = 32;
   const visibleDates = useMemo(() => {
     return allDates.slice(scrollPosition, scrollPosition + VISIBLE_COLUMNS);
   }, [allDates, scrollPosition]);
@@ -181,11 +181,11 @@ const ScoresSpreadsheet = () => {
   const canScrollRight = scrollPosition + VISIBLE_COLUMNS < allDates.length;
 
   const handleScrollLeft = () => {
-    setScrollPosition(Math.max(0, scrollPosition - 12));
+    setScrollPosition(Math.max(0, scrollPosition - 16));
   };
 
   const handleScrollRight = () => {
-    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 12));
+    setScrollPosition(Math.min(allDates.length - VISIBLE_COLUMNS, scrollPosition + 16));
   };
 
   // Export to CSV
@@ -406,7 +406,7 @@ const ScoresSpreadsheet = () => {
                     >
                       {score !== null ? (
                         <span className={`${score >= maxScore * 0.85 ? 'text-green-400' : 'text-cream-300'}`}>
-                          {score.toFixed(1)}
+                          {score.toFixed(3)}
                         </span>
                       ) : (
                         <span className="text-cream-500/20">-</span>
