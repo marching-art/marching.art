@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
 import {
   ClassUnlockCongratsModal,
@@ -135,7 +135,7 @@ const MOBILE_TABS = [
 const Dashboard = () => {
   const { user } = useAuth();
   const dashboardData = useDashboardData();
-  const { aggregatedScores, unfilteredShows, loading: scoresLoading, refetch: refetchScores } = useScoresData();
+  const { aggregatedScores, loading: scoresLoading, refetch: refetchScores } = useScoresData();
   const { data: myLeagues, refetch: refetchLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
 
@@ -166,6 +166,7 @@ const Dashboard = () => {
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
+  const [corpsStats, setCorpsStats] = useState({});
 
   // Destructure dashboard data
   const {
@@ -233,6 +234,30 @@ const Dashboard = () => {
       modalQueue.resumeQueue();
     }
   }, [showRegistration, showCaptionSelection, showEditCorps, showDeleteConfirm, showMoveCorps, showRetireConfirm, modalQueue]);
+
+  // Fetch corps caption stats for lineup display
+  useEffect(() => {
+    const fetchCorpsStats = async () => {
+      if (!seasonData?.seasonUid) return;
+      try {
+        const statsRef = doc(db, 'dci-stats', seasonData.seasonUid);
+        const statsSnap = await getDoc(statsRef);
+        if (statsSnap.exists()) {
+          const data = statsSnap.data();
+          // Build lookup map: "CorpsName|Year" -> stats
+          const statsMap = {};
+          (data.data || []).forEach(corps => {
+            const key = `${corps.corpsName}|${corps.sourceYear}`;
+            statsMap[key] = corps.stats;
+          });
+          setCorpsStats(statsMap);
+        }
+      } catch (error) {
+        console.error('Error fetching corps stats:', error);
+      }
+    };
+    fetchCorpsStats();
+  }, [seasonData?.seasonUid]);
 
   // Handlers
   const handleTourComplete = async () => {
@@ -563,17 +588,9 @@ const Dashboard = () => {
                   const value = lineup[caption.id];
                   const hasValue = !!value;
                   const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get caption score from most recent show (unfilteredShows is sorted by offSeasonDay descending)
-                  let captionScore = null;
-                  if (hasValue && unfilteredShows?.length > 0) {
-                    for (const show of unfilteredShows) {
-                      const corpsScore = show.scores?.find(s => (s.corpsName || s.corps) === corpsName);
-                      if (corpsScore?.captions?.[caption.id] != null) {
-                        captionScore = corpsScore.captions[caption.id];
-                        break;
-                      }
-                    }
-                  }
+                  // Get caption score from corps stats (average performance)
+                  const statsKey = `${corpsName}|${sourceYear}`;
+                  const captionScore = corpsStats[statsKey]?.[caption.id]?.avg ?? null;
                   return (
                     <button
                       key={caption.id}
