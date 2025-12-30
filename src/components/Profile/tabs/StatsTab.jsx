@@ -58,7 +58,7 @@ const StatsTab = ({ profile }) => {
                   <div className="flex justify-between items-center mb-2">
                     <div>
                       <p className="font-display font-semibold text-yellow-50">{corps.name}</p>
-                      <p className="text-xs text-yellow-50/50 uppercase tracking-wide">{classKey}</p>
+                      <p className="text-xs text-yellow-50/70 uppercase tracking-wide">{classKey}</p>
                     </div>
                     <p className="text-xl font-display font-bold text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{(corps.totalSeasonScore || 0).toFixed(2)}</p>
                   </div>
@@ -83,24 +83,24 @@ const StatsTab = ({ profile }) => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-black/30 border border-white/5 rounded-xl p-4">
-            <p className="text-yellow-50/50 text-sm font-display">Total XP Earned</p>
+            <p className="text-yellow-50/70 text-sm font-display">Total XP Earned</p>
             <p className="text-2xl font-display font-bold text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">{(profile.xp || 0).toLocaleString()}</p>
           </div>
           <div className="bg-black/30 border border-white/5 rounded-xl p-4">
-            <p className="text-yellow-50/50 text-sm font-display">Total CorpsCoin</p>
+            <p className="text-yellow-50/70 text-sm font-display">Total CorpsCoin</p>
             <p className="text-2xl font-display font-bold text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">{(profile.corpsCoin || 0).toLocaleString()}</p>
           </div>
           <div className="bg-black/30 border border-white/5 rounded-xl p-4">
-            <p className="text-yellow-50/50 text-sm font-display">Active Corps</p>
+            <p className="text-yellow-50/70 text-sm font-display">Active Corps</p>
             <p className="text-2xl font-display font-bold text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">{Object.keys(profile.corps || {}).length}</p>
           </div>
           <div className="bg-black/30 border border-white/5 rounded-xl p-4">
-            <p className="text-yellow-50/50 text-sm font-display">Retired Corps</p>
+            <p className="text-yellow-50/70 text-sm font-display">Retired Corps</p>
             <p className="text-2xl font-display font-bold text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]">{profile.retiredCorps?.length || 0}</p>
           </div>
           {profile.createdAt && (
             <div className="bg-black/30 border border-white/5 rounded-xl p-4 md:col-span-2">
-              <p className="text-yellow-50/50 text-sm font-display">Member Since</p>
+              <p className="text-yellow-50/70 text-sm font-display">Member Since</p>
               <p className="text-xl font-display font-bold text-yellow-50">
                 {new Date(profile.createdAt?.toDate?.() || profile.createdAt).toLocaleDateString('en-US', {
                   year: 'numeric',

@@ -200,15 +200,15 @@ const CircuitStandingsTab = ({ league }) => {
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
-              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Rank</th>
-              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Director</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70">Rank</th>
+              <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70">Director</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70">
                 <span className="hidden md:inline">Circuit</span> Pts
               </th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">Medals</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50 hidden md:table-cell">Stops</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50 hidden lg:table-cell">High</th>
-              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/50">
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70">Medals</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70 hidden md:table-cell">Stops</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70 hidden lg:table-cell">High</th>
+              <th className="text-center py-3 px-2 md:px-4 text-xs md:text-sm font-display font-semibold text-yellow-50/70">
                 <span className="hidden md:inline">Season</span> Total
               </th>
             </tr>
@@ -233,7 +233,7 @@ const CircuitStandingsTab = ({ league }) => {
                   <td className="py-3 px-2 md:px-4">
                     <div>
                       <span className="font-display font-semibold text-yellow-50 text-sm md:text-base">{member.displayName}</span>
-                      <p className="text-xs text-yellow-50/50 hidden md:block">{member.corpsName}</p>
+                      <p className="text-xs text-yellow-50/70 hidden md:block">{member.corpsName}</p>
                     </div>
                   </td>
                   <td className="text-center py-3 px-2 md:px-4">

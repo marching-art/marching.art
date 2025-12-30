@@ -213,7 +213,7 @@ const AwardsTab = ({ league }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-display font-bold text-yellow-50">{award.title}</h4>
-                    <p className="text-xs text-yellow-50/50 mb-2">{award.subtitle}</p>
+                    <p className="text-xs text-yellow-50/70 mb-2">{award.subtitle}</p>
 
                     {award.leader ? (
                       <div className="mt-2">
@@ -240,7 +240,7 @@ const AwardsTab = ({ league }) => {
 
       {/* Info about awards */}
       <div className="bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl p-4">
-        <p className="text-sm text-yellow-50/50 flex items-start gap-2">
+        <p className="text-sm text-yellow-50/70 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-400/50" />
           <span>
             Awards are calculated from all shows attended by league members this season.

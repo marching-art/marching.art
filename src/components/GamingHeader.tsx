@@ -360,7 +360,7 @@ const GamingHeader: React.FC = () => {
               {seasonData && (
                 <div className="p-4 border-t border-white/10 bg-gradient-to-r from-yellow-500/10 to-transparent">
                   <div className="text-center">
-                    <p className="text-xs text-yellow-50/50 uppercase tracking-wider">Current Season</p>
+                    <p className="text-xs text-yellow-50/70 uppercase tracking-wider">Current Season</p>
                     <p className="text-lg font-display font-bold text-yellow-400 mt-1 capitalize">
                       {seasonData.name?.replace(/_/g, ' ') || 'No Active Season'}
                     </p>

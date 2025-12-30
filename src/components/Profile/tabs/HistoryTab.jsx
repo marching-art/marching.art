@@ -57,7 +57,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-display font-semibold text-yellow-50">{season.corpsName || 'Corps'}</p>
-                      <p className="text-xs text-yellow-50/50 uppercase tracking-wide">{season.classKey}</p>
+                      <p className="text-xs text-yellow-50/70 uppercase tracking-wide">{season.classKey}</p>
                     </div>
                     {season.finalScore && (
                       <p className="text-lg font-display font-bold text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{season.finalScore.toFixed(2)}</p>
@@ -65,10 +65,10 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                     {season.showsCompleted && (
-                      <p className="text-yellow-50/50">Shows: <span className="text-yellow-50">{season.showsCompleted}</span></p>
+                      <p className="text-yellow-50/70">Shows: <span className="text-yellow-50">{season.showsCompleted}</span></p>
                     )}
                     {season.seasonNumber && (
-                      <p className="text-yellow-50/50">Season <span className="text-yellow-50">{season.seasonNumber}</span></p>
+                      <p className="text-yellow-50/70">Season <span className="text-yellow-50">{season.seasonNumber}</span></p>
                     )}
                   </div>
                 </div>
@@ -102,7 +102,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-display font-bold text-yellow-50 text-lg">{corps.corpsName}</h3>
-                    <p className="text-xs text-yellow-50/50 uppercase tracking-wide">{corps.corpsClass}</p>
+                    <p className="text-xs text-yellow-50/70 uppercase tracking-wide">{corps.corpsClass}</p>
                     {corps.location && (
                       <p className="text-sm text-yellow-50/60 mt-1">{corps.location}</p>
                     )}
@@ -112,15 +112,15 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                 <div className="grid grid-cols-3 gap-2 text-center pt-3 border-t border-white/5">
                   <div>
                     <p className="text-lg font-display font-bold text-blue-400 drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]">{corps.totalSeasons || 0}</p>
-                    <p className="text-xs text-yellow-50/50">Seasons</p>
+                    <p className="text-xs text-yellow-50/70">Seasons</p>
                   </div>
                   <div>
                     <p className="text-lg font-display font-bold text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]">{corps.bestSeasonScore?.toFixed(1) || '-'}</p>
-                    <p className="text-xs text-yellow-50/50">Best</p>
+                    <p className="text-xs text-yellow-50/70">Best</p>
                   </div>
                   <div>
                     <p className="text-lg font-display font-bold text-green-400 drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]">{corps.totalShows || 0}</p>
-                    <p className="text-xs text-yellow-50/50">Shows</p>
+                    <p className="text-xs text-yellow-50/70">Shows</p>
                   </div>
                 </div>
                 {corps.retiredAt && (
@@ -164,7 +164,7 @@ const HistoryTab = ({ profile, seasonHistory }) => {
                     <p className={`font-display font-semibold ${isUnlocked ? 'text-yellow-50' : 'text-yellow-50/40'}`}>
                       {CLASS_NAMES[classKey]}
                     </p>
-                    <p className={`text-sm ${isUnlocked ? 'text-yellow-50/50' : 'text-yellow-50/30'}`}>
+                    <p className={`text-sm ${isUnlocked ? 'text-yellow-50/70' : 'text-yellow-50/30'}`}>
                       Unlocks at Level {CLASS_LEVELS[classKey]}
                     </p>
                   </div>

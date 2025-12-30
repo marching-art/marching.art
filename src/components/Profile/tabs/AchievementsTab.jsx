@@ -33,7 +33,7 @@ const AchievementsTab = ({ profile, milestones }) => {
                   <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 flex-shrink-0 mt-0.5 drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]" />
                   <div>
                     <p className="font-display font-semibold text-yellow-50 text-sm md:text-base">{achievement.name}</p>
-                    <p className="text-xs md:text-sm text-yellow-50/50 mt-1">{achievement.description}</p>
+                    <p className="text-xs md:text-sm text-yellow-50/70 mt-1">{achievement.description}</p>
                     {achievement.unlockedAt && (
                       <p className="text-xs text-yellow-50/40 mt-2">
                         {new Date(achievement.unlockedAt?.toDate?.() || achievement.unlockedAt).toLocaleDateString()}
@@ -110,11 +110,11 @@ const AchievementsTab = ({ profile, milestones }) => {
                       <p className={`font-display font-semibold ${isComplete ? 'text-yellow-400' : 'text-yellow-50'}`}>
                         {milestone.name}
                       </p>
-                      <p className="text-sm text-yellow-50/50">
+                      <p className="text-sm text-yellow-50/70">
                         {milestone.current} / {milestone.requirement}
                       </p>
                     </div>
-                    <p className="text-sm text-yellow-50/50 mb-2">{milestone.description}</p>
+                    <p className="text-sm text-yellow-50/70 mb-2">{milestone.description}</p>
                     <div className="w-full bg-black/50 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${isComplete ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 shadow-[0_0_8px_rgba(234,179,8,0.5)]' : 'bg-blue-500'}`}

@@ -47,7 +47,7 @@ const ShowCard = React.memo(({
           ? 'bg-black/20 border-white/5'
           : 'bg-yellow-500/5 border-white/10'
       }`}>
-        <span className="text-[10px] font-display font-bold uppercase tracking-wider text-yellow-50/50">
+        <span className="text-[10px] font-display font-bold uppercase tracking-wider text-yellow-50/70">
           {formattedDate.split(' ')[0]}
         </span>
         <span className={`text-2xl md:text-3xl font-display font-bold ${
@@ -66,7 +66,7 @@ const ShowCard = React.memo(({
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
             <h3 className={`font-display font-bold text-sm md:text-base truncate ${
-              isLocked ? 'text-yellow-50/50' : 'text-yellow-50'
+              isLocked ? 'text-yellow-50/70' : 'text-yellow-50'
             }`}>
               {show.eventName || show.name}
             </h3>
