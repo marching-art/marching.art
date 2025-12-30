@@ -17,6 +17,7 @@ import {
 import GameShell from './components/Layout/GameShell';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { CelebrationContainer } from './components/Celebration';
+import { XPFeedbackContainer } from './components/XPFeedback';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -187,6 +188,9 @@ function App() {
 
         {/* Celebration System - for achievements and level ups */}
         <CelebrationContainer />
+
+        {/* XP/CC Floating Feedback - for gains throughout the app */}
+        <XPFeedbackContainer />
 
         <Suspense fallback={<LoadingScreen fullScreen />}>
         <Routes>

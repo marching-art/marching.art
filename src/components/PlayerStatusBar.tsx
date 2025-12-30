@@ -174,18 +174,18 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           </div>
         </div>
 
-        {/* XP gain animation */}
+        {/* XP gain animation - Enhanced floating feedback */}
         <AnimatePresence>
           {gains
             .filter((g) => g.type === 'xp')
             .map((gain) => (
               <motion.span
                 key={gain.id}
-                className="absolute -top-4 left-1/2 text-xs font-bold text-blue-300 pointer-events-none"
-                initial={{ opacity: 1, y: 0, x: '-50%' }}
-                animate={{ opacity: 0, y: -20, x: '-50%' }}
+                className="absolute -top-6 left-1/2 text-sm font-bold text-blue-300 pointer-events-none whitespace-nowrap drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+                initial={{ opacity: 0, y: 10, x: '-50%', scale: 0.5 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -30, x: '-50%', scale: [0.5, 1.2, 1, 0.8] }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 1.5 }}
+                transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
               >
                 +{gain.amount} XP
               </motion.span>
@@ -220,18 +220,18 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           {corpsCoin >= 1000 ? `${(corpsCoin / 1000).toFixed(1)}k` : corpsCoin}
         </span>
 
-        {/* CC gain animation */}
+        {/* CC gain animation - Enhanced floating feedback */}
         <AnimatePresence>
           {gains
             .filter((g) => g.type === 'coin')
             .map((gain) => (
               <motion.span
                 key={gain.id}
-                className="absolute -top-4 left-1/2 text-xs font-bold text-gold-300 pointer-events-none"
-                initial={{ opacity: 1, y: 0, x: '-50%' }}
-                animate={{ opacity: 0, y: -20, x: '-50%' }}
+                className="absolute -top-6 left-1/2 text-sm font-bold text-gold-300 pointer-events-none whitespace-nowrap drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]"
+                initial={{ opacity: 0, y: 10, x: '-50%', scale: 0.5 }}
+                animate={{ opacity: [0, 1, 1, 0], y: -30, x: '-50%', scale: [0.5, 1.2, 1, 0.8] }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 1.5 }}
+                transition={{ duration: 2, times: [0, 0.1, 0.7, 1] }}
               >
                 +{gain.amount} CC
               </motion.span>

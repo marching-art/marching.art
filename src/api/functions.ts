@@ -96,7 +96,25 @@ export const getExecutionStatus = createCallable<{ corpsClass: string }, unknown
 // DAILY OPERATIONS
 // =============================================================================
 
-export const claimDailyLogin = createCallable<void, { success: boolean; loginStreak: number }>('claimDailyLogin');
+export interface ClaimDailyLoginResult {
+  success: boolean;
+  message: string;
+  loginStreak: number;
+  alreadyClaimed?: boolean;
+  xpAwarded?: number;
+  coinAwarded?: number;
+  milestoneReached?: {
+    days: number;
+    title: string;
+    xp: number;
+    coin: number;
+    freeFreeze?: boolean;
+  };
+  newLevel?: number;
+  classUnlocked?: string;
+}
+
+export const claimDailyLogin = createCallable<void, ClaimDailyLoginResult>('claimDailyLogin');
 
 // =============================================================================
 // LEADERBOARDS

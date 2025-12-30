@@ -513,10 +513,10 @@ Being critical as requested:
 | ~~**QW-16**~~ | ~~Lazy-load canvas-confetti~~ | 30m | Low | **✅ DONE** | Dynamic import with module caching |
 | ~~**QW-17**~~ | ~~Add focus-visible global styles~~ | 1h | Medium | **✅ DONE** | :focus-visible with ESPN blue, input border override |
 | ~~**QW-18**~~ | ~~Free Streak Freeze at 30 days~~ | 2h | High | **✅ DONE** | 30-day milestone now includes free 24h freeze |
-| **QW-19** | XP gain floating feedback | 3h | Medium | Pending | Floating "+50 XP" animation |
+| ~~**QW-19**~~ | ~~XP gain floating feedback~~ | 3h | Medium | **✅ DONE** | Enhanced PlayerStatusBar + global XPFeedbackContainer |
 | **QW-20** | Level-up celebration | 3h | High | Pending | Full-screen animation on level up |
 
-**Progress: 8/10 Complete** (~10.5 hours done, ~6.5 hours remaining)
+**Progress: 9/10 Complete** (~13.5 hours done, ~3.5 hours remaining)
 
 ### Strategic Overhauls (High Effort / Massive Impact)
 
