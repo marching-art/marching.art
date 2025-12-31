@@ -182,10 +182,21 @@ const Settings = () => {
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
+    // In-app notifications
     showReminders: true,
     leagueUpdates: true,
-    weeklyRecap: true
+  });
+
+  const [emailPreferences, setEmailPreferences] = useState({
+    allEmails: true,
+    welcome: true,
+    streakAtRisk: true,
+    streakBroken: true,
+    weeklyDigest: true,
+    winBack: true,
+    lineupReminder: true,
+    leagueActivity: true,
+    milestoneAchieved: true,
   });
 
   const [privacySettings, setPrivacySettings] = useState({
@@ -215,10 +226,20 @@ const Settings = () => {
         });
 
         setNotificationSettings({
-          emailNotifications: data.settings?.emailNotifications ?? true,
           showReminders: data.settings?.showReminders ?? true,
           leagueUpdates: data.settings?.leagueUpdates ?? true,
-          weeklyRecap: data.settings?.weeklyRecap ?? true
+        });
+
+        setEmailPreferences({
+          allEmails: data.settings?.emailPreferences?.allEmails ?? true,
+          welcome: data.settings?.emailPreferences?.welcome ?? true,
+          streakAtRisk: data.settings?.emailPreferences?.streakAtRisk ?? true,
+          streakBroken: data.settings?.emailPreferences?.streakBroken ?? true,
+          weeklyDigest: data.settings?.emailPreferences?.weeklyDigest ?? true,
+          winBack: data.settings?.emailPreferences?.winBack ?? true,
+          lineupReminder: data.settings?.emailPreferences?.lineupReminder ?? true,
+          leagueActivity: data.settings?.emailPreferences?.leagueActivity ?? true,
+          milestoneAchieved: data.settings?.emailPreferences?.milestoneAchieved ?? true,
         });
 
         setPrivacySettings({
@@ -249,7 +270,11 @@ const Settings = () => {
         }
       } else if (activeTab === 'notifications') {
         const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
-        await updateDoc(profileRef, { 'settings': notificationSettings });
+        await updateDoc(profileRef, {
+          'settings.showReminders': notificationSettings.showReminders,
+          'settings.leagueUpdates': notificationSettings.leagueUpdates,
+          'settings.emailPreferences': emailPreferences,
+        });
         toast.success('Alert configuration saved');
       } else if (activeTab === 'privacy') {
         const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
@@ -282,6 +307,11 @@ const Settings = () => {
 
   const updateNotifications = (field, value) => {
     setNotificationSettings(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  const updateEmailPrefs = (field, value) => {
+    setEmailPreferences(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
@@ -463,38 +493,100 @@ const Settings = () => {
                     <p className="text-xs text-cream/40 font-mono mt-1">Manage notification channel parameters</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <TerminalToggle
-                      label="Email Dispatch"
-                      code="MAIL"
-                      description="Receive system notifications via email"
-                      checked={notificationSettings.emailNotifications}
-                      onChange={(e) => updateNotifications('emailNotifications', e.target.checked)}
-                    />
+                  {/* In-App Notifications */}
+                  <div>
+                    <h4 className="font-mono text-xs text-cream/60 uppercase tracking-widest mb-3">In-App Notifications</h4>
+                    <div className="space-y-2">
+                      <TerminalToggle
+                        label="Show Reminders"
+                        code="RMND"
+                        description="Pre-competition alert notifications"
+                        checked={notificationSettings.showReminders}
+                        onChange={(e) => updateNotifications('showReminders', e.target.checked)}
+                      />
 
-                    <TerminalToggle
-                      label="Show Reminders"
-                      code="RMND"
-                      description="Pre-competition alert notifications"
-                      checked={notificationSettings.showReminders}
-                      onChange={(e) => updateNotifications('showReminders', e.target.checked)}
-                    />
+                      <TerminalToggle
+                        label="League Updates"
+                        code="LEAG"
+                        description="Circuit activity notifications"
+                        checked={notificationSettings.leagueUpdates}
+                        onChange={(e) => updateNotifications('leagueUpdates', e.target.checked)}
+                      />
+                    </div>
+                  </div>
 
-                    <TerminalToggle
-                      label="League Updates"
-                      code="LEAG"
-                      description="Circuit activity notifications"
-                      checked={notificationSettings.leagueUpdates}
-                      onChange={(e) => updateNotifications('leagueUpdates', e.target.checked)}
-                    />
+                  {/* Email Preferences */}
+                  <div className="pt-4 border-t border-cream/10">
+                    <h4 className="font-mono text-xs text-cream/60 uppercase tracking-widest mb-3">Email Communications</h4>
+                    <div className="space-y-2">
+                      <TerminalToggle
+                        label="All Emails"
+                        code="MASTER"
+                        description="Master toggle — disable to stop all email communications"
+                        checked={emailPreferences.allEmails}
+                        onChange={(e) => updateEmailPrefs('allEmails', e.target.checked)}
+                      />
 
-                    <TerminalToggle
-                      label="Weekly Digest"
-                      code="WKLY"
-                      description="Performance summary transmission"
-                      checked={notificationSettings.weeklyRecap}
-                      onChange={(e) => updateNotifications('weeklyRecap', e.target.checked)}
-                    />
+                      {emailPreferences.allEmails && (
+                        <div className="ml-4 pl-4 border-l-2 border-cream/10 space-y-2">
+                          <TerminalToggle
+                            label="Streak Warnings"
+                            code="STRK"
+                            description="Alert when your streak is about to expire"
+                            checked={emailPreferences.streakAtRisk}
+                            onChange={(e) => updateEmailPrefs('streakAtRisk', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Streak Reset"
+                            code="RSET"
+                            description="Notification when your streak has been reset"
+                            checked={emailPreferences.streakBroken}
+                            onChange={(e) => updateEmailPrefs('streakBroken', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Weekly Digest"
+                            code="WKLY"
+                            description="Weekly performance summary every Sunday"
+                            checked={emailPreferences.weeklyDigest}
+                            onChange={(e) => updateEmailPrefs('weeklyDigest', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Lineup Reminders"
+                            code="LINE"
+                            description="Reminder to set your lineup before shows"
+                            checked={emailPreferences.lineupReminder}
+                            onChange={(e) => updateEmailPrefs('lineupReminder', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="League Activity"
+                            code="LEAG"
+                            description="Trade proposals, matchup results, and league updates"
+                            checked={emailPreferences.leagueActivity}
+                            onChange={(e) => updateEmailPrefs('leagueActivity', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Milestone Celebrations"
+                            code="MILE"
+                            description="Congratulations when you hit streak milestones"
+                            checked={emailPreferences.milestoneAchieved}
+                            onChange={(e) => updateEmailPrefs('milestoneAchieved', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Re-engagement"
+                            code="REEN"
+                            description="We miss you emails after extended inactivity"
+                            checked={emailPreferences.winBack}
+                            onChange={(e) => updateEmailPrefs('winBack', e.target.checked)}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
