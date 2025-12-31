@@ -16,7 +16,7 @@ const EMAIL_CONFIG = {
   fromName: "marching.art",
   replyTo: "support@marching.art",
   appUrl: "https://marching.art",
-  unsubscribeUrl: "https://marching.art/profile",
+  unsubscribeUrl: "https://marching.art/profile?settings=emails",
 };
 
 // Email types for tracking and preferences

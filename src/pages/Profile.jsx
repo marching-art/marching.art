@@ -5,7 +5,7 @@
 // Laws: No glow, compact spacing, tables over cards
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
@@ -130,9 +130,17 @@ const Toggle = ({ checked, onChange, label, description }) => (
 // SETTINGS MODAL
 // =============================================================================
 
-const SettingsModal = ({ user, isOpen, onClose }) => {
+const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('account');
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Reset tab when modal opens with a new initialTab
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
+
   const [emailPrefs, setEmailPrefs] = useState({
     allEmails: true,
     streakAtRisk: true,
@@ -380,13 +388,31 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('account');
   const [saving, setSaving] = useState(false);
 
   const isOwnProfile = !userId || userId === user?.uid;
+
+  // Handle URL parameters for deep linking to settings
+  useEffect(() => {
+    const settingsParam = searchParams.get('settings');
+    if (settingsParam && isOwnProfile) {
+      if (settingsParam === 'emails') {
+        setSettingsTab('emails');
+      } else {
+        setSettingsTab('account');
+      }
+      setShowSettings(true);
+      // Clear the URL parameter after opening
+      searchParams.delete('settings');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, isOwnProfile, setSearchParams]);
   const profileUserId = userId || user?.uid;
 
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
@@ -702,7 +728,11 @@ const Profile = () => {
       <SettingsModal
         user={user}
         isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => {
+          setShowSettings(false);
+          setSettingsTab('account'); // Reset to account tab when closing
+        }}
+        initialTab={settingsTab}
       />
     </div>
   );
