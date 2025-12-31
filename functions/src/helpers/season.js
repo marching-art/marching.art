@@ -11,13 +11,101 @@ function shuffleArray(array) {
   return array;
 }
 
+async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear) {
+  logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
+
+  // Create schedule structure matching off-season format
+  const schedule = Array.from({ length: seasonLength }, (_, i) => ({ offSeasonDay: startDay + i, shows: [] }));
+
+  // Regular competition days (1-44): Shows will be populated from scraped DCI data
+  // Users will select from actual DCI shows happening each week
+  // The scoring logic will use historical_scores/{currentYear} for real scores
+
+  // Championship Week Shows (Days 45-49) - Same structure as off-season
+  const day45 = schedule.find((d) => d.offSeasonDay === 45);
+  if (day45) {
+    day45.shows = [{
+      eventName: "Open and A Class Prelims",
+      location: "Marion, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["openClass", "aClass"],
+      mandatory: true,
+    }];
+  }
+
+  const day46 = schedule.find((d) => d.offSeasonDay === 46);
+  if (day46) {
+    day46.shows = [{
+      eventName: "Open and A Class Finals",
+      location: "Marion, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["openClass", "aClass"],
+      advancementRules: { openClass: 8, aClass: 4 },
+      mandatory: true,
+    }];
+  }
+
+  const day47 = schedule.find((d) => d.offSeasonDay === 47);
+  if (day47) {
+    day47.shows = [{
+      eventName: "DCI World Championship Prelims",
+      location: "Indianapolis, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["worldClass", "openClass", "aClass"],
+      mandatory: true,
+    }];
+  }
+
+  const day48 = schedule.find((d) => d.offSeasonDay === 48);
+  if (day48) {
+    day48.shows = [{
+      eventName: "DCI World Championship Semifinals",
+      location: "Indianapolis, IN",
+      date: null,
+      isChampionship: true,
+      eligibleClasses: ["worldClass", "openClass", "aClass"],
+      advancementRules: { all: 25 },
+      mandatory: true,
+    }];
+  }
+
+  const day49 = schedule.find((d) => d.offSeasonDay === 49);
+  if (day49) {
+    day49.shows = [
+      {
+        eventName: "DCI World Championship Finals",
+        location: "Indianapolis, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["worldClass", "openClass", "aClass"],
+        advancementRules: { all: 12 },
+        mandatory: true,
+      },
+      {
+        eventName: "SoundSport International Music & Food Festival",
+        location: "Indianapolis, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["soundSport"],
+        mandatory: true,
+      },
+    ];
+  }
+
+  logger.info("Live season schedule generated successfully with championship week structure.");
+  return schedule;
+}
+
 async function startNewLiveSeason() {
   logger.info("Generating new live season...");
   const db = getDb();
   const today = new Date();
   const year = today.getFullYear();
   const previousYear = (year - 1).toString();
-  
+
   let oldSeasonUid = null;
   const oldSeasonDoc = await db.doc("game-settings/season").get();
   if (oldSeasonDoc.exists) {
@@ -35,16 +123,19 @@ async function startNewLiveSeason() {
     points: c.points,
   }));
 
-  // Calculate finals year for naming (season spans two calendar years)
+  // Calculate finals date (2nd Saturday of August)
   const augustFirst = new Date(year, 7, 1);
   const dayOfWeek = augustFirst.getDay();
   const daysToAdd = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
   const millisInDay = 24 * 60 * 60 * 1000;
   const firstSaturday = new Date(augustFirst.getTime() + daysToAdd * millisInDay);
   const finalsDate = new Date(firstSaturday.getTime() + 7 * millisInDay);
+
+  // Season is 70 days total: 21 days spring training + 49 days competition
+  // Start date is 69 days before finals (day 70 = finals)
   const startDate = new Date(finalsDate.getTime() - 69 * millisInDay);
 
-  // Season starts in previous year and ends in current year
+  // Season naming
   const startYear = startDate.getFullYear();
   const endYear = finalsDate.getFullYear();
   const seasonYearSuffix = `${startYear}-${endYear.toString().slice(-2)}`;
@@ -53,9 +144,8 @@ async function startNewLiveSeason() {
   const dataDocId = seasonName;
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
 
-  const scheduleTemplateRef = db.doc("schedules/live_season_template");
-  const scheduleTemplateDoc = await scheduleTemplateRef.get();
-  const events = scheduleTemplateDoc.exists ? scheduleTemplateDoc.data().events : [];
+  // Generate schedule with offSeasonDay structure (1-49 competition days)
+  const events = await generateLiveSeasonSchedule(49, 1, year);
 
   const newSeasonData = {
     name: seasonName,
@@ -67,6 +157,7 @@ async function startNewLiveSeason() {
     schedule: {
       startDate: Timestamp.fromDate(startDate),
       endDate: Timestamp.fromDate(finalsDate),
+      springTrainingDays: 21, // First 21 calendar days are spring training
     },
     events: events,
   };
@@ -804,6 +895,7 @@ module.exports = {
   shuffleArray,
   startNewLiveSeason,
   startNewOffSeason,
+  generateLiveSeasonSchedule,
   generateOffSeasonSchedule,
   calculateOffSeasonDay,
   getThematicOffSeasonName,
