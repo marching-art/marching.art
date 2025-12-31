@@ -101,6 +101,25 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
   return null;
 }
 
+/**
+ * Counts the number of unique data points available for a corps/caption in a given year.
+ * Used to determine if there's enough data for regression.
+ */
+function countDataPointsForCorps(corpsName, year, caption, historicalData) {
+  const yearData = historicalData[year] || [];
+  const uniqueDays = new Set();
+
+  for (const event of yearData) {
+    if (event.offSeasonDay === null) continue; // Skip pre-season events
+    const scoreData = event.scores?.find((s) => s.corps === corpsName);
+    if (scoreData && scoreData.captions?.[caption] > 0) {
+      uniqueDays.add(event.offSeasonDay);
+    }
+  }
+
+  return uniqueDays.size;
+}
+
 function logarithmicRegression(data) {
   const transformedData = data.map(([x, y]) => [x, y > 0 ? Math.log(y) : 0]);
 
@@ -948,14 +967,31 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
 
             if (baseCaptionScore === null) {
-              // No scraped score for current year, use prior year data for prediction
-              baseCaptionScore = getRealisticCaptionScore(
-                corpsName,
-                sourceYear, // Use prior year (from lineup) for regression predictions
-                caption,
-                scoredDay,
-                historicalData
+              // No scraped score for current year on this exact day
+              // Try current year regression first if we have enough data points
+              const currentYearDataPoints = countDataPointsForCorps(
+                corpsName, currentYear.toString(), caption, historicalData
               );
+
+              if (currentYearDataPoints >= 2) {
+                // Use current year data for regression (enough scraped data exists)
+                baseCaptionScore = getRealisticCaptionScore(
+                  corpsName,
+                  currentYear.toString(),
+                  caption,
+                  scoredDay,
+                  historicalData
+                );
+              } else {
+                // Fall back to prior year data for regression predictions
+                baseCaptionScore = getRealisticCaptionScore(
+                  corpsName,
+                  sourceYear,
+                  caption,
+                  scoredDay,
+                  historicalData
+                );
+              }
             }
 
             const synergyBonus = captionBonuses[caption] || 0;
