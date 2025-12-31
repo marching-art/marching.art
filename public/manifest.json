@@ -1,6 +1,6 @@
 {
   "short_name": "marching.art",
-  "name": "marching.art - Fantasy Drum Corps",
+  "name": "marching.art",
   "description": "Build your dream corps and compete with directors worldwide.",
   "id": "/",
   "start_url": "/",
@@ -8,7 +8,7 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "theme_color": "#EAB308",
-  "background_color": "#0A0A0A",
+  "background_color": "#FFFFFF",
   "orientation": "any",
   "categories": ["games", "entertainment", "sports"],
   "launch_handler": {
@@ -21,25 +21,25 @@
       "type": "image/x-icon"
     },
     {
-      "src": "/logo192.png",
+      "src": "/logo192-any.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/logo192.png",
+      "src": "/logo192-maskable.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "maskable"
     },
     {
-      "src": "/logo512.png",
+      "src": "/logo512-any.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/logo512.png",
+      "src": "/logo512-maskable.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -67,21 +67,21 @@
       "short_name": "Dashboard",
       "description": "View your corps dashboard",
       "url": "/dashboard",
-      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logo192-any.png", "sizes": "192x192" }]
     },
     {
       "name": "Schedule",
       "short_name": "Schedule",
       "description": "View upcoming shows",
       "url": "/schedule",
-      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logo192-any.png", "sizes": "192x192" }]
     },
     {
       "name": "Scores",
       "short_name": "Scores",
       "description": "View latest scores",
       "url": "/scores",
-      "icons": [{ "src": "/logo192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logo192-any.png", "sizes": "192x192" }]
     }
   ],
   "prefer_related_applications": false
