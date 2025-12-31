@@ -14,7 +14,10 @@ function isOwner(userId) {
 
 // --- USER DATA ---
 // This path now uses {appId} to match our React code and guidelines
+
+// Allow admins to list all users (needed for admin panel metrics)
 match /artifacts/{appId}/users/{userId} {
+  allow list: if isAdmin();
 
   // Profile data is public to read, owner or admin can write
   // This is correct for leaderboards and public profiles.
