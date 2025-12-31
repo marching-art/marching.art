@@ -4,7 +4,7 @@
 // Three-column layout: News Feed | Live Data | Auth Widget
 // Laws: No marketing fluff, no parallax, no testimonials
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
@@ -51,6 +51,16 @@ const Landing = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Enable body scrolling for Landing page (overrides index.html overflow:hidden)
+  useEffect(() => {
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.overflow = 'auto';
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const handleSignOut = async () => {
     try {
