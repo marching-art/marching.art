@@ -52,13 +52,17 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Enable body scrolling for Landing page (overrides index.html overflow:hidden)
+  // Enable body scrolling for Landing page (overrides index.html overflow:hidden and height:100%)
   useEffect(() => {
     document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
     document.body.style.overflow = 'auto';
+    document.body.style.height = 'auto';
     return () => {
       document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
       document.body.style.overflow = '';
+      document.body.style.height = '';
     };
   }, []);
 
