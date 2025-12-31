@@ -26,23 +26,36 @@ function initializeGemini() {
     }
     genAI = new GoogleGenerativeAI(apiKey);
 
-    // System instruction for the DCI journalist persona
-    const systemInstruction = `You are an expert Drum Corps International journalist for marching.art, a fantasy drum corps platform. Write engaging, analytical recaps of DCI competitions.
+    // System instruction for the DCI Statistician persona
+    const systemInstruction = `You are the DCI Statistician for marching.art, a fantasy drum corps analytics platform. You write high-level technical analysis with precision and authority.
 
-Your writing style should be:
-- Professional but accessible to both casual fans and hardcore enthusiasts
-- Data-driven with specific score references
-- Focused on storytelling around point movements and surprises
-- Insightful about what score changes mean for the competitive landscape
+Your expertise spans:
+- Deep caption-by-caption score analysis (GE1, GE2, Visual Proficiency, Visual Analysis, Color Guard, Brass, Music Analysis, Percussion)
+- Historical DCI data going back to 1972 (corps histories, championship records, iconic shows)
+- Caption movement patterns and what they predict for future performances
+- Fantasy drum corps ROI optimization based on scoring trends
 
-Always include:
-1. Highlight significant point jumps or drops (±0.3 or more is notable)
-2. Note caption leaders (GE, Visual, Music) when relevant
-3. Provide "Fantasy Impact" analysis for directors who have these corps in their lineups
-4. Identify trending corps that fantasy directors should watch
+Your writing style:
+- Lead with specific data points: "The Bluecoats' 0.5 jump in Visual Proficiency (from 18.2 to 18.7)"
+- Explain causation, not just correlation: "This surge follows their mid-season drill rewrite"
+- Quantify fantasy impact with ROI metrics: "Directors rostering Crown Brass saw +4.2 points this week (12.3% ROI)"
+- Reference historical context: "This marks BD's largest single-show GE improvement since 2019"
 
-Keep headlines punchy and attention-grabbing. Summaries should be 2-3 sentences max.
-Full stories should be 3-4 paragraphs with concrete analysis.`;
+Caption Analysis Requirements:
+1. Break down EVERY notable caption movement (±0.15 or more)
+2. Compare to season averages and historical corps performance
+3. Identify caption leaders and explain WHY they're leading
+4. Flag statistical anomalies that could indicate judging trends or show changes
+
+Fantasy Integration Requirements:
+1. Calculate ROI for each corps mentioned (points gained / draft cost)
+2. Identify "Buy Low" opportunities (underperforming relative to talent)
+3. Highlight "Sell High" warnings (overperforming, regression likely)
+4. Provide specific lineup recommendations with projected point values
+
+Headlines: Data-first, punchy. Example: "Crown Brass +0.8: The Breakout Caption of Week 6"
+Summaries: 2-3 sentences with key numbers.
+Full stories: 4-5 paragraphs with deep statistical analysis.`;
 
     // Configure model with structured JSON output
     model = genAI.getGenerativeModel({
@@ -55,19 +68,75 @@ Full stories should be 3-4 paragraphs with concrete analysis.`;
           properties: {
             headline: {
               type: SchemaType.STRING,
-              description: "Attention-grabbing headline (10 words max)",
+              description: "Data-first headline with specific numbers (10 words max). Example: 'Crown Brass +0.8: The Breakout Caption of Week 6'",
             },
             summary: {
               type: SchemaType.STRING,
-              description: "Brief 2-3 sentence summary of key developments",
+              description: "Brief 2-3 sentence summary with key score movements and fantasy implications",
             },
             fullStory: {
               type: SchemaType.STRING,
-              description: "Full 3-4 paragraph recap with analysis",
+              description: "Full 4-5 paragraph deep statistical analysis with caption breakdowns, historical context, and fantasy recommendations",
             },
             fantasyImpact: {
               type: SchemaType.STRING,
-              description: "2-3 sentences on how results affect fantasy lineups",
+              description: "2-3 sentences with specific ROI metrics. Example: 'Directors rostering Crown Brass saw +4.2 points (12.3% ROI)'",
+            },
+            fantasyMetrics: {
+              type: SchemaType.OBJECT,
+              properties: {
+                topROI: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    corps: { type: SchemaType.STRING },
+                    caption: { type: SchemaType.STRING, description: "Caption that drove ROI (Brass, Guard, Percussion, etc.)" },
+                    pointsGained: { type: SchemaType.NUMBER },
+                    roiPercent: { type: SchemaType.NUMBER, description: "ROI as percentage" },
+                  },
+                  required: ["corps", "caption", "pointsGained", "roiPercent"],
+                },
+                buyLow: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      corps: { type: SchemaType.STRING },
+                      reason: { type: SchemaType.STRING },
+                      projectedGain: { type: SchemaType.NUMBER },
+                    },
+                    required: ["corps", "reason", "projectedGain"],
+                  },
+                  description: "Corps underperforming relative to talent - pickup opportunities",
+                },
+                sellHigh: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      corps: { type: SchemaType.STRING },
+                      reason: { type: SchemaType.STRING },
+                      riskLevel: { type: SchemaType.STRING, enum: ["low", "medium", "high"] },
+                    },
+                    required: ["corps", "reason", "riskLevel"],
+                  },
+                  description: "Corps overperforming with regression risk",
+                },
+              },
+              required: ["topROI", "buyLow", "sellHigh"],
+            },
+            captionBreakdown: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  caption: { type: SchemaType.STRING, description: "Caption name (GE, Visual Proficiency, Brass, etc.)" },
+                  leader: { type: SchemaType.STRING, description: "Corps leading this caption" },
+                  leaderScore: { type: SchemaType.NUMBER },
+                  notableMovement: { type: SchemaType.STRING, description: "Key movement in this caption with context" },
+                },
+                required: ["caption", "leader", "leaderScore", "notableMovement"],
+              },
+              description: "Breakdown of each major caption with leaders and movements",
             },
             trendingCorps: {
               type: SchemaType.ARRAY,
@@ -77,13 +146,19 @@ Full stories should be 3-4 paragraphs with concrete analysis.`;
                   corps: { type: SchemaType.STRING },
                   direction: { type: SchemaType.STRING, enum: ["up", "down", "stable"] },
                   reason: { type: SchemaType.STRING },
+                  weeklyChange: { type: SchemaType.NUMBER, description: "Point change from previous show" },
+                  fantasyValue: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"] },
                 },
-                required: ["corps", "direction", "reason"],
+                required: ["corps", "direction", "reason", "weeklyChange", "fantasyValue"],
               },
-              description: "Array of corps with notable movement",
+              description: "Array of corps with notable movement and fantasy implications",
+            },
+            imagePrompt: {
+              type: SchemaType.STRING,
+              description: "Detailed image generation prompt referencing specific corps uniforms, props, or iconic moments. Include year-specific details when relevant. Example: 'Blue Devils 2024 brass section in midnight blue uniforms with silver accents, stadium lights, dynamic performance angle'",
             },
           },
-          required: ["headline", "summary", "fullStory", "fantasyImpact", "trendingCorps"],
+          required: ["headline", "summary", "fullStory", "fantasyImpact", "fantasyMetrics", "captionBreakdown", "trendingCorps", "imagePrompt"],
         },
       },
     });
@@ -224,24 +299,48 @@ function calculateTotal(captions) {
  * Generate fallback content when API is unavailable
  */
 function generateFallbackContent(scoreData) {
-  const { scores, eventName } = scoreData;
+  const { scores, eventName, year = new Date().getFullYear() } = scoreData;
   const sortedScores = scores.sort((a, b) =>
     calculateTotal(b.captions) - calculateTotal(a.captions)
   );
 
   const leader = sortedScores[0];
   const leaderTotal = calculateTotal(leader.captions).toFixed(3);
+  const second = sortedScores[1];
+  const secondTotal = second ? calculateTotal(second.captions).toFixed(3) : null;
+  const margin = second ? (calculateTotal(leader.captions) - calculateTotal(second.captions)).toFixed(3) : null;
 
   return {
-    headline: `${leader.corps} Leads at ${eventName}`,
-    summary: `${leader.corps} topped the standings with a score of ${leaderTotal} at ${eventName}. Full recap and fantasy analysis coming soon.`,
-    fullStory: `${leader.corps} claimed the top spot at ${eventName} with an impressive ${leaderTotal} total score.\n\nThe competition featured ${scores.length} corps vying for position in the standings.\n\nStay tuned for detailed analysis of tonight's performances.`,
-    fantasyImpact: `Fantasy directors with ${leader.corps} in their lineups should feel confident about their selection. Check your captions to ensure optimal coverage.`,
-    trendingCorps: sortedScores.slice(0, 3).map(s => ({
+    headline: `${leader.corps} +${margin || '0.000'}: Leads ${eventName}`,
+    summary: `${leader.corps} topped the standings with ${leaderTotal} at ${eventName}, holding a ${margin || 'comfortable'} point margin over ${second?.corps || 'the field'}. Full statistical analysis pending.`,
+    fullStory: `${leader.corps} claimed the top spot at ${eventName} with an impressive ${leaderTotal} total score.\n\nThe competition featured ${scores.length} corps vying for position in the standings. ${second ? `${second.corps} finished second with ${secondTotal}.` : ''}\n\nCaption-by-caption analysis and fantasy ROI calculations are being processed.\n\nCheck back shortly for complete statistical breakdown and lineup recommendations.`,
+    fantasyImpact: `Directors rostering ${leader.corps} saw positive returns tonight. ROI calculations will be available once full caption data is processed.`,
+    fantasyMetrics: {
+      topROI: {
+        corps: leader.corps,
+        caption: "Overall",
+        pointsGained: parseFloat(leaderTotal),
+        roiPercent: 0,
+      },
+      buyLow: [],
+      sellHigh: [],
+    },
+    captionBreakdown: [
+      {
+        caption: "Total Score",
+        leader: leader.corps,
+        leaderScore: parseFloat(leaderTotal),
+        notableMovement: "Full caption breakdown pending",
+      },
+    ],
+    trendingCorps: sortedScores.slice(0, 3).map((s, idx) => ({
       corps: s.corps,
-      direction: "stable",
+      direction: idx === 0 ? "up" : "stable",
       reason: `Scored ${calculateTotal(s.captions).toFixed(3)} at ${eventName}`,
+      weeklyChange: 0,
+      fantasyValue: idx === 0 ? "buy" : "hold",
     })),
+    imagePrompt: `${leader.corps} ${year} drum corps performance, stadium lights, dramatic angle, marching band uniforms`,
   };
 }
 

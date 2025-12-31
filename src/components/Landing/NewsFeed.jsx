@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Trophy, Flame, Clock, ChevronRight, TrendingUp, TrendingDown,
-  Minus, AlertCircle, Newspaper, Loader2
+  Minus, AlertCircle, Newspaper, Loader2, DollarSign, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { getRecentNews } from '../../api/functions';
 
@@ -20,35 +20,50 @@ const FALLBACK_NEWS = [
   {
     id: 'fallback-1',
     category: 'dci',
-    headline: 'Blue Devils Hold Steady at #1 After San Antonio Regional',
-    summary: 'BD extends their lead with a commanding 97.850 performance, while Bluecoats close the gap with their strongest visual score of the season.',
-    fantasyImpact: 'Directors with Blue Devils brass in their lineup saw major gains. Consider targeting Bluecoats percussion as a breakout pick.',
+    headline: 'Blue Devils +0.425: VP Surge Extends Lead at San Antonio',
+    summary: 'BD extends their lead with a commanding 97.850 performance. Their Visual Proficiency jumped 0.35 points, the largest single-show VP gain of the season.',
+    fantasyImpact: 'Directors rostering Blue Devils Brass saw +3.8 points (11.2% ROI). Bluecoats percussion emerging as a buy-low opportunity.',
+    fantasyMetrics: {
+      topROI: { corps: 'Blue Devils', caption: 'Brass', pointsGained: 3.8, roiPercent: 11.2 },
+      buyLow: [{ corps: 'Bluecoats', reason: 'Percussion undervalued after drill change', projectedGain: 2.1 }],
+      sellHigh: [{ corps: 'Phantom Regiment', reason: 'GE regression likely', riskLevel: 'medium' }],
+    },
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     trendingCorps: [
-      { corps: 'Blue Devils', direction: 'up', reason: 'Dominant GE scores' },
-      { corps: 'Bluecoats', direction: 'up', reason: 'Visual caption surge' },
+      { corps: 'Blue Devils', direction: 'up', reason: 'VP +0.35, largest of season', weeklyChange: 0.425, fantasyValue: 'hold' },
+      { corps: 'Bluecoats', direction: 'up', reason: 'Visual Analysis breakout', weeklyChange: 0.31, fantasyValue: 'buy' },
     ],
   },
   {
     id: 'fallback-2',
     category: 'fantasy',
-    headline: 'Week 4 Lineup Locks: Who to Start This Weekend',
-    summary: 'Our experts break down the must-start corps for DCI San Antonio with data-driven picks.',
-    fantasyImpact: 'Crown brass and SCV guard are trending up. Lock them in if available.',
+    headline: 'Crown Brass +0.8: The Breakout Caption of Week 4',
+    summary: 'Carolina Crown\'s brass section posted 18.7 in Music Analysis, their highest mark since 2019. ROI leaders this week.',
+    fantasyImpact: 'Crown Brass delivered +4.2 points (12.3% ROI). SCV Guard up 8.1% ROI. Lock them in if available.',
+    fantasyMetrics: {
+      topROI: { corps: 'Carolina Crown', caption: 'Brass', pointsGained: 4.2, roiPercent: 12.3 },
+      buyLow: [{ corps: 'Cadets', reason: 'New show design underperforming', projectedGain: 1.8 }],
+      sellHigh: [],
+    },
     createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
     trendingCorps: [
-      { corps: 'Carolina Crown', direction: 'up', reason: 'Brass on fire' },
+      { corps: 'Carolina Crown', direction: 'up', reason: 'Brass +0.8, best since 2019', weeklyChange: 0.62, fantasyValue: 'buy' },
     ],
   },
   {
     id: 'fallback-3',
     category: 'dci',
-    headline: 'Carolina Crown Unveils New Closer Section',
-    summary: 'Crown debuts a reimagined finale that could shake up visual scores heading into championships.',
-    fantasyImpact: 'Crown visual captions may see a spike. Consider adding them to your lineup.',
+    headline: 'Crown Visual +0.45: New Closer Pays Immediate Dividends',
+    summary: 'Crown debuts reimagined finale. Visual Proficiency jumped from 18.1 to 18.55, with Color Guard posting season-high 9.4.',
+    fantasyImpact: 'Crown Visual captions spiked +2.9 points (9.7% ROI). Directors should consider adding Crown Guard before Week 5.',
+    fantasyMetrics: {
+      topROI: { corps: 'Carolina Crown', caption: 'Guard', pointsGained: 2.9, roiPercent: 9.7 },
+      buyLow: [{ corps: 'Boston Crusaders', reason: 'Percussion trending up, underowned', projectedGain: 1.5 }],
+      sellHigh: [],
+    },
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
     trendingCorps: [
-      { corps: 'Carolina Crown', direction: 'up', reason: 'New closer impact' },
+      { corps: 'Carolina Crown', direction: 'up', reason: 'Visual +0.45, new closer impact', weeklyChange: 0.45, fantasyValue: 'buy' },
     ],
   },
 ];
@@ -121,6 +136,43 @@ function TrendingBadge({ direction }) {
   return <Minus className="w-3 h-3 text-gray-500" />;
 }
 
+function FantasyValueBadge({ value }) {
+  const config = {
+    buy: { label: 'BUY', bgClass: 'bg-green-500/20', textClass: 'text-green-400', icon: ArrowUpRight },
+    sell: { label: 'SELL', bgClass: 'bg-red-500/20', textClass: 'text-red-400', icon: ArrowDownRight },
+    hold: { label: 'HOLD', bgClass: 'bg-yellow-500/20', textClass: 'text-yellow-400', icon: Minus },
+  };
+  const { label, bgClass, textClass, icon: Icon } = config[value] || config.hold;
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${bgClass} ${textClass}`}>
+      <Icon className="w-2.5 h-2.5" />
+      {label}
+    </span>
+  );
+}
+
+function FantasyROIBadge({ metrics }) {
+  if (!metrics?.topROI) return null;
+
+  const { corps, caption, pointsGained, roiPercent } = metrics.topROI;
+  const isPositive = roiPercent >= 0;
+
+  return (
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-500/20 to-emerald-500/10 border border-green-500/30 rounded-sm">
+      <DollarSign className="w-4 h-4 text-green-400" />
+      <div className="flex flex-col">
+        <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">Top ROI</span>
+        <span className="text-xs text-white font-bold">
+          {corps} {caption}: <span className={isPositive ? 'text-green-400' : 'text-red-400'}>
+            {isPositive ? '+' : ''}{pointsGained.toFixed(1)} pts ({roiPercent.toFixed(1)}%)
+          </span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function HeroStory({ story, onClick }) {
   const config = getCategoryConfig(story.category);
   const Icon = config.icon;
@@ -168,6 +220,13 @@ function HeroStory({ story, onClick }) {
           {story.summary}
         </p>
 
+        {/* Fantasy ROI Badge */}
+        {story.fantasyMetrics && (
+          <div className="mb-4">
+            <FantasyROIBadge metrics={story.fantasyMetrics} />
+          </div>
+        )}
+
         {/* Fantasy Impact Highlight */}
         {story.fantasyImpact && (
           <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-sm mb-4">
@@ -180,11 +239,17 @@ function HeroStory({ story, onClick }) {
         )}
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {story.trendingCorps?.slice(0, 2).map((corp, idx) => (
-              <span key={idx} className="flex items-center gap-1 text-xs text-gray-500">
+              <span key={idx} className="flex items-center gap-1.5 text-xs text-gray-400">
                 <TrendingBadge direction={corp.direction} />
-                {corp.corps}
+                <span className="text-white">{corp.corps}</span>
+                {corp.weeklyChange !== undefined && (
+                  <span className={corp.weeklyChange >= 0 ? 'text-green-400' : 'text-red-400'}>
+                    {corp.weeklyChange >= 0 ? '+' : ''}{corp.weeklyChange.toFixed(2)}
+                  </span>
+                )}
+                {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}
               </span>
             ))}
           </div>
@@ -231,13 +296,24 @@ function NewsCard({ story, onClick }) {
             {story.summary}
           </p>
 
+          {/* Fantasy ROI Badge (compact) */}
+          {story.fantasyMetrics?.topROI && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-green-500/10 border border-green-500/20 rounded-sm">
+              <DollarSign className="w-3 h-3 text-green-400" />
+              <span className="text-[11px] text-green-400 font-semibold">
+                {story.fantasyMetrics.topROI.corps}: +{story.fantasyMetrics.topROI.roiPercent.toFixed(1)}% ROI
+              </span>
+            </div>
+          )}
+
           {/* Trending indicators */}
           {story.trendingCorps?.length > 0 && (
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
               {story.trendingCorps.slice(0, 2).map((corp, idx) => (
                 <span key={idx} className="flex items-center gap-1 text-xs text-gray-500">
                   <TrendingBadge direction={corp.direction} />
-                  {corp.corps}
+                  <span className="text-gray-300">{corp.corps}</span>
+                  {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}
                 </span>
               ))}
             </div>
@@ -366,6 +442,8 @@ export function FantasyImpactWidget({ news }) {
     return null;
   }
 
+  const metrics = latestWithImpact.fantasyMetrics;
+
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
       {/* Header */}
@@ -379,9 +457,62 @@ export function FantasyImpactWidget({ news }) {
 
       {/* Content */}
       <div className="p-3">
+        {/* Top ROI Highlight */}
+        {metrics?.topROI && (
+          <div className="mb-3 p-2 bg-green-500/10 border border-green-500/20 rounded-sm">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3 h-3 text-green-400" />
+              <span className="text-[10px] text-green-400 uppercase font-bold">Top ROI This Week</span>
+            </div>
+            <div className="text-sm text-white font-semibold">
+              {metrics.topROI.corps} {metrics.topROI.caption}
+            </div>
+            <div className="text-xs text-green-400">
+              +{metrics.topROI.pointsGained.toFixed(1)} pts ({metrics.topROI.roiPercent.toFixed(1)}% ROI)
+            </div>
+          </div>
+        )}
+
         <p className="text-sm text-gray-300 leading-relaxed mb-3">
           {latestWithImpact.fantasyImpact}
         </p>
+
+        {/* Buy Low Opportunities */}
+        {metrics?.buyLow?.length > 0 && (
+          <div className="mb-3">
+            <div className="text-[10px] text-green-400 uppercase font-bold mb-1.5 flex items-center gap-1">
+              <ArrowUpRight className="w-3 h-3" />
+              Buy Low
+            </div>
+            {metrics.buyLow.slice(0, 2).map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs mb-1">
+                <span className="text-white">{item.corps}</span>
+                <span className="text-green-400">+{item.projectedGain.toFixed(1)} proj</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Sell High Warnings */}
+        {metrics?.sellHigh?.length > 0 && (
+          <div className="mb-3">
+            <div className="text-[10px] text-red-400 uppercase font-bold mb-1.5 flex items-center gap-1">
+              <ArrowDownRight className="w-3 h-3" />
+              Sell High
+            </div>
+            {metrics.sellHigh.slice(0, 2).map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs mb-1">
+                <span className="text-white">{item.corps}</span>
+                <span className={`${
+                  item.riskLevel === 'high' ? 'text-red-400' :
+                  item.riskLevel === 'medium' ? 'text-yellow-400' : 'text-gray-400'
+                }`}>
+                  {item.riskLevel} risk
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Trending Corps */}
         {latestWithImpact.trendingCorps?.length > 0 && (
@@ -390,13 +521,18 @@ export function FantasyImpactWidget({ news }) {
             <div className="space-y-1.5">
               {latestWithImpact.trendingCorps.slice(0, 3).map((corp, idx) => (
                 <div key={idx} className="flex items-center justify-between">
-                  <span className="text-sm text-white">{corp.corps}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-white">{corp.corps}</span>
+                    {corp.fantasyValue && <FantasyValueBadge value={corp.fantasyValue} />}
+                  </div>
                   <span className={`flex items-center gap-1 text-xs ${
                     corp.direction === 'up' ? 'text-green-500' :
                     corp.direction === 'down' ? 'text-red-500' : 'text-gray-500'
                   }`}>
                     <TrendingBadge direction={corp.direction} />
-                    {corp.direction === 'up' ? 'Rising' : corp.direction === 'down' ? 'Falling' : 'Stable'}
+                    {corp.weeklyChange !== undefined && (
+                      <span>{corp.weeklyChange >= 0 ? '+' : ''}{corp.weeklyChange.toFixed(2)}</span>
+                    )}
                   </span>
                 </div>
               ))}

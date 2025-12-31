@@ -251,9 +251,12 @@ async function saveToNewsHub(db, { category, date, content, metadata, offSeasonD
     summary: content.summary,
     fullStory: content.fullStory,
     fantasyImpact: content.fantasyImpact,
+    fantasyMetrics: content.fantasyMetrics || null,
+    captionBreakdown: content.captionBreakdown || [],
     trendingCorps: content.trendingCorps || [],
     imageUrl: imageResult.url,
     imageIsPlaceholder: imageResult.isPlaceholder,
+    imagePrompt: content.imagePrompt || null,
     metadata: {
       ...metadata,
       offSeasonDay,
