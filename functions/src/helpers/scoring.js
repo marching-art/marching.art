@@ -942,16 +942,21 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
           for (const caption in corps.lineup) {
             const [corpsName, sourceYear] = corps.lineup[caption].split("|");
 
-            // Use getRealisticCaptionScore which pulls from historical_scores
-            // For live season: checks current year data first (scraped scores),
-            // falls back to logarithmic regression from prior year data
-            const baseCaptionScore = getRealisticCaptionScore(
-              corpsName,
-              currentYear.toString(), // Use current year for live scraped scores
-              caption,
-              scoredDay,
-              historicalData
-            );
+            // For live season scoring:
+            // 1. First check for actual score in current year (scraped live data)
+            // 2. If not found, use prior year (sourceYear from lineup) for regression
+            let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
+
+            if (baseCaptionScore === null) {
+              // No scraped score for current year, use prior year data for prediction
+              baseCaptionScore = getRealisticCaptionScore(
+                corpsName,
+                sourceYear, // Use prior year (from lineup) for regression predictions
+                caption,
+                scoredDay,
+                historicalData
+              );
+            }
 
             const synergyBonus = captionBonuses[caption] || 0;
             const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
