@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Check, X, Info, AlertCircle } from 'lucide-react';
 import { db, functions } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -40,14 +40,26 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
 
       if (seasonSnap.exists()) {
         const seasonData = seasonSnap.data();
-        const events = seasonData.events || [];
+        const seasonUid = seasonData.seasonUid;
         const weekStart = (currentWeek - 1) * 7 + 1;
         const weekEnd = currentWeek * 7;
+
+        // Query the schedule subcollection for days in this week
+        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
+        const daysQuery = query(
+          daysRef,
+          where('offSeasonDay', '>=', weekStart),
+          where('offSeasonDay', '<=', weekEnd),
+          orderBy('offSeasonDay')
+        );
+        const daysSnapshot = await getDocs(daysQuery);
+
         const weekShows = [];
-        events.forEach(dayEvent => {
-          const day = dayEvent.offSeasonDay || dayEvent.day || 0;
-          if (day >= weekStart && day <= weekEnd && dayEvent.shows) {
-            dayEvent.shows.forEach(show => {
+        daysSnapshot.forEach(dayDoc => {
+          const dayData = dayDoc.data();
+          const day = dayData.offSeasonDay;
+          if (dayData.shows) {
+            dayData.shows.forEach(show => {
               // Skip championship shows - they are auto-enrolled based on class
               if (show.isChampionship) {
                 return;

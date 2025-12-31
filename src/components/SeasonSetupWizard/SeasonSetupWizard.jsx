@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db, functions } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
@@ -121,7 +121,7 @@ const SeasonSetupWizard = ({
       const seasonSnap = await getDoc(seasonRef);
       if (seasonSnap.exists()) {
         const data = seasonSnap.data();
-        const events = data.events || [];
+        const seasonUid = data.seasonUid;
 
         let calculatedWeek = 1;
         const startDate = data.schedule?.startDate?.toDate();
@@ -135,10 +135,21 @@ const SeasonSetupWizard = ({
         const weekEndDay = calculatedWeek * 7;
         const weekShows = [];
 
-        events.forEach(dayEvent => {
-          const day = dayEvent.offSeasonDay || dayEvent.day || 0;
-          if (day >= weekStartDay && day <= weekEndDay && dayEvent.shows) {
-            dayEvent.shows.forEach(show => {
+        // Fetch from subcollection
+        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
+        const daysQuery = query(
+          daysRef,
+          where('offSeasonDay', '>=', weekStartDay),
+          where('offSeasonDay', '<=', weekEndDay),
+          orderBy('offSeasonDay')
+        );
+        const daysSnapshot = await getDocs(daysQuery);
+
+        daysSnapshot.forEach(dayDoc => {
+          const dayData = dayDoc.data();
+          const day = dayData.offSeasonDay;
+          if (dayData.shows) {
+            dayData.shows.forEach(show => {
               weekShows.push({ ...show, day });
             });
           }

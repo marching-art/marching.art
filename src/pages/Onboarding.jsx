@@ -366,7 +366,7 @@ const Onboarding = () => {
 
   // Auto-register user for current week's shows
   const autoRegisterForShows = async (season, corpsClass) => {
-    if (!season?.events || !season?.schedule) return;
+    if (!season?.schedule || !season?.seasonUid) return;
 
     try {
       // Calculate current week
@@ -377,20 +377,36 @@ const Onboarding = () => {
       const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
       const currentWeek = Math.max(1, Math.ceil(daysSinceStart / 7));
 
+      // Calculate day range for current week
+      const weekStart = (currentWeek - 1) * 7 + 1;
+      const weekEnd = currentWeek * 7;
+
+      // Fetch shows from subcollection for current week
+      const daysRef = collection(db, `season-schedules/${season.seasonUid}/days`);
+      const daysQuery = query(
+        daysRef,
+        where('offSeasonDay', '>=', weekStart),
+        where('offSeasonDay', '<=', weekEnd),
+        orderBy('offSeasonDay')
+      );
+      const daysSnapshot = await getDocs(daysQuery);
+
       // Get shows for current week
       const currentWeekShows = [];
-      season.events.forEach(dayEvent => {
-        const day = dayEvent.offSeasonDay || dayEvent.day || 0;
-        const week = Math.ceil(day / 7);
-
-        if (week === currentWeek && dayEvent.shows) {
-          dayEvent.shows.forEach(show => {
-            currentWeekShows.push({
-              eventName: show.eventName,
-              date: show.date,
-              location: show.location,
-              day: day
-            });
+      daysSnapshot.forEach(dayDoc => {
+        const dayData = dayDoc.data();
+        const day = dayData.offSeasonDay;
+        if (dayData.shows) {
+          dayData.shows.forEach(show => {
+            // Skip championship shows
+            if (!show.isChampionship) {
+              currentWeekShows.push({
+                eventName: show.eventName,
+                date: show.date,
+                location: show.location,
+                day: day
+              });
+            }
           });
         }
       });

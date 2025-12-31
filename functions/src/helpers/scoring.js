@@ -2,12 +2,12 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { shuffleArray } = require("./season");
+const { shuffleArray, getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { awardCorpsCoin } = require("../callable/economy");
 
 
-async function fetchHistoricalData(dataDocId) {
+async function fetchHistoricalData(dataDocId, additionalYears = []) {
   const db = getDb();
   const corpsDataRef = db.doc(`dci-data/${dataDocId}`);
   const corpsDataSnap = await corpsDataRef.get();
@@ -17,7 +17,10 @@ async function fetchHistoricalData(dataDocId) {
   }
 
   const seasonCorpsList = corpsDataSnap.data().corpsValues || [];
-  const yearsToFetch = [...new Set(seasonCorpsList.map((c) => c.sourceYear))];
+  const yearsFromCorps = seasonCorpsList.map((c) => c.sourceYear);
+  // Combine corps source years with any additional years (e.g., current year for live season)
+  const yearsToFetch = [...new Set([...yearsFromCorps, ...additionalYears.map(String)])];
+
   const historicalDocs = await Promise.all(
     yearsToFetch.map((year) => db.doc(`historical_scores/${year}`).get())
   );
@@ -98,6 +101,25 @@ function getScoreForDay(day, corps, year, caption, historicalData) {
   return null;
 }
 
+/**
+ * Counts the number of unique data points available for a corps/caption in a given year.
+ * Used to determine if there's enough data for regression.
+ */
+function countDataPointsForCorps(corpsName, year, caption, historicalData) {
+  const yearData = historicalData[year] || [];
+  const uniqueDays = new Set();
+
+  for (const event of yearData) {
+    if (event.offSeasonDay === null) continue; // Skip pre-season events
+    const scoreData = event.scores?.find((s) => s.corps === corpsName);
+    if (scoreData && scoreData.captions?.[caption] > 0) {
+      uniqueDays.add(event.offSeasonDay);
+    }
+  }
+
+  return uniqueDays.size;
+}
+
 function logarithmicRegression(data) {
   const transformedData = data.map(([x, y]) => [x, y > 0 ? Math.log(y) : 0]);
 
@@ -110,44 +132,6 @@ function logarithmicRegression(data) {
       return Math.exp(logPrediction);
     },
   };
-}
-
-function mapLiveDayToOffSeasonDay(liveDay) {
-  const liveSeasonStartDay = 22;
-  const dayOffset = 21;
-  if (liveDay < liveSeasonStartDay) {
-    return 1;
-  } else {
-    return liveDay - dayOffset;
-  }
-}
-
-async function getLiveCaptionScore(corpsName, sourceYear, caption, currentDay, historicalData) {
-  const db = getDb();
-  const seasonDoc = await db.doc("game-settings/season").get();
-  const activeSeasonId = seasonDoc.data().seasonUid;
-
-  const liveScoresRef = db.collection(`live_scores/${activeSeasonId}/scores`).where("corpsName", "==", corpsName);
-  const liveScoresSnap = await liveScoresRef.get();
-
-  const currentSeasonScores = [];
-  liveScoresSnap.forEach((doc) => {
-    const data = doc.data();
-    if (data.captions && data.captions[caption]) {
-      currentSeasonScores.push([data.day, data.captions[caption]]);
-    }
-  });
-
-  if (currentSeasonScores.length >= 3) {
-    const regression = logarithmicRegression(currentSeasonScores);
-    const predictedScore = regression.predict(currentDay);
-    const jitter = (Math.random() - 0.5) * 0.5;
-    const finalScore = predictedScore + jitter;
-    return Math.max(0, Math.min(20, parseFloat(finalScore.toFixed(3))));
-  } else {
-    const equivalentOffSeasonDay = mapLiveDayToOffSeasonDay(currentDay);
-    return getRealisticCaptionScore(corpsName, sourceYear, caption, equivalentOffSeasonDay, historicalData);
-  }
 }
 
 async function processAndArchiveOffSeasonScoresLogic() {
@@ -178,7 +162,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
   logger.info(`Processing and archiving scores for Off-Season Day: ${scoredDay}`);
 
   const historicalData = await fetchHistoricalData(seasonData.dataDocId);
-  const dayEventData = seasonData.events.find((e) => e.offSeasonDay === scoredDay);
+  // Fetch day data from subcollection instead of season document
+  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", seasonData.seasonUid);
   const profilesSnapshot = await profilesQuery.get();
@@ -757,258 +742,564 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   const scoreDate = new Date(seasonStartDate);
   scoreDate.setDate(seasonStartDate.getDate() + (scoredDay - 1));
 
-  const historicalData = await fetchHistoricalData(seasonData.dataDocId);
+  // Get current year for fetching live scores from historical_scores
+  const currentYear = new Date().getFullYear();
+
+  // Fetch historical data including current year's scraped live scores
+  // Corps source years (prior year) + current year for live scraped data
+  const historicalData = await fetchHistoricalData(seasonData.dataDocId, [currentYear]);
+
   const dailyRecap = {
     offSeasonDay: scoredDay,
-    date: scoreDate,  // Use the calculated date for this day, not the current date
+    date: scoreDate,
     shows: [],
   };
   const batch = db.batch();
+  const dailyScores = new Map();
 
-  // --- LIVE SEASON CHAMPIONSHIP PROGRESSION ---
-  let championshipParticipants = null;
-  if (scoredDay === 69 || scoredDay === 70) {
+  // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC (Days 45-49) ---
+  let championshipConfig = null;
+
+  if (scoredDay >= 45) {
     const recapDoc = await db.doc(`fantasy_recaps/${seasonData.seasonUid}`).get();
-    if (recapDoc.exists) {
-      const allRecaps = recapDoc.data().recaps || [];
-      if (scoredDay === 69) { // Semifinals
-        const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 68);
-        if (prelimsRecap) {
-          const allResults = prelimsRecap.shows.flatMap(s => s.results);
-          allResults.sort((a, b) => b.totalScore - a.totalScore);
-          championshipParticipants = allResults.slice(0, 25).map(r => r.uid);
-          logger.info(`Found ${championshipParticipants.length} corps advancing to Live Season Semifinals.`);
+    const allRecaps = recapDoc.exists ? recapDoc.data().recaps || [] : [];
+
+    if (scoredDay === 45) {
+      // Day 45: Open and A Class Prelims - All Open and A Class corps auto-enrolled
+      championshipConfig = {
+        "Open and A Class Prelims": {
+          participants: null,
+          classFilter: ["openClass", "aClass"],
+        },
+      };
+      logger.info("Day 45: Auto-enrolling all Open Class and A Class corps in Prelims.");
+
+    } else if (scoredDay === 46) {
+      // Day 46: Open and A Class Finals - Top 8 Open, Top 4 A Class from Day 45
+      const day45Recap = allRecaps.find(r => r.offSeasonDay === 45);
+      if (day45Recap) {
+        const openClassResults = [];
+        const aClassResults = [];
+
+        day45Recap.shows.forEach(show => {
+          show.results.forEach(r => {
+            if (r.corpsClass === "openClass") openClassResults.push(r);
+            else if (r.corpsClass === "aClass") aClassResults.push(r);
+          });
+        });
+
+        openClassResults.sort((a, b) => b.totalScore - a.totalScore);
+        aClassResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        const top8Open = openClassResults.slice(0, 8).map(r => ({ uid: r.uid, corpsClass: "openClass" }));
+        const top4AClass = aClassResults.slice(0, 4).map(r => ({ uid: r.uid, corpsClass: "aClass" }));
+        const finalists = [...top8Open, ...top4AClass];
+        logger.info(`Day 46: ${top8Open.length} Open Class and ${top4AClass.length} A Class corps advancing to Finals.`);
+
+        championshipConfig = {
+          "Open and A Class Finals": {
+            participants: finalists,
+            classFilter: ["openClass", "aClass"],
+          },
+        };
+      }
+
+    } else if (scoredDay === 47) {
+      // Day 47: World Championships Prelims - All World, Open, and A Class corps
+      championshipConfig = {
+        "DCI World Championship Prelims": {
+          participants: null,
+          classFilter: ["worldClass", "openClass", "aClass"],
+        },
+      };
+      logger.info("Day 47: Auto-enrolling all World, Open, and A Class corps in World Championship Prelims.");
+
+    } else if (scoredDay === 48) {
+      // Day 48: World Championships Semifinals - Top 25 from Day 47
+      const prelimsRecap = allRecaps.find(r => r.offSeasonDay === 47);
+      if (prelimsRecap) {
+        const allResults = prelimsRecap.shows.flatMap(s => s.results);
+        allResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        let advancingCorps = [];
+        if (allResults.length >= 25) {
+          const twentyFifthPlaceScore = allResults[24].totalScore;
+          advancingCorps = allResults.filter(r => r.totalScore >= twentyFifthPlaceScore);
+        } else {
+          advancingCorps = allResults;
         }
-      } else if (scoredDay === 70) { // Finals
-        const semisRecap = allRecaps.find(r => r.offSeasonDay === 69);
-        if (semisRecap) {
-          const allResults = semisRecap.shows.flatMap(s => s.results);
-          allResults.sort((a, b) => b.totalScore - a.totalScore);
-          if (allResults.length >= 12) {
-            const twelfthPlaceScore = allResults[11].totalScore;
-            championshipParticipants = allResults.filter(r => r.totalScore >= twelfthPlaceScore).map(r => r.uid);
-            logger.info(`Found ${championshipParticipants.length} corps advancing to Live Season Finals (tie-breaker included).`);
-          } else {
-            championshipParticipants = allResults.map(r => r.uid);
+
+        const participants = advancingCorps.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
+        logger.info(`Day 48: ${participants.length} corps advancing to Semifinals.`);
+
+        championshipConfig = {
+          "DCI World Championship Semifinals": {
+            participants,
+            classFilter: ["worldClass", "openClass", "aClass"],
+          },
+        };
+      }
+
+    } else if (scoredDay === 49) {
+      // Day 49: Two shows - World Finals (top 12) and SoundSport Festival (all SoundSport)
+      const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
+
+      championshipConfig = {
+        "DCI World Championship Finals": {
+          participants: [],
+          classFilter: ["worldClass", "openClass", "aClass"],
+        },
+        "SoundSport International Music & Food Festival": {
+          participants: null,
+          classFilter: ["soundSport"],
+        },
+      };
+
+      if (semisRecap) {
+        const allResults = semisRecap.shows.flatMap(s => s.results);
+        allResults.sort((a, b) => b.totalScore - a.totalScore);
+
+        let finalists = [];
+        if (allResults.length >= 12) {
+          const twelfthPlaceScore = allResults[11].totalScore;
+          finalists = allResults.filter(r => r.totalScore >= twelfthPlaceScore);
+        } else {
+          finalists = allResults;
+        }
+
+        championshipConfig["DCI World Championship Finals"].participants =
+          finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
+        logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
+      }
+      logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
+    }
+  }
+  // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
+
+  // Fetch day data from subcollection instead of season document
+  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
+
+  if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
+    logger.info(`No shows for day ${scoredDay}. Nothing to process.`);
+    return;
+  }
+
+  for (const show of dayEventData.shows) {
+    const showResult = {
+      eventName: show.eventName,
+      location: show.location,
+      results: [],
+    };
+
+    // --- DAY 41/42 REGIONAL SPLIT LOGIC ---
+    let day41_42_participants = null;
+    if ([41, 42].includes(scoredDay) && show.eventName.includes("Eastern Classic")) {
+      const allEnrollees = [];
+      for (const userDoc of profilesSnapshot.docs) {
+        const userProfile = userDoc.data();
+        const userShows = userProfile.corps?.worldClass?.selectedShows?.[`week${week}`] || [];
+        if (userShows.some(s => s.eventName === show.eventName)) {
+          allEnrollees.push(userDoc.ref.parent.parent.id);
+        }
+      }
+      allEnrollees.sort();
+      const splitIndex = Math.ceil(allEnrollees.length / 2);
+      if (scoredDay === 41) {
+        day41_42_participants = allEnrollees.slice(0, splitIndex);
+        logger.info(`Day 41: Scoring first half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+      } else {
+        day41_42_participants = allEnrollees.slice(splitIndex);
+        logger.info(`Day 42: Scoring second half (${day41_42_participants.length}) of Eastern Classic enrollees.`);
+      }
+    }
+    // --- END: DAY 41/42 REGIONAL SPLIT LOGIC ---
+
+    const showConfig = championshipConfig ? championshipConfig[show.eventName] : null;
+
+    for (const userDoc of profilesSnapshot.docs) {
+      const userProfile = userDoc.data();
+      const uid = userDoc.ref.parent.parent.id;
+
+      if (day41_42_participants && !day41_42_participants.includes(uid)) continue;
+
+      const userCorps = userProfile.corps || {};
+      for (const corpsClass of Object.keys(userCorps)) {
+        const corps = userCorps[corpsClass];
+        if (!corps || !corps.corpsName || !corps.lineup) continue;
+
+        let attended = false;
+
+        // Championship Week Logic (Days 45-49)
+        if (showConfig) {
+          if (!showConfig.classFilter.includes(corpsClass)) {
+            continue;
           }
+
+          if (showConfig.participants !== null) {
+            const isParticipant = showConfig.participants.some(
+              p => p.uid === uid && p.corpsClass === corpsClass
+            );
+            if (!isParticipant) {
+              continue;
+            }
+          }
+
+          attended = true;
+        } else {
+          // Regular show - check manual registration
+          const userShows = corps.selectedShows?.[`week${week}`] || [];
+          attended = userShows.some(s => s.eventName === show.eventName);
+        }
+
+        if (attended) {
+          let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
+
+          // Calculate synergy bonus for show concept
+          const { captionBonuses } = calculateLineupSynergyBonus(
+            corps.showConcept || {},
+            corps.lineup
+          );
+
+          for (const caption in corps.lineup) {
+            const [corpsName, sourceYear] = corps.lineup[caption].split("|");
+
+            // For live season scoring:
+            // 1. First check for actual score in current year (scraped live data)
+            // 2. If not found, use prior year (sourceYear from lineup) for regression
+            let baseCaptionScore = getScoreForDay(scoredDay, corpsName, currentYear.toString(), caption, historicalData);
+
+            if (baseCaptionScore === null) {
+              // No scraped score for current year on this exact day
+              // Try current year regression first if we have enough data points
+              const currentYearDataPoints = countDataPointsForCorps(
+                corpsName, currentYear.toString(), caption, historicalData
+              );
+
+              if (currentYearDataPoints >= 3) {
+                // Use current year data for regression (enough scraped data exists)
+                baseCaptionScore = getRealisticCaptionScore(
+                  corpsName,
+                  currentYear.toString(),
+                  caption,
+                  scoredDay,
+                  historicalData
+                );
+              } else {
+                // Fall back to prior year data for regression predictions
+                baseCaptionScore = getRealisticCaptionScore(
+                  corpsName,
+                  sourceYear,
+                  caption,
+                  scoredDay,
+                  historicalData
+                );
+              }
+            }
+
+            const synergyBonus = captionBonuses[caption] || 0;
+            const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
+
+            if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
+            else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
+            else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
+          }
+
+          const visualScore = rawVisualScore / 2;
+          const musicScore = rawMusicScore / 2;
+          const totalShowScore = Math.min(100, geScore + visualScore + musicScore);
+
+          const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
+          dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
+
+          // Award CorpsCoin for performance
+          await awardCorpsCoin(uid, corpsClass, show.eventName);
+
+          showResult.results.push({
+            uid: uid,
+            corpsClass: corpsClass,
+            corpsName: corps.corpsName,
+            totalScore: totalShowScore,
+            geScore, visualScore, musicScore,
+          });
         }
       }
     }
+    dailyRecap.shows.push(showResult);
   }
-  // --- END LIVE SEASON CHAMPIONSHIP PROGRESSION ---
 
-  const dayEventData = seasonData.events.find(e => e.dayIndex === (scoredDay - 1));
-  const showsForDay = dayEventData ? dayEventData.shows : [];
-  
-  // Create recap shows for both real and predicted scores
-  const recapShows = new Map();
-  showsForDay.forEach(show => recapShows.set(show.eventName, { eventName: show.eventName, location: show.location, results: [] }));
-  const predictedShowKey = `Predicted Scores - Day ${scoredDay}`;
-  recapShows.set(predictedShowKey, { eventName: predictedShowKey, location: "Cloud Arena", results: [] });
-
-
-  for (const userDoc of profilesSnapshot.docs) {
-    const userProfile = userDoc.data();
-    const uid = userDoc.ref.parent.parent.id;
-    const userCorps = userProfile.corps || {};
-
-    if (championshipParticipants && !championshipParticipants.includes(uid)) continue;
-
-    for (const corpsClass in userCorps) {
-        const corps = userCorps[corpsClass];
-        if (!corps || !corps.lineup) continue;
-
-        let attendedShow = null;
-        if (scoredDay >= 68) {
-            attendedShow = { eventName: `DCI World Championships Day ${scoredDay - 67}` };
-        } else {
-            const userShowsForWeek = corps.selectedShows?.[`week${week}`] || [];
-            const dayShows = showsForDay.map(s => s.eventName);
-            attendedShow = userShowsForWeek.find(us => dayShows.includes(us.eventName));
-        }
-        
-        if (attendedShow) {
-            // --- LIVE SEASON DAY 62/63 REGIONAL SPLIT ---
-            if ([62, 63].includes(scoredDay) && attendedShow.eventName.includes("Regional")) {
-                const allEnrollees = [];
-                for (const doc of profilesSnapshot.docs) {
-                    const profile = doc.data();
-                    const shows = profile.corps?.[corpsClass]?.selectedShows?.[`week${week}`] || [];
-                    if (shows.some(s => s.eventName === attendedShow.eventName)) {
-                        allEnrollees.push(doc.ref.parent.parent.id);
-                    }
-                }
-                allEnrollees.sort(); // Deterministic split
-                const splitIndex = Math.ceil(allEnrollees.length / 2);
-                const firstHalf = allEnrollees.slice(0, splitIndex);
-
-                if ((scoredDay === 62 && !firstHalf.includes(uid)) || (scoredDay === 63 && firstHalf.includes(uid))) {
-                    continue; // Skip this user if they are not in the correct half for today
-                }
-            }
-            // --- END REGIONAL SPLIT ---
-
-            let totalScore = 0;
-            let geScore = 0, rawVisualScore = 0, rawMusicScore = 0;
-
-            const liveScoresTodayRef = db.collection(`live_scores/${seasonData.seasonUid}/scores`).where("day", "==", scoredDay);
-            const liveScoresTodaySnap = await liveScoresTodayRef.get();
-            const realScoresMap = new Map();
-            liveScoresTodaySnap.forEach(doc => {
-                realScoresMap.set(doc.data().corpsName, doc.data().captions);
-            });
-
-            // Calculate synergy bonus for show concept
-            const { captionBonuses } = calculateLineupSynergyBonus(
-                corps.showConcept || {},
-                corps.lineup
-            );
-
-            for (const caption in corps.lineup) {
-                const [selectedCorps, sourceYear, points] = corps.lineup[caption].split("|");
-                let baseCaptionScore = 0;
-
-                if (realScoresMap.has(selectedCorps) && realScoresMap.get(selectedCorps)[caption] > 0) {
-                    baseCaptionScore = realScoresMap.get(selectedCorps)[caption];
-                } else {
-                    baseCaptionScore = await getLiveCaptionScore(selectedCorps, sourceYear, caption, scoredDay, historicalData);
-                }
-
-                // Apply synergy bonus (0 - 1.0 based on show concept match)
-                const synergyBonus = captionBonuses[caption] || 0;
-                // Hard cap each caption at 20 points
-                const captionScore = Math.min(20, baseCaptionScore + synergyBonus);
-
-                if (["GE1", "GE2"].includes(caption)) geScore += captionScore;
-                else if (["VP", "VA", "CG"].includes(caption)) rawVisualScore += captionScore;
-                else if (["B", "MA", "P"].includes(caption)) rawMusicScore += captionScore;
-            }
-
-            const visualScore = rawVisualScore / 2;
-            const musicScore = rawMusicScore / 2;
-            // Hard cap at 100 - this is the maximum possible score
-            totalScore = Math.min(100, geScore + visualScore + musicScore);
-
-            if (totalScore > 0) {
-                batch.update(userDoc.ref, {
-                    [`corps.${corpsClass}.totalSeasonScore`]: totalScore
-                });
-
-                const result = { uid, corpsClass, corpsName: corps.corpsName, totalScore, geScore, visualScore, musicScore };
-                
-                const usedAnyRealScores = Array.from(realScoresMap.values()).length > 0;
-                const showKey = usedAnyRealScores ? attendedShow.eventName : predictedShowKey;
-
-                if(recapShows.has(showKey)) {
-                    recapShows.get(showKey).results.push(result);
-                }
-            }
-        }
+  // Update user profiles with their most recent score
+  for (const [uidAndClass, totalDailyScore] of dailyScores.entries()) {
+    if (totalDailyScore > 0) {
+      const [uid, corpsClass] = uidAndClass.split("_");
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      batch.update(userProfileRef, {
+        [`corps.${corpsClass}.totalSeasonScore`]: totalDailyScore,
+        [`corps.${corpsClass}.lastScoredDay`]: scoredDay,
+      });
     }
   }
 
-  dailyRecap.shows = Array.from(recapShows.values()).filter(s => s.results.length > 0);
-  
-  // --- LIVE SEASON TROPHY AWARDING ---
-  const liveRegionalTrophyDays = [49, 56, 62, 63];
+  // --- TROPHY AWARDING LOGIC ---
+  const regionalTrophyDays = [28, 35, 41, 42];
   const metals = ['gold', 'silver', 'bronze'];
 
-  if (liveRegionalTrophyDays.includes(scoredDay)) {
-    logger.info(`Day ${scoredDay} is a Live Season regional trophy day. Awarding trophies...`);
+  if (regionalTrophyDays.includes(scoredDay)) {
+    logger.info(`Day ${scoredDay} is a regional trophy day. Awarding trophies...`);
     dailyRecap.shows.forEach(show => {
-        if(show.eventName.includes("Predicted")) return; // Don't award for predicted shows
-        show.results.sort((a,b) => b.totalScore - a.totalScore);
-        const top3 = show.results.slice(0, 3);
-        top3.forEach((winner, index) => {
-            const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
-            const trophy = { type: 'regional', metal: metals[index], seasonName: seasonData.name, eventName: show.eventName, score: winner.totalScore, rank: index + 1 };
-            batch.update(userProfileRef, { 'trophies.regionals': admin.firestore.FieldValue.arrayUnion(trophy) });
+      show.results.sort((a, b) => b.totalScore - a.totalScore);
+      const top3 = show.results.slice(0, 3);
+
+      top3.forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: 'regional',
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.regionals': admin.firestore.FieldValue.arrayUnion(trophy)
         });
+      });
     });
   }
 
-  if (scoredDay === 70) { // Finals Day
-    logger.info(`Day ${scoredDay} is Live Season Finals day. Awarding championship trophies...`);
-    const finalsShow = dailyRecap.shows[0];
-    if (finalsShow) {
-        finalsShow.results.sort((a,b) => b.totalScore - a.totalScore);
-        const top3 = finalsShow.results.slice(0, 3);
-        top3.forEach((winner, index) => {
-            const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
-            const trophy = { type: 'championship', metal: metals[index], seasonName: seasonData.name, eventName: finalsShow.eventName, score: winner.totalScore, rank: index + 1 };
-            batch.update(userProfileRef, { 'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy) });
-        });
-        finalsShow.results.forEach((finalist, index) => {
-            const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
-            const medal = { type: 'finalist', seasonName: seasonData.name, rank: index + 1 };
-            batch.update(userProfileRef, { 'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal) });
-        });
+  // Day 46: Open and A Class Finals - Award class-specific trophies
+  if (scoredDay === 46) {
+    logger.info("Day 46: Awarding Open and A Class Finals trophies...");
+    dailyRecap.shows.forEach(show => {
+      const openClassResults = show.results.filter(r => r.corpsClass === "openClass");
+      const aClassResults = show.results.filter(r => r.corpsClass === "aClass");
 
-        // --- SAVE SEASON CHAMPIONS BY CLASS ---
-        // Group results by corps class and get top 3 for each
-        const resultsByClass = {};
-        finalsShow.results.forEach(result => {
-          const corpsClass = result.corpsClass || 'worldClass';
-          if (!resultsByClass[corpsClass]) {
-            resultsByClass[corpsClass] = [];
-          }
-          resultsByClass[corpsClass].push(result);
-        });
+      openClassResults.sort((a, b) => b.totalScore - a.totalScore);
+      aClassResults.sort((a, b) => b.totalScore - a.totalScore);
 
-        const seasonChampionsData = {
-          seasonId: seasonData.seasonUid,
+      openClassResults.slice(0, 3).forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: 'class_championship',
+          classType: 'openClass',
+          metal: metals[index],
           seasonName: seasonData.name,
-          seasonType: seasonData.status,
-          archivedAt: new Date(),
-          classes: {}
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
         };
+        batch.update(userProfileRef, {
+          'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
+        });
+      });
 
-        // Process each class and get top 3
-        for (const [corpsClass, classResults] of Object.entries(resultsByClass)) {
-          classResults.sort((a, b) => b.totalScore - a.totalScore);
-          const classTop3 = classResults.slice(0, 3);
+      aClassResults.slice(0, 3).forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: 'class_championship',
+          classType: 'aClass',
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.classChampionships': admin.firestore.FieldValue.arrayUnion(trophy)
+        });
+      });
 
-          // Fetch usernames for champions
-          const championsWithUsernames = await Promise.all(classTop3.map(async (result, index) => {
-            const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${result.uid}/profile/data`).get();
-            const username = userProfileDoc.exists ? userProfileDoc.data().username : 'Unknown';
-            return {
-              rank: index + 1,
-              uid: result.uid,
-              username,
-              corpsName: result.corpsName,
-              score: result.totalScore
-            };
-          }));
+      show.results.forEach((finalist) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+        const ribbon = {
+          type: 'class_finalist',
+          classType: finalist.corpsClass,
+          seasonName: seasonData.name,
+          eventName: show.eventName
+        };
+        batch.update(userProfileRef, {
+          'trophies.classFinalistRibbons': admin.firestore.FieldValue.arrayUnion(ribbon)
+        });
+      });
 
-          seasonChampionsData.classes[corpsClass] = championsWithUsernames;
-        }
-
-        // Save to season_champions collection
-        const seasonChampionsRef = db.doc(`season_champions/${seasonData.seasonUid}`);
-        batch.set(seasonChampionsRef, seasonChampionsData);
-        logger.info(`Saved season champions for ${Object.keys(resultsByClass).length} classes.`);
-        // --- END SAVE SEASON CHAMPIONS BY CLASS ---
-    }
+      logger.info(`Awarded trophies to ${openClassResults.slice(0, 3).length} Open Class and ${aClassResults.slice(0, 3).length} A Class champions.`);
+    });
   }
-  // --- END LIVE SEASON TROPHY AWARDING ---
+
+  if (scoredDay === 49) { // Finals Day
+    logger.info(`Day ${scoredDay} is Finals day. Awarding championship trophies and finalist medals...`);
+
+    const allResultsByClass = {};
+
+    for (const show of dailyRecap.shows) {
+      show.results.sort((a, b) => b.totalScore - a.totalScore);
+
+      const isSoundSport = show.eventName.includes("SoundSport");
+      const trophyType = isSoundSport ? 'soundsport_championship' : 'championship';
+
+      const top3 = show.results.slice(0, 3);
+      top3.forEach((winner, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${winner.uid}/profile/data`);
+        const trophy = {
+          type: trophyType,
+          metal: metals[index],
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          score: winner.totalScore,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.championships': admin.firestore.FieldValue.arrayUnion(trophy)
+        });
+      });
+
+      show.results.forEach((finalist, index) => {
+        const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${finalist.uid}/profile/data`);
+        const medal = {
+          type: isSoundSport ? 'soundsport_finalist' : 'finalist',
+          seasonName: seasonData.name,
+          eventName: show.eventName,
+          rank: index + 1
+        };
+        batch.update(userProfileRef, {
+          'trophies.finalistMedals': admin.firestore.FieldValue.arrayUnion(medal)
+        });
+      });
+
+      show.results.forEach(result => {
+        const corpsClass = result.corpsClass || 'worldClass';
+        if (!allResultsByClass[corpsClass]) {
+          allResultsByClass[corpsClass] = [];
+        }
+        allResultsByClass[corpsClass].push(result);
+      });
+    }
+
+    // --- SAVE SEASON CHAMPIONS BY CLASS ---
+    const seasonChampionsData = {
+      seasonId: seasonData.seasonUid,
+      seasonName: seasonData.name,
+      seasonType: seasonData.status,
+      archivedAt: new Date(),
+      classes: {}
+    };
+
+    for (const [corpsClass, classResults] of Object.entries(allResultsByClass)) {
+      classResults.sort((a, b) => b.totalScore - a.totalScore);
+      const classTop3 = classResults.slice(0, 3);
+
+      const championsWithUsernames = await Promise.all(classTop3.map(async (result, index) => {
+        const userProfileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${result.uid}/profile/data`).get();
+        const username = userProfileDoc.exists ? userProfileDoc.data().username : 'Unknown';
+        return {
+          rank: index + 1,
+          uid: result.uid,
+          username,
+          corpsName: result.corpsName,
+          score: result.totalScore
+        };
+      }));
+
+      seasonChampionsData.classes[corpsClass] = championsWithUsernames;
+    }
+
+    const seasonChampionsRef = db.doc(`season_champions/${seasonData.seasonUid}`);
+    batch.set(seasonChampionsRef, seasonChampionsData);
+    logger.info(`Saved season champions for ${Object.keys(allResultsByClass).length} classes.`);
+    // --- END SAVE SEASON CHAMPIONS BY CLASS ---
+  }
+  // --- END: TROPHY AWARDING LOGIC ---
 
   // Save the recap document
   const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
   const recapDoc = await recapDocRef.get();
   if (!recapDoc.exists) {
-    batch.set(recapDocRef, { seasonName: seasonData.name, recaps: [dailyRecap] });
+    batch.set(recapDocRef, {
+      seasonName: seasonData.name,
+      recaps: [dailyRecap],
+    });
   } else {
     const existingRecaps = recapDoc.data().recaps || [];
     const updatedRecaps = existingRecaps.filter((r) => r.offSeasonDay !== scoredDay);
-    if(dailyRecap.shows.length > 0) {
-        updatedRecaps.push(dailyRecap);
-    }
+    updatedRecaps.push(dailyRecap);
     batch.update(recapDocRef, { recaps: updatedRecaps });
   }
 
   await batch.commit();
-  logger.info("Daily Live Season Score Processor & Archiver finished.");
+  logger.info(`Successfully processed and archived scores for live season day ${scoredDay}.`);
+
+  // Weekly matchup determination (same as off-season)
+  if (scoredDay % 7 === 0) {
+    const week = scoredDay / 7;
+    logger.info(`End of week ${week}. Determining class-based matchup winners...`);
+
+    const leaguesSnapshot = await db.collection("leagues").get();
+    const winnerBatch = db.batch();
+    const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+
+    for (const leagueDoc of leaguesSnapshot.docs) {
+      const matchupDocRef = db.doc(`leagues/${leagueDoc.id}/matchups/week${week}`);
+      const matchupDoc = await matchupDocRef.get();
+
+      if (matchupDoc.exists) {
+        const matchupData = matchupDoc.data();
+        let hasUpdates = false;
+
+        for (const corpsClass of corpsClasses) {
+          const matchupArrayKey = `${corpsClass}Matchups`;
+          const matchups = matchupData[matchupArrayKey] || [];
+          if (matchups.length === 0) continue;
+
+          const updatedMatchupsForClass = [];
+
+          for (const matchup of matchups) {
+            if (matchup.winner) {
+              updatedMatchupsForClass.push(matchup);
+              continue;
+            }
+
+            const [p1_uid, p2_uid] = matchup.pair;
+            const p1_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p1_uid}/profile/data`).get();
+            const p2_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p2_uid}/profile/data`).get();
+
+            const p1_score = p1_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+            const p2_score = p2_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+
+            let winnerUid = null;
+            if (p1_score > p2_score) winnerUid = p1_uid;
+            if (p2_score > p1_score) winnerUid = p2_uid;
+
+            const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
+            const increment = admin.firestore.FieldValue.increment(1);
+
+            if (winnerUid === p1_uid) {
+              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+            } else if (winnerUid === p2_uid) {
+              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+            } else {
+              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            }
+
+            const newMatchup = {
+              ...matchup,
+              scores: { [p1_uid]: p1_score, [p2_uid]: p2_score },
+              winner: winnerUid,
+            };
+            updatedMatchupsForClass.push(newMatchup);
+          }
+          matchupData[matchupArrayKey] = updatedMatchupsForClass;
+          hasUpdates = true;
+        }
+        if (hasUpdates) {
+          winnerBatch.update(matchupDocRef, matchupData);
+        }
+      }
+    }
+    await winnerBatch.commit();
+    logger.info(`Matchup winner determination for week ${week} complete.`);
+  }
 }
 
 async function calculateCorpsStatisticsLogic() {
@@ -1107,8 +1398,6 @@ module.exports = {
   getRealisticCaptionScore,
   getScoreForDay,
   logarithmicRegression,
-  mapLiveDayToOffSeasonDay,
-  getLiveCaptionScore,
   processAndArchiveOffSeasonScoresLogic,
   calculateCorpsStatisticsLogic,
   processAndScoreLiveSeasonDayLogic,
