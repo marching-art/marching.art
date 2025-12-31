@@ -19,41 +19,41 @@ const LeagueTrophy = ({ className = '' }) => (
     {/* Trophy Cup */}
     <path
       d="M20 8h24v4c0 8-4 16-12 20-8-4-12-12-12-20V8z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
     {/* Left Handle */}
     <path
       d="M20 12h-4c-2 0-4 2-4 4v4c0 4 4 8 8 8v-4c-2 0-4-2-4-4v-4h4V12z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
     {/* Right Handle */}
     <path
       d="M44 12h4c2 0 4 2 4 4v4c0 4-4 8-8 8v-4c2 0 4-2 4-4v-4h-4V12z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
     {/* Stem */}
     <path
       d="M28 32h8v8h-8z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
     {/* Base */}
     <path
       d="M22 40h20v4H22z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
     <path
       d="M18 44h28v4c0 2-2 4-4 4H22c-2 0-4-2-4-4v-4z"
-      fill="url(#trophy-gold)"
+      fill="#FFD700"
       stroke="#B8860B"
       strokeWidth="1"
     />
@@ -64,14 +64,6 @@ const LeagueTrophy = ({ className = '' }) => (
       stroke="#B8860B"
       strokeWidth="0.5"
     />
-    {/* Gradients */}
-    <defs>
-      <linearGradient id="trophy-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FFD700" />
-        <stop offset="50%" stopColor="#FFA500" />
-        <stop offset="100%" stopColor="#DAA520" />
-      </linearGradient>
-    </defs>
   </svg>
 );
 
@@ -124,9 +116,9 @@ const StandingsTab = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-xl p-8 text-center"
+        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center"
       >
-        <p className="text-cream-500/60">Loading standings...</p>
+        <p className="text-gray-500">Loading standings...</p>
       </motion.div>
     );
   }
@@ -144,8 +136,8 @@ const StandingsTab = ({
     >
       {/* Podium Display */}
       {topThree.length >= 3 && (
-        <div className="glass rounded-xl p-6">
-          <h3 className="text-xs font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-4 text-center">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4 text-center">
             League Leaders
           </h3>
 
@@ -185,13 +177,13 @@ const StandingsTab = ({
       )}
 
       {/* Full Standings Table */}
-      <div className="glass rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-cream-500/10">
-          <h3 className="font-display font-bold text-cream-100 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-gold-500" />
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+        <div className="p-3 border-b border-[#333]">
+          <h3 className="font-bold text-white flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-500" />
             Full Standings
           </h3>
-          <p className="text-xs text-cream-500/50 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Top {playoffSize} teams qualify for playoffs
           </p>
         </div>
@@ -199,27 +191,27 @@ const StandingsTab = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream-500/10 bg-charcoal-900/30">
-                <th className="text-left py-3 px-3 text-xs font-display font-semibold text-cream-500/60 w-12">
+              <tr className="border-b border-[#333] bg-[#0a0a0a]">
+                <th className="text-left py-2 px-3 text-xs font-bold text-gray-500 w-12">
                   RK
                 </th>
-                <th className="text-left py-3 px-3 text-xs font-display font-semibold text-cream-500/60">
+                <th className="text-left py-2 px-3 text-xs font-bold text-gray-500">
                   Director
                 </th>
-                <th className="text-center py-3 px-2 text-xs font-display font-semibold text-cream-500/60 w-16">
+                <th className="text-center py-2 px-2 text-xs font-bold text-gray-500 w-16">
                   W-L
                 </th>
-                <th className="text-center py-3 px-2 text-xs font-display font-semibold text-cream-500/60 w-14">
+                <th className="text-center py-2 px-2 text-xs font-bold text-gray-500 w-14">
                   <span className="hidden sm:inline">Streak</span>
                   <span className="sm:hidden">STK</span>
                 </th>
-                <th className="text-right py-3 px-2 text-xs font-display font-semibold text-cream-500/60 w-16">
+                <th className="text-right py-2 px-2 text-xs font-bold text-gray-500 w-16">
                   PF
                 </th>
-                <th className="text-right py-3 px-2 text-xs font-display font-semibold text-cream-500/60 w-16">
+                <th className="text-right py-2 px-2 text-xs font-bold text-gray-500 w-16">
                   PA
                 </th>
-                <th className="text-center py-3 px-2 text-xs font-display font-semibold text-cream-500/60 w-12">
+                <th className="text-center py-2 px-2 text-xs font-bold text-gray-500 w-12">
                   <TrendingUp className="w-4 h-4 mx-auto" />
                 </th>
               </tr>
@@ -235,28 +227,28 @@ const StandingsTab = ({
                   <React.Fragment key={stats.uid}>
                     <tr
                       className={`border-b transition-colors ${
-                        isPlayoffLine ? 'border-b-2 border-green-500/50' : 'border-cream-500/5'
+                        isPlayoffLine ? 'border-b-2 border-green-500/50' : 'border-[#222]'
                       } ${
                         isUser
                           ? 'bg-purple-500/10 hover:bg-purple-500/15'
                           : isPlayoffSpot
                             ? 'bg-green-500/5 hover:bg-green-500/10'
-                            : 'hover:bg-cream-500/5'
+                            : 'hover:bg-[#222]'
                       }`}
                     >
                       {/* Rank */}
-                      <td className="py-3 px-3">
+                      <td className="py-2 px-3">
                         <RankBadge rank={rank} isPlayoffSpot={isPlayoffSpot} />
                       </td>
 
                       {/* Director */}
-                      <td className="py-3 px-3">
+                      <td className="py-2 px-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center relative ${
-                            isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-charcoal-800'
+                            isUser ? 'bg-purple-500/20 border border-purple-500/50' : 'bg-[#333]'
                           }`}>
                             <span className={`text-sm font-bold ${
-                              isUser ? 'text-purple-400' : 'text-cream-500/60'
+                              isUser ? 'text-purple-400' : 'text-gray-400'
                             }`}>
                               {getDisplayName(stats.uid).charAt(0)}
                             </span>
@@ -268,13 +260,13 @@ const StandingsTab = ({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className={`font-display font-semibold text-sm truncate ${
-                              isUser ? 'text-purple-400' : 'text-cream-100'
+                            <p className={`font-bold text-sm truncate ${
+                              isUser ? 'text-purple-400' : 'text-white'
                             }`}>
                               {getDisplayName(stats.uid)}
                             </p>
                             {getCorpsName(stats.uid) && (
-                              <p className="text-xs text-cream-500/40 truncate max-w-[100px]">
+                              <p className="text-xs text-gray-600 truncate max-w-[100px]">
                                 {getCorpsName(stats.uid)}
                               </p>
                             )}
@@ -283,46 +275,46 @@ const StandingsTab = ({
                       </td>
 
                       {/* Record */}
-                      <td className="text-center py-3 px-2">
-                        <span className="font-display font-bold tabular-nums">
-                          <span className="text-green-400">{stats.wins}</span>
-                          <span className="text-cream-500/40">-</span>
-                          <span className="text-red-400">{stats.losses}</span>
+                      <td className="text-center py-2 px-2">
+                        <span className="font-bold tabular-nums">
+                          <span className="text-green-500">{stats.wins}</span>
+                          <span className="text-gray-600">-</span>
+                          <span className="text-red-500">{stats.losses}</span>
                         </span>
                       </td>
 
                       {/* Streak */}
-                      <td className="text-center py-3 px-2">
+                      <td className="text-center py-2 px-2">
                         {stats.streak > 0 ? (
-                          <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold ${
+                          <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-sm text-xs font-bold ${
                             stats.streakType === 'W'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-red-500/20 text-red-500'
                           }`}>
                             {stats.streakType === 'W' && <Flame className="w-3 h-3" />}
                             {stats.streakType}{stats.streak}
                           </span>
                         ) : (
-                          <span className="text-cream-500/30">—</span>
+                          <span className="text-gray-600">—</span>
                         )}
                       </td>
 
                       {/* Points For */}
-                      <td className="text-right py-3 px-2">
-                        <span className="font-display font-bold text-gold-500 tabular-nums">
+                      <td className="text-right py-2 px-2">
+                        <span className="font-bold text-yellow-500 tabular-nums">
                           {stats.pointsFor.toFixed(1)}
                         </span>
                       </td>
 
                       {/* Points Against */}
-                      <td className="text-right py-3 px-2">
-                        <span className="font-display text-cream-500/60 tabular-nums">
+                      <td className="text-right py-2 px-2">
+                        <span className="text-gray-500 tabular-nums">
                           {stats.pointsAgainst.toFixed(1)}
                         </span>
                       </td>
 
                       {/* Trend */}
-                      <td className="text-center py-3 px-2">
+                      <td className="text-center py-2 px-2">
                         <TrendIndicator trend={stats.trend} />
                       </td>
                     </tr>
@@ -333,7 +325,7 @@ const StandingsTab = ({
                         <td colSpan={7} className="py-0">
                           <div className="flex items-center gap-2 px-4 py-1 bg-green-500/10 border-y border-green-500/30">
                             <div className="flex-1 h-px bg-green-500/30" />
-                            <span className="text-[10px] uppercase tracking-wider text-green-400 font-display font-semibold flex items-center gap-1">
+                            <span className="text-[10px] uppercase tracking-wider text-green-500 font-bold flex items-center gap-1">
                               <Award className="w-3 h-3" />
                               Playoff Cutoff
                             </span>
@@ -350,19 +342,19 @@ const StandingsTab = ({
         </div>
 
         {enhancedStandings.length === 0 && (
-          <div className="p-8 text-center text-cream-500/40">
+          <div className="p-8 text-center text-gray-500">
             No standings data yet. Play some shows to see rankings!
           </div>
         )}
 
         {/* Legend */}
-        <div className="p-4 border-t border-cream-500/10 bg-charcoal-900/30">
-          <div className="flex flex-wrap gap-4 text-xs text-cream-500/50">
+        <div className="p-3 border-t border-[#333] bg-[#0a0a0a]">
+          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
-              <span className="font-semibold">PF</span> = Points For
+              <span className="font-bold">PF</span> = Points For
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-semibold">PA</span> = Points Against
+              <span className="font-bold">PA</span> = Points Against
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500/30 border border-green-500/50" />
@@ -378,9 +370,9 @@ const StandingsTab = ({
 // Podium spot component
 const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height, showTrophy = false }) => {
   const colors = {
-    1: { bg: 'bg-gradient-to-t from-yellow-500/30 to-yellow-500/10', border: 'border-yellow-500/50', text: 'text-yellow-400', medal: '🥇' },
-    2: { bg: 'bg-gradient-to-t from-gray-400/30 to-gray-400/10', border: 'border-gray-400/50', text: 'text-gray-400', medal: '🥈' },
-    3: { bg: 'bg-gradient-to-t from-orange-500/30 to-orange-500/10', border: 'border-orange-500/50', text: 'text-orange-400', medal: '🥉' }
+    1: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/50', text: 'text-yellow-500', medal: '🥇' },
+    2: { bg: 'bg-gray-500/10', border: 'border-gray-500/50', text: 'text-gray-400', medal: '🥈' },
+    3: { bg: 'bg-orange-500/10', border: 'border-orange-500/50', text: 'text-orange-500', medal: '🥉' }
   };
 
   const style = colors[rank];
@@ -403,27 +395,27 @@ const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height, showT
 
       {/* Avatar & Name */}
       <div className={`w-14 h-14 rounded-full ${style.bg} border-2 ${style.border} flex items-center justify-center mb-2 ${
-        isUser ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-charcoal-900' : ''
+        isUser ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-[#0a0a0a]' : ''
       }`}>
-        <span className="text-lg font-display font-bold text-cream-100">
+        <span className="text-lg font-bold text-white">
           {displayName.charAt(0)}
         </span>
       </div>
 
-      <p className={`font-display font-semibold text-sm text-center max-w-[80px] truncate ${
-        isUser ? 'text-purple-400' : 'text-cream-100'
+      <p className={`font-bold text-sm text-center max-w-[80px] truncate ${
+        isUser ? 'text-purple-400' : 'text-white'
       }`}>
         {displayName}
       </p>
 
-      <p className="text-xs text-cream-500/60 mb-2">
+      <p className="text-xs text-gray-500 mb-2">
         {stats.wins}-{stats.losses}
       </p>
 
       {/* Podium */}
-      <div className={`w-20 ${height} ${style.bg} border-t-2 ${style.border} rounded-t-lg flex flex-col items-center justify-start pt-2`}>
+      <div className={`w-20 ${height} ${style.bg} border-t-2 ${style.border} rounded-t-sm flex flex-col items-center justify-start pt-2`}>
         <span className="text-2xl">{style.medal}</span>
-        {rank === 1 && <Crown className="w-4 h-4 text-yellow-400 mt-1" />}
+        {rank === 1 && <Crown className="w-4 h-4 text-yellow-500 mt-1" />}
       </div>
     </div>
   );
@@ -433,31 +425,31 @@ const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height, showT
 const RankBadge = ({ rank, isPlayoffSpot }) => {
   if (rank === 1) {
     return (
-      <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-400">
+      <div className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-yellow-500/10 text-yellow-500">
         <span className="text-sm">🥇</span>
       </div>
     );
   }
   if (rank === 2) {
     return (
-      <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-400/20 text-gray-400">
+      <div className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-gray-500/10 text-gray-400">
         <span className="text-sm">🥈</span>
       </div>
     );
   }
   if (rank === 3) {
     return (
-      <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 text-orange-400">
+      <div className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-orange-500/10 text-orange-500">
         <span className="text-sm">🥉</span>
       </div>
     );
   }
 
   return (
-    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-display font-bold text-sm ${
+    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-sm font-bold text-sm ${
       isPlayoffSpot
-        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-        : 'bg-cream-500/10 text-cream-500/60'
+        ? 'bg-green-500/10 text-green-500 border border-green-500/30'
+        : 'bg-[#222] text-gray-500'
     }`}>
       {rank}
     </div>
@@ -468,21 +460,21 @@ const RankBadge = ({ rank, isPlayoffSpot }) => {
 const TrendIndicator = ({ trend }) => {
   if (trend === 'up') {
     return (
-      <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20">
-        <TrendingUp className="w-4 h-4 text-green-400" />
+      <div className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-green-500/10">
+        <TrendingUp className="w-4 h-4 text-green-500" />
       </div>
     );
   }
   if (trend === 'down') {
     return (
-      <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20">
-        <TrendingDown className="w-4 h-4 text-red-400" />
+      <div className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-red-500/10">
+        <TrendingDown className="w-4 h-4 text-red-500" />
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-cream-500/5">
-      <Minus className="w-4 h-4 text-cream-500/30" />
+    <div className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-[#222]">
+      <Minus className="w-4 h-4 text-gray-600" />
     </div>
   );
 };

@@ -37,23 +37,23 @@ const iconMap = {
 };
 
 const colorMap = {
-  matchup_result: { text: 'text-purple-400', bg: 'bg-purple-500/20', border: 'border-purple-500/30' },
-  standings_change: { text: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30' },
-  new_message: { text: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' },
-  trade_proposal: { text: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/30' },
-  trade_response: { text: 'text-teal-400', bg: 'bg-teal-500/20', border: 'border-teal-500/30' },
-  member_joined: { text: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/30' },
-  rivalry_matchup: { text: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' },
-  show_result: { text: 'text-gold-400', bg: 'bg-gold-500/20', border: 'border-gold-500/30' },
-  week_start: { text: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/30' },
-  week_end: { text: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/30' },
+  matchup_result: { text: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+  standings_change: { text: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+  new_message: { text: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30' },
+  trade_proposal: { text: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+  trade_response: { text: 'text-teal-500', bg: 'bg-teal-500/10', border: 'border-teal-500/30' },
+  member_joined: { text: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
+  rivalry_matchup: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+  show_result: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  week_start: { text: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
+  week_end: { text: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/30' },
   // New transaction log event types
-  lineup_update: { text: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30' },
-  season_high: { text: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' },
-  commissioner_action: { text: 'text-gold-400', bg: 'bg-gold-500/20', border: 'border-gold-500/30' },
-  achievement_unlocked: { text: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' },
-  score_update: { text: 'text-lime-400', bg: 'bg-lime-500/20', border: 'border-lime-500/30' },
-  live_matchup: { text: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-500/30' },
+  lineup_update: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  season_high: { text: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  commissioner_action: { text: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
+  achievement_unlocked: { text: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  score_update: { text: 'text-lime-500', bg: 'bg-lime-500/10', border: 'border-lime-500/30' },
+  live_matchup: { text: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/30' },
 };
 
 // =============================================================================
@@ -75,32 +75,32 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
       whileHover={{ scale: 1.01 }}
       onClick={() => onTap?.(activity)}
       className={`
-        relative flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all
-        ${isNotification && !activity.read ? 'bg-charcoal-900/60 border border-gold-500/30' : 'bg-charcoal-900/30 border border-cream-500/10'}
-        hover:border-cream-500/30
+        relative flex items-start gap-3 p-3 rounded-sm cursor-pointer transition-all
+        ${isNotification && !activity.read ? 'bg-[#222] border border-yellow-500/30' : 'bg-[#1a1a1a] border border-[#333]'}
+        hover:border-[#555]
       `}
     >
       {/* Unread indicator */}
       {isNotification && !activity.read && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
       )}
 
       {/* Icon */}
-      <div className={`p-2 rounded-lg ${colors.bg}`}>
+      <div className={`p-2 rounded-sm ${colors.bg}`}>
         <Icon className={`w-4 h-4 ${colors.text}`} />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-display font-semibold text-sm text-cream-100 truncate">
+          <h4 className="font-bold text-sm text-white truncate">
             {activity.title}
           </h4>
-          <span className="text-xs text-cream-500/50 whitespace-nowrap">
+          <span className="text-xs text-gray-500 whitespace-nowrap">
             {timeAgo}
           </span>
         </div>
-        <p className="text-xs text-cream-500/70 mt-0.5 line-clamp-2">
+        <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">
           {activity.message || activity.description}
         </p>
 
@@ -108,36 +108,36 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
         {activity.metadata && (
           <div className="flex flex-wrap gap-1 mt-2">
             {activity.metadata.won !== undefined && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                activity.metadata.won ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+              <span className={`text-xs px-2 py-0.5 rounded-sm ${
+                activity.metadata.won ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
               }`}>
                 {activity.metadata.won ? 'Victory' : 'Defeat'}
               </span>
             )}
             {activity.metadata.isRival && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 flex items-center gap-1">
                 <Flame className="w-3 h-3" /> Rivalry
               </span>
             )}
             {activity.metadata.week && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-cream-500/10 text-cream-400">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-[#333] text-gray-400">
                 Week {activity.metadata.week}
               </span>
             )}
             {activity.metadata.score && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-400 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-yellow-500/10 text-yellow-500 flex items-center gap-1">
                 <Target className="w-3 h-3" />
                 {activity.metadata.score.toFixed(1)}
               </span>
             )}
             {activity.metadata.newRank && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-blue-500/10 text-blue-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 #{activity.metadata.newRank}
               </span>
             )}
             {activity.metadata.seasonHigh && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 flex items-center gap-1">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-amber-500/10 text-amber-500 flex items-center gap-1">
                 <Star className="w-3 h-3" />
                 Season High!
               </span>
@@ -153,14 +153,14 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
             e.stopPropagation();
             onMarkRead(activity.id);
           }}
-          className="p-1.5 rounded-lg hover:bg-cream-500/10 transition-colors"
+          className="p-1.5 rounded-sm hover:bg-[#333] transition-colors"
           title="Mark as read"
         >
-          <CheckCircle className="w-4 h-4 text-cream-500/50 hover:text-green-400" />
+          <CheckCircle className="w-4 h-4 text-gray-500 hover:text-green-500" />
         </button>
       )}
 
-      <ChevronRight className="w-4 h-4 text-cream-500/30 flex-shrink-0 self-center" />
+      <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0 self-center" />
     </motion.div>
   );
 };
@@ -173,10 +173,10 @@ const FilterTab = ({ active, onClick, children, count }) => (
   <button
     onClick={onClick}
     className={`
-      relative px-3 py-1.5 rounded-lg text-xs font-display font-semibold transition-all
+      relative px-3 py-1.5 rounded-sm text-xs font-bold transition-all
       ${active
-        ? 'bg-gold-500 text-charcoal-900'
-        : 'bg-charcoal-900/30 text-cream-400 hover:bg-charcoal-900/50'
+        ? 'bg-yellow-500 text-black'
+        : 'bg-[#222] text-gray-400 hover:bg-[#333]'
       }
     `}
   >
@@ -184,7 +184,7 @@ const FilterTab = ({ active, onClick, children, count }) => (
     {count > 0 && (
       <span className={`
         absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] flex items-center justify-center
-        ${active ? 'bg-charcoal-900 text-gold-400' : 'bg-gold-500 text-charcoal-900'}
+        ${active ? 'bg-black text-yellow-500' : 'bg-yellow-500 text-black'}
       `}>
         {count > 99 ? '99+' : count}
       </span>
@@ -275,12 +275,12 @@ const LeagueActivityFeed = ({
 
   if (isLoading && filteredItems.length === 0) {
     return (
-      <div className="glass rounded-xl p-4">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-cream-500/10 animate-pulse" />
+          <div className="w-8 h-8 rounded-sm bg-[#333] animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 bg-cream-500/10 rounded animate-pulse" />
-            <div className="h-3 w-48 bg-cream-500/10 rounded animate-pulse" />
+            <div className="h-4 w-32 bg-[#333] rounded-sm animate-pulse" />
+            <div className="h-3 w-48 bg-[#333] rounded-sm animate-pulse" />
           </div>
         </div>
       </div>
@@ -288,16 +288,16 @@ const LeagueActivityFeed = ({
   }
 
   return (
-    <div className={`glass rounded-xl ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`bg-[#1a1a1a] border border-[#333] rounded-sm ${compact ? 'p-3' : 'p-4'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-gold-400" />
-          <h3 className="text-sm font-display font-semibold text-cream-100">
+          <Bell className="w-4 h-4 text-yellow-500" />
+          <h3 className="text-sm font-bold text-white">
             Activity Feed
           </h3>
           {leagueUnreadCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-400 text-xs font-bold">
+            <span className="px-2 py-0.5 rounded-sm bg-yellow-500/10 text-yellow-500 text-xs font-bold">
               {leagueUnreadCount} new
             </span>
           )}
@@ -306,7 +306,7 @@ const LeagueActivityFeed = ({
         {leagueUnreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-xs text-cream-500/60 hover:text-cream-300 transition-colors flex items-center gap-1"
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1"
           >
             <Eye className="w-3 h-3" />
             Mark all read
@@ -316,7 +316,7 @@ const LeagueActivityFeed = ({
 
       {/* Filters */}
       {showFilters && (
-        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-cream-500/10">
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-[#333]">
           <FilterTab
             active={activeFilter === 'all'}
             onClick={() => setActiveFilter('all')}
@@ -374,11 +374,11 @@ const LeagueActivityFeed = ({
               animate={{ opacity: 1 }}
               className="text-center py-8"
             >
-              <Bell className="w-8 h-8 mx-auto text-cream-500/30 mb-2" />
-              <p className="text-cream-500/50 text-sm">
+              <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
+              <p className="text-gray-500 text-sm">
                 No activity yet
               </p>
-              <p className="text-cream-500/30 text-xs mt-1">
+              <p className="text-gray-600 text-xs mt-1">
                 Check back after some matchups!
               </p>
             </motion.div>
@@ -390,7 +390,7 @@ const LeagueActivityFeed = ({
       {hasMore && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-3 py-2 text-sm text-cream-400 hover:text-cream-200 transition-colors flex items-center justify-center gap-2"
+          className="w-full mt-3 py-2 text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
         >
           Show all activity
           <ChevronRight className="w-4 h-4" />
@@ -400,7 +400,7 @@ const LeagueActivityFeed = ({
       {showAll && (
         <button
           onClick={() => setShowAll(false)}
-          className="w-full mt-3 py-2 text-sm text-cream-500/60 hover:text-cream-400 transition-colors"
+          className="w-full mt-3 py-2 text-sm text-gray-500 hover:text-gray-400 transition-colors"
         >
           Show less
         </button>
@@ -426,15 +426,15 @@ export const NotificationDropdown = ({
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto glass rounded-xl border border-cream-500/20 shadow-2xl z-50"
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#1a1a1a] border border-[#333] rounded-sm z-50"
     >
       {/* Header */}
-      <div className="sticky top-0 bg-charcoal-900/95 backdrop-blur-xl p-3 border-b border-cream-500/10 flex items-center justify-between">
+      <div className="sticky top-0 bg-[#1a1a1a] p-3 border-b border-[#333] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-gold-400" />
-          <span className="font-display font-semibold text-cream-100">Notifications</span>
+          <Bell className="w-4 h-4 text-yellow-500" />
+          <span className="font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-gold-500 text-charcoal-900 text-xs font-bold">
+            <span className="px-1.5 py-0.5 rounded-sm bg-yellow-500 text-black text-xs font-bold">
               {unreadCount}
             </span>
           )}
@@ -443,13 +443,13 @@ export const NotificationDropdown = ({
           {unreadCount > 0 && (
             <button
               onClick={onMarkAllRead}
-              className="text-xs text-cream-500/60 hover:text-cream-300"
+              className="text-xs text-gray-500 hover:text-gray-300"
             >
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-cream-500/10 rounded-lg">
-            <X className="w-4 h-4 text-cream-500/50" />
+          <button onClick={onClose} className="p-1 hover:bg-[#333] rounded-sm">
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
       </div>
@@ -468,8 +468,8 @@ export const NotificationDropdown = ({
           ))
         ) : (
           <div className="text-center py-8">
-            <Bell className="w-8 h-8 mx-auto text-cream-500/30 mb-2" />
-            <p className="text-cream-500/50 text-sm">No notifications</p>
+            <Bell className="w-8 h-8 mx-auto text-gray-600 mb-2" />
+            <p className="text-gray-500 text-sm">No notifications</p>
           </div>
         )}
       </div>
@@ -487,7 +487,7 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-red-500/10 text-red-500 text-xs">
         <Flame className="w-3 h-3" />
         <span>{rivalry.matchupCount}x</span>
       </div>
@@ -495,26 +495,26 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
   }
 
   return (
-    <div className="p-3 rounded-xl bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20">
+    <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
       <div className="flex items-center gap-2 mb-2">
-        <Flame className="w-4 h-4 text-red-400" />
-        <span className="font-display font-semibold text-red-400 text-sm">Rivalry</span>
+        <Flame className="w-4 h-4 text-red-500" />
+        <span className="font-bold text-red-500 text-sm">Rivalry</span>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-cream-500/60">vs {rivalry.rivalName}</p>
-          <p className="font-display font-bold text-cream-100">
+          <p className="text-xs text-gray-500">vs {rivalry.rivalName}</p>
+          <p className="font-bold text-white">
             {rivalry.userWins}-{rivalry.rivalWins}
-            {rivalry.ties > 0 && <span className="text-cream-500/60">-{rivalry.ties}</span>}
+            {rivalry.ties > 0 && <span className="text-gray-500">-{rivalry.ties}</span>}
           </p>
         </div>
 
         <div className="text-right">
-          <p className="text-xs text-cream-500/60">{rivalry.matchupCount} matchups</p>
+          <p className="text-xs text-gray-500">{rivalry.matchupCount} matchups</p>
           {rivalry.streak && (
-            <p className={`text-xs font-semibold ${
-              rivalry.streak.type === 'W' ? 'text-green-400' : 'text-red-400'
+            <p className={`text-xs font-bold ${
+              rivalry.streak.type === 'W' ? 'text-green-500' : 'text-red-500'
             }`}>
               {rivalry.streak.type}{rivalry.streak.count} streak
             </p>
@@ -522,10 +522,10 @@ export const RivalryBadge = ({ rivalry, compact = false }) => {
         </div>
       </div>
 
-      <div className="mt-2 h-1 rounded-full bg-charcoal-900/50 overflow-hidden">
+      <div className="mt-2 h-1 rounded-sm bg-[#222] overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${
-            userLeading ? 'bg-green-500' : tied ? 'bg-cream-500' : 'bg-red-500'
+          className={`h-full rounded-sm transition-all ${
+            userLeading ? 'bg-green-500' : tied ? 'bg-gray-500' : 'bg-red-500'
           }`}
           style={{
             width: `${(rivalry.userWins / (rivalry.userWins + rivalry.rivalWins + rivalry.ties)) * 100}%`

@@ -78,14 +78,14 @@ const SmackTalkInput = ({ leagueId, userProfile, disabled = false }) => {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Talk some trash..."
-        className="flex-1 px-4 py-2.5 bg-charcoal-800/50 border border-cream-500/10 rounded-xl text-cream-100 placeholder:text-cream-500/30 focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/30 transition-all text-sm"
+        className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#555] transition-all text-sm"
         disabled={sending || disabled}
         maxLength={200}
       />
       <button
         type="submit"
         disabled={sending || !message.trim() || disabled}
-        className="px-4 py-2.5 bg-gold-500 hover:bg-gold-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-charcoal-900 font-display font-semibold flex items-center gap-2 transition-colors"
+        className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm text-black font-bold flex items-center gap-2 transition-colors"
       >
         <Send className="w-4 h-4" />
       </button>
@@ -126,7 +126,7 @@ const ShareLeagueButton = ({ league }) => {
   return (
     <button
       onClick={handleShare}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-500/20 border border-gold-500/30 text-gold-400 hover:bg-gold-500/30 transition-all font-display font-semibold text-sm"
+      className="flex items-center gap-2 px-3 py-2 rounded-sm bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20 transition-all font-bold text-sm"
     >
       {copied ? (
         <>
@@ -148,7 +148,7 @@ const CommissionerBadge = ({ isCommissioner }) => {
   if (!isCommissioner) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500/30 to-amber-500/30 border border-yellow-500/50 text-yellow-400 text-xs font-display font-bold">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-xs font-bold">
       <Crown className="w-3 h-3" />
       Commissioner
     </span>
@@ -420,10 +420,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
 
   // Get rank badge
   const getRankBadge = (rank) => {
-    if (rank === 1) return { emoji: '🥇', color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
-    if (rank === 2) return { emoji: '🥈', color: 'text-gray-400', bg: 'bg-gray-400/20' };
-    if (rank === 3) return { emoji: '🥉', color: 'text-orange-400', bg: 'bg-orange-500/20' };
-    return { emoji: `#${rank}`, color: 'text-cream-400', bg: 'bg-cream-500/10' };
+    if (rank === 1) return { emoji: '🥇', color: 'text-yellow-500', bg: 'bg-yellow-500/10' };
+    if (rank === 2) return { emoji: '🥈', color: 'text-gray-400', bg: 'bg-gray-500/10' };
+    if (rank === 3) return { emoji: '🥉', color: 'text-orange-500', bg: 'bg-orange-500/10' };
+    return { emoji: `#${rank}`, color: 'text-gray-400', bg: 'bg-[#222]' };
   };
 
   const tabs = [
@@ -464,12 +464,12 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-xl p-4"
+        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
       >
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-cream-300 hover:text-cream-100 transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
@@ -480,9 +480,9 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             {isCommissioner && (
               <button
                 onClick={() => setActiveTab('settings')}
-                className="p-2 rounded-lg glass hover:bg-cream-500/10 transition-colors"
+                className="p-2 rounded-sm bg-[#222] hover:bg-[#333] transition-colors"
               >
-                <Settings className="w-5 h-5 text-cream-400" />
+                <Settings className="w-5 h-5 text-gray-400" />
               </button>
             )}
           </div>
@@ -490,18 +490,18 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
 
         <div className="flex items-center gap-3">
           {/* Logo */}
-          <div className="w-14 h-14 rounded-xl bg-charcoal-800 border border-cream-500/20 flex items-center justify-center overflow-hidden">
+          <div className="w-14 h-14 rounded-sm bg-[#222] border border-[#444] flex items-center justify-center overflow-hidden">
             <MarchingArtLogo className="w-12 h-12" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-display font-bold text-cream-100 truncate">
+              <h1 className="text-xl font-bold text-white truncate">
                 {league.name}
               </h1>
               <CommissionerBadge isCommissioner={isCommissioner} />
             </div>
-            <div className="flex items-center gap-3 text-sm text-cream-500/60 mt-1">
+            <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
               <span className="flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
                 {league.members?.length || 0} members
@@ -521,39 +521,39 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass rounded-xl p-4"
+          className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
         >
-          <h3 className="text-xs font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
             Your Status
           </h3>
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
-            <div className={`px-4 py-2 rounded-lg ${getRankBadge(userStats.currentRank).bg}`}>
+            <div className={`px-4 py-2 rounded-sm ${getRankBadge(userStats.currentRank).bg}`}>
               <span className="text-2xl">{getRankBadge(userStats.currentRank).emoji}</span>
-              <span className={`ml-2 font-display font-bold ${getRankBadge(userStats.currentRank).color}`}>
+              <span className={`ml-2 font-bold ${getRankBadge(userStats.currentRank).color}`}>
                 {userStats.currentRank <= 3 ? '' : 'Place'}
               </span>
             </div>
 
-            <div className="w-px h-10 bg-cream-500/20" />
+            <div className="w-px h-10 bg-[#333]" />
 
             {/* Record */}
             <div className="text-center">
-              <p className="text-xs text-cream-500/60">Record</p>
-              <p className="font-display font-bold text-lg">
-                <span className="text-green-400">{userStats.wins}</span>
-                <span className="text-cream-500/40">-</span>
-                <span className="text-red-400">{userStats.losses}</span>
+              <p className="text-xs text-gray-500">Record</p>
+              <p className="font-bold text-lg">
+                <span className="text-green-500">{userStats.wins}</span>
+                <span className="text-gray-600">-</span>
+                <span className="text-red-500">{userStats.losses}</span>
               </p>
             </div>
 
-            <div className="w-px h-10 bg-cream-500/20" />
+            <div className="w-px h-10 bg-[#333]" />
 
             {/* Streak */}
             <div className="text-center">
-              <p className="text-xs text-cream-500/60">Streak</p>
-              <p className={`font-display font-bold text-lg flex items-center gap-1 ${
-                userStats.streakType === 'W' ? 'text-green-400' : 'text-red-400'
+              <p className="text-xs text-gray-500">Streak</p>
+              <p className={`font-bold text-lg flex items-center gap-1 ${
+                userStats.streakType === 'W' ? 'text-green-500' : 'text-red-500'
               }`}>
                 {userStats.streakType === 'W' && <Flame className="w-4 h-4" />}
                 {userStats.streakType || '—'}{userStats.streak > 0 ? userStats.streak : ''}
@@ -563,17 +563,17 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             {/* Trend */}
             <div className="ml-auto">
               {userStats.trend === 'up' && (
-                <div className="flex items-center gap-1 text-green-400">
+                <div className="flex items-center gap-1 text-green-500">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               )}
               {userStats.trend === 'down' && (
-                <div className="flex items-center gap-1 text-red-400">
+                <div className="flex items-center gap-1 text-red-500">
                   <TrendingDown className="w-5 h-5" />
                 </div>
               )}
               {userStats.trend === 'same' && (
-                <div className="flex items-center gap-1 text-cream-500/40">
+                <div className="flex items-center gap-1 text-gray-600">
                   <Minus className="w-5 h-5" />
                 </div>
               )}
@@ -588,10 +588,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass rounded-xl p-4"
+          className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-display font-semibold text-cream-500/60 uppercase tracking-wide">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
               Your Week {currentWeek} Matchup
             </h3>
           </div>
@@ -602,58 +602,58 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
               week: currentWeek,
               isUserMatchup: true
             })}
-            className={`p-4 rounded-xl cursor-pointer transition-all ${
+            className={`p-4 rounded-sm cursor-pointer transition-all ${
               getMatchupRivalry(userMatchup)
-                ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30 hover:border-red-500/50'
-                : 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 hover:border-purple-500/40'
+                ? 'bg-red-500/10 border border-red-500/30 hover:border-red-500/50'
+                : 'bg-[#222] border border-[#444] hover:border-[#555]'
             }`}
           >
             {getMatchupRivalry(userMatchup) && (
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-red-500/20">
-                <Flame className="w-4 h-4 text-red-400" />
-                <span className="text-xs font-display font-semibold text-red-400">
+                <Flame className="w-4 h-4 text-red-500" />
+                <span className="text-xs font-bold text-red-500">
                   Rivalry Matchup
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-charcoal-800 flex items-center justify-center border-2 border-purple-500/50">
-                  <span className="font-display font-bold text-cream-100">
+                <div className="w-10 h-10 rounded-full bg-[#333] flex items-center justify-center border-2 border-purple-500/50">
+                  <span className="font-bold text-white">
                     {getDisplayName(userMatchup.user1).charAt(0)}
                   </span>
                 </div>
                 <div>
-                  <p className="font-display font-semibold text-cream-100">
+                  <p className="font-bold text-white">
                     {getDisplayName(userMatchup.user1)}
                   </p>
-                  <p className="text-xs text-cream-500/60">
+                  <p className="text-xs text-gray-500">
                     {standings.find(s => s.uid === userMatchup.user1)?.totalPoints.toFixed(1) || '0.0'} pts
                   </p>
                 </div>
               </div>
 
-              <div className="px-3 py-1 rounded-full bg-charcoal-900/50">
-                <Swords className="w-4 h-4 text-purple-400" />
+              <div className="px-3 py-1 rounded-full bg-[#1a1a1a]">
+                <Swords className="w-4 h-4 text-purple-500" />
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="font-display font-semibold text-cream-100">
+                  <p className="font-bold text-white">
                     {getDisplayName(userMatchup.user2)}
                   </p>
-                  <p className="text-xs text-cream-500/60">
+                  <p className="text-xs text-gray-500">
                     {standings.find(s => s.uid === userMatchup.user2)?.totalPoints.toFixed(1) || '0.0'} pts
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-charcoal-800 flex items-center justify-center border-2 border-cream-500/20">
-                  <span className="font-display font-bold text-cream-500/60">
+                <div className="w-10 h-10 rounded-full bg-[#333] flex items-center justify-center border-2 border-[#555]">
+                  <span className="font-bold text-gray-400">
                     {getDisplayName(userMatchup.user2).charAt(0)}
                   </span>
                 </div>
               </div>
             </div>
-            <p className="text-center text-xs text-purple-400 mt-2">
+            <p className="text-center text-xs text-purple-500 mt-2">
               Tap to view matchup details →
             </p>
           </div>
@@ -668,10 +668,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-display font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-sm font-bold transition-all ${
                 activeTab === tab.id
-                  ? 'bg-gold-500 text-charcoal-900'
-                  : 'glass text-cream-300 hover:text-cream-100'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white hover:border-[#444]'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -716,10 +716,10 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
           >
             {/* Rivalries Section */}
             {rivalries.length > 0 && (
-              <div className="glass rounded-xl p-4">
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Flame className="w-4 h-4 text-red-400" />
-                  <h3 className="text-sm font-display font-semibold text-cream-100">
+                  <Flame className="w-4 h-4 text-red-500" />
+                  <h3 className="text-sm font-bold text-white">
                     Your Rivalries
                   </h3>
                 </div>
@@ -777,14 +777,14 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="glass rounded-xl p-4"
+        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4"
       >
         <div className="flex items-center gap-2 mb-3">
-          <MessageSquare className="w-4 h-4 text-gold-400" />
-          <h3 className="text-sm font-display font-semibold text-cream-100">
+          <MessageSquare className="w-4 h-4 text-yellow-500" />
+          <h3 className="text-sm font-bold text-white">
             Smack Talk
           </h3>
-          <span className="text-xs text-cream-500/40">
+          <span className="text-xs text-gray-500">
             Quick message the league
           </span>
         </div>
@@ -798,7 +798,7 @@ const LeagueDetailView = ({ league, userProfile, onBack, onLeave }) => {
       <div className="pt-4">
         <button
           onClick={onLeave}
-          className="w-full py-3 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors"
+          className="w-full py-3 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-colors"
         >
           Leave League
         </button>
