@@ -104,7 +104,32 @@ export interface UserSettings {
   theme: 'dark' | 'light';
   notifications: boolean;
   soundEffects: boolean;
+  emailPreferences?: EmailPreferences;
 }
+
+export interface EmailPreferences {
+  // Master toggle - if false, no emails are sent
+  allEmails: boolean;
+  // Individual email type preferences
+  welcome?: boolean;
+  streakAtRisk?: boolean;
+  streakBroken?: boolean;
+  weeklyDigest?: boolean;
+  winBack?: boolean;
+  lineupReminder?: boolean;
+  leagueActivity?: boolean;
+  milestoneAchieved?: boolean;
+}
+
+export type EmailType =
+  | 'welcome'
+  | 'streak_at_risk'
+  | 'streak_broken'
+  | 'weekly_digest'
+  | 'win_back'
+  | 'lineup_reminder'
+  | 'league_activity'
+  | 'milestone_achieved';
 
 // =============================================================================
 // CORPS TYPES
