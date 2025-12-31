@@ -3,6 +3,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
 const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
+const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 
 exports.startNewOffSeason = onCall({ cors: true }, async (request) => {
   if (!request.auth || !request.auth.token.admin) {
@@ -146,4 +147,45 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", `An error occurred while running ${jobName}.`);
   }
 });
+
+/**
+ * Send a test email to verify Brevo integration
+ * Admin only - sends a welcome email to the admin's own email
+ */
+exports.sendTestEmail = onCall(
+  {
+    cors: true,
+    secrets: [brevoApiKey],
+  },
+  async (request) => {
+    if (!request.auth || !request.auth.token.admin) {
+      throw new HttpsError("permission-denied", "You must be an admin to perform this action.");
+    }
+
+    const { email } = request.data;
+    const targetEmail = email || request.auth.token.email;
+
+    if (!targetEmail) {
+      throw new HttpsError("invalid-argument", "No email address provided or found in auth token.");
+    }
+
+    logger.info(`Admin ${request.auth.uid} sending test email to ${targetEmail}`);
+
+    try {
+      const success = await sendWelcomeEmail(targetEmail, "Test User");
+
+      if (success) {
+        return {
+          success: true,
+          message: `Test email sent successfully to ${targetEmail}`,
+        };
+      } else {
+        throw new HttpsError("internal", "Email sending returned false - check function logs for details.");
+      }
+    } catch (error) {
+      logger.error("Error sending test email:", error);
+      throw new HttpsError("internal", `Failed to send test email: ${error.message}`);
+    }
+  }
+);
 
