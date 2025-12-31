@@ -1,28 +1,90 @@
 // =============================================================================
-// LANDING PAGE - ESPN LOGIN PORTAL
+// LANDING PAGE - NEWS & DATA HUB
 // =============================================================================
-// A gate, not a brochure. Two-column split with live scoreboard preview.
+// Three-column layout: News Feed | Live Data | Auth Widget
 // Laws: No marketing fluff, no parallax, no testimonials
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import {
+  Trophy, Lock, Mail, ArrowRight, AlertCircle, TrendingUp,
+  TrendingDown, Clock, Newspaper, Flame, ChevronRight, Users,
+  Calendar, Activity
+} from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 
 // =============================================================================
-// DUMMY SCOREBOARD DATA
+// DUMMY DATA
 // =============================================================================
 
 const LIVE_SCORES = [
-  { rank: 1, corps: 'Blue Devils', score: 97.850, ge: 19.70, visual: 19.55, music: 38.60, change: '+0.2' },
-  { rank: 2, corps: 'Bluecoats', score: 96.425, ge: 19.45, visual: 19.20, music: 37.78, change: '+0.4' },
-  { rank: 3, corps: 'Carolina Crown', score: 95.900, ge: 19.30, visual: 19.10, music: 37.50, change: '-0.1' },
-  { rank: 4, corps: 'Santa Clara Vanguard', score: 95.275, ge: 19.15, visual: 19.00, music: 37.13, change: '+0.3' },
-  { rank: 5, corps: 'The Cadets', score: 94.650, ge: 18.95, visual: 18.85, music: 36.85, change: '—' },
-  { rank: 6, corps: 'Boston Crusaders', score: 93.800, ge: 18.80, visual: 18.60, music: 36.40, change: '+0.5' },
-  { rank: 7, corps: 'Phantom Regiment', score: 92.150, ge: 18.50, visual: 18.30, music: 35.35, change: '-0.2' },
-  { rank: 8, corps: 'Blue Knights', score: 91.425, ge: 18.35, visual: 18.10, music: 34.98, change: '+0.1' },
+  { rank: 1, corps: 'Blue Devils', score: 97.850, change: '+0.2' },
+  { rank: 2, corps: 'Bluecoats', score: 96.425, change: '+0.4' },
+  { rank: 3, corps: 'Carolina Crown', score: 95.900, change: '-0.1' },
+  { rank: 4, corps: 'Santa Clara Vanguard', score: 95.275, change: '+0.3' },
+  { rank: 5, corps: 'The Cadets', score: 94.650, change: '—' },
+  { rank: 6, corps: 'Boston Crusaders', score: 93.800, change: '+0.5' },
+  { rank: 7, corps: 'Phantom Regiment', score: 92.150, change: '-0.2' },
+  { rank: 8, corps: 'Blue Knights', score: 91.425, change: '+0.1' },
+];
+
+const TRENDING_PLAYERS = [
+  { name: 'Blue Devils Hornline', change: '+15%', direction: 'up' },
+  { name: 'Crown Brass', change: '+12%', direction: 'up' },
+  { name: 'Bluecoats Percussion', change: '+8%', direction: 'up' },
+  { name: 'SCV Guard', change: '-3%', direction: 'down' },
+];
+
+const HERO_STORY = {
+  category: 'DCI RECAP',
+  title: 'Blue Devils Hold Steady at #1 After San Antonio Regional',
+  summary: 'BD extends their lead with a commanding 97.850 performance, while Bluecoats close the gap with their strongest visual score of the season.',
+  timestamp: '2 hours ago',
+  author: 'DCI Staff',
+};
+
+const NEWS_FEED = [
+  {
+    id: 1,
+    category: 'FANTASY',
+    title: 'Week 4 Lineup Locks: Who to Start This Weekend',
+    summary: 'Our experts break down the must-start corps for DCI San Antonio.',
+    timestamp: '4 hours ago',
+    isFantasy: true,
+  },
+  {
+    id: 2,
+    category: 'DCI NEWS',
+    title: 'Carolina Crown Unveils New Closer Section',
+    summary: 'Crown debuts a reimagined finale that could shake up visual scores.',
+    timestamp: '6 hours ago',
+    isFantasy: false,
+  },
+  {
+    id: 3,
+    category: 'FANTASY',
+    title: 'Waiver Wire: Undervalued Corps to Target',
+    summary: 'These sleeper picks could win your league this week.',
+    timestamp: '8 hours ago',
+    isFantasy: true,
+  },
+  {
+    id: 4,
+    category: 'DCI NEWS',
+    title: 'Phantom Regiment Staff Talks Championship Push',
+    summary: 'After a slow start, Regiment is trending up heading into August.',
+    timestamp: '12 hours ago',
+    isFantasy: false,
+  },
+  {
+    id: 5,
+    category: 'ANALYSIS',
+    title: 'GE Scores: What the Judges Are Looking For',
+    summary: 'A deep dive into General Effect scoring trends this season.',
+    timestamp: '1 day ago',
+    isFantasy: false,
+  },
 ];
 
 // =============================================================================
@@ -71,9 +133,9 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       {/* TOP BAR */}
-      <div className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4">
+      <header className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4 lg:px-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-sm overflow-hidden aspect-avatar">
+          <div className="w-8 h-8 rounded-sm overflow-hidden">
             <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
           </div>
           <span className="text-base font-bold text-white uppercase tracking-wider">
@@ -88,261 +150,334 @@ const Landing = () => {
             Terms
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* MAIN CONTENT - Two Column Split */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
-        {/* LEFT COLUMN - Live Scoreboard Preview */}
-        <div className="bg-[#0a0a0a] border-r border-[#333] p-6 lg:p-8 flex flex-col">
-          {/* Brand Header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Trophy className="w-5 h-5 text-[#0057B8]" />
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                Live Scores
-              </span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wide">
-              Fantasy Drum Corps
-            </h1>
-            <h2 className="text-lg md:text-xl font-bold text-[#0057B8]">
-              2025 Season
-            </h2>
-            <p className="text-base text-gray-500 mt-2">
-              The season starts now.
-            </p>
-          </div>
+      {/* MAIN CONTENT - Three Column Layout */}
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-0">
 
-          {/* Live Scoreboard - Mobile Cards / Desktop Table */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="bg-[#1a1a1a] border border-[#333] flex-1 flex flex-col overflow-hidden">
-              {/* Scoreboard Header */}
-              <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  World Class Standings
+          {/* ============================================================= */}
+          {/* MAIN COLUMN - News Feed (Left/Center) */}
+          {/* ============================================================= */}
+          <div className="lg:col-span-7 xl:col-span-8 border-r border-[#333] overflow-y-auto scroll-momentum">
+            <div className="p-4 lg:p-6 xl:p-8">
+
+              {/* Section Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <Newspaper className="w-5 h-5 text-[#0057B8]" />
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  News & Analysis
                 </span>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-xs text-green-500 font-bold uppercase">Live</span>
-                </div>
               </div>
 
-              {/* Mobile Card View - Clean, readable stacked layout */}
-              <div className="flex-1 overflow-auto scroll-momentum md:hidden">
-                <div className="divide-y divide-[#333]/50">
-                  {LIVE_SCORES.map((row, idx) => (
-                    <div
-                      key={row.rank}
-                      className={`flex items-center gap-3 px-3 py-3 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
-                    >
-                      {/* Rank Badge */}
-                      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[#222] rounded text-sm font-bold text-gray-400 tabular-nums">
-                        {row.rank}
+              {/* HERO STORY */}
+              <article className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
+                {/* Hero Image Placeholder */}
+                <div className="aspect-video bg-gradient-to-br from-[#0057B8]/20 to-[#1a1a1a] flex items-center justify-center">
+                  <Trophy className="w-16 h-16 text-[#0057B8]/40" />
+                </div>
+
+                {/* Hero Content */}
+                <div className="p-4 lg:p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="px-2 py-1 bg-[#0057B8] text-white text-xs font-bold uppercase tracking-wider">
+                      {HERO_STORY.category}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <Clock className="w-3 h-3" />
+                      {HERO_STORY.timestamp}
+                    </span>
+                  </div>
+
+                  <h1 className="text-xl lg:text-2xl xl:text-3xl font-black text-white leading-tight mb-3">
+                    {HERO_STORY.title}
+                  </h1>
+
+                  <p className="text-base text-gray-400 leading-relaxed mb-4">
+                    {HERO_STORY.summary}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">By {HERO_STORY.author}</span>
+                    <button className="flex items-center gap-1 text-[#0057B8] text-sm font-bold hover:text-[#0066d6] transition-colors">
+                      Read More
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              {/* NEWS FEED */}
+              <div className="space-y-4">
+                {NEWS_FEED.map((story) => (
+                  <article
+                    key={story.id}
+                    className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 hover:border-[#444] transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Story Thumbnail */}
+                      <div className="hidden sm:flex flex-shrink-0 w-20 h-20 bg-[#222] border border-[#333] rounded-sm items-center justify-center">
+                        {story.isFantasy ? (
+                          <Flame className="w-8 h-8 text-orange-500/50" />
+                        ) : (
+                          <Trophy className="w-8 h-8 text-[#0057B8]/50" />
+                        )}
                       </div>
 
-                      {/* Corps Info */}
+                      {/* Story Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="text-base text-white font-medium truncate">{row.corps}</div>
-                        <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 tabular-nums">
-                          <span>GE {row.ge.toFixed(2)}</span>
-                          <span>VIS {row.visual.toFixed(2)}</span>
-                          <span>MUS {row.music.toFixed(2)}</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
+                            story.isFantasy
+                              ? 'bg-orange-500/20 text-orange-400'
+                              : 'bg-[#0057B8]/20 text-[#0057B8]'
+                          }`}>
+                            {story.category}
+                          </span>
+                          <span className="text-xs text-gray-600">{story.timestamp}</span>
                         </div>
-                      </div>
 
-                      {/* Score + Change */}
-                      <div className="flex-shrink-0 text-right">
-                        <div className="text-lg text-white font-bold tabular-nums">{row.score.toFixed(3)}</div>
-                        <div className={`text-xs tabular-nums ${
-                          row.change.startsWith('+') ? 'text-green-500' :
-                          row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
+                        <h2 className={`text-base lg:text-lg font-bold leading-snug mb-1 ${
+                          story.isFantasy ? 'text-orange-50' : 'text-white'
                         }`}>
-                          {row.change}
-                        </div>
+                          {story.title}
+                        </h2>
+
+                        <p className="text-sm text-gray-500 line-clamp-2">
+                          {story.summary}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </article>
+                ))}
               </div>
 
-              {/* Desktop Table View - Full data density */}
-              <div className="flex-1 overflow-auto scroll-momentum hidden md:block">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-[#1a1a1a] border-b border-[#333]">
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-left w-10">RK</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">Corps</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">GE</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">VIS</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-16">MUS</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-right w-20">Total</th>
-                      <th className="px-2 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-14">+/-</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {LIVE_SCORES.map((row, idx) => (
-                      <tr
-                        key={row.rank}
-                        className={`border-b border-[#333]/50 h-11 ${idx % 2 === 1 ? 'bg-white/[0.02]' : ''}`}
-                      >
-                        <td className="px-2 py-1">
-                          <span className="inline-flex items-center justify-center w-7 h-7 bg-[#222] text-sm font-bold text-gray-400 tabular-nums">
-                            {row.rank}
-                          </span>
-                        </td>
-                        <td className="px-2 py-1 text-base text-white font-medium">{row.corps}</td>
-                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.ge.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.visual.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-sm text-gray-400 tabular-nums text-right">{row.music.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-base text-white font-bold tabular-nums text-right">{row.score.toFixed(3)}</td>
-                        <td className="px-2 py-1 text-center">
-                          <span className={`text-sm tabular-nums ${
-                            row.change.startsWith('+') ? 'text-green-500' :
-                            row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
-                          }`}>
-                            {row.change}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Stats Strip */}
-            <div className="mt-4 grid grid-cols-3 gap-px bg-[#333]">
-              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
-                <div className="text-lg md:text-xl font-bold text-white tabular-nums">2,847</div>
-                <div className="text-xs text-gray-500 uppercase">Directors</div>
-              </div>
-              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
-                <div className="text-lg md:text-xl font-bold text-white tabular-nums">156</div>
-                <div className="text-xs text-gray-500 uppercase">Leagues</div>
-              </div>
-              <div className="bg-[#1a1a1a] p-3 md:p-4 text-center">
-                <div className="text-lg md:text-xl font-bold text-white tabular-nums">Week 4</div>
-                <div className="text-xs text-gray-500 uppercase">Current</div>
+              {/* Load More */}
+              <div className="mt-6 text-center">
+                <button className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all">
+                  Load More Stories
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* RIGHT COLUMN - Login Box */}
-        <div className="bg-[#111] flex items-center justify-center p-6 lg:p-8">
-          <div className="w-full max-w-sm">
-            {/* Login Card */}
-            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-              {/* Card Header */}
-              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Director Login
-                </h3>
-              </div>
+          {/* ============================================================= */}
+          {/* SIDEBAR - Right Column */}
+          {/* ============================================================= */}
+          <div className="lg:col-span-5 xl:col-span-4 bg-[#111] overflow-y-auto scroll-momentum">
+            <div className="p-4 lg:p-5 space-y-5">
 
-              {/* Card Body */}
-              <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                {/* Error Message */}
-                {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-red-300">{error}</p>
-                  </div>
-                )}
+              {/* ------------------------------------------------------- */}
+              {/* COMPACT LOGIN/REGISTER WIDGET */}
+              {/* ------------------------------------------------------- */}
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                {/* Card Header */}
+                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5" />
+                    Director Login
+                  </h3>
+                </div>
 
-                {/* Email Input */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                    Email
-                  </label>
+                {/* Card Body - Compact Form */}
+                <form onSubmit={handleSubmit} className="p-3 space-y-3">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-red-300">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Email Input */}
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                     <input
                       type="email"
-                      placeholder="director@example.com"
+                      placeholder="Email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={loading}
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
                   </div>
-                </div>
 
-                {/* Password Input */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                    Password
-                  </label>
+                  {/* Password Input */}
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                     <input
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
-                      className="w-full h-12 pl-11 pr-4 bg-[#0a0a0a] border border-[#333] rounded-sm text-base text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                     />
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                    >
+                      {loading ? '...' : 'Sign In'}
+                    </button>
+                    <Link
+                      to="/register"
+                      className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-sm"
+                    >
+                      Register
+                    </Link>
+                  </div>
+
+                  {/* Footer Links */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                    <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
+                      Forgot password?
+                    </Link>
+                    <span>Free to play</span>
+                  </div>
+                </form>
+              </div>
+
+              {/* ------------------------------------------------------- */}
+              {/* FANTASY TRENDING MODULE */}
+              {/* ------------------------------------------------------- */}
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                {/* Header */}
+                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                    <Flame className="w-3.5 h-3.5" />
+                    Fantasy Trending
+                  </h3>
+                  <span className="text-xs text-gray-500">24h</span>
+                </div>
+
+                {/* Trending List */}
+                <div className="divide-y divide-[#333]/50">
+                  {TRENDING_PLAYERS.map((player, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-500 tabular-nums">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm text-white">{player.name}</span>
+                      </div>
+                      <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${
+                        player.direction === 'up' ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {player.direction === 'up' ? (
+                          <TrendingUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <TrendingDown className="w-3.5 h-3.5" />
+                        )}
+                        {player.change}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Footer */}
+                <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
+                  <button className="text-xs text-orange-400 hover:text-orange-300 font-bold transition-colors flex items-center gap-1">
+                    View All Trends
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ------------------------------------------------------- */}
+              {/* LIVE SCORE TICKER */}
+              {/* ------------------------------------------------------- */}
+              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                {/* Header */}
+                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5 text-[#0057B8]" />
+                    Live Scores
+                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-green-500 font-bold uppercase">Live</span>
                   </div>
                 </div>
 
-                {/* Sign In Button - 48px min height for touch */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 bg-[#0057B8] text-white font-bold text-base uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
-                >
-                  {loading ? (
-                    'Signing in...'
-                  ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </>
-                  )}
-                </button>
-
-                {/* Divider */}
-                <div className="flex items-center gap-3 py-1">
-                  <div className="flex-1 h-px bg-[#333]" />
-                  <span className="text-xs text-gray-500 uppercase">or</span>
-                  <div className="flex-1 h-px bg-[#333]" />
+                {/* Score List */}
+                <div className="divide-y divide-[#333]/50 max-h-80 overflow-y-auto scroll-momentum">
+                  {LIVE_SCORES.map((row) => (
+                    <div
+                      key={row.rank}
+                      className="flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold text-gray-500 tabular-nums rounded-sm">
+                          {row.rank}
+                        </span>
+                        <span className="text-sm text-white truncate max-w-[140px]">{row.corps}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white tabular-nums">
+                          {row.score.toFixed(3)}
+                        </span>
+                        <span className={`text-xs font-bold tabular-nums w-10 text-right ${
+                          row.change.startsWith('+') ? 'text-green-500' :
+                          row.change.startsWith('-') ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {row.change}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Register Link - 48px min height for touch */}
-                <Link
-                  to="/register"
-                  className="w-full h-12 border border-[#333] text-gray-400 font-bold text-base uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white active:bg-white/5 transition-all duration-150 press-feedback rounded-sm"
-                >
-                  Create Account
-                </Link>
-              </form>
-
-              {/* Card Footer */}
-              <div className="px-4 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
-                <Link to="/forgot-password" className="inline-flex items-center px-2 py-2.5 -ml-2 min-h-touch text-sm text-gray-500 hover:text-[#0057B8] active:text-[#0066d6] transition-colors press-feedback">
-                  Forgot password?
-                </Link>
+                {/* Footer */}
+                <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
+                  <button className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold transition-colors flex items-center gap-1">
+                    Full Standings
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Footer Note */}
-            <p className="mt-4 text-center text-xs text-gray-600">
-              Free to play. No credit card required.
-            </p>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* BOTTOM BAR - Taller for mobile readability */}
-      <div className="h-10 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-center px-4">
-        <span className="text-xs text-gray-600 text-center">
-          © 2025 marching.art — Fantasy Sports for the Marching Arts
-        </span>
-      </div>
+      {/* ============================================================= */}
+      {/* GLOBAL FOOTER - Stats Bar */}
+      {/* ============================================================= */}
+      <footer className="bg-[#1a1a1a] border-t border-[#333]">
+        {/* Stats Strip */}
+        <div className="flex items-center justify-center gap-8 lg:gap-12 py-3 px-4 border-b border-[#333]">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-[#0057B8]" />
+            <span className="text-sm font-bold text-white tabular-nums">2,847</span>
+            <span className="text-xs text-gray-500 uppercase">Directors</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-[#0057B8]" />
+            <span className="text-sm font-bold text-white tabular-nums">156</span>
+            <span className="text-xs text-gray-500 uppercase">Leagues</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#0057B8]" />
+            <span className="text-sm font-bold text-white tabular-nums">Week 4</span>
+            <span className="text-xs text-gray-500 uppercase">Current</span>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="flex items-center justify-center py-2.5 px-4">
+          <span className="text-xs text-gray-600 text-center">
+            © 2025 marching.art — Fantasy Sports for the Marching Arts
+          </span>
+        </div>
+      </footer>
     </div>
   );
 };
