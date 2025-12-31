@@ -454,13 +454,12 @@ const Leagues = () => {
     }
   };
 
-  // If league selected, show office view
+  // If league selected, show the enhanced LeagueDetailView
   if (selectedLeague) {
     return (
-      <LeagueOfficeView
+      <LeagueDetailView
         league={selectedLeague}
         userProfile={userProfile}
-        userId={user?.uid}
         onBack={() => setSelectedLeague(null)}
         onLeave={() => handleLeaveLeague(selectedLeague.id)}
       />
