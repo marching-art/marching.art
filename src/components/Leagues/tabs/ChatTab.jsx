@@ -1,7 +1,7 @@
-// ChatTab - Enhanced league chat with timestamps and reactions
+// ChatTab - Enhanced league chat with timestamps, reactions, and Commissioner badge
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, Heart, ThumbsUp, Flame, Trophy, Clock } from 'lucide-react';
+import { MessageSquare, Send, Heart, ThumbsUp, Flame, Trophy, Clock, Crown } from 'lucide-react';
 import { postLeagueMessage } from '../../../firebase/functions';
 import toast from 'react-hot-toast';
 
@@ -13,7 +13,7 @@ const REACTIONS = [
   { id: 'trophy', emoji: '🏆', icon: Trophy }
 ];
 
-const ChatTab = ({ league, messages, userProfile, memberProfiles }) => {
+const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner = false }) => {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
@@ -178,14 +178,26 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles }) => {
                       className={`px-4 py-2 rounded-2xl ${
                         isOwn
                           ? 'bg-purple-500/20 border border-purple-500/30 rounded-br-sm'
-                          : 'bg-charcoal-800/50 border border-cream-500/10 rounded-bl-sm'
+                          : item.userId === league?.creatorId
+                            ? 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/30 rounded-bl-sm'
+                            : 'bg-charcoal-800/50 border border-cream-500/10 rounded-bl-sm'
                       }`}
                     >
-                      {/* Sender name (for other users) */}
+                      {/* Sender name (for other users) - with Commissioner badge */}
                       {!isOwn && (
-                        <p className="text-xs font-display font-semibold text-purple-400 mb-1">
-                          @{getDisplayName(item.userId)}
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className={`text-xs font-display font-semibold ${
+                            item.userId === league?.creatorId ? 'text-yellow-400' : 'text-purple-400'
+                          }`}>
+                            @{getDisplayName(item.userId)}
+                          </p>
+                          {item.userId === league?.creatorId && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-yellow-500/30 to-amber-500/30 border border-yellow-500/50 text-yellow-400 text-[10px] font-display font-bold">
+                              <Crown className="w-2.5 h-2.5" />
+                              Commish
+                            </span>
+                          )}
+                        </div>
                       )}
 
                       {/* Message text */}
