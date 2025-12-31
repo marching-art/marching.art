@@ -973,7 +973,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
                 corpsName, currentYear.toString(), caption, historicalData
               );
 
-              if (currentYearDataPoints >= 2) {
+              if (currentYearDataPoints >= 3) {
                 // Use current year data for regression (enough scraped data exists)
                 baseCaptionScore = getRealisticCaptionScore(
                   corpsName,
