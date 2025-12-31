@@ -14,13 +14,14 @@ let model = null;
 
 /**
  * Initialize the Gemini AI client
- * Uses GEMINI_API_KEY from environment variables
+ * Uses GOOGLE_GENERATIVE_AI_API_KEY from environment variables
+ * (Consistent with Vercel environment variable naming)
  */
 function initializeGemini() {
   if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is not set");
+      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set");
     }
     genAI = new GoogleGenerativeAI(apiKey);
 
