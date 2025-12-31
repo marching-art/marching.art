@@ -130,9 +130,22 @@ function HeroStory({ story, onClick }) {
       className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden cursor-pointer hover:border-[#444] transition-colors"
       onClick={() => onClick?.(story)}
     >
-      {/* Hero Image Placeholder */}
-      <div className="aspect-video bg-gradient-to-br from-[#0057B8]/20 to-[#1a1a1a] flex items-center justify-center">
-        <Icon className="w-16 h-16 text-[#0057B8]/40" />
+      {/* Hero Image - Uses Cloudinary optimized URL or placeholder */}
+      <div className="aspect-video bg-gradient-to-br from-[#0057B8]/20 to-[#1a1a1a] relative overflow-hidden">
+        {story.imageUrl ? (
+          <img
+            src={story.imageUrl}
+            alt={story.headline}
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="w-16 h-16 text-[#0057B8]/40" />
+          </div>
+        )}
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent" />
       </div>
 
       {/* Hero Content */}

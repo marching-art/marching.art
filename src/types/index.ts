@@ -635,6 +635,8 @@ export interface NewsEntry {
   fantasyImpact: string;
   trendingCorps: TrendingCorps[];
   isPublished: boolean;
+  imageUrl?: string;
+  imageIsPlaceholder?: boolean;
   metadata?: {
     eventName?: string;
     location?: string;
@@ -644,6 +646,7 @@ export interface NewsEntry {
     showCount?: number;
     seasonId?: string;
     generatedBy?: string;
+    imagePublicId?: string;
   };
 }
 

@@ -7,6 +7,7 @@
 
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
 const { logger } = require("firebase-functions/v2");
+const { getContextualPlaceholder, uploadFromUrl } = require("./mediaService");
 
 // Initialize Gemini client (lazy loaded)
 let genAI = null;
@@ -292,8 +293,110 @@ Generate fantasy-specific insights focusing on lineup optimization and trending 
   }
 }
 
+/**
+ * Get an optimized image URL for a news article
+ * Uses contextual placeholders based on article content
+ *
+ * @param {Object} options - Image options
+ * @param {string} options.headline - Article headline for context matching
+ * @param {string} options.category - News category (dci, fantasy, analysis)
+ * @param {string} options.imageUrl - Optional source image URL to upload
+ * @returns {Promise<Object>} Image result with URL
+ */
+async function getArticleImage({ headline, category, imageUrl }) {
+  try {
+    // If a source image URL is provided, upload it to Cloudinary
+    if (imageUrl) {
+      logger.info("Uploading article image to Cloudinary", { imageUrl });
+
+      const uploadResult = await uploadFromUrl(imageUrl, {
+        folder: "marching-art/news",
+        category,
+        headline,
+      });
+
+      return {
+        url: uploadResult.url,
+        isPlaceholder: uploadResult.isPlaceholder,
+        publicId: uploadResult.publicId || null,
+      };
+    }
+
+    // No source image - return contextual placeholder
+    logger.info("Using contextual placeholder for article image");
+    const placeholderUrl = getContextualPlaceholder({
+      newsCategory: category,
+      headline,
+    });
+
+    return {
+      url: placeholderUrl,
+      isPlaceholder: true,
+      publicId: null,
+    };
+  } catch (error) {
+    logger.error("Error getting article image:", error);
+
+    // Fallback to placeholder on any error
+    return {
+      url: getContextualPlaceholder({ newsCategory: category, headline }),
+      isPlaceholder: true,
+      publicId: null,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Generate complete news article with image
+ * Combines Gemini text generation with MediaService image handling
+ *
+ * @param {Object} scoreData - DCI score data
+ * @param {Object} options - Additional options
+ * @param {string} options.imageUrl - Optional source image URL
+ * @returns {Promise<Object>} Complete article with text and image
+ */
+async function generateCompleteArticle(scoreData, options = {}) {
+  try {
+    // Generate text content
+    const textResult = await generateNightlyRecap(scoreData);
+
+    if (!textResult.success) {
+      return textResult;
+    }
+
+    // Get article image
+    const imageResult = await getArticleImage({
+      headline: textResult.content.headline,
+      category: "dci",
+      imageUrl: options.imageUrl,
+    });
+
+    // Combine text and image
+    return {
+      success: true,
+      content: {
+        ...textResult.content,
+        imageUrl: imageResult.url,
+        imageIsPlaceholder: imageResult.isPlaceholder,
+        imagePublicId: imageResult.publicId,
+      },
+      generatedAt: textResult.generatedAt,
+    };
+  } catch (error) {
+    logger.error("Error generating complete article:", error);
+    return {
+      success: false,
+      error: error.message,
+      content: null,
+    };
+  }
+}
+
 module.exports = {
   generateNightlyRecap,
   generateFantasyRecap,
+  generateCompleteArticle,
+  getArticleImage,
   initializeGemini,
 };

@@ -9,7 +9,7 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { generateNightlyRecap, generateFantasyRecap } = require("../helpers/newsGeneration");
+const { generateNightlyRecap, generateFantasyRecap, getArticleImage } = require("../helpers/newsGeneration");
 
 // Pub/Sub topic for news generation requests
 const NEWS_GENERATION_TOPIC = "news-generation-topic";
@@ -237,6 +237,12 @@ async function fetchPreviousScores(db, year) {
 async function saveToNewsHub(db, { category, date, content, metadata, offSeasonDay }) {
   const newsHubRef = db.collection("news_hub");
 
+  // Get optimized article image
+  const imageResult = await getArticleImage({
+    headline: content.headline,
+    category,
+  });
+
   const newsEntry = {
     category,
     date: date instanceof Date ? date : new Date(date),
@@ -246,10 +252,13 @@ async function saveToNewsHub(db, { category, date, content, metadata, offSeasonD
     fullStory: content.fullStory,
     fantasyImpact: content.fantasyImpact,
     trendingCorps: content.trendingCorps || [],
+    imageUrl: imageResult.url,
+    imageIsPlaceholder: imageResult.isPlaceholder,
     metadata: {
       ...metadata,
       offSeasonDay,
       generatedBy: "gemini-1.5-flash",
+      imagePublicId: imageResult.publicId || null,
     },
     isPublished: true,
   };
@@ -260,6 +269,8 @@ async function saveToNewsHub(db, { category, date, content, metadata, offSeasonD
     docId: docRef.id,
     category,
     headline: content.headline,
+    imageUrl: imageResult.url,
+    isPlaceholder: imageResult.isPlaceholder,
   });
 
   // Cleanup old entries (keep last 50)
