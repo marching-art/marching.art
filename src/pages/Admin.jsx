@@ -614,6 +614,7 @@ const UserManagementTab = () => {
 // Background Jobs Tab
 const BackgroundJobsTab = ({ callAdminFunction }) => {
   const [jobLoading, setJobLoading] = useState(null);
+  const [testEmail, setTestEmail] = useState('');
 
   const jobs = [
     {
@@ -642,6 +643,20 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
     },
   ];
 
+  const handleSendTestEmail = async () => {
+    if (!testEmail.trim()) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    setJobLoading('testEmail');
+    try {
+      await callAdminFunction('sendTestEmail', { email: testEmail.trim() });
+      setTestEmail('');
+    } finally {
+      setJobLoading(null);
+    }
+  };
+
   const handleRunJob = async (jobId) => {
     if (!window.confirm(`Run ${jobs.find(j => j.id === jobId)?.name}?`)) {
       return;
@@ -656,39 +671,83 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
   };
 
   return (
-    <div className="space-y-3">
-      {jobs.map((job) => (
-        <div key={job.id} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="w-10 h-10 bg-[#222] rounded-lg flex items-center justify-center flex-shrink-0">
-                <job.icon className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-white text-sm">{job.name}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{job.description}</p>
-              </div>
+    <div className="space-y-4">
+      {/* Test Email Section */}
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
+        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Test Email</h2>
+        </div>
+        <div className="p-4">
+          <p className="text-sm text-gray-400 mb-3">
+            Send a test welcome email to verify Brevo integration is working.
+          </p>
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="email"
+                placeholder="test@example.com"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
+              />
             </div>
             <button
-              onClick={() => handleRunJob(job.id)}
-              disabled={jobLoading === job.id}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-xs rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              onClick={handleSendTestEmail}
+              disabled={jobLoading === 'testEmail' || !testEmail.trim()}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold text-sm rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {jobLoading === job.id ? (
+              {jobLoading === 'testEmail' ? (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  Running...
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Sending...
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5" />
-                  Run
+                  <Mail className="w-4 h-4" />
+                  Send Test
                 </>
               )}
             </button>
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Background Jobs */}
+      <div className="space-y-3">
+        {jobs.map((job) => (
+          <div key={job.id} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-10 h-10 bg-[#222] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <job.icon className="w-5 h-5 text-yellow-500" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-white text-sm">{job.name}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{job.description}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleRunJob(job.id)}
+                disabled={jobLoading === job.id}
+                className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-xs rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              >
+                {jobLoading === job.id ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5" />
+                    Run
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
