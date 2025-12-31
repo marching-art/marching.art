@@ -2,7 +2,7 @@ const { getDb, dataNamespaceParam } = require("../config");
 const { logger } = require("firebase-functions/v2");
 const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
-const { shuffleArray } = require("./season");
+const { shuffleArray, getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
 const { awardCorpsCoin } = require("../callable/economy");
 
@@ -162,7 +162,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
   logger.info(`Processing and archiving scores for Off-Season Day: ${scoredDay}`);
 
   const historicalData = await fetchHistoricalData(seasonData.dataDocId);
-  const dayEventData = seasonData.events.find((e) => e.offSeasonDay === scoredDay);
+  // Fetch day data from subcollection instead of season document
+  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
   const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", seasonData.seasonUid);
   const profilesSnapshot = await profilesQuery.get();
@@ -875,7 +876,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   }
   // --- END: CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
 
-  const dayEventData = seasonData.events.find(e => e.offSeasonDay === scoredDay);
+  // Fetch day data from subcollection instead of season document
+  const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
   if (!dayEventData || !dayEventData.shows || dayEventData.shows.length === 0) {
     logger.info(`No shows for day ${scoredDay}. Nothing to process.`);

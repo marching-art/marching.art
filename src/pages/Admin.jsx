@@ -641,6 +641,12 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
       description: 'Manually trigger daily live season score processing',
       icon: RefreshCw,
     },
+    {
+      id: 'refreshLiveSeasonSchedule',
+      name: 'Refresh Live Season Schedule',
+      description: 'Scrape DCI events page and update the live season schedule with new shows',
+      icon: Calendar,
+    },
   ];
 
   const handleSendTestEmail = async () => {
