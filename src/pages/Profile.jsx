@@ -4,16 +4,17 @@
 // Dense stats strip, minimal header, trophy case grid
 // Laws: No glow, compact spacing, tables over cards
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
-  Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart
+  Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
+  Mail, Bell, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
 
@@ -96,11 +97,106 @@ const seasonHistoryColumns = [
 ];
 
 // =============================================================================
+// TOGGLE COMPONENT
+// =============================================================================
+
+const Toggle = ({ checked, onChange, label, description }) => (
+  <label className="flex items-center justify-between py-3 cursor-pointer group">
+    <div className="flex-1 mr-4">
+      <p className="text-sm text-white group-hover:text-gray-200">{label}</p>
+      {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
+    </div>
+    <div className="relative">
+      <input
+        type="checkbox"
+        className="sr-only peer"
+        checked={checked}
+        onChange={onChange}
+      />
+      <div className={`
+        w-11 h-6 rounded-full transition-colors
+        ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}
+      `}>
+        <div className={`
+          absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all
+          ${checked ? 'left-[22px]' : 'left-0.5'}
+        `} />
+      </div>
+    </div>
+  </label>
+);
+
+// =============================================================================
 // SETTINGS MODAL
 // =============================================================================
 
 const SettingsModal = ({ user, isOpen, onClose }) => {
   const { signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState('account');
+  const [emailPrefs, setEmailPrefs] = useState({
+    allEmails: true,
+    streakAtRisk: true,
+    streakBroken: true,
+    weeklyDigest: true,
+    lineupReminder: true,
+    leagueActivity: true,
+    milestoneAchieved: true,
+    winBack: true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Load email preferences
+  useEffect(() => {
+    if (isOpen && user) {
+      loadEmailPrefs();
+    }
+  }, [isOpen, user]);
+
+  const loadEmailPrefs = async () => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      const profileSnap = await getDoc(profileRef);
+      if (profileSnap.exists()) {
+        const data = profileSnap.data();
+        const prefs = data.settings?.emailPreferences || {};
+        setEmailPrefs({
+          allEmails: prefs.allEmails ?? true,
+          streakAtRisk: prefs.streakAtRisk ?? true,
+          streakBroken: prefs.streakBroken ?? true,
+          weeklyDigest: prefs.weeklyDigest ?? true,
+          lineupReminder: prefs.lineupReminder ?? true,
+          leagueActivity: prefs.leagueActivity ?? true,
+          milestoneAchieved: prefs.milestoneAchieved ?? true,
+          winBack: prefs.winBack ?? true,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading email prefs:', error);
+    }
+  };
+
+  const updatePref = (key, value) => {
+    setEmailPrefs(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const saveEmailPrefs = async () => {
+    setSaving(true);
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        'settings.emailPreferences': emailPrefs,
+      });
+      toast.success('Email preferences saved');
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error saving email prefs:', error);
+      toast.error('Failed to save preferences');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -117,7 +213,7 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="w-full sm:max-w-sm bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-2xl sm:rounded-lg safe-area-bottom"
+        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-2xl sm:rounded-lg safe-area-bottom max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile only */}
@@ -125,7 +221,7 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
           <div className="w-10 h-1 bg-gray-600 rounded-full" />
         </div>
 
-        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between shrink-0">
           <span className="text-sm font-bold uppercase text-gray-400">Settings</span>
           <button
             onClick={onClose}
@@ -136,38 +232,141 @@ const SettingsModal = ({ user, isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div>
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
-            <div className="text-base text-white font-data">{user?.email || 'Anonymous'}</div>
-          </div>
-
-          <div>
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
-            <div className="text-base text-white">
-              {user?.metadata?.creationTime
-                ? new Date(user.metadata.creationTime).toLocaleDateString()
-                : 'Unknown'}
-            </div>
-          </div>
-
-          <a
-            href="https://buymeacoffee.com/marching.art"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full py-4 min-h-[52px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-base font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
-          >
-            <Heart className="w-5 h-5" />
-            Support marching.art
-          </a>
-
+        {/* Tabs */}
+        <div className="flex border-b border-[#333] shrink-0">
           <button
-            onClick={handleSignOut}
-            className="w-full py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+            onClick={() => setActiveTab('account')}
+            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+              activeTab === 'account'
+                ? 'text-white border-b-2 border-[#0057B8]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
           >
-            <LogOut className="w-5 h-5" />
-            Sign Out
+            Account
           </button>
+          <button
+            onClick={() => setActiveTab('emails')}
+            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+              activeTab === 'emails'
+                ? 'text-white border-b-2 border-[#0057B8]'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            Emails
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === 'account' && (
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
+                <div className="text-base text-white font-data">{user?.email || 'Anonymous'}</div>
+              </div>
+
+              <div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
+                <div className="text-base text-white">
+                  {user?.metadata?.creationTime
+                    ? new Date(user.metadata.creationTime).toLocaleDateString()
+                    : 'Unknown'}
+                </div>
+              </div>
+
+              <a
+                href="https://buymeacoffee.com/marching.art"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 min-h-[52px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-base font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+              >
+                <Heart className="w-5 h-5" />
+                Support marching.art
+              </a>
+
+              <button
+                onClick={handleSignOut}
+                className="w-full py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'emails' && (
+            <div className="p-4">
+              <p className="text-xs text-gray-500 mb-4">
+                Choose which emails you'd like to receive from marching.art
+              </p>
+
+              <div className="space-y-1 divide-y divide-[#333]">
+                <Toggle
+                  label="All Emails"
+                  description="Master toggle for all email communications"
+                  checked={emailPrefs.allEmails}
+                  onChange={(e) => updatePref('allEmails', e.target.checked)}
+                />
+
+                {emailPrefs.allEmails && (
+                  <>
+                    <Toggle
+                      label="Streak Warnings"
+                      description="Alert when your streak is about to expire"
+                      checked={emailPrefs.streakAtRisk}
+                      onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
+                    />
+                    <Toggle
+                      label="Streak Reset"
+                      description="Notification when your streak resets"
+                      checked={emailPrefs.streakBroken}
+                      onChange={(e) => updatePref('streakBroken', e.target.checked)}
+                    />
+                    <Toggle
+                      label="Weekly Digest"
+                      description="Performance summary every Sunday"
+                      checked={emailPrefs.weeklyDigest}
+                      onChange={(e) => updatePref('weeklyDigest', e.target.checked)}
+                    />
+                    <Toggle
+                      label="Lineup Reminders"
+                      description="Reminder before shows"
+                      checked={emailPrefs.lineupReminder}
+                      onChange={(e) => updatePref('lineupReminder', e.target.checked)}
+                    />
+                    <Toggle
+                      label="League Activity"
+                      description="Trade proposals and matchup results"
+                      checked={emailPrefs.leagueActivity}
+                      onChange={(e) => updatePref('leagueActivity', e.target.checked)}
+                    />
+                    <Toggle
+                      label="Milestones"
+                      description="Celebrate streak achievements"
+                      checked={emailPrefs.milestoneAchieved}
+                      onChange={(e) => updatePref('milestoneAchieved', e.target.checked)}
+                    />
+                    <Toggle
+                      label="Re-engagement"
+                      description="We miss you emails"
+                      checked={emailPrefs.winBack}
+                      onChange={(e) => updatePref('winBack', e.target.checked)}
+                    />
+                  </>
+                )}
+              </div>
+
+              {hasChanges && (
+                <button
+                  onClick={saveEmailPrefs}
+                  disabled={saving}
+                  className="w-full mt-4 py-3 bg-[#0057B8] text-white text-sm font-bold rounded hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                >
+                  {saving ? 'Saving...' : 'Save Preferences'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
