@@ -183,7 +183,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.ge?.toFixed(3) || '-'}
+        {row.geScore?.toFixed(3) || row.ge?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -194,7 +194,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.vis?.toFixed(3) || '-'}
+        {row.visualScore?.toFixed(3) || row.vis?.toFixed(3) || '-'}
       </span>
     ),
   },
@@ -205,7 +205,7 @@ const createLatestColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.mus?.toFixed(3) || '-'}
+        {row.musicScore?.toFixed(3) || row.mus?.toFixed(3) || '-'}
       </span>
     ),
   },
