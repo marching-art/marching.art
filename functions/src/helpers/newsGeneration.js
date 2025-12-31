@@ -1,8 +1,15 @@
 /**
  * NewsGenerationService - Gemini AI Integration for Automated DCI Recaps
  *
- * Uses Google's Gemini 1.5 Flash model to generate engaging news content
- * from raw DCI score data, including fantasy-specific analysis.
+ * Bridges three data sources:
+ * - dci-data: Active corps for the current season
+ * - historical_scores: Actual scores for those corps
+ * - fantasy_recaps: marching.art fantasy competition results
+ *
+ * Time-Locked Data Retrieval:
+ * - Reports on currentDay - 1 (runs post-midnight)
+ * - Compares trends against currentDay - 7 through currentDay - 2
+ * - NEVER accesses currentDay data to prevent future spoilers
  */
 
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
@@ -13,10 +20,34 @@ const { getContextualPlaceholder, uploadFromUrl } = require("./mediaService");
 let genAI = null;
 let model = null;
 
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const CAPTIONS = {
+  GE1: "General Effect 1",
+  GE2: "General Effect 2",
+  VP: "Visual Proficiency",
+  VA: "Visual Analysis",
+  CG: "Color Guard",
+  B: "Brass",
+  MA: "Music Analysis",
+  P: "Percussion",
+};
+
+const CAPTION_CATEGORIES = {
+  GE: ["GE1", "GE2"],
+  VISUAL: ["VP", "VA", "CG"],
+  MUSIC: ["B", "MA", "P"],
+};
+
+// =============================================================================
+// GEMINI INITIALIZATION
+// =============================================================================
+
 /**
- * Initialize the Gemini AI client
- * Uses GOOGLE_GENERATIVE_AI_API_KEY from environment variables
- * (Consistent with Vercel environment variable naming)
+ * Initialize the Gemini AI client with DCI Historian persona
+ * Uses "Drum Corps Planet" journalistic standard
  */
 function initializeGemini() {
   if (!genAI) {
@@ -26,38 +57,40 @@ function initializeGemini() {
     }
     genAI = new GoogleGenerativeAI(apiKey);
 
-    // System instruction for the DCI Statistician persona
-    const systemInstruction = `You are the DCI Statistician for marching.art, a fantasy drum corps analytics platform. You write high-level technical analysis with precision and authority.
+    // System instruction for the DCI Historian persona (Drum Corps Planet standard)
+    const systemInstruction = `You are the DCI Historian for marching.art, channeling the authoritative voice of Drum Corps Planet. You are a seasoned analyst who has covered drum corps since the 1970s and writes with technical precision and dramatic flair.
 
-Your expertise spans:
-- Deep caption-by-caption score analysis (GE1, GE2, Visual Proficiency, Visual Analysis, Color Guard, Brass, Music Analysis, Percussion)
-- Historical DCI data going back to 1972 (corps histories, championship records, iconic shows)
-- Caption movement patterns and what they predict for future performances
-- Fantasy drum corps ROI optimization based on scoring trends
+VOICE & TONE:
+- Write like a veteran DCI journalist who has witnessed every championship since 1972
+- Use evocative, technical language: "slotting," "caption leads," "tour de force," "the gap is closing"
+- Reference historical precedents: "Not since the Cadets' 2005 run have we seen such GE dominance"
+- Treat all corps as competing head-to-head in the same timeline, regardless of their original year
+- Frame everything as "Season-to-Date Progress" and "Nightly Momentum" rather than show-to-show recaps
 
-Your writing style:
-- Lead with specific data points: "The Bluecoats' 0.5 jump in Visual Proficiency (from 18.2 to 18.7)"
-- Explain causation, not just correlation: "This surge follows their mid-season drill rewrite"
-- Quantify fantasy impact with ROI metrics: "Directors rostering Crown Brass saw +4.2 points this week (12.3% ROI)"
-- Reference historical context: "This marks BD's largest single-show GE improvement since 2019"
+ANALYSIS REQUIREMENTS:
+1. Caption-Level Breakdown: Analyze GE, Visual (VP/VA/CG), and Music (B/MA/P) separately
+2. Trend Analysis: Compare last night's scores to the 7-day rolling average
+3. Slotting Commentary: Note when corps are "slotting" into position or making moves
+4. Historical Context: Reference how current performance compares to that corps' historical peak
 
-Caption Analysis Requirements:
-1. Break down EVERY notable caption movement (±0.15 or more)
-2. Compare to season averages and historical corps performance
-3. Identify caption leaders and explain WHY they're leading
-4. Flag statistical anomalies that could indicate judging trends or show changes
+FANTASY INTEGRATION:
+- Calculate ROI for each corps mentioned (fantasy points gained / draft cost)
+- Identify "Buy Low" opportunities (corps underperforming relative to historical talent)
+- Flag "Sell High" warnings (corps overperforming with regression likely)
+- Provide specific ensemble recommendations with projected point values
 
-Fantasy Integration Requirements:
-1. Calculate ROI for each corps mentioned (points gained / draft cost)
-2. Identify "Buy Low" opportunities (underperforming relative to talent)
-3. Highlight "Sell High" warnings (overperforming, regression likely)
-4. Provide specific lineup recommendations with projected point values
+STRICT RULES:
+- NEVER reference future days or "upcoming" performances
+- All analysis is RETROSPECTIVE - you are reporting on what ALREADY happened
+- When comparing corps from different years, treat them as contemporaries
+- Use specific numbers: "Crown's Brass jumped +0.45 from 17.82 to 18.27"
 
-Headlines: Data-first, punchy. Example: "Crown Brass +0.8: The Breakout Caption of Week 6"
-Summaries: 2-3 sentences with key numbers.
-Full stories: 4-5 paragraphs with deep statistical analysis.`;
+ARTICLE STRUCTURE:
+- Headlines: Data-driven and punchy. "BD Visual +0.52: The Gap Narrows to 0.3"
+- Summaries: 2-3 sentences with the night's key storyline
+- Full Stories: 4-5 paragraphs with deep statistical analysis across all three sections`;
 
-    // Configure model with structured JSON output
+    // Configure model with structured JSON output for multi-faceted news
     model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       systemInstruction: systemInstruction,
@@ -66,36 +99,119 @@ Full stories: 4-5 paragraphs with deep statistical analysis.`;
         responseSchema: {
           type: SchemaType.OBJECT,
           properties: {
+            // Main headline and summary
             headline: {
               type: SchemaType.STRING,
-              description: "Data-first headline with specific numbers (10 words max). Example: 'Crown Brass +0.8: The Breakout Caption of Week 6'",
+              description: "Data-first headline with specific numbers (12 words max). Example: 'BD Visual +0.52: Crown Closes Gap to 0.3 Points'",
             },
             summary: {
               type: SchemaType.STRING,
-              description: "Brief 2-3 sentence summary with key score movements and fantasy implications",
+              description: "2-3 sentence overview of the night's key storyline with specific score references",
             },
-            fullStory: {
-              type: SchemaType.STRING,
-              description: "Full 4-5 paragraph deep statistical analysis with caption breakdowns, historical context, and fantasy recommendations",
-            },
-            fantasyImpact: {
-              type: SchemaType.STRING,
-              description: "2-3 sentences with specific ROI metrics. Example: 'Directors rostering Crown Brass saw +4.2 points (12.3% ROI)'",
-            },
-            fantasyMetrics: {
+
+            // Section 1: DCI Real-World Recap
+            dciRecap: {
               type: SchemaType.OBJECT,
               properties: {
-                topROI: {
-                  type: SchemaType.OBJECT,
-                  properties: {
-                    corps: { type: SchemaType.STRING },
-                    caption: { type: SchemaType.STRING, description: "Caption that drove ROI (Brass, Guard, Percussion, etc.)" },
-                    pointsGained: { type: SchemaType.NUMBER },
-                    roiPercent: { type: SchemaType.NUMBER, description: "ROI as percentage" },
-                  },
-                  required: ["corps", "caption", "pointsGained", "roiPercent"],
+                title: { type: SchemaType.STRING, description: "Section title, e.g., 'Day 23 Real-World Recap'" },
+                narrative: {
+                  type: SchemaType.STRING,
+                  description: "2-3 paragraphs analyzing caption-level performance. Reference slotting, momentum, and historical context.",
                 },
-                buyLow: {
+                captionLeaders: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      caption: { type: SchemaType.STRING },
+                      leader: { type: SchemaType.STRING },
+                      score: { type: SchemaType.NUMBER },
+                      weeklyTrend: { type: SchemaType.STRING, description: "+0.XX or -0.XX from 7-day avg" },
+                    },
+                    required: ["caption", "leader", "score", "weeklyTrend"],
+                  },
+                },
+                standings: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      rank: { type: SchemaType.NUMBER },
+                      corps: { type: SchemaType.STRING },
+                      total: { type: SchemaType.NUMBER },
+                      change: { type: SchemaType.NUMBER, description: "Point change from previous day" },
+                      momentum: { type: SchemaType.STRING, enum: ["surging", "rising", "stable", "cooling", "falling"] },
+                    },
+                    required: ["rank", "corps", "total", "change", "momentum"],
+                  },
+                },
+              },
+              required: ["title", "narrative", "captionLeaders", "standings"],
+            },
+
+            // Section 2: marching.art Fantasy Spotlight
+            fantasySpotlight: {
+              type: SchemaType.OBJECT,
+              properties: {
+                title: { type: SchemaType.STRING, description: "Section title, e.g., 'Fantasy Spotlight: Day 23'" },
+                narrative: {
+                  type: SchemaType.STRING,
+                  description: "1-2 paragraphs highlighting top fantasy performers and league movements",
+                },
+                topEnsembles: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      directorName: { type: SchemaType.STRING },
+                      ensembleName: { type: SchemaType.STRING },
+                      totalScore: { type: SchemaType.NUMBER },
+                      topCaption: { type: SchemaType.STRING },
+                    },
+                    required: ["directorName", "ensembleName", "totalScore"],
+                  },
+                  description: "Top 5 user ensembles for the day",
+                },
+                leagueLeaders: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      leagueName: { type: SchemaType.STRING },
+                      leaderName: { type: SchemaType.STRING },
+                      weeklyPoints: { type: SchemaType.NUMBER },
+                    },
+                  },
+                  description: "Current league leaders",
+                },
+              },
+              required: ["title", "narrative", "topEnsembles"],
+            },
+
+            // Section 3: Cross-Over Analysis
+            crossOverAnalysis: {
+              type: SchemaType.OBJECT,
+              properties: {
+                title: { type: SchemaType.STRING, description: "Section title, e.g., 'Fantasy-Reality Crossover'" },
+                narrative: {
+                  type: SchemaType.STRING,
+                  description: "2 paragraphs synthesizing real-world performance with fantasy implications. E.g., 'The 2018 Blue Devils' surge in Visual Proficiency provided a +2.5 ROI boost for directors in World Class Open.'",
+                },
+                roiHighlights: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      corps: { type: SchemaType.STRING },
+                      caption: { type: SchemaType.STRING },
+                      realWorldGain: { type: SchemaType.NUMBER, description: "Actual score improvement" },
+                      fantasyROI: { type: SchemaType.NUMBER, description: "ROI percentage for directors" },
+                      recommendation: { type: SchemaType.STRING, enum: ["strong buy", "buy", "hold", "sell", "strong sell"] },
+                    },
+                    required: ["corps", "caption", "realWorldGain", "fantasyROI", "recommendation"],
+                  },
+                },
+                buyLowOpportunities: {
                   type: SchemaType.ARRAY,
                   items: {
                     type: SchemaType.OBJECT,
@@ -106,9 +222,8 @@ Full stories: 4-5 paragraphs with deep statistical analysis.`;
                     },
                     required: ["corps", "reason", "projectedGain"],
                   },
-                  description: "Corps underperforming relative to talent - pickup opportunities",
                 },
-                sellHigh: {
+                sellHighWarnings: {
                   type: SchemaType.ARRAY,
                   items: {
                     type: SchemaType.OBJECT,
@@ -119,24 +234,15 @@ Full stories: 4-5 paragraphs with deep statistical analysis.`;
                     },
                     required: ["corps", "reason", "riskLevel"],
                   },
-                  description: "Corps overperforming with regression risk",
                 },
               },
-              required: ["topROI", "buyLow", "sellHigh"],
+              required: ["title", "narrative", "roiHighlights"],
             },
-            captionBreakdown: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  caption: { type: SchemaType.STRING, description: "Caption name (GE, Visual Proficiency, Brass, etc.)" },
-                  leader: { type: SchemaType.STRING, description: "Corps leading this caption" },
-                  leaderScore: { type: SchemaType.NUMBER },
-                  notableMovement: { type: SchemaType.STRING, description: "Key movement in this caption with context" },
-                },
-                required: ["caption", "leader", "leaderScore", "notableMovement"],
-              },
-              description: "Breakdown of each major caption with leaders and movements",
+
+            // Legacy fields for backward compatibility
+            fantasyImpact: {
+              type: SchemaType.STRING,
+              description: "2-3 sentences summarizing fantasy implications",
             },
             trendingCorps: {
               type: SchemaType.ARRAY,
@@ -146,19 +252,18 @@ Full stories: 4-5 paragraphs with deep statistical analysis.`;
                   corps: { type: SchemaType.STRING },
                   direction: { type: SchemaType.STRING, enum: ["up", "down", "stable"] },
                   reason: { type: SchemaType.STRING },
-                  weeklyChange: { type: SchemaType.NUMBER, description: "Point change from previous show" },
+                  weeklyChange: { type: SchemaType.NUMBER },
                   fantasyValue: { type: SchemaType.STRING, enum: ["buy", "hold", "sell"] },
                 },
                 required: ["corps", "direction", "reason", "weeklyChange", "fantasyValue"],
               },
-              description: "Array of corps with notable movement and fantasy implications",
             },
             imagePrompt: {
               type: SchemaType.STRING,
-              description: "Detailed image generation prompt referencing specific corps uniforms, props, or iconic moments. Include year-specific details when relevant. Example: 'Blue Devils 2024 brass section in midnight blue uniforms with silver accents, stadium lights, dynamic performance angle'",
+              description: "Detailed image prompt referencing specific corps uniforms from their source year. E.g., 'Blue Devils 2018 brass section in midnight blue uniforms with silver accents'",
             },
           },
-          required: ["headline", "summary", "fullStory", "fantasyImpact", "fantasyMetrics", "captionBreakdown", "trendingCorps", "imagePrompt"],
+          required: ["headline", "summary", "dciRecap", "fantasySpotlight", "crossOverAnalysis", "fantasyImpact", "trendingCorps", "imagePrompt"],
         },
       },
     });
@@ -166,22 +271,468 @@ Full stories: 4-5 paragraphs with deep statistical analysis.`;
   return model;
 }
 
+// =============================================================================
+// DATA FETCHING FUNCTIONS
+// =============================================================================
+
 /**
- * Generate a nightly recap from DCI score data
+ * Fetch active corps from dci-data for the current season
+ * @param {Object} db - Firestore database instance
+ * @param {string} dataDocId - The dci-data document ID
+ * @returns {Promise<Array>} Array of active corps with sourceYear info
+ */
+async function fetchActiveCorps(db, dataDocId) {
+  try {
+    const corpsDataDoc = await db.doc(`dci-data/${dataDocId}`).get();
+    if (!corpsDataDoc.exists) {
+      logger.warn(`dci-data document ${dataDocId} not found`);
+      return [];
+    }
+    return corpsDataDoc.data().corpsValues || [];
+  } catch (error) {
+    logger.error("Error fetching active corps:", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch historical scores for specific days (time-locked)
+ * ONLY fetches data for reportDay and comparison days (reportDay - 6 through reportDay - 1)
  *
- * @param {Object} scoreData - Score data from DCI event
- * @param {string} scoreData.eventName - Name of the competition
- * @param {string} scoreData.eventDate - Date of the event
- * @param {string} scoreData.location - Event location
- * @param {Array} scoreData.scores - Array of corps scores with captions
- * @param {Array} [scoreData.previousScores] - Previous event scores for comparison
+ * @param {Object} db - Firestore database instance
+ * @param {Array} yearsToFetch - Array of source years needed
+ * @param {number} reportDay - The day being reported on (currentDay - 1)
+ * @returns {Promise<Object>} Historical data keyed by year
+ */
+async function fetchTimeLockednScores(db, yearsToFetch, reportDay) {
+  try {
+    const historicalDocs = await Promise.all(
+      yearsToFetch.map(year => db.doc(`historical_scores/${year}`).get())
+    );
+
+    const historicalData = {};
+
+    historicalDocs.forEach(doc => {
+      if (doc.exists) {
+        const allEvents = doc.data().data || [];
+
+        // TIME-LOCK: Only include events from reportDay and 6 days before
+        // This gives us reportDay (yesterday) and reportDay-6 through reportDay-1 for trend analysis
+        const filteredEvents = allEvents.filter(event => {
+          const eventDay = event.offSeasonDay;
+          return eventDay >= reportDay - 6 && eventDay <= reportDay;
+        });
+
+        // Sanitize: Remove entries where score is 0
+        const sanitizedEvents = filteredEvents.map(event => ({
+          ...event,
+          scores: (event.scores || []).filter(score => {
+            const total = calculateTotal(score.captions || {});
+            return total > 0;
+          }),
+        })).filter(event => event.scores.length > 0);
+
+        historicalData[doc.id] = sanitizedEvents;
+      }
+    });
+
+    return historicalData;
+  } catch (error) {
+    logger.error("Error fetching time-locked scores:", error);
+    return {};
+  }
+}
+
+/**
+ * Fetch fantasy recaps for the report day
+ * @param {Object} db - Firestore database instance
+ * @param {string} seasonId - The season document ID
+ * @param {number} reportDay - The day being reported on
+ * @returns {Promise<Object|null>} Fantasy recap for the day
+ */
+async function fetchFantasyRecaps(db, seasonId, reportDay) {
+  try {
+    const recapDoc = await db.doc(`fantasy_recaps/${seasonId}`).get();
+    if (!recapDoc.exists) {
+      logger.warn(`fantasy_recaps/${seasonId} not found`);
+      return null;
+    }
+
+    const allRecaps = recapDoc.data().recaps || [];
+
+    // Find the recap for reportDay
+    const dayRecap = allRecaps.find(r => r.offSeasonDay === reportDay);
+
+    // Also get previous 6 days for trend analysis
+    const trendRecaps = allRecaps.filter(r =>
+      r.offSeasonDay >= reportDay - 6 && r.offSeasonDay <= reportDay
+    );
+
+    return {
+      current: dayRecap || null,
+      trends: trendRecaps,
+      seasonName: recapDoc.data().seasonName,
+    };
+  } catch (error) {
+    logger.error("Error fetching fantasy recaps:", error);
+    return null;
+  }
+}
+
+// =============================================================================
+// SCORE CALCULATION HELPERS
+// =============================================================================
+
+/**
+ * Calculate total score from caption scores
+ */
+function calculateTotal(captions) {
+  const ge = (captions.GE1 || 0) + (captions.GE2 || 0);
+  const vis = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
+  const mus = ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2;
+  return ge + vis + mus;
+}
+
+/**
+ * Calculate caption category subtotals
+ */
+function calculateCaptionSubtotals(captions) {
+  return {
+    ge: (captions.GE1 || 0) + (captions.GE2 || 0),
+    visual: ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2,
+    music: ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2,
+  };
+}
+
+/**
+ * Extract scores for a specific day from historical data
+ */
+function getScoresForDay(historicalData, targetDay, activeCorps) {
+  const dayScores = [];
+
+  for (const corps of activeCorps) {
+    const { corpsName, sourceYear } = corps;
+    const yearEvents = historicalData[sourceYear] || [];
+
+    // Find event for this day
+    const dayEvent = yearEvents.find(e => e.offSeasonDay === targetDay);
+    if (!dayEvent) continue;
+
+    // Find this corps' score
+    const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
+    if (!corpsScore) continue;
+
+    const total = calculateTotal(corpsScore.captions);
+    if (total <= 0) continue;
+
+    dayScores.push({
+      corps: corpsName,
+      sourceYear,
+      displayName: `${corpsName}`,
+      captions: corpsScore.captions,
+      total,
+      subtotals: calculateCaptionSubtotals(corpsScore.captions),
+    });
+  }
+
+  return dayScores.sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Calculate 7-day rolling averages for trend analysis
+ */
+function calculateTrendData(historicalData, reportDay, activeCorps) {
+  const trends = {};
+
+  for (const corps of activeCorps) {
+    const { corpsName, sourceYear } = corps;
+    const yearEvents = historicalData[sourceYear] || [];
+
+    const scores = [];
+    for (let day = reportDay - 6; day <= reportDay; day++) {
+      const dayEvent = yearEvents.find(e => e.offSeasonDay === day);
+      if (dayEvent) {
+        const corpsScore = dayEvent.scores.find(s => s.corps === corpsName);
+        if (corpsScore) {
+          const total = calculateTotal(corpsScore.captions);
+          if (total > 0) {
+            scores.push({ day, total, captions: corpsScore.captions });
+          }
+        }
+      }
+    }
+
+    if (scores.length >= 2) {
+      const avgTotal = scores.reduce((sum, s) => sum + s.total, 0) / scores.length;
+      const latestScore = scores.find(s => s.day === reportDay);
+      const previousScore = scores.find(s => s.day === reportDay - 1);
+
+      trends[corpsName] = {
+        sourceYear,
+        avgTotal,
+        latestTotal: latestScore?.total || null,
+        previousTotal: previousScore?.total || null,
+        dayChange: latestScore && previousScore ? latestScore.total - previousScore.total : 0,
+        trendFromAvg: latestScore ? latestScore.total - avgTotal : 0,
+        dataPoints: scores.length,
+      };
+    }
+  }
+
+  return trends;
+}
+
+/**
+ * Identify caption leaders across all corps
+ */
+function identifyCaptionLeaders(dayScores, trendData) {
+  const captionLeaders = {};
+
+  // Individual captions
+  for (const captionKey of Object.keys(CAPTIONS)) {
+    let leader = null;
+    let highScore = 0;
+
+    for (const score of dayScores) {
+      const captionScore = score.captions[captionKey] || 0;
+      if (captionScore > highScore) {
+        highScore = captionScore;
+        leader = score;
+      }
+    }
+
+    if (leader) {
+      const trend = trendData[leader.corps];
+      captionLeaders[captionKey] = {
+        caption: CAPTIONS[captionKey],
+        leader: leader.corps,
+        score: highScore,
+        weeklyTrend: trend ? (trend.trendFromAvg >= 0 ? "+" : "") + trend.trendFromAvg.toFixed(2) : "+0.00",
+      };
+    }
+  }
+
+  return Object.values(captionLeaders);
+}
+
+// =============================================================================
+// NEWS GENERATION
+// =============================================================================
+
+/**
+ * Generate a comprehensive nightly news article
+ * Bridges dci-data, historical_scores, and fantasy_recaps
+ *
+ * @param {Object} options - Generation options
+ * @param {Object} options.db - Firestore database instance
+ * @param {string} options.dataDocId - The dci-data document ID
+ * @param {string} options.seasonId - The fantasy season ID
+ * @param {number} options.currentDay - The current day (1-49). Reports on currentDay - 1.
  * @returns {Promise<Object>} Generated news content
+ */
+async function generateDailyNews({ db, dataDocId, seasonId, currentDay }) {
+  // Report on yesterday (time-locked)
+  const reportDay = currentDay - 1;
+
+  if (reportDay < 1) {
+    logger.warn("Cannot generate news for day 0 or negative");
+    return { success: false, error: "Invalid day" };
+  }
+
+  logger.info(`Generating news for Day ${reportDay} (currentDay: ${currentDay})`);
+
+  try {
+    // Step 1: Fetch active corps
+    const activeCorps = await fetchActiveCorps(db, dataDocId);
+    if (activeCorps.length === 0) {
+      return { success: false, error: "No active corps found" };
+    }
+
+    // Step 2: Get unique years to fetch
+    const yearsToFetch = [...new Set(activeCorps.map(c => c.sourceYear))];
+
+    // Step 3: Fetch time-locked historical scores
+    const historicalData = await fetchTimeLockednScores(db, yearsToFetch, reportDay);
+
+    // Step 4: Fetch fantasy recaps
+    const fantasyData = await fetchFantasyRecaps(db, seasonId, reportDay);
+
+    // Step 5: Process the data
+    const dayScores = getScoresForDay(historicalData, reportDay, activeCorps);
+    const previousDayScores = getScoresForDay(historicalData, reportDay - 1, activeCorps);
+    const trendData = calculateTrendData(historicalData, reportDay, activeCorps);
+    const captionLeaders = identifyCaptionLeaders(dayScores, trendData);
+
+    if (dayScores.length === 0) {
+      logger.warn(`No valid scores found for day ${reportDay}`);
+      return {
+        success: false,
+        error: "No scores available for this day",
+        content: generateFallbackContent({ reportDay, activeCorps }),
+      };
+    }
+
+    // Step 6: Build prompt for Gemini
+    const prompt = buildNewsPrompt({
+      reportDay,
+      dayScores,
+      previousDayScores,
+      trendData,
+      captionLeaders,
+      fantasyData,
+    });
+
+    // Step 7: Generate with Gemini
+    const geminiModel = initializeGemini();
+    const result = await geminiModel.generateContent(prompt);
+    const response = result.response;
+    const generatedContent = JSON.parse(response.text());
+
+    logger.info("Successfully generated daily news:", {
+      headline: generatedContent.headline,
+      day: reportDay,
+    });
+
+    return {
+      success: true,
+      content: generatedContent,
+      metadata: {
+        reportDay,
+        currentDay,
+        corpsCount: dayScores.length,
+        fantasyDataAvailable: !!fantasyData?.current,
+      },
+      generatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error("Error generating daily news:", error);
+
+    return {
+      success: false,
+      error: error.message,
+      content: generateFallbackContent({ reportDay, activeCorps: [] }),
+      generatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+/**
+ * Build the prompt for Gemini with all data sources
+ */
+function buildNewsPrompt({ reportDay, dayScores, previousDayScores, trendData, captionLeaders, fantasyData }) {
+  // Format standings
+  const standingsText = dayScores.slice(0, 12).map((s, idx) => {
+    const trend = trendData[s.corps];
+    const change = trend?.dayChange || 0;
+    const changeStr = change >= 0 ? `+${change.toFixed(3)}` : change.toFixed(3);
+    return `${idx + 1}. ${s.corps} (${s.sourceYear}): ${s.total.toFixed(3)} [${changeStr}] - GE: ${s.subtotals.ge.toFixed(2)}, VIS: ${s.subtotals.visual.toFixed(2)}, MUS: ${s.subtotals.music.toFixed(2)}`;
+  }).join("\n");
+
+  // Format caption leaders
+  const captionText = captionLeaders.map(c =>
+    `${c.caption}: ${c.leader} (${c.score.toFixed(2)}) [7-day trend: ${c.weeklyTrend}]`
+  ).join("\n");
+
+  // Format trend movers
+  const trendMovers = Object.entries(trendData)
+    .map(([corps, data]) => ({ corps, ...data }))
+    .filter(t => Math.abs(t.dayChange) >= 0.1)
+    .sort((a, b) => Math.abs(b.dayChange) - Math.abs(a.dayChange))
+    .slice(0, 5);
+
+  const trendText = trendMovers.map(t =>
+    `${t.corps}: ${t.dayChange >= 0 ? "+" : ""}${t.dayChange.toFixed(3)} (7-day avg: ${t.avgTotal.toFixed(3)})`
+  ).join("\n");
+
+  // Format fantasy data
+  let fantasyText = "No fantasy data available for this day.";
+  if (fantasyData?.current) {
+    const shows = fantasyData.current.shows || [];
+    const allResults = shows.flatMap(s => s.results || []);
+    const topPerformers = allResults
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, 5);
+
+    if (topPerformers.length > 0) {
+      fantasyText = `TOP FANTASY ENSEMBLES:\n${topPerformers.map((r, idx) =>
+        `${idx + 1}. ${r.directorName || "Director"}'s ${r.corpsName}: ${r.totalScore.toFixed(3)} pts`
+      ).join("\n")}`;
+    }
+  }
+
+  return `Generate a comprehensive news article for marching.art Day ${reportDay}.
+
+IMPORTANT: This is RETROSPECTIVE reporting. You are analyzing what ALREADY happened on Day ${reportDay}.
+Compare against the previous 7 days for trend analysis. All corps are competing in the same timeline.
+
+=== SECTION 1: DCI REAL-WORLD STANDINGS ===
+${standingsText}
+
+=== CAPTION LEADERS ===
+${captionText}
+
+=== NOTABLE MOVERS (Day-over-Day) ===
+${trendMovers.length > 0 ? trendText : "No significant movers today."}
+
+=== SECTION 2: FANTASY DATA ===
+${fantasyText}
+
+=== SECTION 3: CROSS-OVER ANALYSIS ===
+Synthesize how the real-world score movements impacted fantasy ROI.
+Calculate which corps/caption combinations provided the best fantasy returns.
+
+Generate a complete article with:
+1. DCI Real-World Recap analyzing caption-level performance and slotting
+2. Fantasy Spotlight highlighting top user ensembles and league movements
+3. Cross-Over Analysis connecting real scores to fantasy ROI
+
+Use evocative DCI journalism language. Reference historical context for each corps.`;
+}
+
+/**
+ * Generate fallback content when API is unavailable
+ */
+function generateFallbackContent({ reportDay, activeCorps = [] }) {
+  return {
+    headline: `Day ${reportDay} Recap: Analysis Pending`,
+    summary: `Day ${reportDay} scores are being processed. Full statistical analysis and fantasy insights will be available shortly.`,
+    dciRecap: {
+      title: `Day ${reportDay} Real-World Recap`,
+      narrative: "Score analysis is currently being processed. Check back shortly for complete caption breakdowns and slotting analysis.",
+      captionLeaders: [],
+      standings: [],
+    },
+    fantasySpotlight: {
+      title: `Fantasy Spotlight: Day ${reportDay}`,
+      narrative: "Fantasy results are being tabulated. Top ensemble performances and league standings will be updated shortly.",
+      topEnsembles: [],
+      leagueLeaders: [],
+    },
+    crossOverAnalysis: {
+      title: "Fantasy-Reality Crossover",
+      narrative: "Cross-over analysis between real-world scores and fantasy ROI is pending. ROI calculations will be available once all data is processed.",
+      roiHighlights: [],
+      buyLowOpportunities: [],
+      sellHighWarnings: [],
+    },
+    fantasyImpact: "Fantasy impact calculations are pending.",
+    trendingCorps: [],
+    imagePrompt: "Drum corps performance under stadium lights, dramatic silhouette, marching band competition",
+  };
+}
+
+// =============================================================================
+// LEGACY FUNCTION WRAPPERS (for backward compatibility)
+// =============================================================================
+
+/**
+ * Generate a nightly recap (legacy wrapper)
+ * @deprecated Use generateDailyNews instead
  */
 async function generateNightlyRecap(scoreData) {
   try {
     const geminiModel = initializeGemini();
 
-    // Format score data for the prompt
     const formattedScores = formatScoresForPrompt(scoreData);
 
     const prompt = `Generate a DCI competition recap based on this score data:
@@ -206,13 +757,10 @@ Generate an engaging recap that highlights the key storylines from this competit
     const result = await geminiModel.generateContent(prompt);
     const response = result.response;
     const text = response.text();
-
-    // Parse the JSON response
     const generatedContent = JSON.parse(text);
 
     logger.info("Successfully generated recap:", {
       headline: generatedContent.headline,
-      trendingCount: generatedContent.trendingCorps?.length || 0,
     });
 
     return {
@@ -223,31 +771,27 @@ Generate an engaging recap that highlights the key storylines from this competit
   } catch (error) {
     logger.error("Error generating nightly recap:", error);
 
-    // Return fallback content if API fails
     return {
       success: false,
       error: error.message,
-      content: generateFallbackContent(scoreData),
+      content: generateFallbackContent({ reportDay: 0 }),
       generatedAt: new Date().toISOString(),
     };
   }
 }
 
 /**
- * Format score data into a readable prompt format
+ * Format score data into a readable prompt format (legacy)
  */
 function formatScoresForPrompt(scoreData) {
   const { scores, previousScores } = scoreData;
 
-  // Format current scores
   const current = scores
     .sort((a, b) => calculateTotal(b.captions) - calculateTotal(a.captions))
     .map((s, idx) => {
       const total = calculateTotal(s.captions);
-      const ge = (s.captions.GE1 || 0) + (s.captions.GE2 || 0);
-      const vis = ((s.captions.VP || 0) + (s.captions.VA || 0) + (s.captions.CG || 0)) / 2;
-      const mus = ((s.captions.B || 0) + (s.captions.MA || 0) + (s.captions.P || 0)) / 2;
-      return `${idx + 1}. ${s.corps}: ${total.toFixed(3)} (GE: ${ge.toFixed(2)}, VIS: ${vis.toFixed(2)}, MUS: ${mus.toFixed(2)})`;
+      const subtotals = calculateCaptionSubtotals(s.captions);
+      return `${idx + 1}. ${s.corps}: ${total.toFixed(3)} (GE: ${subtotals.ge.toFixed(2)}, VIS: ${subtotals.visual.toFixed(2)}, MUS: ${subtotals.music.toFixed(2)})`;
     })
     .join("\n");
 
@@ -255,18 +799,15 @@ function formatScoresForPrompt(scoreData) {
   let changes = "";
 
   if (previousScores && previousScores.length > 0) {
-    // Create a map of previous scores
     const prevMap = new Map(
       previousScores.map(s => [s.corps, calculateTotal(s.captions)])
     );
 
-    // Format previous scores
     previous = previousScores
       .sort((a, b) => calculateTotal(b.captions) - calculateTotal(a.captions))
       .map((s, idx) => `${idx + 1}. ${s.corps}: ${calculateTotal(s.captions).toFixed(3)}`)
       .join("\n");
 
-    // Calculate changes
     changes = scores
       .map(s => {
         const currentTotal = calculateTotal(s.captions);
@@ -286,69 +827,7 @@ function formatScoresForPrompt(scoreData) {
 }
 
 /**
- * Calculate total score from caption scores
- */
-function calculateTotal(captions) {
-  const ge = (captions.GE1 || 0) + (captions.GE2 || 0);
-  const vis = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
-  const mus = ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2;
-  return ge + vis + mus;
-}
-
-/**
- * Generate fallback content when API is unavailable
- */
-function generateFallbackContent(scoreData) {
-  const { scores, eventName, year = new Date().getFullYear() } = scoreData;
-  const sortedScores = scores.sort((a, b) =>
-    calculateTotal(b.captions) - calculateTotal(a.captions)
-  );
-
-  const leader = sortedScores[0];
-  const leaderTotal = calculateTotal(leader.captions).toFixed(3);
-  const second = sortedScores[1];
-  const secondTotal = second ? calculateTotal(second.captions).toFixed(3) : null;
-  const margin = second ? (calculateTotal(leader.captions) - calculateTotal(second.captions)).toFixed(3) : null;
-
-  return {
-    headline: `${leader.corps} +${margin || '0.000'}: Leads ${eventName}`,
-    summary: `${leader.corps} topped the standings with ${leaderTotal} at ${eventName}, holding a ${margin || 'comfortable'} point margin over ${second?.corps || 'the field'}. Full statistical analysis pending.`,
-    fullStory: `${leader.corps} claimed the top spot at ${eventName} with an impressive ${leaderTotal} total score.\n\nThe competition featured ${scores.length} corps vying for position in the standings. ${second ? `${second.corps} finished second with ${secondTotal}.` : ''}\n\nCaption-by-caption analysis and fantasy ROI calculations are being processed.\n\nCheck back shortly for complete statistical breakdown and lineup recommendations.`,
-    fantasyImpact: `Directors rostering ${leader.corps} saw positive returns tonight. ROI calculations will be available once full caption data is processed.`,
-    fantasyMetrics: {
-      topROI: {
-        corps: leader.corps,
-        caption: "Overall",
-        pointsGained: parseFloat(leaderTotal),
-        roiPercent: 0,
-      },
-      buyLow: [],
-      sellHigh: [],
-    },
-    captionBreakdown: [
-      {
-        caption: "Total Score",
-        leader: leader.corps,
-        leaderScore: parseFloat(leaderTotal),
-        notableMovement: "Full caption breakdown pending",
-      },
-    ],
-    trendingCorps: sortedScores.slice(0, 3).map((s, idx) => ({
-      corps: s.corps,
-      direction: idx === 0 ? "up" : "stable",
-      reason: `Scored ${calculateTotal(s.captions).toFixed(3)} at ${eventName}`,
-      weeklyChange: 0,
-      fantasyValue: idx === 0 ? "buy" : "hold",
-    })),
-    imagePrompt: `${leader.corps} ${year} drum corps performance, stadium lights, dramatic angle, marching band uniforms`,
-  };
-}
-
-/**
- * Generate fantasy-specific content from recap data
- *
- * @param {Object} recapData - Fantasy recap data with user results
- * @returns {Promise<Object>} Fantasy-focused news content
+ * Generate fantasy-specific content (legacy)
  */
 async function generateFantasyRecap(recapData) {
   try {
@@ -356,7 +835,6 @@ async function generateFantasyRecap(recapData) {
 
     const { shows, offSeasonDay } = recapData;
 
-    // Aggregate results across all shows for the day
     const allResults = shows.flatMap(s => s.results || []);
     const topPerformers = allResults
       .sort((a, b) => b.totalScore - a.totalScore)
@@ -394,17 +872,9 @@ Generate fantasy-specific insights focusing on lineup optimization and trending 
 
 /**
  * Get an optimized image URL for a news article
- * Uses contextual placeholders based on article content
- *
- * @param {Object} options - Image options
- * @param {string} options.headline - Article headline for context matching
- * @param {string} options.category - News category (dci, fantasy, analysis)
- * @param {string} options.imageUrl - Optional source image URL to upload
- * @returns {Promise<Object>} Image result with URL
  */
 async function getArticleImage({ headline, category, imageUrl }) {
   try {
-    // If a source image URL is provided, upload it to Cloudinary
     if (imageUrl) {
       logger.info("Uploading article image to Cloudinary", { imageUrl });
 
@@ -421,7 +891,6 @@ async function getArticleImage({ headline, category, imageUrl }) {
       };
     }
 
-    // No source image - return contextual placeholder
     logger.info("Using contextual placeholder for article image");
     const placeholderUrl = getContextualPlaceholder({
       newsCategory: category,
@@ -436,7 +905,6 @@ async function getArticleImage({ headline, category, imageUrl }) {
   } catch (error) {
     logger.error("Error getting article image:", error);
 
-    // Fallback to placeholder on any error
     return {
       url: getContextualPlaceholder({ newsCategory: category, headline }),
       isPlaceholder: true,
@@ -447,31 +915,22 @@ async function getArticleImage({ headline, category, imageUrl }) {
 }
 
 /**
- * Generate complete news article with image
- * Combines Gemini text generation with MediaService image handling
- *
- * @param {Object} scoreData - DCI score data
- * @param {Object} options - Additional options
- * @param {string} options.imageUrl - Optional source image URL
- * @returns {Promise<Object>} Complete article with text and image
+ * Generate complete news article with image (legacy wrapper)
  */
 async function generateCompleteArticle(scoreData, options = {}) {
   try {
-    // Generate text content
     const textResult = await generateNightlyRecap(scoreData);
 
     if (!textResult.success) {
       return textResult;
     }
 
-    // Get article image
     const imageResult = await getArticleImage({
       headline: textResult.content.headline,
       category: "dci",
       imageUrl: options.imageUrl,
     });
 
-    // Combine text and image
     return {
       success: true,
       content: {
@@ -492,10 +951,27 @@ async function generateCompleteArticle(scoreData, options = {}) {
   }
 }
 
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
 module.exports = {
+  // New unified function
+  generateDailyNews,
+
+  // Data fetching helpers (for external use)
+  fetchActiveCorps,
+  fetchTimeLockednScores,
+  fetchFantasyRecaps,
+
+  // Legacy exports (backward compatibility)
   generateNightlyRecap,
   generateFantasyRecap,
   generateCompleteArticle,
   getArticleImage,
   initializeGemini,
+
+  // Utility exports
+  calculateTotal,
+  calculateCaptionSubtotals,
 };
