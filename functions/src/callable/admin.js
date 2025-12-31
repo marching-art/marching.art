@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic } = require("../helpers/season");
+const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 
@@ -138,6 +138,14 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       await db.doc("game-settings/season").update({ events });
       logger.info(`Patched ${patched} championship days in current season.`);
       return { success: true, message: `Successfully patched ${patched} championship days with isChampionship flag.` };
+    }
+    case "refreshLiveSeasonSchedule": {
+      // Scrape DCI events and refresh the live season schedule
+      const result = await refreshLiveSeasonSchedule();
+      return {
+        success: true,
+        message: `Schedule refreshed. Added ${result.addedCount} new events from ${result.totalEvents} scraped.`,
+      };
     }
     default:
       throw new HttpsError("not-found", `Job named '${jobName}' was not found.`);

@@ -2,6 +2,7 @@ const { logger } = require("firebase-functions/v2");
 const { getDb, dataNamespaceParam } = require("../config");
 const { Timestamp, getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
+const { scrapeUpcomingDciEvents } = require("./scraping");
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -11,15 +12,60 @@ function shuffleArray(array) {
   return array;
 }
 
-async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear) {
+async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, startDate, finalsDate) {
   logger.info(`Generating live season schedule for ${seasonLength} days, starting on day ${startDay}.`);
 
   // Create schedule structure matching off-season format
   const schedule = Array.from({ length: seasonLength }, (_, i) => ({ offSeasonDay: startDay + i, shows: [] }));
 
-  // Regular competition days (1-44): Shows will be populated from scraped DCI data
-  // Users will select from actual DCI shows happening each week
-  // The scoring logic will use historical_scores/{currentYear} for real scores
+  // Scrape upcoming DCI events and populate days 1-44
+  try {
+    logger.info(`Scraping upcoming DCI events for ${finalsYear}...`);
+    const upcomingEvents = await scrapeUpcomingDciEvents(finalsYear);
+    logger.info(`Found ${upcomingEvents.length} upcoming events to map to schedule.`);
+
+    // Map each event to its corresponding offSeasonDay
+    const millisInDay = 24 * 60 * 60 * 1000;
+
+    for (const event of upcomingEvents) {
+      if (!event.date) continue;
+
+      const eventDate = new Date(event.date);
+
+      // Calculate which offSeasonDay this event falls on
+      // offSeasonDay 1 = startDate, offSeasonDay 49 = finalsDate
+      const diffFromStart = eventDate.getTime() - startDate.getTime();
+      const dayNumber = Math.floor(diffFromStart / millisInDay) + 1;
+
+      // Only include events within days 1-44 (non-championship days)
+      if (dayNumber >= 1 && dayNumber <= 44) {
+        const dayEntry = schedule.find((d) => d.offSeasonDay === dayNumber);
+        if (dayEntry) {
+          // Check if this event already exists on this day
+          const alreadyExists = dayEntry.shows.some(
+            (s) => s.eventName === event.eventName
+          );
+          if (!alreadyExists) {
+            dayEntry.shows.push({
+              eventName: event.eventName,
+              location: event.location,
+              date: event.date,
+              isChampionship: false,
+            });
+            logger.info(`Mapped "${event.eventName}" to day ${dayNumber}`);
+          }
+        }
+      }
+    }
+
+    // Log summary of populated days
+    const populatedDays = schedule.filter((d) => d.shows.length > 0 && d.offSeasonDay <= 44);
+    logger.info(`Successfully populated ${populatedDays.length} days with ${upcomingEvents.length} scraped events.`);
+
+  } catch (error) {
+    logger.error("Failed to scrape upcoming events. Schedule will be created with empty days 1-44:", error);
+    // Continue with empty schedule - the season can still function, just without pre-populated shows
+  }
 
   // Championship Week Shows (Days 45-49) - Same structure as off-season
   const day45 = schedule.find((d) => d.offSeasonDay === 45);
@@ -145,7 +191,8 @@ async function startNewLiveSeason() {
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: corpsValues });
 
   // Generate schedule with offSeasonDay structure (1-49 competition days)
-  const events = await generateLiveSeasonSchedule(49, 1, year);
+  // Pass startDate and finalsDate so we can map scraped events to the correct days
+  const events = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate);
 
   const newSeasonData = {
     name: seasonName,
@@ -891,6 +938,82 @@ async function archiveSeasonResultsLogic() {
   logger.info("End-of-season archival process complete.");
 }
 
+/**
+ * Refreshes the live season schedule with newly scraped DCI events
+ * Only updates days 1-44 (non-championship days), preserving championship week
+ * Can be called mid-season to add new events that were announced after season start
+ */
+async function refreshLiveSeasonSchedule() {
+  logger.info("Refreshing live season schedule with scraped events...");
+  const db = getDb();
+
+  const seasonDoc = await db.doc("game-settings/season").get();
+  if (!seasonDoc.exists) {
+    throw new Error("No active season found.");
+  }
+
+  const seasonData = seasonDoc.data();
+  if (seasonData.status !== "live-season") {
+    throw new Error("Can only refresh schedule during a live season.");
+  }
+
+  const startDate = seasonData.schedule.startDate.toDate();
+  const finalsDate = seasonData.schedule.endDate.toDate();
+  const year = finalsDate.getFullYear();
+  const events = seasonData.events || [];
+
+  try {
+    logger.info(`Scraping upcoming DCI events for ${year}...`);
+    const upcomingEvents = await scrapeUpcomingDciEvents(year);
+    logger.info(`Found ${upcomingEvents.length} events to process.`);
+
+    const millisInDay = 24 * 60 * 60 * 1000;
+    let addedCount = 0;
+
+    for (const event of upcomingEvents) {
+      if (!event.date) continue;
+
+      const eventDate = new Date(event.date);
+      const diffFromStart = eventDate.getTime() - startDate.getTime();
+      const dayNumber = Math.floor(diffFromStart / millisInDay) + 1;
+
+      // Only include events within days 1-44 (non-championship days)
+      if (dayNumber >= 1 && dayNumber <= 44) {
+        const dayEntry = events.find((d) => d.offSeasonDay === dayNumber);
+        if (dayEntry) {
+          // Check if this event already exists on this day
+          const alreadyExists = dayEntry.shows.some(
+            (s) => s.eventName === event.eventName
+          );
+          if (!alreadyExists) {
+            dayEntry.shows.push({
+              eventName: event.eventName,
+              location: event.location,
+              date: event.date,
+              isChampionship: false,
+            });
+            addedCount++;
+            logger.info(`Added "${event.eventName}" to day ${dayNumber}`);
+          }
+        }
+      }
+    }
+
+    // Update the season document with the refreshed schedule
+    await db.doc("game-settings/season").update({
+      events: events,
+      lastScheduleRefresh: new Date().toISOString(),
+    });
+
+    logger.info(`Schedule refresh complete. Added ${addedCount} new events.`);
+    return { addedCount, totalEvents: upcomingEvents.length };
+
+  } catch (error) {
+    logger.error("Failed to refresh schedule:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   shuffleArray,
   startNewLiveSeason,
@@ -901,4 +1024,5 @@ module.exports = {
   getThematicOffSeasonName,
   getNextOffSeasonWindow,
   archiveSeasonResultsLogic,
+  refreshLiveSeasonSchedule,
 };
