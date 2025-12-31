@@ -9,10 +9,12 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, ArrowRight, AlertCircle, TrendingUp,
   TrendingDown, Clock, Newspaper, Flame, ChevronRight, Users,
-  Calendar, Activity
+  Calendar, Activity, LayoutDashboard, Award, User, LogOut,
+  Settings, Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
+import { useProfileStore } from '../store/profileStore';
 
 // =============================================================================
 // DUMMY DATA
@@ -92,12 +94,22 @@ const NEWS_FEED = [
 // =============================================================================
 
 const Landing = () => {
-  const { signIn } = useAuth();
+  const { user, signIn, signOut } = useAuth();
+  const profile = useProfileStore((state) => state.profile);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+    } catch (err) {
+      toast.error('Failed to sign out');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -268,81 +280,175 @@ const Landing = () => {
             <div className="p-4 lg:p-5 space-y-5">
 
               {/* ------------------------------------------------------- */}
-              {/* COMPACT LOGIN/REGISTER WIDGET */}
+              {/* AUTH WIDGET - Login or User Dashboard */}
               {/* ------------------------------------------------------- */}
-              <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
-                {/* Card Header */}
-                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <Lock className="w-3.5 h-3.5" />
-                    Director Login
-                  </h3>
-                </div>
+              {user ? (
+                /* AUTHENTICATED USER WIDGET */
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                  {/* User Header */}
+                  <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-[#0057B8]" />
+                      My Fantasy
+                    </h3>
+                  </div>
 
-                {/* Card Body - Compact Form */}
-                <form onSubmit={handleSubmit} className="p-3 space-y-3">
-                  {/* Error Message */}
-                  {error && (
-                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-red-300">{error}</p>
+                  {/* User Info */}
+                  <div className="p-3 border-b border-[#333]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
+                        {profile?.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'D'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-white truncate">
+                          {profile?.displayName || 'Director'}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {user.email}
+                        </div>
+                      </div>
                     </div>
-                  )}
 
-                  {/* Email Input */}
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
-                    />
+                    {/* Quick Stats */}
+                    {profile && (
+                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#333]/50">
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                          <span className="text-xs text-gray-400">Level</span>
+                          <span className="text-sm font-bold text-white">{profile.level || 1}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
+                          <span className="text-xs text-gray-400">XP</span>
+                          <span className="text-sm font-bold text-white tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Password Input */}
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
-                    />
-                  </div>
-
-                  {/* Actions Row */}
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
-                    >
-                      {loading ? '...' : 'Sign In'}
-                    </button>
+                  {/* Quick Links */}
+                  <div className="p-2">
                     <Link
-                      to="/register"
-                      className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-sm"
+                      to="/dashboard"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
                     >
-                      Register
+                      <LayoutDashboard className="w-4 h-4 text-[#0057B8]" />
+                      <span className="text-sm text-white font-medium">Dashboard</span>
+                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                    </Link>
+                    <Link
+                      to="/leagues"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                    >
+                      <Award className="w-4 h-4 text-orange-500" />
+                      <span className="text-sm text-white font-medium">My Leagues</span>
+                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                    </Link>
+                    <Link
+                      to="/scores"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                    >
+                      <Activity className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-white font-medium">Live Scores</span>
+                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-white/[0.05] transition-colors group"
+                    >
+                      <Settings className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-white font-medium">Profile & Settings</span>
+                      <ChevronRight className="w-4 h-4 text-gray-600 ml-auto group-hover:text-gray-400" />
                     </Link>
                   </div>
 
-                  {/* Footer Links */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-                    <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
-                      Forgot password?
-                    </Link>
-                    <span>Free to play</span>
+                  {/* Sign Out */}
+                  <div className="px-3 py-2 border-t border-[#333]">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign Out
+                    </button>
                   </div>
-                </form>
-              </div>
+                </div>
+              ) : (
+                /* LOGIN/REGISTER WIDGET */
+                <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+                  {/* Card Header */}
+                  <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5" />
+                      Director Login
+                    </h3>
+                  </div>
+
+                  {/* Card Body - Compact Form */}
+                  <form onSubmit={handleSubmit} className="p-3 space-y-3">
+                    {/* Error Message */}
+                    {error && (
+                      <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-300">{error}</p>
+                      </div>
+                    )}
+
+                    {/* Email Input */}
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={loading}
+                        className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Password Input */}
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={loading}
+                        className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 h-10 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong disabled:opacity-50 disabled:cursor-not-allowed rounded-sm"
+                      >
+                        {loading ? '...' : 'Sign In'}
+                      </button>
+                      <Link
+                        to="/register"
+                        className="flex-1 h-10 border border-[#333] text-gray-400 font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:border-[#444] hover:text-white transition-all rounded-sm"
+                      >
+                        Register
+                      </Link>
+                    </div>
+
+                    {/* Footer Links */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+                      <Link to="/forgot-password" className="hover:text-[#0057B8] transition-colors">
+                        Forgot password?
+                      </Link>
+                      <span>Free to play</span>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               {/* ------------------------------------------------------- */}
               {/* FANTASY TRENDING MODULE */}
