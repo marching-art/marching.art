@@ -611,3 +611,43 @@ export type WithId<T> = T & { id: string };
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
+
+// =============================================================================
+// NEWS HUB TYPES
+// =============================================================================
+
+export type NewsCategory = 'dci' | 'fantasy' | 'analysis';
+
+export interface TrendingCorps {
+  corps: string;
+  direction: 'up' | 'down' | 'stable';
+  reason: string;
+}
+
+export interface NewsEntry {
+  id: string;
+  category: NewsCategory;
+  date: string;
+  createdAt: string;
+  headline: string;
+  summary: string;
+  fullStory: string;
+  fantasyImpact: string;
+  trendingCorps: TrendingCorps[];
+  isPublished: boolean;
+  metadata?: {
+    eventName?: string;
+    location?: string;
+    corpsCount?: number;
+    year?: number;
+    offSeasonDay?: number;
+    showCount?: number;
+    seasonId?: string;
+    generatedBy?: string;
+  };
+}
+
+export interface NewsHubResponse {
+  success: boolean;
+  news: NewsEntry[];
+}

@@ -95,6 +95,12 @@ const {
   processLiveScoreRecap,
 } = require("./src/triggers/scoreProcessing");
 const {
+  processNewsGeneration,
+  onFantasyRecapUpdated,
+  triggerNewsGeneration,
+  getRecentNews,
+} = require("./src/triggers/newsGeneration");
+const {
   onProfileCreated,
   onStreakMilestoneReached,
 } = require("./src/triggers/emailTriggers");
@@ -170,6 +176,12 @@ module.exports = {
   // Triggers
   processDciScores,
   processLiveScoreRecap,
+
+  // News Generation
+  processNewsGeneration,
+  onFantasyRecapUpdated,
+  triggerNewsGeneration,
+  getRecentNews,
 
   // Email Triggers
   onProfileCreated,

@@ -7,17 +7,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Lock, Mail, ArrowRight, AlertCircle, TrendingUp,
-  TrendingDown, Clock, Newspaper, Flame, ChevronRight, Users,
+  Trophy, Lock, Mail, AlertCircle, TrendingUp,
+  TrendingDown, Flame, ChevronRight, Users,
   Calendar, Activity, LayoutDashboard, Award, User, LogOut,
   Settings, Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
+import NewsFeed from '../components/Landing/NewsFeed';
 
 // =============================================================================
-// DUMMY DATA
+// SIDEBAR DATA (Live Scores & Trending)
 // =============================================================================
 
 const LIVE_SCORES = [
@@ -36,57 +37,6 @@ const TRENDING_PLAYERS = [
   { name: 'Crown Brass', change: '+12%', direction: 'up' },
   { name: 'Bluecoats Percussion', change: '+8%', direction: 'up' },
   { name: 'SCV Guard', change: '-3%', direction: 'down' },
-];
-
-const HERO_STORY = {
-  category: 'DCI RECAP',
-  title: 'Blue Devils Hold Steady at #1 After San Antonio Regional',
-  summary: 'BD extends their lead with a commanding 97.850 performance, while Bluecoats close the gap with their strongest visual score of the season.',
-  timestamp: '2 hours ago',
-  author: 'DCI Staff',
-};
-
-const NEWS_FEED = [
-  {
-    id: 1,
-    category: 'FANTASY',
-    title: 'Week 4 Lineup Locks: Who to Start This Weekend',
-    summary: 'Our experts break down the must-start corps for DCI San Antonio.',
-    timestamp: '4 hours ago',
-    isFantasy: true,
-  },
-  {
-    id: 2,
-    category: 'DCI NEWS',
-    title: 'Carolina Crown Unveils New Closer Section',
-    summary: 'Crown debuts a reimagined finale that could shake up visual scores.',
-    timestamp: '6 hours ago',
-    isFantasy: false,
-  },
-  {
-    id: 3,
-    category: 'FANTASY',
-    title: 'Waiver Wire: Undervalued Corps to Target',
-    summary: 'These sleeper picks could win your league this week.',
-    timestamp: '8 hours ago',
-    isFantasy: true,
-  },
-  {
-    id: 4,
-    category: 'DCI NEWS',
-    title: 'Phantom Regiment Staff Talks Championship Push',
-    summary: 'After a slow start, Regiment is trending up heading into August.',
-    timestamp: '12 hours ago',
-    isFantasy: false,
-  },
-  {
-    id: 5,
-    category: 'ANALYSIS',
-    title: 'GE Scores: What the Judges Are Looking For',
-    summary: 'A deep dive into General Effect scoring trends this season.',
-    timestamp: '1 day ago',
-    isFantasy: false,
-  },
 ];
 
 // =============================================================================
@@ -173,103 +123,8 @@ const Landing = () => {
           {/* ============================================================= */}
           <div className="lg:col-span-7 xl:col-span-8 border-r border-[#333] overflow-y-auto scroll-momentum">
             <div className="p-4 lg:p-6 xl:p-8">
-
-              {/* Section Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <Newspaper className="w-5 h-5 text-[#0057B8]" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  News & Analysis
-                </span>
-              </div>
-
-              {/* HERO STORY */}
-              <article className="mb-6 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden">
-                {/* Hero Image Placeholder */}
-                <div className="aspect-video bg-gradient-to-br from-[#0057B8]/20 to-[#1a1a1a] flex items-center justify-center">
-                  <Trophy className="w-16 h-16 text-[#0057B8]/40" />
-                </div>
-
-                {/* Hero Content */}
-                <div className="p-4 lg:p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="px-2 py-1 bg-[#0057B8] text-white text-xs font-bold uppercase tracking-wider">
-                      {HERO_STORY.category}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <Clock className="w-3 h-3" />
-                      {HERO_STORY.timestamp}
-                    </span>
-                  </div>
-
-                  <h1 className="text-xl lg:text-2xl xl:text-3xl font-black text-white leading-tight mb-3">
-                    {HERO_STORY.title}
-                  </h1>
-
-                  <p className="text-base text-gray-400 leading-relaxed mb-4">
-                    {HERO_STORY.summary}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">By {HERO_STORY.author}</span>
-                    <button className="flex items-center gap-1 text-[#0057B8] text-sm font-bold hover:text-[#0066d6] transition-colors">
-                      Read More
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </article>
-
-              {/* NEWS FEED */}
-              <div className="space-y-4">
-                {NEWS_FEED.map((story) => (
-                  <article
-                    key={story.id}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4 hover:border-[#444] transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Story Thumbnail */}
-                      <div className="hidden sm:flex flex-shrink-0 w-20 h-20 bg-[#222] border border-[#333] rounded-sm items-center justify-center">
-                        {story.isFantasy ? (
-                          <Flame className="w-8 h-8 text-orange-500/50" />
-                        ) : (
-                          <Trophy className="w-8 h-8 text-[#0057B8]/50" />
-                        )}
-                      </div>
-
-                      {/* Story Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
-                            story.isFantasy
-                              ? 'bg-orange-500/20 text-orange-400'
-                              : 'bg-[#0057B8]/20 text-[#0057B8]'
-                          }`}>
-                            {story.category}
-                          </span>
-                          <span className="text-xs text-gray-600">{story.timestamp}</span>
-                        </div>
-
-                        <h2 className={`text-base lg:text-lg font-bold leading-snug mb-1 ${
-                          story.isFantasy ? 'text-orange-50' : 'text-white'
-                        }`}>
-                          {story.title}
-                        </h2>
-
-                        <p className="text-sm text-gray-500 line-clamp-2">
-                          {story.summary}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              {/* Load More */}
-              <div className="mt-6 text-center">
-                <button className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all">
-                  Load More Stories
-                </button>
-              </div>
+              {/* Dynamic News Feed powered by Gemini AI */}
+              <NewsFeed maxItems={5} />
             </div>
           </div>
 
