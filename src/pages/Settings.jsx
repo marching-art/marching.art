@@ -199,6 +199,20 @@ const Settings = () => {
     milestoneAchieved: true,
   });
 
+  const [pushPreferences, setPushPreferences] = useState({
+    allPush: false,
+    streakAtRisk: true,
+    matchupStart: true,
+    matchupResult: true,
+    scoreUpdate: true,
+    leagueActivity: true,
+    tradeProposal: true,
+    showReminder: true,
+  });
+
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState('default');
+
   const [privacySettings, setPrivacySettings] = useState({
     publicProfile: true,
     showLocation: true,
@@ -208,6 +222,18 @@ const Settings = () => {
   useEffect(() => {
     loadSettings();
   }, [user]);
+
+  // Check push notification support on mount
+  useEffect(() => {
+    const checkPushSupport = async () => {
+      const supported = 'Notification' in window && 'serviceWorker' in navigator;
+      setPushSupported(supported);
+      if (supported) {
+        setPushPermission(Notification.permission);
+      }
+    };
+    checkPushSupport();
+  }, []);
 
   const loadSettings = async () => {
     if (!user) return;
@@ -242,6 +268,17 @@ const Settings = () => {
           milestoneAchieved: data.settings?.emailPreferences?.milestoneAchieved ?? true,
         });
 
+        setPushPreferences({
+          allPush: data.settings?.pushPreferences?.allPush ?? false,
+          streakAtRisk: data.settings?.pushPreferences?.streakAtRisk ?? true,
+          matchupStart: data.settings?.pushPreferences?.matchupStart ?? true,
+          matchupResult: data.settings?.pushPreferences?.matchupResult ?? true,
+          scoreUpdate: data.settings?.pushPreferences?.scoreUpdate ?? true,
+          leagueActivity: data.settings?.pushPreferences?.leagueActivity ?? true,
+          tradeProposal: data.settings?.pushPreferences?.tradeProposal ?? true,
+          showReminder: data.settings?.pushPreferences?.showReminder ?? true,
+        });
+
         setPrivacySettings({
           publicProfile: data.privacy?.publicProfile ?? true,
           showLocation: data.privacy?.showLocation ?? true,
@@ -274,6 +311,7 @@ const Settings = () => {
           'settings.showReminders': notificationSettings.showReminders,
           'settings.leagueUpdates': notificationSettings.leagueUpdates,
           'settings.emailPreferences': emailPreferences,
+          'settings.pushPreferences': pushPreferences,
         });
         toast.success('Alert configuration saved');
       } else if (activeTab === 'privacy') {
@@ -313,6 +351,61 @@ const Settings = () => {
   const updateEmailPrefs = (field, value) => {
     setEmailPreferences(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
+  };
+
+  const updatePushPrefs = (field, value) => {
+    setPushPreferences(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  const handleEnablePush = async () => {
+    if (!pushSupported) {
+      toast.error('Push notifications are not supported in this browser');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+
+      if (permission === 'granted') {
+        // Import and initialize FCM
+        const { requestPushPermission } = await import('../api/pushNotifications');
+        const token = await requestPushPermission();
+
+        if (token) {
+          // Save token to user profile
+          const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+          await updateDoc(profileRef, {
+            'settings.fcmToken': token,
+            'settings.pushPreferences.allPush': true,
+          });
+          setPushPreferences(prev => ({ ...prev, allPush: true }));
+          toast.success('Push notifications enabled');
+        } else {
+          toast.error('Failed to register for push notifications');
+        }
+      } else if (permission === 'denied') {
+        toast.error('Push notifications were denied. Please enable them in your browser settings.');
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast.error('Failed to enable push notifications');
+    }
+  };
+
+  const handleDisablePush = async () => {
+    try {
+      const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
+      await updateDoc(profileRef, {
+        'settings.pushPreferences.allPush': false,
+      });
+      setPushPreferences(prev => ({ ...prev, allPush: false }));
+      toast.success('Push notifications disabled');
+    } catch (error) {
+      console.error('Error disabling push notifications:', error);
+      toast.error('Failed to disable push notifications');
+    }
   };
 
   const updatePrivacy = (field, value) => {
@@ -587,6 +680,110 @@ const Settings = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Push Notifications */}
+                  <div className="pt-4 border-t border-cream/10">
+                    <h4 className="font-mono text-xs text-cream/60 uppercase tracking-widest mb-3">Push Notifications</h4>
+
+                    {!pushSupported ? (
+                      <div className="p-3 bg-black/40 border-2 border-cream/5">
+                        <p className="text-xs text-cream/50 font-mono">
+                          Push notifications are not supported in this browser.
+                        </p>
+                      </div>
+                    ) : pushPermission === 'denied' ? (
+                      <div className="p-3 bg-red-950/20 border-2 border-red-500/10">
+                        <p className="text-xs text-cream/70 font-mono">Push notifications are blocked</p>
+                        <p className="text-[10px] text-cream/40 font-mono mt-1">
+                          Enable notifications in your browser settings to receive alerts
+                        </p>
+                      </div>
+                    ) : !pushPreferences.allPush ? (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-black/40 border-2 border-cream/5">
+                          <p className="text-xs text-cream/70 font-mono">Get real-time alerts on your device</p>
+                          <p className="text-[10px] text-cream/40 font-mono mt-1">
+                            Matchup updates, score changes, and streak warnings
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleEnablePush}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-gold-500/20 border-2 border-gold-500/40 text-gold-400 font-mono text-xs uppercase tracking-wider hover:bg-gold-500/30 hover:border-gold-500/60 transition-all"
+                        >
+                          <Bell className="w-4 h-4" />
+                          Enable Push Notifications
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <TerminalToggle
+                          label="Push Notifications"
+                          code="MASTER"
+                          description="Master toggle — disable to stop all push notifications"
+                          checked={pushPreferences.allPush}
+                          onChange={() => handleDisablePush()}
+                        />
+
+                        <div className="ml-4 pl-4 border-l-2 border-cream/10 space-y-2">
+                          <TerminalToggle
+                            label="Streak Warnings"
+                            code="STRK"
+                            description="Alert when your streak is about to expire"
+                            checked={pushPreferences.streakAtRisk}
+                            onChange={(e) => updatePushPrefs('streakAtRisk', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Matchup Starting"
+                            code="MTCH"
+                            description="Notification when a matchup is about to begin"
+                            checked={pushPreferences.matchupStart}
+                            onChange={(e) => updatePushPrefs('matchupStart', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Matchup Results"
+                            code="RSLT"
+                            description="Get notified when matchup results are posted"
+                            checked={pushPreferences.matchupResult}
+                            onChange={(e) => updatePushPrefs('matchupResult', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Score Updates"
+                            code="SCOR"
+                            description="Major position changes in live scoring"
+                            checked={pushPreferences.scoreUpdate}
+                            onChange={(e) => updatePushPrefs('scoreUpdate', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="League Activity"
+                            code="LEAG"
+                            description="Trade proposals and league chat mentions"
+                            checked={pushPreferences.leagueActivity}
+                            onChange={(e) => updatePushPrefs('leagueActivity', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Trade Proposals"
+                            code="TRDE"
+                            description="Get notified when you receive a trade offer"
+                            checked={pushPreferences.tradeProposal}
+                            onChange={(e) => updatePushPrefs('tradeProposal', e.target.checked)}
+                          />
+
+                          <TerminalToggle
+                            label="Show Reminders"
+                            code="SHOW"
+                            description="Reminders before shows you're registered for"
+                            checked={pushPreferences.showReminder}
+                            onChange={(e) => updatePushPrefs('showReminder', e.target.checked)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

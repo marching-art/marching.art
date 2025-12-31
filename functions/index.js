@@ -83,6 +83,11 @@ const {
   winBackEmailJob,
   streakBrokenEmailJob,
 } = require("./src/scheduled/emailNotifications");
+const {
+  streakAtRiskPushJob,
+  showReminderPushJob,
+  weeklyMatchupPushJob,
+} = require("./src/scheduled/pushNotifications");
 
 // Trigger Functions
 const {
@@ -93,6 +98,12 @@ const {
   onProfileCreated,
   onStreakMilestoneReached,
 } = require("./src/triggers/emailTriggers");
+const {
+  onMatchupCompleted,
+  onTradeProposalCreated,
+  onLeagueMemberJoined,
+  onLeagueChatMessage,
+} = require("./src/triggers/pushTriggers");
 
 // Webhooks
 const { stripeWebhook } = require("./src/webhooks/stripe");
@@ -163,6 +174,17 @@ module.exports = {
   // Email Triggers
   onProfileCreated,
   onStreakMilestoneReached,
+
+  // Push Scheduled Jobs
+  streakAtRiskPushJob,
+  showReminderPushJob,
+  weeklyMatchupPushJob,
+
+  // Push Triggers
+  onMatchupCompleted,
+  onTradeProposalCreated,
+  onLeagueMemberJoined,
+  onLeagueChatMessage,
 
   // Webhooks
   stripeWebhook,
