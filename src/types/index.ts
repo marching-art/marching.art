@@ -105,6 +105,8 @@ export interface UserSettings {
   notifications: boolean;
   soundEffects: boolean;
   emailPreferences?: EmailPreferences;
+  pushPreferences?: PushPreferences;
+  fcmToken?: string;
 }
 
 export interface EmailPreferences {
@@ -130,6 +132,28 @@ export type EmailType =
   | 'lineup_reminder'
   | 'league_activity'
   | 'milestone_achieved';
+
+export interface PushPreferences {
+  // Master toggle - if false, no push notifications are sent
+  allPush: boolean;
+  // Individual push notification type preferences
+  streakAtRisk?: boolean;
+  matchupStart?: boolean;
+  matchupResult?: boolean;
+  scoreUpdate?: boolean;
+  leagueActivity?: boolean;
+  tradeProposal?: boolean;
+  showReminder?: boolean;
+}
+
+export type PushNotificationType =
+  | 'streak_at_risk'
+  | 'matchup_start'
+  | 'matchup_result'
+  | 'score_update'
+  | 'league_activity'
+  | 'trade_proposal'
+  | 'show_reminder';
 
 // =============================================================================
 // CORPS TYPES

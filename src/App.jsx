@@ -106,6 +106,26 @@ function App() {
     };
   }, [user, initProfileListener, cleanupProfileListener]);
 
+  // Initialize push notifications when user is authenticated
+  // Only attempts to get token if user has previously granted permission
+  useEffect(() => {
+    const initPushNotifications = async () => {
+      if (!user) return;
+
+      // Only proceed if notifications are supported and permission granted
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          const { initializePushNotifications } = await import('./api/pushNotifications');
+          await initializePushNotifications(user.uid);
+        } catch (error) {
+          console.warn('Push notification initialization skipped:', error.message);
+        }
+      }
+    };
+
+    initPushNotifications();
+  }, [user]);
+
   // Initialize user profile listener to sync profile data with auth state
   // This ensures loggedInProfile is available for components like Scores
   useEffect(() => {
