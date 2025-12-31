@@ -152,3 +152,22 @@ export const reportComment = createCallable<{ commentId: string; reason: string 
 export const startNewOffSeason = createCallable<{ seasonNumber: number }, { success: boolean }>('startNewOffSeason');
 export const startNewLiveSeason = createCallable<{ year: number }, { success: boolean }>('startNewLiveSeason');
 export const manualTrigger = createCallable<{ action: string; params?: unknown }, { success: boolean }>('manualTrigger');
+
+// =============================================================================
+// NEWS HUB
+// =============================================================================
+
+import type { NewsCategory, NewsEntry } from '../types';
+
+export interface GetRecentNewsParams {
+  limit?: number;
+  category?: NewsCategory;
+}
+
+export interface GetRecentNewsResult {
+  success: boolean;
+  news: NewsEntry[];
+}
+
+export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
+export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
