@@ -209,10 +209,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-xl p-8 text-center"
+        className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center"
       >
-        <Swords className="w-12 h-12 text-cream-500/40 mx-auto mb-4 animate-pulse" />
-        <p className="text-cream-500/60">Loading matchups...</p>
+        <Swords className="w-12 h-12 text-gray-500 mx-auto mb-4 animate-pulse" />
+        <p className="text-gray-500">Loading matchups...</p>
       </motion.div>
     );
   }
@@ -243,32 +243,32 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       className="space-y-4"
     >
       {/* Your Record Summary */}
-      <div className="glass rounded-xl p-4">
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Swords className="w-6 h-6 text-purple-400" />
+            <div className="w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center">
+              <Swords className="w-6 h-6 text-purple-500" />
             </div>
             <div>
-              <h3 className="text-lg font-display font-bold text-cream-100">Your Record</h3>
-              <p className="text-sm text-cream-500/60">Season {currentWeek > 1 ? `Week ${currentWeek}` : 'Start'}</p>
+              <h3 className="text-lg font-bold text-white">Your Record</h3>
+              <p className="text-sm text-gray-500">Season {currentWeek > 1 ? `Week ${currentWeek}` : 'Start'}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-display font-bold tabular-nums">
-              <span className="text-green-400">{record.wins}</span>
-              <span className="text-cream-500/40"> - </span>
-              <span className="text-red-400">{record.losses}</span>
+            <p className="text-2xl font-bold tabular-nums">
+              <span className="text-green-500">{record.wins}</span>
+              <span className="text-gray-600"> - </span>
+              <span className="text-red-500">{record.losses}</span>
             </p>
-            <p className="text-xs text-cream-500/60">W-L</p>
+            <p className="text-xs text-gray-500">W-L</p>
           </div>
         </div>
       </div>
 
       {/* Week Selector */}
-      <div className="glass rounded-xl p-4">
-        <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gold-400" />
+      <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-yellow-500" />
           Weekly Schedule
         </h3>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -283,14 +283,14 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg font-display font-semibold transition-all relative min-w-[72px] ${
+                className={`flex-shrink-0 px-4 py-2 rounded-sm font-bold transition-all relative min-w-[72px] ${
                   isSelected
-                    ? 'bg-gold-500 text-charcoal-900'
+                    ? 'bg-yellow-500 text-black'
                     : isCurrentWeek
-                    ? 'glass text-cream-100 border-2 border-purple-500/50 hover:bg-purple-500/10'
+                    ? 'bg-[#222] border-2 border-purple-500/50 text-white hover:bg-purple-500/10'
                     : hasMatchups
-                    ? 'glass text-cream-100 hover:bg-cream-500/10'
-                    : 'glass text-cream-500/40'
+                    ? 'bg-[#222] border border-[#444] text-white hover:bg-[#333]'
+                    : 'bg-[#222] border border-[#333] text-gray-600'
                 }`}
               >
                 <span className="text-sm">Week {week}</span>
@@ -315,9 +315,9 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       {/* User's Matchup - Featured */}
       {userMatchup && (
         <div>
-          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
             {userMatchup.status === 'live' && (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-red-500/20 text-red-500 text-xs font-bold">
                 <Radio className="w-3 h-3 animate-pulse" />
                 LIVE
               </span>
@@ -348,7 +348,7 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       {/* Other Matchups */}
       {otherMatchups.length > 0 && (
         <div>
-          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Users className="w-4 h-4" />
             Other Matchups ({otherMatchups.length})
           </h3>
@@ -377,10 +377,10 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
       )}
 
       {weekMatchups.length === 0 && (
-        <div className="glass rounded-xl p-8 text-center">
-          <Clock className="w-12 h-12 text-cream-500/40 mx-auto mb-4" />
-          <h3 className="text-lg font-display font-bold text-cream-100 mb-2">No Matchups Yet</h3>
-          <p className="text-cream-500/60">
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-8 text-center">
+          <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-2">No Matchups Yet</h3>
+          <p className="text-gray-500">
             Week {selectedWeek} matchups will be available soon
           </p>
         </div>
@@ -388,9 +388,9 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
 
       {/* Past Results Quick View */}
       {selectedWeek === currentWeek && userMatchups.filter(m => m.status === 'completed').length > 0 && (
-        <div className="glass rounded-xl p-4">
-          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-gold-400" />
+        <div className="bg-[#1a1a1a] border border-[#333] rounded-sm p-4">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-500" />
             Recent Results
           </h3>
           <div className="space-y-2">
@@ -409,33 +409,33 @@ const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {},
                   <div
                     key={matchup.id}
                     onClick={() => handleMatchupClick(matchup)}
-                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-sm cursor-pointer transition-all ${
                       won
                         ? 'bg-green-500/10 border border-green-500/20 hover:border-green-500/40'
                         : 'bg-red-500/10 border border-red-500/20 hover:border-red-500/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      <div className={`w-8 h-8 rounded-sm flex items-center justify-center ${
                         won ? 'bg-green-500/20' : 'bg-red-500/20'
                       }`}>
-                        <span className={`text-xs font-bold ${won ? 'text-green-400' : 'text-red-400'}`}>
+                        <span className={`text-xs font-bold ${won ? 'text-green-500' : 'text-red-500'}`}>
                           {won ? 'W' : 'L'}
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-display font-semibold text-cream-100">
+                        <p className="text-sm font-bold text-white">
                           vs @{opponent.displayName}
                         </p>
-                        <p className="text-xs text-cream-500/60">Week {matchup.week}</p>
+                        <p className="text-xs text-gray-500">Week {matchup.week}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`font-display font-bold ${won ? 'text-green-400' : 'text-cream-400'}`}>
+                      <span className={`font-bold ${won ? 'text-green-500' : 'text-gray-400'}`}>
                         {userScore.toFixed(1)}
                       </span>
-                      <span className="text-cream-500/40 mx-1">-</span>
-                      <span className={`font-display font-bold ${!won ? 'text-green-400' : 'text-cream-400'}`}>
+                      <span className="text-gray-600 mx-1">-</span>
+                      <span className={`font-bold ${!won ? 'text-green-500' : 'text-gray-400'}`}>
                         {oppScore.toFixed(1)}
                       </span>
                     </div>
