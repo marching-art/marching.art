@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule } = require("../helpers/season");
+const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 
@@ -69,74 +69,85 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
     }
     case "patchChampionshipShows": {
       // Migration to add isChampionship flag to existing season's championship shows
+      // Now updates the subcollection instead of the main season document
       const db = getDb();
       const seasonDoc = await db.doc("game-settings/season").get();
       if (!seasonDoc.exists) {
         throw new HttpsError("failed-precondition", "No active season found.");
       }
       const seasonData = seasonDoc.data();
-      const events = seasonData.events || [];
+      const seasonId = seasonData.seasonUid;
       let patched = 0;
 
-      events.forEach(dayEvent => {
-        const day = dayEvent.offSeasonDay;
+      // Day 45: Open and A Class Prelims
+      await updateScheduleDay(seasonId, 45, [{
+        eventName: "Open and A Class Prelims",
+        location: "Marion, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["openClass", "aClass"],
+        mandatory: true,
+      }]);
+      patched++;
 
-        if (day === 45) {
-          dayEvent.shows = [{
-            eventName: "Open and A Class Prelims",
-            location: "Marion, IN",
-            date: null,
-            isChampionship: true,
-            eligibleClasses: ["openClass", "aClass"],
-            mandatory: true,
-          }];
-          patched++;
-        } else if (day === 46) {
-          dayEvent.shows = [{
-            eventName: "Open and A Class Finals",
-            location: "Marion, IN",
-            date: null,
-            isChampionship: true,
-            eligibleClasses: ["openClass", "aClass"],
-            advancementRules: { openClass: 8, aClass: 4 },
-            mandatory: true,
-          }];
-          patched++;
-        } else if (day === 47 && dayEvent.shows.length > 0) {
-          dayEvent.shows[0].isChampionship = true;
-          dayEvent.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
-          patched++;
-        } else if (day === 48 && dayEvent.shows.length > 0) {
-          dayEvent.shows[0].isChampionship = true;
-          dayEvent.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
-          dayEvent.shows[0].advancementRules = { all: 25 };
-          patched++;
-        } else if (day === 49) {
-          const worldFinalsShow = dayEvent.shows[0] || {
-            eventName: "marching.art World Championship Finals",
-            location: "Indianapolis, IN",
-            date: null,
-          };
-          worldFinalsShow.isChampionship = true;
-          worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
-          worldFinalsShow.advancementRules = { all: 12 };
+      // Day 46: Open and A Class Finals
+      await updateScheduleDay(seasonId, 46, [{
+        eventName: "Open and A Class Finals",
+        location: "Marion, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["openClass", "aClass"],
+        advancementRules: { openClass: 8, aClass: 4 },
+        mandatory: true,
+      }]);
+      patched++;
 
-          const soundSportShow = {
-            eventName: "SoundSport International Music & Food Festival",
-            location: "Indianapolis, IN",
-            date: null,
-            isChampionship: true,
-            eligibleClasses: ["soundSport"],
-            mandatory: true,
-          };
+      // Day 47: World Championship Prelims
+      await updateScheduleDay(seasonId, 47, [{
+        eventName: "DCI World Championship Prelims",
+        location: "Indianapolis, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["worldClass", "openClass", "aClass"],
+        mandatory: true,
+      }]);
+      patched++;
 
-          dayEvent.shows = [worldFinalsShow, soundSportShow];
-          patched++;
-        }
-      });
+      // Day 48: World Championship Semifinals
+      await updateScheduleDay(seasonId, 48, [{
+        eventName: "DCI World Championship Semifinals",
+        location: "Indianapolis, IN",
+        date: null,
+        isChampionship: true,
+        eligibleClasses: ["worldClass", "openClass", "aClass"],
+        advancementRules: { all: 25 },
+        mandatory: true,
+      }]);
+      patched++;
 
-      await db.doc("game-settings/season").update({ events });
-      logger.info(`Patched ${patched} championship days in current season.`);
+      // Day 49: World Championship Finals + SoundSport Festival
+      await updateScheduleDay(seasonId, 49, [
+        {
+          eventName: "DCI World Championship Finals",
+          location: "Indianapolis, IN",
+          date: null,
+          isChampionship: true,
+          eligibleClasses: ["worldClass", "openClass", "aClass"],
+          advancementRules: { all: 12 },
+          mandatory: true,
+        },
+        {
+          eventName: "SoundSport International Music & Food Festival",
+          location: "Indianapolis, IN",
+          date: null,
+          isChampionship: true,
+          eligibleClasses: ["soundSport"],
+          mandatory: true,
+        },
+      ]);
+      patched++;
+
+      logger.info(`Patched ${patched} championship days in season ${seasonId}.`);
       return { success: true, message: `Successfully patched ${patched} championship days with isChampionship flag.` };
     }
     case "refreshLiveSeasonSchedule": {

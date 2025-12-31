@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 import { ShowRegistrationModal } from '../components/Schedule';
 
@@ -337,6 +337,7 @@ const Schedule = () => {
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
+  const [scheduleData, setScheduleData] = useState([]);
 
   // Season store
   const seasonData = useSeasonStore((state) => state.seasonData);
@@ -351,6 +352,23 @@ const Schedule = () => {
       setSelectedWeek(currentWeek);
     }
   }, [currentWeek, selectedWeek]);
+
+  // Load schedule from subcollection
+  useEffect(() => {
+    const loadSchedule = async () => {
+      if (!seasonUid) return;
+      try {
+        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
+        const daysQuery = query(daysRef, orderBy('offSeasonDay'));
+        const snapshot = await getDocs(daysQuery);
+        const days = snapshot.docs.map(doc => doc.data());
+        setScheduleData(days);
+      } catch (error) {
+        console.error('Error loading schedule:', error);
+      }
+    };
+    loadSchedule();
+  }, [seasonUid]);
 
   // Load user profile
   useEffect(() => {
@@ -404,12 +422,12 @@ const Schedule = () => {
     return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`;
   }, [getActualDate]);
 
-  // Get all shows grouped by week
+  // Get all shows grouped by week (from subcollection data)
   const showsByWeek = useMemo(() => {
-    if (!seasonData?.events) return {};
+    if (!scheduleData || scheduleData.length === 0) return {};
 
     const grouped = {};
-    seasonData.events.forEach(dayEvent => {
+    scheduleData.forEach(dayEvent => {
       const day = dayEvent.offSeasonDay || dayEvent.day || 0;
       const week = Math.ceil(day / 7);
       if (dayEvent.shows) {
@@ -430,7 +448,7 @@ const Schedule = () => {
     });
 
     return grouped;
-  }, [seasonData]);
+  }, [scheduleData]);
 
   const weeks = Object.keys(showsByWeek).map(Number).sort((a, b) => a - b);
 

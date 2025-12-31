@@ -4,6 +4,159 @@ const { Timestamp, getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { scrapeUpcomingDciEvents } = require("./scraping");
 
+// =============================================================================
+// SCHEDULE SUBCOLLECTION HELPERS
+// =============================================================================
+// Schedule data is stored in: season-schedules/{seasonId}/days/{dayNumber}
+// This allows efficient querying of individual days and avoids document size limits
+
+/**
+ * Writes an entire schedule to the subcollection
+ * @param {string} seasonId - The season identifier (e.g., "live_2024-25")
+ * @param {Array} schedule - Array of day objects with offSeasonDay and shows
+ */
+async function writeScheduleToSubcollection(seasonId, schedule) {
+  const db = getDb();
+  const daysCollectionRef = db.collection(`season-schedules/${seasonId}/days`);
+
+  logger.info(`Writing ${schedule.length} days to season-schedules/${seasonId}/days...`);
+
+  // Use batched writes for efficiency (max 500 per batch)
+  let batch = db.batch();
+  let batchCount = 0;
+
+  for (const day of schedule) {
+    const dayDocRef = daysCollectionRef.doc(String(day.offSeasonDay));
+    batch.set(dayDocRef, {
+      offSeasonDay: day.offSeasonDay,
+      shows: day.shows || [],
+      updatedAt: new Date().toISOString(),
+    });
+    batchCount++;
+
+    if (batchCount >= 400) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
+  logger.info(`Successfully wrote schedule for season ${seasonId}`);
+}
+
+/**
+ * Gets a single day's schedule from the subcollection
+ * @param {string} seasonId - The season identifier
+ * @param {number} dayNumber - The offSeasonDay (1-49)
+ * @returns {Object|null} The day data or null if not found
+ */
+async function getScheduleDay(seasonId, dayNumber) {
+  const db = getDb();
+  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
+  const dayDoc = await dayDocRef.get();
+
+  if (!dayDoc.exists) {
+    return null;
+  }
+
+  return dayDoc.data();
+}
+
+/**
+ * Gets schedule days for a specific range (e.g., a week)
+ * @param {string} seasonId - The season identifier
+ * @param {number} startDay - First day to fetch (inclusive)
+ * @param {number} endDay - Last day to fetch (inclusive)
+ * @returns {Array} Array of day objects
+ */
+async function getScheduleDays(seasonId, startDay, endDay) {
+  const db = getDb();
+  const daysCollectionRef = db.collection(`season-schedules/${seasonId}/days`);
+
+  const snapshot = await daysCollectionRef
+    .where("offSeasonDay", ">=", startDay)
+    .where("offSeasonDay", "<=", endDay)
+    .orderBy("offSeasonDay")
+    .get();
+
+  return snapshot.docs.map((doc) => doc.data());
+}
+
+/**
+ * Gets all schedule days for a season
+ * @param {string} seasonId - The season identifier
+ * @returns {Array} Array of all day objects
+ */
+async function getAllScheduleDays(seasonId) {
+  const db = getDb();
+  const daysCollectionRef = db.collection(`season-schedules/${seasonId}/days`);
+
+  const snapshot = await daysCollectionRef.orderBy("offSeasonDay").get();
+
+  return snapshot.docs.map((doc) => doc.data());
+}
+
+/**
+ * Updates a single day's shows in the subcollection
+ * @param {string} seasonId - The season identifier
+ * @param {number} dayNumber - The offSeasonDay to update
+ * @param {Array} shows - The new shows array for this day
+ */
+async function updateScheduleDay(seasonId, dayNumber, shows) {
+  const db = getDb();
+  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
+
+  await dayDocRef.set({
+    offSeasonDay: dayNumber,
+    shows: shows,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+
+  logger.info(`Updated day ${dayNumber} for season ${seasonId}`);
+}
+
+/**
+ * Adds a show to a specific day (without overwriting existing shows)
+ * @param {string} seasonId - The season identifier
+ * @param {number} dayNumber - The offSeasonDay
+ * @param {Object} show - The show object to add
+ * @returns {boolean} True if show was added, false if it already exists
+ */
+async function addShowToDay(seasonId, dayNumber, show) {
+  const db = getDb();
+  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
+
+  const dayDoc = await dayDocRef.get();
+  const currentShows = dayDoc.exists ? (dayDoc.data().shows || []) : [];
+
+  // Check if show already exists
+  const alreadyExists = currentShows.some(
+    (s) => s.eventName === show.eventName
+  );
+
+  if (alreadyExists) {
+    return false;
+  }
+
+  currentShows.push(show);
+
+  await dayDocRef.set({
+    offSeasonDay: dayNumber,
+    shows: currentShows,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+
+  return true;
+}
+
+// =============================================================================
+// END SCHEDULE SUBCOLLECTION HELPERS
+// =============================================================================
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -192,7 +345,11 @@ async function startNewLiveSeason() {
 
   // Generate schedule with offSeasonDay structure (1-49 competition days)
   // Pass startDate and finalsDate so we can map scraped events to the correct days
-  const events = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate);
+  const schedule = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate);
+
+  // Write schedule to subcollection for scalability
+  // Data stored at: season-schedules/{seasonId}/days/{dayNumber}
+  await writeScheduleToSubcollection(dataDocId, schedule);
 
   const newSeasonData = {
     name: seasonName,
@@ -206,7 +363,7 @@ async function startNewLiveSeason() {
       endDate: Timestamp.fromDate(finalsDate),
       springTrainingDays: 21, // First 21 calendar days are spring training
     },
-    events: events,
+    // Note: events are now stored in season-schedules/{seasonId}/days subcollection
   };
 
   await db.doc("game-settings/season").set(newSeasonData);
@@ -412,6 +569,10 @@ async function startNewOffSeason() {
 
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
+  // Write schedule to subcollection for scalability
+  // Data stored at: season-schedules/{seasonId}/days/{dayNumber}
+  await writeScheduleToSubcollection(dataDocId, schedule);
+
   const newSeasonSettings = {
     name: seasonName,
     status: "off-season",
@@ -419,7 +580,7 @@ async function startNewOffSeason() {
     currentPointCap: 150,
     dataDocId: dataDocId,
     schedule: { startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate) },
-    events: schedule,
+    // Note: events are now stored in season-schedules/{seasonId}/days subcollection
   };
 
   await seasonSettingsRef.set(newSeasonSettings);
@@ -957,10 +1118,10 @@ async function refreshLiveSeasonSchedule() {
     throw new Error("Can only refresh schedule during a live season.");
   }
 
+  const seasonId = seasonData.seasonUid;
   const startDate = seasonData.schedule.startDate.toDate();
   const finalsDate = seasonData.schedule.endDate.toDate();
   const year = finalsDate.getFullYear();
-  const events = seasonData.events || [];
 
   try {
     logger.info(`Scraping upcoming DCI events for ${year}...`);
@@ -979,29 +1140,24 @@ async function refreshLiveSeasonSchedule() {
 
       // Only include events within days 1-44 (non-championship days)
       if (dayNumber >= 1 && dayNumber <= 44) {
-        const dayEntry = events.find((d) => d.offSeasonDay === dayNumber);
-        if (dayEntry) {
-          // Check if this event already exists on this day
-          const alreadyExists = dayEntry.shows.some(
-            (s) => s.eventName === event.eventName
-          );
-          if (!alreadyExists) {
-            dayEntry.shows.push({
-              eventName: event.eventName,
-              location: event.location,
-              date: event.date,
-              isChampionship: false,
-            });
-            addedCount++;
-            logger.info(`Added "${event.eventName}" to day ${dayNumber}`);
-          }
+        const show = {
+          eventName: event.eventName,
+          location: event.location,
+          date: event.date,
+          isChampionship: false,
+        };
+
+        // Use helper function to add show to day (handles deduplication)
+        const wasAdded = await addShowToDay(seasonId, dayNumber, show);
+        if (wasAdded) {
+          addedCount++;
+          logger.info(`Added "${event.eventName}" to day ${dayNumber}`);
         }
       }
     }
 
-    // Update the season document with the refreshed schedule
+    // Update the season document with refresh timestamp
     await db.doc("game-settings/season").update({
-      events: events,
       lastScheduleRefresh: new Date().toISOString(),
     });
 
@@ -1015,6 +1171,7 @@ async function refreshLiveSeasonSchedule() {
 }
 
 module.exports = {
+  // Core season functions
   shuffleArray,
   startNewLiveSeason,
   startNewOffSeason,
@@ -1025,4 +1182,11 @@ module.exports = {
   getNextOffSeasonWindow,
   archiveSeasonResultsLogic,
   refreshLiveSeasonSchedule,
+  // Schedule subcollection helpers
+  writeScheduleToSubcollection,
+  getScheduleDay,
+  getScheduleDays,
+  getAllScheduleDays,
+  updateScheduleDay,
+  addShowToDay,
 };
