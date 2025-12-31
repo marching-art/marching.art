@@ -1,13 +1,15 @@
-// MatchupsTab - Weekly matchups view for league members
+// MatchupsTab - Enhanced Weekly Matchups View with Versus Cards
+// Features: Week navigation, live matchups, user's matchup highlighted, rivalry detection
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, Calendar, Radio, Trophy, ChevronRight, Users, Clock } from 'lucide-react';
-import { doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { Swords, Calendar, Radio, Trophy, Clock, Flame, Users } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
-import MatchupCard from '../MatchupCard';
-import MatchupDetail from '../MatchupDetail';
+import VersusCard from '../VersusCard';
+import MatchupDetailView from '../MatchupDetailView';
 
-// Generate mock matchups for demonstration
+// Generate matchups for demonstration (would be replaced with real data)
 const generateMockMatchups = (league, userProfile, memberProfiles, currentWeek) => {
   if (!league?.members?.length || league.members.length < 2) return [];
 
@@ -15,7 +17,7 @@ const generateMockMatchups = (league, userProfile, memberProfiles, currentWeek) 
   const matchups = [];
 
   // Generate matchups for weeks 1 through current week + 1
-  for (let week = 1; week <= Math.min(currentWeek + 1, 7); week++) {
+  for (let week = 1; week <= Math.min(currentWeek + 1, 12); week++) {
     // Create pairings for this week
     const weekMembers = [...members];
 
@@ -86,13 +88,23 @@ const generateMockMatchups = (league, userProfile, memberProfiles, currentWeek) 
   return matchups;
 };
 
-const MatchupsTab = ({ league, userProfile }) => {
+const MatchupsTab = ({ league, userProfile, standings = [], memberProfiles = {}, rivalries = [] }) => {
   const [matchups, setMatchups] = useState([]);
-  const [memberProfiles, setMemberProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [selectedMatchup, setSelectedMatchup] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(1);
+
+  // Check if matchup is a rivalry
+  const isRivalryMatchup = (matchup) => {
+    if (!userProfile?.uid || !rivalries.length) return false;
+    const opponentId = matchup.homeUserId === userProfile.uid
+      ? matchup.awayUserId
+      : matchup.awayUserId === userProfile.uid
+        ? matchup.homeUserId
+        : null;
+    return opponentId ? rivalries.some(r => r.rivalId === opponentId) : false;
+  };
 
   // Fetch member profiles and matchups
   useEffect(() => {
@@ -103,28 +115,6 @@ const MatchupsTab = ({ league, userProfile }) => {
       }
 
       try {
-        // Fetch member profiles
-        const profiles = {};
-        await Promise.all(league.members.map(async (uid) => {
-          const profileRef = doc(db, `artifacts/marching-art/users/${uid}/profile/data`);
-          const profileDoc = await getDoc(profileRef);
-          if (profileDoc.exists()) {
-            const data = profileDoc.data();
-            profiles[uid] = {
-              uid,
-              displayName: data.displayName || data.username || `User ${uid.slice(0, 6)}`,
-              corpsName: data.corps ? Object.values(data.corps).find(c => c.corpsName)?.corpsName : 'Unknown Corps'
-            };
-          } else {
-            profiles[uid] = {
-              uid,
-              displayName: `User ${uid.slice(0, 6)}`,
-              corpsName: 'Unknown Corps'
-            };
-          }
-        }));
-        setMemberProfiles(profiles);
-
         // Fetch season data to get current week
         const seasonRef = doc(db, 'game-settings/season');
         const seasonDoc = await getDoc(seasonRef);
@@ -143,7 +133,7 @@ const MatchupsTab = ({ league, userProfile }) => {
         setSelectedWeek(week);
 
         // Generate mock matchups (replace with real data in production)
-        const mockMatchups = generateMockMatchups(league, userProfile, profiles, week);
+        const mockMatchups = generateMockMatchups(league, userProfile, memberProfiles, week);
         setMatchups(mockMatchups);
 
       } catch (error) {
@@ -154,7 +144,7 @@ const MatchupsTab = ({ league, userProfile }) => {
     };
 
     fetchData();
-  }, [league, userProfile]);
+  }, [league, userProfile, memberProfiles]);
 
   // Get matchups for selected week
   const weekMatchups = useMemo(() => {
@@ -168,7 +158,14 @@ const MatchupsTab = ({ league, userProfile }) => {
     );
   }, [weekMatchups, userProfile?.uid]);
 
-  // Get all user's matchups across all weeks
+  // Other matchups (not involving user)
+  const otherMatchups = useMemo(() => {
+    return weekMatchups.filter(m =>
+      m.homeUserId !== userProfile?.uid && m.awayUserId !== userProfile?.uid
+    );
+  }, [weekMatchups, userProfile?.uid]);
+
+  // Get all user's matchups across all weeks for record calculation
   const userMatchups = useMemo(() => {
     return matchups.filter(m =>
       m.homeUserId === userProfile?.uid || m.awayUserId === userProfile?.uid
@@ -184,10 +181,27 @@ const MatchupsTab = ({ league, userProfile }) => {
   }, [userMatchups, userProfile?.uid]);
 
   // Get user info for a matchup participant
-  const getUserInfo = (userId) => memberProfiles[userId] || {
-    uid: userId,
-    displayName: `User ${userId?.slice(0, 6)}`,
-    corpsName: 'Unknown Corps'
+  const getUserInfo = (userId) => {
+    const profile = memberProfiles[userId];
+    const standing = standings.find(s => s.uid === userId);
+    return {
+      uid: userId,
+      displayName: profile?.displayName || profile?.username || `User ${userId?.slice(0, 6)}`,
+      corpsName: profile?.corps ? Object.values(profile.corps).find(c => c.corpsName)?.corpsName : 'Unknown Corps',
+      record: standing ? { wins: standing.wins || 0, losses: standing.losses || 0 } : { wins: 0, losses: 0 },
+      avgScore: standing?.totalPoints ? standing.totalPoints / (standing.wins + standing.losses || 1) : 0,
+    };
+  };
+
+  // Handle matchup click
+  const handleMatchupClick = (matchup) => {
+    setSelectedMatchup({
+      user1: matchup.homeUserId,
+      user2: matchup.awayUserId,
+      week: matchup.week,
+      status: matchup.status,
+      isUserMatchup: matchup.homeUserId === userProfile?.uid || matchup.awayUserId === userProfile?.uid,
+    });
   };
 
   if (loading) {
@@ -195,7 +209,7 @@ const MatchupsTab = ({ league, userProfile }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-8 text-center"
+        className="glass rounded-xl p-8 text-center"
       >
         <Swords className="w-12 h-12 text-cream-500/40 mx-auto mb-4 animate-pulse" />
         <p className="text-cream-500/60">Loading matchups...</p>
@@ -206,13 +220,17 @@ const MatchupsTab = ({ league, userProfile }) => {
   // Show matchup detail if one is selected
   if (selectedMatchup) {
     return (
-      <MatchupDetail
+      <MatchupDetailView
         matchup={selectedMatchup}
         league={league}
-        currentUserId={userProfile?.uid}
-        homeUser={getUserInfo(selectedMatchup.homeUserId)}
-        awayUser={getUserInfo(selectedMatchup.awayUserId)}
+        userProfile={userProfile}
+        memberProfiles={memberProfiles}
+        standings={standings}
+        currentWeek={currentWeek}
         onBack={() => setSelectedMatchup(null)}
+        rivalry={isRivalryMatchup(selectedMatchup) ? rivalries.find(r =>
+          r.rivalId === (selectedMatchup.user1 === userProfile?.uid ? selectedMatchup.user2 : selectedMatchup.user1)
+        ) : null}
       />
     );
   }
@@ -225,19 +243,19 @@ const MatchupsTab = ({ league, userProfile }) => {
       className="space-y-4"
     >
       {/* Your Record Summary */}
-      <div className="card p-4">
+      <div className="glass rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <Swords className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-cream-100">Your Record</h3>
+              <h3 className="text-lg font-display font-bold text-cream-100">Your Record</h3>
               <p className="text-sm text-cream-500/60">Season {currentWeek > 1 ? `Week ${currentWeek}` : 'Start'}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-display font-bold">
+            <p className="text-2xl font-display font-bold tabular-nums">
               <span className="text-green-400">{record.wins}</span>
               <span className="text-cream-500/40"> - </span>
               <span className="text-red-400">{record.losses}</span>
@@ -247,48 +265,25 @@ const MatchupsTab = ({ league, userProfile }) => {
         </div>
       </div>
 
-      {/* This Week's Matchup (Highlighted) */}
-      {userMatchup && selectedWeek === currentWeek && (
-        <div className="card p-4 border-2 border-purple-500/40 bg-gradient-to-br from-purple-500/10 to-charcoal-900">
-          <div className="flex items-center gap-2 mb-3">
-            {userMatchup.status === 'live' && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-              </span>
-            )}
-            <h3 className="text-sm font-display font-semibold text-cream-400 uppercase tracking-wide">
-              {userMatchup.status === 'live' ? 'Live Matchup' : 'This Week'}
-            </h3>
-          </div>
-          <MatchupCard
-            matchup={userMatchup}
-            currentUserId={userProfile?.uid}
-            homeUser={getUserInfo(userMatchup.homeUserId)}
-            awayUser={getUserInfo(userMatchup.awayUserId)}
-            onClick={() => setSelectedMatchup(userMatchup)}
-          />
-        </div>
-      )}
-
       {/* Week Selector */}
-      <div className="card p-4">
-        <h3 className="text-lg font-bold text-cream-100 mb-3 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gold-500" />
+      <div className="glass rounded-xl p-4">
+        <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-gold-400" />
           Weekly Schedule
         </h3>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[1, 2, 3, 4, 5, 6, 7].map(week => {
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {Array.from({ length: 12 }, (_, i) => i + 1).map(week => {
             const hasMatchups = matchups.some(m => m.week === week);
             const isCurrentWeek = week === currentWeek;
             const isSelected = selectedWeek === week;
             const isPast = week < currentWeek;
+            const hasLive = matchups.some(m => m.week === week && m.status === 'live');
 
             return (
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-all relative ${
+                className={`flex-shrink-0 px-4 py-2 rounded-lg font-display font-semibold transition-all relative min-w-[72px] ${
                   isSelected
                     ? 'bg-gold-500 text-charcoal-900'
                     : isCurrentWeek
@@ -299,7 +294,13 @@ const MatchupsTab = ({ league, userProfile }) => {
                 }`}
               >
                 <span className="text-sm">Week {week}</span>
-                {isCurrentWeek && !isSelected && (
+                {hasLive && !isSelected && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                  </span>
+                )}
+                {isCurrentWeek && !hasLive && !isSelected && (
                   <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500" />
@@ -311,64 +312,92 @@ const MatchupsTab = ({ league, userProfile }) => {
         </div>
       </div>
 
-      {/* Week Matchups */}
-      {weekMatchups.length > 0 ? (
-        <div className="card p-4">
-          <h3 className="text-lg font-bold text-cream-100 mb-4 flex items-center gap-2">
-            <Swords className="w-5 h-5 text-purple-400" />
-            Week {selectedWeek} Matchups
-            {selectedWeek === currentWeek && weekMatchups.some(m => m.status === 'live') && (
-              <span className="ml-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
-                <Radio className="w-3 h-3" />
+      {/* User's Matchup - Featured */}
+      {userMatchup && (
+        <div>
+          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+            {userMatchup.status === 'live' && (
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+                <Radio className="w-3 h-3 animate-pulse" />
                 LIVE
               </span>
             )}
+            Your Matchup
           </h3>
+          <VersusCard
+            matchup={userMatchup}
+            user1={getUserInfo(userMatchup.homeUserId)}
+            user2={getUserInfo(userMatchup.awayUserId)}
+            user1Score={userMatchup.homeScore}
+            user2Score={userMatchup.awayScore}
+            user1Record={getUserInfo(userMatchup.homeUserId).record}
+            user2Record={getUserInfo(userMatchup.awayUserId).record}
+            user1AvgScore={getUserInfo(userMatchup.homeUserId).avgScore}
+            user2AvgScore={getUserInfo(userMatchup.awayUserId).avgScore}
+            isLive={userMatchup.status === 'live'}
+            isCompleted={userMatchup.status === 'completed'}
+            isUserMatchup={true}
+            isRivalry={isRivalryMatchup(userMatchup)}
+            currentUserId={userProfile?.uid}
+            week={userMatchup.week}
+            onClick={() => handleMatchupClick(userMatchup)}
+          />
+        </div>
+      )}
 
+      {/* Other Matchups */}
+      {otherMatchups.length > 0 && (
+        <div>
+          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Other Matchups ({otherMatchups.length})
+          </h3>
           <div className="space-y-3">
-            {weekMatchups.map(matchup => {
-              const isUserMatchup = matchup.homeUserId === userProfile?.uid || matchup.awayUserId === userProfile?.uid;
-
-              return (
-                <div
-                  key={matchup.id}
-                  className={isUserMatchup ? 'ring-2 ring-purple-500/30 rounded-xl' : ''}
-                >
-                  <MatchupCard
-                    matchup={matchup}
-                    currentUserId={userProfile?.uid}
-                    homeUser={getUserInfo(matchup.homeUserId)}
-                    awayUser={getUserInfo(matchup.awayUserId)}
-                    onClick={() => setSelectedMatchup(matchup)}
-                    compact={!isUserMatchup}
-                  />
-                </div>
-              );
-            })}
+            {otherMatchups.map(matchup => (
+              <VersusCard
+                key={matchup.id}
+                matchup={matchup}
+                user1={getUserInfo(matchup.homeUserId)}
+                user2={getUserInfo(matchup.awayUserId)}
+                user1Score={matchup.homeScore}
+                user2Score={matchup.awayScore}
+                user1Record={getUserInfo(matchup.homeUserId).record}
+                user2Record={getUserInfo(matchup.awayUserId).record}
+                isLive={matchup.status === 'live'}
+                isCompleted={matchup.status === 'completed'}
+                isUserMatchup={false}
+                currentUserId={userProfile?.uid}
+                week={matchup.week}
+                onClick={() => handleMatchupClick(matchup)}
+                compact={true}
+              />
+            ))}
           </div>
         </div>
-      ) : (
-        <div className="card p-8 text-center">
+      )}
+
+      {weekMatchups.length === 0 && (
+        <div className="glass rounded-xl p-8 text-center">
           <Clock className="w-12 h-12 text-cream-500/40 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-cream-100 mb-2">No Matchups Yet</h3>
+          <h3 className="text-lg font-display font-bold text-cream-100 mb-2">No Matchups Yet</h3>
           <p className="text-cream-500/60">
             Week {selectedWeek} matchups will be available soon
           </p>
         </div>
       )}
 
-      {/* Past Results Summary */}
+      {/* Past Results Quick View */}
       {selectedWeek === currentWeek && userMatchups.filter(m => m.status === 'completed').length > 0 && (
-        <div className="card p-4">
-          <h3 className="text-lg font-bold text-cream-100 mb-3 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-gold-500" />
-            Your Past Results
+        <div className="glass rounded-xl p-4">
+          <h3 className="text-sm font-display font-semibold text-cream-500/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-gold-400" />
+            Recent Results
           </h3>
           <div className="space-y-2">
             {userMatchups
               .filter(m => m.status === 'completed')
               .sort((a, b) => b.week - a.week)
-              .slice(0, 5)
+              .slice(0, 3)
               .map(matchup => {
                 const won = matchup.winnerId === userProfile?.uid;
                 const isHome = matchup.homeUserId === userProfile?.uid;
@@ -379,8 +408,8 @@ const MatchupsTab = ({ league, userProfile }) => {
                 return (
                   <div
                     key={matchup.id}
-                    onClick={() => setSelectedMatchup(matchup)}
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                    onClick={() => handleMatchupClick(matchup)}
+                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
                       won
                         ? 'bg-green-500/10 border border-green-500/20 hover:border-green-500/40'
                         : 'bg-red-500/10 border border-red-500/20 hover:border-red-500/40'
@@ -395,21 +424,20 @@ const MatchupsTab = ({ league, userProfile }) => {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-cream-100">
+                        <p className="text-sm font-display font-semibold text-cream-100">
                           vs @{opponent.displayName}
                         </p>
                         <p className="text-xs text-cream-500/60">Week {matchup.week}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-bold ${won ? 'text-green-400' : 'text-cream-400'}`}>
+                    <div className="text-right">
+                      <span className={`font-display font-bold ${won ? 'text-green-400' : 'text-cream-400'}`}>
                         {userScore.toFixed(1)}
                       </span>
-                      <span className="text-cream-500/40">-</span>
-                      <span className={`font-bold ${!won ? 'text-green-400' : 'text-cream-400'}`}>
+                      <span className="text-cream-500/40 mx-1">-</span>
+                      <span className={`font-display font-bold ${!won ? 'text-green-400' : 'text-cream-400'}`}>
                         {oppScore.toFixed(1)}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-cream-500/40 ml-2" />
                     </div>
                   </div>
                 );

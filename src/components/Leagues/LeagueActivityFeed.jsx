@@ -11,8 +11,10 @@ import {
 import { useLeagueActivity, useLeagueNotifications, formatNotificationTime } from '../../hooks/useLeagueNotifications';
 
 // =============================================================================
-// ICON MAPPING
+// ICON MAPPING - Enhanced Transaction Log Style
 // =============================================================================
+
+import { Star, Settings, Crown, Target, Zap, Award } from 'lucide-react';
 
 const iconMap = {
   matchup_result: Swords,
@@ -25,6 +27,13 @@ const iconMap = {
   show_result: Trophy,
   week_start: Calendar,
   week_end: Clock,
+  // New transaction log event types
+  lineup_update: Settings,
+  season_high: Star,
+  commissioner_action: Crown,
+  achievement_unlocked: Award,
+  score_update: Target,
+  live_matchup: Zap,
 };
 
 const colorMap = {
@@ -38,6 +47,13 @@ const colorMap = {
   show_result: { text: 'text-gold-400', bg: 'bg-gold-500/20', border: 'border-gold-500/30' },
   week_start: { text: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/30' },
   week_end: { text: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/30' },
+  // New transaction log event types
+  lineup_update: { text: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30' },
+  season_high: { text: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' },
+  commissioner_action: { text: 'text-gold-400', bg: 'bg-gold-500/20', border: 'border-gold-500/30' },
+  achievement_unlocked: { text: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' },
+  score_update: { text: 'text-lime-400', bg: 'bg-lime-500/20', border: 'border-lime-500/30' },
+  live_matchup: { text: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-500/30' },
 };
 
 // =============================================================================
@@ -106,6 +122,24 @@ const ActivityItem = ({ activity, isNotification = false, onMarkRead, onTap }) =
             {activity.metadata.week && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-cream-500/10 text-cream-400">
                 Week {activity.metadata.week}
+              </span>
+            )}
+            {activity.metadata.score && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-400 flex items-center gap-1">
+                <Target className="w-3 h-3" />
+                {activity.metadata.score.toFixed(1)}
+              </span>
+            )}
+            {activity.metadata.newRank && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                #{activity.metadata.newRank}
+              </span>
+            )}
+            {activity.metadata.seasonHigh && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 flex items-center gap-1">
+                <Star className="w-3 h-3" />
+                Season High!
               </span>
             )}
           </div>
