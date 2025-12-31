@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
+import { useBodyScroll } from '../hooks/useBodyScroll';
 
 const Register = () => {
+  useBodyScroll();
   const navigate = useNavigate();
   const { signUp } = useAuth();
 

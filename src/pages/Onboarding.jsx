@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db, functions } from '../firebase';
+import { useBodyScroll } from '../hooks/useBodyScroll';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
@@ -197,6 +198,7 @@ const GuidedCaptionSelection = ({ availableCorps, lineup, setLineup, currentCapt
 };
 
 const Onboarding = () => {
+  useBodyScroll();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);

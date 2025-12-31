@@ -4,7 +4,7 @@
 // Three-column layout: News Feed | Live Data | Auth Widget
 // Laws: No marketing fluff, no parallax, no testimonials
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
@@ -16,6 +16,7 @@ import { useAuth } from '../App';
 import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
+import { useBodyScroll } from '../hooks/useBodyScroll';
 
 // =============================================================================
 // SIDEBAR DATA (Live Scores & Trending)
@@ -44,6 +45,7 @@ const TRENDING_PLAYERS = [
 // =============================================================================
 
 const Landing = () => {
+  useBodyScroll();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
 
@@ -51,20 +53,6 @@ const Landing = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Enable body scrolling for Landing page (overrides index.html overflow:hidden and height:100%)
-  useEffect(() => {
-    document.documentElement.style.overflow = 'auto';
-    document.documentElement.style.height = 'auto';
-    document.body.style.overflow = 'auto';
-    document.body.style.height = 'auto';
-    return () => {
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.height = '';
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    };
-  }, []);
 
   const handleSignOut = async () => {
     try {
