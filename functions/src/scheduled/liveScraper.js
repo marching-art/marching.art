@@ -49,7 +49,7 @@ async function fetchWithRetry(url, maxRetries = 3) {
 }
 
 exports.scrapeDciScores = onSchedule({
-  schedule: "every day 23:30",
+  schedule: "every day 01:30",
   timeZone: "America/New_York",
 }, async () => {
   const db = getDb();
