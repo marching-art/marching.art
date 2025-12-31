@@ -1,8 +1,8 @@
 // ChatTab - Enhanced league chat with timestamps, reactions, and Commissioner badge
+// Note: Message input is handled by the persistent Smack Talk component in LeagueDetailView
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, Heart, ThumbsUp, Flame, Trophy, Clock, Crown } from 'lucide-react';
-import { postLeagueMessage } from '../../../firebase/functions';
+import { MessageSquare, Heart, ThumbsUp, Flame, Trophy, Clock, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Available reactions
@@ -14,33 +14,13 @@ const REACTIONS = [
 ];
 
 const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner = false }) => {
-  const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || sending) return;
-
-    setSending(true);
-    try {
-      await postLeagueMessage({ leagueId: league.id, message: newMessage.trim() });
-      setNewMessage('');
-      inputRef.current?.focus();
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    } finally {
-      setSending(false);
-    }
-  };
 
   const handleReaction = async (messageId, reactionId) => {
     // Reaction feature not implemented yet - UI ready for future
@@ -265,38 +245,6 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="p-3 border-t border-[#333] bg-[#0a0a0a]">
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#555] transition-all"
-            disabled={sending}
-            maxLength={500}
-          />
-          <button
-            type="submit"
-            disabled={sending || !newMessage.trim()}
-            className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-sm text-white font-bold flex items-center gap-2 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            <span className="hidden sm:inline">Send</span>
-          </button>
-        </div>
-
-        {/* Character count */}
-        {newMessage.length > 400 && (
-          <p className={`text-xs mt-1 text-right ${
-            newMessage.length > 480 ? 'text-red-500' : 'text-gray-500'
-          }`}>
-            {newMessage.length}/500
-          </p>
-        )}
-      </form>
     </motion.div>
   );
 };
