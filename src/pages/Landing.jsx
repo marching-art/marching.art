@@ -115,13 +115,13 @@ const Landing = () => {
       </header>
 
       {/* MAIN CONTENT - Three Column Layout */}
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-0">
+      <main className="flex-1">
+        <div className="min-h-full grid grid-cols-1 lg:grid-cols-12 gap-0">
 
           {/* ============================================================= */}
           {/* MAIN COLUMN - News Feed (Left/Center) */}
           {/* ============================================================= */}
-          <div className="lg:col-span-7 xl:col-span-8 border-r border-[#333] overflow-y-auto scroll-momentum">
+          <div className="lg:col-span-7 xl:col-span-8 lg:border-r border-[#333]">
             <div className="p-4 lg:p-6 xl:p-8">
               {/* Dynamic News Feed powered by Gemini AI */}
               <NewsFeed maxItems={5} />
@@ -131,7 +131,7 @@ const Landing = () => {
           {/* ============================================================= */}
           {/* SIDEBAR - Right Column */}
           {/* ============================================================= */}
-          <div className="lg:col-span-5 xl:col-span-4 bg-[#111] overflow-y-auto scroll-momentum">
+          <div className="lg:col-span-5 xl:col-span-4 bg-[#111]">
             <div className="p-4 lg:p-5 space-y-5">
 
               {/* ------------------------------------------------------- */}
