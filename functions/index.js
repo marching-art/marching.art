@@ -98,6 +98,8 @@ const {
   processNewsGeneration,
   onFantasyRecapUpdated,
   triggerNewsGeneration,
+  triggerDailyNews,
+  getDailyNews,
   getRecentNews,
 } = require("./src/triggers/newsGeneration");
 const {
@@ -181,6 +183,8 @@ module.exports = {
   processNewsGeneration,
   onFantasyRecapUpdated,
   triggerNewsGeneration,
+  triggerDailyNews,
+  getDailyNews,
   getRecentNews,
 
   // Email Triggers
