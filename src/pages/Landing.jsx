@@ -113,13 +113,13 @@ const Landing = () => {
               <div className="flex items-center gap-2 lg:hidden">
                 <Link
                   to="/login"
-                  className="h-9 px-4 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong rounded-sm"
+                  className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="h-9 px-3 border border-[#444] text-gray-300 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-1.5 hover:border-[#555] hover:text-white active:bg-white/5 transition-all rounded-sm"
+                  className="h-9 px-3 border border-yellow-500/50 text-yellow-500 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center gap-1.5 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500 active:bg-yellow-500/20 transition-all duration-200"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden xs:inline">Register</span>
@@ -130,7 +130,7 @@ const Landing = () => {
             {user && (
               <Link
                 to="/dashboard"
-                className="h-9 px-4 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong rounded-sm lg:hidden"
+                className="h-9 px-4 bg-yellow-500 text-slate-900 font-display font-semibold text-sm uppercase tracking-wide flex items-center justify-center rounded-lg hover:bg-yellow-400 active:bg-yellow-600 transition-all duration-200 lg:hidden"
               >
                 Dashboard
               </Link>
