@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
+import { getMaxShowsForWeek } from '../../utils/captionPricing';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
@@ -36,13 +37,14 @@ const CorpsSelectionItem = ({
   isSelected,
   onToggle,
   show,
-  isDisabled
+  isDisabled,
+  maxShows
 }) => {
   const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400' };
   const weekKey = `week${show.week}`;
   const currentShows = corpsData.selectedShows?.[weekKey] || [];
   const showsThisWeek = currentShows.length;
-  const isAtMax = showsThisWeek >= 4;
+  const isAtMax = showsThisWeek >= maxShows;
   const isAlreadyAtShow = currentShows.some(
     s => s.eventName === show.eventName && s.date === show.date
   );
@@ -80,7 +82,7 @@ const CorpsSelectionItem = ({
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span className={`text-[11px] ${isAtMax && !isAlreadyAtShow ? 'text-red-400' : 'text-gray-500'}`}>
-            {showsThisWeek}/4 shows this week
+            {showsThisWeek}/{maxShows} shows this week
           </span>
           {isAtMax && !isAlreadyAtShow && (
             <span className="text-[10px] text-red-400 font-bold px-1.5 py-0.5 bg-red-400/10 rounded">
@@ -102,6 +104,9 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState('register'); // 'register' | 'info'
   const { trigger: haptic } = useHaptic();
+
+  // Get max shows based on the show's week (7 for final week, 4 otherwise)
+  const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
 
   // Detect mobile for BottomSheet vs Modal
   const [isMobile, setIsMobile] = useState(false);
@@ -146,9 +151,9 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const isAlreadyAtShow = currentShows.some(
         s => s.eventName === show.eventName && s.date === show.date
       );
-      if (currentShows.length >= 4 && !isAlreadyAtShow) {
+      if (currentShows.length >= maxShows && !isAlreadyAtShow) {
         haptic('error');
-        toast.error(`This corps already has 4 shows registered for week ${show.week}`);
+        toast.error(`This corps already has ${maxShows} shows registered for week ${show.week}`);
         return;
       }
       setSelectedCorps([...selectedCorps, corpsClass]);
@@ -163,7 +168,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       const isAlreadyAtShow = currentShows.some(
         s => s.eventName === show.eventName && s.date === show.date
       );
-      return currentShows.length < 4 || isAlreadyAtShow || selectedCorps.includes(corpsClass);
+      return currentShows.length < maxShows || isAlreadyAtShow || selectedCorps.includes(corpsClass);
     });
     setSelectedCorps(canSelect);
   };
@@ -265,7 +270,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           Week {show.week}
         </span>
         <span className="text-[10px] text-gray-500">
-          Max 4 shows per corps
+          Max {maxShows} shows per corps
         </span>
       </div>
     </>
@@ -328,6 +333,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
                   onToggle={toggleCorps}
                   show={show}
                   isDisabled={false}
+                  maxShows={maxShows}
                 />
               );
             })}
@@ -339,7 +345,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
               <Ticket className="w-4 h-4 text-[#0057B8] flex-shrink-0 mt-0.5" />
               <div className="text-[11px] text-gray-400 leading-relaxed">
                 <p>
-                  Each corps can attend up to <span className="text-[#0057B8] font-bold">4 shows per week</span>.
+                  Each corps can attend up to <span className="text-[#0057B8] font-bold">{maxShows} shows per week</span>.
                   Scores from attended shows contribute to your season standings.
                 </p>
               </div>

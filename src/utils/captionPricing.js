@@ -290,6 +290,21 @@ export const getCaptionChangesAllowed = (weeksRemaining) => {
 };
 
 /**
+ * Get maximum number of show registrations allowed for a given week
+ * @param {number} week - Week number (1-7)
+ * @param {number} totalWeeks - Total weeks in the season (default 7)
+ * @returns {number} Maximum shows allowed for the week
+ */
+export const getMaxShowsForWeek = (week, totalWeeks = 7) => {
+  // Final week allows 7 registrations (1 per day max per ensemble)
+  if (week === totalWeeks) {
+    return 7;
+  }
+  // Regular weeks allow 4 shows
+  return 4;
+};
+
+/**
  * Format corps name with year for display
  * @param {Object} corps - Corps object with name and year
  * @returns {string} Formatted name
@@ -422,6 +437,7 @@ export default {
   calculateLevel,
   getXPProgress,
   getCaptionChangesAllowed,
+  getMaxShowsForWeek,
   formatCorpsName,
   getClassInfo,
   getNextClassProgress
