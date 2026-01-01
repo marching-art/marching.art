@@ -207,4 +207,12 @@ match /news_hub/{newsId} {
   allow write: if false; // Backend only (via Cloud Functions)
 }
 
+// --- NEWS SUBMISSIONS ---
+// User-submitted articles pending admin approval
+match /news_submissions/{submissionId} {
+  allow read: if isAdmin();
+  allow create: if isAuthenticated();
+  allow update, delete: if isAdmin();
+}
+
 }}

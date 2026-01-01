@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
-  Music, TrendingUp, TrendingDown, Activity, Medal
+  Music, TrendingUp, TrendingDown, Activity, Medal, FileText
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -31,6 +31,8 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
+import { submitNewsForApproval } from '../api/functions';
+import NewsSubmissionModal from '../components/modals/NewsSubmissionModal';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -166,6 +168,8 @@ const Dashboard = () => {
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
+  const [showNewsSubmission, setShowNewsSubmission] = useState(false);
+  const [submittingNews, setSubmittingNews] = useState(false);
   const [corpsStats, setCorpsStats] = useState({});
 
   // Destructure dashboard data
@@ -425,6 +429,24 @@ const Dashboard = () => {
   const openCaptionSelection = (captionId = null) => {
     setSelectedCaption(captionId);
     setShowCaptionSelection(true);
+  };
+
+  // Handle news article submission
+  const handleNewsSubmission = async (formData) => {
+    setSubmittingNews(true);
+    try {
+      const result = await submitNewsForApproval(formData);
+      if (result.data.success) {
+        toast.success('Article submitted for review!');
+        setShowNewsSubmission(false);
+      } else {
+        toast.error(result.data.message || 'Failed to submit article');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to submit article');
+    } finally {
+      setSubmittingNews(false);
+    }
   };
 
   // =============================================================================
@@ -694,6 +716,15 @@ const Dashboard = () => {
                   {(profile?.corpsCoin || 0).toLocaleString()}
                 </span>
               </div>
+
+              {/* Submit News */}
+              <button
+                onClick={() => setShowNewsSubmission(true)}
+                className="w-full mt-4 flex items-center justify-center gap-2 p-3 sm:p-2 border border-dashed border-[#444] text-gray-400 hover:text-white hover:border-[#555] active:bg-[#222] rounded min-h-[48px] sm:min-h-0 transition-colors"
+              >
+                <FileText className="w-5 h-5 sm:w-4 sm:h-4" />
+                <span className="text-sm sm:text-xs">Submit News Article</span>
+              </button>
             </div>
 
             {/* CENTER COLUMN - Standings */}
@@ -932,6 +963,14 @@ const Dashboard = () => {
           ...(myLeagues?.length > 0 ? ['league'] : []),
         ]}
       />
+
+      {showNewsSubmission && (
+        <NewsSubmissionModal
+          onClose={() => setShowNewsSubmission(false)}
+          onSubmit={handleNewsSubmission}
+          isSubmitting={submittingNews}
+        />
+      )}
     </div>
   );
 };

@@ -272,3 +272,23 @@ export const getArticleForEdit = createCallable<{ path: string }, GetArticleForE
 export const updateArticle = createCallable<UpdateArticleData, { success: boolean; message: string }>('updateArticle');
 export const archiveArticle = createCallable<ArchiveArticleData, { success: boolean; message: string }>('archiveArticle');
 export const deleteArticle = createCallable<DeleteArticleData, { success: boolean; message: string }>('deleteArticle');
+
+// =============================================================================
+// NEWS SUBMISSIONS (User-submitted articles for admin approval)
+// =============================================================================
+
+export interface SubmitNewsData {
+  headline: string;
+  summary: string;
+  fullStory: string;
+  category: NewsCategory;
+  imageUrl?: string | null;
+}
+
+export interface SubmitNewsResult {
+  success: boolean;
+  message: string;
+  submissionId?: string;
+}
+
+export const submitNewsForApproval = createCallable<SubmitNewsData, SubmitNewsResult>('submitNewsForApproval');
