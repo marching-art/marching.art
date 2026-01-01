@@ -27,7 +27,8 @@ import {
   Music,
   Eye,
   Sparkles,
-  Shield
+  Shield,
+  Newspaper
 } from 'lucide-react';
 
 // =============================================================================
@@ -116,6 +117,7 @@ const TopNav = () => {
 
       {/* Desktop Nav Links */}
       <div className="hidden lg:flex items-center gap-1">
+        <NavItem to="/" icon={Newspaper} label="News" />
         <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/schedule" icon={Calendar} label="Schedule" />
         <NavItem to="/scores" icon={Trophy} label="Scores" />
