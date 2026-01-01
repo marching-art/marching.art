@@ -482,6 +482,14 @@ const TickerBar = () => {
 const GameShell = ({ children }) => {
   const location = useLocation();
 
+  // Enable fixed one-screen layout for GameShell pages
+  useEffect(() => {
+    document.documentElement.classList.add('game-shell-active');
+    return () => {
+      document.documentElement.classList.remove('game-shell-active');
+    };
+  }, []);
+
   // Log page views
   useEffect(() => {
     analyticsHelpers.logPageView(location.pathname);
