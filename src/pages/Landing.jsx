@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap
+  Settings, Zap, UserPlus
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -107,13 +107,43 @@ const Landing = () => {
               marching.art
             </span>
           </div>
-          <div className="ml-auto flex items-center">
-            <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
-              Privacy
-            </Link>
-            <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
-              Terms
-            </Link>
+          <div className="ml-auto flex items-center gap-2">
+            {/* Mobile Auth Buttons - Only show for unauthenticated users on mobile */}
+            {!user && (
+              <div className="flex items-center gap-2 lg:hidden">
+                <Link
+                  to="/login"
+                  className="h-9 px-4 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong rounded-sm"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="h-9 px-3 border border-[#444] text-gray-300 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-1.5 hover:border-[#555] hover:text-white active:bg-white/5 transition-all rounded-sm"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden xs:inline">Register</span>
+                </Link>
+              </div>
+            )}
+            {/* Authenticated user - Show dashboard link on mobile */}
+            {user && (
+              <Link
+                to="/dashboard"
+                className="h-9 px-4 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center hover:bg-[#0066d6] active:bg-[#004a9e] transition-all duration-150 press-feedback-strong rounded-sm lg:hidden"
+              >
+                Dashboard
+              </Link>
+            )}
+            {/* Desktop links */}
+            <div className="hidden lg:flex items-center">
+              <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+                Privacy
+              </Link>
+              <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+                Terms
+              </Link>
+            </div>
           </div>
         </div>
       </header>
