@@ -417,7 +417,7 @@ exports.getRecentNews = onCall(
   },
   async (request) => {
     const db = getDb();
-    const { limit = 5, category, fromDay } = request.data || {};
+    const { limit = 5, category, fromDay, startAfter } = request.data || {};
 
     try {
       // If fromDay is specified, fetch from day-based structure
@@ -437,19 +437,25 @@ exports.getRecentNews = onCall(
         return { success: true, news };
       }
 
-      // Legacy: Fetch from flat collection
+      // Legacy: Fetch from flat collection with cursor-based pagination
       let query = db.collection("news_hub")
         .where("isPublished", "==", true)
-        .orderBy("createdAt", "desc")
-        .limit(Math.min(limit, 20));
+        .orderBy("createdAt", "desc");
 
       if (category) {
         query = db.collection("news_hub")
           .where("isPublished", "==", true)
           .where("category", "==", category)
-          .orderBy("createdAt", "desc")
-          .limit(Math.min(limit, 20));
+          .orderBy("createdAt", "desc");
       }
+
+      // Apply cursor for pagination if provided
+      if (startAfter) {
+        const cursorDate = new Date(startAfter);
+        query = query.startAfter(cursorDate);
+      }
+
+      query = query.limit(Math.min(limit, 20));
 
       const snapshot = await query.get();
 
@@ -460,7 +466,10 @@ exports.getRecentNews = onCall(
         createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
       }));
 
-      return { success: true, news };
+      // Include hasMore flag to indicate if there are more articles
+      const hasMore = snapshot.docs.length === Math.min(limit, 20);
+
+      return { success: true, news, hasMore };
     } catch (error) {
       logger.error("Error fetching recent news:", error);
       throw new HttpsError("internal", "Failed to fetch news");

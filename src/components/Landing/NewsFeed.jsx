@@ -619,7 +619,9 @@ function EmptyState({ category }) {
 export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
 
   const fetchNews = async () => {
@@ -631,15 +633,49 @@ export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
 
       if (result.data?.success && result.data.news?.length > 0) {
         setNews(result.data.news);
+        setHasMore(result.data.hasMore ?? true);
       } else {
         setNews(FALLBACK_NEWS);
+        setHasMore(false);
       }
     } catch (err) {
       console.error('Error fetching news:', err);
       setNews(FALLBACK_NEWS);
+      setHasMore(false);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore || news.length === 0) return;
+
+    // Don't load more if we're showing fallback data
+    if (news[0]?.id?.startsWith('fallback-')) return;
+
+    setLoadingMore(true);
+
+    try {
+      // Get the last article's createdAt as the cursor
+      const lastArticle = news[news.length - 1];
+      const startAfter = lastArticle?.createdAt;
+
+      const result = await getRecentNews({
+        limit: maxItems,
+        startAfter,
+      });
+
+      if (result.data?.success && result.data.news?.length > 0) {
+        setNews(prev => [...prev, ...result.data.news]);
+        setHasMore(result.data.hasMore ?? false);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error loading more news:', err);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -745,11 +781,24 @@ export default function NewsFeed({ onStoryClick, maxItems = 6 }) {
           )}
 
           {/* Load More */}
-          <div className="mt-6 text-center">
-            <button className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback">
-              Load More Stories
-            </button>
-          </div>
+          {hasMore && !news[0]?.id?.startsWith('fallback-') && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-3 border border-[#333] text-gray-400 text-sm font-bold uppercase tracking-wider hover:border-[#444] hover:text-white transition-all press-feedback disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingMore ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </span>
+                ) : (
+                  'Load More Stories'
+                )}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
