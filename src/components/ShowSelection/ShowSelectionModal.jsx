@@ -2,13 +2,14 @@
 // SHOW SELECTION MODAL - ESPN DATA STYLE
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, MapPin, Check, X, Info, AlertCircle } from 'lucide-react';
 import { db, functions } from '../../firebase';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
+import { getMaxShowsForWeek } from '../../utils/captionPricing';
 
 const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, seasonId, currentSelections = [] }) => {
   const [availableShows, setAvailableShows] = useState([]);
@@ -16,7 +17,8 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const MAX_SHOWS = 4;
+  // Get max shows based on current week (7 for final week, 4 otherwise)
+  const MAX_SHOWS = useMemo(() => getMaxShowsForWeek(currentWeek), [currentWeek]);
 
   const classNameMap = {
     soundSport: 'soundSport',

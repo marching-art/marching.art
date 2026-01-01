@@ -157,8 +157,11 @@ export const GAME_CONFIG = {
     /** Game day reset hour (2 AM) */
     resetHour: 2,
 
-    /** Shows per week */
+    /** Shows per week (regular weeks) */
     showsPerWeek: 4,
+
+    /** Shows per week (final week) - allows more registrations during championship week */
+    finalWeekShows: 7,
   },
 
   /** XP level thresholds */

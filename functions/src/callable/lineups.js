@@ -148,6 +148,21 @@ exports.saveLineup = onCall({ cors: true }, async (request) => {
 });
 
 /**
+ * Get maximum number of show registrations allowed for a given week
+ * @param {number} week - Week number (1-7)
+ * @param {number} totalWeeks - Total weeks in the season (default 7)
+ * @returns {number} Maximum shows allowed for the week
+ */
+const getMaxShowsForWeek = (week, totalWeeks = 7) => {
+  // Final week allows 7 registrations (1 per day max per ensemble)
+  if (week === totalWeeks) {
+    return 7;
+  }
+  // Regular weeks allow 4 shows
+  return 4;
+};
+
+/**
  * Task 3.3: Saves a user's selected shows for the week.
  */
 // Add { cors: true } here
@@ -158,10 +173,12 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   const uid = request.auth.uid;
   const { week, shows, corpsClass } = request.data;
 
-  //
-  if (!week || !shows || !Array.isArray(shows) || shows.length > 4) {
+  // Get the max shows allowed for this week (7 for final week, 4 otherwise)
+  const maxShowsForWeek = getMaxShowsForWeek(week);
+
+  if (!week || !shows || !Array.isArray(shows) || shows.length > maxShowsForWeek) {
     throw new HttpsError("invalid-argument",
-      "Invalid data. A week number and a maximum of 4 shows are required.");
+      `Invalid data. A week number and a maximum of ${maxShowsForWeek} shows are required.`);
   }
 
   if (!corpsClass || !["worldClass", "openClass", "aClass", "soundSport"].includes(corpsClass)) {
