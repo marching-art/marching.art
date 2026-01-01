@@ -356,11 +356,16 @@ const Schedule = () => {
   // Load schedule from subcollection
   useEffect(() => {
     const loadSchedule = async () => {
-      if (!seasonUid) return;
+      if (!seasonUid) {
+        console.log('[Schedule] No seasonUid available yet');
+        return;
+      }
+      console.log('[Schedule] Loading schedule for seasonUid:', seasonUid);
       try {
         const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
         const daysQuery = query(daysRef, orderBy('offSeasonDay'));
         const snapshot = await getDocs(daysQuery);
+        console.log('[Schedule] Fetched', snapshot.docs.length, 'days from season-schedules');
         const days = snapshot.docs.map(doc => doc.data());
         setScheduleData(days);
       } catch (error) {
