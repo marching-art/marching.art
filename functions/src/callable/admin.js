@@ -175,13 +175,32 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       // Generate new schedule (49 days for off-season)
       const schedule = await generateOffSeasonSchedule(49, 1);
 
-      // Write to subcollection
-      await writeScheduleToSubcollection(seasonId, schedule);
+      // Transform to competitions array format (used by schedules collection)
+      const competitions = [];
+      schedule.forEach(day => {
+        const week = Math.ceil(day.offSeasonDay / 7);
+        (day.shows || []).forEach((show, idx) => {
+          competitions.push({
+            id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
+            name: show.eventName,
+            location: show.location || "",
+            date: show.date || null,
+            day: day.offSeasonDay,
+            week: week,
+            type: show.isChampionship ? "championship" : "regular",
+            allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+            mandatory: show.mandatory || false,
+          });
+        });
+      });
 
-      logger.info(`Successfully regenerated schedule with ${schedule.length} days for season ${seasonId}`);
+      // Write to schedules collection
+      await db.doc(`schedules/${seasonId}`).set({ competitions });
+
+      logger.info(`Successfully regenerated schedule with ${competitions.length} competitions for season ${seasonId}`);
       return {
         success: true,
-        message: `Schedule regenerated with ${schedule.length} days for season ${seasonId}.`
+        message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}.`
       };
     }
     default:
