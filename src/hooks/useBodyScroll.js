@@ -15,11 +15,15 @@ export function useBodyScroll() {
     document.body.style.overflow = 'auto';
     document.body.style.height = 'auto';
 
-    // Also ensure #root allows overflow
+    // Also ensure #root allows overflow and is not fixed-positioned
     const root = document.getElementById('root');
     if (root) {
-      root.style.minHeight = 'auto';
+      root.style.position = 'static';
+      root.style.top = 'auto';
+      root.style.left = 'auto';
+      root.style.width = '100%';
       root.style.height = 'auto';
+      root.style.minHeight = '100vh';
       root.style.overflow = 'visible';
     }
 
@@ -29,8 +33,12 @@ export function useBodyScroll() {
       document.body.style.overflow = '';
       document.body.style.height = '';
       if (root) {
-        root.style.minHeight = '';
+        root.style.position = '';
+        root.style.top = '';
+        root.style.left = '';
+        root.style.width = '';
         root.style.height = '';
+        root.style.minHeight = '';
         root.style.overflow = '';
       }
     };
