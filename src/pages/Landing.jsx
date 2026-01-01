@@ -117,8 +117,8 @@ const Landing = () => {
       </header>
 
       {/* MAIN CONTENT - Three Column Layout */}
-      <main className="flex-1">
-        <div className="min-h-full grid grid-cols-1 lg:grid-cols-12 gap-0">
+      <main className="flex-1 overflow-visible">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
 
           {/* ============================================================= */}
           {/* MAIN COLUMN - News Feed (Left/Center) */}
