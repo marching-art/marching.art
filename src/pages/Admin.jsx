@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Shield, Database, Users, Award, Calendar,
-  Play, RefreshCw, Table,
+  Play, RefreshCw, Table, FileText,
   X, Search, Mail, UserCheck, UserX, Activity
 } from 'lucide-react';
 import { setUserRole } from '../firebase/functions';
@@ -17,7 +17,7 @@ import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { useAuth } from '../App';
-import { ScoresSpreadsheet } from '../components/Admin';
+import { ScoresSpreadsheet, ArticleManagement } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
 const Admin = () => {
@@ -162,6 +162,7 @@ const Admin = () => {
           {[
             { id: 'overview', label: 'Overview', icon: Database },
             { id: 'season', label: 'Season Management', icon: Calendar },
+            { id: 'articles', label: 'Articles', icon: FileText },
             { id: 'scores', label: 'Scores Reference', icon: Table },
             { id: 'users', label: 'User Management', icon: Users },
             { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
@@ -186,6 +187,7 @@ const Admin = () => {
       <div className="p-4">
         {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
         {activeTab === 'season' && <SeasonManagementTab callAdminFunction={callAdminFunction} />}
+        {activeTab === 'articles' && <ArticleManagement />}
         {activeTab === 'scores' && <ScoresSpreadsheet />}
         {activeTab === 'users' && <UserManagementTab />}
         {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}

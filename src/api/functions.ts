@@ -171,3 +171,104 @@ export interface GetRecentNewsResult {
 
 export const getRecentNews = createCallable<GetRecentNewsParams, GetRecentNewsResult>('getRecentNews');
 export const triggerNewsGeneration = createCallable<{ type: 'dci' | 'fantasy'; data: unknown }, { success: boolean; result?: unknown }>('triggerNewsGeneration');
+
+// =============================================================================
+// ARTICLE MANAGEMENT (Admin)
+// =============================================================================
+
+export interface ArticleListItem {
+  id: string;
+  path: string;
+  source: 'current_season' | 'legacy';
+  reportDay?: number;
+  headline: string;
+  summary: string;
+  isPublished: boolean;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  imageUrl?: string;
+  category: string;
+}
+
+export interface ListAllArticlesResult {
+  success: boolean;
+  articles: ArticleListItem[];
+}
+
+export interface ArticleForEdit {
+  id: string;
+  path: string;
+  headline: string;
+  summary: string;
+  fullStory?: string;
+  fantasyImpact?: string;
+  dciRecap?: {
+    title: string;
+    narrative: string;
+    captionLeaders?: unknown[];
+    standings?: unknown[];
+  };
+  fantasySpotlight?: {
+    title: string;
+    narrative: string;
+    topEnsembles?: unknown[];
+    leagueLeaders?: unknown[];
+  };
+  crossOverAnalysis?: {
+    title: string;
+    narrative: string;
+    roiHighlights?: unknown[];
+    buyLowOpportunities?: unknown[];
+    sellHighWarnings?: unknown[];
+  };
+  trendingCorps?: Array<{
+    corps: string;
+    direction: 'up' | 'down' | 'stable';
+    reason: string;
+  }>;
+  imageUrl?: string;
+  isPublished: boolean;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface GetArticleForEditResult {
+  success: boolean;
+  article: ArticleForEdit;
+}
+
+export interface UpdateArticleData {
+  path: string;
+  updates: Partial<{
+    headline: string;
+    summary: string;
+    fullStory: string;
+    fantasyImpact: string;
+    dciRecap: ArticleForEdit['dciRecap'];
+    fantasySpotlight: ArticleForEdit['fantasySpotlight'];
+    crossOverAnalysis: ArticleForEdit['crossOverAnalysis'];
+    trendingCorps: ArticleForEdit['trendingCorps'];
+    imageUrl: string;
+    isPublished: boolean;
+    isArchived: boolean;
+  }>;
+}
+
+export interface ArchiveArticleData {
+  path: string;
+  archive: boolean;
+}
+
+export interface DeleteArticleData {
+  path: string;
+  confirmDelete: boolean;
+}
+
+export const listAllArticles = createCallable<void, ListAllArticlesResult>('listAllArticles');
+export const getArticleForEdit = createCallable<{ path: string }, GetArticleForEditResult>('getArticleForEdit');
+export const updateArticle = createCallable<UpdateArticleData, { success: boolean; message: string }>('updateArticle');
+export const archiveArticle = createCallable<ArchiveArticleData, { success: boolean; message: string }>('archiveArticle');
+export const deleteArticle = createCallable<DeleteArticleData, { success: boolean; message: string }>('deleteArticle');

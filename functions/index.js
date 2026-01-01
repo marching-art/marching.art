@@ -101,6 +101,11 @@ const {
   triggerDailyNews,
   getDailyNews,
   getRecentNews,
+  listAllArticles,
+  getArticleForEdit,
+  updateArticle,
+  archiveArticle,
+  deleteArticle,
 } = require("./src/triggers/newsGeneration");
 const {
   onProfileCreated,
@@ -186,6 +191,13 @@ module.exports = {
   triggerDailyNews,
   getDailyNews,
   getRecentNews,
+
+  // Article Management (Admin)
+  listAllArticles,
+  getArticleForEdit,
+  updateArticle,
+  archiveArticle,
+  deleteArticle,
 
   // Email Triggers
   onProfileCreated,

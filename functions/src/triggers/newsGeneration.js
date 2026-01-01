@@ -714,3 +714,293 @@ exports.triggerNewsGeneration = onCall(
     }
   }
 );
+
+// =============================================================================
+// ARTICLE MANAGEMENT (Admin)
+// =============================================================================
+
+/**
+ * Check if user is admin - helper function
+ */
+async function checkAdminAuth(db, auth) {
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const userDoc = await db
+    .collection("artifacts")
+    .doc(process.env.DATA_NAMESPACE || "production")
+    .collection("users")
+    .doc(auth.uid)
+    .collection("profile")
+    .doc("data")
+    .get();
+
+  if (!userDoc.exists || userDoc.data().role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins can manage articles");
+  }
+}
+
+/**
+ * List all articles for admin management
+ * Returns articles from both current_season day structure and legacy collection
+ */
+exports.listAllArticles = onCall(
+  {
+    timeoutSeconds: 60,
+  },
+  async (request) => {
+    const db = getDb();
+    await checkAdminAuth(db, request.auth);
+
+    try {
+      const articles = [];
+
+      // Fetch from current_season day-based structure
+      const currentSeasonRef = db.collection("news_hub/current_season");
+      const dayDocs = await currentSeasonRef.listDocuments();
+
+      for (const docRef of dayDocs) {
+        const doc = await docRef.get();
+        if (doc.exists) {
+          const data = doc.data();
+          articles.push({
+            id: doc.id,
+            path: `news_hub/current_season/${doc.id}`,
+            source: "current_season",
+            reportDay: data.reportDay,
+            headline: data.headline || "Untitled",
+            summary: data.summary || "",
+            isPublished: data.isPublished !== false,
+            isArchived: data.isArchived || false,
+            createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+            imageUrl: data.imageUrl,
+            category: data.category || "daily",
+          });
+        }
+      }
+
+      // Fetch from legacy flat collection
+      const legacySnapshot = await db.collection("news_hub")
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
+
+      legacySnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        articles.push({
+          id: doc.id,
+          path: `news_hub/${doc.id}`,
+          source: "legacy",
+          reportDay: data.metadata?.offSeasonDay,
+          headline: data.headline || "Untitled",
+          summary: data.summary || "",
+          isPublished: data.isPublished !== false,
+          isArchived: data.isArchived || false,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          imageUrl: data.imageUrl,
+          category: data.category || "dci",
+        });
+      });
+
+      // Sort by createdAt descending
+      articles.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+
+      logger.info(`Listed ${articles.length} articles for admin`);
+
+      return { success: true, articles };
+    } catch (error) {
+      logger.error("Error listing articles:", error);
+      throw new HttpsError("internal", "Failed to list articles");
+    }
+  }
+);
+
+/**
+ * Get a single article's full data for editing
+ */
+exports.getArticleForEdit = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const db = getDb();
+    await checkAdminAuth(db, request.auth);
+
+    const { path } = request.data || {};
+
+    if (!path) {
+      throw new HttpsError("invalid-argument", "Article path is required");
+    }
+
+    try {
+      const doc = await db.doc(path).get();
+
+      if (!doc.exists) {
+        throw new HttpsError("not-found", "Article not found");
+      }
+
+      const data = doc.data();
+
+      return {
+        success: true,
+        article: {
+          id: doc.id,
+          path,
+          ...data,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          date: data.date?.toDate?.()?.toISOString() || data.date,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      logger.error("Error fetching article for edit:", error);
+      throw new HttpsError("internal", "Failed to fetch article");
+    }
+  }
+);
+
+/**
+ * Update an article's content
+ */
+exports.updateArticle = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const db = getDb();
+    await checkAdminAuth(db, request.auth);
+
+    const { path, updates } = request.data || {};
+
+    if (!path) {
+      throw new HttpsError("invalid-argument", "Article path is required");
+    }
+
+    if (!updates || typeof updates !== "object") {
+      throw new HttpsError("invalid-argument", "Updates object is required");
+    }
+
+    // Allowed fields for editing
+    const allowedFields = [
+      "headline",
+      "summary",
+      "fullStory",
+      "fantasyImpact",
+      "dciRecap",
+      "fantasySpotlight",
+      "crossOverAnalysis",
+      "trendingCorps",
+      "imageUrl",
+      "isPublished",
+      "isArchived",
+    ];
+
+    // Filter to only allowed fields
+    const sanitizedUpdates = {};
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        sanitizedUpdates[field] = updates[field];
+      }
+    }
+
+    if (Object.keys(sanitizedUpdates).length === 0) {
+      throw new HttpsError("invalid-argument", "No valid fields to update");
+    }
+
+    try {
+      // Add updatedAt timestamp
+      sanitizedUpdates.updatedAt = new Date();
+      sanitizedUpdates.lastEditedBy = request.auth.uid;
+
+      await db.doc(path).update(sanitizedUpdates);
+
+      logger.info("Article updated:", { path, fields: Object.keys(sanitizedUpdates) });
+
+      return { success: true, message: "Article updated successfully" };
+    } catch (error) {
+      logger.error("Error updating article:", error);
+      throw new HttpsError("internal", "Failed to update article");
+    }
+  }
+);
+
+/**
+ * Archive or unarchive an article
+ * Archived articles have isPublished=false and isArchived=true
+ */
+exports.archiveArticle = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const db = getDb();
+    await checkAdminAuth(db, request.auth);
+
+    const { path, archive = true } = request.data || {};
+
+    if (!path) {
+      throw new HttpsError("invalid-argument", "Article path is required");
+    }
+
+    try {
+      await db.doc(path).update({
+        isPublished: !archive,
+        isArchived: archive,
+        updatedAt: new Date(),
+        lastEditedBy: request.auth.uid,
+      });
+
+      logger.info(`Article ${archive ? "archived" : "unarchived"}:`, { path });
+
+      return {
+        success: true,
+        message: archive ? "Article archived successfully" : "Article restored successfully",
+      };
+    } catch (error) {
+      logger.error("Error archiving article:", error);
+      throw new HttpsError("internal", "Failed to archive article");
+    }
+  }
+);
+
+/**
+ * Delete an article permanently (use with caution)
+ */
+exports.deleteArticle = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const db = getDb();
+    await checkAdminAuth(db, request.auth);
+
+    const { path, confirmDelete } = request.data || {};
+
+    if (!path) {
+      throw new HttpsError("invalid-argument", "Article path is required");
+    }
+
+    if (confirmDelete !== true) {
+      throw new HttpsError("invalid-argument", "Must confirm deletion");
+    }
+
+    try {
+      await db.doc(path).delete();
+
+      logger.info("Article deleted:", { path });
+
+      return { success: true, message: "Article deleted permanently" };
+    } catch (error) {
+      logger.error("Error deleting article:", error);
+      throw new HttpsError("internal", "Failed to delete article");
+    }
+  }
+);
