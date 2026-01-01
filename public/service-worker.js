@@ -16,8 +16,10 @@ const PRECACHE_URLS = [
   '/favicon.svg',
   '/logo192.png',
   '/logo192.webp',
+  '/logo192.svg',
   '/logo512.png',
-  '/logo512.webp'
+  '/logo512.webp',
+  '/logo512.svg'
 ];
 
 // Cache strategies

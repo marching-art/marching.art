@@ -84,7 +84,7 @@ const TopNav = () => {
       {/* Logo */}
       <Link to="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-6">
         <img
-          src="/logo192.webp"
+          src="/logo192.svg"
           alt="marching.art"
           className="w-7 h-7 rounded"
         />

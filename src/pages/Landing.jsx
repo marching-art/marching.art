@@ -100,7 +100,7 @@ const Landing = () => {
       <header className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4 lg:px-6">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-sm overflow-hidden">
-            <img src="/logo192.webp" alt="marching.art" className="w-full h-full object-cover" />
+            <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
           </div>
           <span className="text-base font-bold text-white uppercase tracking-wider">
             marching.art

@@ -122,7 +122,7 @@ const Register = () => {
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl overflow-hidden mb-4 bg-[#1a1a1a] border border-[#333] aspect-avatar">
                   <img
-                    src="/logo192.webp"
+                    src="/logo192.svg"
                     alt="marching.art"
                     className="w-full h-full object-cover"
                     loading="eager"
