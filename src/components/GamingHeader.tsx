@@ -121,7 +121,7 @@ const GamingHeader: React.FC = () => {
               <div className="relative flex-shrink-0">
                 <div className="w-9 h-9 rounded-lg overflow-hidden transition-all duration-300">
                   <img
-                    src="/logo192.webp"
+                    src="/logo192.svg"
                     alt="marching.art"
                     className="w-full h-full object-cover"
                   />
