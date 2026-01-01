@@ -2,11 +2,11 @@
 // BOTTOM NAV COMPONENT (TypeScript)
 // =============================================================================
 // Mobile bottom navigation bar with 5 direct items
-// Dashboard, Schedule, Scores, Leagues, Profile
+// News, Dashboard, Scores, Leagues, Profile
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, Trophy, Users, User, LucideIcon } from 'lucide-react';
+import { Home, Trophy, Users, User, Newspaper, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../App';
 import { useLeagueNotificationBadge } from '../hooks/useLeagueNotifications';
@@ -29,8 +29,8 @@ interface NavItem {
 // =============================================================================
 
 const navItems: NavItem[] = [
+  { path: '/', label: 'News', icon: Newspaper },
   { path: '/dashboard', label: 'Home', icon: Home },
-  { path: '/schedule', label: 'Schedule', icon: Calendar },
   { path: '/scores', label: 'Scores', icon: Trophy },
   { path: '/leagues', label: 'Leagues', icon: Users, badgeKey: 'leagues' },
   { path: '/profile', label: 'Profile', icon: User },
@@ -48,6 +48,9 @@ const BottomNav: React.FC = () => {
   const leagueBadge = useLeagueNotificationBadge(user?.uid);
 
   const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
     if (path === '/profile') {
       return location.pathname.startsWith('/profile');
     }
