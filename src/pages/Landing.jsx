@@ -96,29 +96,32 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      {/* TOP BAR */}
-      <header className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center px-4 lg:px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-sm overflow-hidden">
-            <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
+      {/* TOP BAR - Full width with centered content */}
+      <header className="h-14 bg-[#1a1a1a] border-b border-[#333]">
+        <div className="max-w-7xl mx-auto h-full flex items-center px-4 lg:px-6 xl:px-8">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-sm overflow-hidden">
+              <img src="/logo192.svg" alt="marching.art" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-base font-bold text-white uppercase tracking-wider">
+              marching.art
+            </span>
           </div>
-          <span className="text-base font-bold text-white uppercase tracking-wider">
-            marching.art
-          </span>
-        </div>
-        <div className="ml-auto flex items-center">
-          <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
-            Privacy
-          </Link>
-          <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
-            Terms
-          </Link>
+          <div className="ml-auto flex items-center">
+            <Link to="/privacy" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              Privacy
+            </Link>
+            <Link to="/terms" className="px-3 py-2.5 min-h-touch text-sm text-gray-500 hover:text-gray-300 active:text-white transition-colors press-feedback flex items-center">
+              Terms
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* MAIN CONTENT - Three Column Layout */}
+      {/* MAIN CONTENT - Centered container with white space on sides */}
       <main className="flex-1 overflow-visible">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 bg-[#111] lg:bg-transparent">
 
           {/* ============================================================= */}
           {/* MAIN COLUMN - News Feed (Left/Center) */}
@@ -408,34 +411,37 @@ const Landing = () => {
 
             </div>
           </div>
+          </div>
         </div>
       </main>
 
       {/* ============================================================= */}
-      {/* GLOBAL FOOTER - Stats Bar */}
+      {/* GLOBAL FOOTER - Full width with centered content */}
       {/* ============================================================= */}
       <footer className="bg-[#1a1a1a] border-t border-[#333]">
         {/* Stats Strip */}
-        <div className="flex items-center justify-center gap-8 lg:gap-12 py-3 px-4 border-b border-[#333]">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#0057B8]" />
-            <span className="text-sm font-bold text-white tabular-nums">2,847</span>
-            <span className="text-xs text-gray-500 uppercase">Directors</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-[#0057B8]" />
-            <span className="text-sm font-bold text-white tabular-nums">156</span>
-            <span className="text-xs text-gray-500 uppercase">Leagues</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#0057B8]" />
-            <span className="text-sm font-bold text-white tabular-nums">Week 4</span>
-            <span className="text-xs text-gray-500 uppercase">Current</span>
+        <div className="border-b border-[#333]">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 lg:gap-12 py-3 px-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#0057B8]" />
+              <span className="text-sm font-bold text-white tabular-nums">2,847</span>
+              <span className="text-xs text-gray-500 uppercase">Directors</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-[#0057B8]" />
+              <span className="text-sm font-bold text-white tabular-nums">156</span>
+              <span className="text-xs text-gray-500 uppercase">Leagues</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#0057B8]" />
+              <span className="text-sm font-bold text-white tabular-nums">Week 4</span>
+              <span className="text-xs text-gray-500 uppercase">Current</span>
+            </div>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="flex items-center justify-center py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-center py-2.5 px-4">
           <span className="text-xs text-gray-600 text-center">
             © 2025 marching.art — Fantasy Sports for the Marching Arts
           </span>
