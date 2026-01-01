@@ -56,21 +56,32 @@
     <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
     <style>
       /* =================================================================
-         ONE-SCREEN GAME UI: Global Reset
-         Browser window must NEVER scroll. All scrolling is internal.
-         Prevent white flash by setting dark background immediately.
+         Dark theme base - prevents white flash on load.
+         Scrolling is controlled per-page via CSS/JS.
          ================================================================= */
       html, body {
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
         margin: 0;
         padding: 0;
         background-color: #0A0A0A;
         color-scheme: dark;
       }
 
+      /* Default: allow normal document scrolling for public pages */
       #root {
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      /* GameShell pages use this class to enable fixed one-screen layout */
+      html.game-shell-active {
+        height: 100%;
+        overflow: hidden;
+      }
+      html.game-shell-active body {
+        height: 100%;
+        overflow: hidden;
+      }
+      html.game-shell-active #root {
         height: 100vh;
         width: 100vw;
         overflow: hidden;
