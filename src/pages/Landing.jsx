@@ -8,8 +8,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
-  TrendingDown, Flame, ChevronRight, Users,
-  Calendar, Activity, LayoutDashboard, Award, User, LogOut,
+  TrendingDown, Flame, ChevronRight,
+  Activity, LayoutDashboard, Award, User, LogOut,
   Settings, Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
@@ -419,27 +419,6 @@ const Landing = () => {
       {/* GLOBAL FOOTER - Full width with centered content */}
       {/* ============================================================= */}
       <footer className="bg-[#1a1a1a] border-t border-[#333]">
-        {/* Stats Strip */}
-        <div className="border-b border-[#333]">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 lg:gap-12 py-3 px-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#0057B8]" />
-              <span className="text-sm font-bold text-white tabular-nums">2,847</span>
-              <span className="text-xs text-gray-500 uppercase">Directors</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-[#0057B8]" />
-              <span className="text-sm font-bold text-white tabular-nums">156</span>
-              <span className="text-xs text-gray-500 uppercase">Leagues</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#0057B8]" />
-              <span className="text-sm font-bold text-white tabular-nums">Week 4</span>
-              <span className="text-xs text-gray-500 uppercase">Current</span>
-            </div>
-          </div>
-        </div>
-
         {/* Copyright */}
         <div className="max-w-7xl mx-auto flex items-center justify-center py-2.5 px-4">
           <span className="text-xs text-gray-600 text-center">
