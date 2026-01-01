@@ -4,7 +4,7 @@
 // Three-column layout: News Feed | Live Data | Auth Widget
 // Laws: No marketing fluff, no parallax, no testimonials
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { useProfileStore } from '../store/profileStore';
 import NewsFeed from '../components/Landing/NewsFeed';
 import { useBodyScroll } from '../hooks/useBodyScroll';
+import { useTickerData } from '../hooks/useTickerData';
 
 // =============================================================================
 // SIDEBAR DATA (Live Scores & Trending)
@@ -33,12 +34,6 @@ const LIVE_SCORES = [
   { rank: 8, corps: 'Blue Knights', score: 91.425, change: '+0.1' },
 ];
 
-const TRENDING_PLAYERS = [
-  { name: 'Blue Devils Hornline', change: '+15%', direction: 'up' },
-  { name: 'Crown Brass', change: '+12%', direction: 'up' },
-  { name: 'Bluecoats Percussion', change: '+8%', direction: 'up' },
-  { name: 'SCV Guard', change: '-3%', direction: 'down' },
-];
 
 // =============================================================================
 // LANDING PAGE COMPONENT
@@ -48,11 +43,43 @@ const Landing = () => {
   useBodyScroll();
   const { user, signIn, signOut } = useAuth();
   const profile = useProfileStore((state) => state.profile);
+  const { tickerData, loading: tickerLoading, hasData: hasTickerData } = useTickerData();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Compute trending players from movers across all classes
+  const trendingPlayers = useMemo(() => {
+    if (!tickerData?.byClass) return [];
+
+    // Collect movers from all classes
+    const allMovers = [];
+    for (const classKey of ['worldClass', 'openClass', 'aClass']) {
+      const classData = tickerData.byClass[classKey];
+      if (classData?.movers) {
+        classData.movers.forEach(mover => {
+          // Calculate percentage change
+          const prevScore = parseFloat(mover.previousScore);
+          const changeValue = parseFloat(mover.change);
+          const percentChange = prevScore > 0 ? (changeValue / prevScore) * 100 : 0;
+
+          allMovers.push({
+            name: mover.fullName,
+            change: `${changeValue >= 0 ? '+' : ''}${percentChange.toFixed(1)}%`,
+            direction: mover.direction,
+            absChange: Math.abs(percentChange),
+          });
+        });
+      }
+    }
+
+    // Sort by absolute percentage change and take top 4
+    return allMovers
+      .sort((a, b) => b.absChange - a.absChange)
+      .slice(0, 4);
+  }, [tickerData]);
 
   const handleSignOut = async () => {
     try {
@@ -350,39 +377,55 @@ const Landing = () => {
                     <Flame className="w-3.5 h-3.5" />
                     Fantasy Trending
                   </h3>
-                  <span className="text-xs text-gray-500">24h</span>
+                  <span className="text-xs text-gray-500">{tickerData?.dayLabel || '24h'}</span>
                 </div>
 
                 {/* Trending List */}
                 <div className="divide-y divide-[#333]/50">
-                  {TRENDING_PLAYERS.map((player, idx) => (
-                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-500 tabular-nums">
-                          {idx + 1}
-                        </span>
-                        <span className="text-sm text-white">{player.name}</span>
-                      </div>
-                      <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${
-                        player.direction === 'up' ? 'text-green-500' : 'text-red-500'
-                      }`}>
-                        {player.direction === 'up' ? (
-                          <TrendingUp className="w-3.5 h-3.5" />
-                        ) : (
-                          <TrendingDown className="w-3.5 h-3.5" />
-                        )}
-                        {player.change}
-                      </div>
+                  {tickerLoading ? (
+                    // Loading state
+                    <div className="px-3 py-6 text-center">
+                      <div className="inline-block w-5 h-5 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
                     </div>
-                  ))}
+                  ) : trendingPlayers.length > 0 ? (
+                    // Data available - show trending players
+                    trendingPlayers.map((player, idx) => (
+                      <div key={idx} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-500 tabular-nums">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm text-white truncate max-w-[160px]">{player.name}</span>
+                        </div>
+                        <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${
+                          player.direction === 'up' ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                          {player.direction === 'up' ? (
+                            <TrendingUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <TrendingDown className="w-3.5 h-3.5" />
+                          )}
+                          {player.change}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    // No data available
+                    <div className="px-3 py-4 text-center">
+                      <p className="text-xs text-gray-500">No trending data available</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}
                 <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
-                  <button className="text-xs text-orange-400 hover:text-orange-300 font-bold transition-colors flex items-center gap-1">
+                  <Link
+                    to="/scores"
+                    className="text-xs text-orange-400 hover:text-orange-300 font-bold transition-colors flex items-center gap-1"
+                  >
                     View All Trends
                     <ChevronRight className="w-3 h-3" />
-                  </button>
+                  </Link>
                 </div>
               </div>
 
