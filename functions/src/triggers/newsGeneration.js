@@ -1013,3 +1013,99 @@ exports.deleteArticle = onCall(
     }
   }
 );
+
+// =============================================================================
+// USER NEWS SUBMISSIONS
+// =============================================================================
+
+/**
+ * Submit a news article for admin approval
+ * Any authenticated user can submit articles
+ */
+exports.submitNewsForApproval = onCall(
+  {
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be logged in to submit articles");
+    }
+
+    const db = getDb();
+    const { headline, summary, fullStory, category, imageUrl } = request.data || {};
+
+    // Validate required fields
+    if (!headline || typeof headline !== "string" || headline.trim().length < 10) {
+      throw new HttpsError("invalid-argument", "Headline must be at least 10 characters");
+    }
+
+    if (!summary || typeof summary !== "string" || summary.trim().length < 20) {
+      throw new HttpsError("invalid-argument", "Summary must be at least 20 characters");
+    }
+
+    if (!fullStory || typeof fullStory !== "string" || fullStory.trim().length < 100) {
+      throw new HttpsError("invalid-argument", "Full story must be at least 100 characters");
+    }
+
+    const validCategories = ["dci", "fantasy", "analysis"];
+    if (!category || !validCategories.includes(category)) {
+      throw new HttpsError("invalid-argument", "Invalid category");
+    }
+
+    // Validate image URL if provided
+    if (imageUrl && typeof imageUrl === "string") {
+      try {
+        new URL(imageUrl);
+      } catch {
+        throw new HttpsError("invalid-argument", "Invalid image URL");
+      }
+    }
+
+    try {
+      // Get user profile for author info
+      const userDoc = await db
+        .collection("artifacts")
+        .doc(process.env.DATA_NAMESPACE || "marching-art")
+        .collection("users")
+        .doc(request.auth.uid)
+        .collection("profile")
+        .doc("data")
+        .get();
+
+      const userData = userDoc.exists ? userDoc.data() : {};
+      const authorName = userData.displayName || userData.username || "Anonymous";
+
+      // Create the submission
+      const submission = {
+        headline: headline.trim(),
+        summary: summary.trim(),
+        fullStory: fullStory.trim(),
+        category,
+        imageUrl: imageUrl?.trim() || null,
+        status: "pending", // pending, approved, rejected
+        authorUid: request.auth.uid,
+        authorName,
+        authorEmail: request.auth.token.email || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const docRef = await db.collection("news_submissions").add(submission);
+
+      logger.info("News submission received:", {
+        submissionId: docRef.id,
+        authorUid: request.auth.uid,
+        headline: headline.substring(0, 50),
+      });
+
+      return {
+        success: true,
+        message: "Article submitted for review. An admin will review it shortly.",
+        submissionId: docRef.id,
+      };
+    } catch (error) {
+      logger.error("Error submitting news article:", error);
+      throw new HttpsError("internal", "Failed to submit article. Please try again.");
+    }
+  }
+);

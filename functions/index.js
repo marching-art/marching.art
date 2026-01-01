@@ -106,6 +106,7 @@ const {
   updateArticle,
   archiveArticle,
   deleteArticle,
+  submitNewsForApproval,
 } = require("./src/triggers/newsGeneration");
 const {
   onProfileCreated,
@@ -198,6 +199,9 @@ module.exports = {
   updateArticle,
   archiveArticle,
   deleteArticle,
+
+  // User News Submissions
+  submitNewsForApproval,
 
   // Email Triggers
   onProfileCreated,
