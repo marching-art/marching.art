@@ -12,29 +12,7 @@ import BrandLogo from '../components/BrandLogo';
 import { db, dataNamespace } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import LoadingScreen from '../components/LoadingScreen';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+import { Line } from '../components/charts';
 
 const CorpsHistory = () => {
   const { user } = useAuth();

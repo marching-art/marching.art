@@ -217,7 +217,9 @@ const createLatestColumns = () => [
 
 const Scores = () => {
   const { user } = useAuth();
-  const { loggedInProfile, completeDailyChallenge } = useUserStore();
+  // Use individual selectors to prevent unnecessary re-renders
+  const loggedInProfile = useUserStore((state) => state.loggedInProfile);
+  const completeDailyChallenge = useUserStore((state) => state.completeDailyChallenge);
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
   const [searchParams] = useSearchParams();
   const { trigger: haptic } = useHaptic();

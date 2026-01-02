@@ -18,6 +18,8 @@ const {
 
 // Batch size for processing users
 const BATCH_SIZE = 100;
+// Concurrency limit for parallel email processing within a batch
+const PARALLEL_LIMIT = 25;
 
 /**
  * Check if user has opted into a specific email type
@@ -144,8 +146,8 @@ exports.streakAtRiskEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-        for (const doc of snapshot.docs) {
-          processed++;
+        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
+        const processUser = async (doc) => {
           const profile = doc.data();
           const uid = doc.ref.parent.parent.id;
 
@@ -154,28 +156,26 @@ exports.streakAtRiskEmailJob = onSchedule(
             (profile.engagement?.streakFreezeUntil ? new Date(profile.engagement.streakFreezeUntil) : null);
 
           if (freezeUntil && now < freezeUntil) {
-            skipped++;
-            continue; // Streak is protected
+            return { status: 'skipped', reason: 'freeze' };
           }
 
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.STREAK_AT_RISK)) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'preferences' };
           }
 
-          // Check if we already sent this email recently (within 12 hours)
-          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_AT_RISK, 12);
+          // OPTIMIZATION: Parallelize the email check and user email fetch
+          const [recentlySent, email] = await Promise.all([
+            wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_AT_RISK, 12),
+            getUserEmail(uid)
+          ]);
+
           if (recentlySent) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'recently_sent' };
           }
 
-          // Get user email
-          const email = await getUserEmail(uid);
           if (!email) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'no_email' };
           }
 
           // Calculate hours remaining
@@ -196,7 +196,25 @@ exports.streakAtRiskEmailJob = onSchedule(
               streakDays: profile.engagement.loginStreak,
               hoursRemaining: Math.floor(hoursRemaining),
             });
-            sent++;
+            return { status: 'sent' };
+          }
+
+          return { status: 'failed' };
+        };
+
+        // Process batch in parallel chunks
+        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
+          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+          const results = await Promise.allSettled(chunk.map(processUser));
+
+          for (const result of results) {
+            processed++;
+            if (result.status === 'fulfilled') {
+              if (result.value.status === 'sent') sent++;
+              else if (result.value.status === 'skipped') skipped++;
+            } else {
+              skipped++; // Count errors as skipped
+            }
           }
         }
       } while (true);
@@ -260,22 +278,20 @@ exports.weeklyDigestEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-        for (const doc of snapshot.docs) {
-          processed++;
+        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
+        const processUser = async (doc) => {
           const profile = doc.data();
           const uid = doc.ref.parent.parent.id;
 
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.WEEKLY_DIGEST)) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'preferences' };
           }
 
           // Get user email
           const email = await getUserEmail(uid);
           if (!email) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'no_email' };
           }
 
           // Calculate weekly stats
@@ -319,7 +335,25 @@ exports.weeklyDigestEmailJob = onSchedule(
             await trackEmailSent(db, uid, EMAIL_TYPES.WEEKLY_DIGEST, {
               week: currentWeek,
             });
-            sent++;
+            return { status: 'sent' };
+          }
+
+          return { status: 'failed' };
+        };
+
+        // Process batch in parallel chunks
+        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
+          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+          const results = await Promise.allSettled(chunk.map(processUser));
+
+          for (const result of results) {
+            processed++;
+            if (result.status === 'fulfilled') {
+              if (result.value.status === 'sent') sent++;
+              else if (result.value.status === 'skipped') skipped++;
+            } else {
+              skipped++; // Count errors as skipped
+            }
           }
         }
       } while (true);
@@ -381,29 +415,28 @@ exports.winBackEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-        for (const doc of snapshot.docs) {
-          processed++;
+        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
+        const processUser = async (doc) => {
           const profile = doc.data();
           const uid = doc.ref.parent.parent.id;
 
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.WIN_BACK)) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'preferences' };
           }
 
-          // Check if we already sent win-back email (7 day cooldown)
-          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.WIN_BACK, 7 * 24);
+          // OPTIMIZATION: Parallelize the email check and user email fetch
+          const [recentlySent, email] = await Promise.all([
+            wasEmailRecentlySent(db, uid, EMAIL_TYPES.WIN_BACK, 7 * 24),
+            getUserEmail(uid)
+          ]);
+
           if (recentlySent) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'recently_sent' };
           }
 
-          // Get user email
-          const email = await getUserEmail(uid);
           if (!email) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'no_email' };
           }
 
           // Calculate days missed
@@ -430,7 +463,25 @@ exports.winBackEmailJob = onSchedule(
               daysMissed,
               streakLost,
             });
-            sent++;
+            return { status: 'sent' };
+          }
+
+          return { status: 'failed' };
+        };
+
+        // Process batch in parallel chunks
+        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
+          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+          const results = await Promise.allSettled(chunk.map(processUser));
+
+          for (const result of results) {
+            processed++;
+            if (result.status === 'fulfilled') {
+              if (result.value.status === 'sent') sent++;
+              else if (result.value.status === 'skipped') skipped++;
+            } else {
+              skipped++; // Count errors as skipped
+            }
           }
         }
       } while (true);
@@ -493,8 +544,8 @@ exports.streakBrokenEmailJob = onSchedule(
 
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-        for (const doc of snapshot.docs) {
-          processed++;
+        // OPTIMIZATION: Process users in parallel chunks instead of sequentially
+        const processUser = async (doc) => {
           const profile = doc.data();
           const uid = doc.ref.parent.parent.id;
 
@@ -503,28 +554,26 @@ exports.streakBrokenEmailJob = onSchedule(
             (profile.engagement?.streakFreezeUntil ? new Date(profile.engagement.streakFreezeUntil) : null);
 
           if (freezeUntil && now < freezeUntil) {
-            skipped++;
-            continue; // Streak is protected
+            return { status: 'skipped', reason: 'freeze' };
           }
 
           // Check email preferences
           if (!shouldSendEmail(profile, EMAIL_TYPES.STREAK_BROKEN)) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'preferences' };
           }
 
-          // Check if we already sent this email (48h cooldown)
-          const recentlySent = await wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_BROKEN, 48);
+          // OPTIMIZATION: Parallelize the email check and user email fetch
+          const [recentlySent, email] = await Promise.all([
+            wasEmailRecentlySent(db, uid, EMAIL_TYPES.STREAK_BROKEN, 48),
+            getUserEmail(uid)
+          ]);
+
           if (recentlySent) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'recently_sent' };
           }
 
-          // Get user email
-          const email = await getUserEmail(uid);
           if (!email) {
-            skipped++;
-            continue;
+            return { status: 'skipped', reason: 'no_email' };
           }
 
           // Send email
@@ -538,7 +587,25 @@ exports.streakBrokenEmailJob = onSchedule(
             await trackEmailSent(db, uid, EMAIL_TYPES.STREAK_BROKEN, {
               previousStreak: profile.engagement.loginStreak,
             });
-            sent++;
+            return { status: 'sent' };
+          }
+
+          return { status: 'failed' };
+        };
+
+        // Process batch in parallel chunks
+        for (let i = 0; i < snapshot.docs.length; i += PARALLEL_LIMIT) {
+          const chunk = snapshot.docs.slice(i, i + PARALLEL_LIMIT);
+          const results = await Promise.allSettled(chunk.map(processUser));
+
+          for (const result of results) {
+            processed++;
+            if (result.status === 'fulfilled') {
+              if (result.value.status === 'sent') sent++;
+              else if (result.value.status === 'skipped') skipped++;
+            } else {
+              skipped++; // Count errors as skipped
+            }
           }
         }
       } while (true);

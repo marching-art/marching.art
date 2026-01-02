@@ -4,7 +4,7 @@
 // Dense, puzzle-fit panels. Zero black space between cards.
 // Laws: gap-px creates borders, tables over cards, no glow
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
@@ -145,7 +145,7 @@ const Dashboard = () => {
   const [activeMobileTab, setActiveMobileTab] = useState('team');
 
   // Pull to refresh handler
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     haptic('pull');
     await Promise.all([
       dashboardData.refreshProfile?.(),
@@ -153,7 +153,7 @@ const Dashboard = () => {
       refetchLeagues?.(),
     ]);
     haptic('success');
-  };
+  }, [haptic, dashboardData.refreshProfile, refetchScores, refetchLeagues]);
 
   // Modal queue for auto-triggered modals (prevents modal chaos)
   const modalQueue = useModalQueue();
@@ -281,8 +281,8 @@ const Dashboard = () => {
     fetchUserScores();
   }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
 
-  // Handlers
-  const handleTourComplete = async () => {
+  // Handlers - memoized to prevent unnecessary re-renders
+  const handleTourComplete = useCallback(async () => {
     modalQueue.dequeue(); // Close onboarding modal
     if (profile?.isFirstVisit && user) {
       try {
@@ -292,30 +292,30 @@ const Dashboard = () => {
         console.error('Error updating first visit flag:', error);
       }
     }
-  };
+  }, [modalQueue, profile?.isFirstVisit, user]);
 
-  const handleSetupNewClass = () => {
+  const handleSetupNewClass = useCallback(() => {
     modalQueue.dequeue(); // Close class unlock modal
     setShowRegistration(true);
-  };
+  }, [modalQueue]);
 
-  const handleDeclineSetup = () => {
+  const handleDeclineSetup = useCallback(() => {
     modalQueue.dequeue(); // Close class unlock modal
     clearNewlyUnlockedClass();
     toast.success('You can register your new corps anytime!');
-  };
+  }, [modalQueue, clearNewlyUnlockedClass]);
 
-  const handleAchievementClose = () => {
+  const handleAchievementClose = useCallback(() => {
     modalQueue.dequeue(); // Close achievement modal
     clearNewAchievement();
-  };
+  }, [modalQueue, clearNewAchievement]);
 
-  const handleSeasonSetupClose = () => {
+  const handleSeasonSetupClose = useCallback(() => {
     modalQueue.dequeue(); // Close season setup wizard
     setShowSeasonSetupWizard(false);
-  };
+  }, [modalQueue, setShowSeasonSetupWizard]);
 
-  const handleEditCorps = async (formData) => {
+  const handleEditCorps = useCallback(async (formData) => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, {
@@ -328,9 +328,9 @@ const Dashboard = () => {
     } catch (error) {
       toast.error('Failed to update corps');
     }
-  };
+  }, [user, activeCorpsClass]);
 
-  const handleDeleteCorps = async () => {
+  const handleDeleteCorps = useCallback(async () => {
     try {
       const profileRef = doc(db, 'artifacts/marching-art/users', user.uid, 'profile/data');
       await updateDoc(profileRef, { [`corps.${activeCorpsClass}`]: null });
@@ -339,9 +339,9 @@ const Dashboard = () => {
     } catch (error) {
       toast.error('Failed to delete corps');
     }
-  };
+  }, [user, activeCorpsClass]);
 
-  const handleRetireCorps = async () => {
+  const handleRetireCorps = useCallback(async () => {
     setRetiring(true);
     try {
       const result = await retireCorps({ corpsClass: activeCorpsClass });
@@ -354,9 +354,9 @@ const Dashboard = () => {
     } finally {
       setRetiring(false);
     }
-  };
+  }, [activeCorpsClass]);
 
-  const handleMoveCorps = async (targetClass) => {
+  const handleMoveCorps = useCallback(async (targetClass) => {
     try {
       if (corps[targetClass]) {
         toast.error(`Already have a corps in ${getCorpsClassName(targetClass)}`);
@@ -372,9 +372,9 @@ const Dashboard = () => {
     } catch (error) {
       toast.error('Failed to move corps');
     }
-  };
+  }, [corps, getCorpsClassName, user, activeCorps, activeCorpsClass]);
 
-  const handleCorpsRegistration = async (formData) => {
+  const handleCorpsRegistration = useCallback(async (formData) => {
     try {
       if (!seasonData?.seasonUid) {
         toast.error('Season data not loaded');
@@ -400,39 +400,36 @@ const Dashboard = () => {
     } catch (error) {
       toast.error('Failed to register corps');
     }
-  };
+  }, [seasonData?.seasonUid, user, clearNewlyUnlockedClass]);
 
-  // Computed values
-  const lineup = activeCorps?.lineup || {};
-  const lineupCount = Object.keys(lineup).length;
-  const standingsData = aggregatedScores.slice(0, 8);
-  const primaryLeague = myLeagues?.[0];
+  // Computed values - memoized to prevent unnecessary recalculations
+  const lineup = useMemo(() => activeCorps?.lineup || {}, [activeCorps?.lineup]);
+  const lineupCount = useMemo(() => Object.keys(lineup).length, [lineup]);
+  const standingsData = useMemo(() => aggregatedScores.slice(0, 8), [aggregatedScores]);
+  const primaryLeague = useMemo(() => myLeagues?.[0], [myLeagues]);
 
-  const getThisWeekShows = () => {
+  const thisWeekShows = useMemo(() => {
     if (!activeCorps?.selectedShows) return [];
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 4);
-  };
+  }, [activeCorps?.selectedShows, currentWeek]);
 
-  const getRankTrend = () => {
+  const rankTrend = useMemo(() => {
     if (!activeCorps?.rankHistory || activeCorps.rankHistory.length < 2) return null;
     const prev = activeCorps.rankHistory[activeCorps.rankHistory.length - 2];
     const curr = activeCorps.rank;
     if (prev > curr) return 'up';
     if (prev < curr) return 'down';
     return null;
-  };
-
-  const thisWeekShows = getThisWeekShows();
-  const rankTrend = getRankTrend();
+  }, [activeCorps?.rankHistory, activeCorps?.rank]);
 
   // Open caption selection, optionally focused on a specific caption
-  const openCaptionSelection = (captionId = null) => {
+  const openCaptionSelection = useCallback((captionId = null) => {
     setSelectedCaption(captionId);
     setShowCaptionSelection(true);
-  };
+  }, []);
 
   // Handle news article submission
-  const handleNewsSubmission = async (formData) => {
+  const handleNewsSubmission = useCallback(async (formData) => {
     setSubmittingNews(true);
     try {
       const result = await submitNewsForApproval(formData);
@@ -447,7 +444,7 @@ const Dashboard = () => {
     } finally {
       setSubmittingNews(false);
     }
-  };
+  }, []);
 
   // =============================================================================
   // RENDER

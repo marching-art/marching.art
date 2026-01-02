@@ -4,7 +4,7 @@ const { getDoc } = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const { shuffleArray, getScheduleDay } = require("./season");
 const { calculateLineupSynergyBonus } = require('./showConceptSynergy');
-const { awardCorpsCoin } = require("../callable/economy");
+const { SHOW_PARTICIPATION_REWARDS, TRANSACTION_TYPES } = require("../callable/economy");
 
 
 async function fetchHistoricalData(dataDocId, additionalYears = []) {
@@ -61,13 +61,18 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   }
 
   const allDataPoints = [];
+  // OPTIMIZATION: Use Set for O(1) lookups instead of .some() which is O(n)
+  // This reduces complexity from O(n²) to O(n)
+  const seenDays = new Set();
   const yearData = historicalData[sourceYear] || [];
   for (const event of yearData) {
+    // Skip if we've already processed this day
+    if (seenDays.has(event.offSeasonDay)) continue;
+
     const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
     if (score !== null) {
-      if (!allDataPoints.some((p) => p[0] === event.offSeasonDay)) {
-        allDataPoints.push([event.offSeasonDay, score]);
-      }
+      seenDays.add(event.offSeasonDay);
+      allDataPoints.push([event.offSeasonDay, score]);
     }
   }
 
@@ -177,6 +182,8 @@ async function processAndArchiveOffSeasonScoresLogic() {
   };
   const batch = db.batch();
   const dailyScores = new Map();
+  // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
+  const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
 
   // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC ---
   // Structure: { showEventName: { participants: [uid], classFilter: [corpsClass] } }
@@ -418,8 +425,11 @@ async function processAndArchiveOffSeasonScoresLogic() {
           const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
           dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
 
-          // Award CorpsCoin for performance
-          await awardCorpsCoin(uid, corpsClass, show.eventName);
+          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
+          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
+          if (coinAmount > 0) {
+            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+          }
 
           showResult.results.push({
             uid: uid,
@@ -645,6 +655,35 @@ async function processAndArchiveOffSeasonScoresLogic() {
   }
   // --- END: TROPHY AWARDING LOGIC ---
 
+  // OPTIMIZATION: Process all coin awards in batch instead of individual transactions
+  // Aggregate by uid to minimize writes (multiple shows = single update per user)
+  if (coinAwards.length > 0) {
+    const coinByUser = new Map(); // uid -> { totalAmount, history: [] }
+
+    for (const award of coinAwards) {
+      const existing = coinByUser.get(award.uid) || { totalAmount: 0, history: [] };
+      existing.totalAmount += award.amount;
+      existing.history.push({
+        type: TRANSACTION_TYPES.SHOW_PARTICIPATION,
+        amount: award.amount,
+        description: `Show performance at ${award.showName}`,
+        corpsClass: award.corpsClass,
+        timestamp: new Date(),
+      });
+      coinByUser.set(award.uid, existing);
+    }
+
+    // Add coin updates to batch (uses increment for concurrency safety)
+    for (const [uid, data] of coinByUser) {
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      batch.update(userProfileRef, {
+        corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
+        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(...data.history),
+      });
+    }
+    logger.info(`Batched ${coinAwards.length} coin awards for ${coinByUser.size} users`);
+  }
+
   // Commit all database writes at once
   await batch.commit();
   logger.info(`Successfully processed and archived scores for day ${scoredDay}.`);
@@ -672,6 +711,22 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
           const updatedMatchupsForClass = [];
 
+          // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
+          const matchupsNeedingScores = matchups.filter(m => !m.winner);
+          const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
+
+          // Batch fetch all profiles in ONE operation
+          const profileRefs = allPlayerIds.map(uid =>
+            db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+          );
+          const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
+          const profileMap = new Map();
+          profileDocs.forEach((doc, i) => {
+            if (doc.exists) {
+              profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
+            }
+          });
+
           for (const matchup of matchups) {
             if (matchup.winner) {
               updatedMatchupsForClass.push(matchup);
@@ -679,12 +734,12 @@ async function processAndArchiveOffSeasonScoresLogic() {
             }
 
             const [p1_uid, p2_uid] = matchup.pair;
-            const p1_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p1_uid}/profile/data`).get();
-            const p2_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p2_uid}/profile/data`).get();
+            const p1_profile = profileMap.get(p1_uid);
+            const p2_profile = profileMap.get(p2_uid);
 
             // IMPORTANT: Get score for the SPECIFIC corps class, not total score
-            const p1_score = p1_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
-            const p2_score = p2_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+            const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+            const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
 
             let winnerUid = null;
             if (p1_score > p2_score) winnerUid = p1_uid;
@@ -694,15 +749,17 @@ async function processAndArchiveOffSeasonScoresLogic() {
             const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
             const increment = admin.firestore.FieldValue.increment(1);
 
-            if (winnerUid === p1_uid) {
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-            } else if (winnerUid === p2_uid) {
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-            } else { // Tie
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            if (p1_profile?.ref && p2_profile?.ref) {
+              if (winnerUid === p1_uid) {
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+              } else if (winnerUid === p2_uid) {
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+              } else { // Tie
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+              }
             }
 
             const newMatchup = {
@@ -756,6 +813,8 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   };
   const batch = db.batch();
   const dailyScores = new Map();
+  // OPTIMIZATION: Collect coin awards to process in batch instead of individual transactions
+  const coinAwards = []; // Array of { uid, corpsClass, showName, amount }
 
   // --- CHAMPIONSHIP WEEK AUTO-ENROLLMENT & PROGRESSION LOGIC (Days 45-49) ---
   let championshipConfig = null;
@@ -1011,8 +1070,11 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
           const currentDailyTotal = dailyScores.get(`${uid}_${corpsClass}`) || 0;
           dailyScores.set(`${uid}_${corpsClass}`, currentDailyTotal + totalShowScore);
 
-          // Award CorpsCoin for performance
-          await awardCorpsCoin(uid, corpsClass, show.eventName);
+          // OPTIMIZATION: Collect coin award for batch processing (instead of individual await)
+          const coinAmount = SHOW_PARTICIPATION_REWARDS[corpsClass] || 0;
+          if (coinAmount > 0) {
+            coinAwards.push({ uid, corpsClass, showName: show.eventName, amount: coinAmount });
+          }
 
           showResult.results.push({
             uid: uid,
@@ -1209,6 +1271,35 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
   }
   // --- END: TROPHY AWARDING LOGIC ---
 
+  // OPTIMIZATION: Process all coin awards in batch instead of individual transactions
+  // Aggregate by uid to minimize writes (multiple shows = single update per user)
+  if (coinAwards.length > 0) {
+    const coinByUser = new Map(); // uid -> { totalAmount, history: [] }
+
+    for (const award of coinAwards) {
+      const existing = coinByUser.get(award.uid) || { totalAmount: 0, history: [] };
+      existing.totalAmount += award.amount;
+      existing.history.push({
+        type: TRANSACTION_TYPES.SHOW_PARTICIPATION,
+        amount: award.amount,
+        description: `Show performance at ${award.showName}`,
+        corpsClass: award.corpsClass,
+        timestamp: new Date(),
+      });
+      coinByUser.set(award.uid, existing);
+    }
+
+    // Add coin updates to batch (uses increment for concurrency safety)
+    for (const [uid, data] of coinByUser) {
+      const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
+      batch.update(userProfileRef, {
+        corpsCoin: admin.firestore.FieldValue.increment(data.totalAmount),
+        corpsCoinHistory: admin.firestore.FieldValue.arrayUnion(...data.history),
+      });
+    }
+    logger.info(`Batched ${coinAwards.length} coin awards for ${coinByUser.size} users`);
+  }
+
   // Save the recap document
   const recapDocRef = db.doc(`fantasy_recaps/${seasonData.seasonUid}`);
   const recapDoc = await recapDocRef.get();
@@ -1251,6 +1342,22 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
           const updatedMatchupsForClass = [];
 
+          // OPTIMIZATION: Batch fetch all matchup profiles for this class upfront
+          const matchupsNeedingScores = matchups.filter(m => !m.winner);
+          const allPlayerIds = [...new Set(matchupsNeedingScores.flatMap(m => m.pair))];
+
+          // Batch fetch all profiles in ONE operation
+          const profileRefs = allPlayerIds.map(uid =>
+            db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`)
+          );
+          const profileDocs = allPlayerIds.length > 0 ? await db.getAll(...profileRefs) : [];
+          const profileMap = new Map();
+          profileDocs.forEach((doc, i) => {
+            if (doc.exists) {
+              profileMap.set(allPlayerIds[i], { ref: doc.ref, data: doc.data() });
+            }
+          });
+
           for (const matchup of matchups) {
             if (matchup.winner) {
               updatedMatchupsForClass.push(matchup);
@@ -1258,11 +1365,11 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             }
 
             const [p1_uid, p2_uid] = matchup.pair;
-            const p1_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p1_uid}/profile/data`).get();
-            const p2_profileDoc = await db.doc(`artifacts/${dataNamespaceParam.value()}/users/${p2_uid}/profile/data`).get();
+            const p1_profile = profileMap.get(p1_uid);
+            const p2_profile = profileMap.get(p2_uid);
 
-            const p1_score = p1_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
-            const p2_score = p2_profileDoc.data()?.corps?.[corpsClass]?.totalSeasonScore || 0;
+            const p1_score = p1_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
+            const p2_score = p2_profile?.data?.corps?.[corpsClass]?.totalSeasonScore || 0;
 
             let winnerUid = null;
             if (p1_score > p2_score) winnerUid = p1_uid;
@@ -1271,15 +1378,17 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             const seasonRecordPath = `seasons.${seasonData.seasonUid}.records.${corpsClass}`;
             const increment = admin.firestore.FieldValue.increment(1);
 
-            if (winnerUid === p1_uid) {
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-            } else if (winnerUid === p2_uid) {
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
-            } else {
-              winnerBatch.set(p1_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
-              winnerBatch.set(p2_profileDoc.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+            if (p1_profile?.ref && p2_profile?.ref) {
+              if (winnerUid === p1_uid) {
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+              } else if (winnerUid === p2_uid) {
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { l: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { w: increment } }, { merge: true });
+              } else {
+                winnerBatch.set(p1_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+                winnerBatch.set(p2_profile.ref, { [seasonRecordPath]: { t: increment } }, { merge: true });
+              }
             }
 
             const newMatchup = {

@@ -367,8 +367,8 @@ const StandingsTab = ({
   );
 };
 
-// Podium spot component
-const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height, showTrophy = false }) => {
+// Podium spot component - memoized to prevent re-renders
+const PodiumSpot = React.memo(({ rank, stats, displayName, corpsName, isUser, height, showTrophy = false }) => {
   const colors = {
     1: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/50', text: 'text-yellow-500', medal: '🥇' },
     2: { bg: 'bg-gray-500/10', border: 'border-gray-500/50', text: 'text-gray-400', medal: '🥈' },
@@ -419,10 +419,10 @@ const PodiumSpot = ({ rank, stats, displayName, corpsName, isUser, height, showT
       </div>
     </div>
   );
-};
+});
 
-// Rank badge component
-const RankBadge = ({ rank, isPlayoffSpot }) => {
+// Rank badge component - memoized to prevent re-renders
+const RankBadge = React.memo(({ rank, isPlayoffSpot }) => {
   if (rank === 1) {
     return (
       <div className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-yellow-500/10 text-yellow-500">
@@ -454,10 +454,10 @@ const RankBadge = ({ rank, isPlayoffSpot }) => {
       {rank}
     </div>
   );
-};
+});
 
-// Trend indicator component
-const TrendIndicator = ({ trend }) => {
+// Trend indicator component - memoized to prevent re-renders
+const TrendIndicator = React.memo(({ trend }) => {
   if (trend === 'up') {
     return (
       <div className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-green-500/10">
@@ -477,6 +477,6 @@ const TrendIndicator = ({ trend }) => {
       <Minus className="w-4 h-4 text-gray-600" />
     </div>
   );
-};
+});
 
 export default StandingsTab;

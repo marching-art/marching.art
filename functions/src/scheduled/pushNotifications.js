@@ -29,8 +29,10 @@ exports.streakAtRiskPushJob = onSchedule(
   async () => {
     logger.info("Running streak at risk push notification job");
 
+    const db = admin.firestore();
     const namespace = dataNamespaceParam.value();
     const now = new Date();
+    const today = now.toISOString().split("T")[0];
 
     // Calculate the threshold - users who last logged in 18-24 hours ago
     // (giving them 6 hours warning before 24-hour streak expires)
@@ -38,58 +40,91 @@ exports.streakAtRiskPushJob = onSchedule(
     const warningEnd = new Date(now.getTime() - (24 - STREAK_WARNING_HOURS) * 60 * 60 * 1000);
 
     try {
-      // Query users with active streaks who last logged in within the warning window
-      const usersSnapshot = await admin
-        .firestore()
+      // Step 1: Get all user IDs
+      const usersSnapshot = await db
         .collection(`artifacts/${namespace}/users`)
         .get();
 
-      let sentCount = 0;
+      if (usersSnapshot.empty) {
+        logger.info("No users found");
+        return;
+      }
 
-      for (const userDoc of usersSnapshot.docs) {
-        const profileDoc = await admin
-          .firestore()
-          .doc(`artifacts/${namespace}/users/${userDoc.id}/profile/data`)
-          .get();
+      const userIds = usersSnapshot.docs.map((doc) => doc.id);
+
+      // Step 2: OPTIMIZATION - Batch fetch all profiles in ONE operation
+      const profileRefs = userIds.map((uid) =>
+        db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+      );
+      const profileDocs = await db.getAll(...profileRefs);
+
+      // Step 3: Process profiles and identify users needing warnings
+      const usersToNotify = [];
+      profileDocs.forEach((profileDoc, index) => {
+        if (!profileDoc.exists) return;
 
         const profile = profileDoc.data();
-        if (!profile?.engagement) continue;
+        if (!profile?.engagement) return;
 
         const { loginStreak, lastLogin } = profile.engagement;
 
         // Skip users without a streak
-        if (!loginStreak || loginStreak <= 0) continue;
+        if (!loginStreak || loginStreak <= 0) return;
 
         // Check if user hasn't logged in today and is in the warning window
         const lastLoginDate = new Date(lastLogin);
-        const today = now.toISOString().split("T")[0];
         const lastLoginDay = lastLoginDate.toISOString().split("T")[0];
 
         // Skip if user already logged in today
-        if (today === lastLoginDay) continue;
+        if (today === lastLoginDay) return;
 
         // Check if within warning window
-        if (lastLoginDate > warningEnd || lastLoginDate < warningStart) continue;
+        if (lastLoginDate > warningEnd || lastLoginDate < warningStart) return;
 
         // Check if we already sent a warning today
         const lastWarning = profile.settings?.lastStreakWarningPush;
-        if (lastWarning && lastWarning.startsWith(today)) continue;
+        if (lastWarning && lastWarning.startsWith(today)) return;
 
         // Calculate hours remaining
         const msRemaining = 24 * 60 * 60 * 1000 - (now - lastLoginDate);
         const hoursRemaining = msRemaining / (60 * 60 * 1000);
 
         if (hoursRemaining > 0 && hoursRemaining <= STREAK_WARNING_HOURS) {
-          const sent = await sendStreakAtRiskPush(userDoc.id, loginStreak, hoursRemaining);
-
-          if (sent) {
-            sentCount++;
-            // Mark that we sent a warning today
-            await profileDoc.ref.update({
-              "settings.lastStreakWarningPush": now.toISOString(),
-            });
-          }
+          usersToNotify.push({
+            userId: userIds[index],
+            profileRef: profileDoc.ref,
+            loginStreak,
+            hoursRemaining,
+          });
         }
+      });
+
+      // Step 4: Send notifications in parallel chunks
+      const PARALLEL_LIMIT = 25;
+      let sentCount = 0;
+
+      for (let i = 0; i < usersToNotify.length; i += PARALLEL_LIMIT) {
+        const chunk = usersToNotify.slice(i, i + PARALLEL_LIMIT);
+        const results = await Promise.allSettled(
+          chunk.map(async (user) => {
+            const sent = await sendStreakAtRiskPush(
+              user.userId,
+              user.loginStreak,
+              user.hoursRemaining
+            );
+            if (sent) {
+              await user.profileRef.update({
+                "settings.lastStreakWarningPush": now.toISOString(),
+              });
+              return true;
+            }
+            return false;
+          })
+        );
+
+        sentCount += results.filter(
+          (r) => r.status === "fulfilled" && r.value === true
+        ).length;
       }
 
       logger.info(`Streak at risk push job complete. Sent ${sentCount} notifications.`);
@@ -186,11 +221,12 @@ exports.weeklyMatchupPushJob = onSchedule(
   async () => {
     logger.info("Running weekly matchup push notification job");
 
+    const db = admin.firestore();
     const namespace = dataNamespaceParam.value();
 
     try {
       // Get current season week
-      const seasonDoc = await admin.firestore().doc("game-settings/season").get();
+      const seasonDoc = await db.doc("game-settings/season").get();
       const season = seasonDoc.data();
 
       if (!season?.currentWeek) {
@@ -201,19 +237,19 @@ exports.weeklyMatchupPushJob = onSchedule(
       const currentWeek = season.currentWeek;
 
       // Get all active leagues
-      const leaguesSnapshot = await admin
-        .firestore()
+      const leaguesSnapshot = await db
         .collection(`artifacts/${namespace}/leagues`)
         .get();
 
-      let totalSent = 0;
+      // Step 1: Collect all matchups from all leagues first
+      const allMatchups = [];
+      const allUserIds = new Set();
 
       for (const leagueDoc of leaguesSnapshot.docs) {
         const league = leagueDoc.data();
 
         // Get this week's matchups for the league
-        const matchupsSnapshot = await admin
-          .firestore()
+        const matchupsSnapshot = await db
           .collection(`artifacts/${namespace}/leagues/${leagueDoc.id}/matchups`)
           .where("week", "==", currentWeek)
           .where("status", "==", "scheduled")
@@ -221,24 +257,64 @@ exports.weeklyMatchupPushJob = onSchedule(
 
         for (const matchupDoc of matchupsSnapshot.docs) {
           const matchup = matchupDoc.data();
-          const { homeUserId, awayUserId } = matchup;
-
-          // Get opponent usernames
-          const [homeProfile, awayProfile] = await Promise.all([
-            admin.firestore().doc(`artifacts/${namespace}/users/${homeUserId}/profile/data`).get(),
-            admin.firestore().doc(`artifacts/${namespace}/users/${awayUserId}/profile/data`).get(),
-          ]);
-
-          const homeUsername = homeProfile.data()?.username || "Opponent";
-          const awayUsername = awayProfile.data()?.username || "Opponent";
-
-          // Send to both users
-          const sent1 = await sendMatchupStartPush(homeUserId, awayUsername, league.name);
-          const sent2 = await sendMatchupStartPush(awayUserId, homeUsername, league.name);
-
-          if (sent1) totalSent++;
-          if (sent2) totalSent++;
+          allMatchups.push({
+            homeUserId: matchup.homeUserId,
+            awayUserId: matchup.awayUserId,
+            leagueName: league.name,
+          });
+          allUserIds.add(matchup.homeUserId);
+          allUserIds.add(matchup.awayUserId);
         }
+      }
+
+      if (allMatchups.length === 0) {
+        logger.info("No scheduled matchups found for this week");
+        return;
+      }
+
+      // Step 2: OPTIMIZATION - Batch fetch ALL profiles in ONE operation
+      const userIdsArray = [...allUserIds];
+      const profileRefs = userIdsArray.map((uid) =>
+        db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+      );
+      const profileDocs = await db.getAll(...profileRefs);
+
+      // Build username map
+      const usernameMap = new Map();
+      profileDocs.forEach((doc, index) => {
+        const username = doc.exists ? doc.data()?.username || "Opponent" : "Opponent";
+        usernameMap.set(userIdsArray[index], username);
+      });
+
+      // Step 3: Send notifications in parallel chunks
+      const PARALLEL_LIMIT = 25;
+      let totalSent = 0;
+
+      // Build notification tasks
+      const notificationTasks = allMatchups.flatMap((matchup) => [
+        {
+          userId: matchup.homeUserId,
+          opponentName: usernameMap.get(matchup.awayUserId),
+          leagueName: matchup.leagueName,
+        },
+        {
+          userId: matchup.awayUserId,
+          opponentName: usernameMap.get(matchup.homeUserId),
+          leagueName: matchup.leagueName,
+        },
+      ]);
+
+      for (let i = 0; i < notificationTasks.length; i += PARALLEL_LIMIT) {
+        const chunk = notificationTasks.slice(i, i + PARALLEL_LIMIT);
+        const results = await Promise.allSettled(
+          chunk.map((task) =>
+            sendMatchupStartPush(task.userId, task.opponentName, task.leagueName)
+          )
+        );
+
+        totalSent += results.filter(
+          (r) => r.status === "fulfilled" && r.value === true
+        ).length;
       }
 
       logger.info(`Weekly matchup push job complete. Sent ${totalSent} notifications.`);
