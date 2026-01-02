@@ -232,7 +232,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
     } else if (scoredDay === 47) {
       // Day 47: World Championships Prelims - All World, Open, and A Class corps
       championshipConfig = {
-        "DCI World Championship Prelims": {
+        "marching.art World Championship Prelims": {
           participants: null, // All eligible
           classFilter: ["worldClass", "openClass", "aClass"],
         },
@@ -259,7 +259,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
         logger.info(`Day 48: ${participants.length} corps advancing to Semifinals.`);
 
         championshipConfig = {
-          "DCI World Championship Semifinals": {
+          "marching.art World Championship Semifinals": {
             participants,
             classFilter: ["worldClass", "openClass", "aClass"],
           },
@@ -272,7 +272,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
 
       championshipConfig = {
         // World Championship Finals - Top 12 from Day 48
-        "DCI World Championship Finals": {
+        "marching.art World Championship Finals": {
           participants: [],
           classFilter: ["worldClass", "openClass", "aClass"],
         },
@@ -296,7 +296,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
           finalists = allResults;
         }
 
-        championshipConfig["DCI World Championship Finals"].participants =
+        championshipConfig["marching.art World Championship Finals"].participants =
           finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
 
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
@@ -807,7 +807,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
     } else if (scoredDay === 47) {
       // Day 47: World Championships Prelims - All World, Open, and A Class corps
       championshipConfig = {
-        "DCI World Championship Prelims": {
+        "marching.art World Championship Prelims": {
           participants: null,
           classFilter: ["worldClass", "openClass", "aClass"],
         },
@@ -833,7 +833,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
         logger.info(`Day 48: ${participants.length} corps advancing to Semifinals.`);
 
         championshipConfig = {
-          "DCI World Championship Semifinals": {
+          "marching.art World Championship Semifinals": {
             participants,
             classFilter: ["worldClass", "openClass", "aClass"],
           },
@@ -845,7 +845,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
       const semisRecap = allRecaps.find(r => r.offSeasonDay === 48);
 
       championshipConfig = {
-        "DCI World Championship Finals": {
+        "marching.art World Championship Finals": {
           participants: [],
           classFilter: ["worldClass", "openClass", "aClass"],
         },
@@ -867,7 +867,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
           finalists = allResults;
         }
 
-        championshipConfig["DCI World Championship Finals"].participants =
+        championshipConfig["marching.art World Championship Finals"].participants =
           finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
       }
