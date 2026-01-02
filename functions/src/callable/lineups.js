@@ -224,9 +224,14 @@ exports.selectUserShows = onCall({ cors: true }, async (request) => {
   const userProfileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${uid}/profile/data`);
 
   try {
-    await userProfileRef.update({
+    // Also set activeSeasonId so user is properly tracked for season resets
+    const updateData = {
       [`corps.${corpsClass}.selectedShows.week${week}`]: shows,
-    });
+    };
+    if (seasonData.seasonUid) {
+      updateData.activeSeasonId = seasonData.seasonUid;
+    }
+    await userProfileRef.update(updateData);
     return { success: true, message: `Successfully saved selections for week ${week}.` };
   } catch (error) {
     logger.error(`Failed to save show selections for user ${uid}:`, error);
