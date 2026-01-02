@@ -6,11 +6,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { db, functions } from '../../firebase';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
 import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
+import { useSeasonStore } from '../../store/seasonStore';
+import { useScheduleStore } from '../../store/scheduleStore';
 
 // Import constants
 import { ALL_CLASSES, POINT_LIMITS, getCorpsClassName, formatSeasonName } from './constants';
@@ -39,6 +41,11 @@ const SeasonSetupWizard = ({
   retiredCorps = [],
   unlockedClasses = ['soundSport']
 }) => {
+  // Global store data
+  const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
+  const getWeekShows = useScheduleStore((state) => state.getWeekShows);
+  const scheduleLoading = useScheduleStore((state) => state.loading);
+
   // Registration state
   const [step, setStep] = useState(1);
   const [processing, setProcessing] = useState(false);
@@ -61,8 +68,9 @@ const SeasonSetupWizard = ({
   const [availableCorps, setAvailableCorps] = useState([]);
   const [loadingCorps, setLoadingCorps] = useState(true);
   const [selectedShows, setSelectedShows] = useState([]);
-  const [availableShows, setAvailableShows] = useState([]);
-  const [currentWeek, setCurrentWeek] = useState(1);
+
+  // Use global week from season store
+  const currentWeek = globalCurrentWeek || 1;
 
   const currentCorpsClass = finalCorpsNeedingSetup[currentCorpsIndex];
 
@@ -90,12 +98,8 @@ const SeasonSetupWizard = ({
     }
   }, [step, seasonData?.seasonUid]);
 
-  // Fetch shows
-  useEffect(() => {
-    if (step === 4 && seasonData) {
-      fetchAvailableShows();
-    }
-  }, [step, seasonData]);
+  // Get available shows from store when on step 4
+  const availableShows = step === 4 ? getWeekShows(currentWeek) : [];
 
   const fetchAvailableCorps = async () => {
     try {
@@ -112,52 +116,6 @@ const SeasonSetupWizard = ({
       console.error('Error fetching corps:', error);
     } finally {
       setLoadingCorps(false);
-    }
-  };
-
-  const fetchAvailableShows = async () => {
-    try {
-      const seasonRef = doc(db, 'game-settings/season');
-      const seasonSnap = await getDoc(seasonRef);
-      if (seasonSnap.exists()) {
-        const data = seasonSnap.data();
-        const seasonUid = data.seasonUid;
-
-        let calculatedWeek = 1;
-        const startDate = data.schedule?.startDate?.toDate();
-        if (startDate) {
-          const diffInDays = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24));
-          calculatedWeek = Math.max(1, Math.min(7, Math.ceil((diffInDays + 1) / 7)));
-        }
-        setCurrentWeek(calculatedWeek);
-
-        const weekStartDay = (calculatedWeek - 1) * 7 + 1;
-        const weekEndDay = calculatedWeek * 7;
-        const weekShows = [];
-
-        // Fetch from subcollection
-        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
-        const daysQuery = query(
-          daysRef,
-          where('offSeasonDay', '>=', weekStartDay),
-          where('offSeasonDay', '<=', weekEndDay),
-          orderBy('offSeasonDay')
-        );
-        const daysSnapshot = await getDocs(daysQuery);
-
-        daysSnapshot.forEach(dayDoc => {
-          const dayData = dayDoc.data();
-          const day = dayData.offSeasonDay;
-          if (dayData.shows) {
-            dayData.shows.forEach(show => {
-              weekShows.push({ ...show, day });
-            });
-          }
-        });
-        setAvailableShows(weekShows);
-      }
-    } catch (error) {
-      console.error('Error fetching shows:', error);
     }
   };
 

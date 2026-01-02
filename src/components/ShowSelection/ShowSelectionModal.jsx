@@ -43,38 +43,30 @@ const ShowSelectionModal = ({ onClose, onSubmit, corpsClass, currentWeek, season
       if (seasonSnap.exists()) {
         const seasonData = seasonSnap.data();
         const seasonUid = seasonData.seasonUid;
-        const weekStart = (currentWeek - 1) * 7 + 1;
-        const weekEnd = currentWeek * 7;
 
-        // Query the schedule subcollection for days in this week
-        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
-        const daysQuery = query(
-          daysRef,
-          where('offSeasonDay', '>=', weekStart),
-          where('offSeasonDay', '<=', weekEnd),
-          orderBy('offSeasonDay')
-        );
-        const daysSnapshot = await getDocs(daysQuery);
+        // Fetch from schedules collection
+        const scheduleRef = doc(db, `schedules/${seasonUid}`);
+        const scheduleSnap = await getDoc(scheduleRef);
 
-        const weekShows = [];
-        daysSnapshot.forEach(dayDoc => {
-          const dayData = dayDoc.data();
-          const day = dayData.offSeasonDay;
-          if (dayData.shows) {
-            dayData.shows.forEach(show => {
-              // Skip championship shows - they are auto-enrolled based on class
-              if (show.isChampionship) {
-                return;
-              }
-              weekShows.push({
-                ...show,
-                day: day,
-                offSeasonDay: day,
-              });
-            });
-          }
-        });
-        setAvailableShows(weekShows);
+        if (scheduleSnap.exists()) {
+          const competitions = scheduleSnap.data().competitions || [];
+          // Filter to current week's shows, skip championship shows
+          const weekShows = competitions
+            .filter(comp => comp.week === currentWeek && comp.type !== 'championship')
+            .map(comp => ({
+              eventName: comp.name,
+              location: comp.location,
+              date: comp.date,
+              day: comp.day,
+              offSeasonDay: comp.day,
+              type: comp.type,
+              allowedClasses: comp.allowedClasses,
+              mandatory: comp.mandatory,
+            }));
+          setAvailableShows(weekShows);
+        } else {
+          setAvailableShows([]);
+        }
       } else {
         toast.error('No active season found');
         setAvailableShows([]);

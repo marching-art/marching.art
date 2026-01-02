@@ -14,6 +14,8 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import { useSeasonStore } from '../store/seasonStore';
+import { useScheduleStore } from '../store/scheduleStore';
 
 // Caption definitions for the guided selection
 const CAPTIONS = [
@@ -213,6 +215,10 @@ const Onboarding = () => {
   const [seasonData, setSeasonData] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  // Global stores for schedule data
+  const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
+  const getWeekShows = useScheduleStore((state) => state.getWeekShows);
+
   // Fetch season data and available corps on mount
   useEffect(() => {
     const fetchSeasonData = async () => {
@@ -369,47 +375,24 @@ const Onboarding = () => {
     if (!season?.schedule || !season?.seasonUid) return;
 
     try {
-      // Calculate current week
-      const startDate = season.schedule.startDate?.toDate ?
-        season.schedule.startDate.toDate() :
-        new Date(season.schedule.startDate);
-      const now = new Date();
-      const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-      const currentWeek = Math.max(1, Math.ceil(daysSinceStart / 7));
+      // Use currentWeek from global store (already calculated)
+      const currentWeek = globalCurrentWeek;
 
-      // Calculate day range for current week
-      const weekStart = (currentWeek - 1) * 7 + 1;
-      const weekEnd = currentWeek * 7;
+      // Get shows from global schedule store (skip championship shows)
+      const weekShows = getWeekShows(currentWeek, { skipChampionship: true });
 
-      // Fetch shows from subcollection for current week
-      const daysRef = collection(db, `season-schedules/${season.seasonUid}/days`);
-      const daysQuery = query(
-        daysRef,
-        where('offSeasonDay', '>=', weekStart),
-        where('offSeasonDay', '<=', weekEnd),
-        orderBy('offSeasonDay')
-      );
-      const daysSnapshot = await getDocs(daysQuery);
+      if (weekShows.length === 0) {
+        console.log('[Onboarding] No shows found for week', currentWeek);
+        return;
+      }
 
-      // Get shows for current week
-      const currentWeekShows = [];
-      daysSnapshot.forEach(dayDoc => {
-        const dayData = dayDoc.data();
-        const day = dayData.offSeasonDay;
-        if (dayData.shows) {
-          dayData.shows.forEach(show => {
-            // Skip championship shows
-            if (!show.isChampionship) {
-              currentWeekShows.push({
-                eventName: show.eventName,
-                date: show.date,
-                location: show.location,
-                day: day
-              });
-            }
-          });
-        }
-      });
+      // Map to the format expected by the backend
+      const currentWeekShows = weekShows.map(show => ({
+        eventName: show.eventName,
+        date: show.date,
+        location: show.location,
+        day: show.day
+      }));
 
       // Register for up to 4 shows
       if (currentWeekShows.length > 0) {
