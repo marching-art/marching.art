@@ -234,6 +234,16 @@ async function processAndArchiveOffSeasonScoresLogic() {
             classFilter: ["openClass", "aClass"],
           },
         };
+      } else {
+        // FALLBACK: No Day 45 results (season reset mid-championship)
+        // Auto-enroll all Open/A Class corps to finals
+        logger.info("Day 46: No Day 45 results found. Auto-enrolling all Open/A Class corps to Finals.");
+        championshipConfig = {
+          "Open and A Class Finals": {
+            participants: null, // null means all eligible
+            classFilter: ["openClass", "aClass"],
+          },
+        };
       }
 
     } else if (scoredDay === 47) {
@@ -271,6 +281,16 @@ async function processAndArchiveOffSeasonScoresLogic() {
             classFilter: ["worldClass", "openClass", "aClass"],
           },
         };
+      } else {
+        // FALLBACK: No Day 47 results (season reset mid-championship)
+        // Auto-enroll all World/Open/A Class corps to semifinals
+        logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
+        championshipConfig = {
+          "marching.art World Championship Semifinals": {
+            participants: null, // null means all eligible
+            classFilter: ["worldClass", "openClass", "aClass"],
+          },
+        };
       }
 
     } else if (scoredDay === 49) {
@@ -280,7 +300,7 @@ async function processAndArchiveOffSeasonScoresLogic() {
       championshipConfig = {
         // World Championship Finals - Top 12 from Day 48
         "marching.art World Championship Finals": {
-          participants: [],
+          participants: null, // Will be set to specific corps if semis results exist
           classFilter: ["worldClass", "openClass", "aClass"],
         },
         // SoundSport Festival - All SoundSport corps
@@ -307,6 +327,11 @@ async function processAndArchiveOffSeasonScoresLogic() {
           finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
 
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
+      } else {
+        // FALLBACK: No Day 48 results (season reset mid-championship)
+        // Auto-enroll all World/Open/A Class corps to finals
+        logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
+        // participants is already null, which means all eligible
       }
       logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
     }
@@ -861,6 +886,16 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             classFilter: ["openClass", "aClass"],
           },
         };
+      } else {
+        // FALLBACK: No Day 45 results (season reset mid-championship)
+        // Auto-enroll all Open/A Class corps to finals
+        logger.info("Day 46: No Day 45 results found. Auto-enrolling all Open/A Class corps to Finals.");
+        championshipConfig = {
+          "Open and A Class Finals": {
+            participants: null, // null means all eligible
+            classFilter: ["openClass", "aClass"],
+          },
+        };
       }
 
     } else if (scoredDay === 47) {
@@ -897,6 +932,16 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
             classFilter: ["worldClass", "openClass", "aClass"],
           },
         };
+      } else {
+        // FALLBACK: No Day 47 results (season reset mid-championship)
+        // Auto-enroll all World/Open/A Class corps to semifinals
+        logger.info("Day 48: No Day 47 results found. Auto-enrolling all World/Open/A Class corps to Semifinals.");
+        championshipConfig = {
+          "marching.art World Championship Semifinals": {
+            participants: null, // null means all eligible
+            classFilter: ["worldClass", "openClass", "aClass"],
+          },
+        };
       }
 
     } else if (scoredDay === 49) {
@@ -905,7 +950,7 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
 
       championshipConfig = {
         "marching.art World Championship Finals": {
-          participants: [],
+          participants: null, // Will be set to specific corps if semis results exist
           classFilter: ["worldClass", "openClass", "aClass"],
         },
         "SoundSport International Music & Food Festival": {
@@ -929,6 +974,11 @@ async function processAndScoreLiveSeasonDayLogic(scoredDay, seasonData) {
         championshipConfig["marching.art World Championship Finals"].participants =
           finalists.map(r => ({ uid: r.uid, corpsClass: r.corpsClass }));
         logger.info(`Day 49: ${finalists.length} corps advancing to World Championship Finals.`);
+      } else {
+        // FALLBACK: No Day 48 results (season reset mid-championship)
+        // Auto-enroll all World/Open/A Class corps to finals
+        logger.info("Day 49: No Day 48 results found. Auto-enrolling all World/Open/A Class corps to Finals.");
+        // participants is already null, which means all eligible
       }
       logger.info("Day 49: All SoundSport corps enrolled in SoundSport Festival.");
     }
