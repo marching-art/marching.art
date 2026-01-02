@@ -108,6 +108,10 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   // Get max shows based on the show's week (7 for final week, 4 otherwise)
   const maxShows = useMemo(() => getMaxShowsForWeek(show.week), [show.week]);
 
+  // Check if this is a championship show with auto-enrollment
+  const isChampionship = show.isChampionship === true;
+  const eligibleClasses = show.eligibleClasses || [];
+
   // Detect mobile for BottomSheet vs Modal
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -122,6 +126,17 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
       ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
       : []
   , [userProfile?.corps]);
+
+  // For championship shows, determine which corps are enrolled/eligible
+  const enrolledCorps = useMemo(() => {
+    if (!isChampionship) return [];
+    return userCorpsClasses.filter(corpsClass => eligibleClasses.includes(corpsClass));
+  }, [isChampionship, userCorpsClasses, eligibleClasses]);
+
+  const ineligibleCorps = useMemo(() => {
+    if (!isChampionship) return [];
+    return userCorpsClasses.filter(corpsClass => !eligibleClasses.includes(corpsClass));
+  }, [isChampionship, userCorpsClasses, eligibleClasses]);
 
   // Initialize with already registered corps
   useEffect(() => {
@@ -279,7 +294,126 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   // Shared body content
   const BodyContent = () => (
     <>
-      {userCorpsClasses.length === 0 ? (
+      {/* Championship Auto-Enrollment Display */}
+      {isChampionship ? (
+        <div className="px-4 py-6">
+          {/* Auto-Enrollment Banner */}
+          <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded mb-4">
+            <Trophy className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-yellow-400 mb-1">Championship Event</p>
+              <p className="text-xs text-gray-400">
+                Eligible corps are automatically enrolled. No manual registration required.
+              </p>
+            </div>
+          </div>
+
+          {/* Enrolled Corps */}
+          {enrolledCorps.length > 0 && (
+            <div className="mb-4">
+              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                <Check className="w-3 h-3 inline mr-1 text-green-500" />
+                Automatically Enrolled
+              </div>
+              <div className="space-y-2">
+                {enrolledCorps.map(corpsClass => {
+                  const corpsData = userProfile.corps[corpsClass];
+                  const config = CLASS_CONFIG[corpsClass];
+                  return (
+                    <div
+                      key={corpsClass}
+                      className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded"
+                    >
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-white text-sm">
+                          {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
+                        </span>
+                        <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
+                          {config.shortName}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-green-400 font-bold px-2 py-1 bg-green-500/20 rounded">
+                        ENROLLED
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Ineligible Corps */}
+          {ineligibleCorps.length > 0 && (
+            <div>
+              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                <X className="w-3 h-3 inline mr-1 text-red-400" />
+                Not Eligible
+              </div>
+              <div className="space-y-2">
+                {ineligibleCorps.map(corpsClass => {
+                  const corpsData = userProfile.corps[corpsClass];
+                  const config = CLASS_CONFIG[corpsClass];
+                  return (
+                    <div
+                      key={corpsClass}
+                      className="flex items-center gap-3 p-3 bg-[#222] border border-[#333] rounded opacity-60"
+                    >
+                      <X className="w-4 h-4 text-red-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-gray-400 text-sm">
+                          {corpsData.corpsName || corpsData.name || 'Unnamed Corps'}
+                        </span>
+                        <span className={`ml-2 text-[10px] font-bold uppercase ${config.color}`}>
+                          {config.shortName}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 font-medium">
+                        Class not eligible
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* No Corps Message */}
+          {userCorpsClasses.length === 0 && (
+            <div className="text-center py-6">
+              <AlertTriangle className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-400">No corps registered yet.</p>
+              <Link
+                to="/"
+                onClick={onClose}
+                className="inline-block mt-3 px-4 py-2 bg-[#0057B8] text-white text-xs font-bold uppercase rounded"
+              >
+                Create a Corps
+              </Link>
+            </div>
+          )}
+
+          {/* Eligible Classes Info */}
+          <div className="mt-4 p-3 bg-[#111] border border-[#333] rounded">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Eligible Classes for This Event
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {eligibleClasses.map(cls => {
+                const config = CLASS_CONFIG[cls];
+                return (
+                  <span
+                    key={cls}
+                    className={`px-2 py-1 text-xs font-bold rounded ${config?.bgColor || 'bg-gray-500/10'} ${config?.color || 'text-gray-400'}`}
+                  >
+                    {config?.name || cls}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : userCorpsClasses.length === 0 ? (
         <div className="text-center py-10 px-4">
           <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-sm text-gray-400 font-medium">No Corps Registered</p>
@@ -381,8 +515,21 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
   );
 
   // Shared footer content
-  const FooterContent = () => (
-    userCorpsClasses.length > 0 ? (
+  const FooterContent = () => {
+    // Championship shows don't need Save/Cancel - just a Close button
+    if (isChampionship) {
+      return (
+        <button
+          onClick={() => { haptic('light'); onClose(); }}
+          className="w-full h-12 bg-[#333] text-white text-sm font-bold uppercase tracking-wider rounded hover:bg-[#444] active:bg-[#222] press-feedback flex items-center justify-center gap-2"
+        >
+          <X className="w-4 h-4" />
+          Close
+        </button>
+      );
+    }
+
+    return userCorpsClasses.length > 0 ? (
       <div className="flex gap-3">
         <button
           onClick={() => { haptic('light'); onClose(); }}
@@ -409,8 +556,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           )}
         </button>
       </div>
-    ) : null
-  );
+    ) : null;
+  };
 
   // Mobile: Use BottomSheet with native swipe-to-dismiss
   if (isMobile) {
@@ -432,7 +579,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
         </div>
 
         {/* Footer */}
-        {userCorpsClasses.length > 0 && (
+        {(isChampionship || userCorpsClasses.length > 0) && (
           <div className="px-4 py-4 border-t border-[#333] bg-[#1a1a1a] flex-shrink-0 safe-area-bottom">
             <FooterContent />
           </div>
@@ -463,7 +610,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
           </div>
 
           {/* Footer */}
-          {userCorpsClasses.length > 0 && (
+          {(isChampionship || userCorpsClasses.length > 0) && (
             <div className="px-4 py-4 border-t border-[#333] bg-[#222] flex-shrink-0">
               <FooterContent />
             </div>
