@@ -9,7 +9,7 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  Mail, Bell, ChevronRight
+  Mail, Bell, ChevronRight, MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -693,7 +693,7 @@ const Profile = () => {
         </div>
 
         {/* QUICK LINKS */}
-        <div className="grid grid-cols-3 gap-px bg-[#333]">
+        <div className={`grid gap-px bg-[#333] ${isOwnProfile ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
           <a
             href="https://buymeacoffee.com/marching.art"
             target="_blank"
@@ -702,6 +702,15 @@ const Profile = () => {
           >
             <Heart className="w-6 h-6 text-amber-500 mb-1.5" />
             <span className="text-sm text-gray-400">Support</span>
+          </a>
+          <a
+            href="https://discord.gg/YvFRJ97A5H"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
+          >
+            <MessageCircle className="w-6 h-6 text-[#5865F2] mb-1.5" />
+            <span className="text-sm text-gray-400">Discord</span>
           </a>
           <Link
             to="/leagues"
