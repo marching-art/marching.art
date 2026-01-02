@@ -982,31 +982,46 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     }];
   }
 
-  // Update Day 47-49 to include championship metadata
+  // Update Day 47-49 to include championship metadata (create fallbacks if missing)
   const day47 = schedule.find((d) => d.offSeasonDay === 47);
-  if (day47 && day47.shows.length > 0) {
-    day47.shows[0].isChampionship = true;
-    day47.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
+  if (day47) {
+    const prelimsShow = day47.shows[0] || {
+      eventName: "marching.art World Championship Prelims",
+      location: "Indianapolis, IN",
+      date: null,
+    };
+    prelimsShow.isChampionship = true;
+    prelimsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
+    prelimsShow.mandatory = true;
+    day47.shows = [prelimsShow];
   }
 
   const day48 = schedule.find((d) => d.offSeasonDay === 48);
-  if (day48 && day48.shows.length > 0) {
-    day48.shows[0].isChampionship = true;
-    day48.shows[0].eligibleClasses = ["worldClass", "openClass", "aClass"];
-    day48.shows[0].advancementRules = { all: 25 }; // Top 25 from Day 47
+  if (day48) {
+    const semisShow = day48.shows[0] || {
+      eventName: "marching.art World Championship Semifinals",
+      location: "Indianapolis, IN",
+      date: null,
+    };
+    semisShow.isChampionship = true;
+    semisShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
+    semisShow.advancementRules = { all: 25 }; // Top 25 from Day 47
+    semisShow.mandatory = true;
+    day48.shows = [semisShow];
   }
 
   const day49 = schedule.find((d) => d.offSeasonDay === 49);
   if (day49) {
     // Day 49 has two shows: World Finals and SoundSport Festival
     const worldFinalsShow = day49.shows[0] || {
-      eventName: "World Championships Finals",
+      eventName: "marching.art World Championship Finals",
       location: "Indianapolis, IN",
       date: null,
     };
     worldFinalsShow.isChampionship = true;
     worldFinalsShow.eligibleClasses = ["worldClass", "openClass", "aClass"];
     worldFinalsShow.advancementRules = { all: 12 }; // Top 12 from Day 48
+    worldFinalsShow.mandatory = true;
 
     const soundSportShow = {
       eventName: "SoundSport International Music & Food Festival",
