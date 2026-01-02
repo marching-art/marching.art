@@ -10,7 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Archive, Plus, RotateCcw, Unlock } from 'lucide-react';
+import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Plus, RotateCcw, Unlock } from 'lucide-react';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 
@@ -380,7 +380,7 @@ const SeasonSetupWizard = ({
                           <Trophy className="w-5 h-5 text-yellow-500" />
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className={`grid gap-2 ${classRetired.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                           <button
                             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
                             className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
@@ -391,17 +391,6 @@ const SeasonSetupWizard = ({
                           >
                             <Play className="w-4 h-4" />
                             Continue
-                          </button>
-                          <button
-                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'retire' })}
-                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                              decision === 'retire'
-                                ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
-                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
-                            }`}
-                          >
-                            <Archive className="w-4 h-4" />
-                            Retire
                           </button>
                           <button
                             onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
@@ -424,7 +413,7 @@ const SeasonSetupWizard = ({
                               }`}
                             >
                               <RotateCcw className="w-4 h-4" />
-                              Unretire
+                              Revive
                             </button>
                           )}
                         </div>
@@ -539,7 +528,7 @@ const SeasonSetupWizard = ({
                                 }`}
                               >
                                 <RotateCcw className="w-4 h-4" />
-                                Unretire
+                                Revive
                               </button>
                             )}
                           </div>
