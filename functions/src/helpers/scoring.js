@@ -61,13 +61,18 @@ function getRealisticCaptionScore(corpsName, sourceYear, caption, currentDay, hi
   }
 
   const allDataPoints = [];
+  // OPTIMIZATION: Use Set for O(1) lookups instead of .some() which is O(n)
+  // This reduces complexity from O(n²) to O(n)
+  const seenDays = new Set();
   const yearData = historicalData[sourceYear] || [];
   for (const event of yearData) {
+    // Skip if we've already processed this day
+    if (seenDays.has(event.offSeasonDay)) continue;
+
     const score = getScoreForDay(event.offSeasonDay, corpsName, sourceYear, caption, historicalData);
     if (score !== null) {
-      if (!allDataPoints.some((p) => p[0] === event.offSeasonDay)) {
-        allDataPoints.push([event.offSeasonDay, score]);
-      }
+      seenDays.add(event.offSeasonDay);
+      allDataPoints.push([event.offSeasonDay, score]);
     }
   }
 
