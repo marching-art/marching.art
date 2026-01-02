@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay } = require("../helpers/season");
+const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay, generateOffSeasonSchedule, writeScheduleToSubcollection } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 
@@ -156,6 +156,51 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       return {
         success: true,
         message: `Schedule refreshed. Added ${result.addedCount} new events from ${result.totalEvents} scraped.`,
+      };
+    }
+    case "regenerateOffSeasonSchedule": {
+      // Regenerate schedule for current off-season without starting a new season
+      const db = getDb();
+      const seasonDoc = await db.doc("game-settings/season").get();
+      if (!seasonDoc.exists) {
+        throw new HttpsError("failed-precondition", "No active season found.");
+      }
+      const seasonData = seasonDoc.data();
+      if (seasonData.status !== "off-season") {
+        throw new HttpsError("failed-precondition", "This function only works for off-seasons. Current status: " + seasonData.status);
+      }
+      const seasonId = seasonData.seasonUid;
+      logger.info(`Regenerating schedule for off-season: ${seasonId}`);
+
+      // Generate new schedule (49 days for off-season)
+      const schedule = await generateOffSeasonSchedule(49, 1);
+
+      // Transform to competitions array format (used by schedules collection)
+      const competitions = [];
+      schedule.forEach(day => {
+        const week = Math.ceil(day.offSeasonDay / 7);
+        (day.shows || []).forEach((show, idx) => {
+          competitions.push({
+            id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
+            name: show.eventName,
+            location: show.location || "",
+            date: show.date || null,
+            day: day.offSeasonDay,
+            week: week,
+            type: show.isChampionship ? "championship" : "regular",
+            allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+            mandatory: show.mandatory || false,
+          });
+        });
+      });
+
+      // Write to schedules collection
+      await db.doc(`schedules/${seasonId}`).set({ competitions });
+
+      logger.info(`Successfully regenerated schedule with ${competitions.length} competitions for season ${seasonId}`);
+      return {
+        success: true,
+        message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}.`
       };
     }
     default:

@@ -353,7 +353,7 @@ const Schedule = () => {
     }
   }, [currentWeek, selectedWeek]);
 
-  // Load schedule from subcollection
+  // Load schedule from schedules collection
   useEffect(() => {
     const loadSchedule = async () => {
       if (!seasonUid) {
@@ -362,12 +362,40 @@ const Schedule = () => {
       }
       console.log('[Schedule] Loading schedule for seasonUid:', seasonUid);
       try {
-        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
-        const daysQuery = query(daysRef, orderBy('offSeasonDay'));
-        const snapshot = await getDocs(daysQuery);
-        console.log('[Schedule] Fetched', snapshot.docs.length, 'days from season-schedules');
-        const days = snapshot.docs.map(doc => doc.data());
-        setScheduleData(days);
+        // Load from schedules/{seasonUid} document with competitions array
+        const scheduleRef = doc(db, `schedules/${seasonUid}`);
+        const scheduleSnap = await getDoc(scheduleRef);
+
+        if (scheduleSnap.exists()) {
+          const data = scheduleSnap.data();
+          const competitions = data.competitions || [];
+          console.log('[Schedule] Fetched', competitions.length, 'competitions from schedules collection');
+
+          // Transform competitions array to day-based format for compatibility
+          // Each competition has: day, week, name (eventName), location, date, allowedClasses, type
+          const dayMap = {};
+          competitions.forEach(comp => {
+            const day = comp.day || 0;
+            if (!dayMap[day]) {
+              dayMap[day] = { offSeasonDay: day, shows: [] };
+            }
+            dayMap[day].shows.push({
+              eventName: comp.name,
+              location: comp.location,
+              date: comp.date,
+              allowedClasses: comp.allowedClasses,
+              type: comp.type,
+              isChampionship: comp.type === 'championship',
+              mandatory: comp.mandatory,
+            });
+          });
+
+          const days = Object.values(dayMap).sort((a, b) => a.offSeasonDay - b.offSeasonDay);
+          setScheduleData(days);
+        } else {
+          console.log('[Schedule] No schedule document found for', seasonUid);
+          setScheduleData([]);
+        }
       } catch (error) {
         console.error('Error loading schedule:', error);
       }

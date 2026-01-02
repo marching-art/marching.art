@@ -649,6 +649,12 @@ const BackgroundJobsTab = ({ callAdminFunction }) => {
       description: 'Scrape DCI events page and update the live season schedule with new shows',
       icon: Calendar,
     },
+    {
+      id: 'regenerateOffSeasonSchedule',
+      name: 'Regenerate Off-Season Schedule',
+      description: 'Regenerate schedule for the current off-season (fixes missing schedule data)',
+      icon: Calendar,
+    },
   ];
 
   const handleSendTestEmail = async () => {
