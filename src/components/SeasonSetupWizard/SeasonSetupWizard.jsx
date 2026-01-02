@@ -52,8 +52,17 @@ const SeasonSetupWizard = ({
     unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
   );
 
-  // Registration state - start at step 0 (corps verification) for returning users
-  const [step, setStep] = useState(hasExistingCorps ? 0 : 1);
+  // Check if corps are already active in the current season (auto-continued)
+  // If so, skip corps verification (step 0) and go to show selection (step 4)
+  const isCorpsAutoContined = profile?.activeSeasonId === seasonData?.seasonUid;
+
+  // Registration state - skip step 0 if corps already auto-continued, otherwise show it for returning users
+  const [step, setStep] = useState(() => {
+    if (hasExistingCorps && isCorpsAutoContined) {
+      return 4; // Skip to show selection - corps already auto-continued
+    }
+    return hasExistingCorps ? 0 : 1; // Step 0 for returning users who need to make decisions
+  });
   const [processing, setProcessing] = useState(false);
 
   // Form data for new corps (only used if creating a new one)
@@ -844,15 +853,62 @@ const SeasonSetupWizard = ({
             <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
               <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Select Week {currentWeek} Shows
+                  {currentWeek === 7 ? 'Championship Week' : `Select Week ${currentWeek} Shows`}
                 </h2>
               </div>
               <div className="p-4">
-                {availableShows.length === 0 ? (
+                {/* Championship Week (Week 7) - Auto-enrollment message */}
+                {currentWeek === 7 ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-[#0057B8]/20 rounded-sm flex items-center justify-center">
+                      <Trophy className="w-8 h-8 text-[#0057B8]" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2">
+                      Championship Week - Auto Enrollment
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-4 max-w-md mx-auto">
+                      All championship events (Days 45-49) have automatic enrollment based on your corps class and advancement results.
+                    </p>
+                    <div className="bg-[#0a0a0a] border border-[#333] p-4 text-left max-w-md mx-auto">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                        Championship Schedule
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Day 45</span>
+                          <span className="text-white">Open & A Class Prelims</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Day 46</span>
+                          <span className="text-white">Open & A Class Finals (Top 8/4)</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Day 47</span>
+                          <span className="text-white">World Championship Prelims</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Day 48</span>
+                          <span className="text-white">World Championship Semifinals (Top 25)</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Day 49</span>
+                          <span className="text-white">World Championship Finals (Top 12)</span>
+                        </div>
+                        <div className="flex justify-between border-t border-[#333] pt-2 mt-2">
+                          <span className="text-gray-400">Day 49</span>
+                          <span className="text-white">SoundSport Festival (All SoundSport)</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Your corps will automatically compete based on class eligibility and prior day results.
+                    </p>
+                  </div>
+                ) : availableShows.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-8">No shows available this week</p>
                 ) : (
                   <div className="space-y-2">
-                    {availableShows.map((show, idx) => {
+                    {availableShows.filter(show => show.type !== 'championship').map((show, idx) => {
                       const isSelected = selectedShows.some(
                         s => s.eventName === show.eventName && s.date === show.date
                       );
@@ -891,17 +947,19 @@ const SeasonSetupWizard = ({
                     })}
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-4">
-                  Selected: {selectedShows.length}/4 shows
-                </p>
+                {currentWeek !== 7 && (
+                  <p className="text-xs text-gray-500 mt-4">
+                    Selected: {selectedShows.length}/4 shows
+                  </p>
+                )}
               </div>
               <div className="px-4 py-3 border-t border-[#333] flex justify-end">
                 <button
-                  onClick={saveShows}
-                  disabled={processing || selectedShows.length === 0}
+                  onClick={currentWeek === 7 ? () => setStep(5) : saveShows}
+                  disabled={processing || (currentWeek !== 7 && selectedShows.length === 0)}
                   className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
                 >
-                  {processing ? 'Saving...' : 'Confirm Shows'}
+                  {processing ? 'Saving...' : currentWeek === 7 ? 'Continue' : 'Confirm Shows'}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
               </div>

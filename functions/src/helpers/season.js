@@ -575,8 +575,10 @@ async function startNewLiveSeason() {
           lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
         }
 
+        // Auto-continue corps in new season (set activeSeasonId to new season, not null)
+        // This prevents the wizard from showing the corps verification step
         batch.update(doc.ref, {
-          activeSeasonId: null,
+          activeSeasonId: dataDocId,
           corps: resetCorps,
           lifetimeStats,
           retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
@@ -596,7 +598,7 @@ async function startNewLiveSeason() {
         await batch.commit();
       }
 
-      logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+      logger.info(`Successfully auto-continued all user corps into new season: ${dataDocId}`);
     }
 
     // Clear all active lineups from previous season
@@ -790,8 +792,10 @@ async function startNewOffSeason() {
           lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
         }
 
+        // Auto-continue corps in new season (set activeSeasonId to new season, not null)
+        // This prevents the wizard from showing the corps verification step
         batch.update(doc.ref, {
-          activeSeasonId: null,
+          activeSeasonId: dataDocId,
           corps: resetCorps,
           lifetimeStats,
           retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
@@ -811,7 +815,7 @@ async function startNewOffSeason() {
         await batch.commit();
       }
 
-      logger.info(`Successfully reset all user profiles from previous season: ${oldSeasonUid}`);
+      logger.info(`Successfully auto-continued all user corps into new season: ${dataDocId}`);
     }
 
     // Clear all active lineups from previous season
