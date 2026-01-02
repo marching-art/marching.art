@@ -304,16 +304,18 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   const matchupData = matchupDoc.data();
   const pairs = matchupData.pairs;
 
-  // Fetch scores for all players in this week
-  const updatedPairs = await Promise.all(pairs.map(async (pair) => {
+  // OPTIMIZATION: Batch fetch all player scores upfront instead of N+1 queries
+  const playerScores = await batchGetPlayerWeekScores(db, pairs, week);
+
+  // Process pairs using the pre-fetched scores (no more individual DB calls)
+  const updatedPairs = pairs.map((pair) => {
     if (pair.player2 === null) {
       // Bye week - already handled
       return pair;
     }
 
-    // Get player scores from their corps performances this week
-    const player1Score = await getPlayerWeekScore(db, pair.player1, week);
-    const player2Score = await getPlayerWeekScore(db, pair.player2, week);
+    const player1Score = playerScores.get(pair.player1) ?? null;
+    const player2Score = playerScores.get(pair.player2) ?? null;
 
     let winner = null;
     if (player1Score !== null && player2Score !== null) {
@@ -333,7 +335,7 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
       winner,
       completed: winner !== null
     };
-  }));
+  });
 
   // Update matchups
   await matchupRef.update({
@@ -347,32 +349,76 @@ exports.updateMatchupResults = onCall({ cors: true }, async (request) => {
   return { success: true, message: "Matchup results updated!", pairs: updatedPairs };
 });
 
-// Helper function to get a player's score for a specific week
-async function getPlayerWeekScore(db, userId, week) {
+/**
+ * OPTIMIZED: Batch fetch all player scores for a given week
+ * Reduces N+1 queries (2 reads per player) to just 2 batch operations total
+ *
+ * @param {FirebaseFirestore.Firestore} db - Firestore instance
+ * @param {Array} pairs - Array of matchup pairs
+ * @param {number} week - The week number to fetch scores for
+ * @returns {Map<string, number|null>} Map of userId -> weekScore
+ */
+async function batchGetPlayerWeekScores(db, pairs, week) {
+  const playerScores = new Map();
+  const namespace = dataNamespaceParam.value();
+
   try {
-    // Get user's active corps class
-    const profileRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/profile/data`);
-    const profileDoc = await profileRef.get();
+    // Step 1: Collect all unique player IDs (excluding bye weeks)
+    const playerIds = [...new Set(
+      pairs.flatMap(pair => [pair.player1, pair.player2].filter(Boolean))
+    )];
 
-    if (!profileDoc.exists) return null;
+    if (playerIds.length === 0) {
+      return playerScores;
+    }
 
-    const profileData = profileDoc.data();
-    const activeCorpsClass = profileData.activeCorpsClass || 'world';
+    // Step 2: Batch fetch all profiles in ONE operation
+    const profileRefs = playerIds.map(uid =>
+      db.doc(`artifacts/${namespace}/users/${uid}/profile/data`)
+    );
+    const profileDocs = await db.getAll(...profileRefs);
 
-    // Get the corps document
-    const corpsRef = db.doc(`artifacts/${dataNamespaceParam.value()}/users/${userId}/corps/${activeCorpsClass}`);
-    const corpsDoc = await corpsRef.get();
+    // Step 3: Build map of userId -> activeCorpsClass and collect corps refs
+    const playerCorpsClasses = new Map();
+    const corpsRefs = [];
+    const corpsRefToUserId = new Map();
 
-    if (!corpsDoc.exists) return null;
+    profileDocs.forEach((doc, index) => {
+      const userId = playerIds[index];
+      if (doc.exists) {
+        const activeCorpsClass = doc.data().activeCorpsClass || 'world';
+        playerCorpsClasses.set(userId, activeCorpsClass);
 
-    const corpsData = corpsDoc.data();
+        const corpsRef = db.doc(`artifacts/${namespace}/users/${userId}/corps/${activeCorpsClass}`);
+        corpsRefs.push(corpsRef);
+        corpsRefToUserId.set(corpsRef.path, userId);
+      } else {
+        // Profile doesn't exist, set null score
+        playerScores.set(userId, null);
+      }
+    });
 
-    // Check if they have a score for this week
-    const weeklyScores = corpsData.weeklyScores || {};
-    return weeklyScores[`week${week}`] || null;
+    // Step 4: Batch fetch all corps documents in ONE operation
+    if (corpsRefs.length > 0) {
+      const corpsDocs = await db.getAll(...corpsRefs);
+
+      corpsDocs.forEach((doc) => {
+        const userId = corpsRefToUserId.get(doc.ref.path);
+        if (doc.exists) {
+          const weeklyScores = doc.data().weeklyScores || {};
+          const score = weeklyScores[`week${week}`] ?? null;
+          playerScores.set(userId, score);
+        } else {
+          playerScores.set(userId, null);
+        }
+      });
+    }
+
+    return playerScores;
   } catch (error) {
-    logger.error(`Error getting score for user ${userId}, week ${week}:`, error);
-    return null;
+    logger.error(`Error batch fetching player scores for week ${week}:`, error);
+    // Return empty map on error - callers will handle null scores gracefully
+    return playerScores;
   }
 }
 
