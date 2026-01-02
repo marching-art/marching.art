@@ -157,6 +157,38 @@ async function addShowToDay(seasonId, dayNumber, show) {
 // END SCHEDULE SUBCOLLECTION HELPERS
 // =============================================================================
 
+/**
+ * Writes schedule to the schedules collection in competitions array format
+ * This is the format used by the mobile app and web Schedule page
+ * @param {string} seasonId - The season identifier
+ * @param {Array} schedule - Array of day objects with offSeasonDay and shows
+ */
+async function writeScheduleToCollection(seasonId, schedule) {
+  const db = getDb();
+
+  // Transform to competitions array format
+  const competitions = [];
+  schedule.forEach(day => {
+    const week = Math.ceil(day.offSeasonDay / 7);
+    (day.shows || []).forEach((show, idx) => {
+      competitions.push({
+        id: `${seasonId}_day${day.offSeasonDay}_${idx}`,
+        name: show.eventName,
+        location: show.location || "",
+        date: show.date || null,
+        day: day.offSeasonDay,
+        week: week,
+        type: show.isChampionship ? "championship" : "regular",
+        allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+        mandatory: show.mandatory || false,
+      });
+    });
+  });
+
+  await db.doc(`schedules/${seasonId}`).set({ competitions });
+  logger.info(`Wrote ${competitions.length} competitions to schedules/${seasonId}`);
+}
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -347,9 +379,8 @@ async function startNewLiveSeason() {
   // Pass startDate and finalsDate so we can map scraped events to the correct days
   const schedule = await generateLiveSeasonSchedule(49, 1, year, startDate, finalsDate);
 
-  // Write schedule to subcollection for scalability
-  // Data stored at: season-schedules/{seasonId}/days/{dayNumber}
-  await writeScheduleToSubcollection(dataDocId, schedule);
+  // Write schedule to schedules collection (competitions array format)
+  await writeScheduleToCollection(dataDocId, schedule);
 
   const newSeasonData = {
     name: seasonName,
@@ -363,7 +394,6 @@ async function startNewLiveSeason() {
       endDate: Timestamp.fromDate(finalsDate),
       springTrainingDays: 21, // First 21 calendar days are spring training
     },
-    // Note: events are now stored in season-schedules/{seasonId}/days subcollection
   };
 
   await db.doc("game-settings/season").set(newSeasonData);
@@ -569,9 +599,8 @@ async function startNewOffSeason() {
 
   await db.doc(`dci-data/${dataDocId}`).set({ corpsValues: offSeasonCorpsData });
 
-  // Write schedule to subcollection for scalability
-  // Data stored at: season-schedules/{seasonId}/days/{dayNumber}
-  await writeScheduleToSubcollection(dataDocId, schedule);
+  // Write schedule to schedules collection (competitions array format)
+  await writeScheduleToCollection(dataDocId, schedule);
 
   const newSeasonSettings = {
     name: seasonName,
@@ -580,7 +609,6 @@ async function startNewOffSeason() {
     currentPointCap: 150,
     dataDocId: dataDocId,
     schedule: { startDate: Timestamp.fromDate(startDate), endDate: Timestamp.fromDate(endDate) },
-    // Note: events are now stored in season-schedules/{seasonId}/days subcollection
   };
 
   await seasonSettingsRef.set(newSeasonSettings);
@@ -1182,7 +1210,8 @@ module.exports = {
   getNextOffSeasonWindow,
   archiveSeasonResultsLogic,
   refreshLiveSeasonSchedule,
-  // Schedule subcollection helpers
+  // Schedule helpers
+  writeScheduleToCollection,
   writeScheduleToSubcollection,
   getScheduleDay,
   getScheduleDays,
