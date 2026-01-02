@@ -1,7 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
 const { getDb } = require("../config");
-const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay, generateOffSeasonSchedule, writeScheduleToSubcollection } = require("../helpers/season");
+const { startNewOffSeason, startNewLiveSeason, archiveSeasonResultsLogic, refreshLiveSeasonSchedule, updateScheduleDay, generateOffSeasonSchedule } = require("../helpers/season");
 const { processAndArchiveOffSeasonScoresLogic, calculateCorpsStatisticsLogic, processAndScoreLiveSeasonDayLogic } = require("../helpers/scoring");
 const { sendWelcomeEmail, brevoApiKey } = require("../helpers/emailService");
 

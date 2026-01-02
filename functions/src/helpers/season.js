@@ -5,10 +5,10 @@ const admin = require("firebase-admin");
 const { scrapeUpcomingDciEvents } = require("./scraping");
 
 // =============================================================================
-// SCHEDULE SUBCOLLECTION HELPERS
+// SCHEDULE HELPERS
 // =============================================================================
-// Schedule data is stored in: season-schedules/{seasonId}/days/{dayNumber}
-// This allows efficient querying of individual days and avoids document size limits
+// Schedule data is stored in: schedules/{seasonId} with a competitions array
+// This format is used by both web and mobile apps
 
 /**
  * Writes an entire schedule to the subcollection
@@ -49,21 +49,41 @@ async function writeScheduleToSubcollection(seasonId, schedule) {
 }
 
 /**
- * Gets a single day's schedule from the subcollection
+ * Gets a single day's schedule from the schedules collection
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay (1-49)
  * @returns {Object|null} The day data or null if not found
  */
 async function getScheduleDay(seasonId, dayNumber) {
   const db = getDb();
-  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
-  const dayDoc = await dayDocRef.get();
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  const scheduleDoc = await scheduleRef.get();
 
-  if (!dayDoc.exists) {
+  if (!scheduleDoc.exists) {
     return null;
   }
 
-  return dayDoc.data();
+  const competitions = scheduleDoc.data().competitions || [];
+  const dayShows = competitions
+    .filter(comp => comp.day === dayNumber)
+    .map(comp => ({
+      eventName: comp.name,
+      location: comp.location,
+      date: comp.date,
+      type: comp.type,
+      isChampionship: comp.type === "championship",
+      eligibleClasses: comp.allowedClasses,
+      mandatory: comp.mandatory,
+    }));
+
+  if (dayShows.length === 0) {
+    return null;
+  }
+
+  return {
+    offSeasonDay: dayNumber,
+    shows: dayShows,
+  };
 }
 
 /**
@@ -75,15 +95,35 @@ async function getScheduleDay(seasonId, dayNumber) {
  */
 async function getScheduleDays(seasonId, startDay, endDay) {
   const db = getDb();
-  const daysCollectionRef = db.collection(`season-schedules/${seasonId}/days`);
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  const scheduleDoc = await scheduleRef.get();
 
-  const snapshot = await daysCollectionRef
-    .where("offSeasonDay", ">=", startDay)
-    .where("offSeasonDay", "<=", endDay)
-    .orderBy("offSeasonDay")
-    .get();
+  if (!scheduleDoc.exists) {
+    return [];
+  }
 
-  return snapshot.docs.map((doc) => doc.data());
+  const competitions = scheduleDoc.data().competitions || [];
+
+  // Group competitions by day within the range
+  const dayMap = {};
+  competitions
+    .filter(comp => comp.day >= startDay && comp.day <= endDay)
+    .forEach(comp => {
+      if (!dayMap[comp.day]) {
+        dayMap[comp.day] = { offSeasonDay: comp.day, shows: [] };
+      }
+      dayMap[comp.day].shows.push({
+        eventName: comp.name,
+        location: comp.location,
+        date: comp.date,
+        type: comp.type,
+        isChampionship: comp.type === "championship",
+        eligibleClasses: comp.allowedClasses,
+        mandatory: comp.mandatory,
+      });
+    });
+
+  return Object.values(dayMap).sort((a, b) => a.offSeasonDay - b.offSeasonDay);
 }
 
 /**
@@ -93,29 +133,71 @@ async function getScheduleDays(seasonId, startDay, endDay) {
  */
 async function getAllScheduleDays(seasonId) {
   const db = getDb();
-  const daysCollectionRef = db.collection(`season-schedules/${seasonId}/days`);
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  const scheduleDoc = await scheduleRef.get();
 
-  const snapshot = await daysCollectionRef.orderBy("offSeasonDay").get();
+  if (!scheduleDoc.exists) {
+    return [];
+  }
 
-  return snapshot.docs.map((doc) => doc.data());
+  const competitions = scheduleDoc.data().competitions || [];
+
+  // Group competitions by day
+  const dayMap = {};
+  competitions.forEach(comp => {
+    if (!dayMap[comp.day]) {
+      dayMap[comp.day] = { offSeasonDay: comp.day, shows: [] };
+    }
+    dayMap[comp.day].shows.push({
+      eventName: comp.name,
+      location: comp.location,
+      date: comp.date,
+      type: comp.type,
+      isChampionship: comp.type === "championship",
+      eligibleClasses: comp.allowedClasses,
+      mandatory: comp.mandatory,
+    });
+  });
+
+  return Object.values(dayMap).sort((a, b) => a.offSeasonDay - b.offSeasonDay);
 }
 
 /**
- * Updates a single day's shows in the subcollection
+ * Updates a single day's shows in the schedules collection
  * @param {string} seasonId - The season identifier
  * @param {number} dayNumber - The offSeasonDay to update
  * @param {Array} shows - The new shows array for this day
  */
 async function updateScheduleDay(seasonId, dayNumber, shows) {
   const db = getDb();
-  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  const scheduleDoc = await scheduleRef.get();
 
-  await dayDocRef.set({
-    offSeasonDay: dayNumber,
-    shows: shows,
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  const week = Math.ceil(dayNumber / 7);
+  let competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
 
+  // Remove existing shows for this day
+  competitions = competitions.filter(comp => comp.day !== dayNumber);
+
+  // Add new shows for this day
+  shows.forEach((show, idx) => {
+    competitions.push({
+      id: `${seasonId}_day${dayNumber}_${idx}`,
+      name: show.eventName,
+      location: show.location || "",
+      date: show.date || null,
+      day: dayNumber,
+      week: week,
+      type: show.isChampionship ? "championship" : "regular",
+      allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+      mandatory: show.mandatory || false,
+    });
+  });
+
+  // Sort by day
+  competitions.sort((a, b) => a.day - b.day);
+
+  await scheduleRef.set({ competitions }, { merge: true });
   logger.info(`Updated day ${dayNumber} for season ${seasonId}`);
 }
 
@@ -128,33 +210,44 @@ async function updateScheduleDay(seasonId, dayNumber, shows) {
  */
 async function addShowToDay(seasonId, dayNumber, show) {
   const db = getDb();
-  const dayDocRef = db.doc(`season-schedules/${seasonId}/days/${dayNumber}`);
+  const scheduleRef = db.doc(`schedules/${seasonId}`);
+  const scheduleDoc = await scheduleRef.get();
 
-  const dayDoc = await dayDocRef.get();
-  const currentShows = dayDoc.exists ? (dayDoc.data().shows || []) : [];
+  let competitions = scheduleDoc.exists ? (scheduleDoc.data().competitions || []) : [];
 
-  // Check if show already exists
-  const alreadyExists = currentShows.some(
-    (s) => s.eventName === show.eventName
+  // Check if show already exists on this day
+  const alreadyExists = competitions.some(
+    (comp) => comp.day === dayNumber && comp.name === show.eventName
   );
 
   if (alreadyExists) {
     return false;
   }
 
-  currentShows.push(show);
+  const week = Math.ceil(dayNumber / 7);
+  const existingDayShows = competitions.filter(comp => comp.day === dayNumber);
 
-  await dayDocRef.set({
-    offSeasonDay: dayNumber,
-    shows: currentShows,
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  competitions.push({
+    id: `${seasonId}_day${dayNumber}_${existingDayShows.length}`,
+    name: show.eventName,
+    location: show.location || "",
+    date: show.date || null,
+    day: dayNumber,
+    week: week,
+    type: show.isChampionship ? "championship" : "regular",
+    allowedClasses: show.eligibleClasses || ["World Class", "Open Class", "A Class", "SoundSport"],
+    mandatory: show.mandatory || false,
+  });
 
+  // Sort by day
+  competitions.sort((a, b) => a.day - b.day);
+
+  await scheduleRef.set({ competitions }, { merge: true });
   return true;
 }
 
 // =============================================================================
-// END SCHEDULE SUBCOLLECTION HELPERS
+// END SCHEDULE HELPERS
 // =============================================================================
 
 /**

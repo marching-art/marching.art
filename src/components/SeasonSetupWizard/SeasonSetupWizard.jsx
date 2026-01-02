@@ -131,30 +131,27 @@ const SeasonSetupWizard = ({
         }
         setCurrentWeek(calculatedWeek);
 
-        const weekStartDay = (calculatedWeek - 1) * 7 + 1;
-        const weekEndDay = calculatedWeek * 7;
-        const weekShows = [];
+        // Fetch from schedules collection
+        const scheduleRef = doc(db, `schedules/${seasonUid}`);
+        const scheduleSnap = await getDoc(scheduleRef);
 
-        // Fetch from subcollection
-        const daysRef = collection(db, `season-schedules/${seasonUid}/days`);
-        const daysQuery = query(
-          daysRef,
-          where('offSeasonDay', '>=', weekStartDay),
-          where('offSeasonDay', '<=', weekEndDay),
-          orderBy('offSeasonDay')
-        );
-        const daysSnapshot = await getDocs(daysQuery);
-
-        daysSnapshot.forEach(dayDoc => {
-          const dayData = dayDoc.data();
-          const day = dayData.offSeasonDay;
-          if (dayData.shows) {
-            dayData.shows.forEach(show => {
-              weekShows.push({ ...show, day });
-            });
-          }
-        });
-        setAvailableShows(weekShows);
+        if (scheduleSnap.exists()) {
+          const competitions = scheduleSnap.data().competitions || [];
+          // Filter to current week's shows
+          const weekShows = competitions
+            .filter(comp => comp.week === calculatedWeek)
+            .map(comp => ({
+              eventName: comp.name,
+              location: comp.location,
+              date: comp.date,
+              day: comp.day,
+              type: comp.type,
+              isChampionship: comp.type === 'championship',
+              allowedClasses: comp.allowedClasses,
+              mandatory: comp.mandatory,
+            }));
+          setAvailableShows(weekShows);
+        }
       }
     } catch (error) {
       console.error('Error fetching shows:', error);

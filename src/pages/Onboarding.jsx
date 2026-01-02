@@ -377,39 +377,26 @@ const Onboarding = () => {
       const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
       const currentWeek = Math.max(1, Math.ceil(daysSinceStart / 7));
 
-      // Calculate day range for current week
-      const weekStart = (currentWeek - 1) * 7 + 1;
-      const weekEnd = currentWeek * 7;
+      // Fetch schedule from schedules collection
+      const scheduleRef = doc(db, `schedules/${season.seasonUid}`);
+      const scheduleSnap = await getDoc(scheduleRef);
 
-      // Fetch shows from subcollection for current week
-      const daysRef = collection(db, `season-schedules/${season.seasonUid}/days`);
-      const daysQuery = query(
-        daysRef,
-        where('offSeasonDay', '>=', weekStart),
-        where('offSeasonDay', '<=', weekEnd),
-        orderBy('offSeasonDay')
-      );
-      const daysSnapshot = await getDocs(daysQuery);
+      if (!scheduleSnap.exists()) {
+        console.log('[Onboarding] No schedule found for', season.seasonUid);
+        return;
+      }
 
-      // Get shows for current week
-      const currentWeekShows = [];
-      daysSnapshot.forEach(dayDoc => {
-        const dayData = dayDoc.data();
-        const day = dayData.offSeasonDay;
-        if (dayData.shows) {
-          dayData.shows.forEach(show => {
-            // Skip championship shows
-            if (!show.isChampionship) {
-              currentWeekShows.push({
-                eventName: show.eventName,
-                date: show.date,
-                location: show.location,
-                day: day
-              });
-            }
-          });
-        }
-      });
+      const competitions = scheduleSnap.data().competitions || [];
+
+      // Get shows for current week (filter by week, skip championship shows)
+      const currentWeekShows = competitions
+        .filter(comp => comp.week === currentWeek && comp.type !== 'championship')
+        .map(comp => ({
+          eventName: comp.name,
+          date: comp.date,
+          location: comp.location,
+          day: comp.day
+        }));
 
       // Register for up to 4 shows
       if (currentWeekShows.length > 0) {
