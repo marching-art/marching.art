@@ -10,7 +10,7 @@ import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
   TrendingDown, Flame, ChevronRight,
   Activity, LayoutDashboard, Award, User, LogOut,
-  Settings, Zap, UserPlus
+  Settings, Zap, UserPlus, MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import toast from 'react-hot-toast';
@@ -492,10 +492,19 @@ const Landing = () => {
       {/* GLOBAL FOOTER - Full width with centered content */}
       {/* ============================================================= */}
       <footer className="bg-[#1a1a1a] border-t border-[#333]">
-        {/* Copyright */}
-        <div className="max-w-7xl mx-auto flex items-center justify-center py-2.5 px-4">
-          <span className="text-xs text-gray-600 text-center">
-            © 2025 marching.art — Fantasy Sports for the Marching Arts
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 py-2.5 px-4">
+          <a
+            href="https://discord.gg/YvFRJ97A5H"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#5865F2] transition-colors"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>Discord</span>
+          </a>
+          <span className="text-gray-700">·</span>
+          <span className="text-xs text-gray-600">
+            © 2025 marching.art
           </span>
         </div>
       </footer>
