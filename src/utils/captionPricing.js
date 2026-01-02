@@ -296,7 +296,7 @@ export const getCaptionChangesAllowed = (weeksRemaining) => {
  * @returns {number} Maximum shows allowed for the week
  */
 export const getMaxShowsForWeek = (week, totalWeeks = 7) => {
-  // Final week allows 7 registrations (1 per day max per ensemble)
+  // Final week allows 7 registrations (1 per day max per corps)
   if (week === totalWeeks) {
     return 7;
   }

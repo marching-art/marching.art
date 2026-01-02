@@ -104,7 +104,7 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
 
       // Day 47: World Championship Prelims
       await updateScheduleDay(seasonId, 47, [{
-        eventName: "DCI World Championship Prelims",
+        eventName: "marching.art World Championship Prelims",
         location: "Indianapolis, IN",
         date: null,
         isChampionship: true,
@@ -115,7 +115,7 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
 
       // Day 48: World Championship Semifinals
       await updateScheduleDay(seasonId, 48, [{
-        eventName: "DCI World Championship Semifinals",
+        eventName: "marching.art World Championship Semifinals",
         location: "Indianapolis, IN",
         date: null,
         isChampionship: true,
@@ -128,7 +128,7 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       // Day 49: World Championship Finals + SoundSport Festival
       await updateScheduleDay(seasonId, 49, [
         {
-          eventName: "DCI World Championship Finals",
+          eventName: "marching.art World Championship Finals",
           location: "Indianapolis, IN",
           date: null,
           isChampionship: true,

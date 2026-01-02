@@ -374,7 +374,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
   const day47 = schedule.find((d) => d.offSeasonDay === 47);
   if (day47) {
     day47.shows = [{
-      eventName: "DCI World Championship Prelims",
+      eventName: "marching.art World Championship Prelims",
       location: "Indianapolis, IN",
       date: null,
       isChampionship: true,
@@ -386,7 +386,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
   const day48 = schedule.find((d) => d.offSeasonDay === 48);
   if (day48) {
     day48.shows = [{
-      eventName: "DCI World Championship Semifinals",
+      eventName: "marching.art World Championship Semifinals",
       location: "Indianapolis, IN",
       date: null,
       isChampionship: true,
@@ -400,7 +400,7 @@ async function generateLiveSeasonSchedule(seasonLength, startDay, finalsYear, st
   if (day49) {
     day49.shows = [
       {
-        eventName: "DCI World Championship Finals",
+        eventName: "marching.art World Championship Finals",
         location: "Indianapolis, IN",
         date: null,
         isChampionship: true,
@@ -898,9 +898,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     }
   };
 
-  placeExclusiveShow(49, "DCI World Championship Finals", true);
-  placeExclusiveShow(48, "DCI World Championship Semifinals", true);
-  placeExclusiveShow(47, "DCI World Championship Prelims", true);
+  placeExclusiveShow(49, "marching.art World Championship Finals", true);
+  placeExclusiveShow(48, "marching.art World Championship Semifinals", true);
+  placeExclusiveShow(47, "marching.art World Championship Prelims", true);
   placeExclusiveShow(28, "DCI Southwestern Championship", true);
   placeExclusiveShow(35, "championship", false);
 
