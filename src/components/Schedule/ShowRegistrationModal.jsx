@@ -110,7 +110,8 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
   // Check if this is a championship show with auto-enrollment
   const isChampionship = show.isChampionship === true;
-  const eligibleClasses = show.eligibleClasses || [];
+  // allowedClasses comes from schedule transform, eligibleClasses is the backend field name
+  const eligibleClasses = show.allowedClasses || show.eligibleClasses || [];
 
   // Detect mobile for BottomSheet vs Modal
   const [isMobile, setIsMobile] = useState(false);
