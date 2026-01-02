@@ -718,7 +718,7 @@ const Profile = () => {
           >
             <Crown className="w-6 h-6 text-purple-500 mb-1.5" />
             <span className="text-sm text-gray-400">Leagues</span>
-          </a>
+          </Link>
           {isOwnProfile && (
             <Link
               to="/dashboard"
