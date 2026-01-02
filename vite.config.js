@@ -30,6 +30,8 @@ export default defineConfig({
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage', 'firebase/analytics'],
           'vendor-ui': ['framer-motion', 'lucide-react', 'react-hot-toast'],
           'vendor-query': ['@tanstack/react-query', 'zustand'],
+          // Lazy-loaded chart library - only loaded when charts are rendered
+          'vendor-charts': ['chart.js', 'react-chartjs-2'],
         },
       },
     },

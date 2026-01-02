@@ -15,33 +15,8 @@ import {
   MapPin,
   Trophy
 } from 'lucide-react';
-import { Line, Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
+import { Line, Bar } from '../charts';
 import { calculateCaptionAggregates } from '../../hooks/useScoresData';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
 
 // Chart configuration
 const chartOptions = {
