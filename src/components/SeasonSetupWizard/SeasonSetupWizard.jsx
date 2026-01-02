@@ -10,7 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import Portal from '../Portal';
-import { ClipboardList, ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
+import { ClipboardList, ChevronRight, ChevronLeft, Check, X, Trophy, Play, Archive, Plus, RotateCcw, Unlock } from 'lucide-react';
 import { useSeasonStore } from '../../store/seasonStore';
 import { useScheduleStore } from '../../store/scheduleStore';
 
@@ -46,11 +46,17 @@ const SeasonSetupWizard = ({
   const getWeekShows = useScheduleStore((state) => state.getWeekShows);
   const scheduleLoading = useScheduleStore((state) => state.loading);
 
-  // Registration state
-  const [step, setStep] = useState(1);
+  // Check if user has existing corps that need decisions (computed early for initial step)
+  const hasExistingCorps = Object.keys(existingCorps).some(c => existingCorps[c]?.corpsName);
+  const eligibleNewClasses = ALL_CLASSES.filter(c =>
+    unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
+  );
+
+  // Registration state - start at step 0 (corps verification) for returning users
+  const [step, setStep] = useState(hasExistingCorps ? 0 : 1);
   const [processing, setProcessing] = useState(false);
 
-  // Form data
+  // Form data for new corps (only used if creating a new one)
   const [formData, setFormData] = useState({
     corpsName: '',
     directorName: profile?.displayName || '',
@@ -60,6 +66,7 @@ const SeasonSetupWizard = ({
 
   // Corps management state
   const [corpsDecisions, setCorpsDecisions] = useState({});
+  const [newCorpsData, setNewCorpsData] = useState({});
   const [currentCorpsIndex, setCurrentCorpsIndex] = useState(0);
   const [finalCorpsNeedingSetup, setFinalCorpsNeedingSetup] = useState(corpsNeedingSetup);
 
@@ -74,11 +81,12 @@ const SeasonSetupWizard = ({
 
   const currentCorpsClass = finalCorpsNeedingSetup[currentCorpsIndex];
 
-  // Check if user has existing corps that need decisions
-  const hasExistingCorps = Object.keys(existingCorps).some(c => existingCorps[c]?.corpsName);
-  const eligibleNewClasses = ALL_CLASSES.filter(c =>
-    unlockedClasses.includes(c) && !existingCorps[c]?.corpsName
-  );
+  // Group retired corps by class
+  const retiredByClass = {};
+  retiredCorps.forEach((rc, idx) => {
+    if (!retiredByClass[rc.corpsClass]) retiredByClass[rc.corpsClass] = [];
+    retiredByClass[rc.corpsClass].push({ ...rc, index: idx });
+  });
 
   // Initialize corps decisions
   useEffect(() => {
@@ -119,41 +127,88 @@ const SeasonSetupWizard = ({
     }
   };
 
-  // Process registration
+  // Process corps verification decisions (step 0)
+  const handleCorpsVerificationContinue = async () => {
+    setProcessing(true);
+    try {
+      const decisions = [];
+
+      // Process decisions for existing corps
+      Object.entries(corpsDecisions).forEach(([classId, action]) => {
+        if (action === 'continue') {
+          decisions.push({ corpsClass: classId, action: 'continue' });
+        } else if (action === 'retire') {
+          decisions.push({ corpsClass: classId, action: 'retire' });
+        } else if (action === 'new') {
+          const data = newCorpsData[classId];
+          if (data?.corpsName) {
+            decisions.push({
+              corpsClass: classId,
+              action: 'new',
+              corpsName: data.corpsName,
+              location: data.location || '',
+            });
+          }
+        } else if (action === 'unretire') {
+          const data = newCorpsData[classId];
+          if (data?.retiredIndex !== undefined) {
+            decisions.push({
+              corpsClass: classId,
+              action: 'unretire',
+              retiredIndex: data.retiredIndex,
+            });
+          }
+        }
+      });
+
+      if (decisions.length > 0) {
+        const processCorpsDecisionsFn = httpsCallable(functions, 'processCorpsDecisions');
+        const result = await processCorpsDecisionsFn({ decisions });
+
+        if (result.data.corpsNeedingSetup?.length > 0) {
+          setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
+          setStep(4); // Go to show selection
+          toast.success('Corps updated successfully');
+          return;
+        }
+      }
+
+      // No lineup needed, complete
+      setStep(5);
+      toast.success('Season setup complete');
+    } catch (error) {
+      console.error('Error processing corps decisions:', error);
+      toast.error(error.message || 'Failed to process corps decisions');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Process new corps registration (step 3 - from new user flow)
   const handleSubmit = async () => {
     setProcessing(true);
     try {
-      // Process corps decisions if needed
-      if (hasExistingCorps || formData.selectedClass) {
-        const decisions = [];
+      const decisions = [];
 
-        // Existing corps decisions
-        Object.entries(corpsDecisions).forEach(([classId, action]) => {
-          if (['continue', 'retire'].includes(action)) {
-            decisions.push({ corpsClass: classId, action });
-          }
+      // New corps registration
+      if (formData.selectedClass && formData.corpsName) {
+        decisions.push({
+          corpsClass: formData.selectedClass,
+          action: 'new',
+          corpsName: formData.corpsName,
+          location: formData.location,
         });
+      }
 
-        // New corps registration
-        if (formData.selectedClass && formData.corpsName) {
-          decisions.push({
-            corpsClass: formData.selectedClass,
-            action: 'new',
-            corpsName: formData.corpsName,
-            location: formData.location,
-          });
-        }
+      if (decisions.length > 0) {
+        const processCorpsDecisionsFn = httpsCallable(functions, 'processCorpsDecisions');
+        const result = await processCorpsDecisionsFn({ decisions });
 
-        if (decisions.length > 0) {
-          const processCorpsDecisions = httpsCallable(functions, 'processCorpsDecisions');
-          const result = await processCorpsDecisions({ decisions });
-
-          if (result.data.corpsNeedingSetup?.length > 0) {
-            setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
-            setStep(3); // Go to lineup setup
-            toast.success('Registration saved');
-            return;
-          }
+        if (result.data.corpsNeedingSetup?.length > 0) {
+          setFinalCorpsNeedingSetup(result.data.corpsNeedingSetup);
+          setStep(4); // Go to show selection
+          toast.success('Registration saved');
+          return;
         }
       }
 
@@ -238,32 +293,330 @@ const SeasonSetupWizard = ({
         <div className="bg-[#1a1a1a] border-b border-[#333]">
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex">
-              {['Identity', 'Class', 'Summary'].map((label, idx) => {
-                const stepNum = idx + 1;
-                const isActive = step === stepNum;
-                const isComplete = step > stepNum;
-                return (
-                  <div
-                    key={label}
-                    className={`flex-1 py-3 text-center border-b-2 ${
-                      isActive ? 'border-[#0057B8] text-white' :
-                      isComplete ? 'border-green-500 text-green-500' :
-                      'border-transparent text-gray-500'
-                    }`}
-                  >
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                      {isComplete && <Check className="w-3 h-3 inline mr-1" />}
-                      {stepNum}. {label}
-                    </span>
-                  </div>
-                );
-              })}
+              {hasExistingCorps ? (
+                // Returning user tabs: Corps Management -> Shows -> Complete
+                ['Manage Corps', 'Shows'].map((label, idx) => {
+                  // Map to actual steps: 0, 4
+                  const stepMapping = [0, 4];
+                  const stepNum = stepMapping[idx];
+                  const isActive = step === stepNum;
+                  const isComplete = step > stepNum;
+                  return (
+                    <div
+                      key={label}
+                      className={`flex-1 py-3 text-center border-b-2 ${
+                        isActive ? 'border-[#0057B8] text-white' :
+                        isComplete ? 'border-green-500 text-green-500' :
+                        'border-transparent text-gray-500'
+                      }`}
+                    >
+                      <span className="text-xs font-bold uppercase tracking-wider">
+                        {isComplete && <Check className="w-3 h-3 inline mr-1" />}
+                        {idx + 1}. {label}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                // New user tabs: Identity -> Class -> Summary
+                ['Identity', 'Class', 'Summary'].map((label, idx) => {
+                  const stepNum = idx + 1;
+                  const isActive = step === stepNum;
+                  const isComplete = step > stepNum;
+                  return (
+                    <div
+                      key={label}
+                      className={`flex-1 py-3 text-center border-b-2 ${
+                        isActive ? 'border-[#0057B8] text-white' :
+                        isComplete ? 'border-green-500 text-green-500' :
+                        'border-transparent text-gray-500'
+                      }`}
+                    >
+                      <span className="text-xs font-bold uppercase tracking-wider">
+                        {isComplete && <Check className="w-3 h-3 inline mr-1" />}
+                        {stepNum}. {label}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="max-w-3xl mx-auto p-4 md:p-6">
+
+          {/* STEP 0: Corps Verification (Returning Users) */}
+          {step === 0 && (
+            <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
+              <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Step 1: Manage Your Corps
+                </h2>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-gray-400 mb-4">
+                  Welcome back! Review your corps from last season and decide how to proceed.
+                </p>
+
+                {/* Existing Corps */}
+                {Object.entries(existingCorps)
+                  .filter(([_, corps]) => corps?.corpsName)
+                  .map(([classId, corps]) => {
+                    const decision = corpsDecisions[classId] || 'continue';
+                    const classRetired = retiredByClass[classId] || [];
+
+                    return (
+                      <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <span className="text-[10px] font-bold text-[#0057B8] uppercase tracking-wider block mb-1">
+                              {getCorpsClassName(classId)}
+                            </span>
+                            <h4 className="text-sm font-bold text-white">{corps.corpsName}</h4>
+                            <p className="text-xs text-gray-500">{corps.location}</p>
+                          </div>
+                          <Trophy className="w-5 h-5 text-yellow-500" />
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <button
+                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'continue' })}
+                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                              decision === 'continue'
+                                ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
+                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                            }`}
+                          >
+                            <Play className="w-4 h-4" />
+                            Continue
+                          </button>
+                          <button
+                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'retire' })}
+                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                              decision === 'retire'
+                                ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
+                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                            }`}
+                          >
+                            <Archive className="w-4 h-4" />
+                            Retire
+                          </button>
+                          <button
+                            onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
+                            className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                              decision === 'new'
+                                ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
+                                : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                            }`}
+                          >
+                            <Plus className="w-4 h-4" />
+                            Start New
+                          </button>
+                          {classRetired.length > 0 && (
+                            <button
+                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
+                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                                decision === 'unretire'
+                                  ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
+                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                              }`}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                              Unretire
+                            </button>
+                          )}
+                        </div>
+
+                        {/* New corps form when "Start New" is selected */}
+                        {decision === 'new' && (
+                          <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
+                            <input
+                              type="text"
+                              placeholder="New Corps Name"
+                              value={newCorpsData[classId]?.corpsName || ''}
+                              onChange={(e) => setNewCorpsData({
+                                ...newCorpsData,
+                                [classId]: { ...newCorpsData[classId], corpsName: e.target.value }
+                              })}
+                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Location"
+                              value={newCorpsData[classId]?.location || ''}
+                              onChange={(e) => setNewCorpsData({
+                                ...newCorpsData,
+                                [classId]: { ...newCorpsData[classId], location: e.target.value }
+                              })}
+                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                            />
+                          </div>
+                        )}
+
+                        {/* Unretire selection */}
+                        {decision === 'unretire' && classRetired.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-[#333]">
+                            <select
+                              className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                              value={newCorpsData[classId]?.retiredIndex ?? ''}
+                              onChange={(e) => setNewCorpsData({
+                                ...newCorpsData,
+                                [classId]: { retiredIndex: parseInt(e.target.value) }
+                              })}
+                            >
+                              <option value="">Select corps to unretire...</option>
+                              {classRetired.map((rc) => (
+                                <option key={rc.index} value={rc.index}>
+                                  {rc.corpsName} ({rc.totalSeasons} seasons)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                {/* Eligible new classes (optional expansion) */}
+                {eligibleNewClasses.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Unlock className="w-4 h-4 text-blue-500" />
+                      Expand to New Classes (Optional)
+                    </h3>
+                    {eligibleNewClasses.map(classId => {
+                      const decision = corpsDecisions[classId];
+                      const classRetired = retiredByClass[classId] || [];
+
+                      return (
+                        <div key={classId} className="bg-[#0a0a0a] border border-[#333] p-4 mb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                {getCorpsClassName(classId)}
+                              </span>
+                              <p className="text-xs text-gray-500">
+                                {POINT_LIMITS[classId]} point budget
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              onClick={() => {
+                                const updated = { ...corpsDecisions };
+                                delete updated[classId];
+                                setCorpsDecisions(updated);
+                              }}
+                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                                !decision
+                                  ? 'bg-[#1a1a1a] border-2 border-gray-500 text-gray-300'
+                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-500 hover:border-gray-500'
+                              }`}
+                            >
+                              Skip
+                            </button>
+                            <button
+                              onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'new' })}
+                              className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                                decision === 'new'
+                                  ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
+                                  : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                              }`}
+                            >
+                              <Plus className="w-4 h-4" />
+                              Register
+                            </button>
+                            {classRetired.length > 0 && (
+                              <button
+                                onClick={() => setCorpsDecisions({ ...corpsDecisions, [classId]: 'unretire' })}
+                                className={`p-2 rounded text-xs font-medium flex flex-col items-center gap-1 transition-all ${
+                                  decision === 'unretire'
+                                    ? 'bg-purple-500/20 border-2 border-purple-500 text-purple-400'
+                                    : 'bg-[#1a1a1a] border-2 border-transparent text-gray-300 hover:border-gray-500'
+                                }`}
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                                Unretire
+                              </button>
+                            )}
+                          </div>
+
+                          {/* New corps form */}
+                          {decision === 'new' && (
+                            <div className="mt-3 pt-3 border-t border-[#333] space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Corps Name"
+                                value={newCorpsData[classId]?.corpsName || ''}
+                                onChange={(e) => setNewCorpsData({
+                                  ...newCorpsData,
+                                  [classId]: { ...newCorpsData[classId], corpsName: e.target.value }
+                                })}
+                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Location"
+                                value={newCorpsData[classId]?.location || ''}
+                                onChange={(e) => setNewCorpsData({
+                                  ...newCorpsData,
+                                  [classId]: { ...newCorpsData[classId], location: e.target.value }
+                                })}
+                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8]"
+                              />
+                            </div>
+                          )}
+
+                          {/* Unretire selection */}
+                          {decision === 'unretire' && classRetired.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-[#333]">
+                              <select
+                                className="w-full h-9 px-3 bg-[#1a1a1a] border border-[#333] rounded-sm text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                                value={newCorpsData[classId]?.retiredIndex ?? ''}
+                                onChange={(e) => setNewCorpsData({
+                                  ...newCorpsData,
+                                  [classId]: { retiredIndex: parseInt(e.target.value) }
+                                })}
+                              >
+                                <option value="">Select corps to unretire...</option>
+                                {classRetired.map((rc) => (
+                                  <option key={rc.index} value={rc.index}>
+                                    {rc.corpsName} ({rc.totalSeasons} seasons)
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="px-4 py-3 border-t border-[#333] flex justify-end">
+                <button
+                  onClick={handleCorpsVerificationContinue}
+                  disabled={processing}
+                  className="h-10 px-6 bg-[#0057B8] text-white font-bold text-sm uppercase tracking-wider flex items-center disabled:opacity-50 hover:bg-[#0066d6]"
+                >
+                  {processing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* STEP 1: Identity */}
           {step === 1 && (
