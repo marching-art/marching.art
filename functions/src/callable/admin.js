@@ -197,10 +197,73 @@ exports.manualTrigger = onCall({ cors: true }, async (request) => {
       // Write to schedules collection
       await db.doc(`schedules/${seasonId}`).set({ competitions });
 
+      // Clear user schedule selections for current week and future weeks
+      // This prevents stale registrations for shows that no longer exist
+      let currentWeek = 1;
+      if (seasonData.schedule?.startDate) {
+        const startDate = seasonData.schedule.startDate.toDate();
+        const now = new Date();
+        const diffInMillis = now.getTime() - startDate.getTime();
+        const diffInDays = Math.floor(diffInMillis / (1000 * 60 * 60 * 24));
+        currentWeek = Math.max(1, Math.ceil((diffInDays + 1) / 7));
+      }
+
+      logger.info(`Clearing schedule selections for week ${currentWeek} and beyond for season ${seasonId}`);
+
+      const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", seasonId);
+      const profilesSnapshot = await profilesQuery.get();
+      let usersUpdated = 0;
+
+      if (!profilesSnapshot.empty) {
+        let batch = db.batch();
+        let batchCount = 0;
+
+        const corpsClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+
+        for (const doc of profilesSnapshot.docs) {
+          const profileData = doc.data();
+          const corpsData = profileData.corps || {};
+          const updates = {};
+          let hasUpdates = false;
+
+          // Clear selectedShows for current week and all future weeks (up to 7 weeks)
+          for (const corpsClass of corpsClasses) {
+            const corps = corpsData[corpsClass];
+            if (corps?.selectedShows) {
+              for (let week = currentWeek; week <= 7; week++) {
+                const weekKey = `week${week}`;
+                if (corps.selectedShows[weekKey] && corps.selectedShows[weekKey].length > 0) {
+                  updates[`corps.${corpsClass}.selectedShows.${weekKey}`] = [];
+                  hasUpdates = true;
+                }
+              }
+            }
+          }
+
+          if (hasUpdates) {
+            batch.update(doc.ref, updates);
+            batchCount++;
+            usersUpdated++;
+
+            if (batchCount >= 400) {
+              await batch.commit();
+              batch = db.batch();
+              batchCount = 0;
+            }
+          }
+        }
+
+        if (batchCount > 0) {
+          await batch.commit();
+        }
+
+        logger.info(`Cleared schedule selections for ${usersUpdated} users from week ${currentWeek} onward`);
+      }
+
       logger.info(`Successfully regenerated schedule with ${competitions.length} competitions for season ${seasonId}`);
       return {
         success: true,
-        message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}.`
+        message: `Schedule regenerated with ${competitions.length} competitions for season ${seasonId}. Cleared schedule selections for ${usersUpdated} users from week ${currentWeek} onward.`
       };
     }
     default:
