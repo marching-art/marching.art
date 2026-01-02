@@ -730,22 +730,14 @@ exports.triggerNewsGeneration = onCall(
 
 /**
  * Check if user is admin - helper function
+ * Uses Firebase auth custom claims (consistent with other admin functions)
  */
-async function checkAdminAuth(db, auth) {
+function checkAdminAuth(auth) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  const userDoc = await db
-    .collection("artifacts")
-    .doc(process.env.DATA_NAMESPACE || "production")
-    .collection("users")
-    .doc(auth.uid)
-    .collection("profile")
-    .doc("data")
-    .get();
-
-  if (!userDoc.exists || userDoc.data().role !== "admin") {
+  if (!auth.token || !auth.token.admin) {
     throw new HttpsError("permission-denied", "Only admins can manage articles");
   }
 }
@@ -760,7 +752,7 @@ exports.listAllArticles = onCall(
   },
   async (request) => {
     const db = getDb();
-    await checkAdminAuth(db, request.auth);
+    checkAdminAuth(request.auth);
 
     try {
       const articles = [];
@@ -840,7 +832,7 @@ exports.getArticleForEdit = onCall(
   },
   async (request) => {
     const db = getDb();
-    await checkAdminAuth(db, request.auth);
+    checkAdminAuth(request.auth);
 
     const { path } = request.data || {};
 
@@ -885,7 +877,7 @@ exports.updateArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    await checkAdminAuth(db, request.auth);
+    checkAdminAuth(request.auth);
 
     const { path, updates } = request.data || {};
 
@@ -951,7 +943,7 @@ exports.archiveArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    await checkAdminAuth(db, request.auth);
+    checkAdminAuth(request.auth);
 
     const { path, archive = true } = request.data || {};
 
@@ -989,7 +981,7 @@ exports.deleteArticle = onCall(
   },
   async (request) => {
     const db = getDb();
-    await checkAdminAuth(db, request.auth);
+    checkAdminAuth(request.auth);
 
     const { path, confirmDelete } = request.data || {};
 
