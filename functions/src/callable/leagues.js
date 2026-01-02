@@ -107,10 +107,13 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
   const standingsRef = leagueRef.collection('standings').doc('current');
 
   await db.runTransaction(async (transaction) => {
+    // Perform ALL reads first (Firestore transaction requirement)
     const leagueDoc = await transaction.get(leagueRef);
     if (!leagueDoc.exists) {
       throw new HttpsError("not-found", "This league does not exist.");
     }
+
+    const standingsDoc = await transaction.get(standingsRef);
 
     const leagueData = leagueDoc.data();
 
@@ -124,6 +127,7 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
       throw new HttpsError("failed-precondition", "This league is full.");
     }
 
+    // Perform ALL writes after reads
     // Add to league
     transaction.update(leagueRef, {
       members: admin.firestore.FieldValue.arrayUnion(uid),
@@ -135,7 +139,6 @@ exports.joinLeague = onCall({ cors: true }, async (request) => {
     });
 
     // Initialize standings for new member
-    const standingsDoc = await transaction.get(standingsRef);
     if (standingsDoc.exists) {
       transaction.update(standingsRef, {
         [`records.${uid}`]: {
