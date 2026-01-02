@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
-import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
+import { useScheduleStore } from '../store/scheduleStore';
 import { ShowRegistrationModal } from '../components/Schedule';
 
 // =============================================================================
@@ -337,7 +338,6 @@ const Schedule = () => {
   const [selectedShow, setSelectedShow] = useState(null);
   const [registrationModal, setRegistrationModal] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
-  const [scheduleData, setScheduleData] = useState([]);
 
   // Season store
   const seasonData = useSeasonStore((state) => state.seasonData);
@@ -346,62 +346,18 @@ const Schedule = () => {
   const seasonLoading = useSeasonStore((state) => state.loading);
   const formatSeasonName = useSeasonStore((state) => state.formatSeasonName);
 
+  // Schedule store - pre-computed data from global listener
+  const showsByWeek = useScheduleStore((state) => state.showsByWeek);
+  const showsByDay = useScheduleStore((state) => state.showsByDay);
+  const showCountsByWeek = useScheduleStore((state) => state.showCountsByWeek);
+  const scheduleLoading = useScheduleStore((state) => state.loading);
+
   // Initialize selected week to current week
   useEffect(() => {
     if (currentWeek && selectedWeek === null) {
       setSelectedWeek(currentWeek);
     }
   }, [currentWeek, selectedWeek]);
-
-  // Load schedule from schedules collection
-  useEffect(() => {
-    const loadSchedule = async () => {
-      if (!seasonUid) {
-        console.log('[Schedule] No seasonUid available yet');
-        return;
-      }
-      console.log('[Schedule] Loading schedule for seasonUid:', seasonUid);
-      try {
-        // Load from schedules/{seasonUid} document with competitions array
-        const scheduleRef = doc(db, `schedules/${seasonUid}`);
-        const scheduleSnap = await getDoc(scheduleRef);
-
-        if (scheduleSnap.exists()) {
-          const data = scheduleSnap.data();
-          const competitions = data.competitions || [];
-          console.log('[Schedule] Fetched', competitions.length, 'competitions from schedules collection');
-
-          // Transform competitions array to day-based format for compatibility
-          // Each competition has: day, week, name (eventName), location, date, allowedClasses, type
-          const dayMap = {};
-          competitions.forEach(comp => {
-            const day = comp.day || 0;
-            if (!dayMap[day]) {
-              dayMap[day] = { offSeasonDay: day, shows: [] };
-            }
-            dayMap[day].shows.push({
-              eventName: comp.name,
-              location: comp.location,
-              date: comp.date,
-              allowedClasses: comp.allowedClasses,
-              type: comp.type,
-              isChampionship: comp.type === 'championship',
-              mandatory: comp.mandatory,
-            });
-          });
-
-          const days = Object.values(dayMap).sort((a, b) => a.offSeasonDay - b.offSeasonDay);
-          setScheduleData(days);
-        } else {
-          console.log('[Schedule] No schedule document found for', seasonUid);
-          setScheduleData([]);
-        }
-      } catch (error) {
-        console.error('Error loading schedule:', error);
-      }
-    };
-    loadSchedule();
-  }, [seasonUid]);
 
   // Load user profile
   useEffect(() => {
@@ -411,10 +367,10 @@ const Schedule = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!seasonLoading && (userProfile !== null || !user)) {
+    if (!seasonLoading && !scheduleLoading && (userProfile !== null || !user)) {
       setLoading(false);
     }
-  }, [seasonLoading, userProfile, user]);
+  }, [seasonLoading, scheduleLoading, userProfile, user]);
 
   const loadUserProfile = async () => {
     try {
@@ -455,33 +411,7 @@ const Schedule = () => {
     return `${startDate.toLocaleDateString('en-US', opts)} - ${endDate.toLocaleDateString('en-US', opts)}`;
   }, [getActualDate]);
 
-  // Get all shows grouped by week (from subcollection data)
-  const showsByWeek = useMemo(() => {
-    if (!scheduleData || scheduleData.length === 0) return {};
-
-    const grouped = {};
-    scheduleData.forEach(dayEvent => {
-      const day = dayEvent.offSeasonDay || dayEvent.day || 0;
-      const week = Math.ceil(day / 7);
-      if (dayEvent.shows) {
-        dayEvent.shows.forEach(show => {
-          if (!grouped[week]) grouped[week] = [];
-          grouped[week].push({
-            ...show,
-            day,
-            week,
-          });
-        });
-      }
-    });
-
-    // Sort shows within each week by day
-    Object.keys(grouped).forEach(week => {
-      grouped[week].sort((a, b) => a.day - b.day);
-    });
-
-    return grouped;
-  }, [scheduleData]);
+  // showsByWeek and showCountsByWeek come from scheduleStore (pre-computed)
 
   const weeks = Object.keys(showsByWeek).map(Number).sort((a, b) => a - b);
 

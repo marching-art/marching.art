@@ -23,6 +23,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PageErrorBoundary } from './components/PageErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
 import { useSeasonStore } from './store/seasonStore';
+import { useScheduleStore } from './store/scheduleStore';
 import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
@@ -80,6 +81,9 @@ function App() {
   const [user, loading, error] = useAuthState(auth);
   const initSeasonListener = useSeasonStore((state) => state.initSeasonListener);
   const cleanupSeasonListener = useSeasonStore((state) => state.cleanup);
+  const seasonUid = useSeasonStore((state) => state.seasonUid);
+  const initScheduleListener = useScheduleStore((state) => state.initScheduleListener);
+  const cleanupScheduleListener = useScheduleStore((state) => state.cleanup);
   const initAuthListener = useUserStore((state) => state.initAuthListener);
   const initProfileListener = useProfileStore((state) => state.initProfileListener);
   const cleanupProfileListener = useProfileStore((state) => state.cleanup);
@@ -92,6 +96,17 @@ function App() {
       cleanupSeasonListener();
     };
   }, [initSeasonListener, cleanupSeasonListener]);
+
+  // Initialize global schedule listener when seasonUid changes
+  // This keeps schedule data in sync with the current season
+  useEffect(() => {
+    if (seasonUid) {
+      initScheduleListener(seasonUid);
+    }
+    return () => {
+      cleanupScheduleListener();
+    };
+  }, [seasonUid, initScheduleListener, cleanupScheduleListener]);
 
   // Initialize global profile listener when user changes
   // This prevents duplicate Firestore listeners for profile data across components

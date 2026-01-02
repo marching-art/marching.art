@@ -14,6 +14,8 @@ import { useBodyScroll } from '../hooks/useBodyScroll';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
+import { useSeasonStore } from '../store/seasonStore';
+import { useScheduleStore } from '../store/scheduleStore';
 
 // Caption definitions for the guided selection
 const CAPTIONS = [
@@ -213,6 +215,10 @@ const Onboarding = () => {
   const [seasonData, setSeasonData] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  // Global stores for schedule data
+  const globalCurrentWeek = useSeasonStore((state) => state.currentWeek);
+  const getWeekShows = useScheduleStore((state) => state.getWeekShows);
+
   // Fetch season data and available corps on mount
   useEffect(() => {
     const fetchSeasonData = async () => {
@@ -369,34 +375,24 @@ const Onboarding = () => {
     if (!season?.schedule || !season?.seasonUid) return;
 
     try {
-      // Calculate current week
-      const startDate = season.schedule.startDate?.toDate ?
-        season.schedule.startDate.toDate() :
-        new Date(season.schedule.startDate);
-      const now = new Date();
-      const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-      const currentWeek = Math.max(1, Math.ceil(daysSinceStart / 7));
+      // Use currentWeek from global store (already calculated)
+      const currentWeek = globalCurrentWeek;
 
-      // Fetch schedule from schedules collection
-      const scheduleRef = doc(db, `schedules/${season.seasonUid}`);
-      const scheduleSnap = await getDoc(scheduleRef);
+      // Get shows from global schedule store (skip championship shows)
+      const weekShows = getWeekShows(currentWeek, { skipChampionship: true });
 
-      if (!scheduleSnap.exists()) {
-        console.log('[Onboarding] No schedule found for', season.seasonUid);
+      if (weekShows.length === 0) {
+        console.log('[Onboarding] No shows found for week', currentWeek);
         return;
       }
 
-      const competitions = scheduleSnap.data().competitions || [];
-
-      // Get shows for current week (filter by week, skip championship shows)
-      const currentWeekShows = competitions
-        .filter(comp => comp.week === currentWeek && comp.type !== 'championship')
-        .map(comp => ({
-          eventName: comp.name,
-          date: comp.date,
-          location: comp.location,
-          day: comp.day
-        }));
+      // Map to the format expected by the backend
+      const currentWeekShows = weekShows.map(show => ({
+        eventName: show.eventName,
+        date: show.date,
+        location: show.location,
+        day: show.day
+      }));
 
       // Register for up to 4 shows
       if (currentWeekShows.length > 0) {
