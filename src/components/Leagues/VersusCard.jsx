@@ -383,4 +383,5 @@ const VersusCard = ({
   );
 };
 
-export default VersusCard;
+// Memoize to prevent re-renders when parent list updates
+export default React.memo(VersusCard);
