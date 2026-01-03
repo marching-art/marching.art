@@ -1,8 +1,7 @@
 // TeamSwitcher - Horizontal pill navigation for switching between corps
 import React from 'react';
 import { TeamAvatar } from '../ui/TeamAvatar';
-
-const CLASS_ORDER = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
+import { compareCorpsClasses } from '../../utils/corps';
 
 const TeamSwitcher = React.memo(({
   corps,
@@ -15,7 +14,7 @@ const TeamSwitcher = React.memo(({
   }
 
   const sortedEntries = Object.entries(corps).sort(
-    (a, b) => (CLASS_ORDER[a[0]] ?? 99) - (CLASS_ORDER[b[0]] ?? 99)
+    (a, b) => compareCorpsClasses(a[0], b[0])
   );
 
   return (

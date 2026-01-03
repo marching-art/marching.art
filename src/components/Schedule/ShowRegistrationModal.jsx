@@ -17,6 +17,7 @@ import Portal from '../Portal';
 import { BottomSheet } from '../ui/BottomSheet';
 import { useHaptic } from '../../hooks/useHaptic';
 import { getMaxShowsForWeek } from '../../utils/captionPricing';
+import { compareCorpsClasses } from '../../utils/corps';
 
 const CLASS_CONFIG = {
   worldClass: { name: 'World Class', shortName: 'World', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
@@ -24,8 +25,6 @@ const CLASS_CONFIG = {
   aClass: { name: 'A Class', shortName: 'A Class', color: 'text-[#0057B8]', bgColor: 'bg-[#0057B8]/10' },
   soundSport: { name: 'SoundSport', shortName: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10' },
 };
-
-const CLASS_ORDER = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
 
 // =============================================================================
 // CORPS SELECTION ITEM
@@ -124,7 +123,7 @@ const ShowRegistrationModal = ({ show, userProfile, formattedDate, onClose, onSu
 
   const userCorpsClasses = useMemo(() =>
     userProfile?.corps
-      ? Object.keys(userProfile.corps).sort((a, b) => (CLASS_ORDER[a] ?? 99) - (CLASS_ORDER[b] ?? 99))
+      ? Object.keys(userProfile.corps).sort(compareCorpsClasses)
       : []
   , [userProfile?.corps]);
 

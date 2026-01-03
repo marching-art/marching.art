@@ -4,6 +4,61 @@
 import type { CorpsClass } from '../types';
 
 // =============================================================================
+// CORPS CLASS ORDERING
+// =============================================================================
+
+/**
+ * Canonical ordering of corps classes from highest tier to lowest.
+ * This order is used consistently across the site wherever corps are displayed.
+ * Order: World → Open → A → SoundSport
+ */
+export const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'] as const;
+
+/**
+ * Map of corps class to sort index for efficient sorting.
+ * Lower index = higher tier class.
+ */
+export const CORPS_CLASS_ORDER_MAP: Record<string, number> = {
+  worldClass: 0,
+  openClass: 1,
+  aClass: 2,
+  soundSport: 3,
+  // Legacy/alternate keys for compatibility
+  world: 0,
+  open: 1,
+};
+
+/**
+ * Get the sort index for a corps class.
+ * Returns 99 for unknown classes to sort them at the end.
+ * @param classId - The class identifier
+ * @returns Sort index (0 = highest tier)
+ */
+export function getCorpsClassOrderIndex(classId: string): number {
+  return CORPS_CLASS_ORDER_MAP[classId] ?? 99;
+}
+
+/**
+ * Compare function for sorting corps classes by tier (highest first).
+ * Use with Array.sort(): classes.sort(compareCorpsClasses)
+ * @param a - First class identifier
+ * @param b - Second class identifier
+ * @returns Negative if a should come first, positive if b should come first
+ */
+export function compareCorpsClasses(a: string, b: string): number {
+  return getCorpsClassOrderIndex(a) - getCorpsClassOrderIndex(b);
+}
+
+/**
+ * Sort an array of corps entries by class order.
+ * @param entries - Array of [classId, corpsData] tuples
+ * @returns Sorted array with highest tier classes first
+ */
+export function sortCorpsEntriesByClass<T>(entries: [string, T][]): [string, T][] {
+  return [...entries].sort((a, b) => compareCorpsClasses(a[0], b[0]));
+}
+
+// =============================================================================
 // CLASS NAME MAPPING
 // =============================================================================
 

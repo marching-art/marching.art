@@ -41,6 +41,7 @@ import ClassPurchaseModal from '../components/modals/ClassPurchaseModal';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 import { useSeasonStore } from '../store/seasonStore';
+import { CORPS_CLASS_ORDER } from '../utils/corps';
 
 // =============================================================================
 // CONSTANTS
@@ -53,8 +54,7 @@ const CLASS_LABELS = {
   soundSport: 'SoundSport',
 };
 
-// Ordered list of corps classes for the switcher (highest tier first)
-const CORPS_CLASS_ORDER = ['worldClass', 'openClass', 'aClass', 'soundSport'];
+// Note: CORPS_CLASS_ORDER is imported from utils/corps for consistent ordering across the site
 
 const CLASS_SHORT_LABELS = {
   worldClass: 'World',
