@@ -475,6 +475,10 @@ async function startNewLiveSeason() {
   // Write schedule to schedules collection (competitions array format)
   await writeScheduleToCollection(dataDocId, schedule);
 
+  // endDate is the first moment of the day AFTER finals, so finals day is fully included
+  // This prevents the scheduler (which runs at 3 AM) from triggering on finals day
+  const seasonEndDate = new Date(finalsDate.getTime() + millisInDay);
+
   const newSeasonData = {
     name: seasonName,
     status: "live-season",
@@ -484,7 +488,7 @@ async function startNewLiveSeason() {
     dataDocId: dataDocId,
     schedule: {
       startDate: Timestamp.fromDate(startDate),
-      endDate: Timestamp.fromDate(finalsDate),
+      endDate: Timestamp.fromDate(seasonEndDate),
       springTrainingDays: 21, // First 21 calendar days are spring training
     },
   };
