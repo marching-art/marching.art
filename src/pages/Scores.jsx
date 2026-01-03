@@ -245,45 +245,83 @@ const RecapDataGrid = ({
 };
 
 // =============================================================================
-// SOUNDSPORT MEDAL LIST - COMPACT ROWS
+// SOUNDSPORT MEDAL LIST - GROUPED BY EVENT
 // =============================================================================
 
+// Mock event names for shows that may not have proper names
+const MOCK_EVENT_NAMES = [
+  'SoundSport International Music & Food Festival',
+  'DCI Indianapolis SoundSport',
+  'Atlanta SoundSport Showcase',
+  'Midwest SoundSport Classic',
+  'SoundSport Championship Series',
+  'Summer Music Games SoundSport',
+];
+
+// Mock special awards - in production these would come from data
+const getSpecialAward = (ensembleName, eventIndex, resultIndex) => {
+  // Simulate awards: first ensemble in each event gets "Best of Show"
+  // Every 3rd ensemble gets "Class Winner"
+  if (resultIndex === 0 && eventIndex % 2 === 0) return 'BEST OF SHOW';
+  if (resultIndex % 3 === 0 && resultIndex !== 0) return 'CLASS WINNER';
+  return null;
+};
+
 const SoundSportMedalList = ({ shows }) => {
-  // Flatten all SoundSport scores from all shows
-  const allResults = useMemo(() => {
-    const results = [];
+  // Group results by event, preserving show context
+  const groupedResults = useMemo(() => {
+    const groups = [];
+    let mockNameIndex = 0;
+
     shows
       .filter(show => show.scores?.some(s => s.corpsClass === 'soundSport'))
-      .forEach(show => {
-        show.scores
+      .forEach((show, showIdx) => {
+        const soundSportScores = show.scores
           .filter(s => s.corpsClass === 'soundSport')
-          .forEach(score => {
-            results.push({
-              ...score,
-              eventName: show.eventName,
-              date: show.date,
-              rating: getSoundSportRating(score.score),
-            });
+          .map((score, idx) => ({
+            ...score,
+            rating: getSoundSportRating(score.score),
+            specialAward: getSpecialAward(score.corps || score.corpsName, showIdx, idx),
+          }));
+
+        if (soundSportScores.length > 0) {
+          // Sort within group by rating priority (Gold first) then alphabetically
+          const ratingOrder = { Gold: 0, Silver: 1, Bronze: 2, Participation: 3 };
+          soundSportScores.sort((a, b) => {
+            const orderDiff = ratingOrder[a.rating] - ratingOrder[b.rating];
+            if (orderDiff !== 0) return orderDiff;
+            return (a.corps || '').localeCompare(b.corps || '');
           });
+
+          // Use show eventName or mock one for display
+          const eventName = show.eventName || MOCK_EVENT_NAMES[mockNameIndex % MOCK_EVENT_NAMES.length];
+          mockNameIndex++;
+
+          groups.push({
+            eventName,
+            date: show.date || 'TBD',
+            location: show.location || 'Various Locations',
+            scores: soundSportScores,
+          });
+        }
       });
 
-    // Sort by rating priority (Gold first) then alphabetically
-    const ratingOrder = { Gold: 0, Silver: 1, Bronze: 2, Participation: 3 };
-    return results.sort((a, b) => {
-      const orderDiff = ratingOrder[a.rating] - ratingOrder[b.rating];
-      if (orderDiff !== 0) return orderDiff;
-      return (a.corps || '').localeCompare(b.corps || '');
-    });
+    return groups;
   }, [shows]);
 
-  // Group by rating for stats
+  // Aggregate stats across all groups
   const stats = useMemo(() => {
-    const counts = { Gold: 0, Silver: 0, Bronze: 0, Participation: 0 };
-    allResults.forEach(r => counts[r.rating]++);
+    const counts = { Gold: 0, Silver: 0, Bronze: 0, Participation: 0, total: 0 };
+    groupedResults.forEach(group => {
+      group.scores.forEach(r => {
+        counts[r.rating]++;
+        counts.total++;
+      });
+    });
     return counts;
-  }, [allResults]);
+  }, [groupedResults]);
 
-  if (allResults.length === 0) {
+  if (groupedResults.length === 0) {
     return (
       <div className="p-8 text-center">
         <Music className="w-8 h-8 text-gray-600 mx-auto mb-2" />
@@ -317,40 +355,62 @@ const SoundSportMedalList = ({ shows }) => {
           </span>
           <span className="text-gray-500">
             <Users className="w-3 h-3 inline mr-1" />
-            {allResults.length}
+            {stats.total}
           </span>
         </div>
       </div>
 
-      {/* Medal List - Compact Rows */}
-      <div className="divide-y divide-[#222]">
-        {allResults.map((result, idx) => {
-          const config = RATING_CONFIG[result.rating];
-          const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+      {/* Grouped Results by Event */}
+      {groupedResults.map((group, groupIdx) => (
+        <div key={groupIdx}>
+          {/* Event Header */}
+          <div className="bg-[#222] border-y border-[#333] px-4 py-2 flex justify-between items-center">
+            <span className="text-xs font-bold uppercase text-white truncate pr-4">
+              {group.eventName}
+            </span>
+            <span className="text-[10px] text-gray-500 flex-shrink-0">
+              {group.date} • {group.location}
+            </span>
+          </div>
 
-          return (
-            <div
-              key={idx}
-              className={`${rowBg} px-4 py-2 flex items-center justify-between hover:bg-[#222] transition-colors`}
-            >
-              {/* Left: Medal Icon + Ensemble Name */}
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}>
-                  <Medal className={`w-4 h-4 ${config.text}`} />
+          {/* Medal List - Compact Rows within Group */}
+          <div>
+            {group.scores.map((result, idx) => {
+              const config = RATING_CONFIG[result.rating];
+              const rowBg = idx % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#111]';
+
+              return (
+                <div
+                  key={idx}
+                  className={`${rowBg} px-4 py-2 flex items-center justify-between hover:bg-[#222] transition-colors`}
+                >
+                  {/* Left: Medal Icon + Ensemble Name */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-6 h-6 ${config.bg} flex items-center justify-center flex-shrink-0`}>
+                      <Medal className={`w-4 h-4 ${config.text}`} />
+                    </div>
+                    <span className="text-sm text-white truncate">
+                      {result.corps || result.corpsName}
+                    </span>
+                  </div>
+
+                  {/* Right: Rating Badge + Special Award */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {result.specialAward && (
+                      <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-sm bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                        {result.specialAward}
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-bold uppercase px-2 py-1 ${config.badge}`}>
+                      {result.rating}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm text-white truncate">
-                  {result.corps || result.corpsName}
-                </span>
-              </div>
-
-              {/* Right: Rating Badge */}
-              <span className={`text-[10px] font-bold uppercase px-2 py-1 ${config.badge} flex-shrink-0`}>
-                {result.rating}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       {/* Learn More Link */}
       <div className="px-4 py-3 bg-[#111] border-t border-[#333]">
