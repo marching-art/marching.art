@@ -8,7 +8,8 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Link } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
-  Calendar, Users, Lock, ChevronRight, Activity, MapPin
+  Calendar, Users, Lock, ChevronRight, Activity, MapPin,
+  Flame, Coins
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -184,63 +185,92 @@ const SkeletonRow = () => (
 );
 
 // =============================================================================
-// CORPS CONTEXT SWITCHER (Pill Tabs)
+// CONTROL BAR (Split: Class Tabs + Director HUD)
 // =============================================================================
 
-const CorpsSwitcher = ({
+const ControlBar = ({
   corps,
   activeCorpsClass,
   unlockedClasses,
+  profile,
   onSwitch,
   onCreateCorps
 }) => {
-  // Only show classes user has unlocked
-  const availableClasses = CORPS_CLASS_ORDER.filter(
-    classId => unlockedClasses?.includes(classId)
-  );
-
-  if (availableClasses.length <= 1) return null;
+  // Director stats from profile
+  const streak = profile?.engagement?.loginStreak || 0;
+  const corpsCoin = profile?.corpsCoin || 0;
+  const level = profile?.xpLevel || 1;
 
   return (
-    <div className="sticky top-0 z-10 bg-[#0a0a0a] border-b border-[#333]">
-      <div className="flex items-center gap-1 p-1.5 px-3">
-        {availableClasses.map((classId) => {
-          const hasCorps = corps && corps[classId];
-          const isActive = classId === activeCorpsClass;
-          const corpsName = hasCorps ? (corps[classId].corpsName || corps[classId].name) : null;
+    <div className="sticky top-0 z-10 bg-[#1a1a1a] border-b border-[#333]">
+      <div className="flex items-center justify-between px-4 py-2">
+        {/* LEFT: Class Switcher (Fixed 4 Tabs) */}
+        <div className="flex items-center gap-1">
+          {CORPS_CLASS_ORDER.map((classId) => {
+            const isUnlocked = unlockedClasses?.includes(classId);
+            const hasCorps = corps && corps[classId];
+            const isActive = classId === activeCorpsClass && hasCorps;
 
-          if (!hasCorps) {
-            // Show "Create" button for unlocked but empty slots
+            // Locked class - don't show
+            if (!isUnlocked) return null;
+
+            // Empty slot (unlocked but no corps)
+            if (!hasCorps) {
+              return (
+                <button
+                  key={classId}
+                  onClick={() => onCreateCorps?.(classId)}
+                  className="text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 border border-dashed border-[#444] transition-colors"
+                >
+                  {CLASS_SHORT_LABELS[classId]}
+                </button>
+              );
+            }
+
+            // Has corps - clickable tab
             return (
               <button
                 key={classId}
-                onClick={() => onCreateCorps?.(classId)}
-                className="text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm text-gray-600 hover:text-gray-400 hover:bg-white/5 border border-dashed border-[#333] transition-colors"
+                onClick={() => onSwitch(classId)}
+                className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
+                  isActive
+                    ? 'bg-[#0057B8] text-white'
+                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
               >
-                + {CLASS_SHORT_LABELS[classId]}
+                {CLASS_SHORT_LABELS[classId]}
               </button>
             );
-          }
+          })}
+        </div>
 
-          return (
-            <button
-              key={classId}
-              onClick={() => onSwitch(classId)}
-              className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
-                isActive
-                  ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span>{CLASS_SHORT_LABELS[classId]}</span>
-              {corpsName && (
-                <span className={`ml-1.5 font-normal normal-case ${isActive ? 'text-white/70' : 'text-gray-600'}`}>
-                  · {corpsName.length > 12 ? corpsName.slice(0, 12) + '…' : corpsName}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {/* RIGHT: Director HUD */}
+        <div className="flex items-center gap-4">
+          {/* Streak */}
+          {streak > 0 && (
+            <div className="flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5 text-orange-500" />
+              <span className="text-xs font-bold text-orange-500 font-data tabular-nums">
+                {streak}
+              </span>
+            </div>
+          )}
+
+          {/* CorpsCoin Wallet */}
+          <div className="flex items-center gap-1">
+            <Coins className="w-3.5 h-3.5 text-yellow-500" />
+            <span className="text-xs font-bold text-yellow-500 font-data tabular-nums">
+              {corpsCoin.toLocaleString()}
+            </span>
+          </div>
+
+          {/* Level */}
+          <div className="flex items-center">
+            <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-sm">
+              Lvl {level}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -949,11 +979,12 @@ const Dashboard = () => {
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
-        {/* Corps Context Switcher - Sticky Sub-Header */}
-        <CorpsSwitcher
+        {/* Control Bar - Class Tabs + Director HUD */}
+        <ControlBar
           corps={corps}
           activeCorpsClass={activeCorpsClass}
           unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          profile={profile}
           onSwitch={handleCorpsSwitch}
           onCreateCorps={(classId) => {
             clearNewlyUnlockedClass();
