@@ -151,12 +151,9 @@ function App() {
     };
   }, [initAuthListener]);
 
-  if (loading) {
-    return <LoadingScreen fullScreen />;
-  }
-
   // Memoize auth context value to prevent unnecessary re-renders of all consumers
   // Only recreates when user, loading, or error actually change
+  // NOTE: This MUST be before any early returns to maintain consistent hook order
   const authContextValue = useMemo(() => ({
     user,
     loading,
@@ -166,6 +163,10 @@ function App() {
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
   }), [user, loading, error]);
+
+  if (loading) {
+    return <LoadingScreen fullScreen />;
+  }
 
   return (
     <ErrorBoundary>
