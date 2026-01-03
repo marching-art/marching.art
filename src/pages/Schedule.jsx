@@ -27,11 +27,57 @@ const CLASS_CONFIG = {
   soundSport: { name: 'SS', color: 'text-green-500', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
 };
 
+// Championship Week (Week 7) event configuration
+const CHAMPIONSHIP_EVENTS = [
+  {
+    day: 45,
+    eventName: 'Open and A Class Prelims',
+    location: 'Marion, IN',
+    eligibleClasses: ['openClass', 'aClass'],
+    description: 'All Open and A Class corps compete',
+  },
+  {
+    day: 46,
+    eventName: 'Open and A Class Finals',
+    location: 'Marion, IN',
+    eligibleClasses: ['openClass', 'aClass'],
+    description: 'Top 8 Open Class, Top 4 A Class advance',
+  },
+  {
+    day: 47,
+    eventName: 'marching.art World Championship Prelims',
+    location: 'Indianapolis, IN',
+    eligibleClasses: ['worldClass', 'openClass', 'aClass'],
+    description: 'All World, Open, and A Class corps compete',
+  },
+  {
+    day: 48,
+    eventName: 'marching.art World Championship Semifinals',
+    location: 'Indianapolis, IN',
+    eligibleClasses: ['worldClass', 'openClass', 'aClass'],
+    description: 'Top 25 from Prelims advance',
+  },
+  {
+    day: 49,
+    eventName: 'marching.art World Championship Finals',
+    location: 'Indianapolis, IN',
+    eligibleClasses: ['worldClass', 'openClass', 'aClass'],
+    description: 'Top 12 from Semifinals compete for title',
+  },
+  {
+    day: 49,
+    eventName: 'SoundSport International Music & Food Festival',
+    location: 'Indianapolis, IN',
+    eligibleClasses: ['soundSport'],
+    description: 'All SoundSport corps compete',
+  },
+];
+
 // =============================================================================
 // WEEK PILLS COMPONENT
 // =============================================================================
 
-const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, showsByWeek }) => {
+const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, getShowCount }) => {
   const containerRef = useRef(null);
   const currentWeekRef = useRef(null);
 
@@ -52,7 +98,7 @@ const WeekPills = ({ weeks, currentWeek, selectedWeek, onSelect, showsByWeek }) 
         {weeks.map((week) => {
           const isSelected = selectedWeek === week;
           const isCurrent = currentWeek === week;
-          const showCount = showsByWeek[week]?.length || 0;
+          const showCount = getShowCount(week);
 
           return (
             <button
@@ -328,6 +374,181 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
 };
 
 // =============================================================================
+// CHAMPIONSHIP WEEK DISPLAY COMPONENT
+// =============================================================================
+
+const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid }) => {
+  const date = getActualDate(event.day);
+  const isPast = date && date < new Date();
+  const formattedDate = date
+    ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : `Day ${event.day}`;
+
+  // Find which of user's corps are eligible for this event
+  const eligibleCorps = useMemo(() => {
+    if (!userProfile?.corps) return [];
+    return Object.entries(userProfile.corps)
+      .filter(([corpsClass, corpsData]) => {
+        if (!corpsData?.corpsName) return false;
+        return event.eligibleClasses.includes(corpsClass);
+      })
+      .map(([corpsClass, corpsData]) => ({
+        corpsClass,
+        corpsName: corpsData.corpsName,
+      }));
+  }, [userProfile, event.eligibleClasses]);
+
+  const hasEligibleCorps = eligibleCorps.length > 0;
+
+  return (
+    <div
+      className={`
+        bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden
+        ${isPast ? 'opacity-60' : ''}
+        ${hasEligibleCorps && !isPast ? 'border-l-2 border-l-[#0057B8]' : ''}
+      `}
+    >
+      {/* Card Header */}
+      <div className="px-3 py-2.5 border-b border-[#333]">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Trophy className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <h3 className="text-sm font-bold text-white truncate leading-tight">
+                {event.eventName}
+              </h3>
+            </div>
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-500">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#0057B8]" />
+                {formattedDate}
+              </span>
+              <span className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 text-purple-400" />
+                <span className="truncate">{event.location}</span>
+              </span>
+              <span className="text-gray-600">Day {event.day}</span>
+            </div>
+          </div>
+
+          {/* Auto-Enrolled Badge */}
+          {hasEligibleCorps && !isPast ? (
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] rounded flex items-center gap-1">
+              <Check className="w-3 h-3" />
+              Auto-Enrolled
+            </span>
+          ) : isPast ? (
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-400 rounded">
+              Completed
+            </span>
+          ) : (
+            <span className="flex-shrink-0 px-2 py-1 text-[10px] font-bold uppercase bg-[#333] text-gray-500 rounded">
+              No Corps
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="px-3 py-2 bg-[#111]">
+        <div className="flex items-center justify-between">
+          {/* Enrolled Corps Badges */}
+          {hasEligibleCorps ? (
+            <div className="flex items-center gap-1 flex-wrap">
+              {eligibleCorps.map(({ corpsClass }) => {
+                const config = CLASS_CONFIG[corpsClass] || { name: corpsClass, color: 'text-gray-400', bgColor: 'bg-gray-500/10' };
+                return (
+                  <span
+                    key={corpsClass}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${config.bgColor} ${config.color}`}
+                  >
+                    <Check className="w-2.5 h-2.5" />
+                    {config.name}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <span className="text-[10px] text-gray-600">{event.description}</span>
+          )}
+
+          {/* Eligible Classes Info */}
+          <div className="flex items-center gap-1">
+            {event.eligibleClasses.map((cls) => {
+              const config = CLASS_CONFIG[cls];
+              if (!config) return null;
+              return (
+                <span
+                  key={cls}
+                  className={`text-[9px] px-1 py-0.5 rounded ${config.bgColor} ${config.color} opacity-60`}
+                >
+                  {config.name}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid }) => {
+  // Group championship events by day
+  const eventsByDay = useMemo(() => {
+    const grouped = {};
+    CHAMPIONSHIP_EVENTS.forEach(event => {
+      if (!grouped[event.day]) grouped[event.day] = [];
+      grouped[event.day].push(event);
+    });
+    return grouped;
+  }, []);
+
+  const days = Object.keys(eventsByDay).map(Number).sort((a, b) => a - b);
+
+  return (
+    <div className="p-3 flex flex-col gap-4">
+      {/* Championship Week Header */}
+      <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-sm p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Trophy className="w-5 h-5 text-yellow-500" />
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            Championship Week
+          </h3>
+        </div>
+        <p className="text-xs text-gray-400">
+          All championship events have <span className="text-[#0057B8] font-bold">automatic enrollment</span> based on your corps class and advancement. No registration required!
+        </p>
+      </div>
+
+      {/* Events by Day */}
+      {days.map(day => {
+        const date = getActualDate(day);
+        return (
+          <div key={day} className="flex gap-3 items-stretch">
+            {/* Day Indicator */}
+            <DayIndicator date={date} dayNumber={day} />
+
+            {/* Events for this day */}
+            <div className="flex-1 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {eventsByDay[day].map((event, idx) => (
+                <ChampionshipEventCard
+                  key={`${event.eventName}-${idx}`}
+                  event={event}
+                  userProfile={userProfile}
+                  getActualDate={getActualDate}
+                  seasonUid={seasonUid}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// =============================================================================
 // MAIN SCHEDULE COMPONENT
 // =============================================================================
 
@@ -412,8 +633,18 @@ const Schedule = () => {
   }, [getActualDate]);
 
   // showsByWeek and showCountsByWeek come from scheduleStore (pre-computed)
+  // Ensure Week 7 is always included for championship events
+  const weeks = useMemo(() => {
+    const weekSet = new Set(Object.keys(showsByWeek).map(Number));
+    weekSet.add(7); // Always include Week 7 for championship events
+    return Array.from(weekSet).sort((a, b) => a - b);
+  }, [showsByWeek]);
 
-  const weeks = Object.keys(showsByWeek).map(Number).sort((a, b) => a - b);
+  // For Week 7, override show count to show championship events
+  const getWeekShowCount = useCallback((week) => {
+    if (week === 7) return CHAMPIONSHIP_EVENTS.length;
+    return showsByWeek[week]?.length || 0;
+  }, [showsByWeek]);
 
   // Handle show click
   const handleShowClick = useCallback((show) => {
@@ -505,20 +736,28 @@ const Schedule = () => {
           currentWeek={currentWeek}
           selectedWeek={selectedWeek}
           onSelect={setSelectedWeek}
-          showsByWeek={showsByWeek}
+          getShowCount={getWeekShowCount}
         />
       </div>
 
       {/* SHOWS LIST - Scrollable with momentum */}
       <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
-        <ShowsList
-          shows={showsByWeek[selectedWeek] || []}
-          userProfile={userProfile}
-          formatDate={formatDate}
-          getActualDate={getActualDate}
-          onRegister={handleShowClick}
-          seasonUid={seasonUid}
-        />
+        {selectedWeek === 7 ? (
+          <ChampionshipWeekDisplay
+            userProfile={userProfile}
+            getActualDate={getActualDate}
+            seasonUid={seasonUid}
+          />
+        ) : (
+          <ShowsList
+            shows={showsByWeek[selectedWeek] || []}
+            userProfile={userProfile}
+            formatDate={formatDate}
+            getActualDate={getActualDate}
+            onRegister={handleShowClick}
+            seasonUid={seasonUid}
+          />
+        )}
       </div>
 
       {/* REGISTRATION MODAL */}
