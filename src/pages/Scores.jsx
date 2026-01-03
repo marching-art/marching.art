@@ -57,7 +57,7 @@ const createStandingsColumns = () => [
     width: '120px',
     render: (row) => (
       <span className="text-gray-400 truncate block">
-        {row.director || '-'}
+        {row.displayName || row.director || '-'}
       </span>
     ),
   },
@@ -95,7 +95,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.geScore?.toFixed(3) || row.ge?.toFixed(3) || '-'}
+        {row.GE_Total?.toFixed(1) || row.geScore?.toFixed(1) || '-'}
       </span>
     ),
   },
@@ -106,7 +106,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.visScore?.toFixed(3) || row.vis?.toFixed(3) || '-'}
+        {row.VIS_Total?.toFixed(1) || row.visScore?.toFixed(1) || '-'}
       </span>
     ),
   },
@@ -117,7 +117,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.musScore?.toFixed(3) || row.mus?.toFixed(3) || '-'}
+        {row.MUS_Total?.toFixed(1) || row.musScore?.toFixed(1) || '-'}
       </span>
     ),
   },
