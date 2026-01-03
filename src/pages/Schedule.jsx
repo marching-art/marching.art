@@ -494,7 +494,7 @@ const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid })
   );
 };
 
-const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid }) => {
+const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid, regularShows, formatDate, onRegister }) => {
   // Group championship events by day
   const eventsByDay = useMemo(() => {
     const grouped = {};
@@ -505,10 +505,54 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid }) => {
     return grouped;
   }, []);
 
-  const days = Object.keys(eventsByDay).map(Number).sort((a, b) => a - b);
+  // Group regular shows (days 43-44) by day
+  const regularShowsByDay = useMemo(() => {
+    if (!regularShows || regularShows.length === 0) return {};
+    const grouped = {};
+    regularShows.forEach(show => {
+      // Only include days 43-44 (regular season days in week 7)
+      if (show.day >= 43 && show.day <= 44) {
+        if (!grouped[show.day]) grouped[show.day] = [];
+        grouped[show.day].push(show);
+      }
+    });
+    return grouped;
+  }, [regularShows]);
+
+  const regularDays = Object.keys(regularShowsByDay).map(Number).sort((a, b) => a - b);
+  const championshipDays = Object.keys(eventsByDay).map(Number).sort((a, b) => a - b);
 
   return (
     <div className="p-3 flex flex-col gap-4">
+      {/* Regular Shows (Days 43-44) */}
+      {regularDays.length > 0 && (
+        <>
+          {regularDays.map(day => {
+            const date = getActualDate(day);
+            const isPast = isEventPast(date);
+            return (
+              <div key={day} className="flex gap-3 items-stretch">
+                <DayIndicator date={date} dayNumber={day} />
+                <div className="flex-1 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {regularShowsByDay[day].map((show, idx) => (
+                    <ShowCard
+                      key={`${show.eventName}-${show.day}-${idx}`}
+                      show={show}
+                      userProfile={userProfile}
+                      formattedDate={formatDate(show.day)}
+                      isPast={isPast}
+                      onRegister={onRegister}
+                      isCompleted={isPast && show.scores?.some(s => s.score != null)}
+                      seasonUid={seasonUid}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
       {/* Championship Week Header */}
       <div className="bg-gradient-to-r from-yellow-500/10 to-[#0057B8]/10 border border-yellow-500/20 rounded-sm p-3">
         <div className="flex items-center gap-2 mb-2">
@@ -522,8 +566,8 @@ const ChampionshipWeekDisplay = ({ userProfile, getActualDate, seasonUid }) => {
         </p>
       </div>
 
-      {/* Events by Day */}
-      {days.map(day => {
+      {/* Championship Events by Day */}
+      {championshipDays.map(day => {
         const date = getActualDate(day);
         return (
           <div key={day} className="flex gap-3 items-stretch">
@@ -641,9 +685,13 @@ const Schedule = () => {
     return Array.from(weekSet).sort((a, b) => a - b);
   }, [showsByWeek]);
 
-  // For Week 7, override show count to show championship events
+  // For Week 7, include both regular shows (days 43-44) and championship events
   const getWeekShowCount = useCallback((week) => {
-    if (week === 7) return CHAMPIONSHIP_EVENTS.length;
+    if (week === 7) {
+      // Count regular shows on days 43-44
+      const regularShowsCount = (showsByWeek[7] || []).filter(s => s.day >= 43 && s.day <= 44).length;
+      return regularShowsCount + CHAMPIONSHIP_EVENTS.length;
+    }
     return showsByWeek[week]?.length || 0;
   }, [showsByWeek]);
 
@@ -748,6 +796,9 @@ const Schedule = () => {
             userProfile={userProfile}
             getActualDate={getActualDate}
             seasonUid={seasonUid}
+            regularShows={showsByWeek[7] || []}
+            formatDate={formatDate}
+            onRegister={handleShowClick}
           />
         ) : (
           <ShowsList
