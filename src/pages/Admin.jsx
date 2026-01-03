@@ -10,7 +10,7 @@ import {
   Shield, Database, Users, Award, Calendar,
   Play, RefreshCw, FileText, Terminal,
   X, Search, Mail, UserCheck, UserX, Activity,
-  CheckCircle, AlertTriangle, Send, Newspaper
+  CheckCircle, AlertTriangle, Send, Newspaper, Flame
 } from 'lucide-react';
 import { setUserRole, triggerDailyNews } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
@@ -234,7 +234,13 @@ const SeasonOpsTab = ({ callAdminFunction }) => {
 // =============================================================================
 
 const UsersTab = () => {
-  const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, premiumUsers: 0, totalCorps: 0 });
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    avgLoginStreak: 0,
+    totalCorps: 0,
+    totalLogins: 0
+  });
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
   const [showRoleManager, setShowRoleManager] = useState(false);
@@ -251,22 +257,48 @@ const UsersTab = () => {
     try {
       const usersRef = collection(db, 'artifacts/marching-art/users');
       const snapshot = await getDocs(usersRef);
-      let activeCount = 0, premiumCount = 0, corpsCount = 0;
+      let activeCount = 0, corpsCount = 0, totalStreaks = 0, streakCount = 0, loginSum = 0;
 
       for (const userDoc of snapshot.docs) {
         const profileRef = doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`);
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
           const data = profileSnap.data();
-          if (data.lastActive) {
-            const days = (Date.now() - data.lastActive.toDate().getTime()) / (1000 * 60 * 60 * 24);
+
+          // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+          let lastLoginDate = null;
+          if (data.lastLogin?.toDate) {
+            lastLoginDate = data.lastLogin.toDate();
+          } else if (data.engagement?.lastLogin) {
+            lastLoginDate = new Date(data.engagement.lastLogin);
+          }
+
+          if (lastLoginDate) {
+            const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
             if (days <= 7) activeCount++;
           }
-          if (data.isPremium) premiumCount++;
+
+          // Engagement stats
+          if (data.engagement) {
+            if (data.engagement.loginStreak > 0) {
+              totalStreaks += data.engagement.loginStreak;
+              streakCount++;
+            }
+            loginSum += data.engagement.totalLogins || 0;
+          }
+
           if (data.corps) corpsCount += Object.keys(data.corps).length;
         }
       }
-      setStats({ totalUsers: snapshot.size, activeUsers: activeCount, premiumUsers: premiumCount, totalCorps: corpsCount });
+
+      const avgStreak = streakCount > 0 ? Math.round(totalStreaks / streakCount * 10) / 10 : 0;
+      setStats({
+        totalUsers: snapshot.size,
+        activeUsers: activeCount,
+        avgLoginStreak: avgStreak,
+        totalCorps: corpsCount,
+        totalLogins: loginSum
+      });
     } catch (error) {
       console.error('Error loading user stats:', error);
     }
@@ -279,16 +311,31 @@ const UsersTab = () => {
       const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
         const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
         const data = profileSnap.exists() ? profileSnap.data() : {};
+
+        // Get last login from either lastLogin (Timestamp) or engagement.lastLogin (string)
+        let lastLoginDate = null;
+        if (data.lastLogin?.toDate) {
+          lastLoginDate = data.lastLogin.toDate();
+        } else if (data.engagement?.lastLogin) {
+          lastLoginDate = new Date(data.engagement.lastLogin);
+        }
+
         return {
           uid: userDoc.id,
           username: data.username || 'Unknown',
-          lastActive: data.lastActive,
+          email: data.email || null,
+          lastLogin: lastLoginDate,
           xpLevel: data.xpLevel || 1,
-          isPremium: data.isPremium || false,
-          corps: data.corps ? Object.keys(data.corps) : []
+          xp: data.xp || 0,
+          loginStreak: data.engagement?.loginStreak || 0,
+          totalLogins: data.engagement?.totalLogins || 0,
+          corps: data.corps ? Object.keys(data.corps) : [],
+          createdAt: data.createdAt?.toDate?.() || null
         };
       }));
-      setUsers(userList.sort((a, b) => (b.lastActive?.toDate?.() || 0) - (a.lastActive?.toDate?.() || 0)));
+
+      // Sort by last login (most recent first)
+      setUsers(userList.sort((a, b) => (b.lastLogin?.getTime() || 0) - (a.lastLogin?.getTime() || 0)));
       setShowUserList(true);
     } catch (error) {
       toast.error('Failed to load users');
@@ -327,16 +374,30 @@ const UsersTab = () => {
             <p className="text-xl font-bold text-white font-data tabular-nums">{stats.totalUsers}</p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Active</p>
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Active (7d)</p>
             <p className="text-xl font-bold text-green-500 font-data tabular-nums">{stats.activeUsers}</p>
           </div>
           <div className="flex-1 p-3">
-            <p className="text-[9px] uppercase text-gray-500 mb-1">Premium</p>
-            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">{stats.premiumUsers}</p>
+            <p className="text-[9px] uppercase text-gray-500 mb-1 flex items-center gap-1">
+              <Flame className="w-3 h-3" />Avg Streak
+            </p>
+            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">{stats.avgLoginStreak}d</p>
           </div>
           <div className="flex-1 p-3">
             <p className="text-[9px] uppercase text-gray-500 mb-1">Corps</p>
             <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">{stats.totalCorps}</p>
+          </div>
+        </div>
+        <div className="flex divide-x divide-[#333] border-t border-[#333]">
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Total Logins</p>
+            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">{stats.totalLogins.toLocaleString()}</p>
+          </div>
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Engagement</p>
+            <p className="text-lg font-bold text-gray-300 font-data tabular-nums">
+              {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
+            </p>
           </div>
         </div>
       </div>
@@ -390,8 +451,10 @@ const UsersTab = () => {
                   <tr>
                     <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">User</th>
                     <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Lvl</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Streak</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Logins</th>
                     <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Corps</th>
-                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Last Active</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Last Login</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#333]">
@@ -402,9 +465,15 @@ const UsersTab = () => {
                         <p className="text-[10px] text-gray-600 font-data">{user.uid.slice(0, 12)}...</p>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-white font-data">{user.xpLevel}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`text-sm font-data ${user.loginStreak >= 7 ? 'text-yellow-500' : user.loginStreak >= 3 ? 'text-green-500' : 'text-gray-400'}`}>
+                          {user.loginStreak > 0 ? `${user.loginStreak}d` : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-400 font-data">{user.totalLogins || 0}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-400">{user.corps.length}</td>
                       <td className="px-4 py-2.5 text-xs text-gray-400">
-                        {user.lastActive?.toDate?.() ? new Date(user.lastActive.toDate()).toLocaleDateString() : '—'}
+                        {user.lastLogin ? user.lastLogin.toLocaleDateString() : '—'}
                       </td>
                     </tr>
                   ))}
@@ -663,10 +732,20 @@ const Admin = () => {
         const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
         if (profileSnap.exists()) {
           const data = profileSnap.data();
-          if (data.lastActive) {
-            const days = (Date.now() - data.lastActive.toDate().getTime()) / (1000 * 60 * 60 * 24);
+
+          // Check activity using lastLogin (Timestamp) or engagement.lastLogin (string)
+          let lastLoginDate = null;
+          if (data.lastLogin?.toDate) {
+            lastLoginDate = data.lastLogin.toDate();
+          } else if (data.engagement?.lastLogin) {
+            lastLoginDate = new Date(data.engagement.lastLogin);
+          }
+
+          if (lastLoginDate) {
+            const days = (Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24);
             if (days <= 7) activeCount++;
           }
+
           if (data.corps) corpsCount += Object.keys(data.corps).length;
         }
       }
