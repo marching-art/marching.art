@@ -1003,22 +1003,9 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
     [...Array(twoShowDayCount).fill(2), ...Array(remainingDays.length - twoShowDayCount).fill(3)]
   );
 
-  // Build a fallback pool of all unused shows from all days (for days that have no mapped events)
-  const fallbackPool = [];
-  for (const [dayNum, shows] of showsByDay.entries()) {
-    // Only include shows from regular season days (1-44) that aren't already placed
-    if (dayNum >= 1 && dayNum <= 44) {
-      for (const show of shows) {
-        if (!usedEventNames.has(show.eventName) && !usedLocations.has(show.location)) {
-          fallbackPool.push(show);
-        }
-      }
-    }
-  }
-
   for (const day of remainingDays) {
     const numShowsToPick = dayCounts.pop() || 3;
-    let potentialShows = shuffleArray(showsByDay.get(day.offSeasonDay) || []);
+    const potentialShows = shuffleArray(showsByDay.get(day.offSeasonDay) || []);
     const pickedShows = [];
 
     for (const show of potentialShows) {
@@ -1029,26 +1016,6 @@ async function generateOffSeasonSchedule(seasonLength, startDay) {
         usedLocations.add(show.location);
       }
     }
-
-    // If no shows were found for this specific day, use the fallback pool
-    if (pickedShows.length === 0) {
-      const shuffledFallback = shuffleArray([...fallbackPool]);
-      for (const show of shuffledFallback) {
-        if (pickedShows.length >= numShowsToPick) break;
-        if (!usedEventNames.has(show.eventName) && !usedLocations.has(show.location)) {
-          pickedShows.push(show);
-          usedEventNames.add(show.eventName);
-          usedLocations.add(show.location);
-          // Remove from fallback pool so it's not reused
-          const idx = fallbackPool.findIndex((s) => s.eventName === show.eventName);
-          if (idx > -1) fallbackPool.splice(idx, 1);
-        }
-      }
-      if (pickedShows.length > 0) {
-        logger.info(`Day ${day.offSeasonDay} had no mapped events. Used fallback pool to add ${pickedShows.length} shows.`);
-      }
-    }
-
     day.shows = pickedShows;
   }
 
