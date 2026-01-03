@@ -766,14 +766,14 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             {loading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
-              <div className="h-full flex min-h-0">
+              <div className="flex-1 flex min-h-0">
                 {/* Left Panel - Your Lineup (hidden on mobile when viewing selection) */}
                 <div className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}>
                   <div className="p-4 space-y-4">
