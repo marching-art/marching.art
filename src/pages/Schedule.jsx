@@ -15,6 +15,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useSeasonStore } from '../store/seasonStore';
 import { useScheduleStore } from '../store/scheduleStore';
 import { ShowRegistrationModal } from '../components/Schedule';
+import { isEventPast } from '../utils/scheduleUtils';
 
 // =============================================================================
 // CONSTANTS
@@ -269,7 +270,7 @@ const DayIndicator = ({ date, dayNumber }) => {
 
   const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
   const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const isPast = date < new Date();
+  const isPast = isEventPast(date);
 
   return (
     <div className={`
@@ -296,7 +297,7 @@ const DayIndicator = ({ date, dayNumber }) => {
 
 const DayRow = ({ day, shows, userProfile, formatDate, getActualDate, onRegister, seasonUid }) => {
   const date = getActualDate(day);
-  const isPast = date && date < new Date();
+  const isPast = isEventPast(date);
 
   return (
     <div className="flex gap-3 items-stretch">
@@ -379,7 +380,7 @@ const ShowsList = ({ shows, userProfile, formatDate, getActualDate, onRegister, 
 
 const ChampionshipEventCard = ({ event, userProfile, getActualDate, seasonUid }) => {
   const date = getActualDate(event.day);
-  const isPast = date && date < new Date();
+  const isPast = isEventPast(date);
   const formattedDate = date
     ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : `Day ${event.day}`;
