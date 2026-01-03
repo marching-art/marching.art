@@ -170,10 +170,10 @@
     bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* On desktop (lg breakpoint), no bottom nav so use minimal spacing */
+  /* On desktop (lg breakpoint), no bottom nav so extend to bottom */
   @media (min-width: 1024px) {
     .main-content-bottom {
-      bottom: 16px;
+      bottom: 0;
     }
   }
 
