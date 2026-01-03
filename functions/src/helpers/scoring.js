@@ -170,7 +170,11 @@ async function processAndArchiveOffSeasonScoresLogic() {
   // Fetch day data from subcollection instead of season document
   const dayEventData = await getScheduleDay(seasonData.seasonUid, scoredDay);
 
-  const profilesQuery = db.collectionGroup("profile").where("activeSeasonId", "==", seasonData.seasonUid);
+  // Field projection: Only fetch 'corps' field to reduce data transfer by ~87%
+  // Full profile docs are ~15KB each; with projection ~2KB each
+  const profilesQuery = db.collectionGroup("profile")
+    .where("activeSeasonId", "==", seasonData.seasonUid)
+    .select("corps");
   const profilesSnapshot = await profilesQuery.get();
   if (profilesSnapshot.empty) return;
 

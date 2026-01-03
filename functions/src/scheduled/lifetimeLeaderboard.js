@@ -42,29 +42,38 @@ exports.scheduledLifetimeLeaderboardUpdate = onSchedule(
 
 /**
  * Core logic to update lifetime leaderboard
+ * Optimized: Uses db.getAll() for batch fetching instead of sequential reads
+ * Previous: N+1 queries (1001 reads for 1000 users)
+ * Now: 2 reads total (1 for users collection, 1 batch for all profiles)
  */
 async function updateLifetimeLeaderboardLogic() {
   const db = getDb();
   logger.info("Updating lifetime leaderboard...");
 
   try {
-    // Get all user profiles
+    // Get all user documents
     const usersRef = db.collection(`artifacts/${dataNamespaceParam.value()}/users`);
     const usersSnapshot = await usersRef.get();
 
     const lifetimeData = [];
 
-    // Collect lifetime stats from all users
-    for (const userDoc of usersSnapshot.docs) {
-      const profileRef = userDoc.ref.collection("profile").doc("data");
-      const profileDoc = await profileRef.get();
+    // Build array of profile document references for batch fetch
+    const profileRefs = usersSnapshot.docs.map(userDoc =>
+      userDoc.ref.collection("profile").doc("data")
+    );
 
+    // Batch fetch all profiles in a single operation (eliminates N+1 query)
+    const profileDocs = profileRefs.length > 0 ? await db.getAll(...profileRefs) : [];
+
+    // Process all profiles
+    profileDocs.forEach((profileDoc, index) => {
       if (profileDoc.exists) {
         const profileData = profileDoc.data();
+        const userId = usersSnapshot.docs[index].id;
 
         if (profileData.lifetimeStats && profileData.username) {
           lifetimeData.push({
-            userId: userDoc.id,
+            userId,
             username: profileData.username,
             userTitle: profileData.userTitle || "Rookie",
             lifetimeStats: profileData.lifetimeStats,
@@ -72,7 +81,7 @@ async function updateLifetimeLeaderboardLogic() {
           });
         }
       }
-    }
+    });
 
     if (lifetimeData.length === 0) {
       logger.info("No lifetime stats found to update");

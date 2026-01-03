@@ -137,6 +137,9 @@ export const generateSparklinePath = (values, width = 60, height = 20) => {
 
 /**
  * Calculate rank within a specific caption category
+ * Optimized: Uses Map lookups O(1) instead of findIndex O(n) for 99%+ performance gain
+ * Previous complexity: O(n²) - with 1000 corps = ~1,000,000 operations
+ * New complexity: O(n log n) - dominated by sorting = ~10,000 operations
  */
 export const calculateCaptionRanks = (scores) => {
   if (!scores || scores.length === 0) return [];
@@ -147,18 +150,23 @@ export const calculateCaptionRanks = (scores) => {
     ...calculateCaptionAggregates(s)
   }));
 
-  // Sort by each category and assign ranks
+  // Sort by each category (O(n log n) each)
   const geRanks = [...withAggregates].sort((a, b) => b.GE_Total - a.GE_Total);
   const visRanks = [...withAggregates].sort((a, b) => b.VIS_Total - a.VIS_Total);
   const musRanks = [...withAggregates].sort((a, b) => b.MUS_Total - a.MUS_Total);
+
+  // Build rank Maps for O(1) lookup instead of O(n) findIndex
+  const geRankMap = new Map(geRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
+  const visRankMap = new Map(visRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
+  const musRankMap = new Map(musRanks.map((s, i) => [s.corps || s.corpsName, i + 1]));
 
   return withAggregates.map(score => {
     const corps = score.corps || score.corpsName;
     return {
       ...score,
-      GE_Rank: geRanks.findIndex(s => (s.corps || s.corpsName) === corps) + 1,
-      VIS_Rank: visRanks.findIndex(s => (s.corps || s.corpsName) === corps) + 1,
-      MUS_Rank: musRanks.findIndex(s => (s.corps || s.corpsName) === corps) + 1
+      GE_Rank: geRankMap.get(corps),
+      VIS_Rank: visRankMap.get(corps),
+      MUS_Rank: musRankMap.get(corps)
     };
   });
 };

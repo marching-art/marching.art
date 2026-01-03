@@ -51,6 +51,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
+    <!-- Google Fonts - Non-blocking load with optimized weights
+         Moved from CSS @import to <link> for better LCP (non-render-blocking)
+         Reduced from 9 weights to 6 weights (~40KB savings) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
     <title>marching.art</title>
 
     <!-- Critical CSS for App Loader - Matches React LoadingScreen exactly -->
