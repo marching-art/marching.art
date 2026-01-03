@@ -15,12 +15,12 @@ export const SchedulePageHeader = ({ totalShows, currentWeek }) => (
       </h1>
       <div className="flex items-center gap-2">
         {/* Shows Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-sm border border-white/10">
           <Music className="w-4 h-4 text-yellow-50/60" />
           <span className="text-sm font-display font-medium text-yellow-50">{totalShows} shows</span>
         </div>
         {/* Week Badge - Glowing Gold */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-sm border border-yellow-500/20 rounded-lg shadow-[0_0_12px_rgba(234,179,8,0.15)]">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-sm border border-yellow-500/20 shadow-[0_0_12px_rgba(234,179,8,0.15)]">
           <Calendar className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
           <span className="text-sm font-display font-bold text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">Week {currentWeek}/7</span>
         </div>
@@ -46,13 +46,13 @@ export const SelectedWeekHeader = ({
         Week {selectedWeek}
       </h2>
       {weekStatus === 'current' && (
-        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-lg">
+        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30">
           <Zap className="w-3 h-3 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]" />
           <span className="text-xs font-display font-bold text-yellow-400 uppercase tracking-wider drop-shadow-[0_0_6px_rgba(234,179,8,0.4)]">Active</span>
         </div>
       )}
       {weekStatus === 'past' && (
-        <div className="px-2 py-1 bg-black/30 border border-white/10 rounded-lg">
+        <div className="px-2 py-1 bg-black/30 border border-white/10">
           <span className="text-xs font-display font-medium text-yellow-50/40 uppercase tracking-wider">Complete</span>
         </div>
       )}
@@ -61,14 +61,14 @@ export const SelectedWeekHeader = ({
       <button
         onClick={onPrevWeek}
         disabled={selectedWeek === 1}
-        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
       <button
         onClick={onNextWeek}
         disabled={selectedWeek === 7}
-        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        className="p-2 bg-black/40 backdrop-blur-sm border border-white/10 text-yellow-50/60 hover:text-yellow-50 hover:border-yellow-500/30 hover:shadow-[0_0_12px_rgba(234,179,8,0.15)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
       >
         <ChevronRight className="w-5 h-5" />
       </button>

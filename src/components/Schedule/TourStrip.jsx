@@ -77,7 +77,7 @@ const TourStrip = ({
       {/* Tour Route Header */}
       <div className="flex items-center gap-3 mb-4 px-1">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
+          <div className="w-8 h-8 bg-gold-500/20 border border-gold-500/30 flex items-center justify-center">
             <MapPin className="w-4 h-4 text-gold-400" />
           </div>
           <div>
@@ -113,7 +113,7 @@ const TourStrip = ({
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-sm bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -123,7 +123,7 @@ const TourStrip = ({
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-sm bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-gray-400 hover:bg-[#222] hover:border-[#444] transition-all"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -179,7 +179,7 @@ const TourStrip = ({
                   {/* Starting Marker (first card only) */}
                   {index === 0 && (
                     <div className="flex items-center mr-2">
-                      <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30 rounded-full">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30">
                         <div className="w-2 h-2 rounded-full bg-gold-400" />
                         <span className="text-[10px] font-display font-bold text-gold-400 uppercase">Start</span>
                       </div>
@@ -202,7 +202,7 @@ const TourStrip = ({
                   {isLast && (
                     <div className="flex items-center ml-2">
                       <div className="w-4 h-0.5 bg-gold-500/30" />
-                      <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30 rounded-full">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gold-500/20 border border-gold-500/30">
                         <span className="text-[10px] font-display font-bold text-gold-400 uppercase">End</span>
                         <div className="w-2 h-2 rounded-full bg-gold-400" />
                       </div>

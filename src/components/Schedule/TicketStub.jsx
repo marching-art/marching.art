@@ -45,7 +45,6 @@ const TicketStub = ({
       {/* Main Ticket Body */}
       <div className={`
         relative flex-1 flex overflow-hidden
-        rounded-l-xl rounded-r-none
         transition-all duration-300
         ${isOpen
           ? isRegistered
@@ -63,7 +62,7 @@ const TicketStub = ({
         {isRegistered && isOpen && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-15deg]">
-              <div className="px-6 py-2 border-4 border-gold-500/30 rounded-lg">
+              <div className="px-6 py-2 border-4 border-gold-500/30">
                 <span className="font-display font-black text-3xl text-gold-500/20 uppercase tracking-[0.2em]">
                   REGISTERED
                 </span>
@@ -140,7 +139,7 @@ const TicketStub = ({
 
             {/* Status Icon */}
             <div className={`
-              w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
+              w-10 h-10 flex items-center justify-center flex-shrink-0
               ${isLocked
                 ? 'bg-charcoal-800 border border-charcoal-700'
                 : isRegistered
@@ -161,13 +160,13 @@ const TicketStub = ({
           {/* Status Badge */}
           <div className="mb-3">
             {isLocked ? (
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-charcoal-800 text-cream/30 border border-charcoal-700">
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-charcoal-800 text-cream/30 border border-charcoal-700">
                 <Lock className="w-3 h-3" />
                 {isPast ? 'Closed' : 'Locked'}
               </span>
             ) : (
               <span className={`
-                inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded
+                inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider
                 ${isRegistered
                   ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse'
@@ -196,7 +195,7 @@ const TicketStub = ({
               {myCorps.slice(0, 2).map((corps, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-0.5 text-[10px] font-bold rounded bg-gold-500/15 text-gold-300 border border-gold-500/25"
+                  className="px-2 py-0.5 text-[10px] font-bold bg-gold-500/15 text-gold-300 border border-gold-500/25"
                 >
                   {corps.corpsName.length > 12
                     ? corps.corpsName.substring(0, 12) + '...'
@@ -204,7 +203,7 @@ const TicketStub = ({
                 </span>
               ))}
               {myCorps.length > 2 && (
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-gold-500/10 text-gold-400/70">
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-gold-500/10 text-gold-400/70">
                   +{myCorps.length - 2}
                 </span>
               )}
@@ -215,7 +214,7 @@ const TicketStub = ({
           <div className="mt-auto">
             {isPast ? (
               <Link to="/scores" className="block">
-                <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all">
+                <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold uppercase tracking-wide bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition-all">
                   <ExternalLink className="w-3.5 h-3.5" />
                   View Scores
                 </button>
@@ -225,7 +224,7 @@ const TicketStub = ({
                 onClick={() => onRegister(show)}
                 disabled={isLocked}
                 className={`
-                  w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all
+                  w-full flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold uppercase tracking-wide transition-all
                   disabled:opacity-30 disabled:cursor-not-allowed
                   ${isRegistered
                     ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 hover:bg-gold-500/30'
@@ -244,7 +243,6 @@ const TicketStub = ({
       {/* Perforated Edge (Right Side) */}
       <div className={`
         w-4 flex flex-col items-center justify-center gap-1.5 py-3
-        rounded-r-xl
         ${isOpen
           ? isRegistered
             ? 'bg-gold-500/10 border-y-2 border-r-2 border-gold-500/40'
