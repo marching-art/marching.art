@@ -106,7 +106,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.VIS_Total?.toFixed(1) || row.visScore?.toFixed(1) || '-'}
+        {row.VIS_Total?.toFixed(1) || row.visualScore?.toFixed(1) || '-'}
       </span>
     ),
   },
@@ -117,7 +117,7 @@ const createStandingsColumns = () => [
     align: 'right',
     render: (row) => (
       <span className="text-gray-300 tabular-nums">
-        {row.MUS_Total?.toFixed(1) || row.musScore?.toFixed(1) || '-'}
+        {row.MUS_Total?.toFixed(1) || row.musicScore?.toFixed(1) || '-'}
       </span>
     ),
   },
