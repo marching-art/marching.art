@@ -4,7 +4,7 @@
 // Dense, puzzle-fit panels. Zero black space between cards.
 // Laws: gap-px creates borders, tables over cards, no glow
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Calendar, Edit, ChevronRight, Coins, Users,
@@ -13,7 +13,12 @@ import {
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import CaptionSelectionModal from '../components/CaptionSelection/CaptionSelectionModal';
+
+// Lazy-load large modals to reduce initial bundle size (~73KB savings)
+const CaptionSelectionModal = lazy(() => import('../components/CaptionSelection/CaptionSelectionModal'));
+const SeasonSetupWizard = lazy(() => import('../components/SeasonSetupWizard'));
+const NewsSubmissionModal = lazy(() => import('../components/modals/NewsSubmissionModal'));
+
 import {
   ClassUnlockCongratsModal,
   CorpsRegistrationModal,
@@ -26,13 +31,11 @@ import {
   QuickStartGuide,
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
-import SeasonSetupWizard from '../components/SeasonSetupWizard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
 import { submitNewsForApproval } from '../api/functions';
-import NewsSubmissionModal from '../components/modals/NewsSubmissionModal';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -452,17 +455,19 @@ const Dashboard = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-[#0a0a0a]">
-      {/* Season Setup Wizard - via modal queue */}
+      {/* Season Setup Wizard - via modal queue (lazy-loaded) */}
       {modalQueue.isActive('seasonSetup') && seasonData && (
-        <SeasonSetupWizard
-          onComplete={() => { handleSeasonSetupComplete(); handleSeasonSetupClose(); }}
-          profile={profile}
-          seasonData={seasonData}
-          corpsNeedingSetup={corpsNeedingSetup}
-          existingCorps={corps || {}}
-          retiredCorps={profile?.retiredCorps || []}
-          unlockedClasses={profile?.unlockedClasses || ['soundSport']}
-        />
+        <Suspense fallback={null}>
+          <SeasonSetupWizard
+            onComplete={() => { handleSeasonSetupComplete(); handleSeasonSetupClose(); }}
+            profile={profile}
+            seasonData={seasonData}
+            corpsNeedingSetup={corpsNeedingSetup}
+            existingCorps={corps || {}}
+            retiredCorps={profile?.retiredCorps || []}
+            unlockedClasses={profile?.unlockedClasses || ['soundSport']}
+          />
+        </Suspense>
       )}
 
       {activeCorps ? (
@@ -879,14 +884,16 @@ const Dashboard = () => {
       )}
 
       {showCaptionSelection && activeCorps && seasonData && (
-        <CaptionSelectionModal
-          onClose={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
-          onSubmit={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
-          corpsClass={activeCorpsClass}
-          currentLineup={activeCorps.lineup || {}}
-          seasonId={seasonData.seasonUid}
-          initialCaption={selectedCaption}
-        />
+        <Suspense fallback={null}>
+          <CaptionSelectionModal
+            onClose={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
+            onSubmit={() => { setShowCaptionSelection(false); setSelectedCaption(null); }}
+            corpsClass={activeCorpsClass}
+            currentLineup={activeCorps.lineup || {}}
+            seasonId={seasonData.seasonUid}
+            initialCaption={selectedCaption}
+          />
+        </Suspense>
       )}
 
       {showEditCorps && activeCorps && (
@@ -962,11 +969,13 @@ const Dashboard = () => {
       />
 
       {showNewsSubmission && (
-        <NewsSubmissionModal
-          onClose={() => setShowNewsSubmission(false)}
-          onSubmit={handleNewsSubmission}
-          isSubmitting={submittingNews}
-        />
+        <Suspense fallback={null}>
+          <NewsSubmissionModal
+            onClose={() => setShowNewsSubmission(false)}
+            onSubmit={handleNewsSubmission}
+            isSubmitting={submittingNews}
+          />
+        </Suspense>
       )}
     </div>
   );
