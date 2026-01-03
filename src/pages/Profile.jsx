@@ -86,15 +86,18 @@ const seasonHistoryColumns = [
     render: (row) => row.placement ? `#${row.placement}` : '-',
   },
   {
-    key: 'finalScore',
+    key: 'totalSeasonScore',
     header: 'Score',
-    width: '60px',
+    width: '70px',
     align: 'right',
-    render: (row) => (
-      <span className="text-white tabular-nums">
-        {row.finalScore ? row.finalScore.toFixed(3) : '-'}
-      </span>
-    ),
+    render: (row) => {
+      const score = row.finalScore || row.totalSeasonScore;
+      return (
+        <span className="text-white tabular-nums">
+          {score ? score.toLocaleString() : '-'}
+        </span>
+      );
+    },
   },
 ];
 
@@ -471,9 +474,16 @@ const Profile = () => {
   const seasonHistory = useMemo(() => {
     if (!profile?.corps) return [];
     const history = [];
+    const seen = new Set(); // Track unique entries to prevent duplicates
+
     Object.entries(profile.corps).forEach(([classKey, corps]) => {
       if (corps.seasonHistory) {
         corps.seasonHistory.forEach(season => {
+          // Create unique key for deduplication
+          const uniqueKey = `${classKey}-${season.seasonId || season.seasonName}`;
+          if (seen.has(uniqueKey)) return; // Skip duplicates
+          seen.add(uniqueKey);
+
           // Prefer archived corps name, fall back to current corps name
           const corpsName = season.corpsName || corps.name || corps.corpsName;
           history.push({ ...season, corpsName, classKey });
