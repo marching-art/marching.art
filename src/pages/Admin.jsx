@@ -1,15 +1,16 @@
 // src/pages/Admin.jsx
 // =============================================================================
-// ADMIN PANEL - ESPN DATA GRID STYLE
+// ADMIN PANEL - SYSTEM OPS TERMINAL
 // =============================================================================
-// Dense panels, dark theme matching Dashboard design
-// Uses bg-[#0a0a0a], bg-[#1a1a1a], bg-[#222] color scheme
+// Dense, technical "Ops Console" aesthetic. Developer tools feel.
+// Laws: App Shell, Telemetry Strip, Process Tables, no glow
 
 import React, { useState, useEffect } from 'react';
 import {
   Shield, Database, Users, Award, Calendar,
-  Play, RefreshCw, Table, FileText,
-  X, Search, Mail, UserCheck, UserX, Activity
+  Play, RefreshCw, FileText, Terminal,
+  X, Search, Mail, UserCheck, UserX, Activity,
+  CheckCircle, AlertTriangle, Send
 } from 'lucide-react';
 import { setUserRole } from '../firebase/functions';
 import { db, adminHelpers } from '../firebase';
@@ -20,287 +21,220 @@ import { useAuth } from '../App';
 import { ScoresSpreadsheet, ArticleManagement } from '../components/Admin';
 import LoadingScreen from '../components/LoadingScreen';
 
-const Admin = () => {
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [seasonData, setSeasonData] = useState(null);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    totalCorps: 0
-  });
+// =============================================================================
+// CONSTANTS
+// =============================================================================
 
-  // Check admin status
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (user) {
-        const adminStatus = await adminHelpers.isAdmin();
-        setIsAdmin(adminStatus);
-        if (adminStatus) {
-          await loadAdminData();
-        }
-      }
-      setLoading(false);
-    };
-    checkAdmin();
-  }, [user]);
+const ADMIN_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'season', label: 'Season Ops' },
+  { id: 'users', label: 'Users' },
+  { id: 'content', label: 'Content' },
+  { id: 'jobs', label: 'Jobs' },
+];
 
-  const loadAdminData = async () => {
-    try {
-      // Load current season
-      const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
-      if (seasonDoc.exists()) {
-        setSeasonData(seasonDoc.data());
-      }
+// =============================================================================
+// TELEMETRY STRIP
+// =============================================================================
 
-      // Load user stats with proper calculations
-      const usersSnapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
-
-      let activeCount = 0;
-      let corpsCount = 0;
-
-      for (const userDoc of usersSnapshot.docs) {
-        const userId = userDoc.id;
-        // Get profile data for accurate stats
-        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
-        const profileSnap = await getDoc(profileRef);
-
-        if (profileSnap.exists()) {
-          const profileData = profileSnap.data();
-
-          // Count active users (within 7 days)
-          if (profileData.lastActive) {
-            const lastActive = profileData.lastActive.toDate();
-            const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSinceActive <= 7) activeCount++;
-          }
-
-          // Count total corps across all classes
-          if (profileData.corps) {
-            corpsCount += Object.keys(profileData.corps).length;
-          }
-        }
-      }
-
-      setStats({
-        totalUsers: usersSnapshot.size,
-        activeUsers: activeCount,
-        totalCorps: corpsCount
-      });
-    } catch (error) {
-      if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
-        console.error('Error loading admin data:', error);
-        toast.error('Failed to load admin data');
-      }
-    }
-  };
-
-  const callAdminFunction = async (functionName, data = {}) => {
-    try {
-      const functions = getFunctions();
-      const callable = httpsCallable(functions, functionName);
-      const result = await callable(data);
-      toast.success(result.data.message || 'Operation completed successfully');
-      await loadAdminData();
-      return result.data;
-    } catch (error) {
-      if (error.code !== 'permission-denied' && !error.message?.includes('insufficient permissions')) {
-        console.error(`Error calling ${functionName}:`, error);
-      }
-      toast.error(error.message || `Failed to execute ${functionName}`);
-      throw error;
-    }
-  };
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
-        <div className="text-center p-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
-            <Shield className="w-8 h-8 text-red-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-          <p className="text-gray-500">You do not have administrator privileges.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="bg-[#1a1a1a] border-b border-[#333]">
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-yellow-500" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-              <p className="text-sm text-gray-500">System Management & Administration</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-px bg-[#333]">
-        <StatCard icon={Users} label="Total Users" value={stats.totalUsers} />
-        <StatCard icon={Activity} label="Active Users (7d)" value={stats.activeUsers} />
-        <StatCard icon={Database} label="Total Corps" value={stats.totalCorps} />
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] overflow-x-auto">
-        <div className="flex">
-          {[
-            { id: 'overview', label: 'Overview', icon: Database },
-            { id: 'season', label: 'Season Management', icon: Calendar },
-            { id: 'articles', label: 'Articles', icon: FileText },
-            { id: 'scores', label: 'Scores Reference', icon: Table },
-            { id: 'users', label: 'User Management', icon: Users },
-            { id: 'jobs', label: 'Background Jobs', icon: RefreshCw },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'text-[#0057B8] border-[#0057B8] bg-[#0a0a0a]'
-                  : 'text-gray-500 border-transparent hover:text-white'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="p-4">
-        {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
-        {activeTab === 'season' && <SeasonManagementTab callAdminFunction={callAdminFunction} />}
-        {activeTab === 'articles' && <ArticleManagement />}
-        {activeTab === 'scores' && <ScoresSpreadsheet />}
-        {activeTab === 'users' && <UserManagementTab />}
-        {activeTab === 'jobs' && <BackgroundJobsTab callAdminFunction={callAdminFunction} />}
-      </div>
+const TelemetryStrip = ({ stats }) => (
+  <div className="bg-[#1a1a1a] border-b border-[#333]">
+    <div className="flex items-center divide-x divide-[#333]">
+      <TelemetryStat label="Users" value={stats.totalUsers.toLocaleString()} />
+      <TelemetryStat label="Active (7d)" value={stats.activeUsers.toLocaleString()} color="text-green-500" />
+      <TelemetryStat label="Corps" value={stats.totalCorps.toLocaleString()} color="text-[#0057B8]" />
+      <TelemetryStat label="System" value="ONLINE" color="text-green-500" icon={CheckCircle} />
     </div>
-  );
-};
-
-// Stat Card Component
-const StatCard = ({ icon: Icon, label, value }) => (
-  <div className="bg-[#1a1a1a] p-4">
-    <div className="flex items-center justify-between mb-2">
-      <Icon className="w-5 h-5 text-gray-500" />
-      <span className="text-2xl font-bold text-white tabular-nums">{value}</span>
-    </div>
-    <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
   </div>
 );
 
-// Overview Tab
+const TelemetryStat = ({ label, value, color = 'text-white', icon: Icon }) => (
+  <div className="flex items-center gap-3 px-4 py-2">
+    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500">{label}:</span>
+    <span className={`text-sm font-bold font-data tabular-nums ${color} flex items-center gap-1`}>
+      {Icon && <Icon className="w-3 h-3" />}
+      {value}
+    </span>
+  </div>
+);
+
+// =============================================================================
+// NAVIGATION TABS (Segmented Control)
+// =============================================================================
+
+const NavTabs = ({ activeTab, onTabChange }) => (
+  <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-2">
+    <div className="flex items-center gap-1">
+      {ADMIN_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-sm transition-colors ${
+            activeTab === tab.id
+              ? 'bg-[#0057B8] text-white'
+              : 'text-gray-500 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+// =============================================================================
+// PROCESS TABLE ROW
+// =============================================================================
+
+const ProcessRow = ({ name, description, icon: Icon, loading, onExecute }) => (
+  <div className="flex items-center justify-between px-4 py-3 border-b border-[#333] hover:bg-[#111] transition-colors">
+    <div className="flex items-center gap-3 min-w-0">
+      <Icon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-white">{name}</p>
+        <p className="text-[11px] text-gray-500 truncate">{description}</p>
+      </div>
+    </div>
+    <button
+      onClick={onExecute}
+      disabled={loading}
+      className="flex items-center gap-1.5 h-7 px-3 text-[10px] font-bold uppercase bg-[#0057B8]/10 text-[#0057B8] border border-[#0057B8]/20 hover:bg-[#0057B8] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+    >
+      {loading ? (
+        <RefreshCw className="w-3 h-3 animate-spin" />
+      ) : (
+        <Terminal className="w-3 h-3" />
+      )}
+      {loading ? 'Running' : 'Execute'}
+    </button>
+  </div>
+);
+
+// =============================================================================
+// SECTION HEADER
+// =============================================================================
+
+const SectionHeader = ({ title, icon: Icon }) => (
+  <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center gap-2">
+    {Icon && <Icon className="w-3.5 h-3.5 text-gray-500" />}
+    <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{title}</h3>
+  </div>
+);
+
+// =============================================================================
+// INFO ROW (for data display)
+// =============================================================================
+
+const InfoRow = ({ label, value, badge, mono }) => (
+  <div className="flex justify-between items-center px-4 py-2.5 border-b border-[#222] last:border-b-0">
+    <span className="text-[11px] uppercase tracking-wider text-gray-500">{label}</span>
+    {badge ? (
+      <span className="px-2 py-0.5 bg-green-500/20 text-green-500 text-[10px] font-bold uppercase">
+        {value}
+      </span>
+    ) : (
+      <span className={`text-sm text-white ${mono ? 'font-data tabular-nums' : 'font-medium'}`}>
+        {value || '—'}
+      </span>
+    )}
+  </div>
+);
+
+// =============================================================================
+// OVERVIEW TAB
+// =============================================================================
+
 const OverviewTab = ({ seasonData }) => (
   <div className="space-y-4">
-    {/* Current Season Card */}
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-      <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-        <h2 className="text-sm font-bold text-white uppercase tracking-wider">Current Season</h2>
-      </div>
+    {/* Current Season */}
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Active Season" icon={Calendar} />
       {seasonData ? (
-        <div className="divide-y divide-[#333]">
-          <InfoRow label="Season Name" value={seasonData.name} />
-          <InfoRow label="Status" value={seasonData.status} badge />
+        <div>
+          <InfoRow label="Name" value={seasonData.name} />
+          <InfoRow label="Status" value={seasonData.status?.toUpperCase()} badge />
           <InfoRow label="Season UID" value={seasonData.seasonUid} mono />
           <InfoRow label="Data Doc ID" value={seasonData.dataDocId} mono />
           <InfoRow
-            label="Start Date"
+            label="Start"
             value={seasonData.schedule?.startDate?.toDate().toLocaleDateString()}
           />
           <InfoRow
-            label="End Date"
+            label="End"
             value={seasonData.schedule?.endDate?.toDate().toLocaleDateString()}
           />
-          <InfoRow label="Point Cap" value={seasonData.currentPointCap} />
+          <InfoRow label="Point Cap" value={seasonData.currentPointCap} mono />
         </div>
       ) : (
-        <div className="p-4 text-gray-500 text-sm">No active season found</div>
+        <div className="p-4 text-sm text-gray-500">No active season found</div>
       )}
     </div>
   </div>
 );
 
-// Season Management Tab
-const SeasonManagementTab = ({ callAdminFunction }) => {
-  const [newSeasonLoading, setNewSeasonLoading] = useState(false);
+// =============================================================================
+// SEASON OPS TAB
+// =============================================================================
 
-  const handleStartNewSeason = async (type) => {
-    if (!window.confirm(`Start a new ${type} season? This will reset all user corps.`)) {
-      return;
-    }
+const SeasonOpsTab = ({ callAdminFunction }) => {
+  const [loading, setLoading] = useState(null);
 
-    setNewSeasonLoading(true);
+  const handleAction = async (type, functionName) => {
+    if (!window.confirm(`Execute ${type}? This may affect user data.`)) return;
+    setLoading(functionName);
     try {
-      const functionName = type === 'off' ? 'startNewOffSeason' : 'startNewLiveSeason';
       await callAdminFunction(functionName);
-    } catch (error) {
-      // Error handled by callAdminFunction
     } finally {
-      setNewSeasonLoading(false);
+      setLoading(null);
     }
   };
 
+  const seasonOps = [
+    {
+      id: 'startNewOffSeason',
+      name: 'Start New Off-Season',
+      description: 'Archive current data and begin a new off-season',
+      icon: Play,
+    },
+    {
+      id: 'startNewLiveSeason',
+      name: 'Start New Live Season',
+      description: 'Archive current data and begin a new live DCI season',
+      icon: Play,
+    },
+  ];
+
   return (
-    <div className="space-y-4">
-      {/* Season Controls */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Season Controls</h2>
-        </div>
-        <div className="p-4">
-          <p className="text-sm text-gray-400 mb-4">
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Season Operations" icon={Calendar} />
+      <div className="px-4 py-3 border-b border-[#333] bg-[#111]">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] text-yellow-500/80">
             Starting a new season will archive all current user corps data and reset the game state.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <button
-              onClick={() => handleStartNewSeason('off')}
-              disabled={newSeasonLoading}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0057B8] text-white font-bold text-sm rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Play className="w-4 h-4" />
-              Start New Off-Season
-            </button>
-            <button
-              onClick={() => handleStartNewSeason('live')}
-              disabled={newSeasonLoading}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] text-white font-bold text-sm rounded border border-[#444] hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Play className="w-4 h-4" />
-              Start New Live Season
-            </button>
-          </div>
         </div>
       </div>
+      {seasonOps.map((op) => (
+        <ProcessRow
+          key={op.id}
+          name={op.name}
+          description={op.description}
+          icon={op.icon}
+          loading={loading === op.id}
+          onExecute={() => handleAction(op.name, op.id)}
+        />
+      ))}
     </div>
   );
 };
 
-// User Management Tab
-const UserManagementTab = () => {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    premiumUsers: 0,
-    totalCorps: 0
-  });
+// =============================================================================
+// USERS TAB
+// =============================================================================
+
+const UsersTab = () => {
+  const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, premiumUsers: 0, totalCorps: 0 });
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
   const [showRoleManager, setShowRoleManager] = useState(false);
@@ -317,45 +251,22 @@ const UserManagementTab = () => {
     try {
       const usersRef = collection(db, 'artifacts/marching-art/users');
       const snapshot = await getDocs(usersRef);
+      let activeCount = 0, premiumCount = 0, corpsCount = 0;
 
-      let activeCount = 0;
-      let premiumCount = 0;
-      let corpsCount = 0;
-
-      // Need to fetch profile data for each user to get accurate stats
       for (const userDoc of snapshot.docs) {
-        const userId = userDoc.id;
-        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
+        const profileRef = doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`);
         const profileSnap = await getDoc(profileRef);
-
         if (profileSnap.exists()) {
-          const profileData = profileSnap.data();
-
-          // Count active users (within 7 days)
-          if (profileData.lastActive) {
-            const lastActive = profileData.lastActive.toDate();
-            const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSinceActive <= 7) activeCount++;
+          const data = profileSnap.data();
+          if (data.lastActive) {
+            const days = (Date.now() - data.lastActive.toDate().getTime()) / (1000 * 60 * 60 * 24);
+            if (days <= 7) activeCount++;
           }
-
-          // Count premium users
-          if (profileData.isPremium) {
-            premiumCount++;
-          }
-
-          // Count total corps across all classes
-          if (profileData.corps) {
-            corpsCount += Object.keys(profileData.corps).length;
-          }
+          if (data.isPremium) premiumCount++;
+          if (data.corps) corpsCount += Object.keys(data.corps).length;
         }
       }
-
-      setStats({
-        totalUsers: snapshot.size,
-        activeUsers: activeCount,
-        premiumUsers: premiumCount,
-        totalCorps: corpsCount
-      });
+      setStats({ totalUsers: snapshot.size, activeUsers: activeCount, premiumUsers: premiumCount, totalCorps: corpsCount });
     } catch (error) {
       console.error('Error loading user stats:', error);
     }
@@ -364,31 +275,22 @@ const UserManagementTab = () => {
   const loadAllUsers = async () => {
     setUsersLoading(true);
     try {
-      const usersRef = collection(db, 'artifacts/marching-art/users');
-      const snapshot = await getDocs(usersRef);
-
+      const snapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
       const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
-        const userId = userDoc.id;
-        // Get profile data
-        const profileRef = doc(db, `artifacts/marching-art/users/${userId}/profile/data`);
-        const profileSnap = await getDoc(profileRef);
-        const profileData = profileSnap.exists() ? profileSnap.data() : {};
-
+        const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
+        const data = profileSnap.exists() ? profileSnap.data() : {};
         return {
-          uid: userId,
-          username: profileData.username || 'Unknown',
-          createdAt: profileData.createdAt,
-          lastActive: profileData.lastActive,
-          xpLevel: profileData.xpLevel || 1,
-          isPremium: profileData.isPremium || false,
-          corps: profileData.corps ? Object.keys(profileData.corps) : []
+          uid: userDoc.id,
+          username: data.username || 'Unknown',
+          lastActive: data.lastActive,
+          xpLevel: data.xpLevel || 1,
+          isPremium: data.isPremium || false,
+          corps: data.corps ? Object.keys(data.corps) : []
         };
       }));
-
       setUsers(userList.sort((a, b) => (b.lastActive?.toDate?.() || 0) - (a.lastActive?.toDate?.() || 0)));
       setShowUserList(true);
     } catch (error) {
-      console.error('Error loading users:', error);
       toast.error('Failed to load users');
     } finally {
       setUsersLoading(false);
@@ -396,105 +298,89 @@ const UserManagementTab = () => {
   };
 
   const handleSetRole = async (makeAdmin) => {
-    if (!roleEmail.trim()) {
-      toast.error('Please enter an email address');
-      return;
-    }
-
+    if (!roleEmail.trim()) return toast.error('Enter an email');
     setRoleLoading(true);
     try {
       const result = await setUserRole({ email: roleEmail.trim(), makeAdmin });
       toast.success(result.data.message);
       setRoleEmail('');
     } catch (error) {
-      console.error('Error setting role:', error);
-      toast.error(error.message || 'Failed to set user role');
+      toast.error(error.message || 'Failed to set role');
     } finally {
       setRoleLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.uid.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.uid.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="space-y-4">
-      {/* User Statistics */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">User Statistics</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#333]">
-          <div className="bg-[#1a1a1a] p-4">
-            <p className="text-xs text-gray-500 mb-1">Total Users</p>
-            <p className="text-2xl font-bold text-white tabular-nums">{stats.totalUsers}</p>
+      {/* User Stats */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="User Telemetry" icon={Users} />
+        <div className="flex divide-x divide-[#333]">
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Total</p>
+            <p className="text-xl font-bold text-white font-data tabular-nums">{stats.totalUsers}</p>
           </div>
-          <div className="bg-[#1a1a1a] p-4">
-            <p className="text-xs text-gray-500 mb-1">Active (7 days)</p>
-            <p className="text-2xl font-bold text-green-500 tabular-nums">{stats.activeUsers}</p>
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Active</p>
+            <p className="text-xl font-bold text-green-500 font-data tabular-nums">{stats.activeUsers}</p>
           </div>
-          <div className="bg-[#1a1a1a] p-4">
-            <p className="text-xs text-gray-500 mb-1">Premium Users</p>
-            <p className="text-2xl font-bold text-yellow-500 tabular-nums">{stats.premiumUsers}</p>
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Premium</p>
+            <p className="text-xl font-bold text-yellow-500 font-data tabular-nums">{stats.premiumUsers}</p>
           </div>
-          <div className="bg-[#1a1a1a] p-4">
-            <p className="text-xs text-gray-500 mb-1">Total Corps</p>
-            <p className="text-2xl font-bold text-[#0057B8] tabular-nums">{stats.totalCorps}</p>
+          <div className="flex-1 p-3">
+            <p className="text-[9px] uppercase text-gray-500 mb-1">Corps</p>
+            <p className="text-xl font-bold text-[#0057B8] font-data tabular-nums">{stats.totalCorps}</p>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Quick Actions</h2>
-        </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button
-            onClick={loadAllUsers}
-            disabled={usersLoading}
-            className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors disabled:opacity-50"
-          >
-            {usersLoading ? (
-              <RefreshCw className="w-5 h-5 text-[#0057B8] mb-2 animate-spin" />
-            ) : (
-              <Users className="w-5 h-5 text-[#0057B8] mb-2" />
-            )}
-            <p className="font-bold text-white text-sm">View All Users</p>
-            <p className="text-xs text-gray-500">Browse user profiles and activity</p>
-          </button>
-          <button
-            onClick={() => setShowRoleManager(true)}
-            className="p-4 bg-[#222] hover:bg-[#333] border border-[#333] rounded text-left transition-colors"
-          >
-            <Shield className="w-5 h-5 text-purple-500 mb-2" />
-            <p className="font-bold text-white text-sm">Manage Roles</p>
-            <p className="text-xs text-gray-500">Assign admin and moderator roles</p>
-          </button>
-        </div>
+      {/* User Operations */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="User Operations" icon={Terminal} />
+        <ProcessRow
+          name="View All Users"
+          description="Browse user profiles and activity"
+          icon={Users}
+          loading={usersLoading}
+          onExecute={loadAllUsers}
+        />
+        <ProcessRow
+          name="Manage Roles"
+          description="Assign admin and moderator roles"
+          icon={Shield}
+          loading={false}
+          onExecute={() => setShowRoleManager(true)}
+        />
       </div>
 
       {/* User List Modal */}
       {showUserList && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col">
+          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-4xl max-h-[80vh] flex flex-col">
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">All Users ({users.length})</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                All Users ({users.length})
+              </h2>
               <button onClick={() => setShowUserList(false)} className="text-gray-400 hover:text-white">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 border-b border-[#333]">
+            <div className="p-3 border-b border-[#333]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Search by username or UID..."
+                  placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
+                  className="w-full pl-9 pr-3 py-2 bg-[#111] border border-[#333] text-xs text-white focus:outline-none focus:border-[#0057B8]"
                 />
               </div>
             </div>
@@ -502,49 +388,28 @@ const UserManagementTab = () => {
               <table className="w-full">
                 <thead className="bg-[#222] sticky top-0">
                   <tr>
-                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Username</th>
-                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Level</th>
-                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Corps</th>
-                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Last Active</th>
-                    <th className="text-left px-4 py-2 text-xs text-gray-500 uppercase">Status</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">User</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Lvl</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Corps</th>
+                    <th className="text-left px-4 py-2 text-[10px] text-gray-500 uppercase">Last Active</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#333]">
                   {filteredUsers.map((user) => (
-                    <tr key={user.uid} className="hover:bg-[#222]">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-white text-sm">{user.username}</p>
-                        <p className="text-xs text-gray-500 font-mono">{user.uid.slice(0, 8)}...</p>
+                    <tr key={user.uid} className="hover:bg-[#111]">
+                      <td className="px-4 py-2.5">
+                        <p className="text-sm text-white">{user.username}</p>
+                        <p className="text-[10px] text-gray-600 font-data">{user.uid.slice(0, 12)}...</p>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-white">Lv. {user.xpLevel}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-400">{user.corps.length || 0} corps</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-400">
-                          {user.lastActive?.toDate?.()
-                            ? new Date(user.lastActive.toDate()).toLocaleDateString()
-                            : 'Never'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {user.isPremium && (
-                          <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-xs font-bold">
-                            Premium
-                          </span>
-                        )}
+                      <td className="px-4 py-2.5 text-sm text-white font-data">{user.xpLevel}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-400">{user.corps.length}</td>
+                      <td className="px-4 py-2.5 text-xs text-gray-400">
+                        {user.lastActive?.toDate?.() ? new Date(user.lastActive.toDate()).toLocaleDateString() : '—'}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {filteredUsers.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
-                  No users found matching "{searchTerm}"
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -553,58 +418,42 @@ const UserManagementTab = () => {
       {/* Role Manager Modal */}
       {showRoleManager && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-md">
+          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm">
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Manage User Roles</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Manage Roles</h2>
               <button onClick={() => setShowRoleManager(false)} className="text-gray-400 hover:text-white">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-xs text-gray-500 uppercase tracking-wider mb-2">
-                  User Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input
-                    type="email"
-                    placeholder="user@example.com"
-                    value={roleEmail}
-                    onChange={(e) => setRoleEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
-                  />
-                </div>
+                <label className="block text-[10px] text-gray-500 uppercase mb-2">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={roleEmail}
+                  onChange={(e) => setRoleEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#111] border border-[#333] text-sm text-white focus:outline-none focus:border-[#0057B8]"
+                />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleSetRole(true)}
-                  disabled={roleLoading || !roleEmail.trim()}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-bold text-sm rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={roleLoading}
+                  className="flex items-center justify-center gap-1.5 py-2 bg-green-600 text-white text-xs font-bold hover:bg-green-700 disabled:opacity-50"
                 >
-                  {roleLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <UserCheck className="w-4 h-4" />
-                  )}
-                  Grant Admin
+                  <UserCheck className="w-3.5 h-3.5" />
+                  Grant
                 </button>
                 <button
                   onClick={() => handleSetRole(false)}
-                  disabled={roleLoading || !roleEmail.trim()}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white font-bold text-sm rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={roleLoading}
+                  className="flex items-center justify-center gap-1.5 py-2 bg-red-600 text-white text-xs font-bold hover:bg-red-700 disabled:opacity-50"
                 >
-                  {roleLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <UserX className="w-4 h-4" />
-                  )}
-                  Revoke Admin
+                  <UserX className="w-3.5 h-3.5" />
+                  Revoke
                 </button>
               </div>
-              <p className="text-xs text-gray-500 text-center">
-                User must sign out and sign back in for changes to take effect.
-              </p>
             </div>
           </div>
         </div>
@@ -613,173 +462,228 @@ const UserManagementTab = () => {
   );
 };
 
-// Background Jobs Tab
-const BackgroundJobsTab = ({ callAdminFunction }) => {
-  const [jobLoading, setJobLoading] = useState(null);
+// =============================================================================
+// CONTENT TAB
+// =============================================================================
+
+const ContentTab = () => (
+  <div className="space-y-4">
+    {/* Articles Management */}
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Article Management" icon={FileText} />
+      <div className="p-4">
+        <ArticleManagement />
+      </div>
+    </div>
+
+    {/* Scores Reference */}
+    <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+      <SectionHeader title="Scores Reference" icon={Database} />
+      <div className="p-4">
+        <ScoresSpreadsheet />
+      </div>
+    </div>
+  </div>
+);
+
+// =============================================================================
+// JOBS TAB
+// =============================================================================
+
+const JobsTab = ({ callAdminFunction }) => {
+  const [loading, setLoading] = useState(null);
   const [testEmail, setTestEmail] = useState('');
 
   const jobs = [
-    {
-      id: 'calculateCorpsStatistics',
-      name: 'Calculate Corps Statistics',
-      description: 'Recalculate all corps statistics from historical data',
-      icon: Database,
-    },
-    {
-      id: 'archiveSeasonResults',
-      name: 'Archive Season Results',
-      description: 'Archive current season results and determine league champions',
-      icon: Award,
-    },
-    {
-      id: 'processAndArchiveOffSeasonScores',
-      name: 'Process Off-Season Scores',
-      description: 'Manually trigger daily off-season score processing',
-      icon: RefreshCw,
-    },
-    {
-      id: 'processLiveSeasonScores',
-      name: 'Process Live Season Scores',
-      description: 'Manually trigger daily live season score processing',
-      icon: RefreshCw,
-    },
-    {
-      id: 'refreshLiveSeasonSchedule',
-      name: 'Refresh Live Season Schedule',
-      description: 'Scrape DCI events page and update the live season schedule with new shows',
-      icon: Calendar,
-    },
-    {
-      id: 'regenerateOffSeasonSchedule',
-      name: 'Regenerate Off-Season Schedule',
-      description: 'Regenerate schedule for the current off-season (fixes missing schedule data)',
-      icon: Calendar,
-    },
+    { id: 'calculateCorpsStatistics', name: 'Calculate Corps Statistics', description: 'Recalculate all corps stats from historical data', icon: Database },
+    { id: 'archiveSeasonResults', name: 'Archive Season Results', description: 'Archive results and determine champions', icon: Award },
+    { id: 'processAndArchiveOffSeasonScores', name: 'Process Off-Season Scores', description: 'Trigger daily off-season score processing', icon: RefreshCw },
+    { id: 'processLiveSeasonScores', name: 'Process Live Season Scores', description: 'Trigger daily live season score processing', icon: RefreshCw },
+    { id: 'refreshLiveSeasonSchedule', name: 'Refresh Live Schedule', description: 'Scrape DCI events and update schedule', icon: Calendar },
+    { id: 'regenerateOffSeasonSchedule', name: 'Regenerate Off-Season Schedule', description: 'Regenerate schedule for current off-season', icon: Calendar },
   ];
 
-  const handleSendTestEmail = async () => {
-    if (!testEmail.trim()) {
-      toast.error('Please enter an email address');
-      return;
+  const handleRunJob = async (jobId, jobName) => {
+    if (!window.confirm(`Run ${jobName}?`)) return;
+    setLoading(jobId);
+    try {
+      await callAdminFunction('manualTrigger', { jobName: jobId });
+    } finally {
+      setLoading(null);
     }
-    setJobLoading('testEmail');
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail.trim()) return toast.error('Enter an email');
+    setLoading('testEmail');
     try {
       await callAdminFunction('sendTestEmail', { email: testEmail.trim() });
       setTestEmail('');
     } finally {
-      setJobLoading(null);
-    }
-  };
-
-  const handleRunJob = async (jobId) => {
-    if (!window.confirm(`Run ${jobs.find(j => j.id === jobId)?.name}?`)) {
-      return;
-    }
-
-    setJobLoading(jobId);
-    try {
-      await callAdminFunction('manualTrigger', { jobName: jobId });
-    } finally {
-      setJobLoading(null);
+      setLoading(null);
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Test Email Section */}
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-lg overflow-hidden">
-        <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Test Email</h2>
-        </div>
-        <div className="p-4">
-          <p className="text-sm text-gray-400 mb-3">
-            Send a test welcome email to verify Brevo integration is working.
-          </p>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input
-                type="email"
-                placeholder="test@example.com"
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[#222] border border-[#333] rounded text-white text-sm focus:outline-none focus:border-[#0057B8]"
-              />
-            </div>
+      {/* Test Email - Compact Input Group */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Test Email" icon={Mail} />
+        <div className="p-3">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="test@example.com"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              className="flex-1 px-3 py-2 bg-[#111] border border-[#333] text-xs text-white focus:outline-none focus:border-[#0057B8]"
+            />
             <button
               onClick={handleSendTestEmail}
-              disabled={jobLoading === 'testEmail' || !testEmail.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold text-sm rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={loading === 'testEmail' || !testEmail.trim()}
+              className="flex items-center justify-center w-10 h-9 bg-[#0057B8] text-white hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {jobLoading === 'testEmail' ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Sending...
-                </>
+              {loading === 'testEmail' ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
-                <>
-                  <Mail className="w-4 h-4" />
-                  Send Test
-                </>
+                <Send className="w-4 h-4" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Background Jobs */}
-      <div className="space-y-3">
+      {/* Background Jobs Process Table */}
+      <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+        <SectionHeader title="Background Processes" icon={Terminal} />
         {jobs.map((job) => (
-          <div key={job.id} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 bg-[#222] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <job.icon className="w-5 h-5 text-yellow-500" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold text-white text-sm">{job.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{job.description}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleRunJob(job.id)}
-                disabled={jobLoading === job.id}
-                className="flex items-center gap-2 px-4 py-2 bg-[#0057B8] text-white font-bold text-xs rounded hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-              >
-                {jobLoading === job.id ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5" />
-                    Run
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          <ProcessRow
+            key={job.id}
+            name={job.name}
+            description={job.description}
+            icon={job.icon}
+            loading={loading === job.id}
+            onExecute={() => handleRunJob(job.id, job.name)}
+          />
         ))}
       </div>
     </div>
   );
 };
 
-// Helper Components
-const InfoRow = ({ label, value, badge, mono }) => (
-  <div className="flex justify-between items-center px-4 py-3">
-    <span className="text-sm text-gray-500">{label}</span>
-    {badge ? (
-      <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-xs font-bold">
-        {value}
-      </span>
-    ) : (
-      <span className={`text-sm text-white ${mono ? 'font-mono' : 'font-medium'}`}>
-        {value || 'N/A'}
-      </span>
-    )}
-  </div>
-);
+// =============================================================================
+// MAIN ADMIN COMPONENT
+// =============================================================================
+
+const Admin = () => {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [seasonData, setSeasonData] = useState(null);
+  const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, totalCorps: 0 });
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const adminStatus = await adminHelpers.isAdmin();
+        setIsAdmin(adminStatus);
+        if (adminStatus) await loadAdminData();
+      }
+      setLoading(false);
+    };
+    checkAdmin();
+  }, [user]);
+
+  const loadAdminData = async () => {
+    try {
+      const seasonDoc = await getDoc(doc(db, 'game-settings/season'));
+      if (seasonDoc.exists()) setSeasonData(seasonDoc.data());
+
+      const usersSnapshot = await getDocs(collection(db, 'artifacts/marching-art/users'));
+      let activeCount = 0, corpsCount = 0;
+
+      for (const userDoc of usersSnapshot.docs) {
+        const profileSnap = await getDoc(doc(db, `artifacts/marching-art/users/${userDoc.id}/profile/data`));
+        if (profileSnap.exists()) {
+          const data = profileSnap.data();
+          if (data.lastActive) {
+            const days = (Date.now() - data.lastActive.toDate().getTime()) / (1000 * 60 * 60 * 24);
+            if (days <= 7) activeCount++;
+          }
+          if (data.corps) corpsCount += Object.keys(data.corps).length;
+        }
+      }
+      setStats({ totalUsers: usersSnapshot.size, activeUsers: activeCount, totalCorps: corpsCount });
+    } catch (error) {
+      if (!error.message?.includes('permission')) {
+        console.error('Error loading admin data:', error);
+        toast.error('Failed to load admin data');
+      }
+    }
+  };
+
+  const callAdminFunction = async (functionName, data = {}) => {
+    try {
+      const functions = getFunctions();
+      const callable = httpsCallable(functions, functionName);
+      const result = await callable(data);
+      toast.success(result.data.message || 'Operation completed');
+      await loadAdminData();
+      return result.data;
+    } catch (error) {
+      toast.error(error.message || `Failed to execute ${functionName}`);
+      throw error;
+    }
+  };
+
+  if (loading) return <LoadingScreen />;
+
+  if (!isAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-[#0a0a0a]">
+        <div className="w-12 h-12 bg-red-500/20 flex items-center justify-center mb-4">
+          <Shield className="w-6 h-6 text-red-500" />
+        </div>
+        <p className="text-sm font-bold text-white mb-1">ACCESS DENIED</p>
+        <p className="text-xs text-gray-500">Administrator privileges required</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* Page Header */}
+      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-yellow-500/20 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-yellow-500" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-white uppercase tracking-wider">System Administration</h1>
+            <p className="text-[10px] text-gray-500">Ops Console</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Telemetry Strip */}
+      <TelemetryStrip stats={stats} />
+
+      {/* Navigation Tabs */}
+      <NavTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto min-h-0 pb-20 md:pb-4">
+        <div className="p-3 md:p-4">
+          {activeTab === 'overview' && <OverviewTab seasonData={seasonData} />}
+          {activeTab === 'season' && <SeasonOpsTab callAdminFunction={callAdminFunction} />}
+          {activeTab === 'users' && <UsersTab />}
+          {activeTab === 'content' && <ContentTab />}
+          {activeTab === 'jobs' && <JobsTab callAdminFunction={callAdminFunction} />}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Admin;
