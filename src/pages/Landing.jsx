@@ -198,15 +198,15 @@ const Landing = () => {
                 /* AUTHENTICATED USER WIDGET */
                 <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
                   {/* User Header */}
-                  <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                       <User className="w-3.5 h-3.5 text-[#0057B8]" />
                       My Fantasy
                     </h3>
                   </div>
 
                   {/* User Info */}
-                  <div className="p-3 border-b border-[#333]">
+                  <div className="p-4 border-b border-[#333]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-[#0057B8] flex items-center justify-center text-white font-bold text-sm">
                         {profile?.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'D'}
@@ -232,7 +232,7 @@ const Landing = () => {
                         <div className="flex items-center gap-1.5">
                           <Trophy className="w-3.5 h-3.5 text-[#0057B8]" />
                           <span className="text-xs text-gray-400">XP</span>
-                          <span className="text-sm font-bold text-white tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
+                          <span className="text-sm font-bold text-white font-data tabular-nums">{profile.xp?.toLocaleString() || 0}</span>
                         </div>
                       </div>
                     )}
@@ -275,7 +275,7 @@ const Landing = () => {
                   </div>
 
                   {/* Sign Out */}
-                  <div className="px-3 py-2 border-t border-[#333]">
+                  <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
                     <button
                       onClick={handleSignOut}
                       className="flex items-center gap-2 text-xs text-gray-500 hover:text-red-400 transition-colors"
@@ -289,15 +289,15 @@ const Landing = () => {
                 /* LOGIN/REGISTER WIDGET */
                 <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
                   {/* Card Header */}
-                  <div className="bg-[#222] px-3 py-2.5 border-b border-[#333]">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                       <Lock className="w-3.5 h-3.5" />
                       Director Login
                     </h3>
                   </div>
 
                   {/* Card Body - Compact Form */}
-                  <form onSubmit={handleSubmit} className="p-3 space-y-3">
+                  <form onSubmit={handleSubmit} className="p-4 space-y-3">
                     {/* Error Message */}
                     {error && (
                       <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-sm flex items-start gap-2">
@@ -316,7 +316,7 @@ const Landing = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                        className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       />
                     </div>
 
@@ -330,7 +330,7 @@ const Landing = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full h-10 pl-9 pr-3 bg-[#0a0a0a] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
+                        className="w-full h-9 pl-9 pr-3 bg-[#111] border border-[#333] rounded-sm text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#0057B8] disabled:opacity-50"
                       />
                     </div>
 
@@ -367,12 +367,12 @@ const Landing = () => {
               {/* ------------------------------------------------------- */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
                 {/* Header */}
-                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
                     <Flame className="w-3.5 h-3.5" />
                     Fantasy Trending
                   </h3>
-                  <span className="text-xs text-gray-500">{tickerData?.dayLabel || '24h'}</span>
+                  <span className="text-[10px] font-data text-gray-500">{tickerData?.dayLabel || '24h'}</span>
                 </div>
 
                 {/* Trending List */}
@@ -385,14 +385,14 @@ const Landing = () => {
                   ) : trendingPlayers.length > 0 ? (
                     // Data available - show trending players
                     trendingPlayers.map((player, idx) => (
-                      <div key={idx} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-500 tabular-nums">
+                          <span className="w-5 h-5 flex items-center justify-center text-xs font-bold font-data text-gray-500 tabular-nums">
                             {idx + 1}
                           </span>
                           <span className="text-sm text-white truncate max-w-[160px]">{player.name}</span>
                         </div>
-                        <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${
+                        <div className={`flex items-center gap-1 text-sm font-bold font-data tabular-nums ${
                           player.direction === 'up' ? 'text-green-500' : 'text-red-500'
                         }`}>
                           {player.direction === 'up' ? (
@@ -413,10 +413,10 @@ const Landing = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
+                <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
                   <Link
                     to="/scores"
-                    className="text-xs text-orange-400 hover:text-orange-300 font-bold transition-colors flex items-center gap-1"
+                    className="text-[10px] text-orange-400 hover:text-orange-300 font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
                   >
                     View All Trends
                     <ChevronRight className="w-3 h-3" />
@@ -429,8 +429,8 @@ const Landing = () => {
               {/* ------------------------------------------------------- */}
               <div className="bg-[#1a1a1a] border border-[#333] rounded-sm">
                 {/* Header */}
-                <div className="bg-[#222] px-3 py-2.5 border-b border-[#333] flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                     <Activity className="w-3.5 h-3.5 text-[#0057B8]" />
                     Live Scores
                   </h3>
@@ -438,7 +438,7 @@ const Landing = () => {
                     {hasScoresData && (
                       <>
                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-xs text-gray-500">Day {displayDay}</span>
+                        <span className="text-[10px] font-data text-gray-500">Day {displayDay}</span>
                       </>
                     )}
                   </div>
@@ -461,21 +461,21 @@ const Landing = () => {
                       return (
                         <div
                           key={`${row.sourceYear}-${row.corpsName}`}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
+                          className="flex items-center justify-between px-4 py-2 hover:bg-white/[0.02] transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold text-gray-500 tabular-nums rounded-sm">
+                            <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold font-data text-gray-500 tabular-nums rounded-sm">
                               {row.rank}
                             </span>
                             <span className="text-sm text-white truncate max-w-[140px]" title={`${row.sourceYear} ${row.corpsName}`}>
-                              <span className="text-gray-400">{row.sourceYear}</span> {row.corpsName}
+                              <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white tabular-nums">
+                            <span className="text-sm font-bold font-data text-white tabular-nums">
                               {row.score.toFixed(3)}
                             </span>
-                            <span className={`flex items-center gap-0.5 text-xs font-bold tabular-nums w-12 justify-end ${
+                            <span className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
                               row.direction === 'up' ? 'text-green-500' :
                               row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
                             }`}>
@@ -495,10 +495,10 @@ const Landing = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
+                <div className="px-4 py-3 border-t border-[#333] bg-[#111]">
                   <button
                     onClick={() => setShowStandingsModal(true)}
-                    className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold transition-colors flex items-center gap-1"
+                    className="text-[10px] text-[#0057B8] hover:text-[#0066d6] font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
                   >
                     Full Standings
                     <ChevronRight className="w-3 h-3" />
@@ -516,24 +516,24 @@ const Landing = () => {
       {/* FULL STANDINGS MODAL */}
       {/* ============================================================= */}
       {showStandingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80"
             onClick={() => setShowStandingsModal(false)}
           />
 
           {/* Modal Content */}
-          <div className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm max-h-[85vh] flex flex-col">
             {/* Header */}
             <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
                   <Activity className="w-4 h-4 text-[#0057B8]" />
                   Full Standings
                 </h2>
                 {displayDay && (
-                  <p className="text-xs text-gray-500 mt-0.5">Season Day {displayDay}</p>
+                  <p className="text-[10px] font-data text-gray-500 mt-0.5">Season Day {displayDay}</p>
                 )}
               </div>
               <button
@@ -560,22 +560,22 @@ const Landing = () => {
                       className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold tabular-nums rounded-sm ${
+                        <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold font-data tabular-nums rounded-sm ${
                           row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
                         }`}>
                           {row.rank}
                         </span>
                         <div className="min-w-0">
                           <span className="text-sm text-white block truncate max-w-[180px]" title={`${row.sourceYear} ${row.corpsName}`}>
-                            <span className="text-gray-400">{row.sourceYear}</span> {row.corpsName}
+                            <span className="text-gray-400 font-data">{row.sourceYear}</span> {row.corpsName}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-white tabular-nums">
+                        <span className="text-sm font-bold font-data text-white tabular-nums">
                           {row.score.toFixed(3)}
                         </span>
-                        <span className={`flex items-center gap-0.5 text-xs font-bold tabular-nums w-12 justify-end ${
+                        <span className={`flex items-center gap-0.5 text-xs font-bold font-data tabular-nums w-12 justify-end ${
                           row.direction === 'up' ? 'text-green-500' :
                           row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
                         }`}>
@@ -591,8 +591,8 @@ const Landing = () => {
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-[#333] bg-[#1a1a1a]/50 flex-shrink-0">
-              <p className="text-xs text-gray-500 text-center">
+            <div className="px-4 py-3 border-t border-[#333] bg-[#111] flex-shrink-0">
+              <p className="text-[10px] font-data text-gray-500 text-center">
                 {liveScores.length} of 25 corps with scores
               </p>
             </div>
