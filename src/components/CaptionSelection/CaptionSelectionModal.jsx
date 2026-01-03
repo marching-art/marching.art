@@ -773,9 +773,9 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Loading corps...</p>
               </div>
             ) : (
-              <div className="h-full flex">
+              <div className="h-full flex min-h-0">
                 {/* Left Panel - Your Lineup (hidden on mobile when viewing selection) */}
-                <div className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}>
+                <div className={`w-full lg:w-80 flex-shrink-0 border-r border-[#333] overflow-y-auto min-h-0 ${mobileView === 'selection' ? 'hidden lg:block' : ''}`}>
                   <div className="p-4 space-y-4">
                     {/* Draft Helper */}
                     <DraftHelper
@@ -826,7 +826,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                 </div>
 
                 {/* Right Panel - Corps Selection (full screen on mobile when viewing selection) */}
-                <div className={`flex-1 flex flex-col overflow-hidden ${mobileView === 'lineup' ? 'hidden lg:flex' : ''}`}>
+                <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${mobileView === 'lineup' ? 'hidden lg:flex' : ''}`}>
                   {activeCaption && activeCaptionData ? (
                     <>
                       {/* Caption Header */}
@@ -851,7 +851,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
                       </div>
 
                       {/* Corps List */}
-                      <div className="flex-1 overflow-y-auto">
+                      <div className="flex-1 overflow-y-auto min-h-0">
                         <div className="divide-y divide-[#222]">
                           {availableCorps.map((corps, idx) => {
                             const value = `${corps.corpsName}|${corps.sourceYear}|${corps.points}`;
