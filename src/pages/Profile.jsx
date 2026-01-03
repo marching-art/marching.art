@@ -17,6 +17,7 @@ import { db } from '../firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
+import { formatSeasonName } from '../utils/season';
 
 // =============================================================================
 // ACHIEVEMENT DEFINITIONS
@@ -53,34 +54,13 @@ const getMilestoneAchievements = (profile) => {
 // SEASON HISTORY TABLE COLUMNS
 // =============================================================================
 
-// Helper to extract season display from seasonId (e.g., "live_2024-25" -> "25")
-const getSeasonDisplay = (row) => {
-  // First try explicit seasonNumber
-  if (row.seasonNumber) return row.seasonNumber;
-
-  // Try to extract from seasonId or seasonName (format: "live_2024-25" or "off_2024-25")
-  const seasonStr = row.seasonId || row.seasonName;
-  if (seasonStr) {
-    // Match patterns like "2024-25" or just "2025"
-    const yearMatch = seasonStr.match(/(\d{4})-(\d{2})/) || seasonStr.match(/(\d{4})/);
-    if (yearMatch) {
-      // Return the ending year (e.g., "25" from "2024-25") or last 2 digits
-      return yearMatch[2] || yearMatch[1].slice(-2);
-    }
-  }
-
-  return null;
-};
-
 const seasonHistoryColumns = [
   {
-    key: 'seasonNumber',
-    header: 'SZN',
-    width: '50px',
-    align: 'center',
+    key: 'seasonName',
+    header: 'Season',
     render: (row) => {
-      const seasonDisplay = getSeasonDisplay(row);
-      return <span className="text-gray-400 tabular-nums">{seasonDisplay ? `S${seasonDisplay}` : '-'}</span>;
+      const seasonStr = row.seasonId || row.seasonName;
+      return <span className="text-gray-400">{seasonStr ? formatSeasonName(seasonStr) : '-'}</span>;
     },
   },
   {
@@ -710,7 +690,7 @@ const Profile = () => {
           <DataTable
             columns={seasonHistoryColumns}
             data={seasonHistory}
-            getRowKey={(row, idx) => `${row.classKey}-${row.seasonNumber}-${idx}`}
+            getRowKey={(row, idx) => `${row.classKey}-${row.seasonId || idx}-${idx}`}
             zebraStripes={true}
             emptyState={
               <div className="p-6 text-center">
