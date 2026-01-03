@@ -8,7 +8,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Lock, Mail, AlertCircle, TrendingUp,
-  TrendingDown, Flame, ChevronRight,
+  TrendingDown, Flame, ChevronRight, X,
   Activity, LayoutDashboard, Award, User, LogOut,
   Settings, Zap, UserPlus, MessageCircle
 } from 'lucide-react';
@@ -36,6 +36,7 @@ const Landing = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showStandingsModal, setShowStandingsModal] = useState(false);
 
   // Compute trending players from movers across all classes
   const trendingPlayers = useMemo(() => {
@@ -445,8 +446,8 @@ const Landing = () => {
                   </div>
                 </div>
 
-                {/* Score List */}
-                <div className="divide-y divide-[#333]/50 max-h-80 overflow-y-auto scroll-momentum">
+                {/* Score List - Shows all 12 corps */}
+                <div className="divide-y divide-[#333]/50">
                   {scoresLoading ? (
                     <div className="px-3 py-6 text-center">
                       <div className="inline-block w-5 h-5 border-2 border-[#0057B8]/30 border-t-[#0057B8] rounded-full animate-spin" />
@@ -497,13 +498,13 @@ const Landing = () => {
 
                 {/* Footer */}
                 <div className="px-3 py-2 border-t border-[#333] bg-[#1a1a1a]/50">
-                  <Link
-                    to="/scores"
+                  <button
+                    onClick={() => setShowStandingsModal(true)}
                     className="text-xs text-[#0057B8] hover:text-[#0066d6] font-bold transition-colors flex items-center gap-1"
                   >
                     Full Standings
                     <ChevronRight className="w-3 h-3" />
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -523,6 +524,94 @@ const Landing = () => {
           </span>
         </div>
       </footer>
+
+      {/* ============================================================= */}
+      {/* FULL STANDINGS MODAL */}
+      {/* ============================================================= */}
+      {showStandingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowStandingsModal(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative w-full max-w-md bg-[#1a1a1a] border border-[#333] rounded-sm shadow-2xl max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-[#222] px-4 py-3 border-b border-[#333] flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#0057B8]" />
+                  Full Standings
+                </h2>
+                {displayDay && (
+                  <p className="text-xs text-gray-500 mt-0.5">Season Day {displayDay}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setShowStandingsModal(false)}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Standings List */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-[#333]/50">
+                {liveScores.map((row) => {
+                  const changeValue = row.change;
+                  const hasChange = changeValue !== null;
+                  const changeDisplay = hasChange
+                    ? `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(1)}`
+                    : '—';
+
+                  return (
+                    <div
+                      key={`modal-${row.sourceYear}-${row.corpsName}`}
+                      className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold tabular-nums rounded-sm ${
+                          row.rank <= 3 ? 'bg-[#0057B8] text-white' : 'bg-[#222] text-gray-500'
+                        }`}>
+                          {row.rank}
+                        </span>
+                        <div className="min-w-0">
+                          <span className="text-sm text-white block truncate max-w-[180px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                            <span className="text-gray-400">{row.sourceYear}</span> {row.corpsName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-white tabular-nums">
+                          {row.score.toFixed(3)}
+                        </span>
+                        <span className={`flex items-center gap-0.5 text-xs font-bold tabular-nums w-12 justify-end ${
+                          row.direction === 'up' ? 'text-green-500' :
+                          row.direction === 'down' ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {row.direction === 'up' && <TrendingUp className="w-3 h-3" />}
+                          {row.direction === 'down' && <TrendingDown className="w-3 h-3" />}
+                          {changeDisplay}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-[#333] bg-[#1a1a1a]/50 flex-shrink-0">
+              <p className="text-xs text-gray-500 text-center">
+                {liveScores.length} of 25 corps with scores
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
