@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy, Calendar, Edit, ChevronRight, Users,
+  Trophy, Edit, ChevronRight, Users,
   TrendingUp, TrendingDown, Activity, Medal, FileText
 } from 'lucide-react';
 import DirectorCard from '../components/DirectorCard';
@@ -30,6 +30,10 @@ import {
   AchievementModal,
   OnboardingTour,
   QuickStartGuide,
+  TeamSwitcher,
+  LineupPanel,
+  StandingsPanel,
+  SchedulePanel,
 } from '../components/Dashboard';
 import toast from 'react-hot-toast';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -37,27 +41,14 @@ import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
 import { submitNewsForApproval, registerCorps } from '../api/functions';
-import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
-import { TeamAvatar } from '../components/ui/TeamAvatar';
 import { useHaptic } from '../hooks/useHaptic';
 import { useModalQueue, MODAL_PRIORITY } from '../hooks/useModalQueue';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-
-const CAPTIONS = [
-  { id: 'GE1', name: 'GE1', category: 'ge' },
-  { id: 'GE2', name: 'GE2', category: 'ge' },
-  { id: 'VP', name: 'VP', category: 'vis' },
-  { id: 'VA', name: 'VA', category: 'vis' },
-  { id: 'CG', name: 'CG', category: 'vis' },
-  { id: 'B', name: 'B', category: 'mus' },
-  { id: 'MA', name: 'MA', category: 'mus' },
-  { id: 'P', name: 'P', category: 'mus' },
-];
 
 const CLASS_LABELS = {
   worldClass: 'World',
@@ -80,49 +71,6 @@ const getSoundSportRating = (score) => {
   }
   return SOUNDSPORT_RATINGS[SOUNDSPORT_RATINGS.length - 1];
 };
-
-// =============================================================================
-// STANDINGS TABLE COLUMNS
-// =============================================================================
-
-const standingsColumns = [
-  {
-    key: 'rank',
-    header: 'RK',
-    width: '44px',
-    isRank: true,
-    render: (row) => (
-      <div className="flex items-center justify-center">
-        <span className="w-6 h-6 rounded bg-[#333] border border-[#444] flex items-center justify-center text-gray-400 font-medium tabular-nums text-xs">
-          {row.rank}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: 'corpsName',
-    header: 'Corps',
-    render: (row) => (
-      <div className="flex items-center gap-2">
-        <TeamAvatar name={row.corpsName || row.corps} size="xs" />
-        <span className="font-bold text-white truncate block max-w-[160px] sm:max-w-[120px] text-sm sm:text-xs">
-          {row.corpsName || row.corps}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: 'score',
-    header: 'Score',
-    align: 'right',
-    width: '75px',
-    render: (row) => (
-      <span className="text-white font-data tabular-nums text-sm sm:text-xs">
-        {typeof row.score === 'number' ? row.score.toFixed(3) : row.score}
-      </span>
-    ),
-  },
-];
 
 // =============================================================================
 // MOBILE TAB LABELS
@@ -488,48 +436,12 @@ const Dashboard = () => {
       {activeCorps ? (
         <>
           {/* Team Switcher - Horizontal Pill Navigation */}
-          {hasMultipleCorps && (
-            <div className="bg-[#0a0a0a] border-b border-[#333] px-3 py-2 overflow-x-auto scrollbar-hide">
-              <div className="flex items-center gap-2 min-w-max">
-                {Object.entries(corps)
-                  .sort((a, b) => {
-                    const classOrder = { worldClass: 0, openClass: 1, aClass: 2, soundSport: 3 };
-                    return (classOrder[a[0]] ?? 99) - (classOrder[b[0]] ?? 99);
-                  })
-                  .map(([classId, corpsData]) => {
-                    const isActive = activeCorpsClass === classId;
-                    const fullName = corpsData.corpsName || corpsData.name || 'Team';
-                    // Truncate names longer than 20 characters
-                    const displayName = fullName.length > 20
-                      ? fullName.substring(0, 18) + '…'
-                      : fullName;
-
-                    return (
-                      <button
-                        key={classId}
-                        onClick={() => { haptic('light'); handleCorpsSwitch(classId); }}
-                        className={`
-                          flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-full
-                          text-sm font-bold whitespace-nowrap transition-all duration-200 press-feedback
-                          ${isActive
-                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 text-black'
-                            : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333] hover:text-gray-200 active:bg-[#3a3a3a]'
-                          }
-                        `}
-                        title={fullName}
-                      >
-                        <TeamAvatar
-                          name={fullName}
-                          size="xs"
-                          className={isActive ? '!bg-black/20 !border-black/30 !text-black' : ''}
-                        />
-                        <span>{displayName}</span>
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
+          <TeamSwitcher
+            corps={corps}
+            activeCorpsClass={activeCorpsClass}
+            onSwitch={handleCorpsSwitch}
+            haptic={haptic}
+          />
 
           {/* MOBILE TABS - Premium Pill Style */}
           <div className="lg:hidden flex gap-1 px-2 py-1.5 border-b border-[#333] bg-[#1a1a1a]">
@@ -673,66 +585,11 @@ const Dashboard = () => {
               </div>
 
               {/* Lineup List - Clean ESPN-style rows */}
-              <div className="mb-4 border border-[#333] rounded-sm overflow-hidden">
-                {CAPTIONS.map((caption, index) => {
-                  const value = lineup[caption.id];
-                  const hasValue = !!value;
-                  const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                  // Get category score from user's fantasy recap (GE/Visual/Music)
-                  let captionScore = null;
-                  if (['GE1', 'GE2'].includes(caption.id)) {
-                    captionScore = corpsStats.geScore ?? null;
-                  } else if (['VP', 'VA', 'CG'].includes(caption.id)) {
-                    captionScore = corpsStats.visualScore ?? null;
-                  } else if (['B', 'MA', 'P'].includes(caption.id)) {
-                    captionScore = corpsStats.musicScore ?? null;
-                  }
-                  return (
-                    <button
-                      key={caption.id}
-                      onClick={() => openCaptionSelection(caption.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-3.5 transition-all cursor-pointer group ${
-                        index !== CAPTIONS.length - 1 ? 'border-b border-[#333]/50' : ''
-                      } ${
-                        hasValue
-                          ? 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
-                          : 'bg-[#1a1a1a] hover:bg-[#222] active:bg-[#252525]'
-                      }`}
-                    >
-                      {/* Position Badge */}
-                      <div className={`w-10 h-8 flex items-center justify-center rounded text-xs font-bold ${
-                        hasValue ? 'bg-[#0057B8]/20 text-[#0057B8]' : 'bg-[#333] text-gray-500'
-                      }`}>
-                        {caption.name}
-                      </div>
-                      {/* Corps Name + Year */}
-                      <div className="flex-1 text-left min-w-0">
-                        {hasValue ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm text-white truncate">{corpsName}</span>
-                            {sourceYear && (
-                              <span className="text-[10px] text-gray-500">'{sourceYear?.slice(-2)}</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500 italic">Empty slot</span>
-                        )}
-                      </div>
-                      {/* Caption Score / Action */}
-                      <div className="flex items-center gap-2">
-                        {hasValue ? (
-                          <span className="text-xs font-data text-gray-400 tabular-nums">
-                            {captionScore !== null ? captionScore.toFixed(1) : '—'}
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold text-[#F5A623] group-hover:text-[#FFB84D]">+ Draft</span>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-gray-400" />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <LineupPanel
+                lineup={lineup}
+                corpsStats={corpsStats}
+                onCaptionSelect={openCaptionSelection}
+              />
 
               {/* League Link */}
               {primaryLeague ? (
@@ -767,97 +624,23 @@ const Dashboard = () => {
             </div>
 
             {/* CENTER COLUMN - Standings */}
-            <div className={`bg-[#0a0a0a] ${activeMobileTab !== 'standings' ? 'hidden lg:block' : ''}`}>
-              {/* Header hidden on mobile since we have tabs */}
-              <div className="hidden lg:flex bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] items-center justify-between">
-                <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  Standings
-                </span>
-                <Link to="/scores" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
-                  Results <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                </Link>
-              </div>
-              {scoresLoading ? (
-                <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>
-              ) : (
-                <DataTable
-                  columns={standingsColumns}
-                  data={standingsData}
-                  getRowKey={(row) => row.corpsName || row.corps}
-                  zebraStripes={true}
-                  highlightRow={(row) =>
-                    row.corpsName === (activeCorps.corpsName || activeCorps.name)
-                  }
-                  emptyState={
-                    <div className="p-4 text-center text-gray-500 text-sm">
-                      No standings yet
-                    </div>
-                  }
-                />
-              )}
-              {/* Mobile View All link */}
-              <Link
-                to="/scores"
-                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm font-medium text-[#F5A623] hover:text-[#FFB84D] transition-colors border-t border-[#333] bg-[#1a1a1a]"
-              >
-                View Full Results <ChevronRight className="w-4 h-4" />
-              </Link>
+            <div className={activeMobileTab !== 'standings' ? 'hidden lg:block' : ''}>
+              <StandingsPanel
+                data={standingsData}
+                isLoading={scoresLoading}
+                activeCorpsName={activeCorps.corpsName || activeCorps.name}
+                isMobile={activeMobileTab === 'standings'}
+              />
             </div>
 
             {/* RIGHT COLUMN - Schedule */}
-            <div className={`bg-[#1a1a1a] ${activeMobileTab !== 'schedule' ? 'hidden lg:block' : ''}`}>
-              {/* Header hidden on mobile since we have tabs */}
-              <div className="hidden lg:flex bg-[#222] px-4 sm:px-3 py-3 sm:py-2 border-b border-[#333] items-center justify-between">
-                <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  Week {currentWeek} Schedule
-                </span>
-                <Link to="/schedule" className="text-[11px] sm:text-[10px] text-[#F5A623] hover:text-[#FFB84D] transition-colors flex items-center gap-0.5 py-1">
-                  Full Schedule <ChevronRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                </Link>
-              </div>
-
-              {thisWeekShows.length > 0 ? (
-                <div className="divide-y divide-[#333]">
-                  {thisWeekShows.map((show, idx) => (
-                    <div key={idx} className="px-4 sm:px-3 py-3 sm:py-2 flex items-center gap-3 hover:bg-[#222] active:bg-[#222]">
-                      <Calendar className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-white truncate">
-                          {show.eventName || show.name || 'Show'}
-                        </div>
-                        <div className="text-[11px] sm:text-[10px] text-gray-500 truncate">
-                          {show.location || show.date || ''}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-5 sm:p-4 text-center">
-                  <Calendar className="w-8 h-8 sm:w-6 sm:h-6 text-gray-600 mx-auto mb-2" />
-                  <p className="text-sm sm:text-xs text-gray-500 mb-3 sm:mb-2">No shows selected</p>
-                  <Link
-                    to="/schedule"
-                    className="inline-flex items-center gap-1 text-sm sm:text-xs text-[#F5A623] hover:text-[#FFB84D] transition-colors py-1"
-                  >
-                    Select Shows <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              )}
-
-              {/* Season Info - desktop only */}
-              <div className="hidden lg:block px-4 sm:px-3 py-3 sm:py-2 border-t border-[#333] bg-[#222]">
-                <div className="text-[11px] sm:text-[10px] text-gray-500">
-                  {formatSeasonName(seasonData?.name)} • Week {currentWeek}
-                </div>
-              </div>
-              {/* Mobile View All link */}
-              <Link
-                to="/schedule"
-                className="lg:hidden flex items-center justify-center gap-1 py-4 text-sm font-medium text-[#F5A623] hover:text-[#FFB84D] transition-colors border-t border-[#333] bg-[#222]"
-              >
-                View Full Schedule <ChevronRight className="w-4 h-4" />
-              </Link>
+            <div className={activeMobileTab !== 'schedule' ? 'hidden lg:block' : ''}>
+              <SchedulePanel
+                shows={thisWeekShows}
+                currentWeek={currentWeek}
+                seasonName={formatSeasonName(seasonData?.name)}
+                isMobile={activeMobileTab === 'schedule'}
+              />
             </div>
           </div>
 
