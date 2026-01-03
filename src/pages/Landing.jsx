@@ -461,15 +461,15 @@ const Landing = () => {
 
                       return (
                         <div
-                          key={row.corpsName}
+                          key={`${row.sourceYear}-${row.corpsName}`}
                           className="flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
                             <span className="w-5 h-5 flex items-center justify-center bg-[#222] text-xs font-bold text-gray-500 tabular-nums rounded-sm">
                               {row.rank}
                             </span>
-                            <span className="text-sm text-white truncate max-w-[140px]" title={row.corpsName}>
-                              {row.corpsName}
+                            <span className="text-sm text-white truncate max-w-[140px]" title={`${row.sourceYear} ${row.corpsName}`}>
+                              <span className="text-gray-400">{row.sourceYear}</span> {row.corpsName}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 // src/hooks/useLandingScores.js
-// Hook for fetching live scores for the landing page
-// Shows most recent scores for all corps, ranked by total score
-// Only includes scores from before the current season day
+// Hook for fetching live DCI scores for the landing page
+// Shows real historical DCI scores for the selected corps in the current season
+// Similar to how ESPN Fantasy shows actual game results
 
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -9,37 +9,69 @@ import { db } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 
 /**
- * Hook to fetch live scores for the landing page
- * Returns ranked scores across all classes (excluding soundSport)
- * with score change from previous performance
+ * Calculate total score from individual captions
+ * GE contributes directly, Visual and Music are divided by 2
+ */
+const calculateTotalScore = (captions) => {
+  if (!captions) return 0;
+  const ge = (captions.GE1 || 0) + (captions.GE2 || 0);
+  const visual = ((captions.VP || 0) + (captions.VA || 0) + (captions.CG || 0)) / 2;
+  const music = ((captions.B || 0) + (captions.MA || 0) + (captions.P || 0)) / 2;
+  return ge + visual + music;
+};
+
+/**
+ * Hook to fetch live DCI scores for the landing page
+ * Returns ranked scores for all selected corps in the current season
+ * using actual historical DCI data
  */
 export const useLandingScores = () => {
-  const seasonUid = useSeasonStore((state) => state.seasonUid);
+  const seasonData = useSeasonStore((state) => state.seasonData);
   const currentDay = useSeasonStore((state) => state.currentDay);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [allRecaps, setAllRecaps] = useState([]);
+  const [corpsValues, setCorpsValues] = useState([]);
+  const [historicalData, setHistoricalData] = useState({});
 
-  // Fetch all recaps for the season
+  // Fetch season corps and historical scores
   useEffect(() => {
-    const fetchRecaps = async () => {
-      if (!seasonUid) {
+    const fetchData = async () => {
+      if (!seasonData?.dataDocId) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const recapRef = doc(db, 'fantasy_recaps', seasonUid);
-        const recapDoc = await getDoc(recapRef);
 
-        if (recapDoc.exists()) {
-          const data = recapDoc.data();
-          setAllRecaps(data.recaps || []);
-        } else {
-          setAllRecaps([]);
+        // 1. Get corps values (selected corps for each point value)
+        const corpsDataDoc = await getDoc(doc(db, `dci-data/${seasonData.dataDocId}`));
+        if (!corpsDataDoc.exists()) {
+          setLoading(false);
+          return;
         }
+        const corpsData = corpsDataDoc.data();
+        const corps = corpsData.corpsValues || [];
+        setCorpsValues(corps);
+
+        // 2. Get unique years to fetch
+        const yearsToFetch = [...new Set(corps.map(c => c.sourceYear))];
+
+        // 3. Fetch historical scores for each year
+        const historicalPromises = yearsToFetch.map(year =>
+          getDoc(doc(db, `historical_scores/${year}`))
+        );
+        const historicalDocs = await Promise.all(historicalPromises);
+
+        const historical = {};
+        historicalDocs.forEach((docSnap) => {
+          if (docSnap.exists()) {
+            historical[docSnap.id] = docSnap.data().data || [];
+          }
+        });
+        setHistoricalData(historical);
+
         setLoading(false);
       } catch (err) {
         console.error('Error fetching landing scores:', err);
@@ -48,70 +80,68 @@ export const useLandingScores = () => {
       }
     };
 
-    fetchRecaps();
-  }, [seasonUid]);
+    fetchData();
+  }, [seasonData?.dataDocId]);
 
   // Process scores for landing page display
   const liveScores = useMemo(() => {
-    if (allRecaps.length === 0 || !currentDay) {
-      return [];
-    }
-
-    // Filter recaps to only include days before current day
-    const validRecaps = allRecaps
-      .filter(r => r.offSeasonDay < currentDay)
-      .sort((a, b) => b.offSeasonDay - a.offSeasonDay); // Most recent first
-
-    if (validRecaps.length === 0) {
+    if (corpsValues.length === 0 || Object.keys(historicalData).length === 0 || !currentDay) {
       return [];
     }
 
     // Build a map of each corps' score history
-    // Key: corpsName, Value: { scores: [{ score, day }], corpsClass }
-    const corpsHistory = new Map();
+    const corpsScoreHistory = new Map();
 
-    validRecaps.forEach(recap => {
-      recap.shows?.forEach(show => {
-        show.results?.forEach(result => {
-          // Skip soundSport
-          if (result.corpsClass === 'soundSport') return;
+    // For each selected corps, gather their scores from historical data
+    corpsValues.forEach(corps => {
+      const yearData = historicalData[corps.sourceYear] || [];
+      const scores = [];
 
-          const corpsName = result.corpsName;
-          const score = result.totalScore || 0;
-          const day = recap.offSeasonDay;
+      yearData.forEach(event => {
+        // Only include scores from days before the current day
+        if (event.offSeasonDay >= currentDay) return;
 
-          if (!corpsHistory.has(corpsName)) {
-            corpsHistory.set(corpsName, {
-              corpsName,
-              corpsClass: result.corpsClass,
-              uid: result.uid,
-              displayName: result.displayName,
-              scores: []
+        const scoreData = event.scores?.find(s => s.corps === corps.corpsName);
+        if (scoreData && scoreData.captions) {
+          const totalScore = calculateTotalScore(scoreData.captions);
+          // Skip zero scores (treat as blank)
+          if (totalScore > 0) {
+            scores.push({
+              day: event.offSeasonDay,
+              date: event.date,
+              eventName: event.eventName,
+              totalScore,
+              captions: scoreData.captions
             });
           }
-
-          corpsHistory.get(corpsName).scores.push({ score, day });
-        });
+        }
       });
+
+      if (scores.length > 0) {
+        // Sort by day descending (most recent first)
+        scores.sort((a, b) => b.day - a.day);
+
+        corpsScoreHistory.set(`${corps.corpsName}-${corps.sourceYear}`, {
+          corpsName: corps.corpsName,
+          sourceYear: corps.sourceYear,
+          points: corps.points,
+          scores
+        });
+      }
     });
 
     // Process each corps to get their latest score and change
     const rankedScores = [];
 
-    corpsHistory.forEach((data, corpsName) => {
-      // Sort scores by day (most recent first)
-      const sortedScores = data.scores.sort((a, b) => b.day - a.day);
-
-      if (sortedScores.length === 0) return;
-
-      const latestScore = sortedScores[0].score;
-      const latestDay = sortedScores[0].day;
+    corpsScoreHistory.forEach((data) => {
+      const latestScore = data.scores[0].totalScore;
+      const latestDay = data.scores[0].day;
 
       // Find the previous score (from a different day)
       let previousScore = null;
-      for (let i = 1; i < sortedScores.length; i++) {
-        if (sortedScores[i].day !== latestDay) {
-          previousScore = sortedScores[i].score;
+      for (let i = 1; i < data.scores.length; i++) {
+        if (data.scores[i].day !== latestDay) {
+          previousScore = data.scores[i].totalScore;
           break;
         }
       }
@@ -126,14 +156,13 @@ export const useLandingScores = () => {
       }
 
       rankedScores.push({
-        corpsName,
-        corpsClass: data.corpsClass,
-        uid: data.uid,
-        displayName: data.displayName,
+        corpsName: data.corpsName,
+        sourceYear: data.sourceYear,
+        points: data.points,
         score: latestScore,
         change,
         direction,
-        showCount: sortedScores.length,
+        showCount: data.scores.length,
         latestDay
       });
     });
@@ -145,7 +174,7 @@ export const useLandingScores = () => {
     });
 
     return rankedScores;
-  }, [allRecaps, currentDay]);
+  }, [corpsValues, historicalData, currentDay]);
 
   // Get the display day (most recent day with scores)
   const displayDay = useMemo(() => {
