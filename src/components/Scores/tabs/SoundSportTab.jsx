@@ -18,7 +18,7 @@ import EmptyState from '../../EmptyState';
 // =============================================================================
 
 const RATING_THRESHOLDS = [
-  { rating: 'Gold', min: 90, color: 'bg-primary', textColor: 'text-black', borderColor: 'border-black' },
+  { rating: 'Gold', min: 90, color: 'bg-yellow-500', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Silver', min: 75, color: 'bg-stone-300', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Bronze', min: 60, color: 'bg-orange-300', textColor: 'text-black', borderColor: 'border-black' },
   { rating: 'Participation', min: 0, color: 'bg-white', textColor: 'text-black', borderColor: 'border-black' },
