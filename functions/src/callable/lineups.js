@@ -506,3 +506,43 @@ exports.getLineupAnalytics = onCall({ cors: true }, async (request) => {
     throw new HttpsError("internal", "Could not retrieve lineup analytics.");
   }
 });
+
+/**
+ * Get all active lineup keys for a corps class.
+ * Used by quick fill to avoid generating duplicate lineups.
+ */
+exports.getActiveLineupKeys = onCall({ cors: true }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const { corpsClass } = request.data;
+  const uid = request.auth.uid;
+
+  const validClasses = ["worldClass", "openClass", "aClass", "soundSport"];
+  if (!validClasses.includes(corpsClass)) {
+    throw new HttpsError("invalid-argument", "Invalid corps class specified.");
+  }
+
+  const db = getDb();
+
+  try {
+    // Query all active lineups for this corps class
+    const lineupsSnapshot = await db.collection("activeLineups")
+      .where("corpsClass", "==", corpsClass)
+      .get();
+
+    // Return lineup keys, excluding the current user's lineup
+    const lineupKeys = [];
+    lineupsSnapshot.forEach(doc => {
+      if (doc.data().uid !== uid) {
+        lineupKeys.push(doc.id);
+      }
+    });
+
+    return { success: true, lineupKeys };
+  } catch (error) {
+    logger.error(`Failed to get active lineup keys:`, error);
+    throw new HttpsError("internal", "Could not retrieve active lineups.");
+  }
+});
