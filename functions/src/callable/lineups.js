@@ -311,8 +311,8 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
       currentDay = Math.floor(diffInMillis / (1000 * 60 * 60 * 24)) + 1;
     }
 
-    // Define the lookback window (10 days)
-    const lookbackDays = 10;
+    // Define the lookback window (7 days = 1 week)
+    const lookbackDays = 7;
     const windowStart = Math.max(1, currentDay - lookbackDays);
     const windowEnd = currentDay - 1; // Don't include today since scores may not be in yet
 
@@ -418,31 +418,34 @@ exports.getHotCorps = onCall({ cors: true }, async (request) => {
     }
 
     // For each caption, determine which corps are "hot"
+    // Hot = top 3 corps with greatest improvement percentage in that caption
     const hotCorps = {};
 
     for (const caption of CAPTIONS) {
       const performers = captionPerformance[caption];
       if (performers.length === 0) continue;
 
-      // Sort by recent average and find thresholds
-      const sortedByRecent = [...performers].sort((a, b) => b.recentAvg - a.recentAvg);
-      const medianIndex = Math.floor(sortedByRecent.length / 2);
-      const medianRecentAvg = sortedByRecent[medianIndex].recentAvg;
-      const topQuartileThreshold = sortedByRecent[Math.floor(sortedByRecent.length * 0.25)]?.recentAvg || medianRecentAvg;
+      // Sort by improvement percentage (descending) to find top gainers
+      const sortedByImprovement = [...performers].sort((a, b) => b.improvement - a.improvement);
 
-      // Determine hot status for each corps in this caption
+      // Get the top 3 corps IDs for this caption
+      const top3Ids = new Set(
+        sortedByImprovement
+          .slice(0, 3)
+          .filter(p => p.improvement > 0) // Only mark as hot if actually improving
+          .map(p => `${p.corpsName}|${p.sourceYear}`)
+      );
+
+      // Set hot status for each corps in this caption
       for (const perf of performers) {
         const corpsId = `${perf.corpsName}|${perf.sourceYear}`;
-        const isAboveMedian = perf.recentAvg >= medianRecentAvg;
-        const isImproving = perf.improvement > 2; // More than 2% improvement
-        const isTopQuartile = perf.recentAvg >= topQuartileThreshold;
 
         if (!hotCorps[corpsId]) {
           hotCorps[corpsId] = {};
         }
 
         hotCorps[corpsId][caption] = {
-          isHot: (isAboveMedian && isImproving) || isTopQuartile,
+          isHot: top3Ids.has(corpsId),
           improvement: Math.round(perf.improvement * 10) / 10,
           recentAvg: Math.round(perf.recentAvg * 100) / 100
         };
