@@ -1,7 +1,7 @@
 // src/components/Scores/Leaderboard.jsx
 // Simple, scannable leaderboard with rank, name, score, and trend indicators
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, ChevronDown, Search, Users } from 'lucide-react';
 
@@ -100,17 +100,21 @@ const FilterDropdown = ({ label, value, options, onChange }) => {
   );
 };
 
-// Single leaderboard row
-const LeaderboardRow = ({ entry, isCurrentUser, onClick }) => {
+// Single leaderboard row - memoized to prevent re-renders when other rows change
+const LeaderboardRow = React.memo(({ entry, isCurrentUser, onClick }) => {
   const { rank, corps, corpsName, score, totalScore, trend, rankChange } = entry;
   const displayName = corps || corpsName || 'Unknown';
   const displayScore = score || totalScore || 0;
+
+  const handleClick = useCallback(() => {
+    onClick?.(entry);
+  }, [onClick, entry]);
 
   return (
     <motion.button
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      onClick={() => onClick?.(entry)}
+      onClick={handleClick}
       className={`
         w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-left
         ${isCurrentUser
@@ -142,7 +146,9 @@ const LeaderboardRow = ({ entry, isCurrentUser, onClick }) => {
       </div>
     </motion.button>
   );
-};
+});
+
+LeaderboardRow.displayName = 'LeaderboardRow';
 
 const Leaderboard = ({
   entries = [],

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, createContext, useContext, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, createContext, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -28,6 +28,7 @@ import { useUserStore } from './store/userStore';
 import { useProfileStore } from './store/profileStore';
 import OfflineBanner from './components/OfflineBanner';
 import { SkipToContent } from './components/a11y';
+import { MotionProvider } from './components/ui/MotionProvider';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -154,7 +155,9 @@ function App() {
     return <LoadingScreen fullScreen />;
   }
 
-  const authContextValue = {
+  // Memoize auth context value to prevent unnecessary re-renders of all consumers
+  // Only recreates when user, loading, or error actually change
+  const authContextValue = useMemo(() => ({
     user,
     loading,
     error,
@@ -162,12 +165,13 @@ function App() {
     signUp: authHelpers.signUpWithEmail,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
-  };
+  }), [user, loading, error]);
 
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <MotionProvider>
           <AuthContext.Provider value={authContextValue}>
             <Router>
           {/* Skip to Content - Accessibility */}
@@ -369,6 +373,7 @@ function App() {
         </Suspense>
           </Router>
         </AuthContext.Provider>
+          </MotionProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -3,7 +3,7 @@
 // Supports both current season and archived seasons
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { doc, getDoc, collection, getDocs, query, orderBy, limit, startAfter } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db, dataNamespace } from '../firebase';
 import { useSeasonStore } from '../store/seasonStore';
 
@@ -199,11 +199,14 @@ export const useScoresData = (options = {}) => {
   const isArchived = seasonId && seasonId !== currentSeasonUid;
 
   // Fetch available archived seasons
+  // OPTIMIZATION: Limit to 20 most recent seasons to reduce data transfer
   useEffect(() => {
     const fetchArchivedSeasons = async () => {
       try {
         const championsRef = collection(db, 'season_champions');
-        const championsSnapshot = await getDocs(championsRef);
+        // Query with ordering and limit - reduces payload for users with many past seasons
+        const championsQuery = query(championsRef, orderBy('archivedAt', 'desc'), limit(20));
+        const championsSnapshot = await getDocs(championsQuery);
 
         const seasons = [];
         championsSnapshot.forEach(doc => {
@@ -216,7 +219,7 @@ export const useScoresData = (options = {}) => {
           });
         });
 
-        // Sort by archived date descending
+        // Already sorted by query, but keep for safety
         seasons.sort((a, b) => b.archivedAt - a.archivedAt);
         setArchivedSeasons(seasons);
       } catch (err) {

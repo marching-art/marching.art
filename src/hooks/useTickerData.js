@@ -126,6 +126,7 @@ export const useTickerData = () => {
   }, [seasonUid]);
 
   // Process the previous day's data - separated by class
+  // OPTIMIZED: Single-pass processing to reduce array iterations from O(5n) to O(n)
   const tickerData = useMemo(() => {
     const emptyClassData = {
       scores: [],
@@ -156,108 +157,119 @@ export const useTickerData = () => {
       return { ...emptyData, dayLabel: `Day ${displayDay}` };
     }
 
-    // Get all results from the day's shows
-    const allResults = dayRecap.shows?.flatMap(show =>
-      show.results?.map(result => ({
-        ...result,
-        eventName: show.eventName,
-        location: show.location,
-      })) || []
-    ) || [];
+    // SINGLE PASS: Classify results, calculate aggregates, and group by class
+    // Previously: flatMap → filter → filter → map → filter×3
+    const soundSportMedals = [];
+    const resultsByClass = {
+      worldClass: [],
+      openClass: [],
+      aClass: [],
+    };
+    const allScoredResults = [];
 
-    // Separate SoundSport and scored classes
-    const soundSportResults = allResults.filter(r => r.corpsClass === 'soundSport');
-    const scoredResults = allResults.filter(r => r.corpsClass !== 'soundSport');
-
-    // Process SoundSport medals
-    const soundSportMedals = soundSportResults
-      .filter(r => r.placement && r.placement <= 3)
-      .map(result => ({
-        name: getCorpsAbbreviation(result.corpsName),
-        fullName: result.corpsName,
-        medal: result.medal || getMedalFromPlacement(result.placement),
-        eventName: result.eventName,
-      }))
-      .sort((a, b) => {
-        const medalOrder = { Gold: 1, Silver: 2, Bronze: 3 };
-        return (medalOrder[a.medal] || 99) - (medalOrder[b.medal] || 99);
+    // Single iteration over shows and results
+    dayRecap.shows?.forEach(show => {
+      show.results?.forEach(result => {
+        if (result.corpsClass === 'soundSport') {
+          // Process SoundSport medals inline
+          if (result.placement && result.placement <= 3) {
+            soundSportMedals.push({
+              name: getCorpsAbbreviation(result.corpsName),
+              fullName: result.corpsName,
+              medal: result.medal || getMedalFromPlacement(result.placement),
+              eventName: show.eventName,
+              _order: result.placement, // For sorting
+            });
+          }
+        } else if (CLASS_CONFIG[result.corpsClass]) {
+          // Calculate aggregates and classify in one pass
+          const aggregates = calculateCaptionAggregates(result);
+          const processed = {
+            ...result,
+            ...aggregates,
+            abbr: getCorpsAbbreviation(result.corpsName),
+            eventName: show.eventName,
+            location: show.location,
+          };
+          resultsByClass[result.corpsClass].push(processed);
+          allScoredResults.push(processed);
+        }
       });
-
-    // Calculate aggregates for each scored result
-    const resultsWithAggregates = scoredResults.map(result => {
-      const aggregates = calculateCaptionAggregates(result);
-      return {
-        ...result,
-        ...aggregates,
-        abbr: getCorpsAbbreviation(result.corpsName),
-      };
     });
 
-    // Group results by class
-    const resultsByClass = {};
-    for (const classKey of Object.keys(CLASS_CONFIG)) {
-      resultsByClass[classKey] = resultsWithAggregates
-        .filter(r => r.corpsClass === classKey)
-        .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+    // Sort medals by placement order
+    soundSportMedals.sort((a, b) => a._order - b._order);
+
+    // Sort each class by score (needed for rankings)
+    for (const classKey of Object.keys(resultsByClass)) {
+      resultsByClass[classKey].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     }
 
-    // Get previous scores for movers calculation - find each corps' most recent score before display day
+    // SINGLE PASS over historical recaps: Build both previous scores AND season scores
+    // Previously: Two separate loops over allRecaps
     const corpsPreviousScores = new Map();
-    allRecaps
-      .filter(r => r.offSeasonDay < displayDay)
-      .sort((a, b) => b.offSeasonDay - a.offSeasonDay) // Most recent first
-      .forEach(recap => {
-        recap.shows?.forEach(show => {
-          show.results?.forEach(result => {
-            if (result.corpsClass === 'soundSport') return;
-            // Only store the most recent score (first one we find due to sorting)
-            if (!corpsPreviousScores.has(result.corpsName)) {
-              corpsPreviousScores.set(result.corpsName, {
-                score: result.totalScore || 0,
-                corpsClass: result.corpsClass,
-                day: recap.offSeasonDay,
-              });
-            }
-          });
-        });
-      });
-
-    // Calculate season data for leaders
     const corpsSeasonScores = new Map();
-    allRecaps
-      .filter(r => r.offSeasonDay <= displayDay)
-      .forEach(recap => {
-        recap.shows?.forEach(show => {
-          show.results?.forEach(result => {
-            if (result.corpsClass === 'soundSport') return;
 
-            const corps = result.corpsName;
-            if (!corpsSeasonScores.has(corps)) {
-              corpsSeasonScores.set(corps, {
-                name: corps,
-                abbr: getCorpsAbbreviation(corps),
-                scores: [],
-                corpsClass: result.corpsClass,
-              });
-            }
+    // Sort recaps once, then process
+    const sortedRecaps = [...allRecaps].sort((a, b) => b.offSeasonDay - a.offSeasonDay);
 
-            const entry = corpsSeasonScores.get(corps);
-            entry.scores.push({
-              score: result.totalScore || 0,
+    for (const recap of sortedRecaps) {
+      const isBeforeDisplayDay = recap.offSeasonDay < displayDay;
+      const isUpToDisplayDay = recap.offSeasonDay <= displayDay;
+
+      // Skip if not relevant for either calculation
+      if (!isUpToDisplayDay) continue;
+
+      recap.shows?.forEach(show => {
+        show.results?.forEach(result => {
+          if (result.corpsClass === 'soundSport') return;
+
+          const corps = result.corpsName;
+          const score = result.totalScore || 0;
+
+          // Build previous scores (for movers) - only before display day
+          if (isBeforeDisplayDay && !corpsPreviousScores.has(corps)) {
+            corpsPreviousScores.set(corps, {
+              score,
+              corpsClass: result.corpsClass,
               day: recap.offSeasonDay,
             });
+          }
+
+          // Build season scores (for leaders) - up to and including display day
+          if (!corpsSeasonScores.has(corps)) {
+            corpsSeasonScores.set(corps, {
+              name: corps,
+              abbr: getCorpsAbbreviation(corps),
+              scores: [],
+              corpsClass: result.corpsClass,
+            });
+          }
+          corpsSeasonScores.get(corps).scores.push({
+            score,
+            day: recap.offSeasonDay,
           });
         });
       });
+    }
 
-    // Build class-separated data
+    // OPTIMIZED: Build class-separated data with single-pass caption leader tracking
+    // Previously: 3 sorts per class (9 total) + 3 sorts for combined = 12 sort operations
+    // Now: Track leaders during iteration, only sort when needed
     const byClass = {};
     const availableClasses = [];
+
+    // Track combined caption leaders across all classes during iteration
+    const combinedLeaders = {
+      ge: [], // Will hold top 8
+      visual: [],
+      music: [],
+    };
 
     for (const classKey of Object.keys(CLASS_CONFIG)) {
       const classResults = resultsByClass[classKey] || [];
 
-      // Scores for this class
+      // Scores for this class (already sorted by total score)
       const scores = classResults.slice(0, 10).map(result => ({
         name: result.abbr,
         fullName: result.corpsName,
@@ -265,32 +277,39 @@ export const useTickerData = () => {
         eventName: result.eventName,
       }));
 
-      // Caption leaders for this class
-      const sortedByGE = [...classResults].sort((a, b) => (b.GE_Total || 0) - (a.GE_Total || 0));
-      const sortedByVisual = [...classResults].sort((a, b) => (b.VIS_Total || 0) - (a.VIS_Total || 0));
-      const sortedByMusic = [...classResults].sort((a, b) => (b.MUS_Total || 0) - (a.MUS_Total || 0));
-
-      const captionLeaders = {
-        ge: sortedByGE[0] ? {
-          name: sortedByGE[0].abbr,
-          fullName: sortedByGE[0].corpsName,
-          score: (sortedByGE[0].GE_Total || 0).toFixed(3),
-        } : null,
-        visual: sortedByVisual[0] ? {
-          name: sortedByVisual[0].abbr,
-          fullName: sortedByVisual[0].corpsName,
-          score: (sortedByVisual[0].VIS_Total || 0).toFixed(3),
-        } : null,
-        music: sortedByMusic[0] ? {
-          name: sortedByMusic[0].abbr,
-          fullName: sortedByMusic[0].corpsName,
-          score: (sortedByMusic[0].MUS_Total || 0).toFixed(3),
-        } : null,
-      };
-
-      // Movers for this class - compare current score to most recent previous score
+      // SINGLE PASS: Find caption leaders and calculate movers simultaneously
+      let geLeader = null;
+      let visualLeader = null;
+      let musicLeader = null;
       const movers = [];
-      classResults.forEach(result => {
+
+      for (const result of classResults) {
+        const geScore = result.GE_Total || 0;
+        const visScore = result.VIS_Total || 0;
+        const musScore = result.MUS_Total || 0;
+
+        // Track class caption leaders
+        if (!geLeader || geScore > geLeader.score) {
+          geLeader = { result, score: geScore };
+        }
+        if (!visualLeader || visScore > visualLeader.score) {
+          visualLeader = { result, score: visScore };
+        }
+        if (!musicLeader || musScore > musicLeader.score) {
+          musicLeader = { result, score: musScore };
+        }
+
+        // Track combined leaders (maintain top 8 for each category)
+        const resultEntry = {
+          name: result.abbr,
+          fullName: result.corpsName,
+          corpsClass: result.corpsClass,
+        };
+        combinedLeaders.ge.push({ ...resultEntry, score: geScore, _score: geScore });
+        combinedLeaders.visual.push({ ...resultEntry, score: visScore, _score: visScore });
+        combinedLeaders.music.push({ ...resultEntry, score: musScore, _score: musScore });
+
+        // Calculate movers inline
         const prev = corpsPreviousScores.get(result.corpsName);
         if (prev && prev.corpsClass === classKey) {
           const change = (result.totalScore || 0) - prev.score;
@@ -303,36 +322,58 @@ export const useTickerData = () => {
               currentScore: (result.totalScore || 0).toFixed(3),
               previousScore: prev.score.toFixed(3),
               daysSince: displayDay - prev.day,
+              _absChange: Math.abs(change), // For sorting
             });
           }
         }
-      });
-      movers.sort((a, b) => Math.abs(parseFloat(b.change)) - Math.abs(parseFloat(a.change)));
+      }
 
-      // Season leaders for this class
-      const classSeasonData = Array.from(corpsSeasonScores.values())
-        .filter(entry => entry.corpsClass === classKey)
-        .map(entry => {
-          entry.scores.sort((a, b) => b.day - a.day);
-          const latestScore = entry.scores[0]?.score || 0;
-          const trend = calculateTrend(entry.scores.map(s => ({ score: s.score })));
+      // Sort movers by absolute change
+      movers.sort((a, b) => b._absChange - a._absChange);
 
-          return {
-            name: entry.abbr,
-            fullName: entry.name,
-            score: latestScore.toFixed(3),
-            trend: trend.trend,
-            showCount: entry.scores.length,
-          };
-        })
-        .sort((a, b) => parseFloat(b.score) - parseFloat(a.score))
-        .slice(0, 10);
+      const captionLeaders = {
+        ge: geLeader ? {
+          name: geLeader.result.abbr,
+          fullName: geLeader.result.corpsName,
+          score: geLeader.score.toFixed(3),
+        } : null,
+        visual: visualLeader ? {
+          name: visualLeader.result.abbr,
+          fullName: visualLeader.result.corpsName,
+          score: visualLeader.score.toFixed(3),
+        } : null,
+        music: musicLeader ? {
+          name: musicLeader.result.abbr,
+          fullName: musicLeader.result.corpsName,
+          score: musicLeader.score.toFixed(3),
+        } : null,
+      };
+
+      // Season leaders for this class - optimized with pre-grouped data
+      const classSeasonData = [];
+      for (const entry of corpsSeasonScores.values()) {
+        if (entry.corpsClass !== classKey) continue;
+
+        // Scores are already sorted by day (most recent first from our earlier loop)
+        const latestScore = entry.scores[0]?.score || 0;
+        const trend = calculateTrend(entry.scores.map(s => ({ score: s.score })));
+
+        classSeasonData.push({
+          name: entry.abbr,
+          fullName: entry.name,
+          score: latestScore.toFixed(3),
+          trend: trend.trend,
+          showCount: entry.scores.length,
+          _score: latestScore, // For sorting
+        });
+      }
+      classSeasonData.sort((a, b) => b._score - a._score);
 
       byClass[classKey] = {
         scores,
         captionLeaders,
         movers: movers.slice(0, 5),
-        leaders: classSeasonData,
+        leaders: classSeasonData.slice(0, 10),
         label: CLASS_CONFIG[classKey].label,
       };
 
@@ -345,28 +386,28 @@ export const useTickerData = () => {
     // Sort available classes by config order
     availableClasses.sort((a, b) => CLASS_CONFIG[a].order - CLASS_CONFIG[b].order);
 
-    // Build combined caption leaders across all classes
-    const allSortedByGE = [...resultsWithAggregates].sort((a, b) => (b.GE_Total || 0) - (a.GE_Total || 0));
-    const allSortedByVisual = [...resultsWithAggregates].sort((a, b) => (b.VIS_Total || 0) - (a.VIS_Total || 0));
-    const allSortedByMusic = [...resultsWithAggregates].sort((a, b) => (b.MUS_Total || 0) - (a.MUS_Total || 0));
+    // Finalize combined caption leaders (sort once, take top 8)
+    combinedLeaders.ge.sort((a, b) => b._score - a._score);
+    combinedLeaders.visual.sort((a, b) => b._score - a._score);
+    combinedLeaders.music.sort((a, b) => b._score - a._score);
 
     const combinedCaptionLeaders = {
-      ge: allSortedByGE.slice(0, 8).map(r => ({
-        name: r.abbr,
-        fullName: r.corpsName,
-        score: (r.GE_Total || 0).toFixed(3),
+      ge: combinedLeaders.ge.slice(0, 8).map(r => ({
+        name: r.name,
+        fullName: r.fullName,
+        score: r._score.toFixed(3),
         corpsClass: r.corpsClass,
       })),
-      visual: allSortedByVisual.slice(0, 8).map(r => ({
-        name: r.abbr,
-        fullName: r.corpsName,
-        score: (r.VIS_Total || 0).toFixed(3),
+      visual: combinedLeaders.visual.slice(0, 8).map(r => ({
+        name: r.name,
+        fullName: r.fullName,
+        score: r._score.toFixed(3),
         corpsClass: r.corpsClass,
       })),
-      music: allSortedByMusic.slice(0, 8).map(r => ({
-        name: r.abbr,
-        fullName: r.corpsName,
-        score: (r.MUS_Total || 0).toFixed(3),
+      music: combinedLeaders.music.slice(0, 8).map(r => ({
+        name: r.name,
+        fullName: r.fullName,
+        score: r._score.toFixed(3),
         corpsClass: r.corpsClass,
       })),
     };
