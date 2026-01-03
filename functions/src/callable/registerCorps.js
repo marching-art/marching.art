@@ -77,6 +77,16 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       throw new HttpsError("already-exists", `You already have a corps in the ${corpsClass} class.`);
     }
 
+    // --- 4b. Check if corps name is already taken this season ---
+    const seasonId = seasonData?.seasonUid || 'default';
+    const corpsNameKey = `${seasonId}_${corpsName.toLowerCase().trim()}`;
+    const corpsNameRef = db.doc(`corpsnames/${corpsNameKey}`);
+    const corpsNameDoc = await corpsNameRef.get();
+
+    if (corpsNameDoc.exists) {
+      throw new HttpsError("already-exists", "This corps name is already taken. Please choose a different name.");
+    }
+
     // --- 5. Create New Corps Data ---
     const newCorpsData = {
       corpsName,
@@ -101,8 +111,18 @@ exports.registerCorps = onCall({ cors: true }, async (request) => {
       logger.info(`Setting activeSeasonId for user ${uid} to ${seasonData.seasonUid}`);
     }
 
-    // --- 7. Write to DB ---
-    await profileDocRef.update(updateData);
+    // --- 7. Write to DB (batch to ensure atomicity) ---
+    const batch = db.batch();
+    batch.update(profileDocRef, updateData);
+    // Reserve the corps name for this season
+    batch.set(corpsNameRef, {
+      uid,
+      corpsName,
+      corpsClass,
+      seasonId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
 
     logger.info(`User ${uid} successfully registered ${corpsName} (${corpsClass}).`);
     return { success: true, message: "Corps registered!" };
