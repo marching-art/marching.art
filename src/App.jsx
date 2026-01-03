@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect, createContext, useContext, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, createContext, useContext, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -154,7 +154,9 @@ function App() {
     return <LoadingScreen fullScreen />;
   }
 
-  const authContextValue = {
+  // Memoize auth context value to prevent unnecessary re-renders of all consumers
+  // Only recreates when user, loading, or error actually change
+  const authContextValue = useMemo(() => ({
     user,
     loading,
     error,
@@ -162,7 +164,7 @@ function App() {
     signUp: authHelpers.signUpWithEmail,
     signInAnonymously: authHelpers.signInAnon,
     signOut: authHelpers.signOut
-  };
+  }), [user, loading, error]);
 
   return (
     <ErrorBoundary>
