@@ -12,15 +12,12 @@ import BottomNav from '../BottomNav';
 import { useSeasonStore } from '../../store/seasonStore';
 import { formatSeasonName } from '../../utils/season';
 import { useTickerData } from '../../hooks/useTickerData';
-import { useDashboardData } from '../../hooks/useDashboardData';
-import PlayerStatusBar from '../PlayerStatusBar';
 import {
   LayoutDashboard,
   Calendar,
   Trophy,
   Users,
   User,
-  ChevronDown,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -46,13 +43,12 @@ export const useShell = () => {
 };
 
 // =============================================================================
-// TOP NAV - Fixed h-12
+// TOP NAV - Clean, minimal header focused on navigation
 // =============================================================================
 
 const TopNav = () => {
   const seasonData = useSeasonStore((state) => state.seasonData);
   const { user } = useAuth();
-  const { profile, engagementData } = useDashboardData();
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
@@ -64,58 +60,43 @@ const TopNav = () => {
     }
   }, [user]);
 
-  // Format the season name for display
-  const getDisplaySeasonName = () => {
-    if (!seasonData?.name) return 'Loading Season...';
-
+  // Format the season name for display - compact version
+  const getSeasonLabel = () => {
+    if (!seasonData?.name) return null;
     const name = seasonData.name;
-
-    // For live seasons (e.g., "live_2024-25"), display as "2024 Live Season"
     if (name.startsWith('live_')) {
       const yearPart = name.replace('live_', '').split('-')[0];
-      return `${yearPart} Live Season`;
+      return yearPart;
     }
-
-    // For off-seasons (e.g., "finale_2024-25"), display as "Finale 2024-25"
-    return formatSeasonName(name);
+    return formatSeasonName(name).replace(' Season', '');
   };
+
+  const seasonLabel = getSeasonLabel();
 
   return (
     <nav className="fixed top-0 w-full h-12 bg-[#1a1a1a] border-b border-[#333] z-50 flex items-center px-2 sm:px-4">
-      {/* Logo */}
-      <Link to="/dashboard" className="flex items-center gap-2 mr-2 sm:mr-6">
+      {/* Logo + Brand */}
+      <Link to="/dashboard" className="flex items-center gap-2 mr-4">
         <img
           src="/logo192.svg"
           alt="marching.art"
           className="w-7 h-7 rounded"
         />
-        <span className="hidden lg:block font-bold text-sm text-white">MARCHING.ART</span>
-      </Link>
-
-      {/* Season Selector - Hidden on mobile to make room for status */}
-      <div className="hidden xl:flex items-center gap-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs text-gray-300">
-        <span>{getDisplaySeasonName()}</span>
-        <ChevronDown className="w-3 h-3 opacity-50" />
-      </div>
-
-      {/* Player Status Bar - Shows streak, XP, CC */}
-      {profile && (
-        <div className="ml-2 sm:ml-4">
-          <PlayerStatusBar
-            xp={profile.xp || 0}
-            xpLevel={profile.xpLevel || 1}
-            corpsCoin={profile.corpsCoin || 0}
-            streak={engagementData?.loginStreak || 0}
-            lastLogin={engagementData?.lastLogin}
-            unlockedClasses={profile.unlockedClasses || ['soundSport']}
-          />
+        <div className="flex flex-col">
+          <span className="hidden sm:block font-bold text-sm text-white leading-tight">MARCHING.ART</span>
+          {/* Season badge - subtle, integrated */}
+          {seasonLabel && (
+            <span className="hidden sm:block text-[9px] text-gray-500 uppercase tracking-wider leading-tight">
+              {seasonLabel}
+            </span>
+          )}
         </div>
-      )}
+      </Link>
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Desktop Nav Links */}
+      {/* Desktop Nav Links - centered feel */}
       <div className="hidden lg:flex items-center gap-1">
         <NavItem to="/" icon={Newspaper} label="News" />
         <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
