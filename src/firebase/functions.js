@@ -74,3 +74,4 @@ export const startNewOffSeason = httpsCallable(functions, 'startNewOffSeason');
 export const startNewLiveSeason = httpsCallable(functions, 'startNewLiveSeason');
 export const manualTrigger = httpsCallable(functions, 'manualTrigger');
 export const sendTestEmail = httpsCallable(functions, 'sendTestEmail');
+export const triggerDailyNews = httpsCallable(functions, 'triggerDailyNews');
