@@ -165,6 +165,18 @@
     overscroll-behavior: contain;
   }
 
+  /* Main content bottom positioning - accounts for mobile nav + safe area */
+  .main-content-bottom {
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* On desktop (lg breakpoint), no bottom nav so use minimal spacing */
+  @media (min-width: 1024px) {
+    .main-content-bottom {
+      bottom: 16px;
+    }
+  }
+
   /* Press feedback - haptic-like visual response */
   .press-feedback {
     transition: transform 150ms cubic-bezier(0.25, 0.1, 0.25, 1.0),

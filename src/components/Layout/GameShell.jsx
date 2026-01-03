@@ -511,10 +511,11 @@ const GameShell = ({ children }) => {
         <TickerBar />
 
         {/* Main Content Area - Fixed position fills space between headers and footer */}
+        {/* On mobile, bottom accounts for nav height + safe-area-inset-bottom via CSS class */}
         <main
           id="main-content"
           role="main"
-          className="fixed top-[84px] sm:top-20 bottom-[72px] lg:bottom-4 left-0 right-0 bg-[#0a0a0a] scroll-momentum"
+          className="fixed top-[84px] sm:top-20 left-0 right-0 bg-[#0a0a0a] scroll-momentum main-content-bottom"
         >
           <div className="h-full w-full overflow-y-auto scroll-contain">
             {children}
