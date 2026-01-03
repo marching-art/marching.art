@@ -607,6 +607,7 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
   }, [corpsClass]);
 
   // Quick Fill - auto-fill empty slots randomly while targeting 95-100% of point limit
+  // Guarantees all captions are filled by reserving budget for remaining slots
   // Also ensures the generated lineup doesn't match any existing lineups
   const handleQuickFill = useCallback(() => {
     if (availableCorps.length === 0) return;
@@ -618,62 +619,80 @@ const CaptionSelectionModal = ({ onClose, onSubmit, corpsClass, currentLineup, s
       return;
     }
 
-    // Helper to generate a random lineup
+    // Helper to check if picking a corps leaves enough budget for remaining slots
+    const isViablePick = (corps, slotsAfterThis, budgetAfterPick, usedCorpsSet) => {
+      if (slotsAfterThis === 0) return true;
+
+      // Get corps that will still be available after this pick
+      const remainingCorps = availableCorps
+        .filter(c => !usedCorpsSet.has(c.corpsName) && c.corpsName !== corps.corpsName)
+        .sort((a, b) => a.points - b.points);
+
+      // Calculate minimum points needed to fill remaining slots
+      const minForRemaining = remainingCorps
+        .slice(0, slotsAfterThis)
+        .reduce((sum, c) => sum + c.points, 0);
+
+      return budgetAfterPick >= minForRemaining;
+    };
+
+    // Helper to generate a random lineup that fills all slots
     const generateRandomLineup = () => {
       const newSelections = { ...selections };
 
-      // Calculate current used points and remaining budget
-      let usedPoints = Object.values(newSelections).reduce(
-        (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
-      );
-      let remainingBudget = pointLimit - usedPoints;
-
-      // Target range: use at least 95% of point limit
-      const minTargetTotal = Math.floor(pointLimit * 0.95);
-      let remainingMinTarget = Math.max(0, minTargetTotal - usedPoints);
-
-      // Track which corps have been used (to avoid duplicates within lineup)
+      // Track which corps have been used
       const usedCorps = new Set(
         Object.values(newSelections)
           .filter(Boolean)
           .map(s => s.split('|')[0])
       );
 
+      let usedPoints = Object.values(newSelections).reduce(
+        (t, s) => t + (s ? parseInt(s.split('|')[2]) || 0 : 0), 0
+      );
+      let remainingBudget = pointLimit - usedPoints;
+
       // Shuffle empty captions for random ordering
       const shuffledCaptions = [...emptyCaptions].sort(() => Math.random() - 0.5);
-      let slotsRemaining = shuffledCaptions.length;
 
-      // Fill each empty caption randomly
-      for (const caption of shuffledCaptions) {
-        // Calculate minimum points needed per remaining slot to hit 95% target
-        const minPerSlot = Math.ceil(remainingMinTarget / slotsRemaining);
+      for (let i = 0; i < shuffledCaptions.length; i++) {
+        const caption = shuffledCaptions[i];
+        const slotsAfterThis = shuffledCaptions.length - i - 1;
 
-        // Get valid corps (not already used, fits within budget)
-        const validCorps = availableCorps
-          .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget);
+        // Get all viable candidates (picking them leaves enough for remaining slots)
+        const viableCandidates = availableCorps
+          .filter(c => !usedCorps.has(c.corpsName) && c.points <= remainingBudget)
+          .filter(c => isViablePick(c, slotsAfterThis, remainingBudget - c.points, usedCorps));
 
-        if (validCorps.length === 0) {
-          slotsRemaining--;
+        if (viableCandidates.length === 0) {
+          // Shouldn't happen with proper math, but safety fallback
           continue;
         }
 
-        // Prefer corps that help us meet the 95% minimum target
-        let candidates = validCorps.filter(c => c.points >= minPerSlot);
+        // Calculate target to aim for 95-100% utilization
+        // Ideal per slot = distribute remaining budget evenly across remaining slots
+        const idealPerSlot = Math.floor(remainingBudget / (slotsAfterThis + 1));
 
-        // If no candidates meet minimum, use all valid corps
-        if (candidates.length === 0) {
-          candidates = validCorps;
+        // Prefer higher-point corps (to maximize budget usage) but within viable range
+        // Sort by points descending and filter to those near ideal or above
+        const sortedByPoints = [...viableCandidates].sort((a, b) => b.points - a.points);
+
+        // Take candidates that are at least 70% of ideal (but still viable)
+        const minPreferred = Math.floor(idealPerSlot * 0.7);
+        let preferredCandidates = sortedByPoints.filter(c => c.points >= minPreferred);
+
+        // If no candidates meet preference, use all viable (prioritizing higher points)
+        if (preferredCandidates.length === 0) {
+          preferredCandidates = sortedByPoints;
         }
 
-        // Randomly select from candidates
-        const randomIndex = Math.floor(Math.random() * candidates.length);
-        const selected = candidates[randomIndex];
+        // Randomly select from preferred candidates
+        const randomIndex = Math.floor(Math.random() * preferredCandidates.length);
+        const selected = preferredCandidates[randomIndex];
 
         newSelections[caption.id] = `${selected.corpsName}|${selected.sourceYear}|${selected.points}`;
         usedCorps.add(selected.corpsName);
         remainingBudget -= selected.points;
-        remainingMinTarget = Math.max(0, remainingMinTarget - selected.points);
-        slotsRemaining--;
       }
 
       return newSelections;
