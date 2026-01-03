@@ -198,7 +198,7 @@ function FantasyROIBadge({ metrics }) {
       <div className="flex flex-col">
         <span className="text-[10px] text-green-400/80 uppercase tracking-wider font-medium">Top ROI</span>
         <span className="text-xs text-white font-bold">
-          {corps} {caption}: <span className={isPositive ? 'text-green-400' : 'text-red-400'}>
+          {corps} {caption}: <span className={`font-data tabular-nums ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
             {isPositive ? '+' : ''}{pointsGained.toFixed(1)} pts ({roiPercent.toFixed(1)}%)
           </span>
         </span>
@@ -229,13 +229,13 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
             </div>
           )}
         </div>
-        <span className="text-xs text-gray-500 tabular-nums">
+        <span className="text-[10px] text-gray-500 font-data tabular-nums uppercase">
           {storyCount} {storyCount === 1 ? 'story' : 'stories'}
         </span>
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-[#1a1a1a] border border-[#333] rounded-sm overflow-x-auto">
+      {/* Category Tabs - Segmented Control */}
+      <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333] rounded-sm overflow-x-auto">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.id;
@@ -243,13 +243,13 @@ function NewsMasthead({ activeCategory, onCategoryChange, storyCount, isLive }) 
             <button
               key={cat.id}
               onClick={() => onCategoryChange(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                 isActive
                   ? 'bg-[#0057B8] text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3 h-3" />
               <span className="hidden sm:inline">{cat.label}</span>
               <span className="sm:hidden">{cat.id === 'all' ? 'All' : cat.label.split(' ')[0]}</span>
             </button>
