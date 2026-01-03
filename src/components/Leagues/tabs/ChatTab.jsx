@@ -1,20 +1,11 @@
-// ChatTab - Enhanced league chat with timestamps, reactions, and Commissioner badge
-// Note: Message input is handled by the persistent Smack Talk component in LeagueDetailView
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Heart, ThumbsUp, Flame, Trophy, Clock, Crown } from 'lucide-react';
-import toast from 'react-hot-toast';
+// ChatTab - Dark-mode messenger styling
+// Design System: #111 received bubbles, #0057B8 sent bubbles, Commissioner badge
 
-// Available reactions
-const REACTIONS = [
-  { id: 'like', emoji: '👍', icon: ThumbsUp },
-  { id: 'heart', emoji: '❤️', icon: Heart },
-  { id: 'fire', emoji: '🔥', icon: Flame },
-  { id: 'trophy', emoji: '🏆', icon: Trophy }
-];
+import React, { useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquare, Clock, Crown } from 'lucide-react';
 
 const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner = false }) => {
-  const [showReactionPicker, setShowReactionPicker] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom on new messages
@@ -22,13 +13,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleReaction = async (messageId, reactionId) => {
-    // Reaction feature not implemented yet - UI ready for future
-    toast.success(`${REACTIONS.find(r => r.id === reactionId)?.emoji} Coming soon!`);
-    setShowReactionPicker(null);
-  };
-
-  // Helper to get display name
+  // Get display name
   const getDisplayName = (uid) => {
     if (uid === userProfile?.uid) return 'You';
     const profile = memberProfiles?.[uid];
@@ -46,19 +31,16 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 7) return `${diffDays}d`;
 
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Group messages by date for better readability
+  // Group messages by date
   const groupMessagesByDate = (msgs) => {
     const groups = [];
     let currentDate = null;
@@ -86,7 +68,7 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
     if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
 
     return date.toLocaleDateString('en-US', {
-      weekday: 'long',
+      weekday: 'short',
       month: 'short',
       day: 'numeric'
     });
@@ -96,84 +78,81 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-[#1a1a1a] border border-[#333] rounded-sm overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col h-full"
     >
-      {/* Header */}
-      <div className="p-3 border-b border-[#333]">
+      {/* Section Header */}
+      <div className="px-4 py-3 border-b border-[#333] bg-[#222]">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-purple-500" />
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+            <MessageSquare className="w-3.5 h-3.5 text-purple-500" />
             League Chat
           </h3>
-          <span className="text-xs text-gray-500 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[10px] text-gray-500 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             {messages.length} messages
           </span>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="h-80 md:h-96 overflow-y-auto p-4 space-y-1">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-3">
-              <MessageSquare className="w-8 h-8 text-purple-500/50" />
+          <div className="h-full flex flex-col items-center justify-center text-center py-12">
+            <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mb-3">
+              <MessageSquare className="w-6 h-6 text-purple-500/50" />
             </div>
-            <p className="text-gray-400">No messages yet</p>
-            <p className="text-xs text-gray-500 mt-1">Start the conversation!</p>
+            <p className="text-sm text-gray-400">No messages yet</p>
+            <p className="text-xs text-gray-600 mt-1">Start the conversation!</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
             {groupedMessages.map((item, idx) => {
               if (item.type === 'date') {
                 return (
-                  <motion.div
+                  <div
                     key={`date-${idx}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center justify-center my-4"
+                    className="flex items-center justify-center my-3"
                   >
-                    <div className="px-3 py-1 rounded-sm bg-[#222] text-xs text-gray-500">
+                    <div className="px-2.5 py-1 bg-[#222] text-[10px] text-gray-500 uppercase tracking-wider font-bold">
                       {formatDateSeparator(item.date)}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               }
 
               const isOwn = item.userId === userProfile?.uid;
+              const isCreator = item.userId === league?.creatorId;
 
               return (
                 <motion.div
                   key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`group flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`relative max-w-xs md:max-w-sm ${isOwn ? 'order-2' : ''}`}>
+                  <div className={`max-w-[280px] md:max-w-[320px] ${isOwn ? 'order-2' : ''}`}>
                     {/* Message Bubble */}
                     <div
-                      className={`px-3 py-2 rounded-sm ${
+                      className={`px-3 py-2 ${
                         isOwn
-                          ? 'bg-purple-500/20 border border-purple-500/30'
-                          : item.userId === league?.creatorId
-                            ? 'bg-yellow-500/10 border border-yellow-500/30'
-                            : 'bg-[#222] border border-[#444]'
+                          ? 'bg-[#0057B8] text-white'
+                          : 'bg-[#111] border border-[#333] text-white'
                       }`}
                     >
-                      {/* Sender name (for other users) - with Commissioner badge */}
+                      {/* Sender name (for received messages) */}
                       {!isOwn && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className={`text-xs font-bold ${
-                            item.userId === league?.creatorId ? 'text-yellow-500' : 'text-purple-500'
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <p className={`text-[11px] font-bold ${
+                            isCreator ? 'text-yellow-500' : 'text-gray-400'
                           }`}>
                             @{getDisplayName(item.userId)}
                           </p>
-                          {item.userId === league?.creatorId && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-[10px] font-bold">
-                              <Crown className="w-2.5 h-2.5" />
+                          {isCreator && (
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.5 bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 text-[9px] font-bold">
+                              <Crown className="w-2 h-2" />
                               Commish
                             </span>
                           )}
@@ -181,61 +160,18 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
                       )}
 
                       {/* Message text */}
-                      <p className="text-white text-sm break-words">
+                      <p className="text-sm break-words leading-relaxed">
                         {item.message}
                       </p>
 
                       {/* Timestamp */}
                       <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
-                        <Clock className="w-3 h-3 text-gray-600" />
-                        <span className="text-xs text-gray-600">
+                        <Clock className={`w-2.5 h-2.5 ${isOwn ? 'text-white/50' : 'text-gray-600'}`} />
+                        <span className={`text-[10px] ${isOwn ? 'text-white/50' : 'text-gray-600'}`}>
                           {formatTime(item.createdAt)}
                         </span>
                       </div>
                     </div>
-
-                    {/* Reactions display */}
-                    {item.reactions && Object.keys(item.reactions).length > 0 && (
-                      <div className={`flex gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
-                        {Object.entries(item.reactions).map(([reaction, users]) => (
-                          <span
-                            key={reaction}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#222] text-xs"
-                          >
-                            {REACTIONS.find(r => r.id === reaction)?.emoji || reaction}
-                            <span className="text-gray-400">{users.length}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Reaction picker button */}
-                    <button
-                      onClick={() => setShowReactionPicker(showReactionPicker === item.id ? null : item.id)}
-                      className={`absolute top-0 ${isOwn ? 'left-0 -translate-x-8' : 'right-0 translate-x-8'} opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-sm bg-[#333] hover:bg-[#444] text-gray-400 hover:text-white`}
-                    >
-                      <span className="text-sm">😀</span>
-                    </button>
-
-                    {/* Reaction picker */}
-                    {showReactionPicker === item.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className={`absolute ${isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} top-0 z-10 flex gap-1 p-2 rounded-sm bg-[#1a1a1a] border border-[#333]`}
-                      >
-                        {REACTIONS.map(reaction => (
-                          <button
-                            key={reaction.id}
-                            onClick={() => handleReaction(item.id, reaction.id)}
-                            className="w-8 h-8 rounded-sm hover:bg-[#333] flex items-center justify-center transition-colors text-lg"
-                          >
-                            {reaction.emoji}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
                   </div>
                 </motion.div>
               );
@@ -244,7 +180,6 @@ const ChatTab = ({ league, messages, userProfile, memberProfiles, isCommissioner
         )}
         <div ref={messagesEndRef} />
       </div>
-
     </motion.div>
   );
 };
