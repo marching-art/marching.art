@@ -1,15 +1,15 @@
 // =============================================================================
-// PROFILE - SPORTS ALMANAC STYLE
+// PROFILE - DIRECTOR CARD STYLE (Gold Standard Aligned)
 // =============================================================================
-// Dense stats strip, minimal header, trophy case grid
-// Laws: No glow, compact spacing, tables over cards
+// Dense stats, compact header, ESPN aesthetic
+// Laws: No glow, no shadow, tight spacing, tables over cards
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Trophy, Settings, Star, TrendingUp, Calendar,
   Crown, Medal, MapPin, Edit, Check, X, LogOut, Coins, Heart,
-  Mail, Bell, ChevronRight, MessageCircle
+  ChevronRight, MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
@@ -71,16 +71,16 @@ const seasonHistoryColumns = [
   {
     key: 'className',
     header: 'Class',
-    width: '70px',
+    width: '60px',
     render: (row) => {
       const names = { worldClass: 'World', openClass: 'Open', aClass: 'A', soundSport: 'SS' };
-      return <span className="text-gray-400">{names[row.classKey] || row.classKey}</span>;
+      return <span className="text-gray-500">{names[row.classKey] || row.classKey}</span>;
     },
   },
   {
     key: 'placement',
     header: 'RK',
-    width: '50px',
+    width: '45px',
     align: 'center',
     isRank: true,
     render: (row) => row.placement ? `#${row.placement}` : '-',
@@ -88,12 +88,12 @@ const seasonHistoryColumns = [
   {
     key: 'totalSeasonScore',
     header: 'Score',
-    width: '70px',
+    width: '65px',
     align: 'right',
     render: (row) => {
       const score = row.finalScore || row.totalSeasonScore;
       return (
-        <span className="text-white tabular-nums">
+        <span className="text-white font-data tabular-nums">
           {score ? score.toLocaleString() : '-'}
         </span>
       );
@@ -106,10 +106,10 @@ const seasonHistoryColumns = [
 // =============================================================================
 
 const Toggle = ({ checked, onChange, label, description }) => (
-  <label className="flex items-center justify-between py-3 cursor-pointer group">
-    <div className="flex-1 mr-4">
+  <label className="flex items-center justify-between py-2.5 cursor-pointer group">
+    <div className="flex-1 mr-3">
       <p className="text-sm text-white group-hover:text-gray-200">{label}</p>
-      {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
+      {description && <p className="text-[10px] text-gray-500 mt-0.5">{description}</p>}
     </div>
     <div className="relative">
       <input
@@ -118,14 +118,8 @@ const Toggle = ({ checked, onChange, label, description }) => (
         checked={checked}
         onChange={onChange}
       />
-      <div className={`
-        w-11 h-6 rounded-full transition-colors
-        ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}
-      `}>
-        <div className={`
-          absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all
-          ${checked ? 'left-[22px]' : 'left-0.5'}
-        `} />
+      <div className={`w-10 h-5 rounded-full transition-colors ${checked ? 'bg-[#0057B8]' : 'bg-[#333]'}`}>
+        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
       </div>
     </div>
   </label>
@@ -139,7 +133,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Reset tab when modal opens with a new initialTab
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
@@ -159,7 +152,6 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Load email preferences
   useEffect(() => {
     if (isOpen && user) {
       loadEmailPrefs();
@@ -226,19 +218,19 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-2xl sm:rounded-lg safe-area-bottom max-h-[85vh] flex flex-col"
+        className="w-full sm:max-w-md bg-[#1a1a1a] border-t sm:border border-[#333] rounded-t-xl sm:rounded-sm safe-area-bottom max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle - mobile only */}
-        <div className="sm:hidden flex justify-center py-3">
-          <div className="w-10 h-1 bg-gray-600 rounded-full" />
+        <div className="sm:hidden flex justify-center py-2">
+          <div className="w-8 h-1 bg-gray-600 rounded-full" />
         </div>
 
         <div className="px-4 py-3 border-b border-[#333] bg-[#222] flex items-center justify-between shrink-0">
-          <span className="text-sm font-bold uppercase text-gray-400">Settings</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Settings</span>
           <button
             onClick={onClose}
-            className="p-2.5 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+            className="p-2 -mr-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -249,7 +241,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         <div className="flex border-b border-[#333] shrink-0">
           <button
             onClick={() => setActiveTab('account')}
-            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'account'
                 ? 'text-white border-b-2 border-[#0057B8]'
                 : 'text-gray-500 hover:text-gray-300'
@@ -259,7 +251,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
           </button>
           <button
             onClick={() => setActiveTab('emails')}
-            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
+            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
               activeTab === 'emails'
                 ? 'text-white border-b-2 border-[#0057B8]'
                 : 'text-gray-500 hover:text-gray-300'
@@ -270,17 +262,17 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scroll-momentum">
           {activeTab === 'account' && (
-            <div className="p-4 space-y-4">
-              <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
-                <div className="text-base text-white font-data">{user?.email || 'Anonymous'}</div>
+            <div className="p-3 space-y-3">
+              <div className="bg-[#111] border border-[#333] p-3">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Email</div>
+                <div className="text-sm text-white font-data">{user?.email || 'Anonymous'}</div>
               </div>
 
-              <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
-                <div className="text-base text-white">
+              <div className="bg-[#111] border border-[#333] p-3">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Member Since</div>
+                <div className="text-sm text-white">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
                     : 'Unknown'}
@@ -291,80 +283,96 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 href="https://buymeacoffee.com/marching.art"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-4 min-h-[52px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-base font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-bold hover:bg-amber-500/20 active:bg-amber-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
               >
-                <Heart className="w-5 h-5" />
+                <Heart className="w-4 h-4" />
                 Support marching.art
               </a>
 
               <button
                 onClick={handleSignOut}
-                className="w-full py-4 min-h-[52px] bg-red-500/10 border border-red-500/30 text-red-400 text-base font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
+                className="w-full py-3 min-h-[44px] bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/20 active:bg-red-500/30 transition-all press-feedback rounded-sm flex items-center justify-center gap-2"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
                 Sign Out
               </button>
             </div>
           )}
 
           {activeTab === 'emails' && (
-            <div className="p-4">
-              <p className="text-xs text-gray-500 mb-4">
-                Choose which emails you'd like to receive from marching.art
+            <div className="p-3">
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-3">
+                Email Preferences
               </p>
 
-              <div className="space-y-1 divide-y divide-[#333]">
-                <Toggle
-                  label="All Emails"
-                  description="Master toggle for all email communications"
-                  checked={emailPrefs.allEmails}
-                  onChange={(e) => updatePref('allEmails', e.target.checked)}
-                />
+              <div className="space-y-0 divide-y divide-[#333] bg-[#111] border border-[#333]">
+                <div className="px-3">
+                  <Toggle
+                    label="All Emails"
+                    description="Master toggle for all communications"
+                    checked={emailPrefs.allEmails}
+                    onChange={(e) => updatePref('allEmails', e.target.checked)}
+                  />
+                </div>
 
                 {emailPrefs.allEmails && (
                   <>
-                    <Toggle
-                      label="Streak Warnings"
-                      description="Alert when your streak is about to expire"
-                      checked={emailPrefs.streakAtRisk}
-                      onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
-                    />
-                    <Toggle
-                      label="Streak Reset"
-                      description="Notification when your streak resets"
-                      checked={emailPrefs.streakBroken}
-                      onChange={(e) => updatePref('streakBroken', e.target.checked)}
-                    />
-                    <Toggle
-                      label="Weekly Digest"
-                      description="Performance summary every Sunday"
-                      checked={emailPrefs.weeklyDigest}
-                      onChange={(e) => updatePref('weeklyDigest', e.target.checked)}
-                    />
-                    <Toggle
-                      label="Lineup Reminders"
-                      description="Reminder before shows"
-                      checked={emailPrefs.lineupReminder}
-                      onChange={(e) => updatePref('lineupReminder', e.target.checked)}
-                    />
-                    <Toggle
-                      label="League Activity"
-                      description="Trade proposals and matchup results"
-                      checked={emailPrefs.leagueActivity}
-                      onChange={(e) => updatePref('leagueActivity', e.target.checked)}
-                    />
-                    <Toggle
-                      label="Milestones"
-                      description="Celebrate streak achievements"
-                      checked={emailPrefs.milestoneAchieved}
-                      onChange={(e) => updatePref('milestoneAchieved', e.target.checked)}
-                    />
-                    <Toggle
-                      label="Re-engagement"
-                      description="We miss you emails"
-                      checked={emailPrefs.winBack}
-                      onChange={(e) => updatePref('winBack', e.target.checked)}
-                    />
+                    <div className="px-3">
+                      <Toggle
+                        label="Streak Warnings"
+                        description="Alert when streak is about to expire"
+                        checked={emailPrefs.streakAtRisk}
+                        onChange={(e) => updatePref('streakAtRisk', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Streak Reset"
+                        description="When your streak resets"
+                        checked={emailPrefs.streakBroken}
+                        onChange={(e) => updatePref('streakBroken', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Weekly Digest"
+                        description="Performance summary every Sunday"
+                        checked={emailPrefs.weeklyDigest}
+                        onChange={(e) => updatePref('weeklyDigest', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Lineup Reminders"
+                        description="Reminder before shows"
+                        checked={emailPrefs.lineupReminder}
+                        onChange={(e) => updatePref('lineupReminder', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="League Activity"
+                        description="Trades and matchup results"
+                        checked={emailPrefs.leagueActivity}
+                        onChange={(e) => updatePref('leagueActivity', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Milestones"
+                        description="Streak achievements"
+                        checked={emailPrefs.milestoneAchieved}
+                        onChange={(e) => updatePref('milestoneAchieved', e.target.checked)}
+                      />
+                    </div>
+                    <div className="px-3">
+                      <Toggle
+                        label="Re-engagement"
+                        description="We miss you emails"
+                        checked={emailPrefs.winBack}
+                        onChange={(e) => updatePref('winBack', e.target.checked)}
+                      />
+                    </div>
                   </>
                 )}
               </div>
@@ -373,7 +381,7 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
                 <button
                   onClick={saveEmailPrefs}
                   disabled={saving}
-                  className="w-full mt-4 py-3 bg-[#0057B8] text-white text-sm font-bold rounded hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
+                  className="w-full mt-3 py-2.5 bg-[#0057B8] text-white text-sm font-bold rounded-sm hover:bg-[#0066d6] disabled:opacity-50 transition-colors"
                 >
                   {saving ? 'Saving...' : 'Save Preferences'}
                 </button>
@@ -385,6 +393,17 @@ const SettingsModal = ({ user, isOpen, onClose, initialTab = 'account' }) => {
     </div>
   );
 };
+
+// =============================================================================
+// STAT CELL COMPONENT
+// =============================================================================
+
+const StatCell = ({ value, label }) => (
+  <div className="text-center px-2">
+    <div className="text-lg font-bold text-white font-data tabular-nums leading-tight">{value}</div>
+    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</div>
+  </div>
+);
 
 // =============================================================================
 // MAIN PROFILE COMPONENT
@@ -413,13 +432,12 @@ const Profile = () => {
         setSettingsTab('account');
       }
       setShowSettings(true);
-      // Clear the URL parameter after opening
       searchParams.delete('settings');
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, isOwnProfile, setSearchParams]);
-  const profileUserId = userId || user?.uid;
 
+  const profileUserId = userId || user?.uid;
   const { data: profile, isLoading, error, isError, refetch } = useProfile(profileUserId);
   const updateProfileMutation = useUpdateProfile(profileUserId || '');
 
@@ -464,7 +482,7 @@ const Profile = () => {
 
     return {
       starts: profile?.stats?.seasonsPlayed || scoreCount || 0,
-      avgScore: scoreCount > 0 ? (totalScore / scoreCount).toFixed(3) : '-',
+      avgScore: scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '-',
       bestFinish: bestRank ? `#${bestRank}` : '-',
       badges: achievements.length,
     };
@@ -474,23 +492,20 @@ const Profile = () => {
   const seasonHistory = useMemo(() => {
     if (!profile?.corps) return [];
     const history = [];
-    const seen = new Set(); // Track unique entries to prevent duplicates
+    const seen = new Set();
 
     Object.entries(profile.corps).forEach(([classKey, corps]) => {
       if (corps.seasonHistory) {
         corps.seasonHistory.forEach(season => {
-          // Create unique key for deduplication
           const uniqueKey = `${classKey}-${season.seasonId || season.seasonName}`;
-          if (seen.has(uniqueKey)) return; // Skip duplicates
+          if (seen.has(uniqueKey)) return;
           seen.add(uniqueKey);
-
-          // Prefer archived corps name, fall back to current corps name
           const corpsName = season.corpsName || corps.name || corps.corpsName;
           history.push({ ...season, corpsName, classKey });
         });
       }
     });
-    // Sort by seasonId descending (e.g., "live_2024-25" > "live_2023-24")
+
     return history.sort((a, b) => {
       const aId = a.seasonId || a.seasonName || '';
       const bId = b.seasonId || b.seasonName || '';
@@ -522,17 +537,26 @@ const Profile = () => {
 
   // Loading state
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+    return (
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center">
+          <div className="w-6 h-6 border-2 border-[#0057B8] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-xs text-gray-500">Loading profile...</p>
+        </div>
+      </div>
+    );
   }
 
   // Error state
   if (isError) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-red-500 mb-4">{error?.message || 'Error loading profile'}</p>
-        <button onClick={() => refetch()} className="text-[#0057B8] hover:underline">
-          Try Again
-        </button>
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center">
+          <p className="text-sm text-red-400 mb-3">{error?.message || 'Error loading profile'}</p>
+          <button onClick={() => refetch()} className="text-xs text-[#0057B8] hover:underline">
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -540,162 +564,160 @@ const Profile = () => {
   // Not found
   if (!profile) {
     return (
-      <div className="p-8 text-center">
-        <User className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-        <p className="text-gray-500">Profile not found</p>
+      <div className="h-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center">
+          <User className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Profile not found</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* HEADER - Minimal: Square Avatar + Name + Team */}
-      <div className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4">
-        <div className="w-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Square Avatar */}
-            <div className="w-14 h-14 bg-[#333] border border-[#444] flex items-center justify-center">
-              {profile.photoURL ? (
-                <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-7 h-7 text-gray-500" />
-              )}
-            </div>
+    <div className="h-full flex flex-col overflow-hidden bg-[#0a0a0a]">
+      {/* FIXED HEADER - Director Card Style */}
+      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* Avatar */}
+          <div className="w-14 h-14 bg-[#333] border border-[#444] flex-shrink-0 flex items-center justify-center">
+            {profile.photoURL ? (
+              <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-6 h-6 text-gray-500" />
+            )}
+          </div>
 
-            {/* Name + Team */}
-            <div>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editData.displayName}
-                  onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
-                  className="px-2 py-1 bg-[#222] border border-[#444] text-white text-lg font-bold focus:outline-none focus:border-[#0057B8]"
-                  placeholder="Display Name"
-                />
-              ) : (
-                <h1 className="text-lg font-bold text-white">
-                  {profile.displayName || 'Anonymous Director'}
-                </h1>
-              )}
-              {teamName && <p className="text-sm text-gray-500">{teamName}</p>}
-              {!isEditing && profile.location && (
-                <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3 h-3" />
-                  {profile.location}
-                </p>
-              )}
-            </div>
+          {/* Name + Meta */}
+          <div className="flex-1 min-w-0">
+            {isEditing ? (
+              <input
+                type="text"
+                value={editData.displayName}
+                onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+                className="w-full px-2 py-1 bg-[#222] border border-[#444] text-white text-sm font-bold focus:outline-none focus:border-[#0057B8]"
+                placeholder="Display Name"
+              />
+            ) : (
+              <h1 className="text-sm font-bold text-white truncate">
+                {profile.displayName || 'Anonymous Director'}
+              </h1>
+            )}
+            {teamName && (
+              <p className="text-[11px] text-gray-500 truncate">{teamName}</p>
+            )}
+            {!isEditing && profile.location && (
+              <p className="text-[10px] text-gray-600 flex items-center gap-1 mt-0.5">
+                <MapPin className="w-2.5 h-2.5" />
+                {profile.location}
+              </p>
+            )}
+          </div>
+
+          {/* Stats Grid - Right Side */}
+          <div className="hidden sm:flex items-center gap-1 border-l border-[#333] pl-3">
+            <StatCell value={stats.starts} label="Starts" />
+            <StatCell value={stats.avgScore} label="Avg" />
+            <StatCell value={stats.bestFinish} label="Best" />
+            <StatCell value={stats.badges} label="Badges" />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             {isOwnProfile && !isEditing && (
               <button
                 onClick={handleStartEdit}
-                className="p-2.5 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                className="p-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
                 aria-label="Edit profile"
               >
-                <Edit className="w-5 h-5" />
+                <Edit className="w-4 h-4" />
               </button>
             )}
             {isOwnProfile && (
               <button
                 onClick={() => setShowSettings(true)}
-                className="p-2.5 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
+                className="p-2 text-gray-500 hover:text-white active:text-white transition-colors press-feedback min-w-touch min-h-touch flex items-center justify-center"
                 aria-label="Settings"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-4 h-4" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Edit fields */}
+        {/* Edit Location Row */}
         {isEditing && (
-          <div className="w-full mt-3 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <input
               type="text"
               value={editData.location}
               onChange={(e) => setEditData({ ...editData, location: e.target.value })}
               placeholder="Location"
-              className="flex-1 px-2 py-1 bg-[#222] border border-[#444] text-white text-sm focus:outline-none focus:border-[#0057B8]"
+              className="flex-1 px-2 py-1.5 bg-[#222] border border-[#444] text-white text-xs focus:outline-none focus:border-[#0057B8]"
             />
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-3 py-1 bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-bold"
+              className="px-3 py-1.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-bold"
             >
-              <Check className="w-4 h-4 inline" />
+              <Check className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setIsEditing(false)}
-              className="px-3 py-1 bg-[#333] border border-[#444] text-gray-400 text-sm"
+              className="px-3 py-1.5 bg-[#333] border border-[#444] text-gray-400 text-xs"
             >
-              <X className="w-4 h-4 inline" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
       </div>
 
-      {/* STATS STRIP - Horizontal row of 4 stats */}
-      <div className="border-y border-[#333] bg-[#1a1a1a] py-4 flex justify-around">
-        <div className="text-center px-2">
-          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.starts}</div>
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Starts</div>
+      {/* SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto min-h-0 scroll-momentum">
+        {/* MOBILE STATS STRIP - Only visible on mobile */}
+        <div className="sm:hidden border-b border-[#333] bg-[#1a1a1a] py-3 flex justify-around">
+          <StatCell value={stats.starts} label="Starts" />
+          <StatCell value={stats.avgScore} label="Avg" />
+          <StatCell value={stats.bestFinish} label="Best" />
+          <StatCell value={stats.badges} label="Badges" />
         </div>
-        <div className="text-center px-2">
-          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.avgScore}</div>
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Avg Score</div>
-        </div>
-        <div className="text-center px-2">
-          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.bestFinish}</div>
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Best</div>
-        </div>
-        <div className="text-center px-2">
-          <div className="text-2xl font-bold text-white font-data tabular-nums">{stats.badges}</div>
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Badges</div>
-        </div>
-      </div>
 
-      {/* MAIN CONTENT */}
-      <div className="w-full">
         {/* TROPHY CASE */}
         <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-2.5 border-b border-[#333]">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
               Trophy Case
-            </span>
+            </h3>
           </div>
           {achievements.length > 0 ? (
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-px bg-[#333] p-px">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-px bg-[#333]">
               {achievements.map((a) => {
                 const Icon = a.icon;
                 return (
                   <div
                     key={a.id}
-                    className="bg-[#1a1a1a] p-4 flex flex-col items-center justify-center min-h-[72px]"
+                    className="bg-[#1a1a1a] p-3 flex flex-col items-center justify-center min-h-[64px]"
                     title={a.label}
                   >
-                    <Icon className="w-6 h-6 text-yellow-500" />
-                    <span className="text-[11px] text-gray-500 mt-1.5">{a.label}</span>
+                    <Icon className="w-5 h-5 text-yellow-500" />
+                    <span className="text-[10px] text-gray-500 mt-1">{a.label}</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="p-8 text-center">
-              <Medal className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No badges yet</p>
+            <div className="p-6 text-center bg-[#1a1a1a]">
+              <Medal className="w-6 h-6 text-gray-600 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">No badges yet</p>
             </div>
           )}
         </div>
 
         {/* SEASON HISTORY */}
         <div className="border-b border-[#333]">
-          <div className="bg-[#222] px-4 py-2.5 border-b border-[#333]">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <div className="bg-[#222] px-4 py-3 border-b border-[#333]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
               Season History
-            </span>
+            </h3>
           </div>
           <DataTable
             columns={seasonHistoryColumns}
@@ -703,8 +725,8 @@ const Profile = () => {
             getRowKey={(row, idx) => `${row.classKey}-${row.seasonId || idx}-${idx}`}
             zebraStripes={true}
             emptyState={
-              <div className="p-6 text-center">
-                <Calendar className="w-6 h-6 text-gray-600 mx-auto mb-1" />
+              <div className="p-4 text-center">
+                <Calendar className="w-5 h-5 text-gray-600 mx-auto mb-1" />
                 <p className="text-xs text-gray-500">No season history</p>
               </div>
             }
@@ -717,34 +739,34 @@ const Profile = () => {
             href="https://buymeacoffee.com/marching.art"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
+            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
           >
-            <Heart className="w-6 h-6 text-amber-500 mb-1.5" />
-            <span className="text-sm text-gray-400">Support</span>
+            <Heart className="w-5 h-5 text-amber-500 mb-1" />
+            <span className="text-xs text-gray-400">Support</span>
           </a>
           <a
             href="https://discord.gg/YvFRJ97A5H"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
+            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
           >
-            <MessageCircle className="w-6 h-6 text-[#5865F2] mb-1.5" />
-            <span className="text-sm text-gray-400">Discord</span>
+            <MessageCircle className="w-5 h-5 text-[#5865F2] mb-1" />
+            <span className="text-xs text-gray-400">Discord</span>
           </a>
           <Link
             to="/leagues"
-            className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
+            className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
           >
-            <Crown className="w-6 h-6 text-purple-500 mb-1.5" />
-            <span className="text-sm text-gray-400">Leagues</span>
+            <Crown className="w-5 h-5 text-purple-500 mb-1" />
+            <span className="text-xs text-gray-400">Leagues</span>
           </Link>
           {isOwnProfile && (
             <Link
               to="/dashboard"
-              className="bg-[#1a1a1a] p-5 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[80px] flex flex-col items-center justify-center"
+              className="bg-[#1a1a1a] p-4 text-center hover:bg-[#222] active:bg-[#333] transition-colors press-feedback min-h-[72px] flex flex-col items-center justify-center"
             >
-              <Coins className="w-6 h-6 text-yellow-500 mb-1.5" />
-              <span className="text-sm text-gray-400 font-data tabular-nums">
+              <Coins className="w-5 h-5 text-yellow-500 mb-1" />
+              <span className="text-xs text-gray-400 font-data tabular-nums">
                 {(profile.corpsCoin || 0).toLocaleString()} CC
               </span>
             </Link>
@@ -758,7 +780,7 @@ const Profile = () => {
         isOpen={showSettings}
         onClose={() => {
           setShowSettings(false);
-          setSettingsTab('account'); // Reset to account tab when closing
+          setSettingsTab('account');
         }}
         initialTab={settingsTab}
       />
