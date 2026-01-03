@@ -605,10 +605,12 @@ async function startNewLiveSeason() {
           lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
         }
 
-        // Auto-continue corps in new season (set activeSeasonId to new season, not null)
-        // This prevents the wizard from showing the corps verification step
+        // Reset corps data for new season but DON'T update activeSeasonId yet.
+        // This allows the SeasonSetupWizard to detect the season mismatch and show
+        // the corps verification step (Step 0) where users can choose to continue,
+        // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
+        // after the user makes their decisions.
         batch.update(doc.ref, {
-          activeSeasonId: dataDocId,
           corps: resetCorps,
           lifetimeStats,
           retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
@@ -852,10 +854,12 @@ async function startNewOffSeason() {
           lifetimeStats.totalPoints = (lifetimeStats.totalPoints || 0) + seasonPointsTotal;
         }
 
-        // Auto-continue corps in new season (set activeSeasonId to new season, not null)
-        // This prevents the wizard from showing the corps verification step
+        // Reset corps data for new season but DON'T update activeSeasonId yet.
+        // This allows the SeasonSetupWizard to detect the season mismatch and show
+        // the corps verification step (Step 0) where users can choose to continue,
+        // retire, or start a new corps. activeSeasonId gets updated by processCorpsDecisions
+        // after the user makes their decisions.
         batch.update(doc.ref, {
-          activeSeasonId: dataDocId,
           corps: resetCorps,
           lifetimeStats,
           retiredCorps: profileData.retiredCorps || [] // Preserve retired corps list
