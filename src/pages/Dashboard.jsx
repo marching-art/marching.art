@@ -8,7 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Link } from 'react-router-dom';
 import {
   Trophy, Edit, TrendingUp, TrendingDown, Minus,
-  Calendar, Users, Lock, ChevronRight, Activity
+  Calendar, Users, Lock, ChevronRight, Activity, MapPin
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
@@ -68,6 +68,98 @@ const CLASS_UNLOCK_COSTS = { aClass: 1000, open: 2500, world: 5000 };
 const CLASS_DISPLAY_NAMES = { aClass: 'A Class', open: 'Open Class', world: 'World Class' };
 
 // =============================================================================
+// HISTORICAL SCORE HELPERS
+// =============================================================================
+
+/**
+ * Get the effective current day for score filtering
+ * Scores are processed at 2 AM, so between midnight and 2 AM
+ * we should still show the previous day's cutoff
+ */
+const getEffectiveDay = (currentDay) => {
+  const now = new Date();
+  const hour = now.getHours();
+  // Between midnight (0) and 2 AM, scores haven't been processed yet
+  if (hour < 2) {
+    return Math.max(1, currentDay - 1);
+  }
+  return currentDay;
+};
+
+/**
+ * Process historical scores for a corps to get caption-specific data
+ * Returns: { score, trend, nextShow } for a given caption
+ */
+const processCaptionScores = (yearData, corpsName, captionId, effectiveDay) => {
+  const scores = [];
+  let nextShow = null;
+
+  // Sort events by day
+  const sortedEvents = [...yearData].sort((a, b) => (a.offSeasonDay || 0) - (b.offSeasonDay || 0));
+
+  for (const event of sortedEvents) {
+    const scoreData = event.scores?.find(s => s.corps === corpsName);
+
+    // Find next upcoming show (first event with day >= effectiveDay)
+    if (event.offSeasonDay >= effectiveDay && !nextShow && scoreData) {
+      nextShow = {
+        day: event.offSeasonDay,
+        location: event.eventName || event.name || 'TBD'
+      };
+    }
+
+    // Only include scores from days before the effective day (no spoilers)
+    if (event.offSeasonDay >= effectiveDay) continue;
+
+    if (scoreData?.captions) {
+      const captionScore = scoreData.captions[captionId];
+      // Skip zero scores
+      if (captionScore && captionScore > 0) {
+        scores.push({
+          day: event.offSeasonDay,
+          score: captionScore,
+          eventName: event.eventName || event.name
+        });
+      }
+    }
+  }
+
+  if (scores.length === 0) {
+    return { score: null, trend: null, nextShow };
+  }
+
+  // Sort by day descending (most recent first)
+  scores.sort((a, b) => b.day - a.day);
+
+  const latestScore = scores[0].score;
+  const latestDay = scores[0].day;
+
+  // Find previous score from a different day
+  let previousScore = null;
+  for (let i = 1; i < scores.length; i++) {
+    if (scores[i].day !== latestDay) {
+      previousScore = scores[i].score;
+      break;
+    }
+  }
+
+  // Calculate trend
+  let trend = null;
+  if (previousScore !== null) {
+    const delta = latestScore - previousScore;
+    if (delta > 0.001) {
+      trend = { direction: 'up', delta: `+${delta.toFixed(2)}` };
+    } else if (delta < -0.001) {
+      trend = { direction: 'down', delta: delta.toFixed(2) };
+    } else {
+      trend = { direction: 'same', delta: '0.00' };
+    }
+  }
+
+  return { score: latestScore, trend, nextShow };
+};
+
+// =============================================================================
 // SKELETON COMPONENTS
 // =============================================================================
 
@@ -87,37 +179,12 @@ const SkeletonRow = () => (
 
 const ActiveLineupTable = ({
   lineup,
-  captionScores,
-  thisWeekShows,
+  lineupScoreData,
   loading,
   onManageLineup,
   onSlotClick
 }) => {
   const lineupCount = Object.keys(lineup).length;
-
-  // Get score for a caption
-  const getScore = (captionId) => {
-    return captionScores?.[captionId] ?? null;
-  };
-
-  // Get trend for a caption (mock - would come from historical data)
-  const getTrend = (captionId) => {
-    const score = getScore(captionId);
-    if (!score) return null;
-    // Mock trend based on score value
-    if (score > 18) return { direction: 'up', delta: '+0.2' };
-    if (score < 17) return { direction: 'down', delta: '-0.1' };
-    return { direction: 'same', delta: '0.0' };
-  };
-
-  // Get next show info
-  const getNextShow = () => {
-    if (!thisWeekShows || thisWeekShows.length === 0) return null;
-    const show = thisWeekShows[0];
-    return show.eventName || show.name || 'Upcoming';
-  };
-
-  const nextShow = getNextShow();
 
   return (
     <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
@@ -135,12 +202,6 @@ const ActiveLineupTable = ({
             {lineupCount}/8
           </span>
         </div>
-        {nextShow && (
-          <span className="text-[10px] text-gray-500 flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            Next: {nextShow}
-          </span>
-        )}
       </div>
 
       {/* Roster Table */}
@@ -157,10 +218,10 @@ const ActiveLineupTable = ({
               <th className="text-right py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
                 Last Score
               </th>
-              <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-16">
+              <th className="text-center py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-20">
                 Trend
               </th>
-              <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-28">
+              <th className="text-right py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-32">
                 Next Show
               </th>
             </tr>
@@ -173,8 +234,8 @@ const ActiveLineupTable = ({
                 const value = lineup[caption.id];
                 const hasValue = !!value;
                 const [corpsName, sourceYear] = hasValue ? value.split('|') : [null, null];
-                const score = getScore(caption.id);
-                const trend = getTrend(caption.id);
+                const captionData = lineupScoreData?.[caption.id] || {};
+                const { score, trend, nextShow } = captionData;
 
                 return (
                   <tr
@@ -211,9 +272,9 @@ const ActiveLineupTable = ({
 
                     {/* Last Score */}
                     <td className="py-2.5 px-2 text-right">
-                      {score !== null ? (
+                      {score !== null && score !== undefined ? (
                         <span className="text-sm font-bold text-white font-data tabular-nums">
-                          {score.toFixed(3)}
+                          {score.toFixed(2)}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-600">—</span>
@@ -238,16 +299,20 @@ const ActiveLineupTable = ({
                       )}
                     </td>
 
-                    {/* Next Show */}
+                    {/* Next Show (Day + Location) */}
                     <td className="py-2.5 px-3 text-right">
                       {hasValue && nextShow ? (
-                        <span className="text-[11px] text-gray-400 truncate block max-w-[100px]">
-                          {nextShow}
-                        </span>
+                        <div className="text-right">
+                          <span className="text-[10px] text-gray-500 block">Day {nextShow.day}</span>
+                          <span className="text-[11px] text-gray-400 truncate block max-w-[120px] flex items-center justify-end gap-1">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{nextShow.location}</span>
+                          </span>
+                        </div>
                       ) : hasValue ? (
                         <span className="text-[11px] text-gray-600 flex items-center justify-end gap-1">
                           <Lock className="w-3 h-3" />
-                          No show
+                          Season complete
                         </span>
                       ) : (
                         <span className="text-[11px] text-yellow-500 font-bold">
@@ -440,7 +505,7 @@ const Dashboard = () => {
   const { aggregatedScores, loading: scoresLoading } = useScoresData();
   const { data: myLeagues } = useMyLeagues(user?.uid);
   const { trigger: haptic } = useHaptic();
-  const { weeksRemaining, isRegistrationLocked } = useSeasonStore();
+  const { weeksRemaining, isRegistrationLocked, currentDay } = useSeasonStore();
 
   // Modal states
   const modalQueue = useModalQueue();
@@ -454,7 +519,8 @@ const Dashboard = () => {
   const [retiring, setRetiring] = useState(false);
   const [showQuickStartGuide, setShowQuickStartGuide] = useState(false);
   const [classToPurchase, setClassToPurchase] = useState(null);
-  const [captionScores, setCaptionScores] = useState({});
+  const [lineupScoreData, setLineupScoreData] = useState({});
+  const [lineupScoresLoading, setLineupScoresLoading] = useState(true);
   const [recentResults, setRecentResults] = useState([]);
 
   // Destructure dashboard data
@@ -500,9 +566,74 @@ const Dashboard = () => {
     return (activeCorps.selectedShows[`week${currentWeek}`] || []).slice(0, 3);
   }, [activeCorps?.selectedShows, currentWeek]);
 
-  // Fetch caption scores and recent results
+  // Fetch caption scores from historical_scores
   useEffect(() => {
-    const fetchScoresData = async () => {
+    const fetchLineupScores = async () => {
+      if (!lineup || Object.keys(lineup).length === 0 || !currentDay) {
+        setLineupScoresLoading(false);
+        return;
+      }
+
+      setLineupScoresLoading(true);
+
+      try {
+        // Calculate effective day (accounting for 2AM score processing)
+        const effectiveDay = getEffectiveDay(currentDay);
+
+        // Get unique years from lineup
+        const yearsNeeded = new Set();
+        Object.values(lineup).forEach(value => {
+          if (value) {
+            const [, sourceYear] = value.split('|');
+            if (sourceYear) yearsNeeded.add(sourceYear);
+          }
+        });
+
+        // Fetch historical_scores for each year
+        const historicalData = {};
+        const yearPromises = [...yearsNeeded].map(async (year) => {
+          const docSnap = await getDoc(doc(db, `historical_scores/${year}`));
+          if (docSnap.exists()) {
+            historicalData[year] = docSnap.data().data || [];
+          }
+        });
+        await Promise.all(yearPromises);
+
+        // Process scores for each caption slot
+        const scoreData = {};
+        CAPTIONS.forEach(caption => {
+          const value = lineup[caption.id];
+          if (!value) {
+            scoreData[caption.id] = { score: null, trend: null, nextShow: null };
+            return;
+          }
+
+          const [corpsName, sourceYear] = value.split('|');
+          const yearData = historicalData[sourceYear];
+
+          if (!yearData) {
+            scoreData[caption.id] = { score: null, trend: null, nextShow: null };
+            return;
+          }
+
+          // Process scores for this caption
+          scoreData[caption.id] = processCaptionScores(yearData, corpsName, caption.id, effectiveDay);
+        });
+
+        setLineupScoreData(scoreData);
+      } catch (error) {
+        console.error('Error fetching lineup scores:', error);
+      } finally {
+        setLineupScoresLoading(false);
+      }
+    };
+
+    fetchLineupScores();
+  }, [lineup, currentDay]);
+
+  // Fetch recent results from fantasy_recaps (for sidebar)
+  useEffect(() => {
+    const fetchRecentResults = async () => {
       if (!user?.uid || !seasonData?.seasonUid || !activeCorpsClass) return;
 
       try {
@@ -512,13 +643,10 @@ const Dashboard = () => {
         if (recapSnap.exists()) {
           const data = recapSnap.data();
           const recaps = data.recaps || [];
+          const results = [];
 
           // Sort by day descending
           const sortedRecaps = [...recaps].sort((a, b) => (b.offSeasonDay || 0) - (a.offSeasonDay || 0));
-
-          // Find user's scores per caption
-          const scores = {};
-          const results = [];
 
           for (const recap of sortedRecaps) {
             for (const show of (recap.shows || [])) {
@@ -526,46 +654,25 @@ const Dashboard = () => {
                 r => r.uid === user.uid && r.corpsClass === activeCorpsClass
               );
 
-              if (userResult) {
-                // Collect recent results
-                if (results.length < 5) {
-                  results.push({
-                    eventName: show.eventName || show.name || 'Show',
-                    score: userResult.totalScore,
-                    placement: userResult.placement,
-                    date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString() : null
-                  });
-                }
-
-                // Set caption scores from most recent
-                if (Object.keys(scores).length === 0) {
-                  // Map category scores to individual captions
-                  const geScore = userResult.geScore || 0;
-                  const visScore = userResult.visualScore || 0;
-                  const musScore = userResult.musicScore || 0;
-
-                  scores['GE1'] = geScore / 2;
-                  scores['GE2'] = geScore / 2;
-                  scores['VP'] = visScore / 3;
-                  scores['VA'] = visScore / 3;
-                  scores['CG'] = visScore / 3;
-                  scores['B'] = musScore / 3;
-                  scores['MA'] = musScore / 3;
-                  scores['P'] = musScore / 3;
-                }
+              if (userResult && results.length < 5) {
+                results.push({
+                  eventName: show.eventName || show.name || 'Show',
+                  score: userResult.totalScore,
+                  placement: userResult.placement,
+                  date: recap.date ? new Date(recap.date.seconds * 1000).toLocaleDateString() : null
+                });
               }
             }
           }
 
-          setCaptionScores(scores);
           setRecentResults(results);
         }
       } catch (error) {
-        console.error('Error fetching scores:', error);
+        console.error('Error fetching recent results:', error);
       }
     };
 
-    fetchScoresData();
+    fetchRecentResults();
   }, [user?.uid, seasonData?.seasonUid, activeCorpsClass]);
 
   // Queue auto-triggered modals
@@ -776,9 +883,8 @@ const Dashboard = () => {
               <div className="lg:col-span-2">
                 <ActiveLineupTable
                   lineup={lineup}
-                  captionScores={captionScores}
-                  thisWeekShows={thisWeekShows}
-                  loading={scoresLoading}
+                  lineupScoreData={lineupScoreData}
+                  loading={lineupScoresLoading}
                   onManageLineup={() => openCaptionSelection()}
                   onSlotClick={(captionId) => openCaptionSelection(captionId)}
                 />
