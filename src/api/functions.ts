@@ -67,7 +67,7 @@ export const unretireCorps = createCallable<{ corpsClass: string }, { success: b
 // ECONOMY
 // =============================================================================
 
-export const unlockClassWithCorpsCoin = createCallable<{ corpsClass: string }, { success: boolean }>('unlockClassWithCorpsCoin');
+export const unlockClassWithCorpsCoin = createCallable<{ classToUnlock: string }, { success: boolean; classUnlocked: string; newBalance: number }>('unlockClassWithCorpsCoin');
 
 // =============================================================================
 // EXECUTION SYSTEM

@@ -36,7 +36,8 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useScoresData } from '../hooks/useScoresData';
 import { useMyLeagues } from '../hooks/useLeagues';
 import { retireCorps } from '../firebase/functions';
-import { submitNewsForApproval, registerCorps } from '../api/functions';
+import { submitNewsForApproval, registerCorps, unlockClassWithCorpsCoin } from '../api/functions';
+import ClassPurchaseModal from '../components/modals/ClassPurchaseModal';
 import { DataTable } from '../components/ui/DataTable';
 import { Card } from '../components/ui/Card';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -175,6 +176,7 @@ const Dashboard = () => {
   const [showNewsSubmission, setShowNewsSubmission] = useState(false);
   const [submittingNews, setSubmittingNews] = useState(false);
   const [corpsStats, setCorpsStats] = useState({});
+  const [classToPurchase, setClassToPurchase] = useState(null);
 
   // Destructure dashboard data
   const {
@@ -464,6 +466,45 @@ const Dashboard = () => {
     }
   }, []);
 
+  // Class unlock constants
+  const CLASS_UNLOCK_LEVELS = {
+    aClass: 3,
+    open: 5,
+    world: 10,
+  };
+
+  const CLASS_UNLOCK_COSTS = {
+    aClass: 1000,
+    open: 2500,
+    world: 5000,
+  };
+
+  const CLASS_DISPLAY_NAMES = {
+    aClass: 'A Class',
+    open: 'Open Class',
+    world: 'World Class',
+  };
+
+  // Handle class unlock with CorpsCoin
+  const handleClassUnlock = useCallback((classKey) => {
+    setClassToPurchase(classKey);
+  }, []);
+
+  const handleConfirmClassPurchase = useCallback(async () => {
+    if (!classToPurchase) return;
+
+    try {
+      const result = await unlockClassWithCorpsCoin({ classToUnlock: classToPurchase });
+      if (result.data.success) {
+        toast.success(`${CLASS_DISPLAY_NAMES[classToPurchase]} unlocked!`);
+        setClassToPurchase(null);
+        refreshProfile?.();
+      }
+    } catch (error) {
+      throw new Error(error.message || 'Failed to unlock class');
+    }
+  }, [classToPurchase, refreshProfile]);
+
   // =============================================================================
   // RENDER
   // =============================================================================
@@ -563,6 +604,7 @@ const Dashboard = () => {
                 streak={engagementData?.loginStreak || 0}
                 lastLogin={engagementData?.lastLogin}
                 unlockedClasses={profile.unlockedClasses || ['soundSport']}
+                onUnlockClass={handleClassUnlock}
                 compact
               />
             </div>
@@ -583,6 +625,7 @@ const Dashboard = () => {
                   unlockedClasses={profile.unlockedClasses || ['soundSport']}
                   seasonName={formatSeasonName(seasonData?.name)}
                   currentWeek={currentWeek}
+                  onUnlockClass={handleClassUnlock}
                 />
               </div>
             )}
@@ -1015,6 +1058,19 @@ const Dashboard = () => {
             isSubmitting={submittingNews}
           />
         </Suspense>
+      )}
+
+      {classToPurchase && profile && (
+        <ClassPurchaseModal
+          classKey={classToPurchase}
+          className={CLASS_DISPLAY_NAMES[classToPurchase]}
+          coinCost={CLASS_UNLOCK_COSTS[classToPurchase]}
+          currentBalance={profile.corpsCoin || 0}
+          levelRequired={CLASS_UNLOCK_LEVELS[classToPurchase]}
+          currentLevel={profile.xpLevel || 1}
+          onConfirm={handleConfirmClassPurchase}
+          onClose={() => setClassToPurchase(null)}
+        />
       )}
     </div>
   );
