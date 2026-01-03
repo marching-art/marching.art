@@ -94,17 +94,17 @@ const generateCaptionBreakdown = (totalScore, existingCaptions) => {
 // =============================================================================
 
 const PillTabControl = ({ tabs, activeTab, onTabChange, haptic }) => (
-  <div className="flex items-center gap-1 p-1 bg-[#111] border border-[#333]">
+  <div className="flex items-center overflow-x-auto scrollbar-hide bg-transparent border-b border-[#333]">
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => { haptic?.('medium'); onTabChange(tab.id); }}
-        className={`flex-1 px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+        className={`px-3 sm:px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border-b-2 -mb-px ${
           activeTab === tab.id
             ? tab.accent === 'green'
-              ? 'bg-green-500/20 text-green-400'
-              : 'bg-[#0057B8] text-white'
-            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+              ? 'text-green-400 border-green-500'
+              : 'text-white border-[#0057B8]'
+            : 'text-gray-500 hover:text-gray-300 border-transparent'
         }`}
       >
         {tab.label}
@@ -129,10 +129,9 @@ const RecapDataGrid = ({
 
   return (
     <div className="border-b border-[#333]">
-      {/* Event Header */}
-      <div className="bg-[#1a1a1a] px-4 py-2.5 flex items-center justify-between border-b border-[#333]">
-        <div className="flex items-center gap-3 min-w-0">
-          <Calendar className="w-4 h-4 text-[#0057B8] flex-shrink-0" />
+      {/* Event Header - Super Row integrated with table */}
+      <div className="bg-[#222] px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
           <span className="font-bold text-white text-sm truncate">{eventName}</span>
           <span className="text-gray-500 text-xs hidden sm:flex items-center gap-1">
             <MapPin className="w-3 h-3" />
@@ -144,11 +143,11 @@ const RecapDataGrid = ({
         </span>
       </div>
 
-      {/* Data Grid */}
+      {/* Data Grid - Column headers immediately below event header */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-[#111]">
+            <tr className="bg-[#1a1a1a] border-t border-[#333]">
               <th className="text-left py-2 px-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 w-10">
                 #
               </th>
@@ -181,7 +180,7 @@ const RecapDataGrid = ({
                 <tr
                   key={idx}
                   onClick={() => onRowClick?.(score)}
-                  className={`${rowBg} ${isUserCorps ? 'ring-1 ring-inset ring-[#0057B8]' : ''} hover:bg-[#222] cursor-pointer transition-colors`}
+                  className={`${rowBg} hover:bg-white/5 cursor-pointer transition-colors`}
                 >
                   {/* Rank */}
                   <td className="py-2 px-2">
@@ -497,7 +496,7 @@ const ClassStandingsGrid = ({
                 <tr
                   key={entry.corpsName || idx}
                   onClick={() => onRowClick?.(entry)}
-                  className={`${rowBg} ${isUserCorps ? 'ring-1 ring-inset ring-[#0057B8]' : ''} hover:bg-[#222] cursor-pointer transition-colors`}
+                  className={`${rowBg} hover:bg-white/5 cursor-pointer transition-colors`}
                 >
                   {/* Rank */}
                   <td className="py-2.5 px-2">
@@ -718,8 +717,8 @@ const Scores = () => {
         </div>
       </div>
 
-      {/* PILL TAB CONTROL */}
-      <div className="flex-shrink-0 bg-[#1a1a1a] border-b border-[#333] px-3 py-2">
+      {/* TAB STRIP */}
+      <div className="flex-shrink-0 bg-[#0A0A0A] px-3">
         <PillTabControl
           tabs={TABS}
           activeTab={activeTab}
