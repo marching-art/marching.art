@@ -444,7 +444,7 @@ const Leagues = () => {
   };
 
   const handleLeaveLeague = async (leagueId) => {
-    if (!window.confirm('Leave this league?')) return;
+    // Confirmation is now handled by LeaveLeagueModal in LeagueDetailView
     try {
       await leaveLeagueMutation.mutateAsync(leagueId);
       toast.success('Left league');
